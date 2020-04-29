@@ -1,0 +1,100 @@
+---
+output:
+  pdf_document: default
+  html_document: default
+ 
+geometry: margin=0.5in
+---
+
+
+---
+# SETUP
+---
+
+```{r setup, include=FALSE}
+#setwd('../../jheem')
+knitr::opts_knit$set(root.dir = '../../jheem')
+
+```
+
+
+```{r echo=FALSE, warning=F, message=F}
+POINT.SIZE = 2
+
+source('../code/source_code.R')
+load('../code/result summaries/simset.Rdata')
+
+msa.name = msa.names(attr(simset@simulations[[1]], 'location'))
+
+```
+
+---
+title: |
+    | Summary of Calibration for 
+    | `r msa.name`
+    | \textit{(`r format(simset@n.sim, big.mark=',')` Simulations)}
+output: pdf_document
+date: "`r format(Sys.time(), '%B %d, %Y')`"
+fontsize: 10pt
+---
+
+---
+# OVERALL
+---
+
+```{r echo=FALSE, warning=F, fig.height=3.25}
+plot.calibration.total(simset, point.size=POINT.SIZE) + 
+    ggtitle('Top-Level Fit (2010-2020)')
+```
+
+```{r echo=FALSE, warning=F, fig.height=3.25}
+plot.calibration.total(simset, point.size=POINT.SIZE, years=1970:2020) + 
+    ggtitle('Top-Level Fit (Full Time Frame)')
+```
+
+---
+# RISK FACTOR
+---
+```{r echo=FALSE, warning=F}
+plot.calibration.risk(simset, point.size=2) + 
+    ggtitle('By Risk Factor') +
+    theme(text=element_text(size=10), legend.position = 'bottom')
+```
+
+```{r echo=FALSE, warning=F}
+plot.calibration.risk(simset, point.size=POINT.SIZE, years=1970:2020) + 
+    ggtitle('By Risk Factor (Full Time Frame)') +
+    theme(text=element_text(size=10), legend.position = 'bottom')
+```
+
+---
+# RACE
+---
+```{r echo=FALSE, warning=F, fig.height=3.5}
+plot.calibration.race(simset, point.size=POINT.SIZE) + 
+    ggtitle('By Race') +
+    theme(text=element_text(size=10), legend.position = 'none')
+```
+
+```{r echo=FALSE, warning=F, fig.height=6.25}
+plot.calibration.race.risk(simset, point.size=POINT.SIZE) + 
+    ggtitle('By Risk x Race') +
+    theme(text=element_text(size=10), legend.position = 'bottom')
+```
+
+---
+# AGE
+---
+```{r echo=FALSE, warning=F, fig.height=10}
+plot.calibration.age(simset, point.size=POINT.SIZE,
+                        facet.data.type.first=F, ncol=2) + 
+    ggtitle('By Age') +
+    theme(text=element_text(size=10), legend.position = 'bottom')
+```
+
+```{r echo=FALSE, warning=F, fig.height=10}
+plot.calibration.sex.age(simset, point.size=POINT.SIZE,
+                        facet.data.type.first=F, ncol=2) + 
+    ggtitle('By Sex x Age') +
+    theme(text=element_text(size=10), legend.position = 'bottom')
+```
