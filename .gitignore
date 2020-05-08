@@ -1,8 +1,17 @@
+# R
 .Rproj.user
 .Rhistory
 .RData
 .Ruserdata
+*.Rproj
+
+# Project-specific
 cached
 cached_surveillance
-ending_hiv.Rproj
 mcmc_runs
+
+# User-specific
+_dev
+
+# OS-specific
+.DS_Store
