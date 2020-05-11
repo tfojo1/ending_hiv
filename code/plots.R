@@ -362,6 +362,25 @@ plot.calibration.age.distribution <- function(sims,
                      ...)
 }
 
+plot.calibration.cumulative.mortality <- function(sims,
+                                                  facet.by=NULL,
+                                                  split.by='risk',
+                                                  years=1981:2000,
+                                                  use.bar=T,
+                                                  data.types='cumulative.mortality',
+                                                  ...)
+{
+    plot.calibration(sims = sims,
+                     years=years,
+                     data.types=data.types,
+                     x.variable=split.by,
+                     facet.by=facet.by,
+                     split.by = NULL,
+                     use.bar = use.bar,
+                     denominator.dimensions = 'year',
+                     ...)
+}
+
 plot.calibration <- function(sims,
                              data.types=c('new','prevalence','mortality','diagnosed','population')[1:2],
                              years=2010:2020,
@@ -388,6 +407,7 @@ plot.calibration <- function(sims,
                              ci.coverage=0.95,
                              ribbon.alpha=0.4,
                              plot.cdc.new.with.incidence=T,
+                             plot.cdc.aids.with.new=T,
                              plot.individual.simset.sims=T,
                              sim1.color=BLUE,
                              sim2.color=RED,
@@ -395,6 +415,7 @@ plot.calibration <- function(sims,
                              sim1.shape=21,
                              sim2.shape=22,
                              cdc.shape=23,
+                             cdc.shape.2=25,
                              sim1.line.size=if (plot.individual.simset.sims && (is(sims, 'simset') || (is(sims, 'list') && is(sims[[1]], 'simset')))) 0.1 else 1,
                              sim2.line.size=sim1.line.size,
                              cdc.line.size=if (plot.individual.simset.sims && (is(sims, 'simset') || (is(sims, 'list') && is(sims[[1]], 'simset')))) 2 else 1,
@@ -409,6 +430,7 @@ plot.calibration <- function(sims,
                              diagnosed.name = 'PWH with Diagnosed HIV (%)',
                              population.name = 'Population (%)',
                              incidence.name = if (show.rates) 'Incidence (per 100,000)' else 'Incidence (number of cases)',
+                             cumulative.mortality.name = if (show.rates) 'Cumulative HIV Mortality (per 100,000 PWH)' else if (normalize.within.facet) 'HIV Mortality (%)' else 'Cumulative HIV Mortality (number of cases)',
                              cdc.label = 'CDC',
                              normalize.within.facet=F,
                              fixed.facet.scales=F,
@@ -471,11 +493,12 @@ plot.calibration <- function(sims,
                         mortality=mortality.name,
                         diagnosed=diagnosed.name,
                         population=population.name,
-                        incidence=incidence.name)
+                        incidence=incidence.name,
+                        cumulative.mortality=cumulative.mortality.name)
     if (show.rates)
-        data.type.denominators = c(new=100000, prevalence=100000, mortality=100000, population=100, diagnosed=100, incidence=100000)
+        data.type.denominators = c(new=100000, prevalence=100000, mortality=100000, population=100, diagnosed=100, incidence=100000, cumulative.mortality=100000)
     else
-        data.type.denominators = c(new=1, prevalence=1, mortality=1, population=100, diagnosed=100, incidence=1)
+        data.type.denominators = c(new=1, prevalence=1, mortality=1, population=100, diagnosed=100, incidence=1, cumulative.mortality=1)
 
     race.names = c(black='Black',hispanic="Hispanic", other='Other')
     risk.names = c(msm='MSM', idu='IDU', msm_idu='MSM+IDU', heterosexual='Heterosexual',
@@ -521,6 +544,20 @@ plot.calibration <- function(sims,
                         truth.denominators = apply(truth.numerators, facet.by, sum)
                     truth.denominators = expand.population(truth.denominators, target.dim.names=dimnames(truth.numerators))
                     truth.numerators = truth.numerators/truth.denominators
+                    truth.type = cdc.label
+                }
+                else if (data.type=='cumulative.mortality')
+                {
+                    truth.numerators = get.surveillance.data(surv, location.codes=location,
+                                                             data.type='cumulative.aids.mortality',
+                                                             age=F, race=T, sex=T, risk=T,
+                                                             years=max(years), aggregate.locations=T,
+                                                             throw.error.if.missing.data=F) / (0.9)
+                    dim.names = dimnames(truth.numerators)[intersect(all.dimensions, names(dimnames(truth.numerators)))]
+                    truth.numerators = apply(truth.numerators, intersect(all.dimensions, names(dimnames(truth.numerators))), sum)
+                    dim(truth.numerators) = sapply(dim.names, length)
+                    dimnames(truth.numerators) = dim.names
+                    truth.type = cdc.label
                 }
                 else
                 {
@@ -550,6 +587,33 @@ plot.calibration <- function(sims,
                         truth.years = intersect(years, as.numeric(dimnames(truth.numerators)[['year']]))
                         truth.numerators = access(truth.numerators, year=as.character(truth.years), collapse.length.one.dimensions = F)
                         truth.numerators = apply(truth.numerators, all.plus.denominator.dimensions, function(x){x})
+                        truth.type = rep(cdc.label, length(truth.years))
+                        
+                        if (plot.cdc.aids.with.new && data.type.for.surveillance=='new' && 
+                            length(split.by)==0 && length(facet.by)==0)
+                        {
+                            aids.numerators = get.surveillance.data(surv, location.codes=location, 
+                                                                    data.type='aids.diagnoses',
+                                                                    aggregate.locations = T, aggregate.years = F,
+                                                                    throw.error.if.missing.data = F)
+                            
+                            aids.years = setdiff(intersect(years, attr(aids.numerators, 'years')), truth.years[!is.na(truth.numerators)])
+                            if (length(aids.years)>0)
+                            {
+                                aids.numerators = aids.numerators[as.character(aids.years)]
+                                
+                                truth.numerators = c(aids.numerators, truth.numerators)
+                                truth.years = c(aids.years, truth.years)
+                                truth.type = c(rep(paste0(cdc.label, ": AIDS Diagnoses"), length(aids.years)),
+                                               truth.type)
+                                
+                                o = order(truth.years)
+                                truth.numerators = truth.numerators[o]
+                                truth.years = truth.years[o]
+                                truth.type = truth.type[o]
+                            }
+                        }
+                            
                     }
                 }
 
@@ -746,6 +810,10 @@ plot.calibration <- function(sims,
 
                 one.df$data.type=data.type.names[data.type]
                 one.df$type = type
+                if (type==cdc.label)
+                    one.df$subtype = truth.type
+                else
+                    one.df$subtype = type
 
                 if (facet.data.type.first)
                     one.df$facet.by = one.df$data.type
@@ -809,7 +877,7 @@ plot.calibration <- function(sims,
     colors[cdc.label] = cdc.color
 
     type.guide.name = element_blank()
-    if (shape.by.split)
+    if (shape.by.split && length(split.by)>0)
     {
         n.split.by = length(unique(df$split.by))
         shapes = rep(split.shapes, ceiling(n.split.by/length(split.shapes)))
@@ -823,7 +891,8 @@ plot.calibration <- function(sims,
         names(shapes) = types
         if (length(types)==3)
             shapes[types[2]] = sim2.shape
-        shapes[cdc.label] = sim2.shape
+        shapes[cdc.label] = cdc.shape
+        shapes[paste0(cdc.label,": AIDS Diagnoses")] = cdc.shape.2
         shape.guide.name = type.guide.name
     }
 
@@ -876,7 +945,7 @@ plot.calibration <- function(sims,
         if (shape.by.split)
             rv = ggplot(df, aes(x, value, ymin=ci.lower, ymax=ci.upper, group=group, color=type, fill=type, shape=split.by))
         else
-            rv = ggplot(df, aes(x, value, ymin=ci.lower, ymax=ci.upper, group=group, color=type, fill=type, shape=type))
+            rv = ggplot(df, aes(x, value, ymin=ci.lower, ymax=ci.upper, group=group, color=type, fill=type, shape=subtype))
 
         rv = rv + geom_ribbon(alpha=ribbon.alpha)
 
@@ -981,19 +1050,16 @@ get.sim.values <- function(sim,
 
     if (show.rates || data.type=='population' || data.type=='diagnosed')
         values = model.rates
- #   else if (any(all.dimensions=='sex') && use.cdc)
- #   {
- #       values = model.rates
-
- #       if (any(dimnames(denominators)))
- #       access(values, sex='male') = access(model.rates, sex='male') * access(denominators, sex='male')
- #       access(values, sex='female') = access(model.rates, sex='female') * access(denominators, sex='female')
- #   }
     else
     {
-        values = model.rates *
-            expand.population(access(denominators, year=dimnames(model.rates)[['year']], collapse.length.one.dimensions = F),
-                              dimnames(model.rates))
+        if(any(names(dimnames(model.rates))=='year'))
+            values = model.rates *
+                expand.population(access(denominators, year=dimnames(model.rates)[['year']], collapse.length.one.dimensions = F),
+                                  dimnames(model.rates))
+        else
+            values = model.rates *
+                expand.population(denominators,
+                                  dimnames(model.rates))
         values = apply(values, all.dimensions, sum)
     }
 
@@ -1071,7 +1137,7 @@ get.sim.projections <- function(jheem.results, data.type, years, keep.dimensions
         else if (data.type=='prevalence')
             numerators = extract.prevalence(jheem.results, continuum='diagnosed', years=years, keep.dimensions = keep.dimensions,
                                             per.population = NA, use.cdc.categorizations = use.cdc)
-        else if (data.type=='mortality')
+        else if (data.type=='mortality' || data.type=='cumulative.mortality')
             numerators = extract.overall.hiv.mortality(jheem.results, continuum='diagnosed', years=years, keep.dimensions = keep.dimensions,
                                                        per.population = NA, use.cdc.categorizations = use.cdc)
         else
@@ -1101,8 +1167,16 @@ get.sim.projections <- function(jheem.results, data.type, years, keep.dimensions
             denominators = array(denominators, dim=sapply(dim.names, length), dimnames=dim.names)
         }
 
-        denominators = apply(denominators, names(dimnames(numerators)), sum)
+        if (length(intersect(names(dimnames(denominators)), names(dimnames(numerators))))==0)
+            denominators = sum(denominators)
+        else
+            denominators = apply(denominators, intersect(names(dimnames(denominators)), names(dimnames(numerators))), sum)
 
+        if (length(intersect(names(dimnames(true.denominators)), names(dimnames(numerators))))==0)
+            true.denominators = sum(true.denominators)
+        else
+            true.denominators = apply(true.denominators, intersect(names(dimnames(true.denominators)), names(dimnames(numerators))), sum)
+        
         numerators / denominators * as.numeric(true.denominators) #expand.population(true.denominators, target.dim.names = dimnames(numerators))
     }
 

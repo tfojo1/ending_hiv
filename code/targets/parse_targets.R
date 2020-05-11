@@ -11,10 +11,14 @@ get.target.counties <- function(dir='..')
 }
 
 get.target.msas <- function(dir='..',
-                            include.pr=F)
+                            include.pr=F,
+                            use.divisions=F)
 {
-    msas = unique(msa.or.division.for.county(get.target.counties()))
-    
+    if (use.divisions)
+        msas = unique(msa.or.division.for.county(get.target.counties(dir=dir)))
+    else
+        msas = unique(msa.for.county(get.target.counties(dir=dir)))
+        
     if (!include.pr)
         msas = msas[sapply(msas, function(msa){
             all(states.for.msa(msa) != 'PR')
@@ -23,9 +27,10 @@ get.target.msas <- function(dir='..',
     msas
 }
 
-get.hiv.burden <- function(msas = get.target.msas(),
+get.hiv.burden <- function(msas = get.target.msas(use.divisions=use.divisions),
                            year=2017,
-                           as.table=T)
+                           as.table=T,
+                           use.divisions=F)
 {
     rv = sapply(msas, function(msa){
         get.surveillance.data(msa.surveillance, location.codes = msa, year=year, data.type='new')
@@ -33,13 +38,16 @@ get.hiv.burden <- function(msas = get.target.msas(),
     
     names(rv) = msa.names(msas)
     
-    rv = sort(rv, decreasing = T)
+    o = order(rv, decreasing = T)
+    rv = rv[o]
+    msas = msas[o]
     
     if (as.table)
     {
         df = data.frame(MSA=names(rv),
+                        CBSA=msas,
                    x=as.numeric(rv))
-        names(df)[2] = paste0(year, '_new_diagnoses')
+        names(df)[3] = paste0(year, '_new_diagnoses')
         df
     }
     else

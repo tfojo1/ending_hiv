@@ -29,7 +29,7 @@ create.full.likelihood <- function(location=BALTIMORE.MSA,
                                    prevalence.years=2010:2016,
                                    mortality.years=2010:2016,
                                    diagnosed.years=2010:2016,
-                                   total.new.years=1993:2010,
+                                   total.new.years=2008:2010,#1993:2010,
                                    total.prevalence.years=2007:2009,
                                    year.to.year.new.correlation=0.0,
                                    year.to.year.prevalence.correlation=0.0,
@@ -48,6 +48,8 @@ create.full.likelihood <- function(location=BALTIMORE.MSA,
                                    new.numerator.sd=function(...){0},
                                    prevalence.numerator.sd=function(...){0},
                                    mortality.numerator.sd=function(...){0},
+                                   mortality.bias.fn = function(...){0},
+                                   mortality.bias.sd = function(...){0},
                                    diagnosed.numerator.sd=function(...){0},
                                    new.sd.inflation=1,
                                    prevalence.sd.inflation=1,
@@ -55,9 +57,16 @@ create.full.likelihood <- function(location=BALTIMORE.MSA,
                                    diagnosed.sd.inflation=1,
                                    include.total.new.prev=T,
                                    total.new.sd.inflation=1,
+                                   cumulative.mortality.sd.inflation=1,
                                    total.new.numerator.sd=function(...){0},
                                    total.prevalence.sd.inflation=1,
                                    total.prevalence.numerator.sd=function(...){0},
+                                   cumulative.mortality.numerator.sd=function(...){0},
+                                   
+                                   aids.diagnoses.numerator.sd=function(...){0},
+                                   aids.diagnoses.sd.inflation=1,
+                                   aids.diagnoses.to.hiv.ratio.log.sd=0.5*log(1.1),
+                                   
                                    use.total.prevalence=F,
                                    idu.manager=ALL.DATA.MANAGERS$idu,
                                    census.full=ALL.DATA.MANAGERS$census.full,
@@ -100,15 +109,24 @@ create.full.likelihood <- function(location=BALTIMORE.MSA,
                                new.numerator.sd=new.numerator.sd,
                                prevalence.numerator.sd=prevalence.numerator.sd,
                                mortality.numerator.sd=mortality.numerator.sd,
+                               mortality.bias.fn=mortality.bias.fn,
+                               mortality.bias.sd=mortality.bias.sd,
                                diagnosed.numerator.sd=diagnosed.numerator.sd,
                                new.sd.inflation=new.sd.inflation,
                                prevalence.sd.inflation=prevalence.sd.inflation,
                                mortality.sd.inflation=mortality.sd.inflation,
                                diagnosed.sd.inflation=diagnosed.sd.inflation,
                                total.new.sd.inflation=total.new.sd.inflation,
+                               cumulative.mortality.sd.inflation=cumulative.mortality.sd.inflation,
                                total.new.numerator.sd=total.new.numerator.sd,
                                total.prevalence.sd.inflation=total.prevalence.sd.inflation,
                                total.prevalence.numerator.sd=total.prevalence.numerator.sd,
+                               cumulative.mortality.numerator.sd=cumulative.mortality.numerator.sd,
+                               
+                               aids.diagnoses.numerator.sd=aids.diagnoses.numerator.sd,
+                               aids.diagnoses.sd.inflation=aids.diagnoses.sd.inflation,
+                               aids.diagnoses.to.hiv.ratio.log.sd=aids.diagnoses.to.hiv.ratio.log.sd,
+                               
                                use.total.prevalence=use.total.prevalence,
                                idu.manager=idu.manager,
                                census.full=census.full,
@@ -153,19 +171,27 @@ create.combined.likelihood <- function(location=BALTIMORE.MSA,
                                    mort.numerator.year.to.year.chunk.correlation=0.65,
                                    mort.numerator.year.to.year.off.correlation=0.25,
                                    mort.numerator.chunk.years=list(2010:2013,2014:2016),
-
+                                   
+                                   aids.diagnoses.numerator.sd=function(...){0},
+                                   aids.diagnoses.sd.inflation=1,
+                                   aids.diagnoses.to.hiv.ratio.log.sd=0.5*log(1.1),
+                                   
                                    new.numerator.sd=function(...){0},
                                    prevalence.numerator.sd=function(...){0},
                                    mortality.numerator.sd=function(...){0},
+                                   mortality.bias.fn = function(...){0},
+                                   mortality.bias.sd = function(...){0},
                                    diagnosed.numerator.sd=function(...){0},
                                    new.sd.inflation=1,
                                    prevalence.sd.inflation=1,
                                    mortality.sd.inflation=1,
                                    diagnosed.sd.inflation=1,
                                    total.new.sd.inflation=1,
+                                   cumulative.mortality.sd.inflation=1,
                                    total.new.numerator.sd=function(...){0},
                                    total.prevalence.sd.inflation=1,
                                    total.prevalence.numerator.sd=function(...){0},
+                                   cumulative.mortality.numerator.sd=function(...){0},
                                    use.total.prevalence=F,
                                    idu.manager=ALL.DATA.MANAGERS$idu,
                                    census.full=ALL.DATA.MANAGERS$census.full,
@@ -246,7 +272,9 @@ create.combined.likelihood <- function(location=BALTIMORE.MSA,
                                          numerator.year.to.year.chunk.correlation=mort.numerator.year.to.year.chunk.correlation,
                                          numerator.year.to.year.off.correlation=mort.numerator.year.to.year.off.correlation,
                                          numerator.chunk.years=mort.numerator.chunk.years,
-                                         numerator.sd = mortality.numerator.sd
+                                         numerator.sd = mortality.numerator.sd,
+                                         bias.fn = mortality.bias.fn,
+                                         bias.sd = mortality.bias.sd
     )
 
     dx.lik = create.diagnosed.likelihood(surv=state.surveillance, location=location,
@@ -274,16 +302,27 @@ create.combined.likelihood <- function(location=BALTIMORE.MSA,
                                     location=location,
                                     years=idu.years,
                                     log.sd = idu.log.sd)
+    
+    cum.mort.lik = create.cumulative.mortality.likelihood(surv = surv,
+                                                          location = location,
+                                                          numerator.sd = cumulative.mortality.numerator.sd,
+                                                          sd.inflation = cumulative.mortality.sd.inflation)
+    
+    aids.lik = create.aids.diagnoses.likelihood(surv=surv,
+                                                location=location,
+                                                numerator.sd=aids.diagnoses.numerator.sd,
+                                                sd.inflation=aids.diagnoses.sd.inflation,
+                                                hiv.to.aids.diagnoses.ratio.log.sd=aids.diagnoses.to.hiv.ratio.log.sd)
 
     if (use.total.prevalence)
-        create.joint.likelihood.function(new.lik, prev.lik, mort.lik,
-                                         dx.lik, total.new.lik, total.prev.lik,
-                                         idu.lik,
+        create.joint.likelihood.function(new=new.lik, prev=prev.lik, mort=mort.lik,
+                                         dx=dx.lik, total.new=total.new.lik, total.prev=total.prev.lik,
+                                         idu=idu.lik, cum.mort=cum.mort.lik, aids=aids.lik,
                                          verbose=verbose)
     else
-        create.joint.likelihood.function(new.lik, prev.lik, mort.lik,
-                                         dx.lik, total.new.lik,
-                                         idu.lik,
+        create.joint.likelihood.function(new=new.lik, prev=prev.lik, mort=mort.lik,
+                                         dx=dx.lik, total.new=total.new.lik, 
+                                         idu=idu.lik, cum.mort=cum.mort.lik, aids=aids.lik,
                                          verbose=verbose)
 }
 
@@ -559,7 +598,9 @@ create.likelihood.function <- function(data.type=c('new','prevalence','mortality
                                        numerator.year.to.year.chunk.correlation=0,
                                        numerator.year.to.year.off.correlation=0,
                                        numerator.chunk.years=numeric(),
-                                       numerator.sd = function(...){0})
+                                       numerator.sd = function(...){0},
+                                       bias.fn = function(...){0},
+                                       bias.sd = function(...){0})
 {
 #    print(denominator.dimensions)
 
@@ -610,6 +651,8 @@ create.likelihood.function <- function(data.type=c('new','prevalence','mortality
                                                                    by.sex.risk=by.sex.risk, by.race.risk=by.race.risk,
                                                                    ages=ages, races=races, sexes=sexes, risks=risks,
                                                                    numerator.sd = numerator.sd,
+                                                                   bias.fn = bias.fn,
+                                                                   bias.sd = bias.sd,
                                                                    numerator.year.to.year.chunk.correlation=numerator.year.to.year.chunk.correlation,
                                                                    numerator.year.to.year.off.correlation=numerator.year.to.year.off.correlation,
                                                                    numerator.chunk.years=numerator.chunk.years
@@ -845,6 +888,130 @@ create.total.likelihood <- function(data.type,
 
         cov.mat = sds %*% t(sds) * cor.mat * sd.inflation + diag(numerator.sds^2)
         dmvnorm(x=observed, mean=mean.vector, sigma = cov.mat, log=log)
+    }
+}
+
+create.aids.diagnoses.likelihood <- function(surv=msa.surveillance,
+                                             location=BALTIMORE.MSA,
+                                             numerator.sd=function(years,num){rep(0,length(num))},
+                                             sd.inflation=1,
+                                             years=1999:2003,
+                                             population=get.census.totals(ALL.DATA.MANAGERS$census.totals,
+                                                                          location, years=years, flatten.single.dim.array = T),
+                                             hiv.to.aids.diagnoses.ratio=c('1999'=1.45,
+                                                                           '2000'=1.56,
+                                                                           '2001'=1.51,
+                                                                           '2002'=1.39,
+                                                                           '2003'=1.35,
+                                                                           '2004'=1.25)[as.character(years)],
+                                             hiv.to.aids.diagnoses.ratio.log.sd=0.5*log(1.1),
+                                             rho=0.5,
+                                             verbose=F
+                                             )
+{
+    observed.aids = get.surveillance.data(location.codes = location, data.type='aids.diagnoses', years=years)
+    obs.sds = numerator.sd(years, observed.aids)
+    
+    #transform to lognormal based on mean and sd
+    cv = obs.sds / observed.aids
+    log.var = log(1 + cv^2)
+    log.mean = log(observed.aids) - log.var/2
+  
+    #add log ratio
+    log.ratios = log(hiv.to.aids.diagnoses.ratio) - hiv.to.aids.diagnoses.ratio.log.sd^2/2
+    log.mean = log.mean + log.ratios
+    log.var = log.var + hiv.to.aids.diagnoses.ratio.log.sd^2
+
+    #put back on exp scale
+    obs = exp(log.mean + log.var/2)
+    obs.var = (exp(log.var)-1) * exp(2*log.mean + log.var)
+    
+    function(sim, log=T)
+    {
+        numerators = extract.new.diagnoses(sim, years=years, keep.dimensions = 'year', per.population = NA)
+        denominators = extract.population.subset(sim, years=years, keep.dimensions = 'year',
+                                                per.population = NA)
+        
+        rates = numerators / denominators
+        
+      #  sds = sqrt(population * rates * (1-rates) * sd.inflation^2 + obs.var)
+
+        
+        cov.mat = make.compound.symmetry.matrix(sqrt(obs.var), rho) + 
+            diag(population * rates * (1-rates) * sd.inflation^2)
+        
+        if (verbose)
+            print(cbind(obs=obs, sim=rates*population))
+        
+        dmvnorm(x=as.numeric(obs),
+                mean=as.numeric(rates*population),
+                sigma=cov.mat, 
+                log=log)
+        
+    }
+}
+
+#.9 captured from https://jamanetwork.com/journals/jama/fullarticle/405140 (cited in 2001-2002 surveillance report)
+create.cumulative.mortality.likelihood <- function(years=1981:2000,
+                                                   surv=msa.surveillance,
+                                                   location=BALTIMORE.MSA,
+                                                   population=sum(get.census.totals(ALL.DATA.MANAGERS$census.totals,
+                                                                                    location, years=years)),
+                                                   rho=0.5,
+                                                   numerator.sd=function(...){0},
+                                                   sd.inflation=1,
+                                                   fraction.captured=0.9,
+                                                   verbose=F) #.85 and .9 are AIDS reported and deaths captured from techcnical appendix of volume 14 report - 2001-2002. .95 is my guess for how many HIV deaths are in people with AIDS
+{
+    observed = get.surveillance.data(location.codes = location, data.type = 'cumulative.aids.mortality', sex=T,race=T,risk=T)[1,,,]
+    observed = apply(observed, c('race','sex','risk'), function(x){x})
+    observed[,'female',c('msm','msm_idu')] = NA
+    mask = !is.na(observed)
+    observed = observed[mask]
+    
+    numerator.sds = numerator.sd(year=rep(max(years), length(observed)), num=observed)
+    
+    function(sim, log=T)
+    {
+        numerators = extract.overall.hiv.mortality(sim, years=years, keep.dimensions = c('race','sex','risk'),
+                                                   continuum = 'diagnosed',
+                                                   use.cdc.categorizations = T, per.population = NA)
+        denominator = extract.population.subset(sim, years=years, keep.dimensions = character(),
+                                                 use.cdc.categorizations = T, per.population = NA)
+        
+        rates = numerators[mask] / denominator * fraction.captured
+        
+        sds = sqrt(population * rates * (1-rates) * sd.inflation^2 + numerator.sds^2)
+        
+ 
+#        cov.mat = make.compound.symmetry.matrix(numerator.sds, rho) +
+ #           diag( population * rates * (1-rates) * sd.inflation^2 )
+        
+#        cov.mat = make.compound.symmetry.matrix(sqrt(population * rates * (1-rates) * sd.inflation^2), rho) +
+        #   diag(numerator.sds^2)   
+     #   cbind(observed, sim=rates*population, sd=sqrt(diag(cov.mat)), model=sqrt(population*rates*(1-rates)*sd.inflation^2),
+      #        obs=numerator.sds)
+      
+        piecewise = dnorm(x = observed,
+                          mean = rates * population, 
+                          sd = sds,
+                          log = log)
+
+    if (verbose)
+    {
+        print(cbind(melt(numerators/denominator*population)[mask,], observed, d=piecewise))
+        print(c(sim=sum(rates*population), obs=sum(observed)))
+    }
+
+        if (log)
+            sum(piecewise)
+        else
+            prod(piecewise)
+        
+    #    dmvnorm(x = observed,
+    #            mean = rates * population,
+    #            sigma = cov.mat,
+    #            log=log)
     }
 }
 
@@ -1273,6 +1440,8 @@ create.likelihood.elements.for.data.type <- function(data.type=c('new','prevalen
                                                      by.sex.risk,
                                                      by.race.risk,
                                                      numerator.sd=function(...){0},
+                                                     bias.fn=function(...){0},
+                                                     bias.sd=function(...){0},
                                                      numerator.year.to.year.chunk.correlation=0,
                                                      numerator.year.to.year.off.correlation=0,
                                                      numerator.chunk.years=numeric(),
@@ -1300,12 +1469,20 @@ create.likelihood.elements.for.data.type <- function(data.type=c('new','prevalen
         cdc.arr = get.surveillance.data(surv, location, data.type=data.type, years=years)
         tmrv = make.transformation.matrix.and.response.vector(cdc.arr=cdc.arr, jheem.skeleton=jheem.skeleton)
 
-        response.vector = c(response.vector, tmrv$response.vector)
-        transformation.matrix = rbind(transformation.matrix, tmrv$transformation.matrix)
-
         sds = numerator.sd(years=tmrv$year, num=tmrv$response.vector)
         if (length(sds)==1)
             sds = rep(sds, length(tmrv$response.vector))
+        bias = bias.fn(years=tmrv$year, num=tmrv$response.vector)
+        if (length(bias)==1)
+            bias = rep(bias, length(tmrv$response.vector))
+        bias.sds = bias.sd(years=tmrv$year, num=tmrv$response.vector)
+        if (length(bias.sds)==1)
+            bias.sds = rep(bias.sds, length(tmrv$response.vector))
+        
+        sds = sqrt(sds^2 + bias.sds^2)
+        response.vector = c(response.vector, tmrv$response.vector - bias)
+        transformation.matrix = rbind(transformation.matrix, tmrv$transformation.matrix)
+        
         one.numerator.covar.mat = make.chunked.compound.symmetry.matrix(sds=sds,
                                                                         chunk.rho=numerator.year.to.year.chunk.correlation,
                                                                         non.chunk.rho=numerator.year.to.year.off.correlation,
@@ -1323,13 +1500,21 @@ create.likelihood.elements.for.data.type <- function(data.type=c('new','prevalen
     {
         cdc.arr = get.surveillance.data(surv, location, data.type=data.type, years=years, sex=T)
         tmrv = make.transformation.matrix.and.response.vector(cdc.arr=cdc.arr, jheem.skeleton=jheem.skeleton)
-
-        response.vector = c(response.vector, tmrv$response.vector)
-        transformation.matrix = rbind(transformation.matrix, tmrv$transformation.matrix)
-
+        
         sds = numerator.sd(years=tmrv$year, num=tmrv$response.vector)
         if (length(sds)==1)
             sds = rep(sds, length(tmrv$response.vector))
+        bias = bias.fn(years=tmrv$year, num=tmrv$response.vector)
+        if (length(bias)==1)
+            bias = rep(bias, length(tmrv$response.vector))
+        bias.sds = bias.sd(years=tmrv$year, num=tmrv$response.vector)
+        if (length(bias.sds)==1)
+            bias.sds = rep(bias.sds, length(tmrv$response.vector))
+        
+        sds = sqrt(sds^2 + bias.sds^2)
+        response.vector = c(response.vector, tmrv$response.vector - bias)
+        transformation.matrix = rbind(transformation.matrix, tmrv$transformation.matrix)
+        
         one.numerator.covar.mat = make.chunked.compound.symmetry.matrix(sds=sds,
                                                                         chunk.rho=numerator.year.to.year.chunk.correlation,
                                                                         non.chunk.rho=numerator.year.to.year.off.correlation,
@@ -1347,13 +1532,21 @@ create.likelihood.elements.for.data.type <- function(data.type=c('new','prevalen
     {
         cdc.arr = get.surveillance.data(surv, location, data.type=data.type, years=years, race=T)
         tmrv = make.transformation.matrix.and.response.vector(cdc.arr=cdc.arr, jheem.skeleton=jheem.skeleton)
-
-        response.vector = c(response.vector, tmrv$response.vector)
-        transformation.matrix = rbind(transformation.matrix, tmrv$transformation.matrix)
-
+        
         sds = numerator.sd(years=tmrv$year, num=tmrv$response.vector)
         if (length(sds)==1)
             sds = rep(sds, length(tmrv$response.vector))
+        bias = bias.fn(years=tmrv$year, num=tmrv$response.vector)
+        if (length(bias)==1)
+            bias = rep(bias, length(tmrv$response.vector))
+        bias.sds = bias.sd(years=tmrv$year, num=tmrv$response.vector)
+        if (length(bias.sds)==1)
+            bias.sds = rep(bias.sds, length(tmrv$response.vector))
+        
+        sds = sqrt(sds^2 + bias.sds^2)
+        response.vector = c(response.vector, tmrv$response.vector - bias)
+        transformation.matrix = rbind(transformation.matrix, tmrv$transformation.matrix)
+        
         one.numerator.covar.mat = make.chunked.compound.symmetry.matrix(sds=sds,
                                                                         chunk.rho=numerator.year.to.year.chunk.correlation,
                                                                         non.chunk.rho=numerator.year.to.year.off.correlation,
@@ -1371,13 +1564,21 @@ create.likelihood.elements.for.data.type <- function(data.type=c('new','prevalen
     {
         cdc.arr = get.surveillance.data(surv, location, data.type=data.type, years=years, age=T)
         tmrv = make.transformation.matrix.and.response.vector(cdc.arr=cdc.arr, jheem.skeleton=jheem.skeleton)
-
-        response.vector = c(response.vector, tmrv$response.vector)
-        transformation.matrix = rbind(transformation.matrix, tmrv$transformation.matrix)
-
+        
         sds = numerator.sd(years=tmrv$year, num=tmrv$response.vector)
         if (length(sds)==1)
             sds = rep(sds, length(tmrv$response.vector))
+        bias = bias.fn(years=tmrv$year, num=tmrv$response.vector)
+        if (length(bias)==1)
+            bias = rep(bias, length(tmrv$response.vector))
+        bias.sds = bias.sd(years=tmrv$year, num=tmrv$response.vector)
+        if (length(bias.sds)==1)
+            bias.sds = rep(bias.sds, length(tmrv$response.vector))
+        
+        sds = sqrt(sds^2 + bias.sds^2)
+        response.vector = c(response.vector, tmrv$response.vector - bias)
+        transformation.matrix = rbind(transformation.matrix, tmrv$transformation.matrix)
+        
         one.numerator.covar.mat = make.chunked.compound.symmetry.matrix(sds=sds,
                                                                         chunk.rho=numerator.year.to.year.chunk.correlation,
                                                                         non.chunk.rho=numerator.year.to.year.off.correlation,
@@ -1395,13 +1596,21 @@ create.likelihood.elements.for.data.type <- function(data.type=c('new','prevalen
     {
         cdc.arr = get.surveillance.data(surv, location, data.type=data.type, years=years, risk=T)
         tmrv = make.transformation.matrix.and.response.vector(cdc.arr=cdc.arr, jheem.skeleton=jheem.skeleton)
-
-        response.vector = c(response.vector, tmrv$response.vector)
-        transformation.matrix = rbind(transformation.matrix, tmrv$transformation.matrix)
-
+        
         sds = numerator.sd(years=tmrv$year, num=tmrv$response.vector)
         if (length(sds)==1)
             sds = rep(sds, length(tmrv$response.vector))
+        bias = bias.fn(years=tmrv$year, num=tmrv$response.vector)
+        if (length(bias)==1)
+            bias = rep(bias, length(tmrv$response.vector))
+        bias.sds = bias.sd(years=tmrv$year, num=tmrv$response.vector)
+        if (length(bias.sds)==1)
+            bias.sds = rep(bias.sds, length(tmrv$response.vector))
+        
+        sds = sqrt(sds^2 + bias.sds^2)
+        response.vector = c(response.vector, tmrv$response.vector - bias)
+        transformation.matrix = rbind(transformation.matrix, tmrv$transformation.matrix)
+        
         one.numerator.covar.mat = make.chunked.compound.symmetry.matrix(sds=sds,
                                                                         chunk.rho=numerator.year.to.year.chunk.correlation,
                                                                         non.chunk.rho=numerator.year.to.year.off.correlation,
@@ -1419,13 +1628,21 @@ create.likelihood.elements.for.data.type <- function(data.type=c('new','prevalen
     {
         cdc.arr = get.surveillance.data(surv, location, data.type=data.type, years=years, sex=T, age=T)
         tmrv = make.transformation.matrix.and.response.vector(cdc.arr=cdc.arr, jheem.skeleton=jheem.skeleton)
-
-        response.vector = c(response.vector, tmrv$response.vector)
-        transformation.matrix = rbind(transformation.matrix, tmrv$transformation.matrix)
-
+        
         sds = numerator.sd(years=tmrv$year, num=tmrv$response.vector)
         if (length(sds)==1)
             sds = rep(sds, length(tmrv$response.vector))
+        bias = bias.fn(years=tmrv$year, num=tmrv$response.vector)
+        if (length(bias)==1)
+            bias = rep(bias, length(tmrv$response.vector))
+        bias.sds = bias.sd(years=tmrv$year, num=tmrv$response.vector)
+        if (length(bias.sds)==1)
+            bias.sds = rep(bias.sds, length(tmrv$response.vector))
+        
+        sds = sqrt(sds^2 + bias.sds^2)
+        response.vector = c(response.vector, tmrv$response.vector - bias)
+        transformation.matrix = rbind(transformation.matrix, tmrv$transformation.matrix)
+        
         one.numerator.covar.mat = make.chunked.compound.symmetry.matrix(sds=sds,
                                                                         chunk.rho=numerator.year.to.year.chunk.correlation,
                                                                         non.chunk.rho=numerator.year.to.year.off.correlation,
@@ -1443,13 +1660,21 @@ create.likelihood.elements.for.data.type <- function(data.type=c('new','prevalen
     {
         cdc.arr = get.surveillance.data(surv, location, data.type=data.type, years=years, sex=T, race=T)
         tmrv = make.transformation.matrix.and.response.vector(cdc.arr=cdc.arr, jheem.skeleton=jheem.skeleton)
-
-        response.vector = c(response.vector, tmrv$response.vector)
-        transformation.matrix = rbind(transformation.matrix, tmrv$transformation.matrix)
-
+        
         sds = numerator.sd(years=tmrv$year, num=tmrv$response.vector)
         if (length(sds)==1)
             sds = rep(sds, length(tmrv$response.vector))
+        bias = bias.fn(years=tmrv$year, num=tmrv$response.vector)
+        if (length(bias)==1)
+            bias = rep(bias, length(tmrv$response.vector))
+        bias.sds = bias.sd(years=tmrv$year, num=tmrv$response.vector)
+        if (length(bias.sds)==1)
+            bias.sds = rep(bias.sds, length(tmrv$response.vector))
+        
+        sds = sqrt(sds^2 + bias.sds^2)
+        response.vector = c(response.vector, tmrv$response.vector - bias)
+        transformation.matrix = rbind(transformation.matrix, tmrv$transformation.matrix)
+        
         one.numerator.covar.mat = make.chunked.compound.symmetry.matrix(sds=sds,
                                                                         chunk.rho=numerator.year.to.year.chunk.correlation,
                                                                         non.chunk.rho=numerator.year.to.year.off.correlation,
@@ -1467,13 +1692,21 @@ create.likelihood.elements.for.data.type <- function(data.type=c('new','prevalen
     {
         cdc.arr = get.surveillance.data(surv, location, data.type=data.type, years=years, sex=T, risk=T)
         tmrv = make.transformation.matrix.and.response.vector(cdc.arr=cdc.arr, jheem.skeleton=jheem.skeleton)
-
-        response.vector = c(response.vector, tmrv$response.vector)
-        transformation.matrix = rbind(transformation.matrix, tmrv$transformation.matrix)
-
+        
         sds = numerator.sd(years=tmrv$year, num=tmrv$response.vector)
         if (length(sds)==1)
             sds = rep(sds, length(tmrv$response.vector))
+        bias = bias.fn(years=tmrv$year, num=tmrv$response.vector)
+        if (length(bias)==1)
+            bias = rep(bias, length(tmrv$response.vector))
+        bias.sds = bias.sd(years=tmrv$year, num=tmrv$response.vector)
+        if (length(bias.sds)==1)
+            bias.sds = rep(bias.sds, length(tmrv$response.vector))
+        
+        sds = sqrt(sds^2 + bias.sds^2)
+        response.vector = c(response.vector, tmrv$response.vector - bias)
+        transformation.matrix = rbind(transformation.matrix, tmrv$transformation.matrix)
+        
         one.numerator.covar.mat = make.chunked.compound.symmetry.matrix(sds=sds,
                                                                         chunk.rho=numerator.year.to.year.chunk.correlation,
                                                                         non.chunk.rho=numerator.year.to.year.off.correlation,
@@ -1491,13 +1724,21 @@ create.likelihood.elements.for.data.type <- function(data.type=c('new','prevalen
     {
         cdc.arr = get.surveillance.data(surv, location, data.type=data.type, years=years, race=T, risk=T)
         tmrv = make.transformation.matrix.and.response.vector(cdc.arr=cdc.arr, jheem.skeleton=jheem.skeleton)
-
-        response.vector = c(response.vector, tmrv$response.vector)
-        transformation.matrix = rbind(transformation.matrix, tmrv$transformation.matrix)
-
+        
         sds = numerator.sd(years=tmrv$year, num=tmrv$response.vector)
         if (length(sds)==1)
             sds = rep(sds, length(tmrv$response.vector))
+        bias = bias.fn(years=tmrv$year, num=tmrv$response.vector)
+        if (length(bias)==1)
+            bias = rep(bias, length(tmrv$response.vector))
+        bias.sds = bias.sd(years=tmrv$year, num=tmrv$response.vector)
+        if (length(bias.sds)==1)
+            bias.sds = rep(bias.sds, length(tmrv$response.vector))
+        
+        sds = sqrt(sds^2 + bias.sds^2)
+        response.vector = c(response.vector, tmrv$response.vector - bias)
+        transformation.matrix = rbind(transformation.matrix, tmrv$transformation.matrix)
+        
         one.numerator.covar.mat = make.chunked.compound.symmetry.matrix(sds=sds,
                                                                         chunk.rho=numerator.year.to.year.chunk.correlation,
                                                                         non.chunk.rho=numerator.year.to.year.off.correlation,

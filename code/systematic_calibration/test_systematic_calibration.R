@@ -8,14 +8,17 @@ if (1==2)
 source('code/source_code.R')
 source('code/systematic_calibration/systematic_calibration.R')
 
-BALTIMORE.CITY = 24510
-BALTIMORE.MSA = msa.for.county(BALTIMORE.CITY)
+#BALTIMORE.CITY = 24510
+#BALTIMORE.MSA = msa.for.county(BALTIMORE.CITY)
 
+BALTIMORE.MSA = '12580'
+NY.MSA = '35620'
+MSA = BALTIMORE.MSA
 
 set.seed(1234)
-mcmc = run.mcmc.for.msa(msa=BALTIMORE.MSA,
-                        save.suffix='v65',
-                        likelihood=create.msa.likelihood(BALTIMORE.MSA))
+mcmc = run.mcmc.for.msa(msa=MSA,
+                        save.suffix='v68',
+                        likelihood=create.msa.likelihood(MSA))
 
 if (1==2)
 {

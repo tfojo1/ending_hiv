@@ -126,9 +126,10 @@ create.msa.likelihood <- function(msa,
                                   EVERYTHING.MULT=sqrt(6),
                                   prev.to.new.cv.ratio=1,
                                   FOCUS.WEIGHT=4,
-                                  DX.WEIGHT=36)
+                                  DX.WEIGHT=36,
+                                  verbose=F)
 {
-    TOTAL.WEIGHT = 8
+    TOTAL.WEIGHT = 16
     PREV.INFLATION = prev.to.new.cv.ratio * get.cv.weights(location=msa, weight.to='new')['prevalence']
 
     SD.INFLATION.PREV.NUM = sqrt(1)*EVERYTHING.MULT*PREV.INFLATION#sqrt(6) * 8.4
@@ -147,20 +148,41 @@ create.msa.likelihood <- function(msa,
     SD.INFLATION.DX = sqrt(1)/sqrt(DX.WEIGHT)*EVERYTHING.MULT
     PREV.SD = function(years, num){sqrt(0.5 * (0.09*num)^2 + 0.5 * (num^0.69)^2)}
     NEW.SD = function(years, num){sqrt(0.5 * (0.065*num)^2 + 0.5 * (num^0.33)^2)}
-    MORT.SD = NEW.SD
+    MORT.SD = PREV.SD
+    
+    
+    missing.mort.fraction = mean(c(.02, 458 / (1926 + 12219)))
+    #2% in NDI alone = https://academic.oup.com/aje/article/174/1/90/126134
+    #458 / (1926 + 12219) #https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2773949/
+    #458 in NDI alone
+    
+    MORT.BIAS = function(years, num){num - num/(1-missing.mort.fraction)}
+    MORT.BIAS.SD = function(years, num){missing.mort.fraction * num / 2}
+    
+    
     DX.SD=function(...){0}
     USE.TOTAl.PREV = T
     SD.INFLATION.TOTAL.PREV = SD.INFLATION.PREV.NUM/sqrt(TOTAL.WEIGHT)*PREV.INFLATION*EVERYTHING.MULT
     SD.INFLATION.TOTAL.NEW = SD.INFLATION.NEW.NUM/sqrt(TOTAL.WEIGHT)*EVERYTHING.MULT
     TOTAL.PREV.SD = PREV.SD
-    TOTAL.NEW.SD = function(years, num){NEW.SD(years, num) * 2^((2010-years)/(2010-1993))}
+    TOTAL.NEW.SD = NEW.SD #function(years, num){NEW.SD(years, num) * 2^((2010-years)/(2010-1993))}
     IDU.LOG.SD = log(2)/8
-
+    
+    SD.INFLATION.AIDS.DIAGNOSES = EVERYTHING.MULT
+    AIDS.SD = function(...){0}#NEW.SD
+    AIDS.TO.HIV.RATIO.LOG.SD = 0.5 * log(1.1)
+    
+    SD.INFLATION.CUM.MORT = EVERYTHING.MULT * 2
+#    CUM.MORT.SD = function(years,num){sqrt(5^2 + 0.5 * (0.065*num)^2 + 0.5 * (num^0.33)^2)}
+    CUM.MORT.SD = function(years, num){2 * sqrt(5^2 + 0.5 * (0.09*num)^2 + 0.5 * (num^0.69)^2)}
+    
     full.likelihood = create.full.likelihood(location = msa,
                                              total.new.years = 2008:2010,
                                              prevalence.numerator.sd = PREV.SD,
                                              new.numerator.sd = NEW.SD,
                                              mortality.numerator.sd = MORT.SD,
+                                             mortality.bias.fn = MORT.BIAS,
+                                             mortality.bias.sd = MORT.BIAS.SD,
                                              diagnosed.numerator.sd = DX.SD,
                                              new.sd.inflation = SD.INFLATION.NEW,
                                              prevalence.sd.inflation = SD.INFLATION.PREV,
@@ -168,15 +190,26 @@ create.msa.likelihood <- function(msa,
                                              diagnosed.sd.inflation = SD.INFLATION.DX,
                                              total.new.numerator.sd = TOTAL.NEW.SD,
                                              total.prevalence.numerator.sd = TOTAL.PREV.SD,
+                                             cumulative.mortality.numerator.sd = CUM.MORT.SD,
                                              total.new.sd.inflation = SD.INFLATION.TOTAL.NEW,
                                              total.prevalence.sd.inflation = SD.INFLATION.TOTAL.PREV,
+                                             cumulative.mortality.sd.inflation = SD.INFLATION.CUM.MORT,
                                              use.total.prevalence = USE.TOTAl.PREV,
-                                             idu.log.sd = IDU.LOG.SD)
+                                             idu.log.sd = IDU.LOG.SD,
+                                             
+                                             aids.diagnoses.numerator.sd = AIDS.SD,
+                                             aids.diagnoses.sd.inflation = SD.INFLATION.AIDS.DIAGNOSES,
+                                             aids.diagnoses.to.hiv.ratio.log.sd = AIDS.TO.HIV.RATIO.LOG.SD,
+                                             
+                                             verbose=verbose)
 
 
-    attr(full.likelihood, 'parameters') = list(PREV.SD=PREV.SD,
+    attr(full.likelihood, 'parameters') = list(EVERYTHING.MULT=EVERYTHING.MULT,
+                                               PREV.SD=PREV.SD,
                                                NEW.SD=NEW.SD,
                                                MORT.SD=MORT.SD,
+                                               MORT.BIAS=MORT.BIAS,
+                                               MORT.BIAS.SD=MORT.BIAS.SD,
                                                DX.SD=DX.SD,
                                                SD.INFLATION.NEW.NUM=SD.INFLATION.NEW.NUM,
                                                SD.INFLATION.PREV.NUM=SD.INFLATION.PREV.NUM,
@@ -184,6 +217,8 @@ create.msa.likelihood <- function(msa,
                                                SD.INFLATION.PREV=SD.INFLATION.PREV,
                                                SD.INFLATION.MORT=SD.INFLATION.MORT,
                                                SD.INFLATION.DX=SD.INFLATION.DX,
+                                               SD.INFLATION.CUM.MORT=SD.INFLATION.CUM.MORT,
+                                               CUM.MORT.SD=CUM.MORT.SD,
                                                TOTAL.NEW.SD = TOTAL.NEW.SD,
                                                TOTAL.PREV.SD = TOTAL.PREV.SD,
                                                SD.INFLATION.TOTAL.NEW = SD.INFLATION.TOTAL.NEW,
@@ -192,7 +227,10 @@ create.msa.likelihood <- function(msa,
                                                TOTAL.WEIGHT=TOTAL.WEIGHT,
                                                FOCUS.WEIGHT=FOCUS.WEIGHT,
                                                IDU.LOG.SD=IDU.LOG.SD,
-                                               DX.WEIGHT=DX.WEIGHT)
+                                               DX.WEIGHT=DX.WEIGHT,
+                                               SD.INFLATION.AIDS.DIAGNOSES = SD.INFLATION.AIDS.DIAGNOSES,
+                                               AIDS.SD = AIDS.SD,
+                                               AIDS.TO.HIV.RATIO.LOG.SD = AIDS.TO.HIV.RATIO.LOG.SD)
 
     full.likelihood
 }

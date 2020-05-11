@@ -965,14 +965,14 @@ do.setup.continuum.transitions <- function(components)
         })
 
         #the ramp up rate
-        ramp.rr = expand.population.to.general(components$jheem, components$testing.ramp.up.vs.current.rr)
-        background.rates[[2]] = background.rates[[3]] * ramp.rr
+     #   ramp.rr = expand.population.to.general(components$jheem, components$testing.ramp.up.vs.current.rr)
+     #   background.rates[[2]] = background.rates[[3]] * ramp.rr
 
-        if (!components$allow.decreasing.testing.rates)
-        {
-            for (i in 2:length(background.rates))
-                background.rates[[i]] = pmax(background.rates[[i]], background.rates[[i-1]])
-        }
+#        if (!components$allow.decreasing.testing.rates)
+#        {
+#            for (i in 2:length(background.rates))
+#                background.rates[[i]] = pmax(background.rates[[i]], background.rates[[i-1]])
+#        }
 
         testing.rates = get.rates.from.background.and.foreground(background.rates = background.rates,
                                                                   background.times = components$background.testing.years,

@@ -6,6 +6,7 @@
 #source('../code/parameters.R')
 
 setup.components.for.msa <- function(msa,
+                                     surv=msa.surveillance,
                                      population.year=2012,
                                      smooth.to.year=2030,
                                      verbose=F,
@@ -179,10 +180,16 @@ setup.components.for.msa <- function(msa,
     comps = set.aids.transitions(comps,
                                  aids.progression.rate = parameters['aids.progression.rate'],
                                  cd4.recovery.rate = parameters['cd4.recovery.rate'])
+    
+    aids.dx = get.surveillance.data(location.codes = msa, data.type='aids.diagnoses', years=1985:1993)
+    fit = lm(log(aids.dx) ~ attr(aids.dx, 'years'))
+    ramp.yearly.increase = exp(fit$coefficients[2])
+    ramp.yearly.increase = min(2, max(1.2, ramp.yearly.increase))
     comps = set.background.hiv.testing.proportions(comps,
                                                    data.managers=data.managers,
                                                    msa=msa,
-                                                   smoothing.years=min(get.testing.rate.years(data.managers$continuum)):smooth.to.year)
+                                                   smoothing.years=min(get.testing.rate.years(data.managers$continuum)):smooth.to.year,
+                                                   testing.ramp.up.yearly.increase = as.numeric(ramp.yearly.increase))
     #-- Suppression --#
     if (verbose)
         print('**Setting up suppression proportions')
