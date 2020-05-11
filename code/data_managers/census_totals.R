@@ -46,7 +46,8 @@ read.census.totals <- function(dir='../data2/Census/county_totals_sans_kids/')
 }
 
 get.census.totals <- function(census.totals, location, years=census.totals$years,
-                              collapse.counties=T, flatten.single.dim.array=F)
+                              collapse.counties=T, flatten.single.dim.array=F,
+                              interpolate.missing.years=T)
 {
     collapsed.name = NULL
     missing.locations = setdiff(location, census.totals$locations)
@@ -69,7 +70,21 @@ get.census.totals <- function(census.totals, location, years=census.totals$years
         stop(paste0("The following locations are not present in the census totals data:",
                     paste0(location, collapse=', ')))
 
-    rv = census.totals$data[as.character(years), location]
+    missing.years = setdiff(years, census.totals$years)
+    
+    if (length(missing.years)>0 && !interpolate.missing.years)
+        stop(paste0("The following years are not present in the total census data: ", 
+                    paste0(missing.years, collapse=', ')))
+    
+    rv = t(sapply(as.character(years), function(year){
+        if (any(as.numeric(year)==census.totals$years))
+            census.totals$data[year, location]
+        else
+        {
+            nearest.year = census.totals$years[order(abs(as.numeric(census.totals$years)-as.numeric(year)))][1]
+            census.totals$data[nearest.year, location]
+        }
+    }))
 
     if (length(location)==1)
     {

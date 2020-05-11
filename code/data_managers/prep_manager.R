@@ -172,7 +172,8 @@ get.prep.rates <- function(prep.manager,
                            years,
                            ages=prep.manager$ages,
                            races=prep.manager$races,
-                           sexes=prep.manager$sexes)
+                           sexes=prep.manager$sexes,
+                           throw.error.if.missing=T)
 {
     not.in.manager.years = setdiff(years, prep.manager$years)
     if (length(not.in.manager.years)>0)
@@ -180,19 +181,25 @@ get.prep.rates <- function(prep.manager,
                     paste0(not.in.manager.years, collapse=', ')))
 
     dim.names = list(year=as.character(years), county=counties, age=ages, race=races, sex=sexes)
-    rv = array(0, dim=sapply(dim.names,length), dimnames=dim.names)
+    rv = array(as.numeric(NA), dim=sapply(dim.names,length), dimnames=dim.names)
     for (county in counties)
     {
         zip3s = zip3s.for.county(county)
         not.in.manager.mask = is.na(zip3s) | sapply(zip3s, function(z3){!any(z3==prep.manager$zip3s)})
         if (all(not.in.manager.mask))
+        {
+            if (throw.error.if.missing)
             stop(paste0("The following county does not have any PrEP data in the manager: ",
                         paste0(county.names(county), collapse=", ")))
-        zip3s = zip3s[!not.in.manager.mask]
-
-        prep.rates = prep.manager$rates[as.character(years), zip3s, ages, races, sexes]
-        prep.rates = apply(prep.rates, intersect(c('year','age','race','sex'), names(dimnames(prep.rates))), mean)
-        rv[,county,,,] = prep.rates
+        }
+        else
+        {
+            zip3s = zip3s[!not.in.manager.mask]
+    
+            prep.rates = prep.manager$rates[as.character(years), zip3s, ages, races, sexes]
+            prep.rates = apply(prep.rates, intersect(c('year','age','race','sex'), names(dimnames(prep.rates))), mean)
+            rv[,county,,,] = prep.rates
+        }
     }
 
     rv

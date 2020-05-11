@@ -13,7 +13,7 @@ source('code/systematic_calibration/systematic_calibration.R')
 set.seed(1324)
 DC.MSA = cbsa.for.msa.name('Washington,DC')
 
-mcmc = run.mcmc.for.msa(msa=DC.MSA, save.suffix = 'v66')
+mcmc = run.mcmc.for.msa(msa=DC.MSA, save.suffix = 'v68')
 #mcmc = run.mcmc.for.msa(msa=DC.MSA, chains=1, save.suffix='c1')
 
 if (1==2)

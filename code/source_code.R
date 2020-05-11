@@ -8,8 +8,8 @@ library(bayesian.simulations)
 library(ggplot2)
 
 #-- Source Data Managers --#
-load('code/cached/DEFAULT.LOCALE.MAPPING.Rdata')
-load('code/cached/SUBSTATE.TO.COUNTY.MAPPING.Rdata')
+load('cached/DEFAULT.LOCALE.MAPPING.Rdata')
+load('cached/SUBSTATE.TO.COUNTY.MAPPING.Rdata')
 
 source('code/data_managers/locale_mappings.R')
 source('code/data_managers/census_manager.R')
@@ -23,9 +23,9 @@ source('code/data_managers/continuum_manager.R')
 source('code/data_managers/hiv_surveillance_manager.R')
 
 #-- Load cached data managers --#
-load('code/cached/msa.surveillance.Rdata')
-load('code/cached/state.surveillance.Rdata')
-load('code/cached/ALL.DATA.MANAGERS.Rdata')
+load('cached/msa.surveillance.Rdata')
+load('cached/state.surveillance.Rdata')
+load('cached/ALL.DATA.MANAGERS.Rdata')
 
 
 #-- Set-Up --#
@@ -40,8 +40,8 @@ source('code/setup/setup_components_for_locale.R')
 source('code/setup/setup_initial_components.R')
 
 #-- Calibration --#
-source('code/calibration/calibrated_parameters_63_helpers.R')
-source('code/calibration/calibrated_parameters_66.R')
+source('code/calibration/calibrated_parameters_68_helpers.R')
+source('code/calibration/calibrated_parameters_68.R')
 source('code/estimate_cdc_errors.R')
 source('code/calibration/likelihoods.R')
 

@@ -116,7 +116,6 @@ smooth.proportions.by.strata <- function(continuum.manager,
     n.top.line = length(total.odds.dists[total.mask][[1]]$mean)
     months = total.odds.dists[total.mask][[1]]$months
 
-
     # Pull stratum-specific log-ORs
     log.ors.by.stratum.list = lapply(years, function(year){
         or.dists = do.get.continuum.or.distributions(cm.subset, msa, year, months=months)
@@ -132,6 +131,7 @@ smooth.proportions.by.strata <- function(continuum.manager,
                                      msm.lor = or.dists$mean['msm'] + log(extra.msm.or),
                                      female.lor = or.dists$mean['female'],
                                      idu.lor = or.dists$mean['idu'] + log(extra.idu.or),
+                                     msm.idu.lor = or.dists$mean['msm.idu'] + log(extra.idu.or),
                                      use.msm.lor.for.msm.idu=F
             )
     })
@@ -139,10 +139,12 @@ smooth.proportions.by.strata <- function(continuum.manager,
     stratum.mask = sapply(log.ors.by.stratum.list, function(mat){
         !is.null(mat) & all(!is.na(mat))
     })
+
     strata.years = years[stratum.mask]
     log.ors.by.stratum = t(sapply(log.ors.by.stratum.list[stratum.mask], function(mat){
         mat
     }))
+    
     target.dim.names = c(list(year=strata.years), dimnames(log.ors.by.stratum.list[stratum.mask][[1]]))
     dim(log.ors.by.stratum) = sapply(target.dim.names, length)
     dimnames(log.ors.by.stratum) = target.dim.names

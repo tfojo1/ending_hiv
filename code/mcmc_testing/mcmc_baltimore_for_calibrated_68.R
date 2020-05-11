@@ -6,12 +6,15 @@ if (1==2)
 source('code/source_code.R')
 source('code/systematic_calibration/systematic_calibration.R')
 
-source('code/calibration/calibrated_parameters_63_helpers.R')
-source('code/calibration/calibrated_parameters_66.R')
+source('code/calibration/calibrated_parameters_68_helpers.R')
+source('code/calibration/calibrated_parameters_68.R')
 
 DC.MSA = cbsa.for.msa.name('Washington,DC')
 BALTIMORE.MSA = '12580'
-msa = BALTIMORE.MSA
+NYC.MSA = '35620'
+msa = NYC.MSA
+
+print(paste0("Calibrating for ", msa.names(msa)))
 
 # MCMC Parameters
 BURN = 0
@@ -22,12 +25,13 @@ CACHE.FREQUENCY = 500
 UPDATE.FREQUENCY = 200
 MAX.SIM.TIME=Inf
 
-FILE.PREFIX = 'balt.66.4_aids.dx_cum.mort.1x_t1=08'
-DESCRIPTION = "V66.4: half mult error sd, half exp error sd; all x3 + prev x2.6; with cum mort x1; aids to hiv ratio"
-RESUME.PRIOR.CACHE = 'mcmc_runs/balt.66.3_aids.dx_cum.mort.1x_t1=08_2020-05-01/'
+FILE.PREFIX = 'nyc.68.8_aids.dx_cum.mort.1x_t1=08'
+DESCRIPTION = "V68: half mult error sd, half exp error sd; all x3 + prev x2.6; with cum mort x1; aids to hiv ratio"
+RESUME.PRIOR.CACHE = NULL
 if (!is.null(RESUME.PRIOR.CACHE))
     print("THIS IS RESUMPTION OF A PRIOR CACHE!!!")
 
+TARGET.ACCEPTANCE.RATE = .125
 
 
 PARAMETER.VAR.BLOCKS = PARAMETER.VAR.BLOCKS.1
@@ -169,6 +173,8 @@ init.parameters = c(
     idu.remission.multiplier = 1.71,
 
     idu.relapse.multiplier = 1.69,
+    
+    idu.mortality = .0166,
 
     #-- HIV-Specific Mortality --#
     hiv.mortality.0 = .105,
@@ -239,6 +245,8 @@ ctrl = create.adaptive.blockwise.metropolis.control(var.names=parameters.prior@v
                                              var.blocks = PARAMETER.VAR.BLOCKS,
                                              reset.adaptive.scaling.update.after = 0,#BURN * .6,
                                              transformations = transformations,
+                                             
+                                             target.acceptance.probability = TARGET.ACCEPTANCE.RATE,
 
                                              n.iter.before.use.adaptive.covariance = N.ITER.BEFORE.COV,
                                              adaptive.covariance.base.update = COV.BASE.UPDATE,

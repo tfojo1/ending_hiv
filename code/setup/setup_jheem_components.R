@@ -92,7 +92,7 @@ set.model.hiv.transmission <- function(components,
 }
 
 setup.track.mortality <- function(components,
-                                  track.hiv.specific.mortality=T,
+                                  track.hiv.specific.mortality=F,
                                   track.overall.hiv.positive.mortality=T,
                                   track.overall.hiv.negative.mortality=F)
 {
@@ -710,9 +710,10 @@ set.background.hiv.testing.proportions <- function(components,
                                                    idu.proportion.tested.or=1,
                                                    total.testing.slope.or=1,
                                                    anchor.year=2012,
-                                                   first.testing.year=1980,
-                                                   testing.ramp.up.year=1990,
+                                                   first.testing.year=1981,
+                                                   testing.ramp.up.year=1993,
                                                    testing.ramp.up.vs.current.rr=0.5,
+                                                   testing.ramp.up.yearly.increase=2,
                                                    age1.msm.or.intercept=1,
                                                    age2.msm.or.intercept=1,
                                                    age1.msm.or.slope=1,
@@ -743,12 +744,15 @@ set.background.hiv.testing.proportions <- function(components,
                                                 age1.msm.or.intercept=age1.msm.or.intercept,
                                                 age2.msm.or.intercept=age2.msm.or.intercept,
                                                 age1.msm.or.slope=age1.msm.or.slope,
-                                                age2.msm.or.slope=age2.msm.or.slope)
+                                                age2.msm.or.slope=age2.msm.or.slope,
+                                                testing.ramp.up.year=testing.ramp.up.year,
+                                                testing.ramp.up.vs.current.rr=testing.ramp.up.vs.current.rr,
+                                                testing.ramp.up.yearly.increase=testing.ramp.up.yearly.increase)
 
-    components = set.testing.ramp.up.vs.current.rr(components,
-                                                   msm.rr = testing.ramp.up.vs.current.rr,
-                                                   heterosexual.rr = testing.ramp.up.vs.current.rr,
-                                                   idu.rr = testing.ramp.up.vs.current.rr)
+  #  components = set.testing.ramp.up.vs.current.rr(components,
+   #                                                msm.rr = testing.ramp.up.vs.current.rr,
+     #                                              heterosexual.rr = testing.ramp.up.vs.current.rr,
+      #                                             idu.rr = testing.ramp.up.vs.current.rr)
 
     testing.proportions = smooth.proportions.by.strata(data.managers$continuum,
                                                        data.type='testing',
@@ -783,11 +787,17 @@ set.background.hiv.testing.proportions <- function(components,
         expand.population.to.general(components$jheem, testing.proportions[as.character(year),,,,])
     })
 
-    #add in the past - the ramp rr will be overwritten later
-    components$background.testing.proportions = c(list(0 * components$background.testing.proportions[[1]],
-                                                       testing.ramp.up.vs.current.rr * components$background.testing.proportions[[1]]),
+    #add in the past
+    ramp.years = setdiff(first.testing.year:testing.ramp.up.year, first.testing.year)
+    
+    components$background.testing.proportions = c(list(0 * components$background.testing.proportions[[1]]),
+                                                  lapply(ramp.years, function(y){
+                                                      testing.ramp.up.vs.current.rr *
+                                                          (1/testing.ramp.up.yearly.increase)^(testing.ramp.up.year-y) *
+                                                          components$background.testing.proportions[[1]]
+                                                  }),
                                                   components$background.testing.proportions)
-    components$background.testing.years = c(first.testing.year, testing.ramp.up.year,
+    components$background.testing.years = c(first.testing.year, ramp.years,
                                             components$background.testing.years)
 
     components = clear.dependent.values(components, 'background.testing.proportions')
@@ -797,6 +807,7 @@ set.background.hiv.testing.proportions <- function(components,
 set.testing.ramp.up <- function(components,
                                 testing.ramp.up.vs.current.rr)
 {
+    stop('disabled at this time')
     components$background.testing.inputs$testing.ramp.up.vs.current.rr = testing.ramp.up.vs.current.rr
     components$background.testing.proportions[[2]] = components$background.testing.proportions[[3]] *
         testing.ramp.up.vs.current.rr
@@ -1326,7 +1337,8 @@ set.background.prep.coverage <- function(components,
                                         counties=components$fips, years=year,
                                         ages=components$settings$AGES$labels,
                                         races=components$settings$RACES,
-                                        sexes=components$settings$SEXES)[1,,,,]
+                                        sexes=components$settings$SEXES,
+                                        throw.error.if.missing=F)[1,,,,]
 
 
             prep.numerators = prep.rates * county.populations

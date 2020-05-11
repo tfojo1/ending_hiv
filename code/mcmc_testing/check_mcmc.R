@@ -3,9 +3,16 @@ if (1==2)
     setwd('../../../Ending HIV/jheem/')
 }
 
-source('../code/source_code.R')
+source('code/source_code.R')
 
-mcmc = assemble.mcmc.from.cache('mcmc_runs/balt.66_focus.wt.9_all.xsqrt(6)_prev.by.cv_2020-04-28/',T)
+mcmc = assemble.mcmc.from.cache('mcmc_runs/balt.68.3_aids.dx_cum.mort.1x_t1=08_2020-05-05/',T)
+mcmc = assemble.mcmc.from.cache('mcmc_runs/dc.68.3_aids.dx_cum.mort.1x_t1=08_2020-05-05/',T)
+mcmc = assemble.mcmc.from.cache('mcmc_runs/dc.68.4_aids.dx_cum.mort.1x_t1=08_2020-05-05/',T)
+mcmc = assemble.mcmc.from.cache('mcmc_runs/dc.68.5_aids.dx_cum.mort.1x_t1=08_2020-05-06/',T)
+mcmc = assemble.mcmc.from.cache('mcmc_runs/dc.68.6_aids.dx_cum.mort.1x_t1=08_2020-05-06/',T)
+mcmc = assemble.mcmc.from.cache('mcmc_runs/dc.68.7_aids.dx_cum.mort.1x_t1=08_2020-05-06/',T)
+mcmc = assemble.mcmc.from.cache('mcmc_runs/dc.68.8_aids.dx_cum.mort.1x_t1=08_2020-05-07/',T)
+
 
 simset = extract.simset(mcmc, additional.burn=mcmc@n.iter/2, additional.thin=2^(as.numeric(mcmc@n.iter>100)+as.numeric(mcmc@n.iter>1000)))
 plot.calibration.race.risk(simset)
@@ -51,6 +58,8 @@ plot.calibration.idu.prevalence(simset, facet.by='sex')
 
 plot.calibration(simset, facet.by='age', split.by='risk')
 
+plot.calibration.cumulative.mortality(simset)
+
 plot.calibration.age.distribution(simset, facet.by=c('sex','year'), years=c(2010,2016), data.type='prevalence')
 
 
@@ -80,7 +89,7 @@ trace.plot(mcmc, c('*incident','*remission','*relapse'))
 #trace.plot(mcmc, '*time')
 #save the simset
 
-save(simset, file='../code/result summaries/simset.Rdata')
+save(simset, file='result_summaries/simset.Rdata')
 
 round(cbind(get.sds(parameters.prior), apply(mcmc@samples, 3, sd), get.sds(parameters.prior)/apply(mcmc@samples,3, sd)),4)
 

@@ -17,7 +17,8 @@ get.surveillance.data <- function(surv=msa.surveillance,
     #Check the data.type argument
     ALLOWED.DATA.TYPES = c('prevalence','new','mortality','diagnosed',
                            'estimated.prevalence', 'estimated.prevalence.ci.lower',
-                           'estimated.prevalence.ci.upper', 'estimated.prevalence.rse')
+                           'estimated.prevalence.ci.upper', 'estimated.prevalence.rse',
+                           'cumulative.aids.mortality', 'aids.diagnoses')
     if (all(data.type!=ALLOWED.DATA.TYPES))
         stop(paste0("data.type must be one of: ",
                     paste0(paste0("'", ALLOWED.DATA.TYPES, "'"), collapse=", ")))
@@ -254,6 +255,7 @@ read.msa.surveillance <- function(dir='../data2/HIV_Surveillance/by_msa',
                                   correct.prevalence.to.county.level=T,
                                   county.file='../data2/HIV_Surveillance/by_county.csv',
                                   first.total.prevalence.year=2007,
+                                  first.total.new.year=2008,
                                   verbose=F)
 {
     #-- READ IN FILES --#
@@ -753,6 +755,13 @@ read.msa.surveillance <- function(dir='../data2/HIV_Surveillance/by_msa',
         }
     }
 
+    #Cumulative AIDS Mortality
+    rv$cumulative.aids.mortality.sex.race.risk = read.cum.aids.mortality(file=file.path(dir, 'msa_mortality_pre_2000.txt'))
+    dim.names = c(list(year='2000'), dimnames(rv$cumulative.aids.mortality.sex.race.risk))
+    dim(rv$cumulative.aids.mortality.sex.race.risk) = sapply(dim.names, length)
+    dimnames(rv$cumulative.aids.mortality.sex.race.risk) = dim.names
+    
+    
     #-- AGGREGATE FOR THE TOTAL POPULATION NUMBERS and AGE, RACE, RISK --#
 #    rv$new.all = apply(rv$new.sex, c('year','location'), sum)
 #    rv$prevalence.all = apply(rv$prevalence.sex, c('year','location'), sum)
@@ -788,7 +797,7 @@ read.msa.surveillance <- function(dir='../data2/HIV_Surveillance/by_msa',
             print("Correcting New Diagnoses to Aggregate County-Level Data")
 
         new.names.to.correct = names(rv)[grepl('new.', names(rv))]
-
+        
         for (name in new.names.to.correct)
             rv[[name]] = correct.array.to.total(to.correct = rv[[name]],
                                                 target.to = msa.by.county$new.all,
@@ -831,6 +840,24 @@ read.msa.surveillance <- function(dir='../data2/HIV_Surveillance/by_msa',
         rv$prevalence.all[old.prev.years,][!is.na(old.prev.all)] = old.prev.all[!is.na(old.prev.all)]
     }
 
+    #-- AIDS DIAGNOSES --#
+    old.aids.diagnoses = read.aids.diagnoses(file.path(dir, 'aids_diagnoses_pre_2002.txt'))
+    move.from.new.to.aids.years = dimnames(rv$new.all)[['year']][as.numeric(dimnames(rv$new.all)[['year']])<first.total.new.year]
+    aids.years = sort(union(dimnames(old.aids.diagnoses)[['year']], move.from.new.to.aids.years))
+    aids.locations = sort(union(dimnames(old.aids.diagnoses)[['location']], dimnames(rv$new.all)[['location']]))
+    
+    dim.names = list(year=aids.years, location=aids.locations)
+    rv$aids.diagnoses.all = array(as.numeric(NA), dim=sapply(dim.names, length), dimnames=dim.names)
+    
+    rv$aids.diagnoses.all[intersect(aids.years, dimnames(rv$new.all)[['year']]), 
+                          dimnames(rv$new.all)[['location']] ] =
+        rv$new.all[intersect(aids.years, dimnames(rv$new.all)[['year']]),]
+    
+    rv$aids.diagnoses.all[intersect(aids.years, dimnames(old.aids.diagnoses)[['year']]), 
+                          dimnames(old.aids.diagnoses)[['location']] ] =
+        old.aids.diagnoses[intersect(aids.years, dimnames(old.aids.diagnoses)[['year']]),]
+    
+    rv$new.all[move.from.new.to.aids.years,] = NA
 
     #-- READ STATE-LEVEL PROPORTION DIAGNOSED --#
     state.diagnoses = read.state.diagnoses(paste0(dir, '/state_diagnosed_data.csv'))
@@ -918,6 +945,23 @@ max.marginal.sum <- function(arr1, arr2, keep=c('race','risk'))
     rv
 }
 
+read.aids.diagnoses <- function(file='../data2/HIV_Surveillance/by_msa/aids_diagnoses_pre_2002.txt')
+{
+    df = read.table(file, sep='\t', stringsAsFactors = F, header = T)
+    df$code = cbsa.for.msa.name(df$Location)
+    df = df[!is.na(df$code),]
+    df$Year.Reported = as.character(df$Year.Reported)
+    df$Year.Reported[df$Year.Reported=='Before 1982'] = '1981'
+    
+    dim.names = list(year = sort(unique(df$Year.Reported)), location=unique(df$code))
+    rv = array(0, dim=sapply(dim.names, length), dimnames=dim.names)
+    
+    for (i in 1:dim(df)[1])
+        rv[df$Year.Reported[i], df$code[i]] = df$Cases[i]
+    
+    rv
+}
+
 read.cum.aids.mortality <- function(file='../data2/HIV_Surveillance/by_msa/msa_mortality_pre_2000.txt')
 {
     df = read.table(file, sep='\t', stringsAsFactors = F, header = T)
@@ -945,15 +989,15 @@ read.cum.aids.mortality <- function(file='../data2/HIV_Surveillance/by_msa/msa_m
                    'U'='other') #unknown
 
     dim.names = list(location=unique(df$code),
-                     race=c('black','hispanic','other'),
                      sex=c('male','female'),
+                     race=c('black','hispanic','other'),
                      risk=c('msm','idu','msm_idu','heterosexual','unknown'))
     rv = array(0, dim=sapply(dim.names, length), dimnames=dim.names)
     
     for (i in 1:dim(df)[1])
     {
-        rv[df$code[i], RACE.CODES[df$Race.or.Ethnicity.Code[i]], SEX.CODES[df$Sex.and.Sexual.Orientation.Code[i]], RISK.CODES[df$HIV.Exposure.Category.Code[i]]] =
-            rv[df$code[i], RACE.CODES[df$Race.or.Ethnicity.Code[i]], SEX.CODES[df$Sex.and.Sexual.Orientation.Code[i]], RISK.CODES[df$HIV.Exposure.Category.Code[i]]] +
+        rv[df$code[i], SEX.CODES[df$Sex.and.Sexual.Orientation.Code[i]], RACE.CODES[df$Race.or.Ethnicity.Code[i]], RISK.CODES[df$HIV.Exposure.Category.Code[i]]] =
+            rv[df$code[i], SEX.CODES[df$Sex.and.Sexual.Orientation.Code[i]], RACE.CODES[df$Race.or.Ethnicity.Code[i]], RISK.CODES[df$HIV.Exposure.Category.Code[i]]] +
             df$Cases[i]
     }
     

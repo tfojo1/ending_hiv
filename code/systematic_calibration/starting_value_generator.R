@@ -4,7 +4,8 @@ source('code/source_code.R')
 
 if (1==2)
 {
-    load('mcmc_runs/dc63.3_focus.wt.9_all.x3_prev.x2.3_20000_2020-04-23.Rdata')
+    load('mcmc_runs/dc.68.5_aids.dx_cum.mort.1x_t1=08_20000_2020-05-06.Rdata')
+    load('mcmc_runs/balt.68.3_aids.dx_cum.mort.1x_t1=08_20000_2020-05-05.Rdata')
     simset = extract.simset(mcmc, additional.burn=mcmc@n.iter/2)
     
     dist = create.starting.sampling.distribution(simset)
