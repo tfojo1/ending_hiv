@@ -562,13 +562,9 @@ create.marginalized.combined.likelihood <- function(location=BALTIMORE.MSA,
 ##-----------------------------------------------------##
 ##-- THE MAIN LIKELIHOOD COMPONENT CREATOR FUNCTIONS --##
 ##-----------------------------------------------------##
-## These functions create and return functions to calculate the likelihood
-## The returned function takes as input two parameters
-##  (1) jheem.result
-##  (2) log (optional, default value=T)
-## And returns either a likelihood or log-likelihood based on the result
+## These functions create and return objects that contain what is needed to calculate the likelihood
 
-create.likelihood.function <- function(data.type=c('new','prevalence','mortality')[1],
+create.general.likelihood <- function(data.type=c('new','prevalence','mortality')[1],
                                        years=NULL,
                                        surv=msa.surveillance,
                                        location=BALTIMORE.MSA,
@@ -722,61 +718,62 @@ create.likelihood.function <- function(data.type=c('new','prevalence','mortality
     ##-- Make and return the actual likelihood function --##
     ##----------------------------------------------------##
 
-    function(jheem.results, log=T){
+}
 
-        # Check if we terminated early
-        if (jheem.results$terminated)
-        {
-            if (log)
-                return (-Inf)
-            else
-                return (0)
-        }
-
-        # Set up the denominators
-        if (denominators.are.totals)
-            denominator.elements = fixed.denominator.elements
-        else if (use.simulated.denominators)
-        {
-            stop("Need to update for denominator dimensions")
-            sim.pop = extract.population.subset(jheem.results, years=years,
-                                                per.population=NA,
-                                                keep.dimensions = c('year','age','race','sex','risk'))
-
-            sim.pop.sums.by.year = apply(sim.pop, 'year', sum)
-            sim.pop = sim.pop * population.sums.by.year / sim.pop.sums.by.year
-
-            denominator.elements = create.simple.denominator.elements(sim.pop,
-                                                                      msm.cv = msm.cv, idu.cv = idu.cv)
-        }
-        else if (use.sim.msm.proportions && !aggregate.denominator.males && any(denominator.dimensions=='sex'))
-            denominator.elements = create.simple.denominator.elements.from.msm.proportions(population,
-                                                                                           msm.proportions=attr(jheem.results, 'msm.proportions.by.race'),
-                                                                                           idu.cv = idu.cv)
+function(jheem.results, log=T){
+    
+    # Check if we terminated early
+    if (jheem.results$terminated)
+    {
+        if (log)
+            return (-Inf)
         else
-            denominator.elements = fixed.denominator.elements
-
-
-        rates = pull.simulations.rates(jheem.results,
-                                       data.type=data.type,
-                                       years=years,
-                                       denominator.dimensions=denominator.dimensions,
-                                       aggregate.denominator.males=aggregate.denominator.males)
-
-        # Pass it all to the sub-function to crunch
-        likelihood.sub(rates,
-                       transformation.matrix = likelihood.elements$transformation.matrix,
-                       response.vector = likelihood.elements$response.vector,
-                       denominator.vector = denominator.elements$denominator.vector,
-                       denominator.covar.mat = denominator.elements$denominator.covar.mat,
-                       numerator.covar.mat = numerator.covar.mat,
-                       corr.mat = corr.mat,
-                       sd.inflation=sd.inflation,
-                       log=log,
-                       sim=jheem.results,
-                       transformation.mapping=transformation.mapping,
-                       description= likelihood.elements$descriptions)
+            return (0)
     }
+    
+    # Set up the denominators
+    if (denominators.are.totals)
+        denominator.elements = fixed.denominator.elements
+    else if (use.simulated.denominators)
+    {
+        stop("Need to update for denominator dimensions")
+        sim.pop = extract.population.subset(jheem.results, years=years,
+                                            per.population=NA,
+                                            keep.dimensions = c('year','age','race','sex','risk'))
+        
+        sim.pop.sums.by.year = apply(sim.pop, 'year', sum)
+        sim.pop = sim.pop * population.sums.by.year / sim.pop.sums.by.year
+        
+        denominator.elements = create.simple.denominator.elements(sim.pop,
+                                                                  msm.cv = msm.cv, idu.cv = idu.cv)
+    }
+    else if (use.sim.msm.proportions && !aggregate.denominator.males && any(denominator.dimensions=='sex'))
+        denominator.elements = create.simple.denominator.elements.from.msm.proportions(population,
+                                                                                       msm.proportions=attr(jheem.results, 'msm.proportions.by.race'),
+                                                                                       idu.cv = idu.cv)
+    else
+        denominator.elements = fixed.denominator.elements
+    
+    
+    rates = pull.simulations.rates(jheem.results,
+                                   data.type=data.type,
+                                   years=years,
+                                   denominator.dimensions=denominator.dimensions,
+                                   aggregate.denominator.males=aggregate.denominator.males)
+    
+    # Pass it all to the sub-function to crunch
+    likelihood.sub(rates,
+                   transformation.matrix = likelihood.elements$transformation.matrix,
+                   response.vector = likelihood.elements$response.vector,
+                   denominator.vector = denominator.elements$denominator.vector,
+                   denominator.covar.mat = denominator.elements$denominator.covar.mat,
+                   numerator.covar.mat = numerator.covar.mat,
+                   corr.mat = corr.mat,
+                   sd.inflation=sd.inflation,
+                   log=log,
+                   sim=jheem.results,
+                   transformation.mapping=transformation.mapping,
+                   description= likelihood.elements$descriptions)
 }
 
 create.diagnosed.likelihood <- function(years=NULL,
@@ -1842,7 +1839,7 @@ make.transformation.matrix.and.response.vector <- function(cdc.arr, jheem.skelet
          year=melted$year)
 }
 
-create.simple.denominator.elements <- function(population, msm.cv = msm.cv, idu.cv = idu.cv)
+create.simple.denominator.elements <- function(population, msm.cv = 0, idu.cv = 0)
 {
     diagonal = array(0, dim=dim(population), dimnames=dimnames(population))
 

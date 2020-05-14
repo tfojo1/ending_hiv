@@ -5,9 +5,7 @@ if (1==2)
 
 source('code/source_code.R')
 
-mcmc = assemble.mcmc.from.cache('../results/mcmc_caches/12580_v65_2020-04-25/',T)
-mcmc = assemble.mcmc.from.cache('../results/mcmc_caches/47900_v67_2020-04-27/',T)
-mcmc = assemble.mcmc.from.cache('../results/mcmc_caches/47900_v66_2020-04-27/',T)
+mcmc = assemble.mcmc.from.cache('../results/mcmc_caches/47900_v68_2020-05-07/',T)
 
 simset = extract.simset(mcmc, additional.burn=mcmc@n.iter/2, additional.thin=2^(as.numeric(mcmc@n.iter>100)+as.numeric(mcmc@n.iter>1000)))
 plot.calibration.race.risk(simset)

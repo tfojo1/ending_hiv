@@ -42,7 +42,7 @@ setup.components.for.intervention <- function(components,
 #                print(paste0('Testing, j=', j, ', y=', y))
 #                print(t.pop)
                 testing.mat[t.pop$ages, t.pop$races, t.pop$subpopulations, t.pop$sexes, t.pop$risks] =
-                    intervention$testing.frequency[[j]][y]
+                    1 / intervention$testing.frequency[[j]][y]
             }
 
             testing.mat

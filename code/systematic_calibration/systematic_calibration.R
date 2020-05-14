@@ -8,6 +8,23 @@ COV.UPDATE.PRIOR=500
 COV.UPDATE.DECAY=1
 
 
+#Set Up
+
+set.up.mcmc.ingredients <- function(msa)
+{
+    
+}
+
+
+run.initial.mcmc.for.msa <- function()
+{
+    
+}
+
+
+##-----------------------##
+##-- RUN PARALLEL MCMC --##
+##-----------------------##
 
 run.mcmc.for.msa <- function(msa,
                              likelihood=create.msa.likelihood(msa),
