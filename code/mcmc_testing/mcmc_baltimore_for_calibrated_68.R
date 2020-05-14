@@ -27,11 +27,11 @@ MAX.SIM.TIME=Inf
 
 FILE.PREFIX = 'nyc.68.8_aids.dx_cum.mort.1x_t1=08'
 DESCRIPTION = "V68: half mult error sd, half exp error sd; all x3 + prev x2.6; with cum mort x1; aids to hiv ratio"
-RESUME.PRIOR.CACHE = NULL
+RESUME.PRIOR.CACHE = NULL#'mcmc_runs/nyc.68.8_aids.dx_cum.mort.1x_t1=08_2020-05-11/'
 if (!is.null(RESUME.PRIOR.CACHE))
     print("THIS IS RESUMPTION OF A PRIOR CACHE!!!")
 
-TARGET.ACCEPTANCE.RATE = .125
+TARGET.ACCEPTANCE.RATE = .238
 
 
 PARAMETER.VAR.BLOCKS = PARAMETER.VAR.BLOCKS.1
@@ -213,6 +213,7 @@ run.simulation <- function(parameters)
 {
 #    print(length(parameters))
 #    print(paste0(names(parameters), '=', parameters, collapse=", "))
+ #   print(Sys.time())
     components = get.components.for.calibrated.parameters(parameters, init.components)
     sim = run.jheem.from.components(components, max.run.time.seconds = MAX.SIM.TIME)
     if (sim$terminated)

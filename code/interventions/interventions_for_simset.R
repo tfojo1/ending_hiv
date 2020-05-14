@@ -41,16 +41,20 @@ prepare.simset.for.interventions <- function(simset,
 
 
 run.simset.intervention <- function(simset,
-                                     intervention,
-                                     run.from.year=attr(simset, 'run.from.year'),
-                                     run.to.year=2030,
-                                    keep.years=run.from.year:run.to.year)
+                                    intervention,
+                                    run.from.year=attr(simset, 'run.from.year'),
+                                    run.to.year=2030,
+                                    keep.years=run.from.year:run.to.year,
+                                    save.intervention=T)
 {
     simset = extend.simulations(simset, function(sim, parameters){
         components = setup.components.for.intervention(attr(sim, 'components'), intervention)
         run.jheem.from.components(components, start.year=run.from.year, end.year=run.to.year,
                                   prior.results = sim, keep.components = F, keep.years=keep.years)
     })
+    
+    if (save.intervention)
+        attr(simset, 'intervention') = interventions
     
     simset
 }
