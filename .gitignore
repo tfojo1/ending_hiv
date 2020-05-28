@@ -11,7 +11,12 @@ cached_surveillance
 mcmc_runs
 
 # User-specific
+## joeflack4
 _dev
+
+# Project-specific
+/temp/
+*git-ignored/
 
 # OS-specific
 .DS_Store
