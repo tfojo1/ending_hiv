@@ -110,6 +110,41 @@ create.multiple.intervention.for.targets <- function()
 
 }
 
+create.all.intervention.combinations <- function(target.populations,
+                                                 testing.frequencies,
+                                                 suppressed.proportions,
+                                                 prep.coverages,
+                                                 intervention.ramped.up.year=2022,
+                                                 settings=SETTINGS)
+{
+    #Iterate all combinations
+   
+    target.populations = rep(target.populations, each = length(testing.frequencies))
+    testing.frequencies = rep(testing.frequencies, length(target.populations)/length(testing.frequencies))
+    
+    target.populations = rep(target.populations, each=length(suppressed.proportions))
+    testing.frequencies = rep(testing.frequencies, each=length(suppressed.proportions))
+    suppressed.proportions = rep(suppressed.proportions, length(target.populations)/length(suppressed.proportions))
+   
+    
+     
+    target.populations = rep(target.populations, each=length(prep.coverages))
+    testing.frequencies = rep(testing.frequencies, each=length(prep.coverages))
+    suppressed.proportions = rep(suppressed.proportions, each=length(prep.coverages))
+    prep.coverages = rep(prep.coverages, length(target.populations)/length(prep.coverages))
+    
+    rv = lapply(1:length(target.populations), function(i){
+        create.one.intervention(target.populations = target.populations[i],
+                                testing.frequency = testing.frequencies[i],
+                                suppressed.proportion = suppressed.proportions[i],
+                                prep.coverage = prep.coverages[i],
+                                intervention.ramped.up.year = intervention.ramped.up.year,
+                                settings=settings)
+    })
+    
+    rv
+}
+
 create.one.intervention <- function(target.populations,
                                     testing.frequency,
                                     suppressed.proportion,
@@ -146,7 +181,7 @@ create.one.intervention <- function(target.populations,
     {
         if (rv$name != '')
             rv$name = paste0(rv$name, ", ")
-        rv$name = paste0(rv$name, "testing ", testing.frequency, "/yr")
+        rv$name = paste0(rv$name, "testing ", 1/testing.frequency, "/yr")
     }
 
     if (!is.na(suppressed.proportion))
@@ -164,7 +199,7 @@ create.one.intervention <- function(target.populations,
     }
 
     rv$name = paste0(target.populations, ": ", rv$name)
-
+    
     rv
 }
 
@@ -245,11 +280,16 @@ parse.target.populations <- function(str, settings=SETTINGS)
 
 get.intervention.filename <- function(intervention)
 {
-    filename = gsub(" ", "_", intervention$name)
-    filename = gsub(":", "", filename)
-    filename = gsub("/", "p", filename)
-    filename = gsub(",", "", filename)
-    filename = gsub("<", "lt", filename)
-
-    filename
+    if (is.null(intervention))
+        "No_Intervention"
+    else
+    {
+        filename = gsub(" ", "_", intervention$name)
+        filename = gsub(":", "", filename)
+        filename = gsub("/", "p", filename)
+        filename = gsub(",", "", filename)
+        filename = gsub("<", "lt", filename)
+    
+        filename
+    }
 }

@@ -1,18 +1,11 @@
 if (1==2)
 {
-    setwd('../../../Ending HIV/jheem/')
+    setwd('../../../Ending HIV/Ending_HIV/')
 }
 
 source('code/source_code.R')
 
-mcmc = assemble.mcmc.from.cache('mcmc_runs/balt.68.3_aids.dx_cum.mort.1x_t1=08_2020-05-05/',T)
-mcmc = assemble.mcmc.from.cache('mcmc_runs/dc.68.3_aids.dx_cum.mort.1x_t1=08_2020-05-05/',T)
-mcmc = assemble.mcmc.from.cache('mcmc_runs/dc.68.4_aids.dx_cum.mort.1x_t1=08_2020-05-05/',T)
-mcmc = assemble.mcmc.from.cache('mcmc_runs/dc.68.5_aids.dx_cum.mort.1x_t1=08_2020-05-06/',T)
-mcmc = assemble.mcmc.from.cache('mcmc_runs/dc.68.6_aids.dx_cum.mort.1x_t1=08_2020-05-06/',T)
-mcmc = assemble.mcmc.from.cache('mcmc_runs/dc.68.7_aids.dx_cum.mort.1x_t1=08_2020-05-06/',T)
-mcmc = assemble.mcmc.from.cache('mcmc_runs/dc.68.8_aids.dx_cum.mort.1x_t1=08_2020-05-07/',T)
-
+mcmc = assemble.mcmc.from.cache('mcmc_runs/systematic_caches/35620_1x20K_2020-05-18/',T)
 
 simset = extract.simset(mcmc, additional.burn=mcmc@n.iter/2, additional.thin=2^(as.numeric(mcmc@n.iter>100)+as.numeric(mcmc@n.iter>1000)))
 plot.calibration.race.risk(simset)
@@ -25,10 +18,10 @@ print(paste0('N Iterations = ', mcmc@n.iter))
 likelihood.plot(mcmc, show.log.prior = F)
 likelihood.plot(mcmc, show.log.likelihood = F, show.log.prior.plus.likelihood = F)
 #qplot(1:mcmc@n.iter, as.numeric(mcmc@log.likelihoods + mcmc@log.priors), geom = 'line')
-trace.plot(mcmc)
+#trace.plot(mcmc)
 
 a=get.total.acceptance.rate(mcmc, by.block = T);a
-qplot(names(a), a) + geom_bar(stat='identity', alpha=.25) + coord_flip() + geom_hline(yintercept = mcmc@control@target.acceptance.probability) + xlab('Parameter') + ylab('Total Acceptance Rate')
+qplot(names(a), a) + geom_bar(stat='identity', alpha=.25) + coord_flip() + geom_hline(yintercept = 0.238) + xlab('Parameter') + ylab('Total Acceptance Rate')
 
 acceptance.plot(mcmc, window.iterations = 200)
 acceptance.plot(mcmc, window.iterations = 200, by.block = T)

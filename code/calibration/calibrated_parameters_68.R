@@ -552,23 +552,23 @@ get.components.for.calibrated.parameters <- function(parameters, components,
                                            fraction.change.after.end = 0.025)
 
     #-- Sexual Mixing by Age --#
-    heterosexual.male.age.model = components$sexual.transmission$heterosexual.male.age.model
+    heterosexual.male.age.model = components$sexual.transmission$base.heterosexual.male.age.model
     heterosexual.male.age.model['sd.intercept'] = parameters['age.mixing.sd.mult'] *
-        components$sexual.transmission[['heterosexual.male.age.model']]['sd.intercept']
+        heterosexual.male.age.model['sd.intercept']
     heterosexual.male.age.model['sd.slope'] = parameters['age.mixing.sd.mult'] *
-        components$sexual.transmission[['heterosexual.male.age.model']]['sd.slope']
+        heterosexual.male.age.model['sd.slope']
 
-    female.age.model = components$sexual.transmission$female.age.model
+    female.age.model = components$sexual.transmission$base.female.age.model
     female.age.model['sd.intercept'] = parameters['age.mixing.sd.mult'] *
-        components$sexual.transmission[['female.age.model']]['sd.intercept']
+        female.age.model['sd.intercept']
     female.age.model['sd.slope'] = parameters['age.mixing.sd.mult'] *
-        components$sexual.transmission[['female.age.model']]['sd.slope']
+        female.age.model['sd.slope']
 
-    msm.age.model = components$sexual.transmission$msm.age.model
+    msm.age.model = components$sexual.transmission$base.msm.age.model
     msm.age.model['sd.intercept'] = parameters['age.mixing.sd.mult'] *
-        components$sexual.transmission[['msm.age.model']]['sd.intercept']
+        msm.age.model['sd.intercept']
     msm.age.model['sd.slope'] = parameters['age.mixing.sd.mult'] *
-        components$sexual.transmission[['msm.age.model']]['sd.slope']
+        msm.age.model['sd.slope']
 
     components = setup.sex.by.age(components,
                                   heterosexual.male.age.model = heterosexual.male.age.model,

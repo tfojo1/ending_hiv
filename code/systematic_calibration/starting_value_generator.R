@@ -49,9 +49,9 @@ create.starting.sampling.distribution <- function(simset,
     #do a test
     x = generate.random.samples(sampling.dist, 10)
     
-    if (!is.null(msa))
-        save(sampling.dist, file=file.path('code/systematic_calibration/starting_value_generators/',
-                                           paste0(msa, '.Rdata')))
+#    if (!is.null(msa))
+ #       save(sampling.dist, file=file.path('code/systematic_calibration/starting_value_generators/',
+  #                                         paste0(msa, '.Rdata')))
     
     sampling.dist
 }

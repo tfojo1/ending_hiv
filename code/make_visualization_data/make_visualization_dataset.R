@@ -66,10 +66,10 @@ if (1==2)
     ##-- WRITE THE FILES --##
     ##---------------------##
     
-    write.csv(simset.df, file='visualizing_datasets/raw/Simulations.csv', row.names=F)
-    write.csv(epi.df, file='visualizing_datasets/raw/Epi_Data.csv', row.names=F)
-    write.csv(intervention.key, file='visualizing_datasets/raw/Interventions.csv', row.names=F)
-    write.csv(location.key, file='visualizing_datasets/raw/Locations.csv', row.names=F)
+    write.csv(simset.df, file='visualization/raw/Simulations.csv', row.names=F)
+    write.csv(epi.df, file='visualization/raw/Epi_Data.csv', row.names=F)
+    write.csv(intervention.key, file='visualization/raw/Interventions.csv', row.names=F)
+    write.csv(location.key, file='visualization/raw/Locations.csv', row.names=F)
     
 }
 
