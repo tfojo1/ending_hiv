@@ -23,33 +23,8 @@ if (1==2)
 }
 
 
-get.simset.incidence.reduction <- function(simset,
-                                           year1=2019,
-                                           year2=2029,
-                                           ci.coverage=0.95)
-{
 
-    dist = extract.simset.distribution(simset, get.incidence.reduction, year1=year1, year2=year2)
 
-    means = get.means(dist)
-    interval = get.intervals(dist, coverage = ci.coverage)[,1]
-
-    c(mean.reduction = as.numeric(means[1]),
-      ci.lower = as.numeric(interval[1]),
-      ci.upper = as.numeric(interval[2]),
-      success.probability = as.numeric(means[2]))
-}
-
-get.incidence.reduction <- function(sim,
-                                    year1=2019,
-                                    year2=2029,
-                                    goal=0.9)
-{
-    inc = extract.incidence(sim, years=c(year1, year2), per.population = NA)
-    reduction = (inc[1] - inc[2]) / inc[1]
-
-    c(reduction=reduction, achieved.goal=reduction>=as.numeric(goal))
-}
 
 parse.intervention.tables <- function(target.populations = DEFAULT.TARGET.POPULATIONS,
                                       testing.rates = c(NA,NA,1,1,1,1,1),

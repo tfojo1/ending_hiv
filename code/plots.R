@@ -326,14 +326,17 @@ plot.calibration.total.incidence <- function(sims,
                                    surv=msa.surveillance,
                                    location=NULL,
                                    population=NULL,
+                                   facet.by=NULL,
+                                   split.by=NULL,
                                    use.cdc=T,
                                    ci.coverage=0.95,
+                                   fixed.facet.scales=F,
                                    ...
 )
 {
     plot.calibration(sims=sims,
-                     split.by=NULL,
-                     facet.by = NULL,
+                     split.by=split.by,
+                     facet.by = facet.by,
                      years=years,
                      data.types='incidence',
                      linetype.by.sim = F,
@@ -342,6 +345,7 @@ plot.calibration.total.incidence <- function(sims,
                      location=location,
                      population=population,
                      ci.coverage=ci.coverage,
+                     fixed.facet.scales=fixed.facet.scales,
                      ...)
 }
 
@@ -933,7 +937,6 @@ plot.calibration <- function(sims,
 
         df$group = factor(df$group, levels=groups)
     }
-
 
     if (use.bar)
     {

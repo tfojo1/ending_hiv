@@ -5,7 +5,7 @@ library(dplyr)
 
 ##-----------------------------##
 ##-- UPDATE THE DATA MANAGER --##
-##-----------------------------##
+##------------------f-----------##
 
 if (1==2)
 {
@@ -233,7 +233,7 @@ read.continuum.manager <- function(dir='../data2/Continuum/',
 #for now
     cm$retained = list()
 
-    cm = set.site.specific.data(cm, surv)
+    cm = set.all.site.specific.data(cm, dir=dir, surv=surv)
 
     cm
 }
@@ -415,7 +415,7 @@ do.testing.regressions <- function(cm, ever.tested.file='../data2/Continuum/BRFS
     fit.het = lm(log.odds.het ~ log.odds.ever.tested + year, complete.df)
     fit.msm = lm(log.odds.msm ~ log.odds.ever.tested + year, complete.df)
     fit.idu = lm(log.odds.idu ~ log.odds.ever.tested + year, complete.df)
-
+browser()
     preds.het = predict(fit.het, ever.df, se.fit = T)
     preds.msm = predict(fit.msm, ever.df, se.fit = T)
     preds.idu = predict(fit.idu, ever.df, se.fit = T)
@@ -1087,6 +1087,9 @@ do.set.continuum.distributions <- function(cm.subset,
     ses.name = paste0(value.prefix, '.se.log.odds')
     months.name = paste0(value.prefix, '.months')
 
+#if (msa.code=='33100' && year=='2016' && means.name=='total.by.risk.mean.log.odds')
+#    browser()
+
     if (is.null(cm.subset[[means.name]]))
     {
         dim.names = list(year=as.character(year),
@@ -1160,16 +1163,15 @@ do.calculate.demographic.odds.ratios <- function(x, y)
     mean.log.ors['age5'] = log(x['age5'] * y['age3'] / y['age5'] / x['age3'])
     se.log.ors['age5'] = sqrt(1/x['age5'] + 1/y['age5'] + 1/x['age3'] + 1/y['age3'])
 
-    # Male/female
-    mean.log.ors['female'] = log(x['female'] * y['male'] / y['female'] / x['male'])
-    se.log.ors['female'] = sqrt(1/x['female'] + 1/y['female'] + 1/x['male'] + 1/y['male'])
-      
     if (any(names(x)=='non.idu'))
     {
         #Sex
         mean.log.ors['msm'] = log(x['msm'] * y['male'] / y['msm'] / x['male'])
         se.log.ors['msm'] = sqrt(1/x['msm'] + 1/y['msm'] + 1/x['male'] + 1/y['male'])
-    
+        
+        mean.log.ors['female'] = log(x['female'] * y['male'] / y['female'] / x['male'])
+        se.log.ors['female'] = sqrt(1/x['female'] + 1/y['female'] + 1/x['male'] + 1/y['male'])
+        
         #IDU
         mean.log.ors['idu'] = log(x['idu'] * y['non.idu'] / y['idu'] / x['non.idu'])
         se.log.ors['idu'] = sqrt(1/x['idu'] + 1/y['idu'] + 1/x['non.idu'] + 1/y['non.idu'])
@@ -1180,10 +1182,16 @@ do.calculate.demographic.odds.ratios <- function(x, y)
     }
     else
     {
-        #Sex
-        mean.log.ors['msm'] = log(x['msm'] * y['heterosexual'] / y['msm'] / x['heterosexual'])
-        se.log.ors['msm'] = sqrt(1/x['msm'] + 1/y['msm'] + 1/x['heterosexual'] + 1/y['heterosexual'])
+        x.het.male = x['male'] * (1 - (x['msm'] - x['msm.idu'])/(x['msm'] + x['msm.idu'] + x['idu'] + x['heterosexual']))
+        y.het.male = y['male'] * (1 - (y['msm'] - y['msm.idu'])/(y['msm'] + y['msm.idu'] + y['idu'] + y['heterosexual']))
         
+        #Sex
+        mean.log.ors['msm'] = log(x['msm'] * y.het.male / y['msm'] / x.het.male)
+        se.log.ors['msm'] = sqrt(1/x['msm'] + 1/y['msm'] + 1/x.het.male + 1/y.het.male)
+        
+        mean.log.ors['female'] = log(x['female'] * y.het.male / y['female'] / x.het.male)
+        se.log.ors['female'] = sqrt(1/x['female'] + 1/y['female'] + 1/x.het.male + 1/y.het.male)
+
         #IDU
         mean.log.ors['idu'] = log(x['idu'] * y['heterosexual'] / y['idu'] / x['heterosexual'])
         se.log.ors['idu'] = sqrt(1/x['idu'] + 1/y['idu'] + 1/x['heterosexual'] + 1/y['heterosexual'])
@@ -1208,7 +1216,6 @@ calculate.testing.odds <- function(df.msm, df.idu, df.het)
     parsed.het = parse.testing.demographics(df.het)
     x = parsed.msm$x + parsed.idu$x + parsed.het$x
     y = parsed.msm$y + parsed.idu$y + parsed.het$y
-
 
     x['idu'] = parsed.idu$x['all']
     y['idu'] = parsed.idu$y['all']
@@ -1651,12 +1658,298 @@ read.continuum.file <- function(file)
 ##----------------------------##
 
 
-set.site.specific.data <- function(cm, surv)
+set.location.data <- function(cm,
+                              location.code,
+                              file,
+                              stratified.total=F,
+                              stratified.ors=T)
+{
+    COL.NAME.MAPPING = c(Data_Type='data.type',
+                         Year='year',
+                         Total='total',
+                         Black='black',
+                         Hispanic='hispanic',
+                         Other='other',
+                         Male='male',
+                         Female='female',
+                         '13-24'='age1',
+                         '25-34'='age2',
+                         '35-44'='age3',
+                         '45-54'='age4',
+                         '55+'='age5',
+                         MSM='msm',
+                         IDU='idu',
+                         'MSM+IDU'='msm.idu',
+                         Heterosexual='heterosexual',
+                         Months='months')
+    
+    REQUIRED.FOR.STRATIFIED = COL.NAME.MAPPING[4:(length(COL.NAME.MAPPING)-1)]
+    
+    df = read.csv(file, stringsAsFactors = F, header = F)
+    col.names = df[,1]
+    if (length(setdiff(col.names, names(COL.NAME.MAPPING)))>1)
+        stop(paste0("Invalid Row Names in file '", file, "': ",
+                    paste0("'", setdiff(col.names, names(COL.NAME.MAPPING)), "'", collapse=', ')))
+    df = as.data.frame(t(df[,-1]), stringsAsFactors = F)
+    dimnames(df)[[2]]=COL.NAME.MAPPING[col.names]
+    
+    
+    for (col in 2:dim(df)[2])
+        df[,col] = as.numeric(as.character(df[,col]))
+    
+    years = unique(df$year)
+    
+    num.success.suppression.total = num.success.retention.total = num.success.linkage.total =
+        num.success.suppression.stratified = num.success.retention.stratified = num.success.linkage.stratified = F
+    for (year in years)
+    {
+        prevalence.mask = df$data.type=='prevalent' & df$year==year
+        if (sum(prevalence.mask)>1)
+            stop(paste0("Multiple columns contain data for ", year, " prevalence"))
+        prevalence = suppressWarnings(as.numeric(df[prevalence.mask,]))
+        names(prevalence) = names(df)
+        
+        suppression.mask = df$data.type=='suppressed' & df$year==year
+        if (sum(suppression.mask)>1)
+            stop(paste0("Multiple columns contain data for ", year, " suppression"))
+        suppression = suppressWarnings(as.numeric(df[suppression.mask,]))
+        names(suppression) = names(df)
+        
+        engagement.mask = df$data.type=='engaged' & df$year==year
+        if (sum(engagement.mask)>1)
+            stop(paste0("Multiple columns contain data for ", year, " engagement"))
+        engagement = suppressWarnings(as.numeric(df[engagement.mask,]))
+        names(engagement) = names(df)
+        
+        new.mask = df$data.type=='new' & df$year==year
+        if (sum(new.mask)>1)
+            stop(paste0("Multiple columns contain data for ", year, " new"))
+        new.cases = suppressWarnings(as.numeric(df[new.mask,]))
+        names(new.cases) = names(df)
+        
+        linkage.mask = df$data.type=='linked' & df$year==year
+        if (sum(linkage.mask)>1)
+            stop(paste0("Multiple columns contain data for ", year, " linkage"))
+        linkage = suppressWarnings(as.numeric(df[linkage.mask,]))
+        names(linkage) = names(df)
+        
+        if (stratified.total)
+        {
+            # Stratified suppression
+            if (any(suppression.mask) && any(prevalence.mask) &&
+                !any(is.na(suppression[REQUIRED.FOR.STRATIFIED])) && 
+                !any(is.na(prevalence[REQUIRED.FOR.STRATIFIED])))
+            {
+                if (any(suppression[REQUIRED.FOR.STRATIFIED] < 0) || 
+                    any(suppression[REQUIRED.FOR.STRATIFIED] > 1))
+                    stop(paste0("Values for 'suppressed' in ", year, " must be between 0 and 1"))
+                
+                cm$suppression = do.set.all.odds.distributions.from.probs(cm$suppression,
+                                                                          probs = suppression[REQUIRED.FOR.STRATIFIED],
+                                                                          ns = prevalence[REQUIRED.FOR.STRATIFIED],
+                                                                          year = year,
+                                                                          msa.code = location.code,
+                                                                          months=12)
+                num.success.suppression.total = num.success.suppression.total + 1
+                num.success.suppression.stratified = num.success.suppression.stratified + 1
+            }
+            
+            # Stratified engagement
+            if (any(engagement.mask) && any(prevalence.mask) &&
+                !any(is.na(engagement[REQUIRED.FOR.STRATIFIED])) && 
+                !any(is.na(prevalence[REQUIRED.FOR.STRATIFIED])))
+            {
+                if (any(engagement[REQUIRED.FOR.STRATIFIED] < 0) || 
+                    any(engagement[REQUIRED.FOR.STRATIFIED] > 1))
+                    stop(paste0("Values for 'engaged' in ", year, " must be between 0 and 1"))
+                
+                cm$retained = do.set.all.odds.distributions.from.probs(cm$retained,
+                                                                       probs = engagement[REQUIRED.FOR.STRATIFIED],
+                                                                       ns = prevalence[REQUIRED.FOR.STRATIFIED],
+                                                                       year = year,
+                                                                       msa.code = location.code,
+                                                                       months=12)
+                num.success.retention.total = num.success.retention.total + 1
+                num.success.retention.stratified = num.success.retention.stratified + 1
+            }
+            
+            # Stratified linkage
+            if (any(linkage.mask) && any(new.mask) &&
+                !any(is.na(linkage[REQUIRED.FOR.STRATIFIED])) && 
+                !any(is.na(new.cases[REQUIRED.FOR.STRATIFIED])))
+            {
+                if (any(linkage[REQUIRED.FOR.STRATIFIED] < 0) || 
+                    any(linkage[REQUIRED.FOR.STRATIFIED] > 1))
+                    stop(paste0("Values for 'linked' in ", year, " must be between 0 and 1"))
+                
+                if (is.na(linkage['months']))
+                    stop(paste0("Missing months for linkage data for ", year))
+                else
+                    months = linkage['months']
+                
+                cm$linkage = do.set.all.odds.distributions.from.probs(cm$linkage,
+                                                                       probs = linkage[REQUIRED.FOR.STRATIFIED],
+                                                                       ns = new.cases[REQUIRED.FOR.STRATIFIED],
+                                                                       year = year,
+                                                                       msa.code = location.code,
+                                                                      months = months)
+                num.success.linkage.total = num.success.linkage.total + 1
+                num.success.linkage.stratified = num.success.linkage.stratified + 1
+            }
+            
+        }
+        else #Set by total
+        { 
+            # Suppression by total
+            if (any(suppression.mask) && any(prevalence.mask))
+            {
+                if (!is.na(suppression['total']) && !is.na(prevalence['total']))
+                {
+                    if (suppression['total'] < 0 || suppression['total'] > 1)
+                        stop(paste0("total suppressed for ", year, " must be between 0 and 1"))
+                    cm$suppression = do.set.total.odds.distribution.from.prob(cm$suppression,
+                                                                              probs=suppression['total'],
+                                                                              n=prevalence['total'],
+                                                                              msa.code = location.code,
+                                                                              year = year,
+                                                                              months=12)
+                    
+                    num.success.suppression.total = num.success.suppression.total + 1
+                }
+                
+                if (stratified.ors && 
+                    !any(is.na(suppression[REQUIRED.FOR.STRATIFIED])) && 
+                    !any(is.na(prevalence[REQUIRED.FOR.STRATIFIED])))
+                {
+                    if (any(suppression[REQUIRED.FOR.STRATIFIED] < 0) || 
+                        any(suppression[REQUIRED.FOR.STRATIFIED] > 1))
+                        stop(paste0("Values for 'suppressed' in ", year, " must be between 0 and 1"))
+                    
+                    cm$suppression = do.set.or.distributions.from.probs(cm$suppression,
+                                                                        probs = suppression[REQUIRED.FOR.STRATIFIED],
+                                                                        ns = prevalence[REQUIRED.FOR.STRATIFIED],
+                                                                        year = year,
+                                                                        msa.code = location.code,
+                                                                        months=12)
+                    
+                    num.success.suppression.stratified = num.success.suppression.stratified + 1
+                }
+            }
+            
+            # Engagement by total
+            if (any(engagement.mask) && any(prevalence.mask))
+            {
+                if (!is.na(engagement['total']) && !is.na(prevalence['total']))
+                {
+                    if (engagement['total'] < 0 || engagement['total'] > 1)
+                        stop(paste0("total engaged for ", year, " must be between 0 and 1"))
+                    cm$retained = do.set.total.odds.distribution.from.prob(cm$retained,
+                                                                              probs=engagement['total'],
+                                                                              n=prevalence['total'],
+                                                                              msa.code = location.code,
+                                                                              year = year,
+                                                                              months=12)
+                    
+                    num.success.retention.total = num.success.retention.total + 1
+                }
+                
+                if (stratified.ors && 
+                    !any(is.na(engagement[REQUIRED.FOR.STRATIFIED])) && 
+                    !any(is.na(prevalence[REQUIRED.FOR.STRATIFIED])))
+                {
+                    if (any(engagement[REQUIRED.FOR.STRATIFIED] < 0) || 
+                        any(engagement[REQUIRED.FOR.STRATIFIED] > 1))
+                        stop(paste0("Values for 'engaged' in ", year, " must be between 0 and 1"))
+                    
+                    cm$retained = do.set.or.distributions.from.probs(cm$retained,
+                                                                        probs = engagement[REQUIRED.FOR.STRATIFIED],
+                                                                        ns = prevalence[REQUIRED.FOR.STRATIFIED],
+                                                                        year = year,
+                                                                        msa.code = location.code,
+                                                                        months=12)
+                    
+                    num.success.retention.stratified = num.success.retention.stratified + 1
+                }
+            }
+            
+            # Linkage by total
+            if (any(linkage) && any(new.mask))
+            {
+                if (!is.na(linkage['total']) && !is.na(new.cases['total']))
+                {
+                    if (linkage['total'] < 0 || linkage['total'] > 1)
+                        stop(paste0("total linked for ", year, " must be between 0 and 1"))
+                    
+                    if (is.na(linkage['months']))
+                        stop(paste0("Missing months for linkage data for ", year))
+                    else
+                        months = linkage['months']
+                    
+                    cm$linkage = do.set.total.odds.distribution.from.prob(cm$linkage,
+                                                                           probs=linkage['total'],
+                                                                           n=new.cases['total'],
+                                                                           msa.code = location.code,
+                                                                           year = year,
+                                                                           months=months)
+                    
+                    num.success.linkage.total = num.success.linkage.total + 1
+                }
+                
+                if (stratified.ors && 
+                    !any(is.na(linkage[REQUIRED.FOR.STRATIFIED])) && 
+                    !any(is.na(new.cases[REQUIRED.FOR.STRATIFIED])))
+                {
+                    if (any(linkage[REQUIRED.FOR.STRATIFIED] < 0) || 
+                        any(linkage[REQUIRED.FOR.STRATIFIED] > 1))
+                        stop(paste0("Values for 'linked' in ", year, " must be between 0 and 1"))
+                    
+                    if (is.na(linkage['months']))
+                        stop(paste0("Missing months for linkage data for ", year))
+                    else
+                        months = linkage['months']
+                    
+                    cm$linkage = do.set.or.distributions.from.probs(cm$linkage,
+                                                                     probs = linkage[REQUIRED.FOR.STRATIFIED],
+                                                                     ns = new.cases[REQUIRED.FOR.STRATIFIED],
+                                                                     year = year,
+                                                                     msa.code = location.code,
+                                                                     months=months)
+                    
+                    num.success.linkage.stratified = num.success.linkage.stratified + 1
+                }
+            }
+        }
+    }
+    
+    #Checks
+    if (num.success.suppression.total < 2)
+        stop("Less than two data points for total suppression")
+    if (num.success.retention.total < 2)
+        stop("Less than two data points for total engagement")
+    if (num.success.linkage.total < 2)
+        stop("Less than two data points for total linkage")
+    
+    if (!stratified.total && stratified.ors)
+    {
+        if (num.success.suppression.total==0)
+            stop("No stratified data for suppression were available")
+        if (num.success.retention.total==0)
+            stop("No stratified data for engagement were available")
+        if (num.success.linkage.total==0)
+            stop("No stratified data for linkage were available")
+    }
+    
+    cm
+}
+
+set.all.site.specific.data <- function(cm, 
+                                       dir,
+                                       surv)
 {
     # Last page gives links to local health departments
     # https://www.cdc.gov/hiv/pdf/library/reports/surveillance/cdc-hiv-surveillance-report-2017-vol-29.pdf
     
-    #-- BALTIMORE --#
+##-- BALTIMORE --##
     BALTIMORE.MSA = '12580'
     BALTIMORE.YEARS = 2010:2018
     #https://phpa.health.maryland.gov/OIDEOR/CHSE/Pages/statistics.aspx
@@ -1675,14 +1968,14 @@ set.site.specific.data <- function(cm, surv)
                                                               msa.code = BALTIMORE.MSA,
                                                               year = BALTIMORE.YEARS,
                                                               months=12)
-    cm$retention = do.set.total.odds.distribution.from.prob(cm$retention,
+    cm$retained = do.set.total.odds.distribution.from.prob(cm$retained,
                                                             probs=c(60,54,68,73,72,72,71,76,81)/100,
                                                             n=BALTIMORE.PREVALENCE,
                                                             msa.code = BALTIMORE.MSA,
                                                             year = BALTIMORE.YEARS,
                                                             months=12)
     
-    #-- WASHINGTON, DC --#
+##-- WASHINGTON, DC --##
     DC.MSA = cbsa.for.msa.name('Washington, DC')
     DC.YEARS = 2010:2018
     #https://phpa.health.maryland.gov/OIDEOR/CHSE/Pages/statistics.aspx
@@ -1700,14 +1993,14 @@ set.site.specific.data <- function(cm, surv)
                                                               msa.code = DC.MSA,
                                                               year = DC.YEARS,
                                                               months=12)
-    cm$retention = do.set.total.odds.distribution.from.prob(cm$retention,
+    cm$retained = do.set.total.odds.distribution.from.prob(cm$retained,
                                                             probs=c(42,38,60,64,64,69,68,74,77)/100,
                                                             n=DC.PREVALENCE,
                                                             msa.code = DC.MSA,
                                                             year = DC.YEARS,
                                                             months=12)
     
-    #-- NEW YORK CITY --#
+##-- NEW YORK CITY --##
     # https://www1.nyc.gov/site/doh/data/data-sets/hiv-aids-surveillance-and-epidemiology-reports.page
     # 2018 report
     NYC.MSA = '35620'
@@ -1744,7 +2037,7 @@ set.site.specific.data <- function(cm, surv)
                                                               msa.code = NYC.MSA,
                                                               year = names(NYC.SUPPRESSION),
                                                               months=12)
-    cm$retention = do.set.total.odds.distribution.from.prob(cm$retention,
+    cm$retained = do.set.total.odds.distribution.from.prob(cm$retained,
                                                             probs=NYC.RETENTION.2tests,
                                                             n=NYC.PREVALENCE[names(NYC.RETENTION.2tests)],
                                                             msa.code = NYC.MSA,
@@ -1960,6 +2253,397 @@ set.site.specific.data <- function(cm, surv)
                                                              msm.idu=2522,
                                                              heterosexual=23192),
                                                         msa.code = NYC.MSA)
+    
+##-- MIAMI --##
+    MIAMI.MSA = '33100'
+    
+    # http://miamidade.floridahealth.gov/programs-and-services/infectious-disease-services/hiv-aids-services/hiv-surveillance.html
+    
+    #Suppression 2016
+    cm$suppression = do.set.all.odds.distributions.from.probs(cm$suppression,
+                                                        year=2016,
+                                                        probs=c(other=.567,
+                                                                black=.499,
+                                                                hispanic=.639,
+                                                                male=.580,
+                                                                female=.539,
+                                                                age1=(59+358)/(129+654),
+                                                                age2=(886+1118)/(1590+1986),
+                                                                age3=(1313+1593)/(2373+2810),
+                                                                age4=(2217+2943)/(3885+4970),
+                                                                age5=(2359+2927)/(4001+5311),
+                                                                msm=.619,
+                                                                idu=(412+355)/(980+727),
+                                                                msm.idu=.528,
+                                                                heterosexual=(1865+3410)/(3807+6221)
+                                                        ),
+                                                        ns=c(other=3069,
+                                                             black=11982,
+                                                             hispanic=12308,
+                                                             male=20580,
+                                                             female=7159,
+                                                             age1=(129+654),
+                                                             age2=(1590+1986),
+                                                             age3=(2373+2810),
+                                                             age4=(3885+4970),
+                                                             age5=(4001+5311), 
+                                                             msm=14823,
+                                                             idu=980+727,
+                                                             msm.idu=792,
+                                                             heterosexual=3807+6221),
+                                                        msa.code = MIAMI.MSA)
+    
+    #Suppression 2017
+    cm$suppression = do.set.all.odds.distributions.from.probs(cm$suppression,
+                                                              year=2017,
+                                                              probs=c(other=.570,
+                                                                      black=.514,
+                                                                      hispanic=.653,
+                                                                      male=.593,
+                                                                      female=.556,
+                                                                      age1=(62+323)/(117+581),
+                                                                      age2=(940+1250)/(1574+2133),
+                                                                      age3=(1307+1546)/(2316+2693),
+                                                                      age4=(2175+2846)/(3701+4745),
+                                                                      age5=(2529+3365)/(4260+5904), 
+                                                                      msm=.619,
+                                                                      idu=(384+360)/(956+681),
+                                                                      msm.idu=.528,
+                                                                      heterosexual=(1916+3519)/(3819+6262)
+                                                              ),
+                                                              ns=c(other=3035,
+                                                                   black=11983,
+                                                                   hispanic=12668,
+                                                                   male=20901,
+                                                                   female=7154,
+                                                                   age1=(117+581),
+                                                                   age2=(1574+2133),
+                                                                   age3=(2316+2693),
+                                                                   age4=(3701+4745),
+                                                                   age5=(4260+5904), 
+                                                                   msm=15173,
+                                                                   idu=(956+681),
+                                                                   msm.idu=776,
+                                                                   heterosexual=(3819+6262)
+                                                              ),
+                                                              msa.code = MIAMI.MSA)
+    
+    #Suppression 2018
+    cm$suppression = do.set.all.odds.distributions.from.probs(cm$suppression,
+                                                              year=2018,
+                                                              probs=c(other=.593,
+                                                                      black=.528,
+                                                                      hispanic=.665,
+                                                                      male=.609,
+                                                                      female=.567,
+                                                                      age1=(45+332)/(100+551),
+                                                                      age2=(954+1359)/(1522+2159),
+                                                                      age3=(1449+1538)/(2419+2610),
+                                                                      age4=(2097+2808)/(3477+4561),
+                                                                      age5=(2653+3712)/(4454+6465), 
+                                                                      msm=.651,
+                                                                      idu=(393+364)/(946+669),
+                                                                      msm.idu=.537,
+                                                                      heterosexual=(1986+3593)/(3866+6258)
+                                                              ),
+                                                              ns=c(other=3047,
+                                                                   black=11894,
+                                                                   hispanic=13030,
+                                                                   male=21213,
+                                                                   female=7132,
+                                                                   age1=(100+551),
+                                                                   age2=(1522+2159),
+                                                                   age3=(2419+2610),
+                                                                   age4=(3477+4561),
+                                                                   age5=(4454+6465), 
+                                                                   msm=15481,
+                                                                   idu=(946+669),
+                                                                   msm.idu=750,
+                                                                   heterosexual=(3866+6258)
+                                                              ),
+                                                              msa.code = MIAMI.MSA)
+    #retention 2016
+    cm$retained = do.set.all.odds.distributions.from.probs(cm$retained,
+                                                              year=2016,
+                                                              probs=c(other=.578,
+                                                                      black=.603,
+                                                                      hispanic=.679,
+                                                                      male=.630,
+                                                                      female=.645,
+                                                                      age1=(95+452)/(129+654),
+                                                                      age2=(1060+1287)/(1590+1986),
+                                                                      age3=(1480+1751)/(2373+2810),
+                                                                      age4=(2467+3221)/(3885+4970),
+                                                                      age5=(2567+3178)/(4001+5311),
+                                                                      msm=.659,
+                                                                      idu=(474+486)/(980+727),
+                                                                      msm.idu=.528,
+                                                                      heterosexual=(2109+3984)/(3807+6221)
+                                                              ),
+                                                              ns=c(other=3069,
+                                                                   black=11982,
+                                                                   hispanic=12308,
+                                                                   male=20580,
+                                                                   female=7159,
+                                                                   age1=(129+654),
+                                                                   age2=(1590+1986),
+                                                                   age3=(2373+2810),
+                                                                   age4=(3885+4970),
+                                                                   age5=(4001+5311), 
+                                                                   msm=14823,
+                                                                   idu=980+727,
+                                                                   msm.idu=792,
+                                                                   heterosexual=3807+6221),
+                                                              msa.code = MIAMI.MSA)
+    
+    #retention 2017
+    cm$retained = do.set.all.odds.distributions.from.probs(cm$retained,
+                                                              year=2017,
+                                                              probs=c(other=.578,
+                                                                      black=.608,
+                                                                      hispanic=.684,
+                                                                      male=.636,
+                                                                      female=.648,
+                                                                      age1=(95+385)/(117+581),
+                                                                      age2=(1089+1424)/(1574+2133),
+                                                                      age3=(1467+1716)/(2316+2693),
+                                                                      age4=(2367+3073)/(3701+4745),
+                                                                      age5=(2733+3556)/(4260+5904), 
+                                                                      msm=.664,
+                                                                      idu=(455+449)/(956+681),
+                                                                      msm.idu=.621,
+                                                                      heterosexual=(2168+4035)/(3819+6262)
+                                                              ),
+                                                              ns=c(other=3035,
+                                                                   black=11983,
+                                                                   hispanic=12668,
+                                                                   male=20901,
+                                                                   female=7154,
+                                                                   age1=(117+581),
+                                                                   age2=(1574+2133),
+                                                                   age3=(2316+2693),
+                                                                   age4=(3701+4745),
+                                                                   age5=(4260+5904), 
+                                                                   msm=15173,
+                                                                   idu=(956+681),
+                                                                   msm.idu=776,
+                                                                   heterosexual=(3819+6262)
+                                                              ),
+                                                              msa.code = MIAMI.MSA)
+    
+    #retention 2018
+    cm$retained = do.set.all.odds.distributions.from.probs(cm$retained,
+                                                              year=2018,
+                                                              probs=c(other=.585,
+                                                                      black=.608,
+                                                                      hispanic=.685,
+                                                                      male=.638,
+                                                                      female=.650,
+                                                                      age1=(78+384)/(100+551),
+                                                                      age2=(1068+1460)/(1522+2159),
+                                                                      age3=(1553+1652)/(2419+2610),
+                                                                      age4=(2229+2966)/(3477+4561),
+                                                                      age5=(2866+3892)/(4454+6465), 
+                                                                      msm=.666,
+                                                                      idu=(443+448)/(946+669),
+                                                                      msm.idu=.627,
+                                                                      heterosexual=(2202+4042)/(3866+6258)
+                                                              ),
+                                                              ns=c(other=3047,
+                                                                   black=11894,
+                                                                   hispanic=13030,
+                                                                   male=21213,
+                                                                   female=7132,
+                                                                   age1=(100+551),
+                                                                   age2=(1522+2159),
+                                                                   age3=(2419+2610),
+                                                                   age4=(3477+4561),
+                                                                   age5=(4454+6465), 
+                                                                   msm=15481,
+                                                                   idu=(946+669),
+                                                                   msm.idu=750,
+                                                                   heterosexual=(3866+6258)
+                                                              ),
+                                                              msa.code = MIAMI.MSA)
+    
+    #linkage 2016
+    cm$linkage = do.set.all.odds.distributions.from.probs(cm$linkage,
+                                                              year=2016,
+                                                              probs=c(other=.807,
+                                                                      black=.808,
+                                                                      hispanic=.880,
+                                                                      male=.861,
+                                                                      female=.815,
+                                                                      age1=(35+122)/(45+148),
+                                                                      age2=(189+173)/(217+198),
+                                                                      age3=(153+118)/(172+140),
+                                                                      age4=(96+75)/(115+88),
+                                                                      age5=(53+56)/(62+71), 
+                                                                      msm=.619,
+                                                                      idu=(7+5)/(12+7),
+                                                                      msm.idu=.528,
+                                                                      heterosexual=(101+181)/(127+222)
+                                                              ),
+                                                              ns=c(other=109,
+                                                                   black=375,
+                                                                   hispanic=767,
+                                                                   male=1028,
+                                                                   female=232,
+                                                                   age1=(45+148),
+                                                                   age2=(217+198),
+                                                                   age3=(172+140),
+                                                                   age4=(115+88),
+                                                                   age5=(62+71), 
+                                                                   msm=875,
+                                                                   idu=(12+7),
+                                                                   msm.idu=14,
+                                                                   heterosexual=(127+222)),
+                                                              msa.code = MIAMI.MSA,
+                                                          months = 3)
+    
+    #linkage 2017
+    cm$linkage = do.set.all.odds.distributions.from.probs(cm$linkage,
+                                                              year=2017,
+                                                              probs=c(other=.876,
+                                                                      black=.846,
+                                                                      hispanic=.923,
+                                                                      male=.903,
+                                                                      female=.863,
+                                                                      age1=(36+89)/(41+104),
+                                                                      age2=(182+187)/(205+212),
+                                                                      age3=(136+100)/(150+105),
+                                                                      age4=(87+83)/(92+94),
+                                                                      age5=(49+91)/(58+101),
+                                                                      msm=.915,
+                                                                      idu=(9+3)/(11+6),
+                                                                      msm.idu=.714,
+                                                                      heterosexual=(112+197)/(134+226)
+                                                              ),
+                                                              ns=c(other=97,
+                                                                   black=369,
+                                                                   hispanic=692,
+                                                                   male=930,
+                                                                   female=234,
+                                                                   age1=(41+104),
+                                                                   age2=(205+212),
+                                                                   age3=(150+105),
+                                                                   age4=(92+94),
+                                                                   age5=(58+101), 
+                                                                   msm=779,
+                                                                   idu=(11+6),
+                                                                   msm.idu=7,
+                                                                   heterosexual=(134+226)
+                                                              ),
+                                                              msa.code = MIAMI.MSA,
+                                                          months = 3)
+    
+    #linkage 2018
+    cm$linkage = do.set.all.odds.distributions.from.probs(cm$linkage,
+                                                              year=2018,
+                                                              probs=c(other=.942,
+                                                                      black=.813,
+                                                                      hispanic=.932,
+                                                                      male=.914,
+                                                                      female=.821,
+                                                                      age1=(36+106)/(100+551),
+                                                                      age2=(202+174)/(1522+2159),
+                                                                      age3=(134+107)/(2419+2610),
+                                                                      age4=(103+83)/(3477+4561),
+                                                                      age5=(82+73)/(4454+6465), 
+                                                                      msm=.933,
+                                                                      idu=(13+5)/(15+6),
+                                                                      msm.idu=1,
+                                                                      heterosexual=(122+165)/(152+201)
+                                                              ),
+                                                              ns=c(other=137,
+                                                                   black=352,
+                                                                   hispanic=725,
+                                                                   male=1017,
+                                                                   female=207,
+                                                                   age1=(41+123),
+                                                                   age2=(225+192),
+                                                                   age3=(146+109),
+                                                                   age4=(116+90),
+                                                                   age5=(94+88), 
+                                                                   msm=842,
+                                                                   idu=(15+6),
+                                                                   msm.idu=8,
+                                                                   heterosexual=(152+201)
+                                                              ),
+                                                              msa.code = MIAMI.MSA,
+                                                          months = 3)
+    
+    
+##-- LA --##
+    # https://www.cdph.ca.gov/Programs/CID/DOA/Pages/OA_case_surveillance_reports.aspx
+    LA.MSA = '31080'
+    
+    LA.SUPPRESSION = c('2016'=(2755+30358)/(4581+50700),
+                       '2017'=(2859+30929)/(4510+51487),
+                       '2018'=(2799+31172)/(4409+52081))
+    
+    LA.RETENTION = c('2016'=(3220+35351)/(4581+50700),
+                     '2017'=(3200+35561)/(4510+51487),
+                     '2018'=(3126+36011)/(4409+52081))
+    
+    LA.PREVALENCE = c('2016'=(4581+50700),
+                      '2017'=(4510+51487),
+                      '2018'=(4409+52081))
+    
+    cm$suppression = do.set.total.odds.distribution.from.prob(cm$suppression,
+                                                              probs=LA.SUPPRESSION,
+                                                              n=LA.PREVALENCE,
+                                                              msa.code = LA.MSA,
+                                                              year = as.numeric(names(LA.SUPPRESSION)),
+                                                              months=12)
+    cm$retained = do.set.total.odds.distribution.from.prob(cm$retained,
+                                                            probs=LA.RETENTION,
+                                                            n=LA.PREVALENCE,
+                                                            msa.code = LA.MSA,
+                                                            year = as.numeric(names(LA.RETENTION)),
+                                                            months=12)
+    #Linkage was not listed
+    
+    cm$suppression = do.set.or.distributions.from.probs(cm$suppression,
+                                                        year=2018,
+                                                        probs=c(male=.87,
+                                                                female=.85,
+                                                                black=.83,
+                                                                hispanic=.87,
+                                                                other=.93,
+                                                                age1=(396*.74+8823*.78)/(296+8823),
+                                                                age2=(8823*.78+19726*.83)/(8823+19726),
+                                                                age3=(19726*.83+24749*.86)/(19726+24749),
+                                                                age4=(24749*.86+40750*.88)/(24749+40750),
+                                                                age5=(40750*.88+32774*.92)/(40750+32774),
+                                                                msm=0.89,
+                                                                idu=0.84,
+                                                                msm.idu=0.81,
+                                                                heterosexual=0.86
+                                                        ),
+                                                        ns=c(male=92044,
+                                                             female=33339,
+                                                             black=55345,
+                                                             hispanic=41908,
+                                                             other=26021,
+                                                             age1=396+.5*8823,
+                                                             age2=(8823+19726)/2,
+                                                             age3=(19726+24749)/2,
+                                                             age4=(24749+40750)/2,
+                                                             age5=.5*40750+32774,
+                                                             msm=52944,
+                                                             idu=14826,
+                                                             msm.idu=3142,
+                                                             heterosexual=24945),
+                                                        msa.code = NYC.MSA)
+    
+    
+    #-- LA --#
+    
+    cm = set.location.data(cm,
+                           file=file.path(dir, 'msa_data/LA.csv'),
+                           location.code = '31080',
+                           stratified.total = T)
     
     #-- RETURN --#
     

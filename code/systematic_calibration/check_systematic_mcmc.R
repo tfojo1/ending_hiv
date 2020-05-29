@@ -1,19 +1,21 @@
 if (1==2)
 {
-    setwd('../../../Ending HIV/jheem/')
+    setwd('../../../Ending HIV/Ending_HIV/')
 }
 
 source('code/source_code.R')
 
-mcmc = assemble.mcmc.from.cache('../results/mcmc_caches/47900_v68_2020-05-07/',T)
+mcmc = assemble.mcmc.from.cache('mcmc_runs/systematic_caches/35620_4x60K_2020-05-19/',T)
+mcmc = assemble.mcmc.from.cache('mcmc_runs/systematic_caches/33100_4x60K_2020-05-19/',T)
 
-simset = extract.simset(mcmc, additional.burn=mcmc@n.iter/2, additional.thin=2^(as.numeric(mcmc@n.iter>100)+as.numeric(mcmc@n.iter>1000)))
+simset = extract.simset(mcmc, additional.burn=mcmc@n.iter/2, 
+                        additional.thin=2^(as.numeric(mcmc@n.iter>50)+as.numeric(mcmc@n.iter>200)))
 plot.calibration.race.risk(simset)
 plot.calibration.sex.age(simset)
 
 
 get.rhats(mcmc, additional.burn = mcmc@n.iter/2)
-trace.plot(mcmc, '*ramp', additional.burn = mcmc@n.iter/2)
+#trace.plot(mcmc, '*ramp', additional.burn = mcmc@n.iter/2)
 
 
 print(paste0('N Iterations = ', mcmc@n.iter))
@@ -21,10 +23,10 @@ print(paste0('N Iterations = ', mcmc@n.iter))
 likelihood.plot(mcmc, show.log.prior = F)
 likelihood.plot(mcmc, show.log.likelihood = F, show.log.prior.plus.likelihood = F)
 #qplot(1:mcmc@n.iter, as.numeric(mcmc@log.likelihoods + mcmc@log.priors), geom = 'line')
-trace.plot(mcmc)
+#trace.plot(mcmc)
 
 a=get.total.acceptance.rate(mcmc, by.block = T);a
-qplot(names(a), a) + geom_bar(stat='identity', alpha=.25) + coord_flip() + geom_hline(yintercept = mcmc@control@target.acceptance.probability) + xlab('Parameter') + ylab('Total Acceptance Rate')
+qplot(names(a), a) + geom_bar(stat='identity', alpha=.25) + coord_flip() + geom_hline(yintercept = .238) + xlab('Parameter') + ylab('Total Acceptance Rate')
 
 acceptance.plot(mcmc, window.iterations = 200)
 acceptance.plot(mcmc, window.iterations = 200, by.block = T)

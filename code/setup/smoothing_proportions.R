@@ -1,60 +1,5 @@
 #source('../code/data_managers/continuum_manager.R')
 
-if (1==2)
-{
-
-    x = smooth.proportions.by.strata(continuum.manager=ALL.DATA.MANAGERS$continuum,
-                                     data.type='testing',
-                                     msa=BALTIMORE.MSA,
-                                     max.proportion=0.7,
-                                     desired.years=2010:2020,
-                                     population=BALTIMORE.POPULATION,
-                                     use.mult.smoothing = F)
-
-    plot.smoothed.proportions(x, split.by='sex', ages='35-44 years') + geom_vline(xintercept=2017)
-    plot.smoothed.proportions(-log(1-x), split.by='sex', ages='35-44 years') + geom_vline(xintercept=2017)
-
-    source('../code/testing_calibration/manual_calibrating_2.R')
-    x = smooth.proportions.by.strata(continuum.manager=ALL.DATA.MANAGERS$continuum,
-                                 data.type='suppression',
-                                 msa=BALTIMORE.MSA,
-                                 max.proportion=0.9,
-                                 desired.years=2010:2020,
-                                 population=BALTIMORE.POPULATION)
-    plot.smoothed.proportions(x, split.by='age', races='other', sexes='msm', risks='never_IDU') + geom_vline(xintercept=2017)
-    plot.smoothed.proportions(x, split.by='race', ages='35-44 years', sexes='msm', risks='never_IDU') + geom_vline(xintercept=2017)
-    plot.smoothed.proportions(x, split.by='sex', races='other', ages='35-44 years') + geom_vline(xintercept=2017)
-    plot.smoothed.proportions(x, split.by='risk', races='other', ages='35-44 years', sex='heterosexual_male') + geom_vline(xintercept=2017)
-
-    plot.smoothed.proportions(x, split.by=c('age','race')) + geom_vline(xintercept=2017)
-
-
-    x = smooth.proportions.by.strata(continuum.manager=ALL.DATA.MANAGERS$continuum,
-                                     data.type='testing',
-                                     msa=BALTIMORE.MSA,
-                                     max.proportion=0.9,
-                                     desired.years=2010:2020,
-                                     population=BALTIMORE.POPULATION,
-                                     age1.log.or.intercept = log(.2))
-
-
-    smoothed.years = as.numeric(dimnames(x)[['year']])
-    total.years = attr(x, 'total.years')
-    smoothed.p = x[,3,'other','heterosexual_male','never_IDU']
-    total.p = attr(x, 'total.p')
-
-    qplot(c(total.years, smoothed.years), c(total.p, smoothed.p),
-          color=c(rep('actual_total', length(total.years)), rep('smoothed', length(smoothed.years)))) +
-        geom_line()
-
-    check.years = as.character(intersect(smoothed.years, as.numeric(dimnames(BALTIMORE.POPULATION)[['year']])))
-    bpop = apply(BALTIMORE.POPULATION, c('year','age','race','sex','risk'), function(x){x})[check.years,,,,]
-    avg = apply(x[check.years,,,,]*bpop, 1, sum) / apply(bpop, 1, sum)
-
-    qplot(c(total.years, check.years), c(total.p, avg),
-          color=c(rep('actual_total', length(total.years)), rep('avg_smoothed', length(check.years)))) +
-        ylim(0,1) + geom_line()
-}
 
 smooth.proportions.by.strata <- function(continuum.manager,
                                          data.type=c('suppression','linkage','testing')[1],
@@ -220,8 +165,15 @@ smooth.proportions.by.strata <- function(continuum.manager,
                 add.intercepts = additional.intercepts[,,,c('active_IDU','IDU_in_remission')]
                 add.slopes = additional.slopes[,,,c('active_IDU','IDU_in_remission')]
             }
+            else if (type=='msm.idu')
+            {
+                log.ors = log.ors.by.stratum[,,,'msm',c('active_IDU','IDU_in_remission')]
+                pop = population[,,'msm',c('active_IDU','IDU_in_remission')]
+                add.intercepts = additional.intercepts[,,'msm',c('active_IDU','IDU_in_remission')]
+                add.slopes = additional.slopes[,,'msm',c('active_IDU','IDU_in_remission')]
+            }
             else
-                stop("Type must be either 'heterosexual', 'msm', or 'idu'")
+                stop("Type must be either 'heterosexual', 'msm', 'idu', or 'msm.idu'")
         }
 
         if (use.mult.smoothing)
@@ -262,8 +214,12 @@ smooth.proportions.by.strata <- function(continuum.manager,
             {
                 rv[,,,,c('active_IDU','IDU_in_remission')] = smoothed
             }
+            else if (type=='msm.idu')
+            {
+                rv[,,,'msm',c('active_IDU','IDU_in_remission')] = smoothed
+            }
             else
-                stop("Type must be either 'heterosexual', 'msm', or 'idu'")
+                stop("Type must be either 'heterosexual', 'msm', 'idu', or 'msm.idu'")
         }
     }
 
@@ -355,9 +311,9 @@ do.smooth.proportions.by.strata <- function(total.proportions,
             }
         }
     }
-
+    
     smoothed.log.odds = sapply(1:n.strata, function(i){
-        strata.intercepts[i] + desired.years.prime * strata.slopes[i] + max(0,desired.years.prime) * additional.total.slope.lor.after.anchor
+        strata.intercepts[i] + desired.years.prime * strata.slopes[i] + pmax(0,desired.years.prime) * additional.total.slope.lor.after.anchor
     })
 
     smoothed.scaled.p = 1 / (1+exp(-smoothed.log.odds))

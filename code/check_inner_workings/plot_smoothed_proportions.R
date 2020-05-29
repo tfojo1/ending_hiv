@@ -1,6 +1,6 @@
 
 library(ggplot2)
-source('../code/setup/setup_helpers.R')
+source('code/setup/setup_helpers.R')
 
 if (1==2)
 {
@@ -37,6 +37,12 @@ plot.smoothed.proportions <- function(arr,
     print(paste0("Split by: ", paste0(split.by, collapse=', ')))
     print(paste0("Facet by: ", paste0(facet.by, collapse=', ')))
 
+    keep.dimensions = c('year', split.by, facet.by)
+    dim.names = dimnames(arr)[keep.dimensions]
+    arr = apply(arr, keep.dimensions, mean)
+    dim(arr) = sapply(dim.names, length)
+    dimnames(arr) = dim.names
+    
     df = melt(arr)
 
     if (!is.null(ages))
@@ -51,7 +57,6 @@ plot.smoothed.proportions <- function(arr,
     df$split.by = sapply(1:dim(df)[1], function(i){
         paste0(split.by, '=', df[i,split.by], collapse=',')
     })
-
 
     ggplot(df, aes(year, value, color=split.by, fill=split.by)) +
         geom_line() + geom_point() +

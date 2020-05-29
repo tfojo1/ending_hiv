@@ -591,7 +591,7 @@ set.idu.transitions <- function(components,
                                 idu.remission,
                                 idu.relapse,
                                 indices = 1:length(components$years.for.idu.transitions),
-                                overwrite.elements=T)
+                                overwrite.elements=F)
 {
     if (overwrite.elements)
         components$idu.transition.elements = list(incident.idu=incident.idu,
@@ -1069,11 +1069,19 @@ setup.heterosexual.transmission <- function(components,
 setup.sex.by.age <- function(components,
                              heterosexual.male.age.model,
                              female.age.model,
-                             msm.age.model)
+                             msm.age.model,
+                             overwrite.base.models=F)
 {
     components$sexual.transmission$heterosexual.male.age.model = heterosexual.male.age.model
     components$sexual.transmission$female.age.model = female.age.model
     components$sexual.transmission$msm.age.model = msm.age.model
+    
+    if (overwrite.base.models)
+    {
+        components$sexual.transmission$base.heterosexual.male.age.model = heterosexual.male.age.model
+        components$sexual.transmission$base.female.age.model = female.age.model
+        components$sexual.transmission$base.msm.age.model = msm.age.model
+    }
 
     components = clear.dependent.values(components, 'sexual.transmission')
     components

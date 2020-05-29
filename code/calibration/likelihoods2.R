@@ -126,7 +126,7 @@ create.general.likelihood.components <- function(data.type=c('new','prevalence',
     rv$response.vector = likelihood.elements$response.vector
     rv$transformation.matrix = likelihood.elements$transformation.matrix
     rv$descriptions = likelihood.elements$descriptions
-    rv$
+
         
     if (is.null(likelihood.elements$numerator.covar.mat))
         numerator.covar.mat = NULL
