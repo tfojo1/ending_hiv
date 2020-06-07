@@ -173,7 +173,8 @@ setup.components.for.msa <- function(msa,
     comps = set.idu.transitions(comps,
                                 incident.idu = incident.idu,
                                 idu.remission = idu.remission,
-                                idu.relapse = idu.relapse)
+                                idu.relapse = idu.relapse,
+                                overwrite.elements = T)
     comps = set.hiv.transitions(comps,
                                 acute.hiv.duration = parameters['acute.infection.duration'],
                                 prep.screening.frequency = parameters['prep.screening.frequency'])
@@ -234,7 +235,8 @@ setup.components.for.msa <- function(msa,
     comps = setup.sex.by.age(comps,
                              heterosexual.male.age.model = data.managers$pairing$sex.age.models[['heterosexual_male']],
                              female.age.model = data.managers$pairing$sex.age.models[['female']],
-                             msm.age.model = data.managers$pairing$sex.age.models[['msm']])
+                             msm.age.model = data.managers$pairing$sex.age.models[['msm']],
+                             overwrite.base.models=T)
 
     sex.by.race.oes = c(data.managers$pairing$msm.sex.by.race.oe, data.managers$pairing$het.sex.by.race.oe)
     mean.oe = sex.by.race.oes[[1]]

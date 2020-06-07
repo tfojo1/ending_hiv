@@ -796,6 +796,7 @@ do.setup.hiv.mortality <- function(components)
                                                               max.background.time = components$background.change.to.years$suppression,
                                                               allow.foreground.less = F)
 
+
         if (use.low.cd4.state)
         {
             stop('low cd4 state is no longer supported')
@@ -1759,12 +1760,22 @@ get.rates.from.background.and.foreground <- function(background.rates,
                                                     allow.foreground.less=F)
 {
     if (is.null(foreground.times))
-        list(rates=background.rates,
-             times=background.times)
+        list(rates=background.rates[background.times<=max.background.time],
+             times=background.times[background.times<=max.background.time])
     else
     {
-        rates.and.times = merge.rates(rates1 = background.rates[background.times<=max.background.time],
-                                      times1 = background.times[background.times<=max.background.time],
+        background.rates = background.rates[background.times<=max.background.time]
+        background.times = background.times[background.times<=max.background.time]
+        
+        if (max(background.times) < (min(foreground.times)-1))
+        {
+            background.times = c(background.times, min(foreground.times)-1)
+            background.rates = c(background.rates,
+                                 background.rates[length(background.rates)])
+        }
+        
+        rates.and.times = merge.rates(rates1 = background.rates,
+                                      times1 = background.times,
                                       rates2 = foreground.rates,
                                       times2 = foreground.times)
 

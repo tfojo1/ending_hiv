@@ -1,13 +1,146 @@
-N.ITER.BEFORE.COV = 0
-ADAPTIVE.SCALING='componentwise'
-SCALING.BASE.UPDATE = 1
-SCALING.UPDATE.PRIOR=100
-SCALING.UPDATE.DECAY=.5
-COV.BASE.UPDATE=1
-COV.UPDATE.PRIOR=500
-COV.UPDATE.DECAY=1
+
+source('code/systematic_calibration/systematic_settings.R')
+source('code/systematic_calibration/starting_value_generator.R')
 
 
+##-----------------##
+##-- RUN INITIAL --##
+##-----------------##
+
+run.initial.mcmc.for.msa <- function(msa,
+                                     likelihood=create.msa.likelihood(msa),
+                                     prior=parameters.prior,
+                                     parameter.var.blocks = PARAMETER.VAR.BLOCKS.1,
+                                     start.value.generator=NULL,
+                                     chains=1,
+                                     n.iter=20000,
+                                     thin=20,
+                                     burn=0,
+                                     max.sim.time=Inf,
+                                     save.dir=file.path(SYSTEMATIC.ROOT.DIR, 'systematic_initial'),
+                                     cache.dir=file.path(SYSTEMATIC.ROOT.DIR, 'systematic_caches'),
+                                     update.frequency=200,
+                                     cache.frequency=500,
+                                     save.suffix='',
+                                     resume.cache=NULL,
+                                     target.acceptance.rate=0.1)
+{
+    if (is.null(start.value.generator))
+    {
+        load(file.path(SYSTEMATIC.ROOT.DIR, 'starting_value_generators/47900.Rdata'))
+        start.value.generator = sampling.dist
+    }
+    
+    run.mcmc.for.msa(msa=msa,
+                     likelihood=likelihood,
+                     prior=prior,
+                     parameter.var.blocks=parameter.var.blocks,
+                     start.value.generator=start.value.generator,
+                     chains=chains,
+                     n.iter=n.iter,
+                     thin=thin,
+                     burn=burn,
+                     max.sim.time=max.sim.time,
+                     save.dir=save.dir,
+                     cache.dir=cache.dir,
+                     update.frequency=update.frequency,
+                     cache.frequency = cache.frequency,
+                     save.suffix=save.suffix,
+                     resume.cache=resume.cache,
+                     target.acceptance.rate = target.acceptance.rate
+                     )
+}
+
+create.start.value.generator.for.msa <- function(msa)
+{
+    files = list.files(file.path(SYSTEMATIC.ROOT.DIR, 'systematic_initial'))
+    full.files = list.files(file.path(SYSTEMATIC.ROOT.DIR, 'systematic_initial'), full.names = T)
+    
+    mask = grepl(msa, files)
+    if (!any(mask))
+        stop(paste0("No initial mcmc runs have been done for '", msa.names(msa), "' MSA (", msa, ')'))
+    load(full.files[mask][sum(mask)])
+    
+    simset = extract.simset(mcmc, additional.burn=mcmc@n.iter/2)
+    sampling.dist = create.starting.sampling.distribution(simset)
+    save(sampling.dist, file=file.path(SYSTEMATIC.ROOT.DIR, 'starting_value_generators',
+                                       paste0(msa, '.Rdata')))
+}
+
+##-----------------------##
+##-- RUN PARALLEL MCMC --##
+##-----------------------##
+
+run.parallel.mcmc.for.msa <- function(msa,
+                                      likelihood=create.msa.likelihood(msa),
+                                      prior=parameters.prior,
+                                      parameter.var.blocks = PARAMETER.VAR.BLOCKS.1,
+                                      start.value.generator=NULL,
+                                      chains=4,
+                                      n.iter=60000,
+                                      thin=80,
+                                      burn=0,
+                                      max.sim.time=Inf,
+                                      save.dir=file.path(SYSTEMATIC.ROOT.DIR, 'systematic_parallel'),
+                                      cache.dir=file.path(SYSTEMATIC.ROOT.DIR, 'systematic_caches'),
+                                      update.frequency=200,
+                                      cache.frequency=800,
+                                      save.suffix='',
+                                      resume.cache=NULL,
+                                      
+                                      target.acceptance.rate=0.238,
+                                      COV.UPDATE.PRIOR=500,
+                                      SCALING.UPDATE.PRIOR=100,
+                                      SCALING.UPDATE.DECAY=.5)
+{
+    # Pull Initial MCMC
+    files = list.files(file.path(SYSTEMATIC.ROOT.DIR, 'systematic_initial'))
+    full.files = list.files(file.path(SYSTEMATIC.ROOT.DIR, 'systematic_initial'), full.names = T)
+    
+    mask = grepl(msa, files)
+    if (!any(mask))
+        stop(paste0("No initial mcmc runs have been done for '", msa.names(msa), "' MSA (", msa, ')'))
+    load(full.files[mask][sum(mask)])
+    
+    # Set up start value generator
+    simset = extract.simset(mcmc, additional.burn=mcmc@n.iter/2)
+    start.value.generator = create.starting.sampling.distribution(simset, correlated.sd.inflation = .75, uncorrelated.sd.inflation = .5)
+
+    # Pull chain state variables
+    chain.state = mcmc@chain.states[[1]]
+    initial.scaling.parameters = lapply(chain.state@log.scaling.parameters, function(x){
+        exp(x)/2
+    })
+    initial.cov.mat = 0.5 * chain.state@cov.mat + 0.5 * diag(diag(chain.state@cov.mat))
+    
+    # Pass to sub function
+    run.mcmc.for.msa(msa=msa,
+                     likelihood=likelihood,
+                     prior=prior,
+                     parameter.var.blocks=parameter.var.blocks,
+                     start.value.generator=start.value.generator,
+                     chains=chains,
+                     n.iter=n.iter,
+                     thin=thin,
+                     burn=burn,
+                     max.sim.time=max.sim.time,
+                     save.dir=save.dir,
+                     cache.dir=cache.dir,
+                     update.frequency=update.frequency,
+                     cache.frequency = cache.frequency,
+                     save.suffix=save.suffix,
+                     resume.cache=resume.cache,
+                     target.acceptance.rate = target.acceptance.rate,
+                     
+                     initial.cov.mat = initial.cov.mat,
+                     initial.scaling.parameters = initial.scaling.parameters,
+                     
+                     COV.UPDATE.PRIOR=COV.UPDATE.PRIOR,
+                     SCALING.UPDATE.PRIOR=SCALING.UPDATE.PRIOR,
+                     SCALING.UPDATE.DECAY=SCALING.UPDATE.DECAY
+    )
+    
+}
 
 run.mcmc.for.msa <- function(msa,
                              likelihood=create.msa.likelihood(msa),
@@ -19,12 +152,24 @@ run.mcmc.for.msa <- function(msa,
                              thin=100,
                              burn=0,
                              max.sim.time=Inf,
-                             save.dir='../results/mcmc_runs',
-                             cache.dir='../results/mcmc_caches',
+                             save.dir=file.path(SYSTEMATIC.ROOT.DIR, 'systematic_parallel'),
+                             cache.dir=file.path(SYSTEMATIC.ROOT.DIR, 'systematic_caches'),
                              update.frequency=200,
                              cache.frequency=2000,
                              save.suffix='',
-                             resume.cache=NULL)
+                             resume.cache=NULL,
+                             
+                             target.acceptance.rate=0.238,
+                             N.ITER.BEFORE.COV = 0,
+                             ADAPTIVE.SCALING='componentwise',
+                             SCALING.BASE.UPDATE = 1,
+                             SCALING.UPDATE.PRIOR=100,
+                             SCALING.UPDATE.DECAY=.5,
+                             COV.BASE.UPDATE=1,
+                             COV.UPDATE.PRIOR=500,
+                             COV.UPDATE.DECAY=1,
+                             initial.cov.mat=NULL,
+                             initial.scaling.parameters=NULL)
 {
     #-- Run Function --#
     run.simulation <- function(parameters)
@@ -37,7 +182,7 @@ run.mcmc.for.msa <- function(msa,
     #-- Start Values --#
     if (is.null(start.value.generator))
     {
-        load(file.path('code/systematic_calibration/starting_value_generators',
+        load(file.path(SYSTEMATIC.ROOT.DIR, 'starting_value_generators',
                        paste0(msa, '.Rdata')))
         start.value.generator = sampling.dist
     }
@@ -61,23 +206,35 @@ run.mcmc.for.msa <- function(msa,
 
 
     #-- MCMC Control --#
-    param.medians = suppressWarnings(get.medians(prior))
-    init.sds = suppressWarnings(get.sds(prior) / param.medians) / 40
-    init.sds[prior@is.improper] = 0.1/40
-        
-    init.sds[init.sds>1] = (param.medians)[init.sds>1] / 40
-    init.sds = init.sds * 2
+    if (is.null(initial.cov.mat))
+    {
+        param.medians = suppressWarnings(get.medians(prior))
+        init.sds = suppressWarnings(get.sds(prior) / param.medians) / 40
+        init.sds[prior@is.improper] = 0.1/40
+            
+        init.sds[init.sds>1] = (param.medians)[init.sds>1] / 40
+        init.sds = init.sds * 2
+        initial.cov.mat = diag(init.sds^2)
+    }
+    if (is.null(initial.scaling.parameters))
+    {
+        initial.scaling.parameters = 2.38^2/sapply(parameter.var.blocks, length)
+    }
     transformations = sapply(prior@var.names, function(v){'log'})
 
     ctrl = create.adaptive.blockwise.metropolis.control(var.names=prior@var.names,
                                                         simulation.function=run.simulation,
                                                         log.prior.distribution = get.density.function(prior),
                                                         log.likelihood = likelihood,
-                                                        initial.covariance.mat = diag(init.sds^2),
                                                         burn=burn, thin=thin,
                                                         var.blocks = parameter.var.blocks,
                                                         reset.adaptive.scaling.update.after = 0,
                                                         transformations = transformations,
+                                                        
+                                                        initial.covariance.mat = initial.cov.mat,
+                                                        initial.scaling.parameters = initial.scaling.parameters,
+                                                        
+                                                        target.acceptance.probability=target.acceptance.rate,
 
                                                         n.iter.before.use.adaptive.covariance = N.ITER.BEFORE.COV,
                                                         adaptive.covariance.base.update = COV.BASE.UPDATE,
@@ -92,7 +249,8 @@ run.mcmc.for.msa <- function(msa,
     #-- Run the MCMC --#
     if (save.suffix != '')
         save.suffix = paste0('_', save.suffix)
-    cache.dir = file.path(cache.dir, paste0(msa, save.suffix, '_', Sys.Date()))
+    cache.dir = file.path(cache.dir, paste0(msa, '_', chains, 'x', n.iter/1000, 'K',
+                                            save.suffix, '_', Sys.Date()))
 
     if (!is.null(resume.cache))
     {
@@ -116,8 +274,9 @@ run.mcmc.for.msa <- function(msa,
     }
 
     #-- Save and return --#
-    filename = paste0(msa, save.suffix, "_", Sys.Date(), ".Rdata")
-    save(mcmc, file=filename)
+    filename = paste0(msa, '_', chains, 'x', n.iter/1000, 'K',
+                      save.suffix, "_", Sys.Date(), ".Rdata")
+    save(mcmc, file=file.path(save.dir, filename))
     mcmc
 }
 

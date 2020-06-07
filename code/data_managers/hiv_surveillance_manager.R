@@ -191,7 +191,8 @@ get.surveillance.data.rate <- function(surv,
     numerators / denominators
 }
 
-aggregate.surveillance.race.as.bho <- function(surv)
+aggregate.surveillance.race.as.bho <- function(surv,
+                                               ignore.na.races=c('american_indian_or_alaska_native', 'asian'))
 {
     lapply(surv, function(elem){
 
@@ -206,7 +207,12 @@ aggregate.surveillance.race.as.bho <- function(surv)
                 if (any(new.dim.names[['race']] == race) && race != 'other')
                     access(rv, race=race) = access(elem, race=race)
                 else
-                    access(rv, race='other') = access(rv, race='other') + access(elem, race=race)
+                {
+                    other.race = access(elem, race=race)
+                    if (any(race==ignore.na.races))
+                        other.race[is.na(other.race)] = 0
+                    access(rv, race='other') = access(rv, race='other') + other.race
+                }
             }
 
             rv
@@ -224,7 +230,11 @@ aggregate.surveillance.other.risk.as.heterosexual <- function(surv)
             new.risk.dim.names = setdiff(dimnames(elem)[['risk']], 'other')
 
             rv = access(elem, risk=new.risk.dim.names)
-            access(rv, risk='heterosexual') = access(rv, risk='heterosexual') + access(elem, risk='other')
+            
+            other.risk = access(elem, risk='other')
+            other.risk[is.na(other.risk)] = 0
+            
+            access(rv, risk='heterosexual') = access(rv, risk='heterosexual') + other.risk
 
             rv
         }
@@ -251,11 +261,10 @@ subset.surveillance <- function(surv, codes)
 
 read.msa.surveillance <- function(dir='../data2/HIV_Surveillance/by_msa',
                                   use.adjusted.estimate=F,
-                                  correct.new.to.county.level=T,
-                                  correct.prevalence.to.county.level=T,
                                   county.file='../data2/HIV_Surveillance/by_county.csv',
                                   first.total.prevalence.year=2007,
                                   first.total.new.year=2008,
+                                  include.children.in.prevalence=F,
                                   verbose=F)
 {
     #-- READ IN FILES --#
@@ -303,8 +312,8 @@ read.msa.surveillance <- function(dir='../data2/HIV_Surveillance/by_msa',
 
     #-- SET UP RV ARRAY SKELETONS --#
     rv = list(params=list(use.adjusted.estimate=use.adjusted.estimate,
-                          correct.new.to.county.level=correct.new.to.county.level,
-                          correct.prevalence.to.county.level=correct.prevalence.to.county.level))
+                          correct.new.to.county.level=F,
+                          correct.prevalence.to.county.level=F))
 
     all.incidence.years = sort(unique(incidence.year[is.incidence]))
     all.prevalence.years = sort(unique(prevalence.year[is.prevalence]))
@@ -549,7 +558,6 @@ read.msa.surveillance <- function(dir='../data2/HIV_Surveillance/by_msa',
 
 
     # Prevalence
-    include.children.in.prevalence = correct.prevalence.to.county.level
     for (year in all.prevalence.years)
     {
         if (verbose)
@@ -786,66 +794,12 @@ read.msa.surveillance <- function(dir='../data2/HIV_Surveillance/by_msa',
                                    rv$prevalence.sex.risk,
                                    'risk')
 
-
-    #-- AGGREGATED COUNTY-LEVEL TOTALS --#
-    if (correct.new.to.county.level || correct.prevalence.to.county.level)
-        msa.by.county = read.total.msa.data.from.counties(county.file = county.file,
-                                                          msas=as.character(all.codes))
-    if (correct.new.to.county.level)
-    {
-        if (verbose)
-            print("Correcting New Diagnoses to Aggregate County-Level Data")
-
-        new.names.to.correct = names(rv)[grepl('new.', names(rv))]
-        
-        for (name in new.names.to.correct)
-            rv[[name]] = correct.array.to.total(to.correct = rv[[name]],
-                                                target.to = msa.by.county$new.all,
-                                                backup.1 = rv$new.sex,
-                                                backup.2 = rv$new.race,
-                                                backup.3 = rv$new.risk,
-                                                backup.4 = rv$new.sex.age)
-    }
-    if (correct.prevalence.to.county.level)
-    {
-        if (verbose)
-            print("Correcting Prevalence to Aggregate County-Level Data")
-
-        prevalence.names.to.correct = names(rv)[grepl('prevalence.', names(rv))]
-
-        for (name in prevalence.names.to.correct)
-            rv[[name]] = correct.array.to.total(to.correct = rv[[name]],
-                                                target.to = msa.by.county$prevalence.all,
-                                                backup.1 = rv$prevalence.sex,
-                                                backup.2 = rv$prevalence.race,
-                                                backup.3 = rv$prevalence.risk,
-                                                backup.4 = rv$prevalence.sex.age)
-    }
-
-
-
-    if (1==2) #not doing this anymore
-    {
-        if (verbose)
-            print("Plugging in Aggregate County-Level Data")
-        old.new.all = rv$new.all
-        old.new.years = dimnames(old.new.all)['year']
-        old.prev.all = rv$prevalence.all
-        old.prev.years = dimnames(old.prev.all)['year']
-
-        rv$new.all = msa.by.county$new.all
-        rv$prevalence.all = msa.by.county$prevalence.all
-
-        rv$new.all[old.new.years,][!is.na(old.new.all)] = old.new.all[!is.na(old.new.all)]
-        rv$prevalence.all[old.prev.years,][!is.na(old.prev.all)] = old.prev.all[!is.na(old.prev.all)]
-    }
-
     #-- AIDS DIAGNOSES --#
     old.aids.diagnoses = read.aids.diagnoses(file.path(dir, 'aids_diagnoses_pre_2002.txt'))
     move.from.new.to.aids.years = dimnames(rv$new.all)[['year']][as.numeric(dimnames(rv$new.all)[['year']])<first.total.new.year]
     aids.years = sort(union(dimnames(old.aids.diagnoses)[['year']], move.from.new.to.aids.years))
     aids.locations = sort(union(dimnames(old.aids.diagnoses)[['location']], dimnames(rv$new.all)[['location']]))
-    
+
     dim.names = list(year=aids.years, location=aids.locations)
     rv$aids.diagnoses.all = array(as.numeric(NA), dim=sapply(dim.names, length), dimnames=dim.names)
     
@@ -875,6 +829,54 @@ read.msa.surveillance <- function(dir='../data2/HIV_Surveillance/by_msa',
 
 
     #-- RETURN IT --#
+    rv
+}
+
+correct.to.county.totals <- function(rv,
+                                     correct.new.to.county.level=T,
+                                     correct.prevalence.to.county.level=T,
+                                     county.file='../data2/HIV_Surveillance/by_county.csv',
+                                     verbose=T)
+{
+    rv$params$correct.new.to.county.level=correct.new.to.county.level
+    rv$params$correct.prevalence.to.county.level=correct.prevalence.to.county.level
+    
+    #-- AGGREGATED COUNTY-LEVEL TOTALS --#
+    all.codes = dimnames(rv$new.all)[['location']]
+    if (correct.new.to.county.level || correct.prevalence.to.county.level)
+        msa.by.county = read.total.msa.data.from.counties(county.file = county.file,
+                                                          msas=as.character(all.codes))
+    if (correct.new.to.county.level)
+    {
+        if (verbose)
+            print("Correcting New Diagnoses to Aggregate County-Level Data")
+        
+        new.names.to.correct = names(rv)[grepl('new.', names(rv))]
+        
+        for (name in new.names.to.correct)
+            rv[[name]] = correct.array.to.total(to.correct = rv[[name]],
+                                                target.to = msa.by.county$new.all,
+                                                backup.1 = rv$new.sex,
+                                                backup.2 = rv$new.race,
+                                                backup.3 = rv$new.risk,
+                                                backup.4 = rv$new.sex.age)
+    }
+    if (correct.prevalence.to.county.level)
+    {
+        if (verbose)
+            print("Correcting Prevalence to Aggregate County-Level Data")
+        
+        prevalence.names.to.correct = names(rv)[grepl('prevalence.', names(rv))]
+        
+        for (name in prevalence.names.to.correct)
+            rv[[name]] = correct.array.to.total(to.correct = rv[[name]],
+                                                target.to = msa.by.county$prevalence.all,
+                                                backup.1 = rv$prevalence.sex,
+                                                backup.2 = rv$prevalence.race,
+                                                backup.3 = rv$prevalence.risk,
+                                                backup.4 = rv$prevalence.sex.age)
+    }
+    
     rv
 }
 
@@ -952,12 +954,12 @@ read.aids.diagnoses <- function(file='../data2/HIV_Surveillance/by_msa/aids_diag
     df = df[!is.na(df$code),]
     df$Year.Reported = as.character(df$Year.Reported)
     df$Year.Reported[df$Year.Reported=='Before 1982'] = '1981'
-    
+  
     dim.names = list(year = sort(unique(df$Year.Reported)), location=unique(df$code))
     rv = array(0, dim=sapply(dim.names, length), dimnames=dim.names)
     
     for (i in 1:dim(df)[1])
-        rv[df$Year.Reported[i], df$code[i]] = df$Cases[i]
+        rv[df$Year.Reported[i], df$code[i]] = rv[df$Year.Reported[i], df$code[i]] + df$Cases[i]
     
     rv
 }

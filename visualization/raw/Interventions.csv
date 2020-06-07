@@ -1,0 +1,4 @@
+"id","description","target_population","suppressed_proportion","prep.coverage","testing_frequency"
+"0","No Intervention",NA,NA,NA,NA
+"1","Young Black MSM: testing 1/yr, 0.9 suppressed, 0.25 PrEP","Young Black MSM",0.9,0.25,1
+"2","All MSM or IDU: testing 1/yr, 0.8 suppressed, 0.5 PrEP","All MSM or IDU",0.8,0.5,1
