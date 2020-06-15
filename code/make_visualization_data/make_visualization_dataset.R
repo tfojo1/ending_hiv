@@ -44,7 +44,6 @@ if (1==2)
         
     epi.df = make.epi.data.df(msa.surveillance, locations = LOCATIONS)
     
-    intervention.key = make.intervention.key(interventions)
     location.key = make.location.key(LOCATIONS)
     
     
@@ -405,42 +404,46 @@ make.epi.data.df <- function(surv,
               #  print(elem.name)
                 
                 elem = surv[[elem.name]]
-                if (length(dim(elem))==2)
+                
+                if (any(location == dimnames(elem)[['location']]))
                 {
-                    data = elem[,location]
-                    dim(data) = dim(elem)[1]
-                    dimnames(data) = dimnames(elem)[1]
+                    if (length(dim(elem))==2)
+                    {
+                        data = elem[,location]
+                        dim(data) = dim(elem)[1]
+                        dimnames(data) = dimnames(elem)[1]
+                    }
+                    else if (length(dim(elem))==3)
+                        data = elem[,location,]
+                    else if (length(dim(elem))==4)
+                        data = elem[,location,,]
+                    else if (length(dim(elem))==5)
+                        data = elem[,location,,,]
+                    else if (length(dim(elem))==6)
+                        data = elem[,location,,,,]
+                    else
+                        stop("The elements of surv must have 2-6 dimensions")
+                    
+                    one.df = melt(data)
+                    one.df = one.df[!is.na(one.df$value),]
+                    
+                    if (all(names(one.df)!='sex'))
+                        one.df$sex = 'all'
+                    if (all(names(one.df)!='risk'))
+                        one.df$risk = 'all'
+                    if (all(names(one.df)!='race'))
+                        one.df$race = 'all'
+                    if (all(names(one.df)!='age'))
+                        one.df$age = 'all'
+                  
+                    one.df$location_code = as.character(location)
+                    one.df$data_type = DATA.TYPE.NAMES[data.type]
+                    
+                    if (is.null(df))
+                        df = one.df
+                    else
+                        df = rbind(df, one.df[,names(df)])
                 }
-                else if (length(dim(elem))==3)
-                    data = elem[,location,]
-                else if (length(dim(elem))==4)
-                    data = elem[,location,,]
-                else if (length(dim(elem))==5)
-                    data = elem[,location,,,]
-                else if (length(dim(elem))==6)
-                    data = elem[,location,,,,]
-                else
-                    stop("The elements of surv must have 2-6 dimensions")
-                
-                one.df = melt(data)
-                one.df = one.df[!is.na(one.df$value),]
-                
-                if (all(names(one.df)!='sex'))
-                    one.df$sex = 'all'
-                if (all(names(one.df)!='risk'))
-                    one.df$risk = 'all'
-                if (all(names(one.df)!='race'))
-                    one.df$race = 'all'
-                if (all(names(one.df)!='age'))
-                    one.df$age = 'all'
-              
-                one.df$location_code = as.character(location)
-                one.df$data_type = DATA.TYPE.NAMES[data.type]
-                
-                if (is.null(df))
-                    df = one.df
-                else
-                    df = rbind(df, one.df[,names(df)])
             }
         }
     }
