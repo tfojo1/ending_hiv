@@ -46,6 +46,17 @@ get.diagnosed.ar.estimate <- function(surv=state.surveillance)
     fit$working.correlation[2,1]
 }
 
+get.diagnosed.cvs <- function(location=BALTIMORE.MSA,
+                              surv=state.surveillance,
+                              years=NULL)
+{
+    dd = get.diagnosed.means.and.sds(location=location,
+                                     surv=surv,
+                                     years=years)
+    
+    dd$sds/dd$means
+}
+
 get.diagnosed.means.and.sds <- function(location=BALTIMORE.MSA,
                               surv=state.surveillance,
                               years=NULL)

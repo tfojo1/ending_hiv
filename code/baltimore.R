@@ -3,7 +3,7 @@
 ##-- BALTIMORE CODES --##
 ##---------------------##
 
-source('code/data_managers/locale_mappings.R')
+#source('code/data_managers/locale_mappings.R')
 BALTIMORE.CITY = 24510
 BALTIMORE.MSA = msa.for.county(BALTIMORE.CITY)
 BALTIMORE.MSA.COUNTIES = counties.for.msa(BALTIMORE.MSA)
@@ -34,7 +34,7 @@ if (1==2)
 
     save(BALTIMORE.POPULATION, BALTIMORE.POPULATION.CDC, BALTIMORE.POPULATION.TOTALS, file='../code/cached/baltimore.population.Rdata')
 }
-load('../code/cached/baltimore.population.Rdata')
+load('code/cached/baltimore.population.Rdata')
 
 #https://phpa.health.maryland.gov/OIDEOR/CHSE/Shared%20Documents/Baltimore-City.pdf
 BALTIMORE.OLDER.NEW.DX = data.frame(year=1985:2011,

@@ -1,5 +1,9 @@
-#source('../code/data_managers/locale_mappings.R')
-#source('../code/setup/setup_helpers.R')
+
+source('code/targets/target_msas.R')
+
+##-----------------##
+##-- THE GETTERS --##
+##-----------------##
 
 get.surveillance.data <- function(surv=msa.surveillance,
                                   location.codes=BALTIMORE.MSA,
@@ -15,9 +19,10 @@ get.surveillance.data <- function(surv=msa.surveillance,
                                   throw.error.if.missing.data=T)
 {
     #Check the data.type argument
-    ALLOWED.DATA.TYPES = c('prevalence','new','mortality','diagnosed',
-                           'estimated.prevalence', 'estimated.prevalence.ci.lower',
-                           'estimated.prevalence.ci.upper', 'estimated.prevalence.rse',
+    ALLOWED.DATA.TYPES = c('prevalence','new','mortality',
+                           'diagnosed','diagnosed.ci.lower','diagnosed.ci.upper',
+                           'suppression','suppression.ci.lower','suppression.ci.upper',
+                           'estimated.prevalence', 'estimated.prevalence.ci.lower','estimated.prevalence.ci.upper', 'estimated.prevalence.rse',
                            'cumulative.aids.mortality', 'aids.diagnoses')
     if (all(data.type!=ALLOWED.DATA.TYPES))
         stop(paste0("data.type must be one of: ",
@@ -158,129 +163,35 @@ has.location.surveillance <- function(surv, location)
     }))
 }
 
-
-get.surveillance.data.rate <- function(surv,
-                                       location.codes,
-                                       years=NULL,
-                                       data.type=c('new', 'prevalence','mortality')[1],
-                                       age=F,
-                                       race=F,
-                                       sex=F,
-                                       aggregate.years=F,
-                                       census)
+get.total.diagnosed <- function(msa.code,
+                                msa.surveillance,
+                                state.surveillance)
 {
-    numerators = get.surveillance.data(surv, location.codes=location.codes,
-                                       years=years, data.type=data.type,
-                                       age=age, race=race, sex=sex,
-                                       aggregate.locations=T,
-                                       aggregate.years=aggregate.years)
-
-    years = attr(numerators, 'years')
-
-    denominators = get.census.data(census, years=years,
-                                   fips=counties.for.msa(location.codes),
-                                   aggregate.counties = T,
-                                   aggregate.years = aggregate.years,
-                                   aggregate.ages=!age,
-                                   aggregate.races=!race,
-                                   aggregate.sexes=!sex)
-
-    if (!is.null(dim(denominators)))
-        denominators = apply(denominators, names(dimnames(numerators)), function(x){x})
-
-    numerators / denominators
+    
 }
 
-aggregate.surveillance.race.as.bho <- function(surv,
-                                               ignore.na.races=c('american_indian_or_alaska_native', 'asian'))
-{
-    lapply(surv, function(elem){
+##---------------------------##
+##-- READ MSA SURVEILLANCE --##
+##---------------------------##
 
-        if (any(names(dim(elem))=='race'))
-        {
-            new.dim.names = dimnames(elem)
-            new.dim.names[['race']] = c('black','hispanic','other')
 
-            rv = array(0, dim=sapply(new.dim.names, length), dimnames=new.dim.names)
-            for (race in dimnames(elem)[['race']])
-            {
-                if (any(new.dim.names[['race']] == race) && race != 'other')
-                    access(rv, race=race) = access(elem, race=race)
-                else
-                {
-                    other.race = access(elem, race=race)
-                    if (any(race==ignore.na.races))
-                        other.race[is.na(other.race)] = 0
-                    access(rv, race='other') = access(rv, race='other') + other.race
-                }
-            }
-
-            rv
-        }
-        else
-            elem
-    })
-}
-
-aggregate.surveillance.other.risk.as.heterosexual <- function(surv)
-{
-    lapply(surv, function(elem){
-        if (any(names(dim(elem))=='risk') && any(dimnames(elem)[['risk']] == 'other'))
-        {
-            new.risk.dim.names = setdiff(dimnames(elem)[['risk']], 'other')
-
-            rv = access(elem, risk=new.risk.dim.names)
-            
-            other.risk = access(elem, risk='other')
-            other.risk[is.na(other.risk)] = 0
-            
-            access(rv, risk='heterosexual') = access(rv, risk='heterosexual') + other.risk
-
-            rv
-        }
-        else
-            elem
-    })
-}
-
-#pull out a location subset
-subset.surveillance <- function(surv, codes)
-{
-    codes = as.character(codes)
-    lapply(surv, function(elem){
-        if (length(dim(elem))==2)
-            elem[,codes]
-        else if (length(dim(elem))==3)
-            elem[,codes,]
-        else if (length(dim(elem))==4)
-            elem[,codes,,]
-        else
-            stop("The subset.surveillance function is currently only set up to handle components with 2, 3, or 4 dimensions")
-    })
-}
-
-read.msa.surveillance <- function(dir='../data2/HIV_Surveillance/by_msa',
+read.msa.surveillance <- function(dir='cleaned_data/',
                                   use.adjusted.estimate=F,
-                                  county.file='../data2/HIV_Surveillance/by_county.csv',
                                   first.total.prevalence.year=2007,
                                   first.total.new.year=2008,
                                   include.children.in.prevalence=F,
                                   verbose=F)
 {
     #-- READ IN FILES --#
-    sub.dirs = list.dirs(dir)
+    sub.dirs = list.dirs(file.path(dir, 'hiv_surveillance/msa/msa_surveillance_reports'))
 
     filenames.full = unlist(sapply(sub.dirs, list.files, include.dirs=F, no..=T, pattern='.csv$', full.names=T))
     filenames = unlist(sapply(sub.dirs, list.files, include.dirs=F, no..=T, pattern='.csv$'))
 
-    remove = filenames == 'state_diagnosed_data.csv' | grepl('ryan_white', filenames)
-    filenames = filenames[!remove]
-    filenames.full = filenames.full[!remove]
-
     is.total = grepl('total', filenames)
 
-#    dfs = lapply(filenames.full, read.msa.file, verbose=verbose)
     dfs = lapply(1:length(filenames.full), function(i){
+#        print(paste0('Reading ', filenames.full[i]))
         read.msa.file(filenames.full[i], allow.misses = is.total[i], verbose=verbose)
     })
     all.codes = unique(unlist(lapply(dfs, function(df){df$code})))
@@ -764,15 +675,13 @@ read.msa.surveillance <- function(dir='../data2/HIV_Surveillance/by_msa',
     }
 
     #Cumulative AIDS Mortality
-    rv$cumulative.aids.mortality.sex.race.risk = read.cum.aids.mortality(file=file.path(dir, 'msa_mortality_pre_2000.txt'))
+    rv$cumulative.aids.mortality.sex.race.risk = read.cum.aids.mortality(file=file.path(dir, 'hiv_surveillance/msa/aids_mortality_pre_2000.txt'))
     dim.names = c(list(year='2000'), dimnames(rv$cumulative.aids.mortality.sex.race.risk))
     dim(rv$cumulative.aids.mortality.sex.race.risk) = sapply(dim.names, length)
     dimnames(rv$cumulative.aids.mortality.sex.race.risk) = dim.names
     
     
     #-- AGGREGATE FOR THE TOTAL POPULATION NUMBERS and AGE, RACE, RISK --#
-#    rv$new.all = apply(rv$new.sex, c('year','location'), sum)
-#    rv$prevalence.all = apply(rv$prevalence.sex, c('year','location'), sum)
     rv$mortality.all = apply(rv$mortality.sex, c('year','location'), sum)
 
     rv$new.age = apply(rv$new.sex.age, c('year','location','age'), sum)
@@ -795,7 +704,7 @@ read.msa.surveillance <- function(dir='../data2/HIV_Surveillance/by_msa',
                                    'risk')
 
     #-- AIDS DIAGNOSES --#
-    old.aids.diagnoses = read.aids.diagnoses(file.path(dir, 'aids_diagnoses_pre_2002.txt'))
+    old.aids.diagnoses = read.aids.diagnoses(file.path(dir, 'hiv_surveillance/msa/aids_diagnoses_pre_2002.txt'))
     move.from.new.to.aids.years = dimnames(rv$new.all)[['year']][as.numeric(dimnames(rv$new.all)[['year']])<first.total.new.year]
     aids.years = sort(union(dimnames(old.aids.diagnoses)[['year']], move.from.new.to.aids.years))
     aids.locations = sort(union(dimnames(old.aids.diagnoses)[['location']], dimnames(rv$new.all)[['location']]))
@@ -813,141 +722,237 @@ read.msa.surveillance <- function(dir='../data2/HIV_Surveillance/by_msa',
     
     rv$new.all[move.from.new.to.aids.years,] = NA
 
-    #-- READ STATE-LEVEL PROPORTION DIAGNOSED --#
-    state.diagnoses = read.state.diagnoses(paste0(dir, '/state_diagnosed_data.csv'))
-    dim.names = list(year=dimnames(state.diagnoses)[['year']], location=dimnames(rv$new.all)[['location']])
-    rv$diagnosed.all = array(NA, dim=sapply(dim.names, length), dimnames=dim.names)
-    for (msa in dim.names[['location']])
-    {
-        states = intersect(states.for.msa(division.to.msa(msa)), dimnames(state.diagnoses)[['location']])
-
-        if (length(states)==1)
-            rv$diagnosed.all[,msa] = state.diagnoses[,states]
-        else if (length(states)>1)
-            rv$diagnosed.all[,msa] = rowMeans(state.diagnoses[,states], na.rm = T)
-    }
-
 
     #-- RETURN IT --#
     rv
 }
 
-correct.to.county.totals <- function(rv,
-                                     correct.new.to.county.level=T,
-                                     correct.prevalence.to.county.level=T,
-                                     county.file='../data2/HIV_Surveillance/by_county.csv',
-                                     verbose=T)
+add.all.local.msa.data <- function(surv,
+                                   dir='cleaned_data')
 {
-    rv$params$correct.new.to.county.level=correct.new.to.county.level
-    rv$params$correct.prevalence.to.county.level=correct.prevalence.to.county.level
+    surv = add.local.data.one.location(surv,
+                                       location=LA.MSA,
+                                       total.file=file.path(dir, 'continuum/msa/total/LA.csv'),
+                                       stratified.file=file.path(dir, 'continuum/msa/stratified/LA.csv'))
     
-    #-- AGGREGATED COUNTY-LEVEL TOTALS --#
-    all.codes = dimnames(rv$new.all)[['location']]
-    if (correct.new.to.county.level || correct.prevalence.to.county.level)
-        msa.by.county = read.total.msa.data.from.counties(county.file = county.file,
-                                                          msas=as.character(all.codes))
-    if (correct.new.to.county.level)
-    {
-        if (verbose)
-            print("Correcting New Diagnoses to Aggregate County-Level Data")
-        
-        new.names.to.correct = names(rv)[grepl('new.', names(rv))]
-        
-        for (name in new.names.to.correct)
-            rv[[name]] = correct.array.to.total(to.correct = rv[[name]],
-                                                target.to = msa.by.county$new.all,
-                                                backup.1 = rv$new.sex,
-                                                backup.2 = rv$new.race,
-                                                backup.3 = rv$new.risk,
-                                                backup.4 = rv$new.sex.age)
-    }
-    if (correct.prevalence.to.county.level)
-    {
-        if (verbose)
-            print("Correcting Prevalence to Aggregate County-Level Data")
-        
-        prevalence.names.to.correct = names(rv)[grepl('prevalence.', names(rv))]
-        
-        for (name in prevalence.names.to.correct)
-            rv[[name]] = correct.array.to.total(to.correct = rv[[name]],
-                                                target.to = msa.by.county$prevalence.all,
-                                                backup.1 = rv$prevalence.sex,
-                                                backup.2 = rv$prevalence.race,
-                                                backup.3 = rv$prevalence.risk,
-                                                backup.4 = rv$prevalence.sex.age)
-    }
-    
-    rv
+    surv
 }
 
-#uses backups to calculate scaling factor if there are some NAs in target.to
-correct.array.to.total <- function(to.correct,
-                                   target.to,
-                                   backup.1=NULL,
-                                   backup.2=NULL,
-                                   backup.3=NULL,
-                                   backup.4=NULL)
+add.local.data.one.location <- function(surv,
+                                        location,
+                                        total.file=NULL,
+                                        stratified.file=NULL)
 {
-    # Set up our access indices and dimension names
-    to.correct.years = intersect(dimnames(to.correct)[['year']], dimnames(target.to)[['year']])
-    to.correct.locations = intersect(dimnames(to.correct)[['location']], dimnames(target.to)[['location']])
-    orig.dim = dim(to.correct)
-    orig.dim.names = dimnames(to.correct)
-    dim(to.correct) = c(dim(to.correct)[1:2], prod(dim(to.correct))/prod(dim(to.correct)[1:2]))
-    dimnames(to.correct) = c(orig.dim.names[1:2], list(NULL))
-
-    # Set up correct factors
-    to.correct.totals = rowSums(to.correct, dims=2)[to.correct.years, to.correct.locations]
-    correct.factor = target.to[to.correct.years, to.correct.locations] / to.correct.totals
-    if (!is.null(backup.1) && any(is.na(correct.factor)))
-        correct.factor[is.na(correct.factor)] = target.to[to.correct.years, to.correct.locations][is.na(correct.factor)] /
-                                                rowSums(backup.1, dims=2)[to.correct.years, to.correct.locations][is.na(correct.factor)]
-    if (!is.null(backup.2) && any(is.na(correct.factor)))
-        correct.factor[is.na(correct.factor)] = target.to[to.correct.years, to.correct.locations][is.na(correct.factor)] /
-                                                rowSums(backup.2, dims=2)[to.correct.years, to.correct.locations][is.na(correct.factor)]
-    if (!is.null(backup.3) && any(is.na(correct.factor)))
-        correct.factor[is.na(correct.factor)] = target.to[to.correct.years, to.correct.locations][is.na(correct.factor)] /
-                                                rowSums(backup.3, dims=2)[to.correct.years, to.correct.locations][is.na(correct.factor)]
-    if (!is.null(backup.4) && any(is.na(correct.factor)))
-        correct.factor[is.na(correct.factor)] = target.to[to.correct.years, to.correct.locations][is.na(correct.factor)] /
-        rowSums(backup.4, dims=2)[to.correct.years, to.correct.locations][is.na(correct.factor)]
-
-    # Make the correction
-    corrected = to.correct
-    corrected[to.correct.years, to.correct.locations, ] = as.numeric(correct.factor) *
-        as.numeric(to.correct[to.correct.years, to.correct.locations, ])
-
-    # Reset original dims
-    dim(corrected) = orig.dim
-    dimnames(corrected) = orig.dim.names
-
-    corrected
+    # Read stratified file    
+    if (!is.null(stratified.file))
+    {
+        COL.NAME.MAPPING = c(Data_Type='data.type',
+                             Year='year',
+                             Total='total',
+                             Black='black',
+                             Hispanic='hispanic',
+                             Other='other',
+                             Male='male',
+                             Female='female',
+                             '13-24'='13-24 years',
+                             '25-34'='25-34 years',
+                             '35-44'='35-44 years',
+                             '45-54'='45-54 years',
+                             '55+'='55+ years',
+                             MSM='msm',
+                             IDU='idu',
+                             'MSM+IDU'='msm_idu',
+                             Heterosexual='heterosexual',
+                             Months='months')
+        
+        REQUIRED.FOR.STRATIFIED = COL.NAME.MAPPING[4:(length(COL.NAME.MAPPING)-1)]
+        
+        df = read.csv(stratified.file, stringsAsFactors = F, header = F)
+        col.names = df[,1]
+        if (length(setdiff(col.names, names(COL.NAME.MAPPING)))>1)
+            stop(paste0("Invalid Row Names in file '", file, "': ",
+                        paste0("'", setdiff(col.names, names(COL.NAME.MAPPING)), "'", collapse=', ')))
+        df = as.data.frame(t(df[,-1]), stringsAsFactors = F)
+        dimnames(df)[[2]]=COL.NAME.MAPPING[col.names]
+        
+        for (col in 2:dim(df)[2])
+            df[,col] = as.numeric(as.character(df[,col]))
+        
+        if (any(df$data.type=='aware' | df$data.type=='suppressed'))
+        {
+            df = df[df$data.type=='aware' | df$data.type=='suppressed',]
+            for (i in 1:dim(df)[1])
+            {
+                if (df$data.type[i]=='aware')
+                    data.type = 'diagnosed'
+                else
+                    data.type = 'suppression'
+                
+                if (any(!is.na(df[i,c('female','male')])))
+                    surv = add.surveillance.data(surv,
+                                                 data.type=data.type,
+                                                 location=location,
+                                                 years=df$year[i],
+                                                 values=df[i,c('female','male')],
+                                                 by.sex=T)
+                
+                if (any(!is.na(df[i,c('black','hispanic','other')])))
+                    surv = add.surveillance.data(surv,
+                                                 data.type=data.type,
+                                                 location=location,
+                                                 years=df$year[i],
+                                                 values=df[i,c('black','hispanic','other')],
+                                                 by.race=T)
+                
+                if (any(!is.na(df[i,c('msm','idu','msm_idu','heterosexual')])))
+                    surv = add.surveillance.data(surv,
+                                                 data.type=data.type,
+                                                 location=location,
+                                                 years=df$year[i],
+                                                 values=df[i,c('msm','idu','msm_idu','heterosexual')],
+                                                 by.risk=T)
+                
+                if (any(!is.na(df[i,c('13-24 years','25-34 years','35-44 years','45-54 years','55+ years')])))
+                    surv = add.surveillance.data(surv,
+                                                 data.type=data.type,
+                                                 location=location,
+                                                 years=df$year[i],
+                                                 values=df[i,c('13-24 years','25-34 years','35-44 years','45-54 years','55+ years')],
+                                                 by.age=T)
+                
+                if (!is.na(df[i,'total']))
+                    surv = add.surveillance.data(surv,
+                                                  data.type=data.type,
+                                                  location=location,
+                                                  years=df$year[i],
+                                                  values=df[i,'total'])
+            }
+        }
+    }
+    
+    #Read total file
+    if (!is.null(total.file))
+    {
+        df = read.csv(total.file, stringsAsFactors = F)
+        if (any(names(df)=='aware'))
+            surv = add.surveillance.data(surv,
+                                  data.type='diagnosed',
+                                  location=location,
+                                  years=df[,1],
+                                  values=df$aware)
+        if (any(names(df)=='suppressed'))
+            surv = add.surveillance.data(surv,
+                                  data.type='suppression',
+                                  location=location,
+                                  years=df[,1],
+                                  values=df$suppressed)
+    }
+    
+    surv
 }
 
-#note = arr1 must have other as race, arr2 can have asian + american_indian
-max.marginal.sum <- function(arr1, arr2, keep=c('race','risk'))
+add.surveillance.data <- function(surv,
+                                  data.type,
+                                  location,
+                                  years,
+                                  values,
+                                  by.race=F,
+                                  by.age=F,
+                                  by.sex=F,
+                                  by.risk=F)
 {
-    rv = apply(arr1, c('year','location', keep), sum)
-    summed.2 = apply(arr2, c('year', 'location', keep), sum)
-
-    arr1.2d = rowSums(rv, dims=2)
-    arr2.2d = rowSums(summed.2, dims=2)
-
-    replace.mask = is.na(arr1.2d) | (!is.na(arr1.2d) & !is.na(arr2.2d) & arr2.2d>arr1.2d)
-
-    for (value in dimnames(rv)[[keep]])
+    years = as.character(years)
+    location = as.character(location)
+    
+    if (by.race)
     {
-        if (keep=='race' && value=='other' && any(dimnames(summed.2)[['race']]=='asian'))
-            rv[,,value][replace.mask] = summed.2[,,'asian'][replace.mask] +
-                summed.2[,,'american_indian_or_alaska_native'][replace.mask]
+        data.name = paste0(data.type, '.race')
+        to.add.dim.names = list(year=as.character(years), location=location, 
+                                race=c('black','hispanic','other'))
+    }
+    else if (by.age)
+    {
+        data.name = paste0(data.type, '.age')
+        to.add.dim.names = list(year=as.character(years), location=location, 
+                                age=c('13-24 years','25-34 years','35-44 years','45-54 years','55+ years'))
+    }
+    else if (by.sex)
+    {
+        data.name = paste0(data.type, '.sex')
+        to.add.dim.names = list(year=as.character(years), location=location, 
+                                sex=c('female','male'))
+    }
+    else if (by.risk)
+    {
+        data.name = paste0(data.type, '.risk')
+        to.add.dim.names = list(year=as.character(years), location=location, 
+                                risk=c('msm','idu','msm_idu','heterosexual'))
+    }
+    else
+    {
+        data.name = paste0(data.type, '.all')
+        to.add.dim.names = list(year=as.character(years), location=location)
+    }
+    
+    if (by.race || by.sex || by.age || by.risk)
+    {
+        if (is.null(dim(values)))
+        {
+            if (length(years)==1)
+                values = as.numeric(values[to.add.dim.names[[3]]])
+            else
+                stop("'values' must have two dimensions")
+        }
+        else if (length(years)==1)
+            values = as.numeric(values[1, to.add.dim.names[[3]]])
         else
-            rv[,,value][replace.mask] = summed.2[,,value][replace.mask]
+            values = as.numeric(values[as.character(years), to.add.dim.names[[3]]])
     }
+    else
+    {
+        if (!is.null(names(values)))
+            values = as.numeric(values[as.character(years)])
+    }
+    
+    dim(values) = sapply(to.add.dim.names, length)
+    dimnames(values) = to.add.dim.names
 
-    rv
+    old.values = surv[[data.name]]
+    if (is.null(old.values))
+        new.dim.names = to.add.dim.names
+    else
+    {
+        old.dim.names = new.dim.names = dimnames(old.values)
+        if (length(setdiff(to.add.dim.names[['year']], old.dim.names[['year']]))>0)
+            new.dim.names[['year']] = sort(union(old.dim.names[['year']],
+                                                     to.add.dim.names[['year']]))
+        if (length(setdiff(to.add.dim.names[['location']], old.dim.names[['location']]))>0)
+            new.dim.names[['location']] = union(old.dim.names[['location']],
+                                                    to.add.dim.names[['location']])
+    }
+    
+    surv[[data.name]] = array(as.numeric(NA),
+                              dim=sapply(new.dim.names, length),
+                              dimnames=new.dim.names)
+    
+    if (by.race || by.sex || by.age || by.risk)
+    {
+        if (!is.null(old.values))
+            surv[[data.name]][old.dim.names[['year']], old.dim.names[['location']],] = old.values[old.dim.names[['year']], old.dim.names[['location']],]
+        surv[[data.name]][as.character(years), location,] = values[as.character(years), location,]
+    }
+    else
+    {
+        if (!is.null(old.values))
+            surv[[data.name]][old.dim.names[['year']], old.dim.names[['location']]] = old.values[old.dim.names[['year']], old.dim.names[['location']]]
+        surv[[data.name]][as.character(years), location] = values[as.character(years), location]
+    }
+    
+    surv
 }
 
-read.aids.diagnoses <- function(file='../data2/HIV_Surveillance/by_msa/aids_diagnoses_pre_2002.txt')
+
+read.aids.diagnoses <- function(file='../data2/alt_Surveillance/by_msa/aids_diagnoses_pre_2002.txt')
 {
     df = read.table(file, sep='\t', stringsAsFactors = F, header = T)
     df$code = cbsa.for.msa.name(df$Location)
@@ -1100,59 +1105,277 @@ read.msa.file <- function(file, verbose=T, allow.misses=F)
     df
 }
 
-map.state.abbreviations <- function(msa.strings)
+
+read.total.msa.data.from.counties <- function(msas,
+                                              county.file='../data2/HIV_Surveillance/by_county.csv',
+                                              ignore.missing=T)
 {
-    state.regex = '(^.*,) *(.+)$'
-    state.mask = grepl(state.regex, msa.strings) & !grepl('populatio', msa.strings) &
-        !grepl('^.*, .*-.*$', msa.strings)
-
-    unabbreviated.states = gsub(state.regex, '\\2', msa.strings[state.mask])
-
-    matched.states = robust.match.state.name(unabbreviated.states)
-
-    rv = msa.strings
-    rv[state.mask] = paste0(gsub(state.regex, '\\1 ', rv[state.mask]), matched.states)
-
-
+    NEW.INDICATOR = 'HIV diagnoses'
+    PREV.INDICATOR = 'HIV prevalence'
+    
+    df = read.csv(county.file, stringsAsFactors = F)
+    df$msa = msa.for.county(df$FIPS)
+    df = df[!is.na(df$msa),]
+    df$Cases[df$Cases=='Data suppressed'] = NA
+    df$Cases = gsub(",", "", df$Cases)
+    df$Cases = as.numeric(df$Cases)
+    
+    new.years = as.character(unique(df$Year[df$Indicator==NEW.INDICATOR]))
+    prev.years = as.character(unique(df$Year[df$Indicator==PREV.INDICATOR]))
+    
+    new.dim.names = list(year=new.years, location=msas)
+    prev.dim.names = list(year=prev.years, location=msas)
+    
+    rv = list()
+    rv$new.all = array(as.numeric(-1), dim=sapply(new.dim.names, length), dimnames=new.dim.names)
+    rv$prevalence.all = array(as.numeric(-1), dim=sapply(prev.dim.names, length), dimnames=prev.dim.names)
+    
+    for (msa in msas)
+    {
+        msa.counties = as.integer(counties.for.msa.or.division(msa))
+        msa.df = df[sapply(df$FIPS, function(one.fips){any(one.fips==msa.counties)}),]
+        
+        if (dim(msa.df)[1]>0)
+        {
+            for (i in 1:dim(msa.df)[1])
+            {
+                if (msa.df$Indicator[i]==NEW.INDICATOR)
+                    dataset.name = 'new.all'
+                else if (msa.df$Indicator[i]==PREV.INDICATOR)
+                    dataset.name = 'prevalence.all'
+                else
+                    dataset.name = NULL
+                
+                if (!is.null(dataset.name) &&
+                    (!ignore.missing || !is.na(msa.df$Cases[i])))
+                {
+                    year = as.character(msa.df$Year[i])
+                    rv[[dataset.name]][year,msa] = rv[[dataset.name]][year,msa] + msa.df$Cases[i]
+                }
+            }
+        }
+    }
+    
+    rv$new.all[rv$new.all<0] = NA
+    rv$prevalence.all[rv$prevalence.all<0] = NA
+    
+    rv$new.all = rv$new.all+1
+    rv$prevalence.all = rv$prevalence.all+1
+    
     rv
 }
 
-read.state.diagnoses <- function(file)
+##---------------------------------##
+##-- POST-PROCESSING AGGREGATORS --##
+##---------------------------------##
+
+aggregate.surveillance.race.as.bho <- function(surv,
+                                               ignore.na.races=c('american_indian_or_alaska_native', 'asian'))
 {
-    df = read.csv(file, stringsAsFactors = F)
-    regex = '([0-9]+\\.*[0-9]*) \\(.*'
-    pct = rep(NA, dim(df)[1])
-    matches = grepl(regex, df[,4])
+    lapply(surv, function(elem){
+        
+        if (any(names(dim(elem))=='race'))
+        {
+            new.dim.names = dimnames(elem)
+            new.dim.names[['race']] = c('black','hispanic','other')
+            
+            rv = array(0, dim=sapply(new.dim.names, length), dimnames=new.dim.names)
+            for (race in dimnames(elem)[['race']])
+            {
+                if (any(new.dim.names[['race']] == race) && race != 'other')
+                    access(rv, race=race) = access(elem, race=race)
+                else
+                {
+                    other.race = access(elem, race=race)
+                    if (any(race==ignore.na.races))
+                        other.race[is.na(other.race)] = 0
+                    access(rv, race='other') = access(rv, race='other') + other.race
+                }
+            }
+            
+            rv
+        }
+        else
+            elem
+    })
+}
 
-    pct[matches] = as.numeric(gsub(regex, '\\1', df[matches,4]))
-    years = as.character(df$Year)
-    states = state.name.to.abbreviation(df$Geography)
+aggregate.surveillance.other.risk.as.heterosexual <- function(surv)
+{
+    lapply(surv, function(elem){
+        if (any(names(dim(elem))=='risk') && any(dimnames(elem)[['risk']] == 'other'))
+        {
+            new.risk.dim.names = setdiff(dimnames(elem)[['risk']], 'other')
+            
+            rv = access(elem, risk=new.risk.dim.names)
+            
+            other.risk = access(elem, risk='other')
+            other.risk[is.na(other.risk)] = 0
+            
+            access(rv, risk='heterosexual') = access(rv, risk='heterosexual') + other.risk
+            
+            rv
+        }
+        else
+            elem
+    })
+}
 
-    dim.names = list(year=sort(unique(years)), location=unique(states))
-    rv = array(NA, dim=sapply(dim.names, length), dimnames=dim.names)
 
-    for (i in 1:length(pct))
-        rv[as.character(years[i]), states[i]] = pct[i]/100
+##-------------------------##
+##-- CORRECTING TO TOTAL --##
+##-------------------------##
 
+
+correct.to.county.totals <- function(rv,
+                                     correct.new.to.county.level=T,
+                                     correct.prevalence.to.county.level=T,
+                                     county.file='../data2/HIV_Surveillance/by_county.csv',
+                                     verbose=T)
+{
+    rv$params$correct.new.to.county.level=correct.new.to.county.level
+    rv$params$correct.prevalence.to.county.level=correct.prevalence.to.county.level
+    
+    #-- AGGREGATED COUNTY-LEVEL TOTALS --#
+    all.codes = dimnames(rv$new.all)[['location']]
+    if (correct.new.to.county.level || correct.prevalence.to.county.level)
+        msa.by.county = read.total.msa.data.from.counties(county.file = county.file,
+                                                          msas=as.character(all.codes))
+    if (correct.new.to.county.level)
+    {
+        if (verbose)
+            print("Correcting New Diagnoses to Aggregate County-Level Data")
+        
+        new.names.to.correct = names(rv)[grepl('new.', names(rv))]
+        
+        for (name in new.names.to.correct)
+            rv[[name]] = correct.array.to.total(to.correct = rv[[name]],
+                                                target.to = msa.by.county$new.all,
+                                                backup.1 = rv$new.sex,
+                                                backup.2 = rv$new.race,
+                                                backup.3 = rv$new.risk,
+                                                backup.4 = rv$new.sex.age)
+    }
+    if (correct.prevalence.to.county.level)
+    {
+        if (verbose)
+            print("Correcting Prevalence to Aggregate County-Level Data")
+        
+        prevalence.names.to.correct = names(rv)[grepl('prevalence.', names(rv))]
+        
+        for (name in prevalence.names.to.correct)
+            rv[[name]] = correct.array.to.total(to.correct = rv[[name]],
+                                                target.to = msa.by.county$prevalence.all,
+                                                backup.1 = rv$prevalence.sex,
+                                                backup.2 = rv$prevalence.race,
+                                                backup.3 = rv$prevalence.risk,
+                                                backup.4 = rv$prevalence.sex.age)
+    }
+    
     rv
 }
 
-read.state.surveillance.manager <- function(dir='../data2/HIV_Surveillance/by_state/')
+#uses backups to calculate scaling factor if there are some NAs in target.to
+correct.array.to.total <- function(to.correct,
+                                   target.to,
+                                   backup.1=NULL,
+                                   backup.2=NULL,
+                                   backup.3=NULL,
+                                   backup.4=NULL)
 {
+    # Set up our access indices and dimension names
+    to.correct.years = intersect(dimnames(to.correct)[['year']], dimnames(target.to)[['year']])
+    to.correct.locations = intersect(dimnames(to.correct)[['location']], dimnames(target.to)[['location']])
+    orig.dim = dim(to.correct)
+    orig.dim.names = dimnames(to.correct)
+    dim(to.correct) = c(dim(to.correct)[1:2], prod(dim(to.correct))/prod(dim(to.correct)[1:2]))
+    dimnames(to.correct) = c(orig.dim.names[1:2], list(NULL))
+    
+    # Set up correct factors
+    to.correct.totals = rowSums(to.correct, dims=2)[to.correct.years, to.correct.locations]
+    correct.factor = target.to[to.correct.years, to.correct.locations] / to.correct.totals
+    if (!is.null(backup.1) && any(is.na(correct.factor)))
+        correct.factor[is.na(correct.factor)] = target.to[to.correct.years, to.correct.locations][is.na(correct.factor)] /
+        rowSums(backup.1, dims=2)[to.correct.years, to.correct.locations][is.na(correct.factor)]
+    if (!is.null(backup.2) && any(is.na(correct.factor)))
+        correct.factor[is.na(correct.factor)] = target.to[to.correct.years, to.correct.locations][is.na(correct.factor)] /
+        rowSums(backup.2, dims=2)[to.correct.years, to.correct.locations][is.na(correct.factor)]
+    if (!is.null(backup.3) && any(is.na(correct.factor)))
+        correct.factor[is.na(correct.factor)] = target.to[to.correct.years, to.correct.locations][is.na(correct.factor)] /
+        rowSums(backup.3, dims=2)[to.correct.years, to.correct.locations][is.na(correct.factor)]
+    if (!is.null(backup.4) && any(is.na(correct.factor)))
+        correct.factor[is.na(correct.factor)] = target.to[to.correct.years, to.correct.locations][is.na(correct.factor)] /
+        rowSums(backup.4, dims=2)[to.correct.years, to.correct.locations][is.na(correct.factor)]
+    
+    # Make the correction
+    corrected = to.correct
+    corrected[to.correct.years, to.correct.locations, ] = as.numeric(correct.factor) *
+        as.numeric(to.correct[to.correct.years, to.correct.locations, ])
+    
+    # Reset original dims
+    dim(corrected) = orig.dim
+    dimnames(corrected) = orig.dim.names
+    
+    corrected
+}
 
-    df.male = read.state.file(file.path(dir, 'All State male.csv'))
-    df.female = read.state.file(file.path(dir, 'All State female.csv'))
-    df.male$Sex='male'
-    df.female$Sex='female'
-    df = rbind(df.male, df.female)
+#note = arr1 must have other as race, arr2 can have asian + american_indian
+max.marginal.sum <- function(arr1, arr2, keep=c('race','risk'))
+{
+    rv = apply(arr1, c('year','location', keep), sum)
+    summed.2 = apply(arr2, c('year', 'location', keep), sum)
+    
+    arr1.2d = rowSums(rv, dims=2)
+    arr2.2d = rowSums(summed.2, dims=2)
+    
+    replace.mask = is.na(arr1.2d) | (!is.na(arr1.2d) & !is.na(arr2.2d) & arr2.2d>arr1.2d)
+    
+    for (value in dimnames(rv)[[keep]])
+    {
+        if (keep=='race' && value=='other' && any(dimnames(summed.2)[['race']]=='asian'))
+            rv[,,value][replace.mask] = summed.2[,,'asian'][replace.mask] +
+                summed.2[,,'american_indian_or_alaska_native'][replace.mask]
+        else
+            rv[,,value][replace.mask] = summed.2[,,value][replace.mask]
+    }
+    
+    rv
+}
 
 
+##-----------------------------##
+##-- READ STATE SURVEILLANCE --##
+##-----------------------------##
+
+read.state.surveillance.manager <- function(dir='cleaned_data',
+                                            verbose=T)
+{
+    if (verbose)
+        print("Reading state surveillance data (reported, prevalence, deaths)")
+    files = list.files(file.path(dir, 'hiv_surveillance/state'))
+    is.female = grepl('female', files, ignore.case = T)
+
+    dfs = lapply(file.path(dir, 'hiv_surveillance/state', files), read.hiv.atlas.file) 
+    
+    df = NULL
+    for (i in 1:length(dfs))
+    {
+        if (is.female[i])
+            dfs[[i]]$Sex = 'female'
+        else
+            dfs[[i]]$Sex = 'male'
+        
+        df = rbind(df, dfs[[i]])
+    }
+
+    df$State = state.name.to.abbreviation(df$Geography)
     states = unique(df$State)
     years = as.character(unique(df$Year))
+    df$Age.Group = paste0(df$Age.Group, " years")
     ages = sort(unique(as.character(df$Age.Group)))
 
     dim.names = list(year=years, location=states, age=ages, race=c('black','hispanic','other'),
-                     sex=c('male','female'), risk=c('MSM','IDU','MSM_IDU','heterosexual'))
+                     sex=c('male','female'), risk=c('msm','idu','msm_idu','heterosexual'))
 
 
     rv = list()
@@ -1160,7 +1383,6 @@ read.state.surveillance.manager <- function(dir='../data2/HIV_Surveillance/by_st
     rv$prevalence.master = array(0, dim=sapply(dim.names, length), dimnames=dim.names)
     rv$mortality.master = array(0, dim=sapply(dim.names, length), dimnames=dim.names)
 
-#df = df[df$Year=='2016' & df$State=='MD' & df$Sex=='male' & grepl('black',df$Race.Ethnicity, ignore.case = T) & df$Indicator=='HIV diagnoses',]
     for (i in 1:dim(df)[1])
     {
         if (df$Indicator[i]=="HIV deaths")
@@ -1182,103 +1404,88 @@ read.state.surveillance.manager <- function(dir='../data2/HIV_Surveillance/by_st
         if (grepl('injection', df$Transmission.Category[i], ignore.case = T))
         {
             if (grepl('male-to-male', df$Transmission.Category[i], ignore.case = T))
-                risk.to = 'MSM_IDU'
+                risk.to = 'msm_idu'
             else
-                risk.to = "IDU"
+                risk.to = "idu"
         }
         else if (grepl('male-to-male', df$Transmission.Category[i], ignore.case = T))
-            risk.to = 'MSM'
+            risk.to = 'msm'
         else
             risk.to = 'heterosexual'
+        
+        rv[[elem]][as.character(df$Year[i]), df$State[i], df$Age.Group[i], race.to, df$Sex[i], risk.to] = df$Cases[i] +
+            rv[[elem]][as.character(df$Year[i]), df$State[i], df$Age.Group[i], race.to, df$Sex[i], risk.to]
 
-        rv[[elem]][df$Year[i], df$State[i], df$Age.Group[i], race.to, df$Sex[i], risk.to] = df$Cases[i] +
-            rv[[elem]][df$Year[i], df$State[i], df$Age.Group[i], race.to, df$Sex[i], risk.to]
-
- #       browser()
     }
 
-    ##-- Estimated Prevalence --##
-
-    df.est.prev = read.state.estimated.prevalence.file(file.path(dir, 'All State estimated prevalence.csv'))
-    df.est.prev$Year = as.character(df.est.prev$Year)
-
-    est.prev.dim.names = list(year=unique(df.est.prev$Year), location=unique(df.est.prev$State))
+    ##-- Estimated Prevalence and Diagnosis --##
+    
+    if (verbose)
+        print("Reading state estimated prevalence and diagnosis rate")
+    df.dx = read.hiv.atlas.file(file.path(dir, 'continuum/state/state_diagnosis_all.csv'))
+    df.dx$State = state.name.to.abbreviation(df.dx$Geography)
+    
+    dx.dim.names = list(year=sort(unique(df.dx$Year)), location=unique(df.dx$State))
     rv$estimated.prevalence.all = rv$estimated.prevalence.ci.lower.all =
         rv$estimated.prevalence.ci.upper.all = rv$estimated.prevalence.rse.all =
-        array(0, dim=sapply(est.prev.dim.names, length), dimnames=est.prev.dim.names)
+        rv$diagnosed.all =
+        array(0, dim=sapply(dx.dim.names, length), dimnames=dx.dim.names)
 
-    for (i in 1:dim(df.est.prev)[1])
+    for (i in 1:dim(df.dx)[1])
     {
-        rv$estimated.prevalence.all[df.est.prev$Year[i], df.est.prev$State[i]] = df.est.prev$estimate[i]
-        rv$estimated.prevalence.ci.lower.all[df.est.prev$Year[i], df.est.prev$State[i]] = df.est.prev$ci.lower[i]
-        rv$estimated.prevalence.ci.upper.all[df.est.prev$Year[i], df.est.prev$State[i]] = df.est.prev$ci.upper[i]
-        rv$estimated.prevalence.rse.all[df.est.prev$Year[i], df.est.prev$State[i]] = df.est.prev$rse[i]
-    }
-
-    ##-- Diagnosed --##
-    rv$diagnosed.all = read.state.diagnoses(paste0(dir, '/state_diagnosed_data.csv'))
-
-    rv
-}
-
-read.total.msa.data.from.counties <- function(msas,
-                                              county.file='../data2/HIV_Surveillance/by_county.csv',
-                                              ignore.missing=T)
-{
-    NEW.INDICATOR = 'HIV diagnoses'
-    PREV.INDICATOR = 'HIV prevalence'
-
-    df = read.csv(county.file, stringsAsFactors = F)
-    df$msa = msa.for.county(df$FIPS)
-    df = df[!is.na(df$msa),]
-    df$Cases[df$Cases=='Data suppressed'] = NA
-    df$Cases = gsub(",", "", df$Cases)
-    df$Cases = as.numeric(df$Cases)
-
-    new.years = as.character(unique(df$Year[df$Indicator==NEW.INDICATOR]))
-    prev.years = as.character(unique(df$Year[df$Indicator==PREV.INDICATOR]))
-
-    new.dim.names = list(year=new.years, location=msas)
-    prev.dim.names = list(year=prev.years, location=msas)
-
-    rv = list()
-    rv$new.all = array(as.numeric(-1), dim=sapply(new.dim.names, length), dimnames=new.dim.names)
-    rv$prevalence.all = array(as.numeric(-1), dim=sapply(prev.dim.names, length), dimnames=prev.dim.names)
-
-    for (msa in msas)
-    {
-        msa.counties = as.integer(counties.for.msa.or.division(msa))
-        msa.df = df[sapply(df$FIPS, function(one.fips){any(one.fips==msa.counties)}),]
-
-        if (dim(msa.df)[1]>0)
+        if (df.dx$Indicator[i]=='Knowledge of Status')
         {
-            for (i in 1:dim(msa.df)[1])
-            {
-                if (msa.df$Indicator[i]==NEW.INDICATOR)
-                    dataset.name = 'new.all'
-                else if (msa.df$Indicator[i]==PREV.INDICATOR)
-                    dataset.name = 'prevalence.all'
-                else
-                    dataset.name = NULL
-
-                if (!is.null(dataset.name) &&
-                    (!ignore.missing || !is.na(msa.df$Cases[i])))
-                {
-                    year = as.character(msa.df$Year[i])
-                    rv[[dataset.name]][year,msa] = rv[[dataset.name]][year,msa] + msa.df$Cases[i]
-                }
-            }
+            rv$estimated.prevalence.rse.all[as.character(df.dx$Year[i]), df.dx$State[i]] = df.dx$RSE[i]
+            rv$diagnosed.all[as.character(df.dx$Year[i]), df.dx$State[i]] = df.dx$Percent[i]/100 
+        }
+        else
+        {
+            rv$estimated.prevalence.all[as.character(df.dx$Year[i]), df.dx$State[i]] = df.dx$Cases[i]
+            rv$estimated.prevalence.ci.lower.all[as.character(df.dx$Year[i]), df.dx$State[i]] = df.dx$Cases.LCI[i]
+            rv$estimated.prevalence.ci.upper.all[as.character(df.dx$Year[i]), df.dx$State[i]] = df.dx$Cases.UCI[i]
         }
     }
 
-    rv$new.all[rv$new.all<0] = NA
-    rv$prevalence.all[rv$prevalence.all<0] = NA
-
-    rv$new.all = rv$new.all+1
-    rv$prevalence.all = rv$prevalence.all+1
-
     rv
 }
+
+map.state.abbreviations <- function(msa.strings)
+{
+    state.regex = '(^.*,) *(.+)$'
+    state.mask = grepl(state.regex, msa.strings) & !grepl('populatio', msa.strings) &
+        !grepl('^.*, .*-.*$', msa.strings)
+    
+    unabbreviated.states = gsub(state.regex, '\\2', msa.strings[state.mask])
+    
+    matched.states = robust.match.state.name(unabbreviated.states)
+    
+    rv = msa.strings
+    rv[state.mask] = paste0(gsub(state.regex, '\\1 ', rv[state.mask]), matched.states)
+    
+    
+    rv
+}
+
+read.state.diagnoses <- function(file)
+{
+    df = read.csv(file, stringsAsFactors = F)
+    regex = '([0-9]+\\.*[0-9]*) \\(.*'
+    pct = rep(NA, dim(df)[1])
+    matches = grepl(regex, df[,4])
+    
+    pct[matches] = as.numeric(gsub(regex, '\\1', df[matches,4]))
+    years = as.character(df$Year)
+    states = state.name.to.abbreviation(df$Geography)
+    
+    dim.names = list(year=sort(unique(years)), location=unique(states))
+    rv = array(NA, dim=sapply(dim.names, length), dimnames=dim.names)
+    
+    for (i in 1:length(pct))
+        rv[as.character(years[i]), states[i]] = pct[i]/100
+    
+    rv
+}
+
 
 read.state.file <- function(file)
 {
@@ -1310,3 +1517,328 @@ read.state.estimated.prevalence.file <- function(file)
 
     df
 }
+
+##--------------------------------##
+##-- READ NATIONAL SURVEILLANCE --##
+##--------------------------------##
+
+read.national.surveillance.manager <- function(dir='cleaned_data',
+                                               aggregate.race.as.bho=T,
+                                               verbose=T)
+{
+    rv = list()
+    
+    if (verbose)
+        print("Reading Suppression Data")
+    rv = read.national.suppression(rv,
+                                   file.path(dir, 'continuum/national/suppression'),
+                                   collapse.race.as.bho = aggregate.race.as.bho)
+    
+    if (verbose)
+        print("Reading Diagnosis Data")
+    rv = read.national.diagnoses(rv,
+                                 dir=file.path(dir, 'continuum/national/diagnosis'),
+                                 aggregate.race.as.bho = aggregate.race.as.bho)
+    
+    rv
+}
+
+read.national.suppression <- function(surv,
+                                      dir='cleaned_data/continuum/national/suppression',
+                                      collapse.race.as.bho=T)
+{
+    files = list.files(dir)
+    files = files[grepl('[0-9][0-9][0-9][0-9].*', files)]
+    years = substr(files, 1,4)
+    
+    dfs = lapply(file.path(dir, files), read.national.continuum.file)
+    
+    if (!collapse.race.as.bho)
+        stop("We are currently only set up to collapse races as black/hispanic/other")
+    
+    dim.names.all = list(year = sort(years),
+                         location='national',
+                         age=c('13-24 years','25-34 years','35-44 years','45-54 years','55+ years'),
+                         race=c('black','hispanic','other'),
+                         sex=c('female','male'),
+                         risk=c('msm','idu','msm_idu','heterosexual'))
+    
+    surv$suppression.all = array(as.numeric(NA),
+                                 dim=sapply(dim.names.all[c('year','location')], length),
+                                 dimnames=dim.names.all[c('year','location')])
+    surv$suppression.sex = array(as.numeric(NA),
+                                 dim=sapply(dim.names.all[c('year','location','sex')], length),
+                                 dimnames=dim.names.all[c('year','location','sex')])
+    surv$suppression.age = array(as.numeric(NA),
+                                 dim=sapply(dim.names.all[c('year','location','age')], length),
+                                 dimnames=dim.names.all[c('year','location','age')])
+    surv$suppression.race = array(as.numeric(NA),
+                                 dim=sapply(dim.names.all[c('year','location','race')], length),
+                                 dimnames=dim.names.all[c('year','location','race')])
+    surv$suppression.risk = array(as.numeric(NA),
+                                 dim=sapply(dim.names.all[c('year','location','risk')], length),
+                                 dimnames=dim.names.all[c('year','location','risk')])
+    surv$suppression.sex.risk = array(as.numeric(NA),
+                                 dim=sapply(dim.names.all[c('year','location','sex','risk')], length),
+                                 dimnames=dim.names.all[c('year','location','sex','risk')])
+    
+    race.mapping = c('American Indian/Alaska Native' = 'other',
+                     'Asian' = 'other',
+                     'Black/African American' = 'black',
+                     'Hispanic/Latino' = 'hispanic',
+                     'Native Hawaiian/Other Pacific Islander' = 'other',
+                     'White' = 'other',
+                     'Multiple races' = 'other')
+    
+    for (i in 1:length(dfs))
+    {
+        df = dfs[[i]]
+        year = years[i]
+        
+        surv$suppression.all[year,1] = df$pct.suppressed[df$category=='Total']/100
+        
+        surv$suppression.sex[year,1,'female'] = df$pct.suppressed[df$category=='Female']/100
+        surv$suppression.sex[year,1,'male'] = df$pct.suppressed[df$category=='Male']/100
+        
+        surv$suppression.age[year,1,1] = df$pct.suppressed[df$category=='13-24']/100
+        surv$suppression.age[year,1,2] = df$pct.suppressed[df$category=='25-34']/100
+        surv$suppression.age[year,1,3] = df$pct.suppressed[df$category=='35-44']/100
+        surv$suppression.age[year,1,4] = df$pct.suppressed[df$category=='45-54']/100
+        surv$suppression.age[year,1,5] = df$pct.suppressed[df$category=='55+']/100
+        
+        race.numerators = race.denominators = sapply(dim.names.all[['race']], function(x){0})
+        for (race.from in names(race.mapping))
+        {
+            race.to = race.mapping[race.from]
+            
+            
+            
+            race.numerators[race.to] = race.numerators[race.to] + df$n.suppressed[df$category==race.from]
+            race.denominators[race.to] = race.denominators[race.to] + df$n[df$category==race.from]
+        }
+        surv$suppression.race[year,1,] = race.numerators / race.denominators
+        
+        #Risk and sex x risk
+        surv$suppression.risk[year,1,'msm'] = surv$suppression.sex.risk[year,1,'male','msm'] =
+            df$pct.suppressed[df$category=='msm']/100
+        surv$suppression.risk[year,1,'msm_idu'] = surv$suppression.sex.risk[year,1,'male','msm_idu'] =
+            df$pct.suppressed[df$category=='idu.msm']/100
+        
+        surv$suppression.sex.risk[year,1,'female','msm'] = surv$suppression.sex.risk[year,1,'female','msm_idu'] = 0
+        
+        surv$suppression.sex.risk[year,1,'female','idu'] = df$pct.suppressed[df$category=='idu.female']/100
+        surv$suppression.sex.risk[year,1,'male','idu'] = df$pct.suppressed[df$category=='idu.male']/100
+        
+        surv$suppression.sex.risk[year,1,'female','heterosexual'] = df$pct.suppressed[df$category=='het.female']/100
+        surv$suppression.sex.risk[year,1,'male','heterosexual'] = df$pct.suppressed[df$category=='het.male']/100
+
+        surv$suppression.risk[year,1,'idu'] = (df$n.suppressed[df$category=='idu.female'] + df$n.suppressed[df$category=='idu.male']) /
+            (df$n[df$category=='idu.female'] + df$n[df$category=='idu.male'])
+        surv$suppression.risk[year,1,'heterosexual'] = (df$n.suppressed[df$category=='het.female'] + df$n.suppressed[df$category=='het.male']) /
+            (df$n[df$category=='het.female'] + df$n[df$category=='het.male'])
+    }
+    
+    if (any(is.na(surv$suppression.all)))
+        stop("NAs generated in reading national suppression data (totals)")
+    if (any(is.na(surv$suppression.sex)))
+        stop("NAs generated in reading national suppression data (by sex)")
+    if (any(is.na(surv$suppression.age)))
+        stop("NAs generated in reading national suppression data (by age)")
+    if (any(is.na(surv$suppression.race)))
+        stop("NAs generated in reading national suppression data (by race)")
+    if (any(is.na(surv$suppression.risk)))
+        stop("NAs generated in reading national suppression data (by risk)")
+    if (any(is.na(surv$suppression.sex.risk)))
+        stop("NAs generated in reading national suppression data (by sex x risk)")
+        
+    #Return
+    surv
+}
+
+read.national.diagnoses <- function(surv,
+                                    dir='cleaned_data/continuum/national/diagnosis/',
+                                    aggregate.race.as.bho=T)
+{
+    
+    df.all = read.hiv.atlas.file(file.path(dir, 'diagnosis_all.csv'))
+    df.age = read.hiv.atlas.file(file.path(dir, 'diagnosis_by_age.csv'))
+    df.sex = read.hiv.atlas.file(file.path(dir, 'diagnosis_by_sex.csv'))
+    df.race = read.hiv.atlas.file(file.path(dir, 'diagnosis_by_race.csv'))
+    df.risk = read.hiv.atlas.file(file.path(dir, 'diagnosis_by_risk.csv'))
+    
+    years = sort(unique(c(unique(df.all$Year),
+                          unique(df.age$Year),
+                          unique(df.sex$Year),
+                          unique(df.race$Year),
+                          unique(df.risk$Year))))
+    
+    dim.names.all = list(year = sort(years),
+                         location='national',
+                         age=c('13-24 years','25-34 years','35-44 years','45-54 years','55+ years'),
+                         race=c('black','hispanic','other'),
+                         sex=c('female','male'),
+                         risk=c('msm','idu','msm_idu','heterosexual'))
+    
+    surv$diagnosed.all = array(as.numeric(NA),
+                                 dim=sapply(dim.names.all[c('year','location')], length),
+                                 dimnames=dim.names.all[c('year','location')])
+    surv$diagnosed.sex = array(as.numeric(NA),
+                                 dim=sapply(dim.names.all[c('year','location','sex')], length),
+                                 dimnames=dim.names.all[c('year','location','sex')])
+    surv$diagnosed.age = array(as.numeric(NA),
+                                 dim=sapply(dim.names.all[c('year','location','age')], length),
+                                 dimnames=dim.names.all[c('year','location','age')])
+    surv$diagnosed.race = race.numerators = race.denominators =
+        array(0,
+              dim=sapply(dim.names.all[c('year','location','race')], length),
+              dimnames=dim.names.all[c('year','location','race')])
+    surv$diagnosed.risk = array(as.numeric(NA),
+                                  dim=sapply(dim.names.all[c('year','location','risk')], length),
+                                  dimnames=dim.names.all[c('year','location','risk')])
+    
+    race.mapping = c('American Indian/Alaska Native' = 'other',
+                     'Asian' = 'other',
+                     'Black/African American' = 'black',
+                     'Hispanic/Latino' = 'hispanic',
+                     'Native Hawaiian/Other Pacific Islander' = 'other',
+                     'White' = 'other',
+                     'Multiple races' = 'other')
+    
+    age.mapping = c('13-24' = 1,
+                    '25-34' = 2,
+                    '35-44' = 3,
+                    '45-54' = 4,
+                    '55+' = 5)
+    
+    risk.mapping = c('Male-to-male sexual contact' = 'msm',
+                     'Injection drug use' = 'idu',
+                     'Male-to-male sexual contact and injection drug use' = 'msm_idu',
+                     'Heterosexual contact' = 'heterosexual',
+                     'Other' = 'other')
+    
+    sex.mapping = c('Male'='male','Female'='female')
+    
+    for (i in 1:dim(df.all)[1])
+    {
+        if (df.all$Indicator[i]=="Knowledge of Status")
+            surv$diagnosed.all[as.character(df.all$Year[i]),1] = df.all$Percent[i]/100
+    }
+    
+    for (i in 1:dim(df.age)[1])
+    {
+        if (df.age$Indicator[i]=="Knowledge of Status")
+            surv$diagnosed.age[as.character(df.age$Year[i]),1,age.mapping[df.age$Age.Group[i]]] = df.age$Percent[i]/100
+    }
+    
+    for (i in 1:dim(df.race)[1])
+    {
+        if (df.race$Indicator[i]=="Knowledge of Status" && !is.na(df.race$Percent[i]))
+        {
+            race.numerators[as.character(df.race$Year[i]),1,race.mapping[df.race$Race.Ethnicity[i]]] = 
+                df.race$Cases[i] +
+                race.numerators[as.character(df.race$Year[i]),1,race.mapping[df.race$Race.Ethnicity[i]]]
+            
+            race.denominators[as.character(df.race$Year[i]),1,race.mapping[df.race$Race.Ethnicity[i]]] = 
+                df.race$Cases[i] * 100 / df.race$Percent[i] +
+                race.denominators[as.character(df.race$Year[i]),1,race.mapping[df.race$Race.Ethnicity[i]]]
+        }
+    }
+    surv$diagnosed.race = race.numerators / race.denominators
+    
+    for (i in 1:dim(df.risk)[1])
+    {
+        if (df.risk$Indicator[i]=="Knowledge of Status" &&
+            any(risk.mapping[df.risk$Transmission.Category[i]] == dim.names.all[['risk']]))
+            surv$diagnosed.risk[as.character(df.risk$Year[i]),1,risk.mapping[df.risk$Transmission.Category[i]]] = df.risk$Percent[i]/100
+    }
+    
+    for (i in 1:dim(df.sex)[1])
+    {
+        if (df.sex$Indicator[i]=="Knowledge of Status")
+            surv$diagnosed.sex[as.character(df.sex$Year[i]),1,sex.mapping[df.sex$Sex[i]]] = df.sex$Percent[i]/100
+    }
+    
+    if (any(is.na(surv$diagnosed.all)))
+        stop("NAs generated in reading national diagnosis data (totals)")
+    if (any(is.na(surv$diagnosed.sex)))
+        stop("NAs generated in reading national diagnosis data (by sex)")
+    if (any(is.na(surv$diagnosed.age)))
+        stop("NAs generated in reading national diagnosis data (by age)")
+    if (any(is.na(surv$diagnosed.race)))
+        stop("NAs generated in reading national diagnosis data (by race)")
+    if (any(is.na(surv$diagnosed.risk)))
+        stop("NAs generated in reading national diagnosis data (by risk)")
+    if (any(is.na(surv$diagnosed.sex.risk)))
+        stop("NAs generated in reading national diagnosis data (by sex x risk)")
+        
+    surv
+}
+
+read.national.continuum.file <- function(file)
+{
+    df = read.csv(file, stringsAsFactors = F)
+    for (j in 2:dim(df)[2])
+    {
+        if (class(df[,j])=='character')
+        {
+            df[,j] = gsub(' |,','',df[,j])
+            df[df[,j]=='',j] = NA
+            df[,j] = as.numeric(df[,j])
+        }
+    }
+    
+    df$category = gsub('â€“', '-', df$category)
+    
+    df
+}
+
+HIV.ATLAS.NUMERIC.COLUMNS = c('Cases',
+                              'Cases.LCI',
+                              'Cases.UCI',
+                              'Percent',
+                              'Percent.LCI',
+                              'Percent.UCI',
+                              'Rate.per.100000',
+                              'Rate.LCI',
+                              'Rate.UCI',
+                              'RSE',
+                              'Population')
+read.hiv.atlas.file <- function(file)
+{
+    df = read.csv(file, stringsAsFactors = F)
+    cols = intersect(names(df), HIV.ATLAS.NUMERIC.COLUMNS)
+
+    for (col in cols)
+    {
+        if (class(df[,col])=='character')
+        {
+            df[,col] = gsub(',| ','',df[,col])
+            df[!is.na(df[,col]) & (df[,col]=='' | df[,col]=='Data suppressed'), col] = NA
+            df[,col] = suppressWarnings(as.numeric(df[,col]))
+        }
+    }
+    
+    df
+}
+
+##------------------------##
+##-- MISC OTHER HELPERS --##
+##------------------------##
+
+
+#pull out a location subset
+subset.surveillance <- function(surv, codes)
+{
+    codes = as.character(codes)
+    lapply(surv, function(elem){
+        if (length(dim(elem))==2)
+            elem[,codes]
+        else if (length(dim(elem))==3)
+            elem[,codes,]
+        else if (length(dim(elem))==4)
+            elem[,codes,,]
+        else
+            stop("The subset.surveillance function is currently only set up to handle components with 2, 3, or 4 dimensions")
+    })
+}
+

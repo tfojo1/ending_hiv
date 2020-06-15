@@ -779,47 +779,77 @@ create.likelihood.function <- function(data.type=c('new','prevalence','mortality
     }
 }
 
+
+
+#this just does the total diagnosed
 create.diagnosed.likelihood <- function(years=NULL,
-                                        surv=state.surveillance,
+                                        msa.surv=msa.surveillance,
+                                        state.surv=state.surveillance,
                                         location=BALTIMORE.MSA,
                                         numerator.sd=function(...){0},
                                         sd.inflation=1,
                                         ar=F,
                                         rho=0.55)
 {
-    means.and.sds = get.diagnosed.means.and.sds(location=location, surv=surv, years=years)
-    mean.diagnosed = means.and.sds$means
-    sds = means.and.sds$sds * sd.inflation
-    years = means.and.sds$years
-
-    not.na.mask = !is.na(mean.diagnosed)
-    mean.diagnosed = mean.diagnosed[not.na.mask]
-
+    dx = get.surveillance.data(msa.surv, location.codes=location, data.type='diagnosed', years=years)
+    years = attr(dx, 'years')
+    mask = !is.na(dx)
+    dx = dx[mask]
+    years = years[mask]
+    
+    cvs = get.diagnosed.cvs(location=location, surv=state.surv, years=years)
+    mask = !is.na(cvs)
+    dx = dx[mask]
+    cvs = cvs[mask]
+    years = years[mask]
+    
+    sds = dx * cvs * sd.inflation
+    
+    logit.mean.dx = log(dx) - log(1-dx)
+    logit.sd.dx = get.logit.sds(dx, sds)
+    
     if (ar)
     {
         year.diff = matrix(abs(rep(years, length(years)) - rep(years, each=length(years))),
                            nrow=length(years), ncol=length(years))
-        cov.mat = sds %*% t(sds) * rho^year.diff
+        cov.mat = logit.sd.dx %*% t(logit.sd.dx) * rho^year.diff
     }
     else
     {
         cov.mat = matrix(rho, nrow=length(years), ncol=length(years))
         diag(cov.mat) = 1
-        cov.mat = sds %*% t(sds) * cov.mat
+        cov.mat = logit.sd.dx %*% t(logit.sd.dx) * cov.mat
     }
 
     numerator.sds = numerator.sd(year=years, num=mean.diagnosed)
-    if (length(numerator.sds)==1)
-        numerator.sds = rep(numerator.sds, length(years))
-    cov.mat = cov.mat + diag(numerator.sds^2)
+    logit.numerator.sds = get.logit.sds(dx, numerator.sds)
+    
+    if (length(logit.numerator.sds)==1)
+        logit.numerator.sds = rep(logit.numerator.sds, length(years))
+    cov.mat = cov.mat + diag(logit.numerator.sds^2)
 
     function(sim, log=T)
     {
-        sim.diagnosed = extract.diagnosed.hiv(sim, years=years, keep.dimensions = 'year')
-        dmvnorm(sim.diagnosed, mean=mean.diagnosed, sigma=cov.mat, log=log)
+        sim.diagnosed = extract.diagnosed.hiv(sim, years=years, keep.dimensions = 'year', per.population=1)
+        logit.sim.diagnosed = log(sim.diagnosed) - log(1-sim.diagnosed)
+        dmvnorm(logit.sim.diagnosed, mean=logit.mean.dx, sigma=cov.mat, log=log)
     }
 }
 
+#transforms sds from regular scale to ones corresponding for the logit scale
+get.logit.sds <- function(means, sds, max=.99, min=.01)
+{
+    if (any(means>=1) || any(means<=0))
+        stop("means must be between 0 and 1")
+    
+    ci.upper = pmin(max, means + sds * qnorm(.975))
+    ci.lower = pmax(min, means + sds * qnorm(.025))
+    
+    logit.upper = log(ci.upper) - log(1-ci.upper)
+    logit.lower = log(ci.lower) - log(1-ci.lower)
+    
+    (logit.upper-logit.lower) / 2 / qnorm(.975)
+}
 
 create.total.likelihood <- function(data.type,
                                     years=NULL,
