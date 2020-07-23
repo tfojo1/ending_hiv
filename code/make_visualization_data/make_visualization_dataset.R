@@ -55,7 +55,7 @@ if (1==2)
     write.csv(strata.key.to.data.frame(strata.key), file='visualization/raw/Strata.csv', row.names=F)
     write.csv(intervention.key.to.data.frame(intervention.key), file='visualization/raw/Interventions.csv', row.names=F)
     
-    write.csv(simset.df, file='visualization/raw/Simulations.csv', row.names=F)
+    #write.csv(simset.df, file='visualization/raw/Simulations.csv', row.names=F)
     
     write.csv(summarized.df, file='visualization/raw/Summarized_Simulations.csv', row.names=F)
     write.csv(epi.df, file='visualization/raw/Epi_Data.csv', row.names=F)

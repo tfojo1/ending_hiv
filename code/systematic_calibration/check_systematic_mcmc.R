@@ -5,8 +5,8 @@ if (1==2)
 
 source('code/source_code.R')
 
-mcmc = assemble.mcmc.from.cache('mcmc_runs/systematic_caches/35620_4x60K_2020-05-19/',T)
-mcmc = assemble.mcmc.from.cache('mcmc_runs/systematic_caches/33100_4x60K_2020-05-19/',T)
+mcmc = assemble.mcmc.from.cache('mcmc_runs/systematic_caches/31080_1x20K_2020-07-19/',T)
+
 
 simset = extract.simset(mcmc, additional.burn=mcmc@n.iter/2, 
                         additional.thin=2^(as.numeric(mcmc@n.iter>50)+as.numeric(mcmc@n.iter>200)))

@@ -19,12 +19,13 @@ source('code/data_managers/natality_manager.R')
 source('code/data_managers/idu_manager.R')
 source('code/data_managers/pairing_manager.R')
 source('code/data_managers/prep_manager.R')
-source('code/data_managers/continuum_manager.R')
+source('code/data_managers/continuum_manager_2.R')
 source('code/data_managers/hiv_surveillance_manager.R')
 
 #-- Load cached data managers --#
 load('cached/msa.surveillance.Rdata')
 load('cached/state.surveillance.Rdata')
+load('cached/national.surveillance.Rdata')
 load('cached/ALL.DATA.MANAGERS.Rdata')
 
 
@@ -41,11 +42,12 @@ source('code/setup/setup_initial_components.R')
 
 #-- Calibration --#
 source('code/calibration/calibrated_parameters_68_helpers.R')
-source('code/calibration/calibrated_parameters_68.R')
+source('code/calibration/calibrated_parameters_73.R')
 source('code/estimate_cdc_errors.R')
-source('code/calibration/likelihoods.R')
+source('code/calibration/likelihoods_2.R')
 
 #-- Plots --#
+source('code/systematic_calibration/postprocessing.R')
 source('code/plots.R')
 
 #-- Interventions --#

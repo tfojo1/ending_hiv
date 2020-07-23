@@ -47,13 +47,10 @@ initialize.jheem.components <- function(settings,
     components = setup.aging(components)
     components = setup.idu.age1.aging(components)
 
-    components = set.background.suppression.ors(components)
-    components = set.background.hiv.testing.rate.ratios(components)
-    components = set.background.hiv.testing.rate.slopes(components)
-    components = set.background.hiv.testing.slope.time(components)
-
     components = setup.global.trates(components, global.sexual.trate = 1, global.idu.trate = 1)
 
+    components = do.setup.jheem.skeleton(components)
+    
     #-- Return --#
     components
 }
@@ -625,193 +622,150 @@ set.hiv.transitions <- function(components,
     components
 }
 
-set.aids.transitions <- function(components,
-                                 aids.progression.rate,
-                                 cd4.recovery.rate)
+set.background.hiv.testing.ors <- function(components,
+                                           msm.or.intercept=NA,
+                                           heterosexual.or.intercept=NA,
+                                           idu.or.intercept=NA,
+                                           black.or.intercept=NA,
+                                           hispanic.or.intercept=NA,
+                                           other.or.intercept=NA,
+                                           age1.or.intercept=NA,
+                                           age2.or.intercept=NA,
+                                           age3.or.intercept=NA,
+                                           age4.or.intercept=NA,
+                                           age5.or.intercept=NA,
+                                           
+                                           total.or.slope=NA,
+                                           
+                                           msm.or.slope=NA,
+                                           heterosexual.or.slope=NA,
+                                           idu.or.slope=NA,
+                                           black.or.slope=NA,
+                                           hispanic.or.slope=NA,
+                                           other.or.slope=NA,
+                                           age1.or.slope=NA,
+                                           age2.or.slope=NA,
+                                           age3.or.slope=NA,
+                                           age4.or.slope=NA,
+                                           age5.or.slope=NA)
 {
-    components$aids.progression.rate = aids.progression.rate
-    components$cd4.recovery.rate = cd4.recovery.rate
-
-    components = clear.dependent.values(components, c('aids.progression.rate','cd4.recovery.rate'))
-
-    components
-}
-
-DEFAULT.TESTING.Z.SCORES = c(testing.msm.z=0, testing.idu.z=0, testing.heterosexual.z=0,
-                             testing.black.z=0, testing.hispanic.z=0,
-                             testing.age1.z=0, testing.age2.z=0, testing.age4.z=0, testing.age5.z=0,
-                             testing.female.z=0)
-
-set.background.hiv.testing.slope.time <- function(components,
-                                                  anchor.year=2010,
-                                                  allow.decreasing.testing.rates=F)
-{
-    components$background.testing.slope.anchor.year = anchor.year
-    components$allow.decreasing.testing.rates = allow.decreasing.testing.rates
-
-    components = clear.dependent.values(components, 'background.testing.rate.ratios')
-
-    components
-}
-
-set.background.hiv.testing.rate.slopes <- function(components,
-                                                   msm.slope=0,
-                                                   heterosexual.slope=0,
-                                                   idu.slope=0)
-{
-    dim.names = list(sex=components$settings$SEXES, risk=components$settings$RISK_STRATA)
-    components$background.testing.rate.slopes = array(heterosexual.slope, dim=sapply(dim.names, length), dimnames = dim.names)
-    components$background.testing.rate.slopes['msm',] = msm.slope
-    components$background.testing.rate.slopes[,'active_IDU'] = idu.slope
-
-    components = clear.dependent.values(components, 'background.testing.rate.ratios')
-
-    components
-}
-
-set.background.hiv.testing.rate.ratios <- function(components,
-                                                   msm.ratio=1,
-                                                   heterosexual.ratio=1,
-                                                   idu.ratio=1)
-{
-    dim.names = list(sex=components$settings$SEXES, risk=components$settings$RISK_STRATA)
-    components$background.testing.rate.ratios = array(heterosexual.ratio, dim=sapply(dim.names, length), dimnames = dim.names)
-    components$background.testing.rate.ratios['msm',] = msm.ratio
-    components$background.testing.rate.ratios[,'active_IDU'] = idu.ratio
-
-    components = clear.dependent.values(components, 'background.testing.rate.ratios')
-
-    components
-}
-
-set.testing.ramp.up.vs.current.rr <- function(components,
-                                              msm.rr,
-                                              heterosexual.rr,
-                                              idu.rr)
-{
-    dim.names = list(sex=components$settings$SEXES, risk=components$settings$RISK_STRATA)
-    components$testing.ramp.up.vs.current.rr = array(heterosexual.rr, dim=sapply(dim.names, length), dimnames = dim.names)
-    components$testing.ramp.up.vs.current.rr['msm',] = msm.rr
-    components$testing.ramp.up.vs.current.rr[,'active_IDU'] = idu.rr
-
+    if (is.null(components$background.testing))
+        components$background.testing = list()
+    
+    if (is.null(components$background.testing$additional.intercept.ors))
+        components$background.testing$additional.intercept.ors = numeric()
+    
+    if (is.null(components$background.testing$additional.slope.ors))
+        components$background.testing$additional.slope.ors = numeric()
+    
+    if (!is.na(msm.or.intercept))
+        components$background.testing$additional.intercept.ors['msm'] = msm.or.intercept
+    if (!is.na(heterosexual.or.intercept))
+        components$background.testing$additional.intercept.ors['heterosexual'] = heterosexual.or.intercept
+    if (!is.na(idu.or.intercept))
+        components$background.testing$additional.intercept.ors['idu'] = idu.or.intercept
+    
+    if (!is.na(black.or.intercept))
+        components$background.testing$additional.intercept.ors['black'] = black.or.intercept
+    if (!is.na(hispanic.or.intercept))
+        components$background.testing$additional.intercept.ors['hispanic'] = hispanic.or.intercept
+    if (!is.na(other.or.intercept))
+        components$background.testing$additional.intercept.ors['other'] = other.or.intercept
+    
+    if (!is.na(age1.or.intercept))
+        components$background.testing$additional.intercept.ors['age1'] = age1.or.intercept
+    if (!is.na(age2.or.intercept))
+        components$background.testing$additional.intercept.ors['age2'] = age2.or.intercept
+    if (!is.na(age3.or.intercept))
+        components$background.testing$additional.intercept.ors['age3'] = age3.or.intercept
+    if (!is.na(age4.or.intercept))
+        components$background.testing$additional.intercept.ors['age4'] = age4.or.intercept
+    if (!is.na(age5.or.intercept))
+        components$background.testing$additional.intercept.ors['age5'] = age5.or.intercept
+    
+    
+    if (!is.na(total.or.slope))
+        components$background.testing$additional.slope.ors['all'] = total.or.slope
+    
+    if (!is.na(msm.or.slope))
+        components$background.testing$additional.slope.ors['msm'] = msm.or.slope
+    if (!is.na(heterosexual.or.slope))
+        components$background.testing$additional.slope.ors['heterosexual'] = heterosexual.or.slope
+    if (!is.na(idu.or.slope))
+        components$background.testing$additional.slope.ors['idu'] = idu.or.slope
+    
+    if (!is.na(black.or.slope))
+        components$background.testing$additional.slope.ors['black'] = black.or.slope
+    if (!is.na(hispanic.or.slope))
+        components$background.testing$additional.slope.ors['hispanic'] = hispanic.or.slope
+    if (!is.na(other.or.slope))
+        components$background.testing$additional.slope.ors['other'] = other.or.slope
+    
+    if (!is.na(age1.or.slope))
+        components$background.testing$additional.slope.ors['age1'] = age1.or.slope
+    if (!is.na(age2.or.slope))
+        components$background.testing$additional.slope.ors['age2'] = age2.or.slope
+    if (!is.na(age3.or.slope))
+        components$background.testing$additional.slope.ors['age3'] = age3.or.slope
+    if (!is.na(age4.or.slope))
+        components$background.testing$additional.slope.ors['age4'] = age4.or.slope
+    if (!is.na(age5.or.slope))
+        components$background.testing$additional.slope.ors['age5'] = age5.or.slope
+    
     components = clear.dependent.values(components, 'background.testing.proportions')
     components
 }
 
-set.background.hiv.testing.proportions <- function(components,
-                                                   data.managers,
-                                                   msa,
-                                                   max.smoothed.testing.proportion=0.9,
-                                                   smoothing.years,
-                                                   age1.testing.log.or.intercept=0,
-                                                   age1.testing.log.or.slope=0,
-                                                   total.proportion.tested.or=1,
-                                                   msm.proportion.tested.or=1,
-                                                   idu.proportion.tested.or=1,
-                                                   total.testing.slope.or=1,
-                                                   anchor.year=2012,
-                                                   first.testing.year=1981,
-                                                   testing.ramp.up.year=1993,
-                                                   testing.ramp.up.vs.current.rr=0.5,
-                                                   testing.ramp.up.yearly.increase=2,
-                                                   age1.msm.or.intercept=1,
-                                                   age2.msm.or.intercept=1,
-                                                   age1.msm.or.slope=1,
-                                                   age2.msm.or.slope=1)
+set.background.hiv.testing.ramp.up <- function(components,
+                                               testing.ramp.up.vs.current.rr=0.5,
+                                               testing.ramp.up.yearly.increase=2)
 {
+    if (is.null(components$background.testing))
+        components$background.testing = list()
+    
+    if (!is.na(testing.ramp.up.vs.current.rr))
+        components$background.testing$ramp.up.vs.current.rr = testing.ramp.up.vs.current.rr
+    
+    if (!is.na(testing.ramp.up.yearly.increase))
+        components$background.testing$ramp.up.yearly.increase = testing.ramp.up.yearly.increase
+    
+    components = clear.dependent.values(components, 'background.testing.proportions')
+    components
+}
+
+setup.background.hiv.testing <- function(components,
+                                         continuum.manager,
+                                         location,
+                                         years,
+                                         first.testing.year=1981,
+                                         testing.ramp.up.year=1993)
+{
+    if (is.null(components$background.testing))
+        components$background.testing = list()
+    
+    if (is.null(components$background.testing))
+        components$background.testing = list()
+    
+    components$background.testing$years = years
+    components$background.testing$first.testing.year = first.testing.year
+    components$background.testing$ramp.up.year = testing.ramp.up.year
+    
+    
     if (is.null(components$proportions.msm.of.male))
         stop('MSM proportions must be set up in the components prior to pulling testing rates')
-
+    
     if (is.null(components$active.idu.prevalence) || is.null(components$idu.ever.prevalence))
         stop('IDU proportions must be set up in the components prior to pulling testing rates')
-
+    
     population = stratify.males.to.msm.by.race(components$populations$collapsed,
                                                components$proportions.msm.of.male)
     population = stratify.population.idu(population,
                                          active.idu.prevalence=components$active.idu.prevalence,
                                          idu.ever.prevalence=components$idu.ever.prevalence)
-
-    components$background.testing.inputs = list(msa=msa,
-                                                age1.testing.log.or.intercept=age1.testing.log.or.intercept,
-                                                age1.testing.log.or.slope=age1.testing.log.or.slope,
-                                                smoothing.years=smoothing.years,
-                                                max.smoothed.testing.proportion=max.smoothed.testing.proportion,
-                                                total.proportion.tested.or=total.proportion.tested.or,
-                                                msm.proportion.tested.or=msm.proportion.tested.or,
-                                                idu.proportion.tested.or=idu.proportion.tested.or,
-                                                total.testing.slope.or=total.testing.slope.or,
-                                                anchor.year=anchor.year,
-                                                age1.msm.or.intercept=age1.msm.or.intercept,
-                                                age2.msm.or.intercept=age2.msm.or.intercept,
-                                                age1.msm.or.slope=age1.msm.or.slope,
-                                                age2.msm.or.slope=age2.msm.or.slope,
-                                                testing.ramp.up.year=testing.ramp.up.year,
-                                                testing.ramp.up.vs.current.rr=testing.ramp.up.vs.current.rr,
-                                                testing.ramp.up.yearly.increase=testing.ramp.up.yearly.increase)
-
-  #  components = set.testing.ramp.up.vs.current.rr(components,
-   #                                                msm.rr = testing.ramp.up.vs.current.rr,
-     #                                              heterosexual.rr = testing.ramp.up.vs.current.rr,
-      #                                             idu.rr = testing.ramp.up.vs.current.rr)
-
-    testing.proportions = smooth.proportions.by.strata(data.managers$continuum,
-                                                       data.type='testing',
-                                                       msa=msa,
-                                                       max.proportion=max.smoothed.testing.proportion,
-                                                       constrain.to.total = F,
-                                                       desired.years=smoothing.years,
-                                                       population=population,
-                                                       age1.log.or.intercept=age1.testing.log.or.intercept,
-                                                       age1.log.or.slope=age1.testing.log.or.slope,
-                                                       extra.total.or=total.proportion.tested.or,
-                                                       extra.msm.or=msm.proportion.tested.or,
-                                                       extra.idu.or=idu.proportion.tested.or,
-                                                       extra.total.slope.or=total.testing.slope.or,
-                                                       anchor.year=anchor.year,
-                                                       age1.msm.log.or.intercept = log(age1.msm.or.intercept),
-                                                       age2.msm.log.or.intercept = log(age2.msm.or.intercept),
-                                                       age1.msm.log.or.slope = log(age1.msm.or.slope),
-                                                       age2.msm.log.or.slope = log(age2.msm.or.slope))
-
-    attr(components, 'smoothed.testing.proportions') = testing.proportions
-
-#    testing.rates = -log(1-testing.proportions)
-
-#    attr(components, 'smoothed.testing.rates') = testing.rates
-
-    if (is.null(components$jheem))
-        components = do.setup.jheem.skeleton(components)
-
-    components$background.testing.years = as.numeric(dimnames(testing.proportions)[['year']])
-    components$background.testing.proportions = lapply(components$background.testing.years, function(year){
-        expand.population.to.general(components$jheem, testing.proportions[as.character(year),,,,])
-    })
-
-    #add in the past
-    ramp.years = setdiff(first.testing.year:testing.ramp.up.year, first.testing.year)
+    components$background.testing$model = get.testing.model(continuum.manager, 
+                                                            location=location,
+                                                            population=population)
     
-    components$background.testing.proportions = c(list(0 * components$background.testing.proportions[[1]]),
-                                                  lapply(ramp.years, function(y){
-                                                      testing.ramp.up.vs.current.rr *
-                                                          (1/testing.ramp.up.yearly.increase)^(testing.ramp.up.year-y) *
-                                                          components$background.testing.proportions[[1]]
-                                                  }),
-                                                  components$background.testing.proportions)
-    components$background.testing.years = c(first.testing.year, ramp.years,
-                                            components$background.testing.years)
-
-    components = clear.dependent.values(components, 'background.testing.proportions')
-    components
-}
-
-set.testing.ramp.up <- function(components,
-                                testing.ramp.up.vs.current.rr)
-{
-    stop('disabled at this time')
-    components$background.testing.inputs$testing.ramp.up.vs.current.rr = testing.ramp.up.vs.current.rr
-    components$background.testing.proportions[[2]] = components$background.testing.proportions[[3]] *
-        testing.ramp.up.vs.current.rr
-
     components = clear.dependent.values(components, 'background.testing.proportions')
     components
 }
@@ -1138,9 +1092,11 @@ setup.idu.by.race <- function(components,
 
 setup.sex.by.sex <- function(components,
                              fraction.msm.pairings.with.female,
-                             oe.female.pairings.with.msm)
+                             oe.female.pairings.with.msm,
+                             fraction.heterosexual.male.pairings.with.male)
 {
     components$sexual.transmission$fraction.msm.pairings.with.female = fraction.msm.pairings.with.female
+    components$sexual.transmission$fraction.heterosexual.male.pairings.with.male = fraction.heterosexual.male.pairings.with.male
     components$sexual.transmission$oe.female.pairings.with.msm = oe.female.pairings.with.msm
 
     components = clear.dependent.values(components, 'sexual.transmission')
@@ -1172,108 +1128,151 @@ setup.idu.by.sex <- function(components,
 
 ##-- SUPPRESSION --##
 
-DEFAULT.SUPPRESSION.Z.SCORES = c(suppressed.total.z=0, suppressed.black.z=0, suppressed.hispanic.z=0,
-                                 suppressed.age1.z=0, suppressed.age2.z=0, suppressed.age4.z=0, suppressed.age5.z=0,
-                                 suppressed.female.z=0, suppressed.msm.z=0, suppressed.idu.z=0)
 
 set.background.suppression.ors <- function(components,
-                                           msm.or=1,
-                                           heterosexual.or=1,
-                                           idu.or=1)
+                                           msm.or.intercept=NA,
+                                           heterosexual.or.intercept=NA,
+                                           idu.or.intercept=NA,
+                                           black.or.intercept=NA,
+                                           hispanic.or.intercept=NA,
+                                           other.or.intercept=NA,
+                                           age1.or.intercept=NA,
+                                           age2.or.intercept=NA,
+                                           age3.or.intercept=NA,
+                                           age4.or.intercept=NA,
+                                           age5.or.intercept=NA,
+                                           
+                                           total.or.slope=NA,
+                                           
+                                           msm.or.slope=NA,
+                                           heterosexual.or.slope=NA,
+                                           idu.or.slope=NA,
+                                           black.or.slope=NA,
+                                           hispanic.or.slope=NA,
+                                           other.or.slope=NA,
+                                           age1.or.slope=NA,
+                                           age2.or.slope=NA,
+                                           age3.or.slope=NA,
+                                           age4.or.slope=NA,
+                                           age5.or.slope=NA)
 {
-    dim.names = list(sex=components$settings$SEXES, risk=components$settings$RISK_STRATA)
-    components$background.suppression.ors = array(heterosexual.or, dim=sapply(dim.names, length), dimnames = dim.names)
-    components$background.suppression.ors['msm',] = msm.or
-    components$background.suppression.ors[,'active_IDU'] = idu.or
-
+    if (is.null(components$background.suppression))
+        components$background.suppression = list()
+    
+    if (is.null(components$background.suppression$additional.intercept.ors))
+        components$background.suppression$additional.intercept.ors = numeric()
+    
+    if (is.null(components$background.suppression$additional.slope.ors))
+        components$background.suppression$additional.slope.ors = numeric()
+    
+    if (!is.na(msm.or.intercept))
+        components$background.suppression$additional.intercept.ors['msm'] = msm.or.intercept
+    if (!is.na(heterosexual.or.intercept))
+        components$background.suppression$additional.intercept.ors['heterosexual'] = heterosexual.or.intercept
+    if (!is.na(idu.or.intercept))
+        components$background.suppression$additional.intercept.ors['idu'] = idu.or.intercept
+    
+    if (!is.na(black.or.intercept))
+        components$background.suppression$additional.intercept.ors['black'] = black.or.intercept
+    if (!is.na(hispanic.or.intercept))
+        components$background.suppression$additional.intercept.ors['hispanic'] = hispanic.or.intercept
+    if (!is.na(other.or.intercept))
+        components$background.suppression$additional.intercept.ors['other'] = other.or.intercept
+    
+    if (!is.na(age1.or.intercept))
+        components$background.suppression$additional.intercept.ors['age1'] = age1.or.intercept
+    if (!is.na(age2.or.intercept))
+        components$background.suppression$additional.intercept.ors['age2'] = age2.or.intercept
+    if (!is.na(age3.or.intercept))
+        components$background.suppression$additional.intercept.ors['age3'] = age3.or.intercept
+    if (!is.na(age4.or.intercept))
+        components$background.suppression$additional.intercept.ors['age4'] = age4.or.intercept
+    if (!is.na(age5.or.intercept))
+        components$background.suppression$additional.intercept.ors['age5'] = age5.or.intercept
+    
+    
+    if (!is.na(total.or.slope))
+        components$background.suppression$additional.slope.ors['all'] = total.or.slope
+    
+    
+    if (!is.na(msm.or.slope))
+        components$background.suppression$additional.slope.ors['msm'] = msm.or.slope
+    if (!is.na(heterosexual.or.slope))
+        components$background.suppression$additional.slope.ors['heterosexual'] = heterosexual.or.slope
+    if (!is.na(idu.or.slope))
+        components$background.suppression$additional.slope.ors['idu'] = idu.or.slope
+    
+    if (!is.na(black.or.slope))
+        components$background.suppression$additional.slope.ors['black'] = black.or.slope
+    if (!is.na(hispanic.or.slope))
+        components$background.suppression$additional.slope.ors['hispanic'] = hispanic.or.slope
+    if (!is.na(other.or.slope))
+        components$background.suppression$additional.slope.ors['other'] = other.or.slope
+    
+    if (!is.na(age1.or.slope))
+        components$background.suppression$additional.slope.ors['age1'] = age1.or.slope
+    if (!is.na(age2.or.slope))
+        components$background.suppression$additional.slope.ors['age2'] = age2.or.slope
+    if (!is.na(age3.or.slope))
+        components$background.suppression$additional.slope.ors['age3'] = age3.or.slope
+    if (!is.na(age4.or.slope))
+        components$background.suppression$additional.slope.ors['age4'] = age4.or.slope
+    if (!is.na(age5.or.slope))
+        components$background.suppression$additional.slope.ors['age5'] = age5.or.slope
+    
     components = clear.dependent.values(components, 'background.suppression')
     components
 }
 
-set.background.suppression <- function(components,
-                                       data.managers,
-                                       msa,
-                                       max.smoothed.suppressed.proportion=0.9,
-                                       smoothing.years,
-                                       zero.suppression.year=1996,
-                                       initial.suppression.ramp.up.years=NA,#5,
-                                       total.suppressed.or=1,
-                                       total.future.suppressed.slope.or=1,
-                                       anchor.year=2020,
-                                       age1.msm.or.intercept=1,
-                                       age2.msm.or.intercept=1,
-                                       age1.msm.or.slope=1,
-                                       age2.msm.or.slope=1)
+set.future.background.suppression <- function(components,
+                                              future.slope.or)
 {
-    if (is.null(components$proportions.msm.of.male))
-        stop('MSM proportions must be set up in the components prior to pulling suppression rates')
+    if (is.null(components$background.suppression))
+        components$background.suppression = list()
+   
+    if (!is.na(future.slope.or))
+        components$background.suppression$future.slope.or = future.slope.or
+    
+    components = clear.dependent.values(components, 'background.suppression')
+    components 
+}
 
-    if (is.null(components$active.idu.prevalence) || is.null(components$idu.ever.prevalence))
-        stop('IDU proportions must be set up in the components prior to pulling suppression rates')
-
-    population = stratify.males.to.msm.by.race(components$populations$collapsed,
-                                               components$proportions.msm.of.male)
-    population = stratify.population.idu(population,
-                                         active.idu.prevalence=components$active.idu.prevalence,
-                                         idu.ever.prevalence=components$idu.ever.prevalence)
-
-    components$background.suppression.inputs = list(msa=msa,
-                                                    max.smoothed.suppressed.proportion=max.smoothed.suppressed.proportion,
-                                                    smoothing.years=smoothing.years,
-                                                    zero.suppression.year=zero.suppression.year,
-                                                    initial.suppression.ramp.up.years=initial.suppression.ramp.up.years,
-                                                    total.suppressed.or=total.suppressed.or,
-                                                    total.future.suppressed.slope.or=total.future.suppressed.slope.or,
-                                                    anchor.year=anchor.year,
-                                                    age1.msm.or.intercept=age1.msm.or.intercept,
-                                                    age2.msm.or.intercept=age2.msm.or.intercept,
-                                                    age1.msm.or.slope=age1.msm.or.slope,
-                                                    age2.msm.or.slope=age2.msm.or.slope)
-
-    suppressed.proportions = smooth.proportions.by.strata(data.managers$continuum,
-                                                          data.type='suppression',
-                                                          msa=msa,
-                                                          max.proportion=max.smoothed.suppressed.proportion,
-                                                          constrain.to.total = T,
-                                                          desired.years=smoothing.years,
-                                                          population=population,
-                                                          anchor.year=anchor.year,
-                                                          extra.total.or=total.suppressed.or,
-                                                          extra.total.slope.after.anchor.or=total.future.suppressed.slope.or,
-                                                          age1.msm.log.or.intercept = log(age1.msm.or.intercept),
-                                                          age2.msm.log.or.intercept = log(age2.msm.or.intercept),
-                                                          age1.msm.log.or.slope = log(age1.msm.or.slope),
-                                                          age2.msm.log.or.slope = log(age2.msm.or.slope))
-
-    attr(components, 'smoothed.suppressed.proportions') = suppressed.proportions
-
-    components$background.suppression.years = as.numeric(dimnames(suppressed.proportions)[['year']])
-    components$background.suppression = lapply(components$background.suppression.years, function(year){
-        #        access(suppressed.proportions, year=as.character(year))
-        expand.population.to.hiv.positive(components$jheem, suppressed.proportions[as.character(year),,,,])
-    })
-
-    if (!is.na(zero.suppression.year))
-    {
-        if (!is.na(initial.suppression.ramp.up.years))
-        {
-            if ((zero.suppression.year+initial.suppression.ramp.up.years)>components$background.suppression.years[1])
-                stop(paste0("A zero-suppression year of ", zero.suppression.year,
-                            " and ", initial.suppression.ramp.up.years, " years to ramp up initial suppression,",
-                            " puts the initial ramped up year at ", zero.suppression.year + initial.suppression.ramp.up.years,
-                            " which is AFTER the first year for which there is suppression data, ", components$background.suppression.years[1]))
-            components$background.suppression.years = c(zero.suppression.year+initial.suppression.ramp.up.years, components$background.suppression.years)
-            components$background.suppression = c(components$background.suppression[1], components$background.suppression)
-        }
-
-        components$background.suppression.years = c(zero.suppression.year, components$background.suppression.years)
-        components$background.suppression = c(list(expand.population.to.hiv.positive(components$jheem, 0)),
-                                              components$background.suppression)
-    }
-
+setup.background.suppression <- function(components,
+                                         continuum.manager,
+                                         location,
+                                         years,
+                                         zero.suppression.year=1996,
+#                                         initial.suppression.ramp.up.years=NA,
+                                         future.slope.after.year=2020)
+{
+    if (is.null(components$background.suppression))
+        components$background.suppression = list()
+    
+    components$background.suppression$years = years
+    components$background.suppression$zero.suppression.year = zero.suppression.year
+#    components$background.suppression$ramp.up.years = initial.suppression.ramp.up.years
+    components$background.suppression$future.slope.after.year = future.slope.after.year
+    
+    
+#    if (is.null(components$proportions.msm.of.male))
+#        stop('MSM proportions must be set up in the components prior to pulling suppression')
+    
+#    if (is.null(components$active.idu.prevalence) || is.null(components$idu.ever.prevalence))
+#        stop('IDU proportions must be set up in the components prior to pulling suppression')
+    
+#    population = stratify.males.to.msm.by.race(components$populations$collapsed,
+#                                               components$proportions.msm.of.male)
+#    population = stratify.population.idu(population,
+#                                         active.idu.prevalence=components$active.idu.prevalence,
+#                                         idu.ever.prevalence=components$idu.ever.prevalence)
+    components$background.suppression$model = get.suppression.model(continuum.manager, 
+                                                            location=location)#,
+ #                                                           population=population)
+    
     components = clear.dependent.values(components, 'background.suppression')
     components
 }
+
 set.foreground.suppression <- function(components,
                                        suppressed.proportions,
                                        years)
@@ -1307,7 +1306,6 @@ set.background.change.to.years <- function(components,
     components = clear.dependent.values(components, c('background.prep.coverage',
                                                       'background.testing.proportions',
                                                       'background.suppression'))
-
     components
 }
 

@@ -783,54 +783,28 @@ do.setup.general.mortality <- function(components)
     components
 }
 
+
 do.setup.hiv.mortality <- function(components)
 {
     if (components$model.hiv.transmission)
     {
-        use.low.cd4.state = length(components$settings$CD4_STRATA)>=3
+        suppression = calculate.suppression(components)
 
-        suppression = get.rates.from.background.and.foreground(background.rates = components$background.suppression,
-                                                              background.times = components$background.suppression.years,
-                                                              foreground.rates = components$foreground.suppression,
-                                                              foreground.times = components$foreground.suppression.years,
-                                                              max.background.time = components$background.change.to.years$suppression,
-                                                              allow.foreground.less = F)
+        mortality.rates = get.hiv.mortality.rate.arrays(components)
 
+        mortality.and.suppression = merge.rates(rates1=mortality.rates$rates,
+                                                times1=mortality.rates$times,
+                                                rates2=suppression$rates,
+                                                times2=suppression$times)
 
-        if (use.low.cd4.state)
-        {
-            stop('low cd4 state is no longer supported')
-            components$hiv.mortality.rates = lapply(suppression$rates, function(suppressed.proportions){
-#                suppression = expand.population.to.hiv.positive(components$jheem, suppressed.proportions)
+        components$hiv.mortality.rates = lapply(1:length(mortality.and.suppression$times), function(i){
 
-                suppressed.proportions[,,,,,components$settings$UNDIAGNOSED,,] = 0
+            hiv.mortality = mortality.and.suppression$rates1[[i]]
+            hiv.mortality[,,,,,components$settings$DIAGNOSED_STATES,,] = hiv.mortality[,,,,,components$settings$DIAGNOSED_STATES,,] *
+                (1-mortality.and.suppression$rates2[[i]][,,,,,components$settings$DIAGNOSED_STATES,,])
 
-                hiv.mortality = get.hiv.positive.population.skeleton(components$jheem)
-                hiv.mortality[,,,,,,'AIDS',] = components$untreated.aids.mortality
-#                hiv.mortality[,,,,,components$settings$DIAGNOSED_STATES,'AIDS',] = components$untreated.aids.mortality *
-#                    (1-suppressed.proportions[,,,,,components$settings$DIAGNOSED_STATES,'AIDS',])
-
-                hiv.mortality
-            })
-        }
-        else
-        {
-            mortality.rates = get.hiv.mortality.rate.arrays(components)
-
-            mortality.and.suppression = merge.rates(rates1=mortality.rates$rates,
-                                                    times1=mortality.rates$times,
-                                                    rates2=suppression$rates,
-                                                    times2=suppression$times)
-
-            components$hiv.mortality.rates = lapply(1:length(mortality.and.suppression$times), function(i){
-
-                hiv.mortality = mortality.and.suppression$rates1[[i]]
-                hiv.mortality[,,,,,components$settings$DIAGNOSED_STATES,,] = hiv.mortality[,,,,,components$settings$DIAGNOSED_STATES,,] *
-                    (1-mortality.and.suppression$rates2[[i]][,,,,,components$settings$DIAGNOSED_STATES,,])
-
-                hiv.mortality
-            })
-        }
+            hiv.mortality
+        })
 
         components$hiv.mortality.years = mortality.and.suppression$times
     }
@@ -950,41 +924,11 @@ do.setup.continuum.transitions <- function(components)
 
         #-- HIV Testing --#
 
-        testing.rate.ratios = expand.population.to.general(components$jheem, components$background.testing.rate.ratios)
-        testing.rate.slopes = expand.population.to.general(components$jheem, components$background.testing.rate.slopes)
-        background.rates = lapply(1:length(components$background.testing.proportions), function(i){
-            p = components$background.testing.proportions[[i]]
-            year = components$background.testing.years[[i]]
-
-            rate = -log(1-p)
-            rate = rate * testing.rate.ratios
-
-            if (year <= components$background.testing.slope.anchor.year)
-                rate
-            else
-                rate + testing.rate.slopes * (year - components$background.testing.slope.anchor.year)
-        })
-
-        #the ramp up rate
-     #   ramp.rr = expand.population.to.general(components$jheem, components$testing.ramp.up.vs.current.rr)
-     #   background.rates[[2]] = background.rates[[3]] * ramp.rr
-
-#        if (!components$allow.decreasing.testing.rates)
-#        {
-#            for (i in 2:length(background.rates))
-#                background.rates[[i]] = pmax(background.rates[[i]], background.rates[[i-1]])
-#        }
-
-        testing.rates = get.rates.from.background.and.foreground(background.rates = background.rates,
-                                                                  background.times = components$background.testing.years,
-                                                                  foreground.rates = components$foreground.testing.rates,
-                                                                  foreground.times = components$foreground.testing.years,
-                                                                 max.background.time = components$background.change.to.years$testing,
-                                                                 allow.foreground.less = F)
-
+        testing.rates = calculate.testing.rates(components)
+    
         components$continuum.transitions = lapply(1:length(testing.rates$rates), function(i){
             continuum.transitions.for.year = base.transitions
-            continuum.transitions.for.year[,,,,,'undiagnosed',,,'diagnosed'] = testing.rates$rates[[i]]
+            continuum.transitions.for.year[,,,,,'undiagnosed',,,'diagnosed'] = testing.rates$rates[[i]][,,,,,'undiagnosed',,]
             continuum.transitions.for.year
         })
         components$continuum.transition.years = testing.rates$times
@@ -996,6 +940,181 @@ do.setup.continuum.transitions <- function(components)
     }
 
     components
+}
+
+##-----------------------------##
+##-- SUPPRESSION AND TESTING --##
+##-----------------------------##
+
+calculate.suppression <- function(components)
+{
+    #Pull background suppression proportions from logistic model
+    background.suppression = get.background.proportions(base.model = components$background.suppression$model,
+                                                        years = components$background.suppression$years,
+                                                        additional.intercepts = log(components$background.suppression$additional.intercept.ors),
+                                                        additional.slopes = log(components$background.suppression$additional.slope.ors),
+                                                        future.slope = log(components$background.suppression$future.slope.or),
+                                                        future.slope.after.year = components$background.suppression$future.slope.after.year,
+                                                        idu.applies.to.in.remission = T,
+                                                        idu.applies.to.msm.idu=T,
+                                                        msm.applies.to.msm.idu=T,
+                                                        jheem=components$jheem)
+    
+    #Add in zero suppression
+    
+    background.suppression.years = c(components$background.suppression$zero.suppression.year, 
+                                     components$background.suppression$years)
+    background.suppression = c(list(0 * background.suppression[[1]]), background.suppression)
+ 
+    undiagnosed.states = setdiff(components$settings$CONTINUUM_OF_CARE, 'diagnosed')
+    background.suppression = lapply(background.suppression, function(r){
+        r[,,,,,undiagnosed.states,,] = 0
+        r
+    })
+       
+    #Overlay foreground suppression
+    suppression = get.rates.from.background.and.foreground(background.rates = background.suppression,
+                                                           background.times = background.suppression.years,
+                                                           foreground.rates = components$foreground.suppression.rates,
+                                                           foreground.times = components$foreground.suppression.years,
+                                                           max.background.time = components$background.change.to.years$suppression,
+                                                           allow.foreground.less = F)
+
+    #Return
+    suppression
+}
+
+calculate.testing.rates <- function(components)
+{
+    #Pull background testing proportions from logistic model
+    background.testing.proportions = get.background.proportions(base.model = components$background.testing$model,
+                                                                years = components$background.testing$years,
+                                                                additional.intercepts = log(components$background.testing$additional.intercept.ors),
+                                                                additional.slopes = log(components$background.testing$additional.slope.ors),
+                                                                idu.applies.to.in.remission = F,
+                                                                idu.applies.to.msm.idu=T,
+                                                                msm.applies.to.msm.idu=T,
+                                                                jheem=components$jheem)
+
+    #Add in ramp up (in the past)
+    ramp.years = setdiff(components$background.testing$first.testing.year:components$background.testing$ramp.up.year,
+                         components$background.testing$first.testing.year)
+    
+    background.testing.proportions = c(list(0 * background.testing.proportions[[1]]),
+                                                  lapply(ramp.years, function(y){
+                                                      components$background.testing$ramp.up.vs.current.rr *
+                                                          (1/components$background.testing$ramp.up.yearly.increase)^(components$background.testing$ramp.up.year-y) *
+                                                          background.testing.proportions[[1]]
+                                                  }),
+                                                  background.testing.proportions)
+    background.testing.years = c(components$background.testing$first.testing.year, ramp.years,
+                                            components$background.testing$years)
+    
+    #Convert background to rates
+    background.testing.rates = lapply(background.testing.proportions, function(p){
+        -log(1-p)
+    })
+    
+    #        if (!components$allow.decreasing.testing.rates)
+    #        {
+    #            for (i in 2:length(background.rates))
+    #                background.rates[[i]] = pmax(background.rates[[i]], background.rates[[i-1]])
+    #        }
+    
+    #Overlay foreground rates
+    testing.rates = get.rates.from.background.and.foreground(background.rates = background.testing.rates,
+                                                             background.times = background.testing.years,
+                                                             foreground.rates = components$foreground.testing.rates,
+                                                             foreground.times = components$foreground.testing.years,
+                                                             max.background.time = components$background.change.to.years$testing,
+                                                             allow.foreground.less = F)
+    
+    #Return
+    testing.rates
+}
+
+get.background.proportions <- function(base.model,
+                                       years,
+                                       additional.intercepts,
+                                       additional.slopes,
+                                       future.slope=0,
+                                       future.slope.after.year=base.model$anchor.year,
+                                       idu.applies.to.in.remission=T,
+                                       idu.applies.to.msm.idu=T,
+                                       msm.applies.to.msm.idu=T,
+                                       transformation = function(x){base.model$max.proportion / (1+exp(-x))},
+                                       jheem)
+{
+    intercept = add.additional.betas.to.array(base.model$intercept, additional.intercepts,
+                                              idu.applies.to.in.remission = idu.applies.to.in.remission,
+                                              idu.applies.to.msm.idu = idu.applies.to.msm.idu,
+                                              msm.applies.to.msm.idu = msm.applies.to.msm.idu)
+    slope = add.additional.betas.to.array(base.model$slope, additional.slopes,
+                                          idu.applies.to.in.remission = idu.applies.to.in.remission,
+                                          idu.applies.to.msm.idu = idu.applies.to.msm.idu,
+                                          msm.applies.to.msm.idu = msm.applies.to.msm.idu)
+
+    lapply(years, function(year){
+        expand.population.to.hiv.positive(jheem,
+                                          transformation(intercept + slope * (year-base.model$anchor.year) + future.slope * max(0,year-future.slope.after.year)))
+    })
+}
+
+add.additional.betas.to.array <- function(arr, additional.betas,
+                                          idu.applies.to.in.remission=T,
+                                          idu.applies.to.msm.idu=T,
+                                          msm.applies.to.msm.idu=T)
+{
+    if (idu.applies.to.in.remission)
+        idu.strata = c('active_IDU','IDU_in_remission')
+    else
+        idu.strata = 'active_IDU'
+    non.idu.strata = setdiff(c('never_IDU','active_IDU','IDU_in_remission'), idu.strata)
+    
+    if (idu.applies.to.msm.idu)
+        idu.sexes = c('heterosexual_male','female','msm')
+    else
+        idu.sexes = c('heterosexual_male','female')
+    
+    if (msm.applies.to.msm.idu)
+        msm.risks = c('never_IDU','active_IDU','IDU_in_remission')
+    else
+        msm.risks = non.idu.strata
+    
+    for (name in names(additional.betas))
+    {
+        if (grepl('all', name, ignore.case = T))
+            arr = arr + additional.betas[name]
+        
+        else if (grepl('age1', name, ignore.case = T))
+            arr[1,,,] = arr[1,,,] + additional.betas[name]
+        else if (grepl('age2', name, ignore.case = T))
+            arr[2,,,] = arr[2,,,] + additional.betas[name]
+        else if (grepl('age3', name, ignore.case = T))
+            arr[3,,,] = arr[3,,,] + additional.betas[name]
+        else if (grepl('age4', name, ignore.case = T))
+            arr[4,,,] = arr[4,,,] + additional.betas[name]
+        else if (grepl('age5', name, ignore.case = T))
+            arr[5,,,] = arr[5,,,] + additional.betas[name]
+        
+        else if (grepl('black', name, ignore.case = T))
+            arr[,'black',,] = arr[,'black',,] + additional.betas[name]
+        else if (grepl('hispanic', name, ignore.case = T))
+            arr[,'hispanic',,] = arr[,'hispanic',,] + additional.betas[name]
+        else if (grepl('other', name, ignore.case = T))
+            arr[,'other',,] = arr[,'other',,] + additional.betas[name]
+        
+        else if (grepl('idu', name, ignore.case = T))
+            arr[,,idu.sexes,idu.strata] = arr[,,idu.sexes,idu.strata] + additional.betas[name]
+        else if (grepl('msm', name, ignore.case = T))
+            arr[,,'msm',msm.risks] = arr[,,'msm',msm.risks] + additional.betas[name]
+        else if (grepl('heterosexual', name, ignore.case = T))
+            arr[,,c('heterosexual_male','female'),non.idu.strata] = 
+                arr[,,c('heterosexual_male','female'),non.idu.strata] + additional.betas[name]
+        
+    }
+    
+    arr
 }
 
 ##-----------##
@@ -1371,22 +1490,8 @@ do.setup.transmissibility <- function(components)
 
         #-- Pull year-specific suppression --#
 
-        suppression.ors = expand.population.to.hiv.positive(components$jheem, components$background.suppression.ors)
-#        background.suppression = lapply(components$background.suppression, function(p){
-#            p.prime = min(.99999, p/components$background.suppression.inputs$max.smoothed.suppressed.proportion)
-#            o = p.prime / (1-p.prime)
-#            o = o * suppression.ors
-#            p.prime = o / (1+o)
-#            p.prime * components$background.suppression.inputs$max.smoothed.suppressed.proportion
-#        })
-        background.suppression = components$background.suppression
 
-        suppression = get.rates.from.background.and.foreground(background.rates = background.suppression,
-                                                              background.times = components$background.suppression.years,
-                                                              foreground.rates = components$foreground.suppression,
-                                                              foreground.times = components$foreground.suppression.years,
-                                                              max.background.time = components$background.change.to.years$suppression,
-                                                              allow.foreground.less = F)
+        suppression = calculate.suppression(components)  
 
 
         #-- Put them together --#
@@ -1500,16 +1605,27 @@ attr(components, 'msm.sex.by.age') = msm.sex.by.age
         population = stratify.males.to.msm.by.race(components$populations$collapsed,
                                                    components$proportions.msm.of.male)
         sex.counts = apply(population, 'sex', sum)
-
+        fraction.male.male.that.are.with.msm = sex.counts['msm'] / (sex.counts['msm'] + sex.counts['heterosexual_male'] * components$sexual.transmission$fraction.heterosexual.male.pairings.with.male)
+        
         mat = array(0, dim=c(sex.from=length(components$settings$SEXES), sex.to=length(components$settings$SEXES)),
                     dimnames=list(sex.from=components$settings$SEXES, sex.to=components$settings$SEXES))
 
+        #females
         mat['heterosexual_male','female'] = sex.counts['heterosexual_male']
         mat['msm','female'] = sex.counts['msm'] * components$sexual.transmission$oe.female.pairings.with.msm
-        mat['female','heterosexual_male'] = 1
+        
+        #msm
         mat['female','msm'] = components$sexual.transmission$fraction.msm.pairings.with.female
-        mat['msm','msm'] = 1-components$sexual.transmission$fraction.msm.pairings.with.female
-
+        mat['msm','msm'] = (1-components$sexual.transmission$fraction.msm.pairings.with.female) * fraction.male.male.that.are.with.msm
+        mat['heterosexual_male','msm'] = (1-components$sexual.transmission$fraction.msm.pairings.with.female) * (1-fraction.male.male.that.are.with.msm)
+        
+        #heterosexual males
+        mat['msm','heterosexual_male'] = components$sexual.transmission$fraction.heterosexual.male.pairings.with.male *
+            fraction.male.male.that.are.with.msm
+        mat['heterosexual_male','heterosexual_male'] = components$sexual.transmission$fraction.heterosexual.male.pairings.with.male *
+            (1-fraction.male.male.that.are.with.msm)
+        mat['female','heterosexual_male'] = 1 - components$sexual.transmission$fraction.heterosexual.male.pairings.with.male
+        
         sexual.transmission.by.sex = calculate.column.proportions(mat)
 
         #-- Sex by IDU --#
@@ -1617,6 +1733,9 @@ get.sexual.transmission.arrays <- function(components)
             sexual.transmission.mapping[,,,age.index,race,'msm'] = msm.name
             sexual.transmission.mapping[,,,age.index,race,'heterosexual_male'] = het.male.name
             sexual.transmission.mapping[,,,age.index,race,'female'] = het.female.name
+            
+            #This line lets msm transmission rates apply to heterosexual males engaging in sex with males
+            sexual.transmission.mapping[,,c('heterosexual_male','msm'),age.index,race,'heterosexual_male'] = msm.name
         }
     }
 

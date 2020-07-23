@@ -267,9 +267,65 @@ plot.calibration.sex.risk <- function(sims,
                      ...)
 }
 
+plot.calibration.sex.race <- function(sims,
+                                      years=2010:2020,
+                                      data.types=c('new','prevalence'),
+                                      surv=msa.surveillance,
+                                      location=NULL,
+                                      population=NULL,
+                                      use.cdc=T,
+                                      ci.coverage=0.95,
+                                      facet.data.type.first=T,
+                                      ncol=3,
+                                      ...
+)
+{
+    plot.calibration(sims=sims,
+                     split.by='sex',
+                     facet.by = 'race',
+                     years=years,
+                     data.types=data.types,
+                     surv=surv,
+                     location=location,
+                     population=population,
+                     use.cdc=use.cdc,
+                     ci.coverage=ci.coverage,
+                     facet.data.type.first=facet.data.type.first,
+                     ncol=ncol,
+                     ...)
+}
+
+plot.calibration.race.sex <- function(sims,
+                                      years=2010:2020,
+                                      data.types=c('new','prevalence'),
+                                      surv=msa.surveillance,
+                                      location=NULL,
+                                      population=NULL,
+                                      use.cdc=T,
+                                      ci.coverage=0.95,
+                                      facet.data.type.first=T,
+                                      ncol=3,
+                                      ...
+)
+{
+    plot.calibration(sims=sims,
+                     split.by='race',
+                     facet.by = 'sex',
+                     years=years,
+                     data.types=data.types,
+                     surv=surv,
+                     location=location,
+                     population=population,
+                     use.cdc=use.cdc,
+                     ci.coverage=ci.coverage,
+                     facet.data.type.first=facet.data.type.first,
+                     ncol=ncol,
+                     ...)
+}
+
 plot.calibration.total <- function(sims,
                                    years=2010:2020,
-                                   data.types=c('new','prevalence','mortality','diagnosed'),
+                                   data.types=c('new','prevalence','mortality','diagnosed','suppression'),
                                    surv=msa.surveillance,
                                    location=NULL,
                                    population=NULL,
@@ -433,6 +489,7 @@ plot.calibration <- function(sims,
                              mortality.name = if (show.rates) 'HIV Mortality (per 100,000 PWH)' else if (normalize.within.facet) 'HIV Mortality (%)' else 'HIV Mortality (number of cases)',
                              diagnosed.name = 'PWH with Diagnosed HIV (%)',
                              population.name = 'Population (%)',
+                             suppression.name = 'Suppression (%)', 
                              incidence.name = if (show.rates) 'Incidence (per 100,000)' else 'Incidence (number of cases)',
                              cumulative.mortality.name = if (show.rates) 'Cumulative HIV Mortality (per 100,000 PWH)' else if (normalize.within.facet) 'HIV Mortality (%)' else 'Cumulative HIV Mortality (number of cases)',
                              cdc.label = 'CDC',
@@ -498,11 +555,12 @@ plot.calibration <- function(sims,
                         diagnosed=diagnosed.name,
                         population=population.name,
                         incidence=incidence.name,
-                        cumulative.mortality=cumulative.mortality.name)
+                        cumulative.mortality=cumulative.mortality.name,
+                        suppression=suppression.name)
     if (show.rates)
-        data.type.denominators = c(new=100000, prevalence=100000, mortality=100000, population=100, diagnosed=100, incidence=100000, cumulative.mortality=100000)
+        data.type.denominators = c(new=100000, prevalence=100000, mortality=100000, population=100, diagnosed=100, suppression=100, incidence=100000, cumulative.mortality=100000)
     else
-        data.type.denominators = c(new=1, prevalence=1, mortality=1, population=100, diagnosed=100, incidence=1, cumulative.mortality=1)
+        data.type.denominators = c(new=1, prevalence=1, mortality=1, population=100, diagnosed=100, suppression=100, incidence=1, cumulative.mortality=1)
 
     race.names = c(black='Black',hispanic="Hispanic", other='Other')
     risk.names = c(msm='MSM', idu='IDU', msm_idu='MSM+IDU', heterosexual='Heterosexual',
@@ -527,7 +585,7 @@ plot.calibration <- function(sims,
             #Set up denominators
             #In general, we are going to pull the years we need from the population given
             #If years are missing from the given population, will just use the nearest year
-            if (data.type=='diagnosed' || data.type=='population')
+            if (data.type=='diagnosed' || data.type=='population' || data.type=='suppression')
                 denominators = 1
             else
                 denominators = get.denominator.population(population=population,
@@ -582,6 +640,30 @@ plot.calibration <- function(sims,
                                                                  sex=any(all.dimensions=='sex'), risk=any(all.dimensions=='risk'),
                                                                  aggregate.locations = T, aggregate.years = F,
                                                                  throw.error.if.missing.data = F)
+                        
+                        if (data.type=='diagnosed' && is.null(truth.numerators) && length(all.dimensions)==1 && all.dimensions=='year')
+                        {
+                            truth.numerators = get.state.averaged.knowledge.of.status(location,
+                                                                               state.surveillance,
+                                                                               years=years,
+                                                                               census.totals = ALL.DATA.MANAGERS$census.totals)
+                         
+                            dim(truth.numerators) = c(year=length(years))
+                            dimnames(truth.numerators) = list(year = as.character(years))
+                        }
+                        else if (data.type=='suppression' && is.null(truth.numerators) &&
+                                 is.null(get.surveillance.data(surv, location.codes=location, data.type='suppression', throw.error.if.missing.data=F)))
+                        {
+                            states = states.for.msa(location)
+                            if (length(states)==1)
+                            {
+                                truth.numerators = get.surveillance.data(state.surveillance, location.codes=states, data.type=data.type.for.surveillance,
+                                                                         age=any(all.dimensions=='age'), race=any(all.dimensions=='race'),
+                                                                         sex=any(all.dimensions=='sex'), risk=any(all.dimensions=='risk'),
+                                                                         aggregate.locations = T, aggregate.years = F,
+                                                                         throw.error.if.missing.data = F)
+                            }
+                        }
                     }
                     else
                         truth.numerators = NULL
@@ -589,6 +671,7 @@ plot.calibration <- function(sims,
                     if (!is.null(truth.numerators))
                     {
                         truth.years = intersect(years, as.numeric(dimnames(truth.numerators)[['year']]))
+
                         truth.numerators = access(truth.numerators, year=as.character(truth.years), collapse.length.one.dimensions = F)
                         truth.numerators = apply(truth.numerators, all.plus.denominator.dimensions, function(x){x})
                         truth.type = rep(cdc.label, length(truth.years))
@@ -867,7 +950,6 @@ plot.calibration <- function(sims,
         }
     }
 
-
     #-- Make the Plot --#
 
     if (use.bar)
@@ -1042,6 +1124,9 @@ get.sim.values <- function(sim,
         model.rates = extract.population.subset(sim, years=years, keep.dimensions = all.dimensions,
                                                 denominator.dimensions = facet.by, per.population = 1,
                                                 use.cdc.categorizations = use.cdc)
+    else if (data.type=='suppression')
+        model.rates = extract.suppression(sim, years=years, keep.dimensions=all.dimensions,
+                                          use.cdc.categorizations = use.cdc)
     else
         model.rates = get.sim.projections(jheem.results=sim,
                                           data.type=data.type,
@@ -1051,7 +1136,7 @@ get.sim.values <- function(sim,
                                           use.cdc=use.cdc,
                                           denominator.dimensions = denominator.dimensions)
 
-    if (show.rates || data.type=='population' || data.type=='diagnosed')
+    if (show.rates || data.type=='population' || data.type=='diagnosed' || data.type=='suppression')
         values = model.rates
     else
     {
@@ -1129,6 +1214,9 @@ get.sim.projections <- function(jheem.results, data.type, years, keep.dimensions
         extract.population.subset(jheem.results, years=years, keep.dimensions = keep.dimensions,
                                   denominator.dimensions = facet.by, per.population = 1,
                                   use.cdc.categorizations = use.cdc)
+    else if (data.type=='suppression')
+        model.rates = extract.suppression(jheem.results, years=years, keep.dimensions=keep.dimensions,
+                                          use.cdc.categorizations = use.cdc)
     else
     {
         if (data.type=='new')

@@ -5,12 +5,28 @@ if (1==2)
 
 source('code/source_code.R')
 
-mcmc = assemble.mcmc.from.cache('mcmc_runs/systematic_caches/35620_1x20K_2020-05-18/',T)
-
+mcmc = assemble.mcmc.from.cache('mcmc_runs/systematic_caches/31080_1x20K_2020-07-23/',T)
+mcmc = assemble.mcmc.from.cache('mcmc_runs/systematic_caches/33100_1x20K_2020-07-23/',T)
+mcmc = assemble.mcmc.from.cache('mcmc_runs/systematic_caches/35620_1x20K_2020-07-23/',T)
+    
 simset = extract.simset(mcmc, additional.burn=mcmc@n.iter/2, additional.thin=2^(as.numeric(mcmc@n.iter>100)+as.numeric(mcmc@n.iter>1000)))
 plot.calibration.race.risk(simset)
 plot.calibration.sex.age(simset)
-plot.calibration(simset, facet.by=c('race'), risk='msm')
+#plot.calibration(simset, facet.by=c('race'), risk='msm')
+plot.calibration.risk(simset)
+plot.calibration.total(simset)
+plot.calibration.risk.race(simset)
+plot.calibration.race(simset)
+
+
+#Breatk out suppression
+plot.calibration.total(simset, data.types='suppression')
+plot.calibration.race(simset, data.types='suppression')
+plot.calibration.risk(simset, data.types='suppression')
+plot.calibration.age(simset, data.types='suppression')
+plot.calibration.sex(simset, data.types='suppression')
+
+
 
 
 print(paste0('N Iterations = ', mcmc@n.iter))

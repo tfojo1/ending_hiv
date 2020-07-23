@@ -6,567 +6,27 @@ library(mvtnorm)
 library(reshape2)
 library(jheem)
 
-##----------------------------------------------##
-##-- THE COMBINED LIKELIHOOD CREATOR FUNCTION --##
-##----------------------------------------------##
-## This function creates and returns a function to calculate the likelihood
-## The returned function takes as input two parameters
-##  (1) jheem.result
-##  (2) log (optional, default value=T)
-## And returns either a likelihood or log-likelihood based on the result
-
-create.full.likelihood <- function(location=BALTIMORE.MSA,
-                                   surv=msa.surveillance,
-                                   state.surveillance=state.surveillance,
-                                   population=get.census.totals(ALL.DATA.MANAGERS$census.totals, location),
-                                   use.simulated.denominators=F,
-                                   use.sim.msm.proportions=T,
-                                   denominator.dimensions='year',
-                                   aggregate.denominator.males=T,
-                                   msm.cv=0,
-                                   idu.cv=0.25,
-                                   new.years=2010:2017,
-                                   prevalence.years=2009:2016,
-                                   mortality.years=2009:2016,
-                                   diagnosed.years=2010:2016,
-                                   total.new.years=2008:2009,#1993:2010,
-                                   total.prevalence.years=2007:2008,
-                                   year.to.year.new.correlation=0.0,
-                                   year.to.year.prevalence.correlation=0.0,
-                                   year.to.year.mortality.correlation=0.0,
-
-                                   new.numerator.year.to.year.chunk.correlation=0.65,
-                                   new.numerator.year.to.year.off.correlation=0.25,
-                                   new.numerator.chunk.years=list(2011:2014,2015:2017),
-                                   prev.numerator.year.to.year.chunk.correlation=0.65,
-                                   prev.numerator.year.to.year.off.correlation=0.25,
-                                   prev.numerator.chunk.years=list(2010:2013,2014:2016),
-                                   mort.numerator.year.to.year.chunk.correlation=0.65,
-                                   mort.numerator.year.to.year.off.correlation=0.25,
-                                   mort.numerator.chunk.years=list(2010:2013,2014:2016),
-
-                                   new.numerator.sd=function(...){0},
-                                   prevalence.numerator.sd=function(...){0},
-                                   mortality.numerator.sd=function(...){0},
-                                   mortality.bias.fn = function(...){0},
-                                   mortality.bias.sd = function(...){0},
-                                   diagnosed.numerator.sd=function(...){0},
-                                   new.sd.inflation=1,
-                                   prevalence.sd.inflation=1,
-                                   mortality.sd.inflation=1,
-                                   diagnosed.sd.inflation=1,
-                                   include.total.new.prev=T,
-                                   total.new.sd.inflation=1,
-                                   cumulative.mortality.sd.inflation=1,
-                                   total.new.numerator.sd=function(...){0},
-                                   total.prevalence.sd.inflation=1,
-                                   total.prevalence.numerator.sd=function(...){0},
-                                   cumulative.mortality.numerator.sd=function(...){0},
-                                   
-                                   aids.diagnoses.numerator.sd=function(...){0},
-                                   aids.diagnoses.sd.inflation=1,
-                                   aids.diagnoses.to.hiv.ratio.log.sd=0.5*log(1.1),
-                                   
-                                   use.total.prevalence=F,
-                                   idu.manager=ALL.DATA.MANAGERS$idu,
-                                   census.full=ALL.DATA.MANAGERS$census.full,
-                                   idu.years=2014:2016,
-                                   idu.log.sd=log(2)/2,
-                                   verbose=F)
-{
-    create.combined.likelihood(location=location,
-                               surv=surv,
-                               population=population,
-                               use.2d.targets = T,
-                               use.all.targets = T,
-                               include.total.new.prev = include.total.new.prev,
-                               use.simulated.denominators = use.simulated.denominators,
-                               use.sim.msm.proportions = use.sim.msm.proportions,
-                               denominator.dimensions = denominator.dimensions,
-                               aggregate.denominator.males = aggregate.denominator.males,
-                               msm.cv=msm.cv,
-                               idu.cv=idu.cv,
-                               new.years=new.years,
-                               prevalence.years=prevalence.years,
-                               mortality.years=mortality.years,
-                               diagnosed.years=diagnosed.years,
-                               total.new.years=total.new.years,
-                               total.prevalence.years=total.prevalence.years,
-                               year.to.year.new.correlation = year.to.year.new.correlation,
-                               year.to.year.prevalence.correlation = year.to.year.prevalence.correlation,
-                               year.to.year.mortality.correlation = year.to.year.mortality.correlation,
-
-                               new.numerator.year.to.year.chunk.correlation=new.numerator.year.to.year.chunk.correlation,
-                               new.numerator.year.to.year.off.correlation=new.numerator.year.to.year.off.correlation,
-                               new.numerator.chunk.years=new.numerator.chunk.years,
-                               prev.numerator.year.to.year.chunk.correlation=prev.numerator.year.to.year.chunk.correlation,
-                               prev.numerator.year.to.year.off.correlation=prev.numerator.year.to.year.off.correlation,
-                               prev.numerator.chunk.years=prev.numerator.chunk.years,
-                               mort.numerator.year.to.year.chunk.correlation=mort.numerator.year.to.year.chunk.correlation,
-                               mort.numerator.year.to.year.off.correlation=mort.numerator.year.to.year.off.correlation,
-                               mort.numerator.chunk.years=mort.numerator.chunk.years,
-
-                               new.numerator.sd=new.numerator.sd,
-                               prevalence.numerator.sd=prevalence.numerator.sd,
-                               mortality.numerator.sd=mortality.numerator.sd,
-                               mortality.bias.fn=mortality.bias.fn,
-                               mortality.bias.sd=mortality.bias.sd,
-                               diagnosed.numerator.sd=diagnosed.numerator.sd,
-                               new.sd.inflation=new.sd.inflation,
-                               prevalence.sd.inflation=prevalence.sd.inflation,
-                               mortality.sd.inflation=mortality.sd.inflation,
-                               diagnosed.sd.inflation=diagnosed.sd.inflation,
-                               total.new.sd.inflation=total.new.sd.inflation,
-                               cumulative.mortality.sd.inflation=cumulative.mortality.sd.inflation,
-                               total.new.numerator.sd=total.new.numerator.sd,
-                               total.prevalence.sd.inflation=total.prevalence.sd.inflation,
-                               total.prevalence.numerator.sd=total.prevalence.numerator.sd,
-                               cumulative.mortality.numerator.sd=cumulative.mortality.numerator.sd,
-                               
-                               aids.diagnoses.numerator.sd=aids.diagnoses.numerator.sd,
-                               aids.diagnoses.sd.inflation=aids.diagnoses.sd.inflation,
-                               aids.diagnoses.to.hiv.ratio.log.sd=aids.diagnoses.to.hiv.ratio.log.sd,
-                               
-                               use.total.prevalence=use.total.prevalence,
-                               idu.manager=idu.manager,
-                               census.full=census.full,
-                               idu.years=idu.years,
-                               idu.log.sd=idu.log.sd,
-                               verbose=verbose
-                               )
-}
-
-create.combined.likelihood <- function(location=BALTIMORE.MSA,
-                                   surv=msa.surveillance,
-                                   population=get.census.totals(ALL.DATA.MANAGERS$census.totals, location),
-                                   use.2d.targets=T,
-                                   include.total.new.prev=T,
-                                   use.all.targets=T,
-                                   use.sex=use.all.targets,
-                                   use.race=use.all.targets,
-                                   use.risk=use.all.targets,
-                                   use.age=use.all.targets,
-                                   use.simulated.denominators=F,
-                                   use.sim.msm.proportions=T,
-                                   denominator.dimensions='year',
-                                   aggregate.denominator.males=T,
-                                   msm.cv=0,
-                                   idu.cv=0,
-                                   new.years=2011:2017,
-                                   prevalence.years=2010:2016,
-                                   mortality.years=2010:2016,
-                                   diagnosed.years=2010:2016,
-                                   total.new.years=1993:2010,
-                                   total.prevalence.years=2007:2009,
-                                   year.to.year.new.correlation=0.5,
-                                   year.to.year.prevalence.correlation=0.5,
-                                   year.to.year.mortality.correlation=0.5,
-
-                                   new.numerator.year.to.year.chunk.correlation=0.65,
-                                   new.numerator.year.to.year.off.correlation=0.25,
-                                   new.numerator.chunk.years=list(2011:2014,2015:2017),
-                                   prev.numerator.year.to.year.chunk.correlation=0.65,
-                                   prev.numerator.year.to.year.off.correlation=0.25,
-                                   prev.numerator.chunk.years=list(2010:2013,2014:2016),
-                                   mort.numerator.year.to.year.chunk.correlation=0.65,
-                                   mort.numerator.year.to.year.off.correlation=0.25,
-                                   mort.numerator.chunk.years=list(2010:2013,2014:2016),
-                                   
-                                   aids.diagnoses.numerator.sd=function(...){0},
-                                   aids.diagnoses.sd.inflation=1,
-                                   aids.diagnoses.to.hiv.ratio.log.sd=0.5*log(1.1),
-                                   
-                                   new.numerator.sd=function(...){0},
-                                   prevalence.numerator.sd=function(...){0},
-                                   mortality.numerator.sd=function(...){0},
-                                   mortality.bias.fn = function(...){0},
-                                   mortality.bias.sd = function(...){0},
-                                   diagnosed.numerator.sd=function(...){0},
-                                   new.sd.inflation=1,
-                                   prevalence.sd.inflation=1,
-                                   mortality.sd.inflation=1,
-                                   diagnosed.sd.inflation=1,
-                                   total.new.sd.inflation=1,
-                                   cumulative.mortality.sd.inflation=1,
-                                   total.new.numerator.sd=function(...){0},
-                                   total.prevalence.sd.inflation=1,
-                                   total.prevalence.numerator.sd=function(...){0},
-                                   cumulative.mortality.numerator.sd=function(...){0},
-                                   use.total.prevalence=F,
-                                   idu.manager=ALL.DATA.MANAGERS$idu,
-                                   census.full=ALL.DATA.MANAGERS$census.full,
-                                   idu.years=2014:2016,
-                                   idu.log.sd=log(2)/2,
-                                   verbose=F)
-{
-    new.lik = create.likelihood.function(data.type='new',
-                                         years = new.years,
-                                        surv=surv,
-                                        location=location,
-                                        by.total = include.total.new.prev,
-                                        by.sex.age=use.2d.targets && use.sex && use.age,
-                                        by.sex.race=use.2d.targets && use.sex && use.race,
-                                        by.sex.risk=use.2d.targets && use.sex && use.risk,
-                                        by.race.risk=use.2d.targets && use.race && use.risk,
-                                        by.sex=!use.2d.targets && use.sex,
-                                        by.race=!use.2d.targets && use.race,
-                                        by.age=!use.2d.targets && use.age,
-                                        by.risk=!use.2d.targets && use.risk,
-                                        population=population,
-                                        use.sim.msm.proportions=use.sim.msm.proportions,
-                                        denominator.dimensions=intersect(denominator.dimensions, c('year','age','race','sex','risk')),
-                                        aggregate.denominator.males=aggregate.denominator.males,
-                                        msm.cv=msm.cv,
-                                        idu.cv=idu.cv,
-                                        sd.inflation=new.sd.inflation,
-                                        year.to.year.correlation = year.to.year.new.correlation,
-
-                                        numerator.year.to.year.chunk.correlation=new.numerator.year.to.year.chunk.correlation,
-                                        numerator.year.to.year.off.correlation=new.numerator.year.to.year.off.correlation,
-                                        numerator.chunk.years=new.numerator.chunk.years,
-                                        numerator.sd = new.numerator.sd
-                                        )
-
-    prev.lik = create.likelihood.function(data.type='prevalence',
-                                          years=prevalence.years,
-                                         surv=surv,
-                                         location=location,
-                                         by.total = include.total.new.prev,
-                                         by.sex.age=use.2d.targets && use.sex && use.age,
-                                         by.sex.race=use.2d.targets && use.sex && use.race,
-                                         by.sex.risk=use.2d.targets && use.sex && use.risk,
-                                         by.race.risk=use.2d.targets && use.race && use.risk,
-                                         by.sex=!use.2d.targets && use.sex,
-                                         by.race=!use.2d.targets && use.race,
-                                         by.age=!use.2d.targets && use.age,
-                                         by.risk=!use.2d.targets && use.risk,
-                                         population=population,
-                                         use.sim.msm.proportions=use.sim.msm.proportions,
-                                         denominator.dimensions=intersect(denominator.dimensions, c('year','age','race','sex','risk')),
-                                         aggregate.denominator.males=aggregate.denominator.males,
-                                         msm.cv=msm.cv,
-                                         idu.cv=idu.cv,
-                                         sd.inflation=prevalence.sd.inflation,
-                                         year.to.year.correlation = year.to.year.prevalence.correlation,
-
-                                         numerator.year.to.year.chunk.correlation=prev.numerator.year.to.year.chunk.correlation,
-                                         numerator.year.to.year.off.correlation=prev.numerator.year.to.year.off.correlation,
-                                         numerator.chunk.years=prev.numerator.chunk.years,
-                                         numerator.sd = prevalence.numerator.sd
-    )
-
-    mort.lik = create.likelihood.function(data.type='mortality',
-                                          years=mortality.years,
-                                         surv=surv,
-                                         location=location,
-                                         by.sex=use.sex,
-                                         by.total = !use.sex,
-                                         population=population,
-                                         denominator.dimensions=intersect(denominator.dimensions, c('year','sex')),
-                                         aggregate.denominator.males=aggregate.denominator.males,
-                                         msm.cv=msm.cv,
-                                         idu.cv=idu.cv,
-                                         sd.inflation = mortality.sd.inflation,
-                                         year.to.year.correlation = year.to.year.mortality.correlation,
-
-                                         numerator.year.to.year.chunk.correlation=mort.numerator.year.to.year.chunk.correlation,
-                                         numerator.year.to.year.off.correlation=mort.numerator.year.to.year.off.correlation,
-                                         numerator.chunk.years=mort.numerator.chunk.years,
-                                         numerator.sd = mortality.numerator.sd,
-                                         bias.fn = mortality.bias.fn,
-                                         bias.sd = mortality.bias.sd
-    )
-
-    dx.lik = create.diagnosed.likelihood(surv=state.surveillance, location=location,
-                                         years = diagnosed.years,
-                                         sd.inflation=diagnosed.sd.inflation, numerator.sd=diagnosed.numerator.sd)
-
-    total.new.lik = create.total.likelihood(data.type='new',
-                                            years=total.new.years,
-                                            surv=surv,
-                                            location=location,
-                                            population = population,
-                                            sd.inflation = total.new.sd.inflation,
-                                            numerator.sd = total.new.numerator.sd)
-
-    total.prev.lik = create.total.likelihood(data.type='prevalence',
-                                            years=total.prevalence.years,
-                                            surv=surv,
-                                            location=location,
-                                            population = population,
-                                            sd.inflation = total.prevalence.sd.inflation,
-                                            numerator.sd = total.prevalence.numerator.sd)
-
-    idu.lik = create.idu.likelihood(idu.manager=idu.manager,
-                                    census=census.full,
-                                    location=location,
-                                    years=idu.years,
-                                    log.sd = idu.log.sd)
-    
-    cum.mort.lik = create.cumulative.mortality.likelihood(surv = surv,
-                                                          location = location,
-                                                          numerator.sd = cumulative.mortality.numerator.sd,
-                                                          sd.inflation = cumulative.mortality.sd.inflation)
-    
-    aids.lik = create.aids.diagnoses.likelihood(surv=surv,
-                                                location=location,
-                                                numerator.sd=aids.diagnoses.numerator.sd,
-                                                sd.inflation=aids.diagnoses.sd.inflation,
-                                                hiv.to.aids.diagnoses.ratio.log.sd=aids.diagnoses.to.hiv.ratio.log.sd)
-
-    if (use.total.prevalence)
-        create.joint.likelihood.function(new=new.lik, prev=prev.lik, mort=mort.lik,
-                                         dx=dx.lik, total.new=total.new.lik, total.prev=total.prev.lik,
-                                         idu=idu.lik, cum.mort=cum.mort.lik, aids=aids.lik,
-                                         verbose=verbose)
-    else
-        create.joint.likelihood.function(new=new.lik, prev=prev.lik, mort=mort.lik,
-                                         dx=dx.lik, total.new=total.new.lik, 
-                                         idu=idu.lik, cum.mort=cum.mort.lik, aids=aids.lik,
-                                         verbose=verbose)
-}
-
-create.marginalized.combined.likelihood <- function(location=BALTIMORE.MSA,
-                                       surv=msa.surveillance,
-                                       state.surveillance=state.surveillance,
-                                       population=get.census.totals(ALL.DATA.MANAGERS$census.totals, location),
-                                       use.2d.targets=T,
-                                       use.all.targets=T,
-                                       use.sex=use.all.targets,
-                                       use.race=use.all.targets,
-                                       use.risk=use.all.targets,
-                                       use.age=use.all.targets,
-                                       use.simulated.denominators=F,
-                                       use.sim.msm.proportions=T,
-                                       denominator.dimensions='year',
-                                       aggregate.denominator.males=T,
-                                       msm.cv=0,
-                                       idu.cv=0,
-                                       year.to.year.new.correlation=0.5,
-                                       year.to.year.prevalence.correlation=0.5,
-                                       year.to.year.mortality.correlation=0.5,
-                                       numerator.cv.on.log.scale=T,
-                                       new.cv=0.5,
-                                       prevalence.cv=0.5,
-                                       mortality.cv=0.5,
-                                       new.fixed.sd=0,
-                                       prevalence.fixed.sd=0,
-                                       mortality.fixed.sd=0,
-                                       new.sd.inflation=1,
-                                       prevalence.sd.inflation=1,
-                                       mortality.sd.inflation=1,
-                                       verbose=F)
-{
-    stop("need to redo numerator sds")
-    lik.components = list()
-
-    year.to.year.correlations = c(new=year.to.year.new.correlation, prevalence=year.to.year.prevalence.correlation)
-    numerator.cvs = c(new=new.cv, prevalence=prevalence.cv)
-    sd.inflation = c(new=new.sd.inflation, prevalence=prevalence.sd.inflation)
-
-    for (data.type in c('new','prevalence'))
-    {
-        if (use.2d.targets && use.sex && use.age)
-        {
-            one.lik = create.likelihood.function(data.type=data.type,
-                                                 surv=surv,
-                                                 location=location,
-                                                 by.sex.age=T,
-                                                 population=population,
-                                                 use.sim.msm.proportions=use.sim.msm.proportions,
-                                                 denominator.dimensions=intersect(denominator.dimensions, c('year','age','race','sex','risk')),
-                                                 aggregate.denominator.males=aggregate.denominator.males,
-                                                 msm.cv=msm.cv,
-                                                 idu.cv=idu.cv,
-                                                 sd.inflation=sd.inflation[data.type],
-                                                 year.to.year.correlation = year.to.year.correlations[data.type],
-                                                 numerator.cv.on.log.scale=numerator.cv.on.log.scale,
-                                                 numerator.cv = numerator.cvs[data.type],
-                                                 numerator.fixed.sd = numerator.fixed.sds[data.type]
-            )
-            lik.components = c(lik.components, list(one.lik))
-        }
-
-        if (use.2d.targets && use.sex && use.race)
-        {
-            one.lik = create.likelihood.function(data.type=data.type,
-                                                 surv=surv,
-                                                 location=location,
-                                                 by.sex.race=T,
-                                                 population=population,
-                                                 use.sim.msm.proportions=use.sim.msm.proportions,
-                                                 denominator.dimensions=intersect(denominator.dimensions, c('year','age','race','sex','risk')),
-                                                 aggregate.denominator.males=aggregate.denominator.males,
-                                                 msm.cv=msm.cv,
-                                                 idu.cv=idu.cv,
-                                                 sd.inflation=sd.inflation[data.type],
-                                                 year.to.year.correlation = year.to.year.correlations[data.type],
-                                                 numerator.cv.on.log.scale=numerator.cv.on.log.scale,
-                                                 numerator.cv = numerator.cvs[data.type],
-                                                 numerator.fixed.sd = numerator.fixed.sds[data.type]
-            )
-            lik.components = c(lik.components, list(one.lik))
-        }
-
-        if (use.2d.targets && use.sex && use.risk)
-        {
-            one.lik = create.likelihood.function(data.type=data.type,
-                                                 surv=surv,
-                                                 location=location,
-                                                 by.sex.risk=T,
-                                                 population=population,
-                                                 use.sim.msm.proportions=use.sim.msm.proportions,
-                                                 denominator.dimensions=intersect(denominator.dimensions, c('year','age','race','sex','risk')),
-                                                 aggregate.denominator.males=aggregate.denominator.males,
-                                                 msm.cv=msm.cv,
-                                                 idu.cv=idu.cv,
-                                                 sd.inflation=sd.inflation[data.type],
-                                                 year.to.year.correlation = year.to.year.correlations[data.type],
-                                                 numerator.cv.on.log.scale=numerator.cv.on.log.scale,
-                                                 numerator.cv = numerator.cvs[data.type],
-                                                 numerator.fixed.sd = numerator.fixed.sds[data.type]
-            )
-            lik.components = c(lik.components, list(one.lik))
-        }
-
-        if (use.2d.targets && use.race && use.risk)
-        {
-            one.lik = create.likelihood.function(data.type=data.type,
-                                                 surv=surv,
-                                                 location=location,
-                                                 by.race.risk=T,
-                                                 population=population,
-                                                 use.sim.msm.proportions=use.sim.msm.proportions,
-                                                 denominator.dimensions=intersect(denominator.dimensions, c('year','age','race','sex','risk')),
-                                                 aggregate.denominator.males=aggregate.denominator.males,
-                                                 msm.cv=msm.cv,
-                                                 idu.cv=idu.cv,
-                                                 year.to.year.correlation = year.to.year.correlations[data.type],
-                                                 numerator.cv.on.log.scale=numerator.cv.on.log.scale,
-                                                 numerator.cv = numerator.cvs[data.type],
-                                                 numerator.fixed.sd = numerator.fixed.sds[data.type]
-            )
-            lik.components = c(lik.components, list(one.lik))
-        }
-
-        if (!use.2d.targets && use.sex)
-        {
-            one.lik = create.likelihood.function(data.type=data.type,
-                                                 surv=surv,
-                                                 location=location,
-                                                 by.sex=T,
-                                                 population=population,
-                                                 use.sim.msm.proportions=use.sim.msm.proportions,
-                                                 denominator.dimensions=intersect(denominator.dimensions, c('year','age','race','sex','risk')),
-                                                 aggregate.denominator.males=aggregate.denominator.males,
-                                                 msm.cv=msm.cv,
-                                                 idu.cv=idu.cv,
-                                                 sd.inflation=sd.inflation[data.type],
-                                                 year.to.year.correlation = year.to.year.correlations[data.type],
-                                                 numerator.cv.on.log.scale=numerator.cv.on.log.scale,
-                                                 numerator.cv = numerator.cvs[data.type],
-                                                 numerator.fixed.sd = numerator.fixed.sds[data.type]
-            )
-            lik.components = c(lik.components, list(one.lik))
-        }
-
-        if (!use.2d.targets && use.race)
-        {
-            one.lik = create.likelihood.function(data.type=data.type,
-                                                 surv=surv,
-                                                 location=location,
-                                                 by.race=T,
-                                                 population=population,
-                                                 use.sim.msm.proportions=use.sim.msm.proportions,
-                                                 denominator.dimensions=intersect(denominator.dimensions, c('year','age','race','sex','risk')),
-                                                 aggregate.denominator.males=aggregate.denominator.males,
-                                                 msm.cv=msm.cv,
-                                                 idu.cv=idu.cv,
-                                                 sd.inflation=sd.inflation[data.type],
-                                                 year.to.year.correlation = year.to.year.correlations[data.type],
-                                                 numerator.cv.on.log.scale=numerator.cv.on.log.scale,
-                                                 numerator.cv = numerator.cvs[data.type],
-                                                 numerator.fixed.sd = numerator.fixed.sds[data.type]
-            )
-            lik.components = c(lik.components, list(one.lik))
-        }
-
-        if (!use.2d.targets && use.age)
-        {
-            one.lik = create.likelihood.function(data.type=data.type,
-                                                 surv=surv,
-                                                 location=location,
-                                                 by.age=T,
-                                                 population=population,
-                                                 use.sim.msm.proportions=use.sim.msm.proportions,
-                                                 denominator.dimensions=intersect(denominator.dimensions, c('year','age','race','sex','risk')),
-                                                 aggregate.denominator.males=aggregate.denominator.males,
-                                                 msm.cv=msm.cv,
-                                                 idu.cv=idu.cv,
-                                                 sd.inflation=sd.inflation[data.type],
-                                                 year.to.year.correlation = year.to.year.correlations[data.type],
-                                                 numerator.cv.on.log.scale=numerator.cv.on.log.scale,
-                                                 numerator.cv = numerator.cvs[data.type],
-                                                 numerator.fixed.sd = numerator.fixed.sds[data.type]
-            )
-            lik.components = c(lik.components, list(one.lik))
-        }
-
-        if (!use.2d.targets && use.risk)
-        {
-            one.lik = create.likelihood.function(data.type=data.type,
-                                                 surv=surv,
-                                                 location=location,
-                                                 by.risk=T,
-                                                 population=population,
-                                                 use.sim.msm.proportions=use.sim.msm.proportions,
-                                                 denominator.dimensions=intersect(denominator.dimensions, c('year','age','race','sex','risk')),
-                                                 aggregate.denominator.males=aggregate.denominator.males,
-                                                 msm.cv=msm.cv,
-                                                 idu.cv=idu.cv,
-                                                 sd.inflation=sd.inflation[data.type],
-                                                 year.to.year.correlation = year.to.year.correlations[data.type],
-                                                 numerator.cv.on.log.scale=numerator.cv.on.log.scale,
-                                                 numerator.cv = numerator.cvs[data.type],
-                                                 numerator.fixed.sd = numerator.fixed.sds[data.type]
-            )
-            lik.components = c(lik.components, list(one.lik))
-        }
-    }
-
-    mort.lik = create.likelihood.function(data.type='mortality',
-                                          surv=surv,
-                                          location=location,
-                                          by.sex=use.sex,
-                                          by.total = !use.sex,
-                                          population=population,
-                                          denominator.dimensions=intersect(denominator.dimensions, c('year','sex')),
-                                          aggregate.denominator.males=aggregate.denominator.males,
-                                          msm.cv=msm.cv,
-                                          idu.cv=idu.cv,
-                                          sd.inflation=mortality.sd.inflation,
-                                          year.to.year.correlation = year.to.year.mortality.correlation,
-                                          numerator.cv.on.log.scale=numerator.cv.on.log.scale,
-                                          numerator.cv = mortality.cv,
-                                          numerator.fixed.sd = mortality.fixed.sd
-    )
-    lik.components = c(lik.components, list(mort.lik))
-
-    dx.lik = create.diagnosed.likelihood(surv=state.surveillance, location=location)
-    lik.components = c(lik.components, list(dx.lik))
-
-    print(paste0("Combining ", length(lik.components), " components (marginally) into the likelihood"))
-    create.joint.likelihood.function(lik.components, verbose=verbose)
-}
-
+##-----------------------------------------------------##
 ##-----------------------------------------------------##
 ##-- THE MAIN LIKELIHOOD COMPONENT CREATOR FUNCTIONS --##
 ##-----------------------------------------------------##
+##
 ## These functions create and return functions to calculate the likelihood
 ## The returned function takes as input two parameters
 ##  (1) jheem.result
 ##  (2) log (optional, default value=T)
 ## And returns either a likelihood or log-likelihood based on the result
+##
+##-----------------------------------------------------##
+##-----------------------------------------------------##
+
+
+##----------------------------------------------------##
+##--              GENERAL LIKELIHOOD                --##
+##--                                                --##
+##-- Used for new diagnoses, prevalence, mortality  --##
+##-- and preserves correlations for stratifications --##
+##----------------------------------------------------##
 
 create.likelihood.function <- function(data.type=c('new','prevalence','mortality')[1],
                                        years=NULL,
@@ -586,6 +46,7 @@ create.likelihood.function <- function(data.type=c('new','prevalence','mortality
                                        sexes=c('heterosexual_male','msm','female'),
                                        risks=c('never_IDU','active_IDU','IDU_in_remission'),
                                        sd.inflation=1,
+                                       weight.by.n.obs.per.year=T,
                                        sd.inflation.for.observations=1,
                                        population=get.census.totals(ALL.DATA.MANAGERS$census.totals, location),
                                        use.simulated.denominators=F,
@@ -669,9 +130,9 @@ create.likelihood.function <- function(data.type=c('new','prevalence','mortality
     else
         corr.mat = make.compound.symmetry.by.year.matrix(access(population, year=as.character(years)), correlation=year.to.year.correlation)
 
-    ##-------------------------------------------------------##
-    ##-- Set up SD Inflation (if dependent on a data.type) --##
-    ##-------------------------------------------------------##
+    ##----------------------------------------------------------------##
+    ##-- Set up SD Inflation (if dependent on a data.type or n.obs) --##
+    ##----------------------------------------------------------------##
 
     if (is(sd.inflation, 'character'))
     {
@@ -697,6 +158,23 @@ create.likelihood.function <- function(data.type=c('new','prevalence','mortality
 
     }
 
+    if (weight.by.n.obs.per.year)
+    {
+        year = substr(likelihood.elements$descriptions, 1, 4)
+        year.counts = table(year)
+        year.weights = max(year.counts) / year.counts
+        
+        orig.sd.inflation = sd.inflation
+        sd.inflation = function(descriptions)
+        {
+            if (is(orig.sd.inflation, 'function'))
+                orig.sd.inflation = orig.sd.inflation(descriptions)
+            
+            year = substr(descriptions, 1, 4)
+            orig.sd.inflation / sqrt(year.weights[year])
+        }
+    }
+    
     ##------------------------------------------------------------------------------------##
     ##-- Set up a mask to pull out components we don't use in the transformation matrix --##
     ##------------------------------------------------------------------------------------##
@@ -706,11 +184,10 @@ create.likelihood.function <- function(data.type=c('new','prevalence','mortality
         !use.simulated.denominators &&
         !(use.sim.msm.proportions && !aggregate.denominator.males && any(denominator.dimensions=='sex')))
     {
-        transformation.mapping = make.transformation.mapping(likelihood.elements$transformation.matrix,
-                                                             likelihood.elements$denominator.vector)
+        transformation.mapping = make.transformation.mapping(likelihood.elements$transformation.matrix)
 
         likelihood.elements$transformation.matrix = likelihood.elements$transformation.matrix[,transformation.mapping$first.in.signature]
-        fixed.denominator.elements$denominator.vector = fixed.denominator.elements$denominator.vector[transformation.mapping$first.in.signature]
+#        fixed.denominator.elements$denominator.vector = fixed.denominator.elements$denominator.vector[transformation.mapping$first.in.signature]
 
         if (!is.null(fixed.denominator.elements$denominator.covar.mat))
             fixed.denominator.elements$denominator.covar.mat = fixed.denominator.elements$denominator.covar.mat[transformation.mapping$first.in.signature,transformation.mapping$first.in.signature]
@@ -779,147 +256,401 @@ create.likelihood.function <- function(data.type=c('new','prevalence','mortality
     }
 }
 
+##---------------------------##
+##-- PROPORTION SUPPRESSED --##
+##---------------------------##
 
-
-#this just does the total diagnosed
-create.diagnosed.likelihood <- function(years=NULL,
-                                        msa.surv=msa.surveillance,
-                                        state.surv=state.surveillance,
-                                        location=BALTIMORE.MSA,
-                                        numerator.sd=function(...){0},
-                                        sd.inflation=1,
-                                        ar=F,
-                                        rho=0.55)
+create.suppressed.likelihood <- function(location,
+                                         years=2010:2018,
+                                         surv=msa.surveillance,
+                                         numerator.year.to.year.chunk.correlation=0,
+                                         numerator.year.to.year.off.correlation=0,
+                                         numerator.chunk.years=numeric(),
+                                         numerator.sd = function(...){0},
+                                         sd.inflation=1)
 {
-    dx = get.surveillance.data(msa.surv, location.codes=location, data.type='diagnosed', years=years)
-    years = attr(dx, 'years')
-    mask = !is.na(dx)
-    dx = dx[mask]
-    years = years[mask]
+    total.prevalence = get.surveillance.data(surv, location.codes = location, data.type='prevalence', years=years)
+    total.prevalence = unlist(interpolate.parameters(values=total.prevalence[!is.na(total.prevalence)],
+                                                     value.times=years[!is.na(total.prevalence)],
+                                                     desired.times = years))
     
-    cvs = get.diagnosed.cvs(location=location, surv=state.surv, years=years)
-    mask = !is.na(cvs)
-    dx = dx[mask]
-    cvs = cvs[mask]
-    years = years[mask]
+    likelihood.elements = create.likelihood.elements.for.data.type('suppression',
+                                                                   surv=surv,
+                                                                   location=location,
+                                                                   years=years,
+                                                                   by.total=T,
+                                                                   by.sex=T,
+                                                                   by.race=T,
+                                                                   by.age=T,
+                                                                   by.risk=T,
+                                                                   by.sex.age=F,
+                                                                   by.sex.race=F,
+                                                                   by.sex.risk=F,
+                                                                   by.race.risk=F,
+                                                                   numerator.sd = numerator.sd,
+                                                                   numerator.year.to.year.chunk.correlation=numerator.year.to.year.chunk.correlation,
+                                                                   numerator.year.to.year.off.correlation=numerator.year.to.year.off.correlation,
+                                                                   numerator.chunk.years=numerator.chunk.years)
     
-    sds = dx * cvs * sd.inflation
+    transformation.mapping = make.transformation.mapping(likelihood.elements$transformation.matrix)
+    likelihood.elements$transformation.matrix = likelihood.elements$transformation.matrix[,transformation.mapping$first.in.signature]
     
-    logit.mean.dx = log(dx) - log(1-dx)
-    logit.sd.dx = get.logit.sds(dx, sds)
-    
-    if (ar)
-    {
-        year.diff = matrix(abs(rep(years, length(years)) - rep(years, each=length(years))),
-                           nrow=length(years), ncol=length(years))
-        cov.mat = logit.sd.dx %*% t(logit.sd.dx) * rho^year.diff
-    }
-    else
-    {
-        cov.mat = matrix(rho, nrow=length(years), ncol=length(years))
-        diag(cov.mat) = 1
-        cov.mat = logit.sd.dx %*% t(logit.sd.dx) * cov.mat
-    }
-
-    numerator.sds = numerator.sd(year=years, num=mean.diagnosed)
-    logit.numerator.sds = get.logit.sds(dx, numerator.sds)
-    
-    if (length(logit.numerator.sds)==1)
-        logit.numerator.sds = rep(logit.numerator.sds, length(years))
-    cov.mat = cov.mat + diag(logit.numerator.sds^2)
-
     function(sim, log=T)
     {
-        sim.diagnosed = extract.diagnosed.hiv(sim, years=years, keep.dimensions = 'year', per.population=1)
-        logit.sim.diagnosed = log(sim.diagnosed) - log(1-sim.diagnosed)
-        dmvnorm(logit.sim.diagnosed, mean=logit.mean.dx, sigma=cov.mat, log=log)
-    }
-}
-
-#transforms sds from regular scale to ones corresponding for the logit scale
-get.logit.sds <- function(means, sds, max=.99, min=.01)
-{
-    if (any(means>=1) || any(means<=0))
-        stop("means must be between 0 and 1")
-    
-    ci.upper = pmin(max, means + sds * qnorm(.975))
-    ci.lower = pmax(min, means + sds * qnorm(.025))
-    
-    logit.upper = log(ci.upper) - log(1-ci.upper)
-    logit.lower = log(ci.lower) - log(1-ci.lower)
-    
-    (logit.upper-logit.lower) / 2 / qnorm(.975)
-}
-
-create.total.likelihood <- function(data.type,
-                                    years=NULL,
-                                    surv=msa.surveillance,
-                                    location=BALTIMORE.MSA,
-                                    population=get.census.totals(ALL.DATA.MANAGERS$census.totals, location),
-                                    numerator.sd=function(...){0},
-                                    sd.inflation=1,
-                                    ar=T,
-                                    rho=0.7)
-{
-    if (data.type!='new' && data.type!='prevalence' && data.type!='mortality')
-        stop("data.type must be either 'new', 'prevalence', or 'diagnosed'")
-
-    observed = get.surveillance.data(msa.surveillance, location=location, data.type=data.type)
-    available.years = attr(observed, 'years')[!is.na(observed)]
-    if (is.null(years))
-        years = available.years
-    else
-        years = intersect(years, available.years)
-    observed = as.numeric(observed[as.character(years)])
-
-    if (is.null(dim(population)))
-        denominators = population[as.character(years)]
-    else
-        denominators = apply(population, 'year', sum)[as.character(years)]
-
-    if (ar)
-    {
-        year.diff = matrix(abs(rep(years, length(years)) - rep(years, each=length(years))),
-                           nrow=length(years), ncol=length(years))
-        cor.mat = rho^year.diff
-    }
-    else
-    {
-        cor.mat = matrix(rho, nrow=length(years), ncol=length(years))
-        diag(cor.mat) = 1
-    }
-
-    numerator.sds = numerator.sd(year=years, num=observed)
-    if (length(numerator.sds)==1)
-        numerator.sds = rep(numerator.sds, length(years))
-
-    function(sim, log=T)
-    {
-        if (data.type=='new')
-            sim.rates = extract.new.diagnoses(sim,
-                                               years=years,
-                                               keep.dimensions = 'year',
-                                               per.population = 1)
-        else if (data.type=='prevalence')
-            sim.rates = extract.prevalence(sim, continuum='diagnosed',
-                                            years=years,
-                                           keep.dimensions = 'year',
-                                           per.population = 1)
-        else if (data.type=='mortality')
-            sim.rates = extract.overall.hiv.mortality(sim, continuum='diagnosed',
-                                                       years=years,
-                                                      keep.dimensions = 'year',
-                                                      per.population = 1)
+        # Check if we terminated early
+        if (sim$terminated)
+        {
+            if (log)
+                return (-Inf)
+            else
+                return (0)
+        }
+        
+        
+        #Pull rates from the simulation
+        rates = as.numeric(extract.suppression(sim,
+                                    years=years,
+                                    continuum='diagnosed',
+                                    keep.dimensions=c('year','age','race','sex','risk')))
+        
+        #Multiply the denominators (as fraction of total population) by the total population 
+        # to get our denominators
+        denominators = extract.prevalence(sim,
+                                          years=years,
+                                          continuum='diagnosed',
+                                          keep.dimensions = c('year','age','race','sex','risk'),
+                                          per.population=NA)
+        denominators = as.numeric(denominators / rowSums(denominators) * total.prevalence)
+        
+        aggregated.denominators = likelihood.elements$transformation.matrix %*% sum.for.matrix.mapping(denominators, transformation.mapping)
+        
+        if (is.null(likelihood.elements$numerator.covar.mat))
+            numerator.covar.mat = NULL
         else
-            stop("data.type must be either 'new', 'prevalence', or 'diagnosed'")
-
-        sds = sqrt(denominators * sim.rates * (1-sim.rates))
-        mean.vector = denominators * sim.rates
-
-        cov.mat = sds %*% t(sds) * cor.mat * sd.inflation + diag(numerator.sds^2)
-        dmvnorm(x=observed, mean=mean.vector, sigma = cov.mat, log=log)
+            numerator.covar.mat = aggregated.denominators %*% t(aggregated.denominators) * likelihood.elements$numerator.covar.mat
+        
+        # Pass it all to the sub-function to crunch
+        likelihood.sub(rates,
+                       transformation.matrix = likelihood.elements$transformation.matrix,
+                       response.vector = likelihood.elements$response.vector * aggregated.denominators,
+                       denominator.vector = denominators,
+                       denominator.covar.mat = NULL,
+                       numerator.covar.mat = numerator.covar.mat,
+                       corr.mat = NULL,
+                       sd.inflation=sd.inflation,
+                       log=log,
+                       sim=sim,
+                       transformation.mapping=transformation.mapping,
+                       description=likelihood.elements$descriptions)
     }
 }
+
+##----------------------------##
+##-- AWARENESS OF DIAGNOSIS --##
+##----------------------------##
+
+create.knowledge.of.status.likelihood <- function(location,
+                                                  surv=msa.surveillance,
+                                                  state.surv=state.surveillance,
+                                                  census.totals=ALL.DATA.MANAGERS$census.totals,
+                                                  knowledge.of.status.regressions=NULL,
+                                                  years=2010:2018,
+                                                  total.sd.inflation=1,
+                                                  stratified.ors.sd.inflation=1,
+                                                  total.rho=0.5)
+{
+    if (is.null(knowledge.of.status.regressions))
+        load('cached/knowledge_of_status_regressions.Rdata')
+    
+    #-- Set up for totals --#
+    total.suppression = get.surveillance.data(surv, location.codes = location, data.type='diagnosed', 
+                                              years=years, throw.error.if.missing.data = F)
+    if (is.null(total.suppression))
+    {
+        total.suppression = get.state.averaged.knowledge.of.status(msa=location,
+                                               years=years,
+                                               census.totals=census.totals,
+                                               state.surveillance = state.surv)
+    }
+
+    if (is.null(years))
+        total.years = as.numeric(names(total.suppression))
+    else
+        total.years = years
+    total.years = total.years[!is.na(total.suppression)]    
+    total.suppression = total.suppression[!is.na(total.suppression)]
+    
+    diagnosed.prevalence.for.total = get.surveillance.data(surv, location.codes = location, data.type='prevalence',
+                                                           years=total.years)
+
+    diagnosed.prevalence.for.total = unlist(interpolate.parameters(values=diagnosed.prevalence.for.total[!is.na(diagnosed.prevalence.for.total)],
+                                                             value.times=total.years[!is.na(diagnosed.prevalence.for.total)],
+                                                             desired.times = total.years))
+
+    n.total = diagnosed.prevalence.for.total / total.suppression
+    
+    #-- Set up our 'years' argument (to include only years for which we have data) --# 
+    if (is.null(years))
+    {
+        age.race.sex.msm.years = knowledge.of.status.regressions$age.race.sex.msm.years
+        race.sex.idu.years = knowledge.of.status.regressions$race.sex.idu.years
+    }
+    else
+    {
+        age.race.sex.msm.years = intersect(years, knowledge.of.status.regressions$age.race.sex.msm.years)
+        race.sex.idu.years = intersect(years, knowledge.of.status.regressions$race.sex.idu.years)
+    }
+    
+    #-- Pull total prevalence for each year --#
+    years = sort(union(age.race.sex.msm.years, race.sex.idu.years))
+    
+    total.prevalence.for.ors = get.surveillance.data(surv, location.codes = location, data.type='prevalence', years=years)
+    total.prevalence.for.ors = unlist(interpolate.parameters(values=total.prevalence.for.ors[!is.na(total.prevalence.for.ors)],
+                                                     value.times=years[!is.na(total.prevalence.for.ors)],
+                                                     desired.times = years))
+    
+    function(sim, log=T)
+    {
+        #-- Pull the Prevalent Strata Sizes --#
+        #Multiply the denominators (as fraction of total population) by the total population 
+        # to get our denominators
+        denominators = extract.prevalence(sim,
+                                          years=years,
+                                          continuum='diagnosed',
+                                          keep.dimensions = c('year','age','race','sex','risk'),
+                                          per.population=NA)
+        denominators = as.numeric(denominators / rowSums(denominators) * total.prevalence.for.ors)
+        
+        #-- Set up a data frame that we're going to use to run regressions --#
+        sim.diagnosed.prevalence = extract.prevalence(sim, years=years,
+                                                      continuum='diagnosed',
+                                                      keep.dimensions = c('year','age','race','sex','risk'))
+        sim.prevalence = extract.prevalence(sim, years=years,
+                                                      keep.dimensions = c('year','age','race','sex','risk'))
+        
+        df = melt(sim.prevalence)
+        df$fraction = as.numeric(sim.diagnosed.prevalence / sim.prevalence)
+        df$n = as.numeric(denominators)
+        
+        df$black = as.numeric(df$race=='black')
+        df$hispanic = as.numeric(df$race=='hispanic')
+        
+        msm.mask = df$sex=='msm'
+        idu.mask = df$risk!='never_IDU'
+        
+        df$msm = as.numeric(msm.mask & !idu.mask)
+        df$msm_idu = as.numeric(msm.mask & idu.mask)
+        df$heterosexual = as.numeric(!msm.mask & !idu.mask)
+        df$idu = as.numeric(idu.mask & !msm.mask)
+        
+        df$age1 = as.numeric(df$age=='13-24 years')
+        df$age2 = as.numeric(df$age=='25-34 years')
+        df$age3 = as.numeric(df$age=='35-44 years')
+        df$age4 = as.numeric(df$age=='45-54 years')
+        df$age5 = as.numeric(df$age=='55+ years')
+        
+        df$female = as.numeric(df$sex=='female')
+        
+        #-- Do the Regressions on the sim --#
+        fits.age.race.sex.msm = lapply(age.race.sex.msm.years, do.knowledge.age.race.sex.msm.regression, df=df)
+        fits.race.sex.idu = lapply(race.sex.idu.years, do.knowledge.race.sex.idu.regression, df=df)
+        
+        #-- Calculate the likelihood of the 'true' log ORs given the mean and cov.mat from the fit to sim --#
+        age.race.sex.likelihoods = sapply(1:length(age.race.sex.msm.years), function(i){
+            obs.mask = knowledge.of.status.regressions$age.race.sex.msm.years==age.race.sex.msm.years[i]
+            
+            dmvnorm(x=as.numeric(knowledge.of.status.regressions$age.race.sex.msm[obs.mask][[1]]$mean),
+                    mean=fits.age.race.sex.msm[[i]]$mean,
+                    sigma = fits.age.race.sex.msm[[i]]$cov.mat*stratified.ors.sd.inflation,
+                    log=log)
+        })
+        race.sex.idu.likelihoods = sapply(1:length(race.sex.idu.years), function(i){
+            obs.mask = knowledge.of.status.regressions$race.sex.idu.years==race.sex.idu.years[i]
+            
+            dmvnorm(x=as.numeric(knowledge.of.status.regressions$race.sex.idu[obs.mask][[1]]$mean),
+                    mean=fits.race.sex.idu[[i]]$mean,
+                    sigma = fits.race.sex.idu[[i]]$cov.mat*stratified.ors.sd.inflation,
+                    log=log)
+        })
+
+        #-- Calculate the likelihood for total --#
+
+        p = extract.prevalence(sim, years=total.years, keep.dimensions = 'year', continuum='diagnosed') /
+            extract.prevalence(sim, years=total.years, keep.dimensions = 'year')
+        
+        cov.mat = make.compound.symmetry.matrix(sqrt(n.total * p * (1-p)), rho=total.rho)
+        
+        total.likelihood = dmvnorm(x=diagnosed.prevalence.for.total,
+                                   mean=n.total*p,
+                                   sigma=cov.mat*total.sd.inflation,
+                                   log=log)
+        
+        #-- Combine it all and return --#
+        if (log)
+            sum(age.race.sex.likelihoods) + sum(race.sex.idu.likelihoods) + total.likelihood
+        else
+            prod(age.race.sex.likelihoods) * prod(race.sex.idu.likelihoods) * total.likelihood
+        
+    }
+    
+}
+
+
+
+do.knowledge.of.status.regressions <- function(dir='cleaned_data/continuum/national/diagnosis/')
+{
+    #-- Read in the Datasets --#
+    df.male.race.risk = read.hiv.atlas.file(file.path(dir, 'diagnosis_by_male_race_risk.csv'))
+    df.female.race.risk = read.hiv.atlas.file(file.path(dir, 'diagnosis_by_female_race_risk.csv'))
+    df.age.race.sex = read.hiv.atlas.file(file.path(dir, 'diagnosis_by_age_race_sex.csv'))
+    df.msm.age.race = read.hiv.atlas.file(file.path(dir, 'diagnosis_by_msm_age_race.csv'))
+    
+    df.age.race.sex$src = 'age.race.sex'
+    df.msm.age.race$src = 'msm.age.race'
+    df.male.race.risk$src = 'race.sex.risk'
+    df.female.race.risk$src = 'race.sex.risk'
+    
+    df.female.age.race = df.age.race.sex[df.age.race.sex$Sex=='Female',]
+    df.non.msm.male.age.race = df.age.race.sex[df.age.race.sex$Sex=='Male',]
+    indices.into.msm = sapply(1:dim(df.non.msm.male.age.race)[1], function(i){
+        (1:dim(df.msm.age.race)[1])[df.msm.age.race$Year==df.non.msm.male.age.race$Year[i] &
+                                        df.msm.age.race$Age.Group==df.non.msm.male.age.race$Age.Group[i] &
+                                        df.msm.age.race$Race.Ethnicity==df.non.msm.male.age.race$Race.Ethnicity[i]]
+    })
+    df.non.msm.male.age.race$Population = df.non.msm.male.age.race$Population - df.msm.age.race$Population[indices.into.msm]
+    df.non.msm.male.age.race$Cases = df.non.msm.male.age.race$Cases - df.msm.age.race$Cases[indices.into.msm]
+    df.non.msm.male.age.race$Percent = df.non.msm.male.age.race$Cases / df.non.msm.male.age.race$Population * 100
+    
+    
+    #-- Set up Cleaned Data Frames --#
+    df.joined.age.race.sex = rbind(df.msm.age.race,
+                                   df.female.age.race,
+                                   df.non.msm.male.age.race)
+    
+    df.cleaned.age.race.sex = data.frame(year=df.joined.age.race.sex$Year,
+                                         fraction=df.joined.age.race.sex$Percent/100,
+                                         n=df.joined.age.race.sex$Population,
+                                         black=as.numeric(grepl('black', df.joined.age.race.sex$Race.Ethnicity, ignore.case = T)),
+                                         hispanic=as.numeric(grepl('hispanic', df.joined.age.race.sex$Race.Ethnicity, ignore.case = T)),
+                                         age1=as.numeric(grepl('13-24', df.joined.age.race.sex$Age.Group)),
+                                         age2=as.numeric(grepl('25-34', df.joined.age.race.sex$Age.Group)),
+                                         age3=as.numeric(grepl('35-44', df.joined.age.race.sex$Age.Group)),
+                                         age4=as.numeric(grepl('45-54', df.joined.age.race.sex$Age.Group)),
+                                         age5=as.numeric(grepl('55+', df.joined.age.race.sex$Age.Group)),
+                                         male=as.numeric(df.joined.age.race.sex=='Male'),
+                                         female=as.numeric(df.joined.age.race.sex=='Female'),
+                                         msm=as.numeric(df.joined.age.race.sex$src=='msm.age.race'),
+                                         src = df.joined.age.race.sex$src
+    )
+    df.cleaned.age.race.sex$other = as.numeric(df.cleaned.age.race.sex$black==0 & df.cleaned.age.race.sex$hispanic==0)
+    
+    
+    df.sex.race.risk = rbind(df.male.race.risk,
+                             df.female.race.risk)
+    msm.mask = grepl('male-to-male', df.sex.race.risk$Transmission.Category, ignore.case = T)
+    idu.mask = grepl('injection', df.sex.race.risk$Transmission.Category, ignore.case = T)
+    het.mask = grepl('heterosexual', df.sex.race.risk$Transmission.Category, ignore.case = T)
+    
+    df.cleaned.sex.race.risk = data.frame(year=df.sex.race.risk$Year,
+                                          fraction=df.sex.race.risk$Percent/100,
+                                          n=df.sex.race.risk$Population,
+                                          black=as.numeric(grepl('black', df.sex.race.risk$Race.Ethnicity, ignore.case = T)),
+                                          hispanic=as.numeric(grepl('hispanic', df.sex.race.risk$Race.Ethnicity, ignore.case = T)),
+                                          male=as.numeric(df.sex.race.risk=='Male'),
+                                          female=as.numeric(df.sex.race.risk=='Female'),
+                                          msm=as.numeric(msm.mask & !idu.mask),
+                                          idu=as.numeric(idu.mask & !msm.mask),
+                                          msm_idu=as.numeric(idu.mask & msm.mask),
+                                          heterosexual=as.numeric(het.mask),
+                                          src = df.sex.race.risk$src
+    )
+    df.cleaned.sex.race.risk$other = as.numeric(df.cleaned.sex.race.risk$black==0 & df.cleaned.sex.race.risk$hispanic==0)
+    
+    
+    
+    #-- Fit a Regression for each Year --#
+    
+    age.race.sex.msm.years = sort(unique(df.cleaned.age.race.sex$year))
+    race.sex.idu.years = sort(unique(df.cleaned.sex.race.risk$year))
+   
+    list(
+        age.race.sex.msm.years = age.race.sex.msm.years,
+        race.sex.idu.years = race.sex.idu.years,
+        
+        age.race.sex.msm = lapply(age.race.sex.msm.years, do.knowledge.age.race.sex.msm.regression, df=df.cleaned.age.race.sex),
+        race.sex.idu = lapply(race.sex.idu.years, do.knowledge.race.sex.idu.regression, df=df.cleaned.sex.race.risk)
+    )
+}
+
+do.knowledge.age.race.sex.msm.regression <- function(df,
+                                                     year=NA)
+{
+    if (!is.na(year))
+        df = df[df$year==year,]
+    
+    fit = suppressWarnings(glm(fraction ~ black + hispanic +
+                               age1 + age2 + age4 + age5 + 
+                               female +
+                               msm + msm:black + msm:hispanic +
+                               msm:age1 + msm:age2 + msm:age4 + msm:age5,
+                           family=binomial(),
+                           data=df,
+                           weights = n))
+    
+    names.to.keep = names(fit$coefficients)[-1]
+    
+    list(mean=fit$coefficients[names.to.keep],
+         cov.mat=vcov(fit)[names.to.keep, names.to.keep])
+}
+
+do.knowledge.race.sex.idu.regression <- function(df, year=NA)
+{
+    if (!is.na(year))
+        df = df[df$year==year,]
+    
+    fit = suppressWarnings(glm(fraction ~ black + hispanic +
+                                female +
+                                msm + msm:black + msm:hispanic + 
+                                idu + idu:black + idu:hispanic + msm_idu,
+                            family=binomial(),
+                            data=df,
+                            weights = n))
+    
+    names.to.keep = c('idu', 'black:idu', 'hispanic:idu', 'msm_idu')
+    
+    
+    list(mean=fit$coefficients[names.to.keep],
+         cov.mat=vcov(fit)[names.to.keep, names.to.keep])
+}
+
+get.state.averaged.knowledge.of.status <- function(msa,
+                                                   state.surveillance,
+                                                   years,
+                                                   census.totals = ALL.DATA.MANAGERS$census.totals)
+{
+    states = states.for.msa(msa)
+    if (length(states)==1)
+        get.surveillance.data(state.surveillance, states, data.type = 'diagnosed', years=years)
+    else
+    {
+        p = get.surveillance.data(state.surveillance, states, data.type = 'diagnosed', years=years, aggregate.locations = F)
+        
+        counties = counties.for.msa(msa)
+        county.populations = get.census.totals(census.totals, location=counties, years=years, collapse.counties=F)
+        states.by.county = state.for.county(counties)
+        state.populations.from.counties = sapply(states, function(st){
+            sapply(years, function(year){
+                sum(county.populations[as.character(year), states.by.county==st])
+            })
+        })
+        
+        rowSums(p * state.populations.from.counties / rowSums(state.populations.from.counties))
+    }
+}
+
+##---------------------------------##
+##-- (Historical) AIDS DIAGNOSES --##
+##---------------------------------##
 
 create.aids.diagnoses.likelihood <- function(surv=msa.surveillance,
                                              location=BALTIMORE.MSA,
@@ -949,7 +680,6 @@ create.aids.diagnoses.likelihood <- function(surv=msa.surveillance,
   
     #add log ratio
     log.ratios = log(hiv.to.aids.diagnoses.ratio) - hiv.to.aids.diagnoses.ratio.log.sd^2/2
-    log.mean = log.mean + log.ratios
     log.var = log.var + hiv.to.aids.diagnoses.ratio.log.sd^2
 
     #put back on exp scale
@@ -980,6 +710,10 @@ create.aids.diagnoses.likelihood <- function(surv=msa.surveillance,
         
     }
 }
+
+##---------------------------------------##
+##-- (Historical) CUMULATIVE MORTALITY --##
+##---------------------------------------##
 
 #.9 captured from https://jamanetwork.com/journals/jama/fullarticle/405140 (cited in 2001-2002 surveillance report)
 create.cumulative.mortality.likelihood <- function(years=1981:2000,
@@ -1044,6 +778,11 @@ create.cumulative.mortality.likelihood <- function(years=1981:2000,
     #            log=log)
     }
 }
+
+
+##-----------------##
+##-- IV DRUG USE --##
+##-----------------##
 
 create.idu.likelihood <- function(idu.manager=ALL.DATA.MANAGERS$idu,
                                   census=ALL.DATA.MANAGERS$census.full,
@@ -1143,6 +882,14 @@ create.idu.likelihood <- function(idu.manager=ALL.DATA.MANAGERS$idu,
     }
 }
 
+##----------------------##
+##----------------------##
+##-- HELPER FUNCTIONS --##
+##----------------------##
+##----------------------##
+
+
+# Joins multiple (independent) likelihood functions
 create.joint.likelihood.function <- function(..., verbose=F)
 {
     args = list(...)
@@ -1184,10 +931,14 @@ create.joint.likelihood.function <- function(..., verbose=F)
 ##-- HELPERS TO REDUCE COMPUTATION FOR MATRICES --##
 ##------------------------------------------------##
 
-make.transformation.mapping <- function(transformation.matrix, denominators)
+#We have a matrix M, such that we multiply M by some vector V
+# If two rows of M are identical (ie, two elements of V are always both or neither
+#  included in each row of the matrix transformation), we can pre-sum the two elements
+#  of V and remove one row from the matrix M
+make.transformation.mapping <- function(transformation.matrix)
 {
     n.col = ncol(transformation.matrix)
-    col.signatures = paste0(denominators, '-', apply(transformation.matrix, 2, paste0, collapse=','))
+    col.signatures = apply(transformation.matrix, 2, paste0, collapse=',')#paste0(denominators, '-', apply(transformation.matrix, 2, paste0, collapse=','))
     unique.col.signatures = unique(col.signatures)
     n.signatures = length(unique.col.signatures)
 
@@ -1234,7 +985,7 @@ collapse.for.matrix.mapping <- function(M, mapping)
 
 
 pull.simulations.rates <- function(jheem.results,
-                                   data.type=c('new','prevalence','mortality'),
+                                   data.type=c('new','prevalence','mortality','aware'),
                                    years,
                                    denominator.dimensions,
                                    aggregate.denominator.males=T)
@@ -1254,10 +1005,20 @@ pull.simulations.rates <- function(jheem.results,
                                               years=years,
                                               keep.dimensions = c('year', 'age','race','sex','risk'),
                                               per.population = NA)
+    else if (data.type=='aware')
+        numerators = extract.prevalence(jheem.results, years=years,
+                                        continuum = 'diagnosed',
+                                        keep.dimensions = c('year', 'age','race','sex','risk'),
+                                        per.population = NA)
     else
-        stop("data.type must be one of 'new', 'prevalence', or 'mortality")
+        stop("data.type must be one of 'new', 'prevalence', 'mortality', or 'aware'")
 
-    denominators = extract.population.subset(jheem.results, years=years,
+    if (data.type=='aware')
+        denominators = extract.prevalence(jheem.results, years=years,
+                                          keep.dimensions=denominator.dimensions,
+                                          per.population = NA)    
+    else
+        denominators = extract.population.subset(jheem.results, years=years,
                                              keep.dimensions = denominator.dimensions)
 
     denominators = expand.population(denominators, target.dim.names = dimnames(numerators))
@@ -1321,27 +1082,25 @@ likelihood.sub <- function(pre.transformation.rates,
 
     if (is.null(transformation.mapping))
     {
-        p = pre.transformation.rates
-        p.1mp = pre.transformation.rates * (1 - pre.transformation.rates)
+        n.p = pre.transformation.rates * denominator.vector
+        n.p.1mp = pre.transformation.rates * (1 - pre.transformation.rates) * denominator.vector
     }
     else
     {
-        p = sum.for.matrix.mapping(pre.transformation.rates, transformation.mapping)
-        p.1mp = sum.for.matrix.mapping(pre.transformation.rates * (1 - pre.transformation.rates),
+        n.p = sum.for.matrix.mapping(pre.transformation.rates* denominator.vector, transformation.mapping)
+        n.p.1mp = sum.for.matrix.mapping(pre.transformation.rates * (1 - pre.transformation.rates)* denominator.vector,
                                        transformation.mapping)
     }
-
-    binomial.variance.component = denominator.vector * p.1mp
-
+    
     if (is.null(corr.mat))
-        binomial.variance.component = diag(binomial.variance.component)
+        binomial.variance.component = diag(n.p.1mp)
     else
     {
-        sds = sqrt(binomial.variance.component)
+        sds = sqrt(n.p.1mp)
         binomial.variance.component = sds %*% t(sds) * corr.mat
     }
 
-    mean.vector = transformation.matrix %*% (denominator.vector * p)
+    mean.vector = transformation.matrix %*% n.p
 
     if (is.null(denominator.covar.mat))
     {
@@ -1444,8 +1203,9 @@ likelihood.sub <- function(pre.transformation.rates,
                                             sigma=covar.mat[mask,mask],
                                             log=log)))
     }
-    dmvnorm(x=response.vector,
-            mean=mean.vector,
+   
+    dmvnorm(x=as.numeric(response.vector),
+            mean=as.numeric(mean.vector),
             sigma=covar.mat,
             log=log)
 }
