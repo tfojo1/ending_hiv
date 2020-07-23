@@ -60,8 +60,6 @@ setup.initial.components <- function(msa=BALTIMORE.MSA,
 
                                      idu.transition.years = c(idu.post.spike.year,idu.t2),
 
-                                     testing.slope.anchor.year=2010,
-
                                      run.to.year = 2030,
                                      fix=F)
 {
@@ -157,9 +155,6 @@ setup.initial.components <- function(msa=BALTIMORE.MSA,
                                                t.end=run.to.year)
 
     msa.components = setup.trates(msa.components, fraction.change.after.end=0.05)
-
-    msa.components = set.background.hiv.testing.slope.time(msa.components,
-                                                           anchor.year=testing.slope.anchor.year)
 
     if (fix)
         msa.components = fix.components.for.calibration(msa.components)

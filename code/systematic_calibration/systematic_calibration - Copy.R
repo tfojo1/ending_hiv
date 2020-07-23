@@ -27,12 +27,7 @@ run.initial.mcmc.for.msa <- function(msa,
 {
     if (is.null(start.value.generator))
     {
-        svg.47900 = file.path(SYSTEMATIC.ROOT.DIR, 'starting_value_generators/47900.Rdata')
-        if (file.exists(svg.47900))
-            load(svg.47900)
-        else
-            load(file.path(SYSTEMATIC.ROOT.DIR, 'starting_value_generators/DEFAULT.Rdata'))
-        
+        load(file.path(SYSTEMATIC.ROOT.DIR, 'starting_value_generators/47900.Rdata'))
         start.value.generator = sampling.dist
     }
     
@@ -82,14 +77,14 @@ run.parallel.mcmc.for.msa <- function(msa,
                                       parameter.var.blocks = PARAMETER.VAR.BLOCKS.1,
                                       start.value.generator=NULL,
                                       chains=4,
-                                      n.iter=75000,
-                                      thin=100,
-                                      burn=25000,
+                                      n.iter=60000,
+                                      thin=80,
+                                      burn=0,
                                       max.sim.time=Inf,
                                       save.dir=file.path(SYSTEMATIC.ROOT.DIR, 'systematic_parallel'),
                                       cache.dir=file.path(SYSTEMATIC.ROOT.DIR, 'systematic_caches'),
                                       update.frequency=200,
-                                      cache.frequency=1000,
+                                      cache.frequency=800,
                                       save.suffix='',
                                       resume.cache=NULL,
                                       
@@ -197,6 +192,7 @@ run.mcmc.for.msa <- function(msa,
     else
         start.values = start.value.generator(chains)
 
+
     #-- Init Components --#
     base.components = setup.initial.components(msa=msa)
     if (chains==1)
@@ -258,7 +254,6 @@ run.mcmc.for.msa <- function(msa,
 
     if (!is.null(resume.cache))
     {
-        print(paste0("Resuming MCMC for ", msa.names(msa)))
         mcmc = run.mcmc.from.cache(dir = resume.cache,
                                    update.frequency = update.frequency,
                                    update.detail = 'high')
@@ -287,20 +282,13 @@ run.mcmc.for.msa <- function(msa,
 
 
 create.msa.likelihood <- function(msa,
-                                  EVERYTHING.WEIGHT=1/8,
-                                  
-                                  NEW.WEIGHT = 1,
-                                  PREV.WEIGHT = 1,
-                                  MORT.WEIGHT = 1,
-                                  CUM.MORT.WEIGHT = 1,
-                                  IDU.WEIGHT = 64*8,
-                                  AIDS.DX.WEIGHT = 4,
-                                  TOTAL.DX.WEIGHT=1/8,
-                                  STRATIFIED.DX.WEIGHT=1/128/4,
-                                  SUPPRESSION.WEIGHT=1/8,
-                                  
+                                  EVERYTHING.MULT=sqrt(6),
                                   prev.to.new.cv.ratio=1,
-                                  FOCUS.WEIGHT=1,#4,
+                                  FOCUS.WEIGHT=4,
+                                  TOTAL.DX.WEIGHT=1/16,
+                                  STRATIFIED.DX.WEIGHT=1/128,
+                                  SUPPRESSION.WEIGHT=1/16,
+                                  verbose=F,
                                   
                                   new.correlated.year.chunks=list(2008:2014, 2015:2018),
                                   prevalence.correlated.year.chunks=list(2007:2013, 2014:2017),
@@ -315,6 +303,7 @@ create.msa.likelihood <- function(msa,
     
     
     #-- SETTINGS --#
+    TOTAL.WEIGHT = 16
 
     # The demographic groups to which we want to give added weight
     to.focus = function(description){
@@ -323,7 +312,7 @@ create.msa.likelihood <- function(msa,
     }
     
     #-- Elements for New Diagnoses --#
-    SD.INFLATION.NEW.NUM = 1/sqrt(NEW.WEIGHT)/sqrt(EVERYTHING.WEIGHT)
+    SD.INFLATION.NEW.NUM = sqrt(1)*EVERYTHING.MULT# * 1.6
     SD.INFLATION.NEW = function(description){SD.INFLATION.NEW.NUM /
             (sqrt(FOCUS.WEIGHT)^as.numeric(to.focus(description)))}
     
@@ -333,7 +322,7 @@ create.msa.likelihood <- function(msa,
     #-- Elements for Prevalence --#
     PREV.INFLATION = prev.to.new.cv.ratio * get.cv.weights(location=msa, weight.to='new')['prevalence']
     
-    SD.INFLATION.PREV.NUM = 1/sqrt(PREV.WEIGHT)/sqrt(EVERYTHING.WEIGHT)*PREV.INFLATION
+    SD.INFLATION.PREV.NUM = sqrt(1)*EVERYTHING.MULT*PREV.INFLATION#sqrt(6) * 8.4
     SD.INFLATION.PREV = function(description){SD.INFLATION.PREV.NUM /
             (sqrt(FOCUS.WEIGHT)^as.numeric(to.focus(description)))}
     
@@ -341,7 +330,7 @@ create.msa.likelihood <- function(msa,
     
     
     #-- Elements for Mortality --#
-    SD.INFLATION.MORT = 1/sqrt(MORT.WEIGHT)/sqrt(EVERYTHING.WEIGHT)
+    SD.INFLATION.MORT = sqrt(1)*EVERYTHING.MULT
     MORT.SD = PREV.SD
     
     missing.mort.fraction = mean(c(.02, 458 / (1926 + 12219)))
@@ -353,27 +342,26 @@ create.msa.likelihood <- function(msa,
     MORT.BIAS.SD = function(years, num){missing.mort.fraction * num / 2}
     
     #-- Elements for Awareness of Diagnosis --#
-    TOTAL.SD.INFLATION.DX = 1/sqrt(TOTAL.DX.WEIGHT)/sqrt(EVERYTHING.WEIGHT)
-    STRATIFIED.SD.INFLATION.DX = 1/sqrt(STRATIFIED.DX.WEIGHT)/sqrt(EVERYTHING.WEIGHT)
-    DX.SD=function(...){0.005}
-    DX.SD.MULTIPLIER.IF.STATE = 3
+    TOTAL.SD.INFLATION.DX = sqrt(1)/sqrt(TOTAL.DX.WEIGHT)*EVERYTHING.MULT
+    STRATIFIED.SD.INFLATION.DX = sqrt(1)/sqrt(STRATIFIED.DX.WEIGHT)*EVERYTHING.MULT
+    DX.SD=function(...){0}
+    
     
     #-- Elements for Suppression --#
-    SUPPRESSED.SD = function(...){.005}
-    SUPPRESSION.SD.INFLATION = 1/sqrt(SUPPRESSION.WEIGHT)/sqrt(EVERYTHING.WEIGHT)
-    SUPPRESSED.STATE.SD.INFLATION = 3
+    SUPPRESSED.SD = function(...){.01}
+    SUPPRESSION.SD.INFLATION = 1/sqrt(SUPPRESSION.WEIGHT)
     
     #-- Elements for IDU --#
-    IDU.LOG.SD = log(2) / sqrt(EVERYTHING.WEIGHT) / sqrt(IDU.WEIGHT)
+    IDU.LOG.SD = log(2)/8
+    
     
     #-- Elements for Historical AIDS Diagnoses --#
-    SD.INFLATION.AIDS.DIAGNOSES = 1/sqrt(EVERYTHING.WEIGHT) / sqrt(AIDS.DX.WEIGHT)
-    AIDS.SD = NEW.SD#function(...){0}#NEW.SD
-    AIDS.TO.HIV.RATIO.LOG.SD = 0.5 * log(1.2)
-    AIDS.RHO = 0
+    SD.INFLATION.AIDS.DIAGNOSES = EVERYTHING.MULT
+    AIDS.SD = function(...){0}#NEW.SD
+    AIDS.TO.HIV.RATIO.LOG.SD = 0.5 * log(1.1)
     
     #-- Elements for Historical Cumulative Diagnoses --#
-    SD.INFLATION.CUM.MORT = 1/sqrt(EVERYTHING.WEIGHT) / sqrt(CUM.MORT.WEIGHT)
+    SD.INFLATION.CUM.MORT = EVERYTHING.MULT * 2
 #    CUM.MORT.SD = function(years,num){sqrt(5^2 + 0.5 * (0.065*num)^2 + 0.5 * (num^0.33)^2)}
     CUM.MORT.SD = function(years, num){2 * sqrt(5^2 + 0.5 * (0.09*num)^2 + 0.5 * (num^0.69)^2)}
     
@@ -448,9 +436,7 @@ create.msa.likelihood <- function(msa,
                                                   numerator.year.to.year.chunk.correlation=0.5,
                                                   numerator.chunk.years=list(suppression.years),
                                                   numerator.sd = SUPPRESSED.SD,
-                                                  sd.inflation=SUPPRESSION.SD.INFLATION,
-                                                  inflate.sd.by.n.obs.per.year = F,
-                                                  numerator.sd.inflation.if.backup=SUPPRESSED.STATE.SD.INFLATION)
+                                                  sd.inflation=SUPPRESSION.SD.INFLATION)
     
     dx.lik = create.knowledge.of.status.likelihood(location=msa,
                                                    surv=msa.surveillance,
@@ -460,9 +446,7 @@ create.msa.likelihood <- function(msa,
                                                    years=diagnosed.years,
                                                    total.sd.inflation=TOTAL.SD.INFLATION.DX,
                                                    stratified.ors.sd.inflation=STRATIFIED.SD.INFLATION.DX,
-                                                   total.rho=0.5,
-                                                   total.numerator.sd = DX.SD,
-                                                   total.sd.multiplier.if.state = DX.SD.MULTIPLIER.IF.STATE)
+                                                   total.rho=0.5)
     
     idu.lik = create.idu.likelihood(idu.manager=ALL.DATA.MANAGERS$idu,
                                     census=ALL.DATA.MANAGERS$census.full,
@@ -479,8 +463,7 @@ create.msa.likelihood <- function(msa,
                                                 location=msa,
                                                 numerator.sd=AIDS.SD,
                                                 sd.inflation=SD.INFLATION.AIDS.DIAGNOSES,
-                                                hiv.to.aids.diagnoses.ratio.log.sd=AIDS.TO.HIV.RATIO.LOG.SD,
-                                                rho=AIDS.RHO)
+                                                hiv.to.aids.diagnoses.ratio.log.sd=AIDS.TO.HIV.RATIO.LOG.SD)
     
     
     
@@ -492,10 +475,11 @@ create.msa.likelihood <- function(msa,
                                                        supp=suppressed.lik,
                                                        idu=idu.lik,
                                                        cum.mort=cum.mort.lik, 
-                                                       aids=aids.lik)
+                                                       aids=aids.lik,
+                                                       verbose=verbose)
 
 
-    attr(full.likelihood, 'parameters') = list(EVERYTHING.WEIGHT=EVERYTHING.WEIGHT,
+    attr(full.likelihood, 'parameters') = list(EVERYTHING.MULT=EVERYTHING.MULT,
                                                PREV.SD=PREV.SD,
                                                NEW.SD=NEW.SD,
                                                MORT.SD=MORT.SD,
@@ -518,15 +502,6 @@ create.msa.likelihood <- function(msa,
                                                SD.INFLATION.AIDS.DIAGNOSES = SD.INFLATION.AIDS.DIAGNOSES,
                                                AIDS.SD = AIDS.SD,
                                                AIDS.TO.HIV.RATIO.LOG.SD = AIDS.TO.HIV.RATIO.LOG.SD)
-    
-    attr(full.likelihood, 'components') = list(new=new.lik,
-                                               prev=prev.lik, 
-                                               mort=mort.lik,
-                                               dx=dx.lik,
-                                               supp=suppressed.lik,
-                                               idu=idu.lik,
-                                               cum.mort=cum.mort.lik, 
-                                               aids=aids.lik)
 
     full.likelihood
 }

@@ -8,7 +8,8 @@
 setup.components.for.msa <- function(msa,
                                      surv=msa.surveillance,
                                      population.year=2012,
-                                     smooth.to.year=2030,
+                                     smooth.from.year=2010,
+                                     smooth.to.year=2025,
                                      verbose=F,
                                      data.managers = ALL.DATA.MANAGERS,
                                      settings = SETTINGS,
@@ -178,30 +179,81 @@ setup.components.for.msa <- function(msa,
     comps = set.hiv.transitions(comps,
                                 acute.hiv.duration = parameters['acute.infection.duration'],
                                 prep.screening.frequency = parameters['prep.screening.frequency'])
-    comps = set.aids.transitions(comps,
-                                 aids.progression.rate = parameters['aids.progression.rate'],
-                                 cd4.recovery.rate = parameters['cd4.recovery.rate'])
     
     aids.dx = get.surveillance.data(location.codes = msa, data.type='aids.diagnoses', years=1985:1993)
     fit = lm(log(aids.dx) ~ attr(aids.dx, 'years'))
     ramp.yearly.increase = exp(fit$coefficients[2])
     ramp.yearly.increase = min(2, max(1.2, ramp.yearly.increase))
-    comps = set.background.hiv.testing.proportions(comps,
-                                                   data.managers=data.managers,
-                                                   msa=msa,
-                                                   smoothing.years=min(get.testing.rate.years(data.managers$continuum)):smooth.to.year,
-                                                   testing.ramp.up.yearly.increase = as.numeric(ramp.yearly.increase))
+    comps = setup.background.hiv.testing(comps,
+                                         continuum.manager = data.managers$continuum,
+                                         location=msa,
+                                         years=smooth.from.year:smooth.to.year)
+    comps = set.background.hiv.testing.ramp.up(comps,
+                                               testing.ramp.up.yearly.increase=as.numeric(ramp.yearly.increase))
+    comps = set.background.hiv.testing.ors(comps,
+                                           msm.or.intercept=1,
+                                           heterosexual.or.intercept=1,
+                                           idu.or.intercept=1,
+                                           black.or.intercept=1,
+                                           hispanic.or.intercept=1,
+                                           other.or.intercept=1,
+                                           age1.or.intercept=1,
+                                           age2.or.intercept=1,
+                                           age3.or.intercept=1,
+                                           age4.or.intercept=1,
+                                           age5.or.intercept=1,
+                                           
+                                           total.or.slope=1,
+                                           msm.or.slope=1,
+                                           heterosexual.or.slope=1,
+                                           idu.or.slope=1,
+                                           black.or.slope=1,
+                                           hispanic.or.slope=1,
+                                           other.or.slope=1,
+                                           age1.or.slope=1,
+                                           age2.or.slope=1,
+                                           age3.or.slope=1,
+                                           age4.or.slope=1,
+                                           age5.or.slope=1)
+    
     #-- Suppression --#
     if (verbose)
         print('**Setting up suppression proportions')
-
-    comps = set.background.suppression(comps,
-                                       data.managers=data.managers,
-                                       msa=msa,
-                                       smoothing.years=min(get.suppressed.proportion.years(data.managers$continuum),suppression.smooth.from.year):smooth.to.year,
-                                       zero.suppression.year = zero.suppression.year,
-                                       max.smoothed.suppressed.proportion = max.smoothed.suppressed.proportion)
-
+    
+    comps = setup.background.suppression(comps,
+                                         continuum.manager=data.managers$continuum,
+                                         location=msa,
+                                         years=smooth.from.year:smooth.to.year)
+    
+    comps = set.background.suppression.ors(comps,
+                                           msm.or.intercept=1,
+                                           heterosexual.or.intercept=1,
+                                           idu.or.intercept=1,
+                                           black.or.intercept=1,
+                                           hispanic.or.intercept=1,
+                                           other.or.intercept=1,
+                                           age1.or.intercept=1,
+                                           age2.or.intercept=1,
+                                           age3.or.intercept=1,
+                                           age4.or.intercept=1,
+                                           age5.or.intercept=1,
+                                           
+                                           total.or.slope=1,
+                                           msm.or.slope=1,
+                                           heterosexual.or.slope=1,
+                                           idu.or.slope=1,
+                                           black.or.slope=1,
+                                           hispanic.or.slope=1,
+                                           other.or.slope=1,
+                                           age1.or.slope=1,
+                                           age2.or.slope=1,
+                                           age3.or.slope=1,
+                                           age4.or.slope=1,
+                                           age5.or.slope=1)
+    
+    comps = set.future.background.suppression(comps,
+                                              future.slope.or=1)
+    
     #-- PrEP --#
     if (verbose)
         print('**Setting up PrEP')
@@ -210,6 +262,11 @@ setup.components.for.msa <- function(msa,
                                          smoothing.years=min(data.managers$prep$years):smooth.to.year,
                                          prep.persistence = parameters['prep.persistence'])
 
+    comps = set.background.change.to.years(comps,
+                                           testing.change.to.year=smooth.to.year,
+                                           suppression.change.to.year=smooth.to.year,
+                                           prep.change.to.year=smooth.to.year)
+    
     #-- Transmission --#
     if (verbose)
         print('**Setting up Transmission')
@@ -251,7 +308,8 @@ setup.components.for.msa <- function(msa,
 #                              race.oes = mean.oe)
     comps = setup.sex.by.sex(comps,
                              fraction.msm.pairings.with.female = mean(data.managers$pairing$msm.sex.with.female.estimates),
-                             oe.female.pairings.with.msm = parameters['proportion.msm.sex.with.female'])
+                             oe.female.pairings.with.msm = parameters['proportion.msm.sex.with.female'],
+                             fraction.heterosexual.male.pairings.with.male = 0.004)
 
     comps = setup.sex.by.idu(comps,
                              never.idu.sexual.oe=1,

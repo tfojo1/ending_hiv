@@ -32,9 +32,9 @@ if (1==2)
 
     BALTIMORE.POPULATION.CDC = recategorize.to.cdc.risk.strata(BALTIMORE.POPULATION)
 
-    save(BALTIMORE.POPULATION, BALTIMORE.POPULATION.CDC, BALTIMORE.POPULATION.TOTALS, file='../code/cached/baltimore.population.Rdata')
+    save(BALTIMORE.POPULATION, BALTIMORE.POPULATION.CDC, BALTIMORE.POPULATION.TOTALS, file='cached/baltimore.population.Rdata')
 }
-load('code/cached/baltimore.population.Rdata')
+load('cached/baltimore.population.Rdata')
 
 #https://phpa.health.maryland.gov/OIDEOR/CHSE/Shared%20Documents/Baltimore-City.pdf
 BALTIMORE.OLDER.NEW.DX = data.frame(year=1985:2011,

@@ -21,7 +21,7 @@ get.surveillance.data <- function(surv=msa.surveillance,
     #Check the data.type argument
     ALLOWED.DATA.TYPES = c('prevalence','new','mortality',
                            'diagnosed','diagnosed.ci.lower','diagnosed.ci.upper',
-                           'suppression','suppression.ci.lower','suppression.ci.upper',
+                           'suppression','suppression.ci.lower','suppression.ci.upper', 'prevalence.for.continuum',
                            'estimated.prevalence', 'estimated.prevalence.ci.lower','estimated.prevalence.ci.upper', 'estimated.prevalence.rse',
                            'cumulative.aids.mortality', 'aids.diagnoses')
     if (all(data.type!=ALLOWED.DATA.TYPES))
@@ -77,9 +77,14 @@ get.surveillance.data <- function(surv=msa.surveillance,
     })
 
     if (any(missing.code))
-        stop(paste0("The following location code(s) are not present in the requested data: ",
-                    paste0(location.codes[missing.code], collapse=', ')))
-
+    {
+        if (throw.error.if.missing.data)
+            stop(paste0("The following location code(s) are not present in the requested data: ",
+                        paste0(location.codes[missing.code], collapse=', ')))
+        else
+            return (NULL)
+    }
+    
     #Pull and check the years
     if (is.null(years))
         years = dimnames(data)[['year']]
@@ -154,6 +159,38 @@ get.surveillance.data <- function(surv=msa.surveillance,
         access(rv, year=as.character(years)) = data
         rv
     }
+}
+
+get.surveillance.data.rate <- function(surv,
+                                       location.codes,
+                                       years=NULL,
+                                       data.type=c('new', 'prevalence','mortality')[1],
+                                       age=F,
+                                       race=F,
+                                       sex=F,
+                                       aggregate.years=F,
+                                       census)
+{
+    numerators = get.surveillance.data(surv, location.codes=location.codes,
+                                       years=years, data.type=data.type,
+                                       age=age, race=race, sex=sex,
+                                       aggregate.locations=T,
+                                       aggregate.years=aggregate.years)
+    
+    years = attr(numerators, 'years')
+    
+    denominators = get.census.data(census, years=years,
+                                   fips=counties.for.msa(location.codes),
+                                   aggregate.counties = T,
+                                   aggregate.years = aggregate.years,
+                                   aggregate.ages=!age,
+                                   aggregate.races=!race,
+                                   aggregate.sexes=!sex)
+    
+    if (!is.null(dim(denominators)))
+        denominators = apply(denominators, names(dimnames(numerators)), function(x){x})
+    
+    numerators / denominators
 }
 
 has.location.surveillance <- function(surv, location)
@@ -728,12 +765,49 @@ read.msa.surveillance <- function(dir='cleaned_data/',
 }
 
 add.all.local.msa.data <- function(surv,
-                                   dir='cleaned_data')
+                                   dir='cleaned_data/continuum/msa',
+                                   verbose=T)
 {
-    surv = add.local.data.one.location(surv,
-                                       location=LA.MSA,
-                                       total.file=file.path(dir, 'continuum/msa/total/LA.csv'),
-                                       stratified.file=file.path(dir, 'continuum/msa/stratified/LA.csv'))
+    add.all.local.data(surv,
+                           dir,
+                           verbose=verbose)
+}
+
+add.all.local.state.data <- function(surv,
+                                   dir='cleaned_data/continuum/state',
+                                   verbose=T)
+{
+    add.all.local.data(surv,
+                       dir,
+                       verbose=verbose)
+}
+
+add.all.local.data <- function(surv,
+                                   dir='cleaned_data/continuum/msa',
+                                   verbose=T)
+{
+    stratified.files = list.files(file.path(dir, 'stratified'))
+    total.files = list.files(file.path(dir, 'total'))
+    
+    locations = unique(c(gsub('.csv', '', stratified.files), gsub('.csv', '', total.files)))
+    
+    for (location in locations)
+    {
+        total.file = file.path(dir, 'total', paste0(location, '.csv'))
+        stratified.file = file.path(dir, 'stratified', paste0(location, '.csv'))
+        
+        if (!file.exists(total.file))
+            total.file = NULL
+        if (!file.exists(stratified.file))
+            stratified.file = NULL
+        
+        print(location)
+        surv = add.local.data.one.location(surv,
+                                           location=location,
+                                           total.file=total.file,
+                                           stratified.file=stratified.file,
+                                           verbose=verbose)
+    }
     
     surv
 }
@@ -741,8 +815,17 @@ add.all.local.msa.data <- function(surv,
 add.local.data.one.location <- function(surv,
                                         location,
                                         total.file=NULL,
-                                        stratified.file=NULL)
+                                        stratified.file=NULL,
+                                        verbose=T)
 {
+    if (verbose)
+    {
+        if (is.na(msa.names(location))) 
+            print(paste0("Processing data for location '", location, "'"))
+        else
+            print(paste0("Processing data for MSA ", location, " (", msa.names(location), ")"))
+    }
+    
     # Read stratified file    
     if (!is.null(stratified.file))
     {
@@ -775,16 +858,23 @@ add.local.data.one.location <- function(surv,
         df = as.data.frame(t(df[,-1]), stringsAsFactors = F)
         dimnames(df)[[2]]=COL.NAME.MAPPING[col.names]
         
+        df = df[apply(!is.na(df), 1, any),]
+        
         for (col in 2:dim(df)[2])
             df[,col] = as.numeric(as.character(df[,col]))
         
-        if (any(df$data.type=='aware' | df$data.type=='suppressed'))
+        if (any(df$data.type=='aware' | df$data.type=='suppressed' | df$data.type=='prevalent'))
         {
-            df = df[df$data.type=='aware' | df$data.type=='suppressed',]
+            df = df[df$data.type=='aware' | df$data.type=='suppressed' | df$data.type=='prevalent',]
+            df = df[,!is.na(names(df))]
+            df = df[apply(!is.na(df), 1, any),]
+            
             for (i in 1:dim(df)[1])
             {
                 if (df$data.type[i]=='aware')
                     data.type = 'diagnosed'
+                else if (df$data.type[i]=='prevalent')
+                    data.type = 'prevalence.for.continuum'
                 else
                     data.type = 'suppression'
                 
@@ -834,6 +924,7 @@ add.local.data.one.location <- function(surv,
     if (!is.null(total.file))
     {
         df = read.csv(total.file, stringsAsFactors = F)
+        df = df[apply(!is.na(df), 1, any),]
         if (any(names(df)=='aware'))
             surv = add.surveillance.data(surv,
                                   data.type='diagnosed',
@@ -846,6 +937,12 @@ add.local.data.one.location <- function(surv,
                                   location=location,
                                   years=df[,1],
                                   values=df$suppressed)
+        if (any(names(df)=='prevalent'))
+            surv = add.surveillance.data(surv,
+                                         data.type='prevalence.for.continuum',
+                                         location=location,
+                                         years=df[,1],
+                                         values=df$prevalent)
     }
     
     surv
@@ -1107,7 +1204,7 @@ read.msa.file <- function(file, verbose=T, allow.misses=F)
 
 
 read.total.msa.data.from.counties <- function(msas,
-                                              county.file='../data2/HIV_Surveillance/by_county.csv',
+                                              county.file='cleaned_data/hiv_surveillance/county/all_county_08_18_diagnoses_and_prevalence.csv',
                                               ignore.missing=T)
 {
     NEW.INDICATOR = 'HIV diagnoses'
@@ -1122,14 +1219,14 @@ read.total.msa.data.from.counties <- function(msas,
     
     new.years = as.character(unique(df$Year[df$Indicator==NEW.INDICATOR]))
     prev.years = as.character(unique(df$Year[df$Indicator==PREV.INDICATOR]))
-    
+
     new.dim.names = list(year=new.years, location=msas)
     prev.dim.names = list(year=prev.years, location=msas)
     
     rv = list()
     rv$new.all = array(as.numeric(-1), dim=sapply(new.dim.names, length), dimnames=new.dim.names)
     rv$prevalence.all = array(as.numeric(-1), dim=sapply(prev.dim.names, length), dimnames=prev.dim.names)
-    
+
     for (msa in msas)
     {
         msa.counties = as.integer(counties.for.msa.or.division(msa))
@@ -1230,7 +1327,7 @@ aggregate.surveillance.other.risk.as.heterosexual <- function(surv)
 correct.to.county.totals <- function(rv,
                                      correct.new.to.county.level=T,
                                      correct.prevalence.to.county.level=T,
-                                     county.file='../data2/HIV_Surveillance/by_county.csv',
+                                     county.file='cleaned_data/hiv_surveillance/county/all_county_08_18_diagnoses_and_prevalence.csv',
                                      verbose=T)
 {
     rv$params$correct.new.to.county.level=correct.new.to.county.level
@@ -1241,6 +1338,7 @@ correct.to.county.totals <- function(rv,
     if (correct.new.to.county.level || correct.prevalence.to.county.level)
         msa.by.county = read.total.msa.data.from.counties(county.file = county.file,
                                                           msas=as.character(all.codes))
+
     if (correct.new.to.county.level)
     {
         if (verbose)
@@ -1255,6 +1353,8 @@ correct.to.county.totals <- function(rv,
                                                 backup.2 = rv$new.race,
                                                 backup.3 = rv$new.risk,
                                                 backup.4 = rv$new.sex.age)
+        
+        rv$new.all = msa.by.county$new.all
     }
     if (correct.prevalence.to.county.level)
     {
@@ -1270,6 +1370,9 @@ correct.to.county.totals <- function(rv,
                                                 backup.2 = rv$prevalence.race,
                                                 backup.3 = rv$prevalence.risk,
                                                 backup.4 = rv$prevalence.sex.age)
+        
+        
+        rv$prevalence.all = msa.by.county$prevalence.all
     }
     
     rv
@@ -1563,24 +1666,30 @@ read.national.suppression <- function(surv,
                          sex=c('female','male'),
                          risk=c('msm','idu','msm_idu','heterosexual'))
     
-    surv$suppression.all = array(as.numeric(NA),
-                                 dim=sapply(dim.names.all[c('year','location')], length),
-                                 dimnames=dim.names.all[c('year','location')])
-    surv$suppression.sex = array(as.numeric(NA),
-                                 dim=sapply(dim.names.all[c('year','location','sex')], length),
-                                 dimnames=dim.names.all[c('year','location','sex')])
-    surv$suppression.age = array(as.numeric(NA),
-                                 dim=sapply(dim.names.all[c('year','location','age')], length),
-                                 dimnames=dim.names.all[c('year','location','age')])
-    surv$suppression.race = array(as.numeric(NA),
-                                 dim=sapply(dim.names.all[c('year','location','race')], length),
-                                 dimnames=dim.names.all[c('year','location','race')])
-    surv$suppression.risk = array(as.numeric(NA),
-                                 dim=sapply(dim.names.all[c('year','location','risk')], length),
-                                 dimnames=dim.names.all[c('year','location','risk')])
-    surv$suppression.sex.risk = array(as.numeric(NA),
-                                 dim=sapply(dim.names.all[c('year','location','sex','risk')], length),
-                                 dimnames=dim.names.all[c('year','location','sex','risk')])
+    surv$suppression.all = surv$prevalence.for.continuum.all = 
+        array(as.numeric(NA),
+              dim=sapply(dim.names.all[c('year','location')], length),
+              dimnames=dim.names.all[c('year','location')])
+    surv$suppression.sex =  surv$prevalence.for.continuum.sex = 
+        array(as.numeric(NA),
+              dim=sapply(dim.names.all[c('year','location','sex')], length),
+              dimnames=dim.names.all[c('year','location','sex')])
+    surv$suppression.age =  surv$prevalence.for.continuum.age = 
+        array(as.numeric(NA),
+              dim=sapply(dim.names.all[c('year','location','age')], length),
+              dimnames=dim.names.all[c('year','location','age')])
+    surv$suppression.race =  surv$prevalence.for.continuum.race = 
+        array(as.numeric(NA),
+              dim=sapply(dim.names.all[c('year','location','race')], length),
+              dimnames=dim.names.all[c('year','location','race')])
+    surv$suppression.risk = surv$prevalence.for.continuum.risk = 
+        array(as.numeric(NA),
+              dim=sapply(dim.names.all[c('year','location','risk')], length),
+              dimnames=dim.names.all[c('year','location','risk')])
+    surv$suppression.sex.risk =  surv$prevalence.for.continuum.sex.risk = 
+        array(as.numeric(NA),
+              dim=sapply(dim.names.all[c('year','location','sex','risk')], length),
+              dimnames=dim.names.all[c('year','location','sex','risk')])
     
     race.mapping = c('American Indian/Alaska Native' = 'other',
                      'Asian' = 'other',
@@ -1596,46 +1705,64 @@ read.national.suppression <- function(surv,
         year = years[i]
         
         surv$suppression.all[year,1] = df$pct.suppressed[df$category=='Total']/100
+        surv$prevalence.for.continuum.all[year,1] = df$n[df$category=='Total']
         
         surv$suppression.sex[year,1,'female'] = df$pct.suppressed[df$category=='Female']/100
+        surv$prevalence.for.continuum.sex[year,1,'female'] = df$n[df$category=='Female']
         surv$suppression.sex[year,1,'male'] = df$pct.suppressed[df$category=='Male']/100
+        surv$prevalence.for.continuum.sex[year,1,'male'] = df$n[df$category=='Male']
         
         surv$suppression.age[year,1,1] = df$pct.suppressed[df$category=='13-24']/100
+        surv$prevalence.for.continuum.age[year,1,1] = df$n[df$category=='13-24']
         surv$suppression.age[year,1,2] = df$pct.suppressed[df$category=='25-34']/100
+        surv$prevalence.for.continuum.age[year,1,2] = df$n[df$category=='25-34']
         surv$suppression.age[year,1,3] = df$pct.suppressed[df$category=='35-44']/100
+        surv$prevalence.for.continuum.age[year,1,3] = df$n[df$category=='35-44']
         surv$suppression.age[year,1,4] = df$pct.suppressed[df$category=='45-54']/100
+        surv$prevalence.for.continuum.age[year,1,4] = df$n[df$category=='45-54']
         surv$suppression.age[year,1,5] = df$pct.suppressed[df$category=='55+']/100
+        surv$prevalence.for.continuum.age[year,1,5] = df$n[df$category=='55+']
         
         race.numerators = race.denominators = sapply(dim.names.all[['race']], function(x){0})
         for (race.from in names(race.mapping))
         {
             race.to = race.mapping[race.from]
             
-            
-            
             race.numerators[race.to] = race.numerators[race.to] + df$n.suppressed[df$category==race.from]
             race.denominators[race.to] = race.denominators[race.to] + df$n[df$category==race.from]
         }
         surv$suppression.race[year,1,] = race.numerators / race.denominators
+        surv$prevalence.for.continuum.race[year,1,] = race.denominators
         
         #Risk and sex x risk
         surv$suppression.risk[year,1,'msm'] = surv$suppression.sex.risk[year,1,'male','msm'] =
             df$pct.suppressed[df$category=='msm']/100
+        surv$prevalence.for.continuum.risk[year,1,'msm'] = surv$prevalence.for.continuum.sex.risk[year,1,'male','msm'] =
+            df$n[df$category=='msm']
         surv$suppression.risk[year,1,'msm_idu'] = surv$suppression.sex.risk[year,1,'male','msm_idu'] =
             df$pct.suppressed[df$category=='idu.msm']/100
+        surv$prevalence.for.continuum.risk[year,1,'msm_idu'] = surv$prevalence.for.continuum.sex.risk[year,1,'male','msm_idu'] =
+            df$n[df$category=='idu.msm']
         
         surv$suppression.sex.risk[year,1,'female','msm'] = surv$suppression.sex.risk[year,1,'female','msm_idu'] = 0
+        surv$prevalence.for.continuum.sex.risk[year,1,'female','msm'] = surv$prevalence.for.continuum.sex.risk[year,1,'female','msm_idu'] = 0
         
         surv$suppression.sex.risk[year,1,'female','idu'] = df$pct.suppressed[df$category=='idu.female']/100
+        surv$prevalence.for.continuum.sex.risk[year,1,'female','idu'] = df$n[df$category=='idu.female']
         surv$suppression.sex.risk[year,1,'male','idu'] = df$pct.suppressed[df$category=='idu.male']/100
+        surv$prevalence.for.continuum.sex.risk[year,1,'male','idu'] = df$n[df$category=='idu.male']
         
         surv$suppression.sex.risk[year,1,'female','heterosexual'] = df$pct.suppressed[df$category=='het.female']/100
+        surv$prevalence.for.continuum.sex.risk[year,1,'female','heterosexual'] = df$n[df$category=='het.female']
         surv$suppression.sex.risk[year,1,'male','heterosexual'] = df$pct.suppressed[df$category=='het.male']/100
-
+        surv$prevalence.for.continuum.sex.risk[year,1,'male','heterosexual'] = df$n[df$category=='het.male']
+        
         surv$suppression.risk[year,1,'idu'] = (df$n.suppressed[df$category=='idu.female'] + df$n.suppressed[df$category=='idu.male']) /
             (df$n[df$category=='idu.female'] + df$n[df$category=='idu.male'])
+        surv$prevalence.for.continuum.risk[year,1,'idu'] = df$n[df$category=='idu.female'] + df$n[df$category=='idu.male']
         surv$suppression.risk[year,1,'heterosexual'] = (df$n.suppressed[df$category=='het.female'] + df$n.suppressed[df$category=='het.male']) /
             (df$n[df$category=='het.female'] + df$n[df$category=='het.male'])
+        surv$prevalence.for.continuum.risk[year,1,'heterosexual'] = df$n[df$category=='het.female'] + df$n[df$category=='het.male']
     }
     
     if (any(is.na(surv$suppression.all)))
@@ -1666,6 +1793,7 @@ read.national.diagnoses <- function(surv,
     df.race = read.hiv.atlas.file(file.path(dir, 'diagnosis_by_race.csv'))
     df.risk = read.hiv.atlas.file(file.path(dir, 'diagnosis_by_risk.csv'))
     
+    
     years = sort(unique(c(unique(df.all$Year),
                           unique(df.age$Year),
                           unique(df.sex$Year),
@@ -1695,6 +1823,16 @@ read.national.diagnoses <- function(surv,
     surv$diagnosed.risk = array(as.numeric(NA),
                                   dim=sapply(dim.names.all[c('year','location','risk')], length),
                                   dimnames=dim.names.all[c('year','location','risk')])
+    
+##    surv$diagnosed.sex.race.risk = sex.race.risk.numerators = sex.race.risk.denominators = 
+#        array(as.numeric(0),
+#              dim=sapply(dim.names.all[c('year','location','race','sex','risk')], length),
+#              dimnames=dim.names.all[c('year','location','race','sex','risk')])
+#    surv$diagnosed.sex.age.race = sex.age.race.numerators = sex.age.race.denominators = 
+#        array(as.numeric(0),
+#              dim=sapply(dim.names.all[c('year','location','age','race','sex')], length),
+#              dimnames=dim.names.all[c('year','location','age','race','sex')])
+    
     
     race.mapping = c('American Indian/Alaska Native' = 'other',
                      'Asian' = 'other',
@@ -1791,6 +1929,8 @@ read.national.continuum.file <- function(file)
     
     df
 }
+
+
 
 HIV.ATLAS.NUMERIC.COLUMNS = c('Cases',
                               'Cases.LCI',

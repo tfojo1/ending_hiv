@@ -1,22 +1,24 @@
-library(distributions)
+#library(distributions)
 #library(mcmc.sim)
 source('code/source_code.R')
+source('code/systematic_calibration/systematic_settings.R')
 
 if (1==2)
 {
-    load('mcmc_runs/dc.68.5_aids.dx_cum.mort.1x_t1=08_20000_2020-05-06.Rdata')
-    load('mcmc_runs/balt.68.3_aids.dx_cum.mort.1x_t1=08_20000_2020-05-05.Rdata')
-    simset = extract.simset(mcmc, additional.burn=mcmc@n.iter/2)
+    load('mcmc_runs/dallas.73_revised.lik_20000_2020-07-22.Rdata')
+    mcmc = assemble.mcmc.from.cache('mcmc_runs/la.73_revised.lik_2020-07-22/',T)
+    simset = extract.simset(mcmc, additional.burn=mcmc@n.iter * .25)
     
-    dist = create.starting.sampling.distribution(simset)
+    sampling.dist = create.starting.sampling.distribution(simset, correlated.sd.inflation = .75, uncorrelated.sd.inflation = .5)   
+    save(sampling.dist, file=file.path(SYSTEMATIC.ROOT.DIR, 'starting_value_generators/DEFAULT.Rdata'))
     
     #to add parameters
-    simset = add.parameters(simset, simset@parameters[,'global.trate'], parameter.names='global.trate.msm',
-                            parameter.lower.bounds = 0, parameter.upper.bounds = Inf, parameter.transformations = 'log')
-    simset = add.parameters(simset, simset@parameters[,'global.trate'], parameter.names='global.trate.heterosexual',
-                            parameter.lower.bounds = 0, parameter.upper.bounds = Inf, parameter.transformations = 'log')
-    simset = add.parameters(simset, simset@parameters[,'global.trate'], parameter.names='global.trate.idu',
-                            parameter.lower.bounds = 0, parameter.upper.bounds = Inf, parameter.transformations = 'log')
+#    simset = add.parameters(simset, simset@parameters[,'global.trate'], parameter.names='global.trate.msm',
+ #                           parameter.lower.bounds = 0, parameter.upper.bounds = Inf, parameter.transformations = 'log')
+  #  simset = add.parameters(simset, simset@parameters[,'global.trate'], parameter.names='global.trate.heterosexual',
+   #                         parameter.lower.bounds = 0, parameter.upper.bounds = Inf, parameter.transformations = 'log')
+    #simset = add.parameters(simset, simset@parameters[,'global.trate'], parameter.names='global.trate.idu',
+     #                       parameter.lower.bounds = 0, parameter.upper.bounds = Inf, parameter.transformations = 'log')
 }
 
 create.starting.sampling.distribution <- function(simset,
@@ -34,7 +36,9 @@ create.starting.sampling.distribution <- function(simset,
     # Get empiric means and correlation
     means = colMeans(parameters)
     cov.mat = cov(parameters)
-    cov.mat = cov.mat * correlated.sd.inflation + diag(diag(cov.mat)) * uncorrelated.sd.inflation
+    cov.mat = cov.mat * correlated.sd.inflation +  diag(diag(cov.mat)) * uncorrelated.sd.inflation 
+    #    diag(diag(cov.mat) + min(diag(cov.mat))/2) * uncorrelated.sd.inflation 
+    #the +min(diag...) is just to avoid rounding error non-positive definiteness
     
     bounds = get.support.bounds(prior@support)
     dimnames(bounds)[[2]] = prior@var.names
