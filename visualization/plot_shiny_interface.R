@@ -5,7 +5,8 @@
 #'@param description The function that actually generates plots
 #'
 #' THE FUNDAMENTAL ARGUMENTS THAT DEFINE THE PLOT
-#'@param location The location code representing a place
+#'@param version The indicator for the version of the model. Corresponds to one of the values of names(get.version.options)
+#'@param location A location code. Corresponds to one of the values of names(get.location.options(version))
 #'@param intervention.name
 #'@param years The numeric years to plot
 #'@param data.types The names of 
@@ -32,7 +33,8 @@
 #'@return A list with two values:
 #' $plot - a ggplot object
 #' $notes - a character vector (which may be empty) of notes
-plot.simulations <- function(location,
+plot.simulations <- function(version,
+                             location,
                              intervention.names,
                              years,
                              data.types,
