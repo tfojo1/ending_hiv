@@ -4,13 +4,23 @@
 .RData
 .Ruserdata
 *.Rproj
+
 # Project-specific
 cached
 cached_surveillance
 mcmc_runs
+
 # User-specific
+## joeflack4
 _dev
+_archive
+
+# Project-specific
+/temp/
+*git-ignored/
+
 # OS-specific
 .DS_Store
 cleaned_data
 result_summaries
+~$*
