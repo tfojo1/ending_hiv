@@ -21,24 +21,20 @@ INTERVENTION.SET = c(list(NULL),
                                                         intervention.ramped.up.year=INTERVENTION.RAMPED.UP.YEAR))
 names(INTERVENTION.SET) = sapply(INTERVENTION.SET, get.intervention.filename)
 
+
+#MARGINAL.INTERVENTIONS = list(create.one.intervention())
+#names(MARGINAL.INTERVENTIONS) = sapply(MARGINAL.INTERVENTIONS, get.intervention.filename)
+
 run.systematic.interventions <- function(location,
+                                         simset.prefix,
                                          interventions=INTERVENTION.SET,
-                                         full.simset=T,
                                          keep.years.if.null.intervention=2000:2030,
                                          keep.years.for.interventions=2020:2030,
                                          verbose=T)
 {
-    if (full.simset)
-    {
-        dst.dir = file.path(SYSTEMATIC.ROOT.DIR, 'full_simset_interventions', location)
-        load(file.path(SYSTEMATIC.ROOT.DIR, 'full_simsets', paste0(location, '.Rdata')))
-    }
-    else
-    {
-        dst.dir = file.path(SYSTEMATIC.ROOT.DIR, 'limited_simset_interventions', location)
-        load(file.path(SYSTEMATIC.ROOT.DIR, 'limited_simsets', paste0(location, '.Rdata')))
-    }
-    
+    dst.dir = get.intervention.simsets.dir(location, simset.prefix=simset.prefix)
+    load(get.base.simset.filename(location, simset.prefix=simset.prefix))
+
     if (!dir.exists(dst.dir))
         dir.create(dst.dir)
     base.simset = simset

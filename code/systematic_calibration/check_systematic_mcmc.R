@@ -10,6 +10,8 @@ mcmc = assemble.mcmc.from.cache('mcmc_runs/systematic_caches/31080_1x20K_2020-07
 
 simset = extract.simset(mcmc, additional.burn=mcmc@n.iter/2, 
                         additional.thin=2^(as.numeric(mcmc@n.iter>50)+as.numeric(mcmc@n.iter>200)))
+
+simset = extract.simset(mcmc, additional.burn=250, additional.thin=8)
 plot.calibration.race.risk(simset)
 plot.calibration.sex.age(simset)
 
@@ -64,12 +66,11 @@ plot.calibration(simset, facet.by=c('sex','age'), split.by='risk', sex='male', s
 
 #Difficult mixers
 ADDITIONAL.BURN = mcmc@n.iter/2
+ADDITIONAL.BURN=250
 get.rhats(mcmc, additional.burn = ADDITIONAL.BURN)[1:6]
 trace.plot(mcmc, names(get.rhats(mcmc, additional.burn = ADDITIONAL.BURN))[1:6], additional.burn = ADDITIONAL.BURN)
 
 trace.plot(mcmc, c('global.trate','diagnosed.tra','acute.trans'), additional.burn = ADDITIONAL.BURN)
-trace.plot(mcmc, c('age*msm.suppressed','age*msm.testing'), additional.burn = ADDITIONAL.BURN)
-
 trace.plot(mcmc, '*sexual.oe', additional.burn=ADDITIONAL.BURN)
 
 trace.plot(mcmc, '*mortality', additional.burn=ADDITIONAL.BURN)
@@ -80,11 +81,14 @@ trace.plot(mcmc, '*trate.1', additional.burn=ADDITIONAL.BURN)
 trace.plot(mcmc, '*trate.2', additional.burn=ADDITIONAL.BURN)
 
 
-trace.plot(mcmc, c('age.mixing'))
+trace.plot(mcmc, c('age.mixing'), additional.burn=ADDITIONAL.BURN)
 
-trace.plot(mcmc, '*suppressed')
+trace.plot(mcmc, '*suppressed', additional.burn=ADDITIONAL.BURN)
 
-trace.plot(mcmc, '*sexual.oe')
+trace.plot(mcmc, '*sexual.oe', additional.burn=ADDITIONAL.BURN)
+
+trace.plot(mcmc, '*suppressed.or', additional.burn=ADDITIONAL.BURN)
+trace.plot(mcmc, '*suppressed.slope.or', additional.burn=ADDITIONAL.BURN)
 
 #break it down
 

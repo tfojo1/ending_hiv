@@ -975,7 +975,7 @@ calculate.suppression <- function(components)
     #Overlay foreground suppression
     suppression = get.rates.from.background.and.foreground(background.rates = background.suppression,
                                                            background.times = background.suppression.years,
-                                                           foreground.rates = components$foreground.suppression.rates,
+                                                           foreground.rates = components$foreground.suppression,
                                                            foreground.times = components$foreground.suppression.years,
                                                            max.background.time = components$background.change.to.years$suppression,
                                                            allow.foreground.less = F)
@@ -1781,7 +1781,11 @@ do.setup.idu.contact <- function(components)
                                                    components$proportions.msm.of.male)
         sex.counts = apply(population, 'sex', sum)
         idu.transmission.by.sex = get.pairing.proportions(components$idu.transmission$sex.oes, sex.counts)
-
+        
+        idu.transmission.by.sex['female',] = idu.transmission.by.sex['female',] * components$female.idu.transmission.ratio
+        idu.transmission.by.sex['msm',] = idu.transmission.by.sex['msm',] * components$msm.idu.transmission.ratio
+        idu.transmission.by.sex['heterosexual_male',] = idu.transmission.by.sex['heterosexual_male',] * components$heterosexual.male.idu.transmission.ratio
+        
         #-- IDU Transmission --#
         # ASSUMING HERE THAT ALL AGES ARE THE SAME
         black.idu.trates = calculate.changing.trates.and.times(components$idu.trates$black[[1]])
@@ -1883,6 +1887,9 @@ get.rates.from.background.and.foreground <- function(background.rates,
              times=background.times[background.times<=max.background.time])
     else
     {
+        if (is.null(foreground.rates))
+            stop("foreground.rates is NULL")
+        
         background.rates = background.rates[background.times<=max.background.time]
         background.times = background.times[background.times<=max.background.time]
         

@@ -101,7 +101,7 @@ setup.components.for.intervention <- function(components,
                                                   prep.coverage = prep.coverages,
                                                   years = intervention$prep.years)
     }
-
+    
     components
 }
 

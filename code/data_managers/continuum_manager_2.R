@@ -18,12 +18,46 @@ get.testing.model <- function(cm,
                               population)
 {
     location.mask = cm$testing$total.ever.tested$location==location
-    ever.tested = cm$testing$total.ever.tested$frac.ever[location.mask]
-    years = cm$testing$total.ever.tested$year[location.mask] - cm$testing$anchor.year
-    sample.size = cm$testing$total.ever.tested$sample.size[location.mask]
+    if (any(location.mask))
+    {
+        ever.tested = cm$testing$total.ever.tested$frac.ever[location.mask]
+        years = cm$testing$total.ever.tested$year[location.mask] - cm$testing$anchor.year
+        sample.size = cm$testing$total.ever.tested$sample.size[location.mask]
+    }
+    else #average fraction ever tested for locations in the same state
+    {
+        location.states = states.for.msa(location)
+        locations = unique(cm$testing$total.ever.tested$location)
+        same.state.mask = sapply(locations, function(loc){
+            states.for.loc = states.for.msa(loc)
+            any(sapply(location.states, function(st){
+                any(st == states.for.loc)
+            }))
+        })
+        if (any(same.state.mask))
+        {
+            locations = locations[same.state.mask]
+            location.mask = sapply(cm$testing$total.ever.tested$location, function(loc){
+                any(loc==locations)
+            })
+        }
+        else
+            location.mask = T
+        
+        years = sort(unique(cm$testing$total.ever.tested$year[location.mask]))
+        ever.tested = sapply(years, function(year){
+            year.mask = location.mask & cm$testing$total.ever.tested$year == year
+            sum(cm$testing$total.ever.tested$frac.ever[year.mask] * cm$testing$total.ever.tested$sample.size[year.mask]) /
+                sum(cm$testing$total.ever.tested$sample.size[year.mask])
+        })
+        sample.size = sapply(years, function(year){
+            year.mask = location.mask & cm$testing$total.ever.tested$year == year
+            ceiling(mean(cm$testing$total.ever.tested$sample.size[year.mask]))
+        })
+    }
     frac.12mo = 1-exp(cm$testing$rate.ever.to.12mo.mult * log(1-ever.tested))
     xs = round(frac.12mo*sample.size)
-  
+    
     summed.population = sum(population)
     fn <- function(params)
     {
@@ -33,10 +67,9 @@ get.testing.model <- function(cm,
                     cm$testing$max.proportion) /
                 summed.population
         })
-        
         -sum(dbinom(xs, size=sample.size, prob=p.by.year, log=T))
     }
-    
+
     opt = optim(par=c(0,0), 
                 fn = fn,control = list(maxit=500))
     
@@ -244,7 +277,6 @@ run.suppression.regressions <- function(cm,
         cm$suppression$stratified.log.odds.slope[,,'msm',non.idu.strata] + 
         fit.sex.risk$coefficients['msm:year']
     
-    browser()
     #-- Return --#
     cm
 }

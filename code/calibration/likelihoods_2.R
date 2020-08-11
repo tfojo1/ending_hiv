@@ -277,6 +277,7 @@ create.suppressed.likelihood <- function(location,
                                          upweight.by.n.obs.per.year=T,
                                          backup.surv=state.surveillance,
                                          numerator.sd.inflation.if.backup=2,
+                                         probability.decreasing.slope=0.05,
                                          by.total=T,
                                          by.age=T,
                                          by.race=T,
@@ -304,7 +305,12 @@ create.suppressed.likelihood <- function(location,
          if (length(states)==0)
              stop(paste0("No data for location, '", location, "', and it is not an msa within a state"))
          else if (length(states)>1)
-             stop(paste0("More than one state for location '", location, "' ('", msa.names(location), "')"))
+         {
+             if (location=='14460')
+                 states = 'MA'
+             else
+                 stop(paste0("More than one state for location '", location, "' ('", msa.names(location), "')"))
+         }
          location.for.likelihood.elements = states
     }
     else
@@ -368,10 +374,11 @@ create.suppressed.likelihood <- function(location,
         
         
         #Pull rates from the simulation
-        rates = as.numeric(extract.suppression(sim,
+        rates = extract.suppression(sim,
                                     years=years,
                                     continuum='diagnosed',
-                                    keep.dimensions=c('year','age','race','sex','risk')))
+                                    keep.dimensions=c('year','age','race','sex','risk'))
+        rates = as.numeric(rates)
         
         #Multiply the denominators (as fraction of total population) by the total population 
         # to get our denominators
@@ -390,7 +397,7 @@ create.suppressed.likelihood <- function(location,
             numerator.covar.mat = aggregated.denominators %*% t(aggregated.denominators) * likelihood.elements$numerator.covar.mat
         
         # Pass it all to the sub-function to crunch
-        likelihood.sub(rates,
+        lik.continuous = likelihood.sub(rates,
                        transformation.matrix = likelihood.elements$transformation.matrix,
                        response.vector = likelihood.elements$response.vector * aggregated.denominators,
                        denominator.vector = denominators,
@@ -402,6 +409,50 @@ create.suppressed.likelihood <- function(location,
                        sim=sim,
                        transformation.mapping=transformation.mapping,
                        description=likelihood.elements$descriptions)
+        
+        #the binary likelihood
+        if (is.na(probability.decreasing.slope))
+        {
+            if (log)
+                lik.binary = 0
+            else
+                lik.binary = 1
+        }
+        else
+        {
+            rates.age  = extract.suppression(sim,
+                                        years=years,
+                                        continuum='diagnosed',
+                                        keep.dimensions=c('year','age'))
+            rates.race = extract.suppression(sim,
+                                        years=years,
+                                        continuum='diagnosed',
+                                        keep.dimensions=c('year','race'))
+            rates.sex = extract.suppression(sim,
+                                        years=years,
+                                        continuum='diagnosed',
+                                        keep.dimensions=c('year','sex'))
+            rates.risk = extract.suppression(sim,
+                                        years=years,
+                                        continuum='diagnosed',
+                                        keep.dimensions=c('year','risk'))
+            is.decreasing = c(as.numeric(rates.age[length(years),] < rates.age[1,]),
+                              as.numeric(rates.race[length(years),] < rates.race[1,]),
+                              as.numeric(rates.sex[length(years),] < rates.sex[1,]),
+                              as.numeric(rates.risk[length(years),] < rates.risk[1,]))
+            
+            if (log)
+                lik.binary = sum(is.decreasing*log(probability.decreasing.slope) + (1-is.decreasing)*log(1-probability.decreasing.slope))
+            else
+                lik.binary = prod(probability.decreasing.slope ^ is.decreasing * (1-probability.decreasing.slope)^(1-is.decreasing))
+        }
+        
+        
+        #put them together
+        if (log)
+            lik.continuous + lik.binary
+        else
+            lik.continuous * lik.binary
     }
 }
 

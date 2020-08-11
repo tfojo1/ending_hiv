@@ -105,6 +105,7 @@ parameters.prior = join.distributions(
     age1.msm.susceptibility.rr1 = Lognormal.Distribution(log(0.6*78.50/mean(c(77.84,63.22))), 0.5*log(2)),
     age2.msm.susceptibility.rr1 = Lognormal.Distribution(log(mean(c(78.50,77.84))/mean(c(77.84,63.22))), 0.5*log(2)),
     age3.msm.susceptibility.rr1 = Lognormal.Distribution(0, 0.5*log(2)),
+    
     age1.msm.susceptibility.rr2 = Lognormal.Distribution(log(0.6*78.50/mean(c(77.84,63.22))), 0.5*log(2)),
     age2.msm.susceptibility.rr2 = Lognormal.Distribution(log(mean(c(78.50,77.84))/mean(c(77.84,63.22))), 0.5*log(2)),
     age3.msm.susceptibility.rr2 = Lognormal.Distribution(0, 0.5*log(2)),
@@ -119,11 +120,24 @@ parameters.prior = join.distributions(
     # From Abma 2017 (see setup for msa function)
     # sum(c(.076,.108,.13,.26,.42,.55,.68,.75*5))/14 / sum(c(.55,.68,.75*5)) * 7
     
-    age1.susceptibility.rr = Lognormal.Distribution(log(0.6*78.50/mean(c(77.84,63.22))), 0.25*log(2)),
-    age2.susceptibility.rr = Lognormal.Distribution(log(mean(c(78.50,77.84))/mean(c(77.84,63.22))), 0.25*log(2)),
-    age4.susceptibility.rr = Lognormal.Distribution(log(mean(c(63.22,38.29))/mean(c(77.84,63.22))), 0.25*log(2)),
-    age5.susceptibility.rr = Lognormal.Distribution(log(mean(c(38.29,25.03,10.88))/mean(c(77.84,63.22))), 0.25*log(2)),
+    age1.msm.susceptibility.rr0 = Lognormal.Distribution(log(0.6*78.50/mean(c(77.84,63.22))), 0.25*log(2)),
+    age2.msm.susceptibility.rr0 = Lognormal.Distribution(log(mean(c(78.50,77.84))/mean(c(77.84,63.22))), 0.25*log(2)),
+    age4.msm.susceptibility.rr = Lognormal.Distribution(log(mean(c(63.22,38.29))/mean(c(77.84,63.22))), 0.25*log(2)),
+    age5.msm.susceptibility.rr = Lognormal.Distribution(log(mean(c(38.29,25.03,10.88))/mean(c(77.84,63.22))), 0.25*log(2)),
     
+    age1.heterosexual.susceptibility.rr = Lognormal.Distribution(log(0.6*78.50/mean(c(77.84,63.22))), 0.25*log(2)),
+    age2.heterosexual.susceptibility.rr = Lognormal.Distribution(log(mean(c(78.50,77.84))/mean(c(77.84,63.22))), 0.25*log(2)),
+    age4.heterosexual.susceptibility.rr = Lognormal.Distribution(log(mean(c(63.22,38.29))/mean(c(77.84,63.22))), 0.25*log(2)),
+    age5.heterosexual.susceptibility.rr = Lognormal.Distribution(log(mean(c(38.29,25.03,10.88))/mean(c(77.84,63.22))), 0.25*log(2)),
+    
+    
+    #idu by age from table 9 and 10 from
+    #  https://www.cdc.gov/hiv/pdf/library/reports/surveillance/cdc-hiv-surveillance-special-report-number-24.pdf
+    # RR of prob of daily use (heroin) * prob of needle sharing
+    age1.idu.susceptibility.rr = Lognormal.Distribution(log(.762/.788*.720/.672), 0.25*log(2)),
+    age2.idu.susceptibility.rr = Lognormal.Distribution(log(.797/.788*.705/.672), 0.25*log(2)),
+    age4.idu.susceptibility.rr = Lognormal.Distribution(log(.745/.788*.596/.672), 0.25*log(2)),
+    age5.idu.susceptibility.rr = Lognormal.Distribution(log(.740/.788*.498/.672), 0.25*log(2)),
     
     #-- Aging --#
     
@@ -134,6 +148,7 @@ parameters.prior = join.distributions(
     msm.age1.aging.base = Lognormal.Distribution(log(12209/2/22537), 0.25*log(2)),
     msm.age2.aging.0 = Lognormal.Distribution(log(0.2), 0.5*log(2)),
     msm.age2.aging.1 = Lognormal.Distribution(log(0.1), 0.5*log(2)),
+    msm.age2.aging.2 = Lognormal.Distribution(log(0.1), 0.5*log(2)),
     msm.age3.aging.1 = Lognormal.Distribution(log(0.2), 0.5*log(2)),
     msm.age3.aging.2 = Lognormal.Distribution(log(0.1), 0.25*log(2)),
     msm.age4.aging.1 = Lognormal.Distribution(log(0.05), 0.5*log(2)),
@@ -142,6 +157,7 @@ parameters.prior = join.distributions(
     heterosexual.age1.aging.base = Lognormal.Distribution(log((427+1861)/2/(814+3752)), 0.25*log(2)),
     heterosexual.age2.aging.0 = Lognormal.Distribution(log(0.2), 0.5*log(2)),
     heterosexual.age2.aging.1 = Lognormal.Distribution(log(0.1), 0.5*log(2)),
+    heterosexual.age2.aging.2 = Lognormal.Distribution(log(0.1), 0.5*log(2)),
     heterosexual.age3.aging.1 = Lognormal.Distribution(log(0.2), 0.5*log(2)),
     heterosexual.age3.aging.2 = Lognormal.Distribution(log(0.1), 0.25*log(2)),
     heterosexual.age4.aging.1 = Lognormal.Distribution(log(0.05), 0.5*log(2)),
@@ -150,6 +166,7 @@ parameters.prior = join.distributions(
     idu.age1.aging.base = Lognormal.Distribution(log((180+221)/2/(218+411)), 0.25*log(2)),
     idu.age2.aging.0 = Lognormal.Distribution(log(0.2), 0.5*log(2)),
     idu.age2.aging.1 = Lognormal.Distribution(log(0.1), 0.5*log(2)),
+    idu.age2.aging.2 = Lognormal.Distribution(log(0.1), 0.5*log(2)),
     idu.age3.aging.1 = Lognormal.Distribution(log(0.2), 0.5*log(2)),
     idu.age3.aging.2 = Lognormal.Distribution(log(0.1), 0.25*log(2)),
     idu.age4.aging.1 = Lognormal.Distribution(log(0.05), 0.5*log(2)),
@@ -273,7 +290,8 @@ PARAMETER.VAR.BLOCKS.1 = list(
 
     msm.young.aging = c('msm.age1.aging.base',
                         'msm.age2.aging.0',
-                        'msm.age2.aging.1'),
+                        'msm.age2.aging.1',
+                        'msm.age2.aging.2'),
     
     msm.old.aging = c('msm.age3.aging.1',
                       'msm.age3.aging.2',
@@ -283,14 +301,20 @@ PARAMETER.VAR.BLOCKS.1 = list(
     sexual.mixing = c('black.black.sexual.oe',
                       'hispanic.hispanic.sexual.oe',
                       'other.other.sexual.oe'),
-
-    young.msm.susceptibility = c('age1.msm.susceptibility.rr1',
-                                 'age1.msm.susceptibility.rr2',
-                                 'age2.msm.susceptibility.rr1',
-                                 'age2.msm.susceptibility.rr2',
-                                 'age3.msm.susceptibility.rr1',
-                                 'age3.msm.susceptibility.rr2'),
-
+    
+    age1.msm.susceptibility = c('age1.msm.susceptibility.rr0',
+                                'age1.msm.susceptibility.rr1',
+                                'age1.msm.susceptibility.rr2'),
+    
+    age2.msm.susceptibility = c('age2.msm.susceptibility.rr0',
+                                'age2.msm.susceptibility.rr1',
+                                'age2.msm.susceptibility.rr2'),
+    
+    old.msm.susceptibility = c('age3.msm.susceptibility.rr1',
+                               'age3.msm.susceptibility.rr2',
+                               'age4.msm.susceptibility.rr',
+                               'age5.msm.susceptibility.rr'),
+                               
     sexual.transmission = c('oe.female.pairings.with.msm',
                             'fraction.heterosexual.male.pairings.with.male',
                             'oe.never.idu.pairings.with.idu',
@@ -319,12 +343,18 @@ PARAMETER.VAR.BLOCKS.1 = list(
     
     heterosexual.young.aging = c('heterosexual.age1.aging.base',
                                  'heterosexual.age2.aging.0',
-                                 'heterosexual.age2.aging.1'),
+                                 'heterosexual.age2.aging.1',
+                                 'heterosexual.age2.aging.2'),
     
     heterosexual.old.aging = c('heterosexual.age3.aging.1',
                                'heterosexual.age3.aging.2',
                                'heterosexual.age4.aging.1',
                                'heterosexual.age4.aging.2'),
+    
+    heterosexual.age.susceptibility = c('age1.heterosexual.susceptibility.rr',
+                                        'age2.heterosexual.susceptibility.rr',
+                                        'age4.heterosexual.susceptibility.rr',
+                                        'age5.heterosexual.susceptibility.rr'),
 
     black.idu.past.transmission = c('black.idu.trate.peak',
                                     'black.idu.trate.0'),
@@ -345,18 +375,18 @@ PARAMETER.VAR.BLOCKS.1 = list(
 
     idu.young.aging = c('idu.age1.aging.base',
                         'idu.age2.aging.0',
-                        'idu.age2.aging.1'),
+                        'idu.age2.aging.1',
+                        'idu.age2.aging.2'),
     
     idu.old.aging = c('idu.age3.aging.1',
                       'idu.age3.aging.2',
                       'idu.age4.aging.1',
                       'idu.age4.aging.2'),
 
-    young.age.susceptibility = c('age1.susceptibility.rr',
-                                 'age2.susceptibility.rr'),
-    
-    old.age.susceptibility = c('age4.susceptibility.rr',
-                               'age5.susceptibility.rr'),
+    idu.age.susceptibility = c('age1.idu.susceptibility.rr',
+                               'age2.idu.susceptibility.rr',
+                               'age4.idu.susceptibility.rr',
+                               'age5.idu.susceptibility.rr'),
 
     idu.transitions.0 = c('black.incident.idu.multiplier.0',
                           'hispanic.incident.idu.multiplier.0',
@@ -440,43 +470,54 @@ get.components.for.calibrated.parameters <- function(parameters, components,
 
     #-- Setup for Transmission --#
 
-    msm.age.rr.peak = heterosexual.age.rr.peak = idu.age.rr.peak = c(parameters['age1.susceptibility.rr'],
-                                                                     parameters['age2.susceptibility.rr'],
+    msm.age.rr.peak = heterosexual.age.rr.peak = idu.age.rr.peak = c(parameters['age1.msm.susceptibility.rr0'],
+                                                                     parameters['age2.msm.susceptibility.rr0'],
                                                                      1,#parameters['age3.susceptibility.rr.peak'],
-                                                                     parameters['age4.susceptibility.rr'],
-                                                                     parameters['age5.susceptibility.rr'])
+                                                                     parameters['age4.msm.susceptibility.rr'],
+                                                                     parameters['age5.msm.susceptibility.rr'])
 
-    heterosexual.age.rr0 = idu.age.rr0 = c(parameters['age1.susceptibility.rr'],
-                                           parameters['age2.susceptibility.rr'],
-                                           1,#parameters['age3.susceptibility.rr0'],
-                                           parameters['age4.susceptibility.rr'],
-                                           parameters['age5.susceptibility.rr'])
-
-    msm.age.rr0 = c(parameters['age1.susceptibility.rr'],
-                    parameters['age2.susceptibility.rr'],
+    heterosexual.age.rr0 = c(parameters['age1.heterosexual.susceptibility.rr'],
+                             parameters['age2.heterosexual.susceptibility.rr'],
+                             1,#parameters['age3.susceptibility.rr0'],
+                             parameters['age4.heterosexual.susceptibility.rr'],
+                             parameters['age5.heterosexual.susceptibility.rr']) 
+        
+    idu.age.rr0 = c(parameters['age1.idu.susceptibility.rr'],
+                    parameters['age2.idu.susceptibility.rr'],
                     1,#parameters['age3.susceptibility.rr0'],
-                    parameters['age4.susceptibility.rr'],
-                    parameters['age5.susceptibility.rr'])
+                    parameters['age4.idu.susceptibility.rr'],
+                    parameters['age5.idu.susceptibility.rr'])
+
+    msm.age.rr0 = c(parameters['age1.msm.susceptibility.rr0'],
+                    parameters['age2.msm.susceptibility.rr0'],
+                    1,#parameters['age3.susceptibility.rr0'],
+                    parameters['age4.msm.susceptibility.rr'],
+                    parameters['age5.msm.susceptibility.rr'])
 
     msm.age.rr1 = c(parameters['age1.msm.susceptibility.rr1'],
                     parameters['age2.msm.susceptibility.rr1'],
                     parameters['age3.msm.susceptibility.rr1'],
-                    parameters['age4.susceptibility.rr'],
-                    parameters['age5.susceptibility.rr'])
+                    parameters['age4.msm.susceptibility.rr'],
+                    parameters['age5.msm.susceptibility.rr'])
 
     msm.age.rr2 = c(parameters['age1.msm.susceptibility.rr2'],
                     parameters['age2.msm.susceptibility.rr2'],
                     parameters['age3.msm.susceptibility.rr2'],
-                    parameters['age4.susceptibility.rr'],
-                    parameters['age5.susceptibility.rr'])
+                    parameters['age4.msm.susceptibility.rr'],
+                    parameters['age5.msm.susceptibility.rr'])
 
-    heterosexual.age.rr1 = heterosexual.age.rr2 =
-        idu.age.rr1 = idu.age.rr2 = c(parameters['age1.susceptibility.rr'],
-                                      parameters['age2.susceptibility.rr'],
-                                      1,#parameters['age3.susceptibility.rr1'],
-                                      parameters['age4.susceptibility.rr'],
-                                      parameters['age5.susceptibility.rr'])
-
+    heterosexual.age.rr1 = heterosexual.age.rr2 = c(parameters['age1.heterosexual.susceptibility.rr'],
+                                                    parameters['age2.heterosexual.susceptibility.rr'],
+                                                    1,#parameters['age3.susceptibility.rr1'],
+                                                    parameters['age4.heterosexual.susceptibility.rr'],
+                                                    parameters['age5.heterosexual.susceptibility.rr'])
+    
+    idu.age.rr1 = idu.age.rr2 = c(parameters['age1.idu.susceptibility.rr'],
+                                  parameters['age2.idu.susceptibility.rr'],
+                                  1,#parameters['age3.susceptibility.rr1'],
+                                  parameters['age4.idu.susceptibility.rr'],
+                                  parameters['age5.idu.susceptibility.rr'])
+    
     #-- MSM Transmission --#
     for (age.index in 1:5)
     {
@@ -549,7 +590,8 @@ get.components.for.calibrated.parameters <- function(parameters, components,
         components = set.aging.rates(components, route=route,
                                      age.indices = 2,
                                      r0 = parameters[paste0(route, '.age2.aging.0')],
-                                     r1 = parameters[paste0(route, '.age2.aging.1')])
+                                     r1 = parameters[paste0(route, '.age2.aging.1')],
+                                     r2 = parameters[paste0(route, '.age2.aging.2')])
 
         components = set.aging.rates(components, route=route,
                                      age.indices = 3,

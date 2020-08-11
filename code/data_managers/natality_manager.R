@@ -347,7 +347,7 @@ get.birth.rates <- function(fertility.manager,
 
     #Aggregate across counties
     if (aggregate.counties & length(fips)==1)
-        rv = rv[1,,]
+        rv = rv[1,]
     else if (aggregate.counties)
     {
         populations = get.census.data(census, years=aggregate.county.years, fips=fips,
