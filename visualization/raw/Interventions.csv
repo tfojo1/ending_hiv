@@ -1,5 +1,0 @@
-"id","name","target_population","suppressed_proportion","prep.coverage","testing_frequency","begin_implementation_year","implementation_complete_year","end_year"
-0,"base",NA,NA,NA,NA,NA,NA,2030
-1,"No Intervention",NA,NA,NA,NA,NA,NA,2030
-2,"All MSM or IDU - testing 1/yr, 0.8 suppressed, 0.25 PrEP","All MSM or IDU",0.8,0.25,1,2021,2022,2030
-3,"All MSM or IDU - testing 1/yr, 0.8 suppressed, 0.25 PrEP","All MSM or IDU",0.8,0.25,1,2021,2022,2030

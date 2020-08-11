@@ -1,0 +1,12 @@
+name: covid-emory
+title: covid-emory
+username:
+account: joeflack4
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 2642225
+bundleId: 3476270
+url: https://joeflack4.shinyapps.io/covid-emory/
+when: 1596597390.72942
+asMultiple: FALSE
+asStatic: FALSE
