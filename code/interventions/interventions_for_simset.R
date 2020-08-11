@@ -21,34 +21,8 @@ prepare.simset.for.interventions <- function(simset,
                             parameter.lower.bounds = current.gains.end.by.bounds[1],
                             parameter.upper.bounds = current.gains.end.by.bounds[2])
 
-    print("We are doing the total hack to fix the age model thing")
     simset = extend.simulations(simset, function(sim, parameters){
         components = attr(sim, 'components')
-        
-        if (is.null(components$sexual.transmission$base.heterosexual.male.age.model))
-        {
-            heterosexual.male.age.model = components$sexual.transmission$heterosexual.male.age.model
-            heterosexual.male.age.model['sd.intercept'] = 1/parameters['age.mixing.sd.mult'] *
-                heterosexual.male.age.model['sd.intercept']
-            heterosexual.male.age.model['sd.slope'] = 1/parameters['age.mixing.sd.mult'] *
-                heterosexual.male.age.model['sd.slope']
-            components$sexual.transmission$base.heterosexual.male.age.model = heterosexual.male.age.model
-            
-            female.age.model = components$sexual.transmission$female.age.model
-            female.age.model['sd.intercept'] = 1/parameters['age.mixing.sd.mult'] *
-                female.age.model['sd.intercept']
-            female.age.model['sd.slope'] = 1/parameters['age.mixing.sd.mult'] *
-                female.age.model['sd.slope']
-            components$sexual.transmission$base.female.age.model = female.age.model
-            
-            msm.age.model = components$sexual.transmission$msm.age.model
-            msm.age.model['sd.intercept'] = 1/parameters['age.mixing.sd.mult'] *
-                msm.age.model['sd.intercept']
-            msm.age.model['sd.slope'] = 1/parameters['age.mixing.sd.mult'] *
-                msm.age.model['sd.slope']
-            components$sexual.transmission$base.msm.age.model = msm.age.model
-        }
-        
         
         components = unfix.jheem.components(components)
         

@@ -6,13 +6,16 @@ if (1==2)
 source('code/source_code.R')
 source('code/systematic_calibration/systematic_calibration.R')
 
+source('code/targets/target_msas.R')
+
 source('code/calibration/calibrated_parameters_68_helpers.R')
-source('code/calibration/calibrated_parameters_73.R')
+source('code/calibration/calibrated_parameters_75.R')
+
 
 DC.MSA = cbsa.for.msa.name('Washington,DC')
 BALTIMORE.MSA = '12580'
 NYC.MSA = '35620'
-msa ='31080' #LA
+msa = LA.MSA
 
 print(paste0("Calibrating for ", msa.names(msa)))
 
@@ -25,8 +28,8 @@ CACHE.FREQUENCY = 500
 UPDATE.FREQUENCY = 200
 MAX.SIM.TIME=Inf
 
-FILE.PREFIX = 'la.73_revised.lik'
-DESCRIPTION = "V71"
+FILE.PREFIX = 'la.75'
+DESCRIPTION = "V75"
 RESUME.PRIOR.CACHE = NULL#'mcmc_runs/balt.70_wt.6.6.33_2020-07-16/'
 if (!is.null(RESUME.PRIOR.CACHE))
     print("THIS IS RESUMPTION OF A PRIOR CACHE!!!")
@@ -116,6 +119,8 @@ init.parameters = c(
     age1.msm.susceptibility.rr1 = 1.200,
     age2.msm.susceptibility.rr1 = 1.200,
     age3.msm.susceptibility.rr1 = 0.646,
+    age4.msm.susceptibility.rr1 = 0.737,
+    age5.msm.susceptibility.rr1 = 0.150,
     
     age1.msm.susceptibility.rr2 = 1.577,
     age2.msm.susceptibility.rr2 = 1.200,
@@ -131,6 +136,7 @@ init.parameters = c(
     msm.age1.aging.base = 0.400,
     msm.age2.aging.0 = 0.227,
     msm.age2.aging.1 = 0.150,
+    msm.age2.aging.2 = 0.1,
     msm.age3.aging.1 = 0.109,
     msm.age3.aging.2 = 0.200,
     msm.age4.aging.1 = 0.055,
@@ -139,6 +145,7 @@ init.parameters = c(
     heterosexual.age1.aging.base = 0.167,
     heterosexual.age2.aging.0 = 0.258,
     heterosexual.age2.aging.1 = 0.098,
+    heterosexual.age2.aging.2 = 0.1,
     heterosexual.age3.aging.1 = 0.103,
     heterosexual.age3.aging.2 = 0.100,
     heterosexual.age4.aging.1 = 0.041,
@@ -147,6 +154,7 @@ init.parameters = c(
     idu.age1.aging.base = 0.159,
     idu.age2.aging.0 = 0.167,
     idu.age2.aging.1 = 0.101,
+    idu.age2.aging.2 = 0.1,
     idu.age3.aging.1 = 0.123,
     idu.age3.aging.2 = 0.100,
     idu.age4.aging.1 = 0.050,

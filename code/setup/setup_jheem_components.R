@@ -160,8 +160,8 @@ set.proportions.msm.of.male <- function(components,
     if (any(components$proportions.msm.of.male>1) || any(components$proportions.msm.of.male<0))
         stop("MSM proportions must be between 0 and 1")
 
-    if (any(components$proportions.msm.of.male>0.1))
-        warning("Some MSM proportions have been set to be greater than 10% - is this intended?")
+    if (any(components$proportions.msm.of.male>0.25))
+        warning("Some MSM proportions have been set to be greater than 25% - is this intended?")
 
     if (overwrite.base.proportions)
         components$base.proportions.msm.of.male = components$proportions.msm.of.male
@@ -782,7 +782,7 @@ set.foreground.hiv.testing.rates <- function(components,
             testing.rates = list(testing.rates)
 
         components$foreground.testing.rates = lapply(testing.rates, function(rate){
-            expand.population.to.general(components$jheem, rate)
+            expand.population.to.hiv.positive(components$jheem, rate)
         })
         names(components$foreground.testing.rates) = as.character(years)
 
@@ -1117,10 +1117,21 @@ setup.sex.by.idu <- function(components,
 }
 
 setup.idu.by.sex <- function(components,
-                             sex.oes)
+                             sex.oes=NULL,
+                             female.transmission.ratio=NA,
+                             msm.transmission.ratio=NA,
+                             heterosexual.male.transmission.ratio=NA)
 {
-    components$idu.transmission$sex.oes = sex.oes
-
+    if (!is.null(sex.oes))
+        components$idu.transmission$sex.oes = sex.oes
+    
+    if (!is.na(female.transmission.ratio))
+        components$female.idu.transmission.ratio = female.transmission.ratio
+    if (!is.na(msm.transmission.ratio))
+        components$msm.idu.transmission.ratio = msm.transmission.ratio
+    if (!is.na(heterosexual.male.transmission.ratio))
+        components$heterosexual.male.idu.transmission.ratio = heterosexual.male.transmission.ratio
+    
     components = clear.dependent.values(components, 'idu.transmission')
     components
 }
@@ -1337,6 +1348,7 @@ set.background.prep.coverage <- function(components,
         prep.years = sort(data.managers$prep$years)
         no.prep.year = min(prep.years)
 
+        has.data.mask = logical()
         for (year in prep.years)
         {
             prep.rates = get.prep.rates(data.managers$prep,
@@ -1345,33 +1357,48 @@ set.background.prep.coverage <- function(components,
                                         races=components$settings$RACES,
                                         sexes=components$settings$SEXES,
                                         throw.error.if.missing=F)[1,,,,]
-
+            if (length(components$fips)==1)
+            {
+                dim.names = c(list(county=components$fips), dimnames(prep.rates))
+                dim(prep.rates) = sapply(dim.names, length)
+                dimnames(prep.rates) = dim.names
+            }
 
             prep.numerators = prep.rates * county.populations
 
             missing.counties = apply(is.na(prep.numerators), 'county', any)
             if (all(missing.counties))
-                stop(paste0("No PrEP rates available for any county for year ", year))
-
-            prep.numerators = prep.numerators[!missing.counties,,,]
-            prep.denominators = county.populations[!missing.counties,,,]
-
-            if (sum(!missing.counties)>1)
+                has.data.mask = c(has.data.mask, F)
+#                stop(paste0("No PrEP rates available for any county for year ", year))
+            else
             {
-                prep.numerators = colSums(prep.numerators)
-                prep.denominators = colSums(county.populations)
+                has.data.mask = c(has.data.mask, T)
+                prep.numerators = prep.numerators[!missing.counties,,,]
+                prep.denominators = county.populations[!missing.counties,,,]
+    
+                if (sum(!missing.counties)>1)
+                {
+                    prep.numerators = colSums(prep.numerators)
+                    prep.denominators = colSums(county.populations)
+                }
+    
+                one.prep.coverage = prep.numerators / prep.denominators * components$prep.persistence
+    
+                if (is.null(prep.coverage))
+                {
+                    dim.names = c(list(year=as.character(c(no.prep.year, prep.years+1))), dimnames(one.prep.coverage))
+                    prep.coverage = array(0, dim=sapply(dim.names, length), dimnames=dim.names)
+                }
+    
+                prep.coverage[as.character(year+1),,,] = one.prep.coverage
             }
-
-            one.prep.coverage = prep.numerators / prep.denominators * components$prep.persistence
-
-            if (is.null(prep.coverage))
-            {
-                dim.names = c(list(year=as.character(c(no.prep.year, prep.years+1))), dimnames(one.prep.coverage))
-                prep.coverage = array(0, dim=sapply(dim.names, length), dimnames=dim.names)
-            }
-
-            prep.coverage[as.character(year+1),,,] = one.prep.coverage
         }
+      
+        if (!any(has.data.mask))
+            stop("No PrEP data present for any year")
+        
+        prep.coverage = prep.coverage[has.data.mask,,,]
+      
     }
     else
     {

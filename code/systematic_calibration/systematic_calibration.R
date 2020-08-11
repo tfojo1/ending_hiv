@@ -7,7 +7,7 @@ source('code/systematic_calibration/starting_value_generator.R')
 ##-- RUN INITIAL --##
 ##-----------------##
 
-run.initial.mcmc.for.msa <- function(msa,
+setup.initial.mcmc.for.msa <- function(msa,
                                      likelihood=create.msa.likelihood(msa),
                                      prior=parameters.prior,
                                      parameter.var.blocks = PARAMETER.VAR.BLOCKS.1,
@@ -22,8 +22,8 @@ run.initial.mcmc.for.msa <- function(msa,
                                      update.frequency=200,
                                      cache.frequency=500,
                                      save.suffix='',
-                                     resume.cache=NULL,
-                                     target.acceptance.rate=0.1)
+                                     target.acceptance.rate=0.1,
+                                     run=T)
 {
     if (is.null(start.value.generator))
     {
@@ -36,7 +36,7 @@ run.initial.mcmc.for.msa <- function(msa,
         start.value.generator = sampling.dist
     }
     
-    run.mcmc.for.msa(msa=msa,
+    setup.mcmc.for.msa(msa=msa,
                      likelihood=likelihood,
                      prior=prior,
                      parameter.var.blocks=parameter.var.blocks,
@@ -51,8 +51,8 @@ run.initial.mcmc.for.msa <- function(msa,
                      update.frequency=update.frequency,
                      cache.frequency = cache.frequency,
                      save.suffix=save.suffix,
-                     resume.cache=resume.cache,
-                     target.acceptance.rate = target.acceptance.rate
+                     target.acceptance.rate = target.acceptance.rate,
+                     run=run
                      )
 }
 
@@ -76,7 +76,7 @@ create.start.value.generator.for.msa <- function(msa)
 ##-- RUN PARALLEL MCMC --##
 ##-----------------------##
 
-run.parallel.mcmc.for.msa <- function(msa,
+setup.parallel.mcmc.for.msa <- function(msa,
                                       likelihood=create.msa.likelihood(msa),
                                       prior=parameters.prior,
                                       parameter.var.blocks = PARAMETER.VAR.BLOCKS.1,
@@ -84,19 +84,20 @@ run.parallel.mcmc.for.msa <- function(msa,
                                       chains=4,
                                       n.iter=75000,
                                       thin=100,
-                                      burn=25000,
+                                      burn=0,
                                       max.sim.time=Inf,
                                       save.dir=file.path(SYSTEMATIC.ROOT.DIR, 'systematic_parallel'),
                                       cache.dir=file.path(SYSTEMATIC.ROOT.DIR, 'systematic_caches'),
                                       update.frequency=200,
                                       cache.frequency=1000,
                                       save.suffix='',
-                                      resume.cache=NULL,
                                       
                                       target.acceptance.rate=0.238,
                                       COV.UPDATE.PRIOR=500,
                                       SCALING.UPDATE.PRIOR=100,
-                                      SCALING.UPDATE.DECAY=.5)
+                                      SCALING.UPDATE.DECAY=.5,
+                                      
+                                      run=F)
 {
     # Pull Initial MCMC
     files = list.files(file.path(SYSTEMATIC.ROOT.DIR, 'systematic_initial'))
@@ -119,7 +120,7 @@ run.parallel.mcmc.for.msa <- function(msa,
     initial.cov.mat = 0.5 * chain.state@cov.mat + 0.5 * diag(diag(chain.state@cov.mat))
     
     # Pass to sub function
-    run.mcmc.for.msa(msa=msa,
+    setup.mcmc.for.msa(msa=msa,
                      likelihood=likelihood,
                      prior=prior,
                      parameter.var.blocks=parameter.var.blocks,
@@ -134,7 +135,6 @@ run.parallel.mcmc.for.msa <- function(msa,
                      update.frequency=update.frequency,
                      cache.frequency = cache.frequency,
                      save.suffix=save.suffix,
-                     resume.cache=resume.cache,
                      target.acceptance.rate = target.acceptance.rate,
                      
                      initial.cov.mat = initial.cov.mat,
@@ -142,12 +142,14 @@ run.parallel.mcmc.for.msa <- function(msa,
                      
                      COV.UPDATE.PRIOR=COV.UPDATE.PRIOR,
                      SCALING.UPDATE.PRIOR=SCALING.UPDATE.PRIOR,
-                     SCALING.UPDATE.DECAY=SCALING.UPDATE.DECAY
+                     SCALING.UPDATE.DECAY=SCALING.UPDATE.DECAY,
+                     
+                     run=run
     )
     
 }
 
-run.mcmc.for.msa <- function(msa,
+setup.mcmc.for.msa <- function(msa,
                              likelihood=create.msa.likelihood(msa),
                              prior=parameters.prior,
                              parameter.var.blocks = PARAMETER.VAR.BLOCKS.1,
@@ -162,7 +164,6 @@ run.mcmc.for.msa <- function(msa,
                              update.frequency=200,
                              cache.frequency=2000,
                              save.suffix='',
-                             resume.cache=NULL,
                              
                              target.acceptance.rate=0.238,
                              N.ITER.BEFORE.COV = 0,
@@ -174,7 +175,8 @@ run.mcmc.for.msa <- function(msa,
                              COV.UPDATE.PRIOR=500,
                              COV.UPDATE.DECAY=1,
                              initial.cov.mat=NULL,
-                             initial.scaling.parameters=NULL)
+                             initial.scaling.parameters=NULL,
+                             run=F)
 {
     #-- Run Function --#
     run.simulation <- function(parameters)
@@ -224,8 +226,34 @@ run.mcmc.for.msa <- function(msa,
     {
         initial.scaling.parameters = 2.38^2/sapply(parameter.var.blocks, length)
     }
+    else if (length(initial.scaling.parameters) != length(parameter.var.blocks)) #this code just maps the 
+    {
+        initial.scaling.parameters = lapply(parameter.var.blocks, function(block){
+            superset.mask = sapply(initial.scaling.parameters, function(params){
+                length(setdiff(names(params), block))==0
+            })
+            if (any(superset.mask))
+            {
+                index = (1:length(initial.scaling.parameters))[superset.mask][1]              
+                initial.scaling.parameters[[index]][block]
+            }
+            else
+            {
+                rv = sapply(block, function(var.in.block){
+                    mask = sapply(initial.scaling.parameters, function(params){
+                        any(names(params)==var.in.block)
+                    })
+                    index = (1:length(initial.scaling.parameters))[mask][1]
+                    initial.scaling.parameters[[index]][var.in.block]
+                })
+                names(rv) = block
+                rv
+            }
+        })
+        names(initial.scaling.parameters) = names(parameter.var.blocks)
+    }
     transformations = sapply(prior@var.names, function(v){'log'})
-
+    
     ctrl = create.adaptive.blockwise.metropolis.control(var.names=prior@var.names,
                                                         simulation.function=run.simulation,
                                                         log.prior.distribution = get.density.function(prior),
@@ -250,41 +278,80 @@ run.mcmc.for.msa <- function(msa,
                                                         adaptive.scaling.update.decay= SCALING.UPDATE.DECAY
     )
 
-    #-- Run the MCMC --#
+    #-- Set up the MCMC cache --#
     if (save.suffix != '')
         save.suffix = paste0('_', save.suffix)
     cache.dir = file.path(cache.dir, paste0(msa, '_', chains, 'x', n.iter/1000, 'K',
                                             save.suffix, '_', Sys.Date()))
 
-    if (!is.null(resume.cache))
-    {
-        print(paste0("Resuming MCMC for ", msa.names(msa)))
-        mcmc = run.mcmc.from.cache(dir = resume.cache,
-                                   update.frequency = update.frequency,
-                                   update.detail = 'high')
-    }
+    remove.mcmc.cache(cache.dir)
+
+    create.mcmc.cache(dir=cache.dir,
+                      control=ctrl,
+                      n.iter=n.iter,
+                      starting.values = start.values,
+                      cache.frequency = cache.frequency)
+    
+    
+    metadata = list(n.chains=chains,
+                    save.dir=save.dir,
+                    location=msa)
+    
+    save(metadata, file=file.path(cache.dir, 'metadata.Rdata'))
+
+    if (run)
+        run.mcmc.for.msa.cache(cache.dir,
+                               update.detail='high',
+                               update.frequency=update.frequency)
     else
-    {
-        remove.mcmc.cache(cache.dir)
-
-        print(paste0("Running MCMC for ", msa.names(msa)))
-        mcmc = run.mcmc(control=ctrl,
-                        n.iter=n.iter,
-                        starting.values = start.values,
-                        update.frequency = update.frequency,
-                        update.detail = 'high',
-                        cache.frequency = cache.frequency,
-                        cache.dir = cache.dir
-        )
-    }
-
-    #-- Save and return --#
-    filename = paste0(msa, '_', chains, 'x', n.iter/1000, 'K',
-                      save.suffix, "_", Sys.Date(), ".Rdata")
-    save(mcmc, file=file.path(save.dir, filename))
-    mcmc
+        NULL
 }
 
+
+run.mcmc.for.msa.cache <- function(cache.dir,
+                                   chains=NULL,
+                                   update.detail='high',
+                                   update.frequency=200)
+{
+    load(file.path(cache.dir, 'metadata.Rdata'))
+    if (is.null(chains))
+        chains = 1:metadata$n.chains
+    
+    print(paste0("Running MCMC (",
+                 ifelse(length(chains)==1, 'chain ', 'chains '),
+                 paste0(chains, collapse=','),
+                 " of ", metadata$n.chains,
+                 ") for ", msa.names(metadata$location)))
+    
+    mcmc = run.mcmc.from.cache(dir=cache.dir,
+                        chains=chains,
+                        update.frequency = update.frequency,
+                        update.detail = update.detail)
+    
+
+    if (length(unique(chains))==mcmc@n.chains)
+        to.save=T
+    else if (is.mcmc.cache.complete(cache.dir))
+    {
+        mcmc = assemble.mcmc.from.cache(cache.dir)
+        to.save=T
+    }
+    else
+        to.save=F
+        
+    
+    #-- Save and return --#
+    if (to.save)
+    {
+        filename = paste0(basename(cache.dir), '.Rdata')
+        save(mcmc, file=file.path(metadata$save.dir, filename))
+        file.remove(file.path(cache.dir, 'metadata.Rdata'))
+        remove.mcmc.cache(cache.dir)
+    }
+    
+    mcmc
+    
+}
 
 create.msa.likelihood <- function(msa,
                                   EVERYTHING.WEIGHT=1/8,
@@ -362,6 +429,7 @@ create.msa.likelihood <- function(msa,
     SUPPRESSED.SD = function(...){.005}
     SUPPRESSION.SD.INFLATION = 1/sqrt(SUPPRESSION.WEIGHT)/sqrt(EVERYTHING.WEIGHT)
     SUPPRESSED.STATE.SD.INFLATION = 3
+    PROBABILITY.SUPPRESSION.DECREASING = 0.05
     
     #-- Elements for IDU --#
     IDU.LOG.SD = log(2) / sqrt(EVERYTHING.WEIGHT) / sqrt(IDU.WEIGHT)
@@ -391,6 +459,10 @@ create.msa.likelihood <- function(msa,
                                          by.sex.race=T,
                                          by.sex.risk=T,
                                          by.race.risk=T,
+                                #         by.sex=T,
+                                #         by.risk=T,
+                                #         by.race=T,
+                                #         by.age=T,
                                          population=POPULATION.TOTALS,
                                          denominator.dimensions='year',
                                          msm.cv=0,
@@ -411,6 +483,10 @@ create.msa.likelihood <- function(msa,
                                          by.sex.race=T,
                                          by.sex.risk=T,
                                          by.race.risk=T,
+                                         #by.sex=T,
+                                         #by.risk=T,
+                                         #by.race=T,
+                                         #by.age=T,
                                          population=POPULATION.TOTALS,
                                          denominator.dimensions='year',
                                          msm.cv=0,
@@ -427,6 +503,7 @@ create.msa.likelihood <- function(msa,
                                           surv=msa.surveillance,
                                           location=msa,
                                           by.sex=T,
+                                          by.total=T,
                                           population=POPULATION.TOTALS,
                                           denominator.dimensions='year',
                                           msm.cv=0,
@@ -450,7 +527,8 @@ create.msa.likelihood <- function(msa,
                                                   numerator.sd = SUPPRESSED.SD,
                                                   sd.inflation=SUPPRESSION.SD.INFLATION,
                                                   inflate.sd.by.n.obs.per.year = F,
-                                                  numerator.sd.inflation.if.backup=SUPPRESSED.STATE.SD.INFLATION)
+                                                  numerator.sd.inflation.if.backup=SUPPRESSED.STATE.SD.INFLATION,
+                                                  probability.decreasing.slope=PROBABILITY.SUPPRESSION.DECREASING)
     
     dx.lik = create.knowledge.of.status.likelihood(location=msa,
                                                    surv=msa.surveillance,

@@ -21,6 +21,10 @@ get.incidence.reduction <- function(sim,
                                     goal=0.9,
                                     keep.dimensions=NULL)
 {
+    if (all(sim$years != year1))
+        stop("The year ", year1, " is not contained in the simulation")
+    if (all(sim$years != year2))
+        stop("The year ", year2, " is not contained in the simulation")
     inc = extract.incidence(sim, years=c(year1, year2), per.population = NA, keep.dimensions = c('year', keep.dimensions))
     
     if (is.null(keep.dimensions))

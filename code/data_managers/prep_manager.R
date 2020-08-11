@@ -185,6 +185,7 @@ get.prep.rates <- function(prep.manager,
     for (county in counties)
     {
         zip3s = zip3s.for.county(county)
+        zip3s = as.character(as.numeric(zip3s))
         not.in.manager.mask = is.na(zip3s) | sapply(zip3s, function(z3){!any(z3==prep.manager$zip3s)})
         if (all(not.in.manager.mask))
         {

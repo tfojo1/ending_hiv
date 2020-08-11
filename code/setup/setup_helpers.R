@@ -161,22 +161,71 @@ get.best.guess.msm.proportion <- function(fips,
     sum(props*males) / sum(males)
 }
 
+# https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4516312/
+MSM.PROPORTIONS = c(black=1-.806, hispanic=1-.854, other=1-.848)
+
+# Assumes that within each county, relative risks of being MSM are as in MSM.PROPORTIONS
+# and total risk of being MSM is as per read.msm.proportions
 get.best.guess.msm.proportions.by.race <- function(fips,
                                           census,
                                           years)
 {
     props = read.msm.proportions()[as.character(fips)]
     males.raw = get.census.data(census, years=years, fips=fips,
-                            sexes = 'male',
-                            aggregate.ages = T,
-                            aggregate.years = T,
-                            aggregate.races = F,
-                            aggregate.sexes = T)
-    males = cbind(black=males.raw[,'black'],
-                  hispanic=males.raw[,'hispanic'],
-                  other=rowSums(males.raw[,setdiff(dimnames(males.raw)[[2]], c('black','hispanic'))]))
+                                sexes = 'male',
+                                aggregate.ages = T,
+                                aggregate.years = T,
+                                aggregate.races = F,
+                                aggregate.sexes = T)
+    
+    if (length(fips)==1)
+        males = matrix(c(black=males.raw[,'black'],
+                         hispanic=males.raw[,'hispanic'],
+                         other=sum(males.raw[,setdiff(dimnames(males.raw)[[2]], c('black','hispanic'))])),
+                       nrow=1)
+    else
+        males = cbind(black=males.raw[,'black'],
+                      hispanic=males.raw[,'hispanic'],
+                      other=rowSums(males.raw[,setdiff(dimnames(males.raw)[[2]], c('black','hispanic'))]))
+    
+    
+    
+    numerators = t(sapply(1:length(fips), function(i){
+        p = props[i]
+        pop = males[i,]
+        p.mult = p * sum(pop) / sum(pop * MSM.PROPORTIONS)
+        p.mult * MSM.PROPORTIONS * pop
+    }))
+    
+    rv = colSums(numerators) / colSums(males)
+    names(rv) = c('black','hispanic','other')
 
-    colSums(props*males) / colSums(males)
+    rv
+}
+
+#does not take into account race differences in MSM prevalence
+ORIG.get.best.guess.msm.proportions.by.race <- function(fips,
+                                                   census,
+                                                   years)
+{
+    props = read.msm.proportions()[as.character(fips)]
+    if (length(fips)==1)
+        c(black=as.numeric(props), hispanic=as.numeric(props), other=as.numeric(props))
+    else
+    {
+        males.raw = get.census.data(census, years=years, fips=fips,
+                                    sexes = 'male',
+                                    aggregate.ages = T,
+                                    aggregate.years = T,
+                                    aggregate.races = F,
+                                    aggregate.sexes = T)
+        
+        males = cbind(black=males.raw[,'black'],
+                      hispanic=males.raw[,'hispanic'],
+                      other=rowSums(males.raw[,setdiff(dimnames(males.raw)[[2]], c('black','hispanic'))]))
+        
+        colSums(props*males) / colSums(males)
+    }
 }
 
 stratify.males.to.msm.by.race <- function(population,

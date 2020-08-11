@@ -10,6 +10,6 @@ source('code/systematic_calibration/systematic_calibration.R')
 source('code/targets/target_msas.R')
 
 set.seed(1234)
-mcmc = run.mcmc.for.msa.cache('mcmc_runs/systematic_caches/31080_4x75K_2020-07-25/',
-                              chains=4)
+msa = NYC.MSA
+mcmc = setup.parallel.mcmc.for.msa(msa)
 
