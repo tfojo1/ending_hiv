@@ -36,7 +36,8 @@
 plot.simulations <- function(version,
                              location,
                              intervention.names,
-                             years,
+                             start.year,
+                             end.year,
                              data.types,
                              facet.by,
                              split.by,
@@ -57,6 +58,7 @@ plot.simulations <- function(version,
                              truth.point.size=5)
 {
     dimensions = unique(c(facet.by, split.by))
+    years = start.year:end.year
     
     
     dimension.values = dimension.subsets
