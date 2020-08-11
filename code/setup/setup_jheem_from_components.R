@@ -1781,7 +1781,7 @@ do.setup.idu.contact <- function(components)
                                                    components$proportions.msm.of.male)
         sex.counts = apply(population, 'sex', sum)
         idu.transmission.by.sex = get.pairing.proportions(components$idu.transmission$sex.oes, sex.counts)
-        
+#HERE        
         idu.transmission.by.sex['female',] = idu.transmission.by.sex['female',] * components$female.idu.transmission.ratio
         idu.transmission.by.sex['msm',] = idu.transmission.by.sex['msm',] * components$msm.idu.transmission.ratio
         idu.transmission.by.sex['heterosexual_male',] = idu.transmission.by.sex['heterosexual_male',] * components$heterosexual.male.idu.transmission.ratio
