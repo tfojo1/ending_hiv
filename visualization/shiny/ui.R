@@ -4,158 +4,141 @@
 
 source("R/ui.tools.R")
 
+# UI
 ui <- dashboardPage(
-  ## Header content
+  
+  ## Header
   dashboardHeader(title="Ending HIV"),
   
-  ## Sidebar content
+  ## Sidebar
+  #  - Appear in app in order shown below
+  #  - TODO: put params 2nd after finished
   dashboardSidebar(
     sidebarMenu(
-      menuItem("Docs", tabName = "text", icon = icon("info")),
-      menuItem("Parameters", tabName = "raw_params", icon = icon("th")),
-      menuItem("Run Model", tabName = "main", icon = icon("dashboard"))
+      menuItem("Parameters", tabName="raw_params", icon=icon("th")),
+      menuItem("Run Model", tabName="main", icon=icon("dashboard")),
+      menuItem("Documentation", tabName="text", icon=icon("info"))
       # menuItem(
       #   "Sensitivity Analysis", tabName="sens_ana", icon=icon("bar-chart"))
-    )
-  ),
-  ## Body content
+  )),
+  
+  # Body
   dashboardBody(
     tabItems(
       # Page: Docs
+      # - Dynamic page; rendered in server.R under "#page-run-model"
       tabItem(
-        tabName = "text",
-        uiOutput("introductionText")
-      ),
+        tabName="text",
+        uiOutput("introductionText")),
       
       # Page: Run model
+      # - Dynamic page; rendered in server.R under "#page-docs"
       tabItem(
-        tabName = "main",
-        uiOutput("ui_main")
-      ),
+        tabName="main",
+        uiOutput("ui_main")),
       
-      # Page: Sensitivity analysis
-      # tabItem(
-      #  tabName = "sens_ana",
-      #  uiOutput("ui_sens")
-      # ),
-      
-      # Page: params
+      # Page: Params
+      # - Static page; defined here
       tabItem(
-        tabName = "raw_params",
-        ## Sect: Button
+        tabName="raw_params",
+        # PageSection: Params.Sect1.Header
         fluidRow(
           column(
-            width = 12,
+            width=12,
             box(
-              width = NULL, title = name2lab("base_raw", all_labs),
-              status = "primary", solidHeader = TRUE,
-
+              width=NULL, title=name2lab("base_raw", all_labs),
+              status="primary", solidHeader=TRUE,
               uiOutput("rawParamText"),
               actionButton("btn_reload", "Reload the App and Reset All Values"),
-            )
-          )
-        ),
-        ## Sect: Params 1
+        ))),
+        # PageSection: Params.Sect2.Options
         fluidRow(
+          # Params.Sect2.Options.1
           column(
-            width = 12,
+            width=12,
             box(
-              width = NULL, title = name2lab("base_init", all_labs),
-              status = "primary", solidHeader = TRUE,
-
+              width=NULL, title=name2lab("base_init", all_labs),
+              status="primary", solidHeader=TRUE,
               column(
-                width = 4,
-
+                width=4,
                 numericInput("N_on", name2lab("N_on", all_labs), 4500),
                 numericInput("E_on", name2lab("E_on", all_labs), 0),
                 numericInput("I_on", name2lab("I_on", all_labs), 0),
                 numericInput("P_on", name2lab("P_on", all_labs), 0),
                 numericInput("R_on", name2lab("R_on", all_labs), 0),
-                numericInput("Q_on", name2lab("Q_on", all_labs), 0)
-              ),
+                numericInput("Q_on", name2lab("Q_on", all_labs), 0)),
               column(
-                width = 4,
-
+                width=4,
                 numericInput("N_off", name2lab("N_off", all_labs), 10500),
                 numericInput("E_off", name2lab("E_off", all_labs), 0),
                 numericInput("I_off", name2lab("I_off", all_labs), 0),
                 numericInput("P_off", name2lab("P_off", all_labs), 0),
                 numericInput("R_off", name2lab("R_off", all_labs), 0),
                 numericInput("Q_off", name2lab("Q_off", all_labs), 0),
-                numericInput("Test", name2lab("Test", all_labs), 0)
-              ),
+                numericInput("Test", name2lab("Test", all_labs), 0)),
               column(
-                width = 4,
-
+                width=4,
                 numericInput("N_saf", name2lab("N_saf", all_labs), 20000),
                 numericInput("E_saf", name2lab("E_saf", all_labs), 0),
                 numericInput("I_saf", name2lab("I_saf", all_labs), 0),
                 numericInput("P_saf", name2lab("P_saf", all_labs), 0),
                 numericInput("R_saf", name2lab("R_saf", all_labs), 0),
-                numericInput("Q_saf", name2lab("Q_saf", all_labs), 0)
-
-              )
-            )
-          ),
-          ## Sect: Params 2
+                numericInput("Q_saf", name2lab("Q_saf", all_labs), 0))
+          )),
+          # Params.Sect2.Options.2
           fluidRow(
             column(
-              width = 12,
+              width=12,
               box(
-                width = 12, title = name2lab("base_param", all_labs),
-                status = "primary", solidHeader = TRUE,
-
+                width=12, title=name2lab("base_param", all_labs),
+                status="primary", solidHeader=TRUE,
                 column(
-                  width = 4,
-
+                  width=4,
                   numericInput("R0_student_to_student",
-                               name2lab("R0_student_to_student", all_labs), 2.0),
+                    name2lab("R0_student_to_student", all_labs), 2.0),
                   numericInput("R0_on_to_on",
-                               name2lab("R0_on_to_on", all_labs), 1.0),
+                    name2lab("R0_on_to_on", all_labs), 1.0),
                   numericInput("R0_saf",
-                               name2lab("R0_saf", all_labs), 0.5),
+                    name2lab("R0_saf", all_labs), 0.5),
                   numericInput("latent", name2lab("latent", all_labs), 3),
                   numericInput("infectious", name2lab("infectious", all_labs), 7),
                   numericInput("isolation", name2lab("isolation", all_labs), 14),
-                  numericInput("community",
-                               name2lab("community", all_labs), 0.00033)
-                ),
+                  numericInput("community", name2lab(
+                    "community", all_labs), 0.00033)),
                 column(
-                  width = 4,
-
-                  numericInput("p_asympt_stu",
-                               name2lab("p_asympt_stu", all_labs), 0.65),
-                  numericInput("p_hosp_stu",
-                               name2lab("p_hosp_stu", all_labs), 0.0224),
-                  numericInput("p_death_stu",
-                               name2lab("p_death_stu", all_labs), 0.0006),
-                  numericInput("p_asympt_saf",
-                               name2lab("p_asympt_saf", all_labs), 0.49),
-                  numericInput("p_hosp_saf",
-                               name2lab("p_hosp_saf", all_labs), 0.055),
-                  numericInput("p_death_saf",
-                               name2lab("p_death_saf", all_labs), 0.0052),
-                  numericInput("ili", name2lab("ili", all_labs), 0.00333)
-                ),
+                  width=4,
+                  numericInput("p_asympt_stu", name2lab(
+                    "p_asympt_stu", all_labs), 0.65),
+                  numericInput("p_hosp_stu", name2lab(
+                    "p_hosp_stu", all_labs), 0.0224),
+                  numericInput("p_death_stu",name2lab(
+                    "p_death_stu", all_labs), 0.0006),
+                  numericInput("p_asympt_saf",name2lab(
+                    "p_asympt_saf", all_labs), 0.49),
+                  numericInput("p_hosp_saf",name2lab(
+                    "p_hosp_saf", all_labs), 0.055),
+                  numericInput("p_death_saf",name2lab(
+                    "p_death_saf", all_labs), 0.0052),
+                  numericInput("ili", name2lab(
+                    "ili", all_labs), 0.00333)),
                 column(
-                  width = 4,
-
+                  width=4,
                   numericInput("contacts", name2lab("contacts", all_labs), 14),
-                  numericInput("p_contacts_reached",
-                               name2lab("p_contacts_reached", all_labs), 0.75),
-                  ## numericInput("testing", name2lab("testing", all_labs), 0),
-                  ## numericInput("screening", name2lab("screening", all_labs), 0),
-                  numericInput("sensitivity",
-                               name2lab("sensitivity", all_labs), 0.8),
-                  sliderInput("nsteps", name2lab("nsteps", all_labs), 0, 365, 180)
-                )
-              )
-            )
-          )
-        )
-      )
-    )
-  )
-)
+                  numericInput("p_contacts_reached",name2lab(
+                    "p_contacts_reached", all_labs), 0.75),
+                  # numericInput("testing", name2lab(
+                  # "testing", all_labs), 0),
+                  # numericInput("screening", name2lab(
+                  # "screening", all_labs), 0),
+                  numericInput("sensitivity",name2lab(
+                    "sensitivity", all_labs), 0.8),
+                  sliderInput("nsteps", name2lab(
+                    "nsteps", all_labs), 0, 365, 180))
+          )))
+        )  # </PageSection: Params.Sect2.Options>
+      )  # </Page: Params>
+    )  # </Body (tabItems)>
+  )  # </Body (dashboardBody)>
+)  # </UI (dashboardPage)>
 
 ui
