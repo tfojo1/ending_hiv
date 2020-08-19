@@ -203,27 +203,29 @@ plot.interval.coverage.applies.to.plot.format <- function(plot.format)
 if (1==2)
 {
   version = names(get.version.options())[1]
-  location = names(get.location.options())[1]
-  interventions = get.intervention.options(location)
+  location = names(get.location.options(version))[1]
+  interventions = get.intervention.options(version, location)
   
-  plot.simulations(location=location,
-                   intervention.names = names(interventions)[1],
-                   years = get.year.options(version, location),
-                   data.types = get.data.type.options(version, location)[1:2],
-                   facet.by = names(get.facet.by.options(version, location))[1],
-                   split.by = names(get.split.by.options(version, location))[2],
-                   dimension.subsets=get.dimension.value.options(version, location),
-                   plot.format = names(get.plot.format.options(version, location))[1],
-                   plot.interval.coverage=0.95,
-                   summary.statistic=get.summary.statistic.options(version, location)[1],
-                   summary.statistic.interval.coverage=0.95,
-                   baseline.color='blue',
-                   intervention.colors='red',
-                   plot.interval.alpha=0.2,
-                   simulation.alpha=0.2,
-                   simulation.line.size=0.1,
-                   show.truth=T,
-                   truth.point.size=5
+  plot.simulations(
+    version=version,
+    location=location,
+    intervention.names = names(interventions)[1],
+    years = get.year.options(version, location),
+    data.types = get.data.type.options(version, location)[1:2],
+    facet.by = names(get.facet.by.options(version, location))[1],
+    split.by = names(get.split.by.options(version, location))[2],
+    dimension.subsets=get.dimension.value.options(version, location),
+    plot.format = names(get.plot.format.options(version, location))[1],
+    plot.interval.coverage=0.95,
+    summary.statistic=get.summary.statistic.options(version, location)[1],
+    summary.statistic.interval.coverage=0.95,
+    baseline.color='blue',
+    intervention.colors='red',
+    plot.interval.alpha=0.2,
+    simulation.alpha=0.2,
+    simulation.line.size=0.1,
+    show.truth=T,
+    truth.point.size=5
   )$plot
 }
 
@@ -292,13 +294,18 @@ plot.simulations <- function(
   base.df = NULL
   for (d in 1:length(data.types)) {
     for (i in 1:length(intervention.names)) {
-      base.df = rbind(
-        base.df,
-        suppressWarnings(data.frame(
-          data_type=data.types[d],
-          intervention=intervention.names[i],
-          year=years,
-          value= 100 * d + 10 * i + 2 - 2*(1:length(years))) ))}}
+      for (year in years) {
+        # browser()
+        base.df = rbind(
+          base.df,
+          suppressWarnings(data.frame(
+            data_type=data.types[d],
+            intervention=names(intervention.names[i]),
+            year=year,
+            value=100 * d + 10 * i + 2 - 2*(1:length(year))
+          ))
+        )  
+    }}}
   
   df = base.df
   for (d in dimensions) {
@@ -315,6 +322,9 @@ plot.simulations <- function(
   else if (length(split.by)==1)
     df$split.by=paste0(split.by, '=', df[,split.by])
   else {
+    # TODO: Error in `[.data.frame`(df, , split.by[1]) : undefined columns selected
+    browser()
+    
     df$split.by=paste0(split.by[1], '=', df[,split.by[1]])
     for (split in split.by[-1])
       df$split.by = paste0(df$split.by, ', ', split, '=', df[,split]) }
