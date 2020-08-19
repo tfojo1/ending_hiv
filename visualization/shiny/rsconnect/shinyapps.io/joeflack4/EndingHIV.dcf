@@ -1,0 +1,13 @@
+name: EndingHIV
+title: EndingHIV
+username:
+account: joeflack4
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 2679489
+bundleId: 3527725
+url: https://joeflack4.shinyapps.io/EndingHIV/
+when: 1597714043.87727
+asMultiple: FALSE
+asStatic: FALSE
+ignoredFiles: R/.DS_Store
