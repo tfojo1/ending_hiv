@@ -364,7 +364,7 @@ create.msa.likelihood <- function(msa,
                                   AIDS.DX.WEIGHT = 4,
                                   TOTAL.DX.WEIGHT=1/8,
                                   STRATIFIED.DX.WEIGHT=1/128/4,
-                                  SUPPRESSION.WEIGHT=1/8,
+                                  SUPPRESSION.WEIGHT=1/4,
                                   
                                   prev.to.new.cv.ratio=1,
                                   FOCUS.WEIGHT=1,#4,
@@ -377,7 +377,9 @@ create.msa.likelihood <- function(msa,
                                   suppression.years = 2010:2018,
                                   
                                   year.to.year.chunk.correlation=0.65,
-                                  year.to.year.off.correlation=0.25)
+                                  year.to.year.off.correlation=0.25,
+                                  
+                                  measurement.error.cv.vs.sqrt.weight=0.5)
 {
     
     
@@ -394,7 +396,8 @@ create.msa.likelihood <- function(msa,
     SD.INFLATION.NEW = function(description){SD.INFLATION.NEW.NUM /
             (sqrt(FOCUS.WEIGHT)^as.numeric(to.focus(description)))}
     
-    NEW.SD = function(years, num){sqrt(0.5 * (0.065*num)^2 + 0.5 * (num^0.33)^2)}
+    NEW.SD = function(years, num){sqrt(measurement.error.cv.vs.sqrt.weight * (0.065*num)^2 +
+                                           (1-measurement.error.cv.vs.sqrt.weight) * (num^0.33)^2)}
     
     
     #-- Elements for Prevalence --#
@@ -404,7 +407,8 @@ create.msa.likelihood <- function(msa,
     SD.INFLATION.PREV = function(description){SD.INFLATION.PREV.NUM /
             (sqrt(FOCUS.WEIGHT)^as.numeric(to.focus(description)))}
     
-    PREV.SD = function(years, num){sqrt(0.5 * (0.09*num)^2 + 0.5 * (num^0.69)^2)}
+    PREV.SD = function(years, num){sqrt(measurement.error.cv.vs.sqrt.weight * (0.09*num)^2 + 
+                                            (1-measurement.error.cv.vs.sqrt.weight) * (num^0.69)^2)}
     
     
     #-- Elements for Mortality --#
@@ -503,7 +507,7 @@ create.msa.likelihood <- function(msa,
                                           surv=msa.surveillance,
                                           location=msa,
                                           by.sex=T,
-                                          by.total=T,
+                                       #   by.total=T,
                                           population=POPULATION.TOTALS,
                                           denominator.dimensions='year',
                                           msm.cv=0,

@@ -423,24 +423,28 @@ create.suppressed.likelihood <- function(location,
             rates.age  = extract.suppression(sim,
                                         years=years,
                                         continuum='diagnosed',
-                                        keep.dimensions=c('year','age'))
+                                        keep.dimensions=c('year','age'),
+                                        use.cdc.categorizations = T)
             rates.race = extract.suppression(sim,
                                         years=years,
                                         continuum='diagnosed',
-                                        keep.dimensions=c('year','race'))
+                                        keep.dimensions=c('year','race'),
+                                        use.cdc.categorizations = T)
             rates.sex = extract.suppression(sim,
                                         years=years,
                                         continuum='diagnosed',
-                                        keep.dimensions=c('year','sex'))
+                                        keep.dimensions=c('year','sex'),
+                                        use.cdc.categorizations = T)
             rates.risk = extract.suppression(sim,
                                         years=years,
                                         continuum='diagnosed',
-                                        keep.dimensions=c('year','risk'))
+                                        keep.dimensions=c('year','risk'),
+                                        use.cdc.categorizations = T)
             is.decreasing = c(as.numeric(rates.age[length(years),] < rates.age[1,]),
                               as.numeric(rates.race[length(years),] < rates.race[1,]),
                               as.numeric(rates.sex[length(years),] < rates.sex[1,]),
                               as.numeric(rates.risk[length(years),] < rates.risk[1,]))
-            
+
             if (log)
                 lik.binary = sum(is.decreasing*log(probability.decreasing.slope) + (1-is.decreasing)*log(1-probability.decreasing.slope))
             else

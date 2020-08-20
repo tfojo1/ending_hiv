@@ -88,7 +88,7 @@ setup.initial.components <- function(msa=BALTIMORE.MSA,
                                        t0.end = msm.young.t0)
 
     msa.components = setup.trate.years(msa.components,
-                                       routes='heterosexual',
+                                       routes=c('heterosexual.male','heterosexual.female'),
                                        t.pre.peak=heterosexual.pre.spike.year,
                                        t.peak.start=heterosexual.spike.start.year,
                                        t.peak.end=heterosexual.spike.end.year,
@@ -100,7 +100,7 @@ setup.initial.components <- function(msa=BALTIMORE.MSA,
                                        t.end=run.to.year)
 
     msa.components = setup.trate.years(msa.components,
-                                       routes='heterosexual',
+                                       routes=c('heterosexual.male','heterosexual.female'),
                                        age.indices = 1:2,
                                        t0.end = heterosexual.young.t0)
 

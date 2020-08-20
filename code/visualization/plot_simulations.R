@@ -19,7 +19,11 @@ do.plot.simulations <- function(baseline.simset,
                                 plot.interval.alpha=0.2,
                                 simulation.alpha=0.2,
                                 simulation.line.size=0.1,
-                                truth.point.size=5)
+                                truth.point.size=5,
+                                
+                                ncol=NULL,
+                                nrow=NULL,
+                                fixed.y=F)
 {
     location = attr(baseline.simset@simulations[[1]], 'location')
     
@@ -41,24 +45,56 @@ do.plot.simulations <- function(baseline.simset,
                                       keep.dimensions=keep.dimensions))
         
         #Get Sim
-        df.
+        df.sim
     }
     
+    
+    #-- SET UP GROUPS --#
+    if (plot.format=='individual.simulations')
+        df.sim$group = paste0(df.sim$split, "_", df.sim$simulation)
+    
+    #-- SET UP STYLES (colors, etc) --#
+    
+    #-- MAKE THE PLOT --#
     plot = ggplot()
     if (plot.format=='individual.simulations')
-        plot = plot + geom_line(data=df.sim, aes(x=year, y=value, group=simulation, color=intervention),
+        plot = plot + geom_line(data=df.sim, aes(x=year, y=value, group=group, color=intervention),
                                 alpha=simulation.alpha, size=simulation.line.size)
     else
-        plot = plot + geom_ribbon(data=df.sim, aes(x=year, y=value, group=split.by, color=intervention, fill=intervention), alpha=plot.interval.alpha) +
-            geom_line(data=df.sim, aes(x-year, y=value, group=split.by, color=intervention), size=simulation.line.size)
+        plot = plot + 
+            geom_ribbon(data=df.sim, aes(x=year, ymin=ci.lower, ymax=ci.upper,
+                                         group=split.by, color=intervention, fill=intervention), alpha=plot.interval.alpha) +
+            geom_line(data=df.sim, aes(x=year, y=value, group=group, color=intervention), size=simulation.line.size)
     
     plot = plot + geom_point(data=df.truth, aes(x=year, y=value, fill=intervention, shape=split.by))
     
+    #-- SET UP FACET WRAP --#
+    if (fixed.y)
+        facet.scales = 'fixed'
+    else
+        facet.scales = 'free_y'
+    
+    if (length(data.types)>1)
+    {
+        if (length(split.by)>1)
+            facet.formula = as.formula(paste0('~data.type+', paste0(split.by, collapse='+')))
+        else
+            facet.formula = ~data.type
+    }
+    else
+    {
+        if (length(split.by)>1)
+            facet.formula = as.formula(paste0('~', paste0(split.by, collapse='+')))
+        else
+            facet.formula = NULL
+        
+    }
     #not sure this is right
-    if (length(unique(df.sim$facet.by))>1)
-        plot = plot + facet_wrap(~facet.formula)
+    if (!is.null(facet.formula))
+        plot = plot + facet_wrap(facet.formula, scales=facet.scales)
     
     
+    #-- RETURN --#
     plot
 }
 
@@ -66,6 +102,11 @@ get.truth.df <- function(location,
                          data.type,
                          years,
                          keep.dimensions)
+{
+    
+}
+
+get.sim.df <- function()
 {
     
 }

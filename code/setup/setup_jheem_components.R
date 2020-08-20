@@ -798,7 +798,7 @@ set.foreground.hiv.testing.rates <- function(components,
 ##-----------------------------##
 
 setup.trate.years <- function(components,
-                              routes=c('idu','msm','heterosexual'),
+                              routes=c('idu','msm','heterosexual,male','heterosexual.female'),
                               races=c('black','hispanic','other'),
                               age.indices=1:5,
                               t.pre.peak=NA,
@@ -844,7 +844,7 @@ setup.trate.years <- function(components,
 }
 
 setup.trates <- function(components,
-                         routes=c('idu','msm','heterosexual'),
+                         routes=c('idu','msm','heterosexual.male','heterosexual.female'),
                          races=c('black','hispanic','other'),
                          age.indices = 1:5,
                          r.peak=NA,
@@ -1008,18 +1008,6 @@ setup.transmissibility <- function(components,
     components
 }
 
-setup.heterosexual.transmission <- function(components,
-                                            male.to.female.sexual.transmission.ratio,
-                                            female.to.male.sexual.transmission.ratio)
-{
-    components$male.to.female.sexual.transmission.ratio = male.to.female.sexual.transmission.ratio
-    components$female.to.male.sexual.transmission.ratio = female.to.male.sexual.transmission.ratio
-
-    components = clear.dependent.values(components, c('male.to.female.sexual.transmission',
-                                                      'female.to.male.sexual.transmission'))
-    components
-}
-
 setup.sex.by.age <- function(components,
                              heterosexual.male.age.model,
                              female.age.model,
@@ -1118,19 +1106,19 @@ setup.sex.by.idu <- function(components,
 
 setup.idu.by.sex <- function(components,
                              sex.oes=NULL,
-                             female.transmission.ratio=NA,
-                             msm.transmission.ratio=NA,
-                             heterosexual.male.transmission.ratio=NA)
+                             female.susceptibility.ratio=NA,
+                             msm.susceptibility.ratio=NA,
+                             heterosexual.male.susceptibility.ratio=NA)
 {
     if (!is.null(sex.oes))
         components$idu.transmission$sex.oes = sex.oes
     
-    if (!is.na(female.transmission.ratio))
-        components$female.idu.transmission.ratio = female.transmission.ratio
-    if (!is.na(msm.transmission.ratio))
-        components$msm.idu.transmission.ratio = msm.transmission.ratio
-    if (!is.na(heterosexual.male.transmission.ratio))
-        components$heterosexual.male.idu.transmission.ratio = heterosexual.male.transmission.ratio
+    if (!is.na(female.susceptibility.ratio))
+        components$female.idu.susceptibility.ratio = female.susceptibility.ratio
+    if (!is.na(msm.susceptibility.ratio))
+        components$msm.idu.susceptibility.ratio = msm.susceptibility.ratio
+    if (!is.na(heterosexual.male.susceptibility.ratio))
+        components$heterosexual.male.idu.susceptibility.ratio = heterosexual.male.susceptibility.ratio
     
     components = clear.dependent.values(components, 'idu.transmission')
     components

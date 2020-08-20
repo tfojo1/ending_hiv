@@ -5,12 +5,15 @@ if (1==2)
 
 source('code/source_code.R')
 
-mcmc = assemble.mcmc.from.cache('mcmc_runs/la.74_revised.lik_2020-08-08/',T)
-mcmc = assemble.mcmc.from.cache('mcmc_runs/la.75_2020-08-08/',T)
+mcmc = assemble.mcmc.from.cache('mcmc_runs/test_caches/la.73d_supp.wt.125_20K_2020-08-18/',T)
+mcmc = assemble.mcmc.from.cache('mcmc_runs/test_caches/la.81_supp.wt.1_20K_2020-08-18/',T)
+mcmc = assemble.mcmc.from.cache('mcmc_runs/test_caches/la.83_supp.wt.125_20K_2020-08-19/',T)
     
 simset = extract.simset(mcmc, additional.burn=mcmc@n.iter/2, additional.thin=2^(as.numeric(mcmc@n.iter>100)+as.numeric(mcmc@n.iter>1000)))
 plot.calibration.race.risk(simset)
 plot.calibration.sex.age(simset)
+plot.calibration.sex.age(simset, sex='female')
+plot.calibration.sex.risk(simset)
 #plot.calibration(simset, facet.by=c('race'), risk='msm')
 plot.calibration.risk(simset)
 plot.calibration.total(simset)

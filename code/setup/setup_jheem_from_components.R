@@ -1579,7 +1579,7 @@ do.setup.sexual.contact <- function(components)
                                                                  age.counts=age.counts,
                                                                  age.cutoffs = components$settings$AGE_CUTOFFS)
 
-attr(components, 'msm.sex.by.age') = msm.sex.by.age
+
         sexual.transmission.by.age[,,'heterosexual_male'] = het.male.sex.by.age
         sexual.transmission.by.age[,,'female'] = female.sex.by.age
         sexual.transmission.by.age[,,'msm'] = msm.sex.by.age
@@ -1709,14 +1709,8 @@ get.sexual.transmission.arrays <- function(components)
 
             msm.trates = calculate.changing.trates.and.times(components$msm.trates[[race]][[age]])
 
-            heterosexual.male.trates = heterosexual.female.trates =
-                calculate.changing.trates.and.times(components$heterosexual.trates[[race]][[age]])
-            heterosexual.male.trates$rates = lapply(heterosexual.male.trates$rates, function(r){
-                r * components$female.to.male.sexual.transmission.ratio
-            })
-            heterosexual.female.trates$rates = lapply(heterosexual.female.trates$rates, function(r){
-                r * components$male.to.female.sexual.transmission.ratio
-            })
+            heterosexual.male.trates = calculate.changing.trates.and.times(components$heterosexual.male.trates[[race]][[age]])
+            heterosexual.female.trates = calculate.changing.trates.and.times(components$heterosexual.female.trates[[race]][[age]])
 
             msm.name = paste0(race, '.', age, '.msm')
             het.male.name = paste0(race, '.', age, '.het.male')
@@ -1781,10 +1775,10 @@ do.setup.idu.contact <- function(components)
                                                    components$proportions.msm.of.male)
         sex.counts = apply(population, 'sex', sum)
         idu.transmission.by.sex = get.pairing.proportions(components$idu.transmission$sex.oes, sex.counts)
-#HERE        
-        idu.transmission.by.sex['female',] = idu.transmission.by.sex['female',] * components$female.idu.transmission.ratio
-        idu.transmission.by.sex['msm',] = idu.transmission.by.sex['msm',] * components$msm.idu.transmission.ratio
-        idu.transmission.by.sex['heterosexual_male',] = idu.transmission.by.sex['heterosexual_male',] * components$heterosexual.male.idu.transmission.ratio
+       
+        idu.transmission.by.sex[,'female'] = idu.transmission.by.sex['female',] * components$female.idu.susceptibility.ratio
+        idu.transmission.by.sex[,'msm'] = idu.transmission.by.sex['msm',] * components$msm.idu.susceptibility.ratio
+        idu.transmission.by.sex[,'heterosexual_male'] = idu.transmission.by.sex['heterosexual_male',] * components$heterosexual.male.idu.susceptibility.ratio
         
         #-- IDU Transmission --#
         # ASSUMING HERE THAT ALL AGES ARE THE SAME

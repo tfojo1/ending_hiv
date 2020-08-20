@@ -285,10 +285,6 @@ setup.components.for.msa <- function(msa,
                                    diagnosed.female.condomless.rr=parameters['diagnosed.female.condomless.rr'],
                                    diagnosed.msm.condomless.rr=parameters['diagnosed.msm.condomless.rr'])
 
-    comps = setup.heterosexual.transmission(comps,
-                                            female.to.male.sexual.transmission.ratio = parameters['female.to.male.sexual.transmission'],
-                                            male.to.female.sexual.transmission.ratio = parameters['male.to.female.sexual.transmission'])
-
     comps = setup.sex.by.age(comps,
                              heterosexual.male.age.model = data.managers$pairing$sex.age.models[['heterosexual_male']],
                              female.age.model = data.managers$pairing$sex.age.models[['female']],
@@ -321,9 +317,9 @@ setup.components.for.msa <- function(msa,
                               hispanic.hispanic.oe = data.managers$pairing$idu.oe.race['hispanic','hispanic'],
                               other.other.oe = data.managers$pairing$idu.oe.race['other','other'])
     comps = setup.idu.by.sex(comps, sex.oes = data.managers$pairing$idu.oe.sex,
-                             female.transmission.ratio=1,
-                             msm.transmission.ratio=1,
-                             heterosexual.male.transmission.ratio=1)
+                             female.susceptibility.ratio=1,
+                             msm.susceptibility.ratio=1,
+                             heterosexual.male.susceptibility.ratio=1)
 
     #-- Sexual availability --#
 

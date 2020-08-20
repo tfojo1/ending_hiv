@@ -8,8 +8,8 @@ source('code/systematic_calibration/systematic_calibration.R')
 
 source('code/targets/target_msas.R')
 
-source('code/calibration/calibrated_parameters_68_helpers.R')
-source('code/calibration/calibrated_parameters_75b.R')
+source('code/calibration/calibrated_parameters_77_helpers.R')
+source('code/calibration/calibrated_parameters_78.R')
 
 
 DC.MSA = cbsa.for.msa.name('Washington,DC')
@@ -28,8 +28,8 @@ CACHE.FREQUENCY = 500
 UPDATE.FREQUENCY = 200
 MAX.SIM.TIME=Inf
 
-FILE.PREFIX = 'la.75b_neg.supp.slope.ok'
-DESCRIPTION = "V75b"
+FILE.PREFIX = 'la.78'
+DESCRIPTION = "V78"
 RESUME.PRIOR.CACHE = NULL#'mcmc_runs/balt.70_wt.6.6.33_2020-07-16/'
 if (!is.null(RESUME.PRIOR.CACHE))
     print("THIS IS RESUMPTION OF A PRIOR CACHE!!!")
@@ -118,25 +118,38 @@ init.parameters = c(
     #-- Other Sexual Transmission Parameters --#
     age1.msm.susceptibility.rr1 = 1.200,
     age2.msm.susceptibility.rr1 = 1.200,
-    age3.msm.susceptibility.rr1 = 0.646,
-    age4.msm.susceptibility.rr1 = 0.737,
-    age5.msm.susceptibility.rr1 = 0.150,
     
     age1.msm.susceptibility.rr2 = 1.577,
     age2.msm.susceptibility.rr2 = 1.200,
-    age3.msm.susceptibility.rr2 = 0.628,
     
-    age1.susceptibility.rr = 0.997,
-    age2.susceptibility.rr = 1.185,
-    age4.susceptibility.rr = 0.737,
-    age5.susceptibility.rr = 0.150,
+    age1.msm.susceptibility.rr0 = 0.997,
+    age2.msm.susceptibility.rr0 = 1.185,
+    age3.msm.susceptibility.rr = 1,
+    age4.msm.susceptibility.rr = 0.737,
+    age5.msm.susceptibility.rr = 0.150,
     
+    age1.heterosexual.male.susceptibility.rr = 0.997,
+    age2.heterosexual.male.susceptibility.rr = 1.185,
+    age3.heterosexual.male.susceptibility.rr = 1,
+    age4.heterosexual.male.susceptibility.rr = 0.737,
+    age5.heterosexual.male.susceptibility.rr = 0.150,
+    
+    age1.heterosexual.female.susceptibility.rr = 0.997/.405,
+    age2.heterosexual.female.susceptibility.rr = 1.185/.405,
+    age3.heterosexual.female.susceptibility.rr = 1/.405,
+    age4.heterosexual.female.susceptibility.rr = 0.737/.405,
+    age5.heterosexual.female.susceptibility.rr = 0.150/.405,
+    
+    age1.idu.susceptibility.rr = 0.997,
+    age2.idu.susceptibility.rr = 1.185,
+    age3.idu.susceptibility.rr = 1,
+    age4.idu.susceptibility.rr = 0.737,
+    age5.idu.susceptibility.rr = 0.150,
     
     #-- Aging --#
     msm.age1.aging.base = 0.400,
     msm.age2.aging.0 = 0.227,
     msm.age2.aging.1 = 0.150,
-    msm.age2.aging.2 = 0.1,
     msm.age3.aging.1 = 0.109,
     msm.age3.aging.2 = 0.200,
     msm.age4.aging.1 = 0.055,
@@ -145,16 +158,14 @@ init.parameters = c(
     heterosexual.age1.aging.base = 0.167,
     heterosexual.age2.aging.0 = 0.258,
     heterosexual.age2.aging.1 = 0.098,
-    heterosexual.age2.aging.2 = 0.1,
     heterosexual.age3.aging.1 = 0.103,
-    heterosexual.age3.aging.2 = 0.100,
+    heterosexual.age3.aging.2 = 0.1,
     heterosexual.age4.aging.1 = 0.041,
     heterosexual.age4.aging.2 = 0.101,
     
     idu.age1.aging.base = 0.159,
     idu.age2.aging.0 = 0.167,
     idu.age2.aging.1 = 0.101,
-    idu.age2.aging.2 = 0.1,
     idu.age3.aging.1 = 0.123,
     idu.age3.aging.2 = 0.100,
     idu.age4.aging.1 = 0.050,
@@ -162,7 +173,7 @@ init.parameters = c(
     
     
     #-- Other Sexual Transmission Parameters --#
-    male.vs.female.heterosexual.rr = 0.405,
+    female.vs.male.idu.susceptibility.rr = 1,
     
     #-- HIV Testing --#
     heterosexual.proportion.tested.or = 0.794,
