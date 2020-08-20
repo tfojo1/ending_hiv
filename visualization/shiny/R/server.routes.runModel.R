@@ -170,22 +170,50 @@ server.routes.runModel.get <- function(
     })
   }
   if (boilerplate == F) {
-    mainPlot <- ''  # TODO: figure out
+    # TODO: figure out how to render mainPlot
+    # - Is it supposed to be a ggplotly() obj?
+    # - These are  placeholder values; these should be selected from the UI.
     
-    # TODO: pre-set placeholder values; these should be selected from the UI
-    p.version = get.version.options()[1]
-    p.location = names(get.location.options(version))
+    # Attempt 1
+    # p.version = names(get.version.options())[1]
+    # p.location = names(get.location.options(p.version))[1]
+    # p.interventions = get.intervention.options(p.version, p.location)
+    # p = plot.simulations(
+    #   version=p.version,
+    #   location=p.location,
+    #   intervention.names=names(p.interventions)[1],
+    #   years=c(2000:2020),
+    #   data.types=get.data.type.options(p.version, p.location),
+    #   facet.by=get.facet.by.options(p.version, p.location),
+    #   split.by=get.split.by.options(p.version, p.location),
+    #   dimension.subsets=get.dimension.value.options(p.version, p.location),
+    #   plot.format=get.plot.format.options(p.version, p.location)[1])$plot
     
+    # Attempt 2
+    version = names(get.version.options())[1]
+    location = names(get.location.options(version))[1]
+    interventions = get.intervention.options(version, location)
     p = plot.simulations(
-      version=p.version,
-      location=p.location,
-      intervention.names=get.intervention.options(p.location),
-      years=c(2000:2020),
-      data.types=get.data.type.options(version, location),
-      facet.by=get.facet.by.options(version, location),
-      split.by=get.split.by.options(version, location),
+      version=version,
+      location=location,
+      intervention.names = names(interventions)[1],
+      years = get.year.options(version, location),
+      data.types = get.data.type.options(version, location)[1:2],
+      facet.by = names(get.facet.by.options(version, location))[1],
+      split.by = names(get.split.by.options(version, location))[2],
       dimension.subsets=get.dimension.value.options(version, location),
-      plot.format=get.plot.format.options(version, location)[1])
+      plot.format = names(get.plot.format.options(version, location))[1],
+      plot.interval.coverage=0.95,
+      summary.statistic=get.summary.statistic.options(version, location)[1],
+      summary.statistic.interval.coverage=0.95,
+      baseline.color='blue',
+      intervention.colors='red',
+      plot.interval.alpha=0.2,
+      simulation.alpha=0.2,
+      simulation.line.size=0.1,
+      show.truth=T,
+      truth.point.size=5
+    )$plot
     
     mainPlot <- renderPlotly({
       ggplotly(
@@ -221,16 +249,21 @@ server.routes.runModel.get <- function(
     df_summ() %>%
       kable_sum()
   }
-  
+
   
   # Page Def ####
+  res_main <- reactiveVal()
   ui_main = renderUI({
     reset <- input$reset_main
     res_main(runif(1))
+    
+    # List
     list(
+      
+      # Row 1
       fluidRow(
-        column(
-          width = 12,
+        # Row 1, Box 1
+        column(          width = 12,
           box(
             width = NULL, title = name2lab("model_plots", all_labs),
             status = "primary", solidHeader = TRUE,
@@ -258,88 +291,104 @@ server.routes.runModel.get <- function(
             )
           )
         )
+        
+      # # Attempt 1
+      # ))})
+    
+      # Attempt 2
       ),
+
+      # Row 2
       fluidRow(
         column(
           width = 6,
+
+          # Row 2, Box 1
           box(
             width = NULL, title = name2lab("model_summary", all_labs),
             status = "primary", solidHeader = TRUE,
-            
+
             tableOutput("mainTable")
           ),
         ),
+
+    column(
+      width = 6,
+      # Row 2, Box 2
+      box(
+        width = NULL, title = name2lab("model_scenario", all_labs),
+        status = "primary", solidHeader = TRUE,
+
         column(
           width = 6,
-          box(
-            width = NULL, title = f("model_scenario", all_labs),
-            status = "primary", solidHeader = TRUE,
-            
-            column(
-              width = 6,
-              sliderInput(
-                "mainPlot_test_int",
-                name2lab("test_int", all_labs),
-                0, 28, 4
-              )
-            ),
-            column(
-              width = 6,
-              sliderInput(
-                "mainPlot_screen_int",
-                name2lab("screen_int", all_labs),
-                0, 180, 30
-              )
-            )
-          ),
-          box(
-            width = NULL, title = name2lab("model_opts", all_labs),
-            status = "primary", solidHeader = TRUE,
-            
-            column(
-              width = 6,
-              numericInput("baseIni_N_off", name2lab("N_off", all_labs), 0),
-              numericInput("baseIni_N_saf", name2lab("N_saf", all_labs), 0)
-            ),
-            column(
-              width = 6,
-              numericInput("baseIni_N_on", name2lab("N_on", all_labs), 0),
-              sliderInput(
-                "baseCon_nsteps",
-                name2lab("nsteps", all_labs),
-                0, 365, 180
-              )
-            ),
-            # action buttons
-            fluidRow(
-              column(
-                width = 6,
-                downloadButton("mainDL", name2lab("dl_btn", all_labs))
-              ),
-              column(
-                width = 6,
-                actionButton("reset_main", name2lab("reset_button", all_labs))
-              )
-            )
-          ),
-          box(
-            width = NULL, title = name2lab("model_opts_trans", all_labs),
-            status = "primary", solidHeader = TRUE,
-            
-            column(
-              width = 6,
-              numericInput("basePar_R0_student_to_student",
-                           name2lab("R0_student_to_student", all_labs), 0),
-              numericInput("basePar_R0_saf", name2lab("R0_saf", all_labs), 0)
-            ),
-            column(
-              width = 6,
-              numericInput("basePar_R0_on_to_on",
-                           name2lab("R0_on_to_on", all_labs), 0),
-              numericInput("basePar_community",
-                           name2lab("community", all_labs), 0)
-            )
+          sliderInput(
+            "mainPlot_test_int",
+            name2lab("test_int", all_labs),
+            0, 28, 4
           )
+        ),
+        column(
+          width = 6,
+          sliderInput(
+            "mainPlot_screen_int",
+            name2lab("screen_int", all_labs),
+            0, 180, 30
+          )
+        )
+      ),
+
+      # Row 2, Box 3
+      box(
+        width = NULL, title = name2lab("model_opts", all_labs),
+        status = "primary", solidHeader = TRUE,
+
+        column(
+          width = 6,
+          numericInput("baseIni_N_off", name2lab("N_off", all_labs), 0),
+          numericInput("baseIni_N_saf", name2lab("N_saf", all_labs), 0)
+        ),
+        column(
+          width = 6,
+          numericInput("baseIni_N_on", name2lab("N_on", all_labs), 0),
+          sliderInput(
+            "baseCon_nsteps",
+            name2lab("nsteps", all_labs),
+            0, 365, 180
+          )
+        ),
+
+        # action buttons
+        fluidRow(
+          column(
+            width = 6,
+            downloadButton("mainDL", name2lab("dl_btn", all_labs))
+          ),
+          column(
+            width = 6,
+            actionButton("reset_main", name2lab("reset_button", all_labs))
+          )
+        )
+      ),
+
+      # Row 2, Box 4
+      box(
+        width = NULL, title = name2lab("model_opts_trans", all_labs),
+        status = "primary", solidHeader = TRUE,
+
+        column(
+          width = 6,
+          numericInput("basePar_R0_student_to_student",
+                       name2lab("R0_student_to_student", all_labs), 0),
+          numericInput("basePar_R0_saf", name2lab("R0_saf", all_labs), 0)
+        ),
+        column(
+          width = 6,
+          numericInput("basePar_R0_on_to_on",
+                       name2lab("R0_on_to_on", all_labs), 0),
+          numericInput("basePar_community",
+                       name2lab("community", all_labs), 0)
+        )
+      ) #
         )
       )
     )
@@ -350,5 +399,6 @@ server.routes.runModel.get <- function(
   server.routes.runModel[['mainPlot']] = mainPlot
   server.routes.runModel[['mainDL']] = mainDL
   server.routes.runModel[['mainTable']] = mainTable
+  server.routes.runModel[['res_main']] = res_main
   server.routes.runModel
 }

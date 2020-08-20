@@ -1,6 +1,10 @@
 # EndingHIV model ####
-'# EndingHIV Model::RShiny Interface
-'
+'# EndingHIV Model::RShiny Interface'
+
+library('ggplot2')
+
+# test.config.on = TRUE
+test.config.on = FALSE
 
 # TODO @jef: Need to replace boilerplate func 'model' object with a matching one
 # from EndingHIV. I do not believe that the main plot function here will serve
@@ -199,36 +203,6 @@ plot.interval.coverage.applies.to.plot.format <- function(plot.format)
     individual.simulations=F)
 }
 
-# Tests: TEST CODE ####
-if (1==2)
-{
-  version = names(get.version.options())[1]
-  location = names(get.location.options(version))[1]
-  interventions = get.intervention.options(version, location)
-  
-  plot.simulations(
-    version=version,
-    location=location,
-    intervention.names = names(interventions)[1],
-    years = get.year.options(version, location),
-    data.types = get.data.type.options(version, location)[1:2],
-    facet.by = names(get.facet.by.options(version, location))[1],
-    split.by = names(get.split.by.options(version, location))[2],
-    dimension.subsets=get.dimension.value.options(version, location),
-    plot.format = names(get.plot.format.options(version, location))[1],
-    plot.interval.coverage=0.95,
-    summary.statistic=get.summary.statistic.options(version, location)[1],
-    summary.statistic.interval.coverage=0.95,
-    baseline.color='blue',
-    intervention.colors='red',
-    plot.interval.alpha=0.2,
-    simulation.alpha=0.2,
-    simulation.line.size=0.1,
-    show.truth=T,
-    truth.point.size=5
-  )$plot
-}
-
 # Main Function: THE PLOT FUNCTION ####
 
 #'@param description The function that actually generates plots
@@ -294,18 +268,13 @@ plot.simulations <- function(
   base.df = NULL
   for (d in 1:length(data.types)) {
     for (i in 1:length(intervention.names)) {
-      for (year in years) {
-        # browser()
-        base.df = rbind(
-          base.df,
-          suppressWarnings(data.frame(
-            data_type=data.types[d],
-            intervention=names(intervention.names[i]),
-            year=year,
-            value=100 * d + 10 * i + 2 - 2*(1:length(year))
-          ))
-        )  
-    }}}
+      base.df = rbind(
+        base.df,
+        suppressWarnings(data.frame(
+          data_type=data.types[d],
+          intervention=intervention.names[i],
+          year=years,
+          value= 100 * d + 10 * i + 2 - 2*(1:length(years))) ))}}
   
   df = base.df
   for (d in dimensions) {
@@ -322,9 +291,6 @@ plot.simulations <- function(
   else if (length(split.by)==1)
     df$split.by=paste0(split.by, '=', df[,split.by])
   else {
-    # TODO: Error in `[.data.frame`(df, , split.by[1]) : undefined columns selected
-    browser()
-    
     df$split.by=paste0(split.by[1], '=', df[,split.by[1]])
     for (split in split.by[-1])
       df$split.by = paste0(df$split.by, ', ', split, '=', df[,split]) }
@@ -343,59 +309,92 @@ plot.simulations <- function(
     notes=c('test note 1', 'test note 2'))
 }
 
+# Tests: TEST CODE ####
+# test.config.on = FALSE
+# test.config.on = TRUE
+if (test.config.on == T) {
+  version = names(get.version.options())[1]
+  location = names(get.location.options(version))[1]
+  interventions = get.intervention.options(version, location)
+  
+  test.me = plot.simulations(
+    version=version,
+    location=location,
+    intervention.names = names(interventions)[1],
+    years = get.year.options(version, location),
+    data.types = get.data.type.options(version, location)[1:2],
+    facet.by = names(get.facet.by.options(version, location))[1],
+    split.by = names(get.split.by.options(version, location))[2],
+    dimension.subsets=get.dimension.value.options(version, location),
+    plot.format = names(get.plot.format.options(version, location))[1],
+    plot.interval.coverage=0.95,
+    summary.statistic=get.summary.statistic.options(version, location)[1],
+    summary.statistic.interval.coverage=0.95,
+    baseline.color='blue',
+    intervention.colors='red',
+    plot.interval.alpha=0.2,
+    simulation.alpha=0.2,
+    simulation.line.size=0.1,
+    show.truth=T,
+    truth.point.size=5
+  )$plot
+  
+  View(test.me)
+}
+
 # Boilerplate Model ####
 model.boilerplate <- function(t, t0, parms) {
   with(as.list(c(t0, parms)), {
-
+    
     # ODEs
     # On campus students
     dS_on <- -((beta_student_to_student*(I_off+I_on) + (beta_on_to_on*I_on) + (beta_saf*I_saf))*S_on)/N - community*S_on  - testing*(1-p_asympt_stu)*I_on*sensitivity*(contacts-R0_on_to_on-R0_student_to_student)*p_contacts_reached + 1/isolation*Q_on*((contacts-R0_on_to_on-R0_student_to_student)/contacts)
     dE_on <-  ((beta_student_to_student*(I_off+I_on) + (beta_on_to_on*I_on) + (beta_saf*I_saf))*S_on)/N + community*S_on - 1/latent*E_on  - screening*E_on*sensitivity - testing*(1-p_asympt_stu)*I_on*sensitivity*(R0_on_to_on+R0_student_to_student)*p_contacts_reached #last term represents contract tracing
     dI_on <- 1/latent*E_on - testing*(1-p_asympt_stu)*sensitivity*I_on - 1/infectious*I_on - screening*I_on*sensitivity
     dR_on <- 1/infectious*I_on + 1/isolation*P_on + 1/isolation*Q_on*((R0_on_to_on+R0_student_to_student)/contacts)
-
+    
     dP_on <- testing*(1-p_asympt_stu)*sensitivity*I_on + screening*(E_on+I_on)*sensitivity - 1/isolation*P_on
     dQ_on <- testing*(1-p_asympt_stu)*I_on*sensitivity*contacts*p_contacts_reached  - 1/isolation*Q_on
-
+    
     dIcum_on <- (1-p_asympt_stu)*((beta_student_to_student*(I_off+I_on) + (beta_on_to_on*I_on) + (beta_saf*I_saf))*S_on)/N
     dPcum_on <- testing*(1-p_asympt_stu)*I_on*sensitivity + screening*(E_on+I_on)*sensitivity
     dQcum_on <- testing*(1-p_asympt_stu)*I_on*sensitivity*contacts
     dHcum_on <- ((1-p_asympt_stu)*((beta_student_to_student*(I_off+I_on) + (beta_on_to_on*I_on) + (beta_saf*I_saf))*S_on)/N)*p_hosp_stu
     dDcum_on <- ((1-p_asympt_stu)*((beta_student_to_student*(I_off+I_on) + (beta_on_to_on*I_on) + (beta_saf*I_saf))*S_on)/N)*p_death_stu
-
+    
     # Off campus students
     dS_off <- -((beta_student_to_student*(I_off+I_on)+(beta_saf*I_saf))*S_off)/N - community*S_off - testing*(1-p_asympt_stu)*I_off*sensitivity*(contacts - R0_student_to_student)*p_contacts_reached + 1/isolation*Q_off*((contacts-R0_student_to_student)/contacts)
     dE_off <-  ((beta_student_to_student*(I_off+I_on)+(beta_saf*I_saf))*S_off)/N + community*S_off - (1/latent)*E_off - screening*E_off*sensitivity - testing*(1-p_asympt_stu)*I_off*sensitivity*(R0_student_to_student)*p_contacts_reached
     dI_off <- 1/latent*E_off - testing*(1-p_asympt_stu)*I_off*sensitivity - 1/infectious*I_off - screening*I_off*sensitivity
     dR_off <- 1/infectious*I_off + 1/isolation*P_off + 1/isolation*Q_off*(R0_student_to_student/contacts)
-
+    
     dP_off <- testing*(1-p_asympt_stu)*I_off*sensitivity - 1/isolation*P_off + screening*(E_off+I_off)*sensitivity
     dQ_off <- testing*(1-p_asympt_stu)*I_off*sensitivity*contacts*p_contacts_reached - 1/isolation*Q_off
-
+    
     dIcum_off = (1-p_asympt_stu)*((beta_student_to_student*(I_off+I_on)+(beta_saf*I_saf))*S_off)/N
     dPcum_off <- testing*(1-p_asympt_stu)*I_off*sensitivity + screening*(E_off+I_off)*sensitivity
     dQcum_off <-testing*(1-p_asympt_stu)*I_off*sensitivity*contacts
     dHcum_off <- ((1-p_asympt_stu)*((beta_student_to_student*(I_off+I_on)+(beta_saf*I_saf))*S_off)/N)*p_hosp_stu
     dDcum_off <- ((1-p_asympt_stu)*((beta_student_to_student*(I_off+I_on)+(beta_saf*I_saf))*S_off)/N)*p_death_stu
-
-
-
+    
+    
+    
     # Staff and faculty
     dS_saf <- -beta_saf*(I_on+I_off+I_saf)*S_saf/N - community*S_saf - testing*(1-p_asympt_saf)*I_saf*sensitivity*(contacts-R0_saf)*p_contacts_reached + 1/isolation*Q_saf*((contacts-R0_saf)/contacts)
     dE_saf <-  beta_saf*(I_on+I_off+I_saf)*S_saf/N + community*S_saf - 1/latent*E_saf - screening*E_saf*sensitivity - testing*(1-p_asympt_saf)*I_saf*sensitivity*(R0_saf)*p_contacts_reached
     dI_saf <- 1/latent*E_saf - testing*(1-p_asympt_saf)*I_saf*sensitivity- 1/infectious*I_saf - screening*I_saf*sensitivity
     dR_saf <- 1/infectious*I_saf + 1/isolation*P_saf + 1/isolation*Q_saf*(R0_saf/contacts)
-
+    
     dP_saf <- testing*(1-p_asympt_saf)*I_saf*sensitivity - 1/isolation*P_saf + screening*(E_saf+I_saf)*sensitivity
     dQ_saf <- testing*(1-p_asympt_saf)*I_saf*sensitivity*contacts*p_contacts_reached - 1/isolation*Q_saf
-
+    
     dIcum_saf = (1-p_asympt_saf)*beta_saf*(I_on+I_off+I_saf)*S_saf/N
     dPcum_saf <- testing*(1-p_asympt_saf)*I_saf*sensitivity  + screening*(E_saf+I_saf)*sensitivity
     dHcum_saf <- ((1-p_asympt_saf)*beta_saf*(I_on+I_off+I_saf)*S_saf/N)*p_hosp_saf
     dDcum_saf <- ((1-p_asympt_saf)*beta_saf*(I_on+I_off+I_saf)*S_saf/N)*p_death_saf
-
+    
     dTest <- N*screening + ((I_on+I_off+I_saf)*testing) + N*ili*ifelse(testing > 0, 1, 0)
-
+    
     state_list <- c(dS_on,dE_on,dI_on,dP_on,dR_on,dIcum_on, dPcum_on, dQ_on, dQcum_on, dHcum_on, dDcum_on,
                     dS_off,dE_off,dI_off,dP_off,dR_off,dIcum_off, dPcum_off, dQ_off, dQcum_off, dHcum_off, dDcum_off,
                     dS_saf,dE_saf,dI_saf,dP_saf,dR_saf,dIcum_saf,dPcum_saf, dQ_saf, dHcum_saf, dDcum_saf, dTest)
