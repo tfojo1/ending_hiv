@@ -115,12 +115,14 @@ server <- function(input, output, session) {
   })
 
   # Page: RunModel - Def ####  
-  server.routes.runModel = server.routes.runModel.get(input, control, init, param)
+  server.routes.runModel = server.routes.runModel.get(
+    input, control, init, param)
   output$ui_main = server.routes.runModel[['ui_main']]
   # Page: RunModel - Components####  
   output$mainPlot = server.routes.runModel[['mainPlot']]
   output$mainDL = server.routes.runModel[['mainDL']]
   output$mainTable = server.routes.runModel[['mainTable']]
+  res_main = server.routes.runModel[['res_main']]
   
   # Page: Docs (#page-docs): output$introductionText ####
   output$introductionText = server.routes.docs
