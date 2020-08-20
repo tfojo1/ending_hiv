@@ -364,7 +364,7 @@ create.msa.likelihood <- function(msa,
                                   AIDS.DX.WEIGHT = 4,
                                   TOTAL.DX.WEIGHT=1/8,
                                   STRATIFIED.DX.WEIGHT=1/128/4,
-                                  SUPPRESSION.WEIGHT=1/4,
+                                  SUPPRESSION.WEIGHT=1,
                                   
                                   prev.to.new.cv.ratio=1,
                                   FOCUS.WEIGHT=1,#4,

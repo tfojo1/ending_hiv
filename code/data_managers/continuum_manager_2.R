@@ -1,4 +1,10 @@
 
+if (1==2)
+{
+    cm = create.continuum.manager(national.surveillance = national.surveillance,
+                                  suppression.anchor.year = 2010,
+                                  testing.anchor.year = 2010)
+}
 
 get.suppression.model <- function(cm,
                                   location)

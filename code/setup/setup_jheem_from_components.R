@@ -1133,7 +1133,7 @@ do.setup.aging <- function(components)
     {
         for (race in components$jheem$race)
         {
-            for (route in c('msm','heterosexual','idu'))
+            for (route in c('msm','heterosexual.male','heterosexual.female','idu'))
             {
                 if (is.null(components[[paste0('aging.', route)]]))
                 {
@@ -1164,7 +1164,7 @@ do.setup.aging <- function(components)
         {
             for (race in components$jheem$race)
             {
-                for (route in c('msm','heterosexual','idu'))
+                for (route in c('msm','heterosexual.male', 'heterosexual.female','idu'))
                 {
                     if (is.null(components[[paste0('aging.', route)]]))
                     {
@@ -1185,8 +1185,10 @@ do.setup.aging <- function(components)
 
                     if (route=='msm')
                         aging[age.index, race, , 'msm', ,,,] = aging.for.subgroup
-                    else if (route=='heterosexual')
-                        aging[age.index, race, , c('heterosexual_male','female'), ,,,] = aging.for.subgroup
+                    else if (route=='heterosexual.male')
+                        aging[age.index, race, , 'heterosexual_male', ,,,] = aging.for.subgroup
+                    else if (route=='heterosexual.female')
+                        aging[age.index, race, , 'female', ,,,] = aging.for.subgroup
                     else if (route=='idu')
                         aging[age.index, race, , , c('active_IDU','IDU_in_remission'),,,] = aging.for.subgroup
                 }

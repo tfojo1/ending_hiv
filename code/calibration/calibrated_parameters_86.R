@@ -137,7 +137,6 @@ parameters.prior = join.distributions(
     msm.age3.aging.1 = Lognormal.Distribution(log(0.2), 0.5*log(2)),
     msm.age3.aging.2 = Lognormal.Distribution(log(0.1), 0.5*log(2)),
     msm.age4.aging.1 = Lognormal.Distribution(log(0.05), 0.5*log(2)),
-    msm.age4.aging.2 = Lognormal.Distribution(log(0.1), 0.5*log(2)),
     
     heterosexual.male.age1.aging.base = Lognormal.Distribution(log((427)/2/(814)), 0.25*log(2)),
     heterosexual.male.age2.aging.0 = Lognormal.Distribution(log(0.2), 0.5*log(2)),
@@ -145,7 +144,6 @@ parameters.prior = join.distributions(
     heterosexual.male.age3.aging.1 = Lognormal.Distribution(log(0.2), 0.5*log(2)),
     heterosexual.male.age3.aging.2 = Lognormal.Distribution(log(0.1), 0.5*log(2)),
     heterosexual.male.age4.aging.1 = Lognormal.Distribution(log(0.05), 0.5*log(2)),
-    heterosexual.male.age4.aging.2 = Lognormal.Distribution(log(0.1), 0.5*log(2)),
     
     heterosexual.female.age1.aging.base = Lognormal.Distribution(log((1861)/2/(3752)), 0.25*log(2)),
     heterosexual.female.age2.aging.0 = Lognormal.Distribution(log(0.2), 0.5*log(2)),
@@ -153,7 +151,6 @@ parameters.prior = join.distributions(
     heterosexual.female.age3.aging.1 = Lognormal.Distribution(log(0.2), 0.5*log(2)),
     heterosexual.female.age3.aging.2 = Lognormal.Distribution(log(0.1), 0.5*log(2)),
     heterosexual.female.age4.aging.1 = Lognormal.Distribution(log(0.05), 0.5*log(2)),
-    heterosexual.female.age4.aging.2 = Lognormal.Distribution(log(0.1), 0.5*log(2)),
     
     idu.age1.aging.base = Lognormal.Distribution(log((180+221)/2/(218+411)), 0.25*log(2)),
     idu.age2.aging.0 = Lognormal.Distribution(log(0.2), 0.5*log(2)),
@@ -161,7 +158,6 @@ parameters.prior = join.distributions(
     idu.age3.aging.1 = Lognormal.Distribution(log(0.2), 0.5*log(2)),
     idu.age3.aging.2 = Lognormal.Distribution(log(0.1), 0.5*log(2)),
     idu.age4.aging.1 = Lognormal.Distribution(log(0.05), 0.5*log(2)),
-    idu.age4.aging.2 = Lognormal.Distribution(log(0.1), 0.5*log(2)),
     
     
     
@@ -295,8 +291,7 @@ PARAMETER.VAR.BLOCKS.1 = list(
     
     msm.old.aging = c('msm.age3.aging.1',
                       'msm.age3.aging.2',
-                      'msm.age4.aging.1',
-                      'msm.age4.aging.2'),
+                      'msm.age4.aging.1'),
 
     sexual.mixing = c('black.black.sexual.oe',
                       'hispanic.hispanic.sexual.oe',
@@ -346,8 +341,7 @@ PARAMETER.VAR.BLOCKS.1 = list(
     
     heterosexual.male.old.aging = c('heterosexual.male.age3.aging.1',
                                     'heterosexual.male.age3.aging.2',
-                                    'heterosexual.male.age4.aging.1',
-                                    'heterosexual.male.age4.aging.2'),
+                                    'heterosexual.male.age4.aging.1'),
     
     heterosexual.female.young.aging = c('heterosexual.female.age1.aging.base',
                                         'heterosexual.female.age2.aging.0',
@@ -355,8 +349,7 @@ PARAMETER.VAR.BLOCKS.1 = list(
     
     heterosexual.female.old.aging = c('heterosexual.female.age3.aging.1',
                                       'heterosexual.female.age3.aging.2',
-                                      'heterosexual.female.age4.aging.1',
-                                      'heterosexual.female.age4.aging.2'),
+                                      'heterosexual.female.age4.aging.1'),
 
     black.idu.past.transmission = c('black.idu.trate.peak',
                                     'black.idu.trate.0'),
@@ -381,8 +374,7 @@ PARAMETER.VAR.BLOCKS.1 = list(
     
     idu.old.aging = c('idu.age3.aging.1',
                       'idu.age3.aging.2',
-                      'idu.age4.aging.1',
-                      'idu.age4.aging.2'),
+                      'idu.age4.aging.1'),
 
     young.age.susceptibility = c('age1.susceptibility.rr',
                                  'age2.susceptibility.rr'),

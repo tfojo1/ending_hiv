@@ -1,3 +1,4 @@
+source('code/systematic_calibration/postprocessing.R')
 
 do.plot.simulations <- function(baseline.simset,
                                 intervention.simsets,
@@ -31,7 +32,10 @@ do.plot.simulations <- function(baseline.simset,
     
     #-- Name the Interventions --#
     
+    #----------------------------#
     #-- Set up the Data Frames --#
+    #----------------------------#
+    
     df.truth = NULL
     df.sim = NULL
     
@@ -49,13 +53,24 @@ do.plot.simulations <- function(baseline.simset,
     }
     
     
+    #-- SET UP SPLITS --#
+    
+    #-------------------#
     #-- SET UP GROUPS --#
+    #-------------------#
+    
     if (plot.format=='individual.simulations')
         df.sim$group = paste0(df.sim$split, "_", df.sim$simulation)
+    else
+        df.sim$group = df.sim$split
     
     #-- SET UP STYLES (colors, etc) --#
     
+    
+    #-------------------#
     #-- MAKE THE PLOT --#
+    #-------------------#
+    
     plot = ggplot()
     if (plot.format=='individual.simulations')
         plot = plot + geom_line(data=df.sim, aes(x=year, y=value, group=group, color=intervention),
@@ -66,9 +81,14 @@ do.plot.simulations <- function(baseline.simset,
                                          group=split.by, color=intervention, fill=intervention), alpha=plot.interval.alpha) +
             geom_line(data=df.sim, aes(x=year, y=value, group=group, color=intervention), size=simulation.line.size)
     
-    plot = plot + geom_point(data=df.truth, aes(x=year, y=value, fill=intervention, shape=split.by))
+    if (!is.null(df.truth))
+        plot = plot + geom_point(data=df.truth, aes(x=year, y=value, fill=intervention, shape=split.by))
     
+    
+    #-----------------------#
     #-- SET UP FACET WRAP --#
+    #-----------------------#
+    
     if (fixed.y)
         facet.scales = 'fixed'
     else
@@ -89,24 +109,76 @@ do.plot.simulations <- function(baseline.simset,
             facet.formula = NULL
         
     }
-    #not sure this is right
+    
     if (!is.null(facet.formula))
         plot = plot + facet_wrap(facet.formula, scales=facet.scales)
     
     
+    #------------#
     #-- RETURN --#
+    #------------#
+    
     plot
 }
 
 get.truth.df <- function(location,
                          data.type,
                          years,
-                         keep.dimensions)
+                         keep.dimensions,
+                         dimension.subsets)
 {
+    all.dimensions = union(keep.dimensions, names(dimension.subsets))
     
+    surv = msa.surveillance
+    
+    rv = get.surveillance.data(surv, location.codes=location, data.type=data.type.for.surveillance,
+                               age=any(all.dimensions=='age'), race=any(all.dimensions=='race'),
+                               sex=any(all.dimensions=='sex'), risk=any(all.dimensions=='risk'),
+                               aggregate.locations = T, aggregate.years = F,
+                               throw.error.if.missing.data = F)
+    
+    if (data.type=='diagnosed' && is.null(rv) && length(all.dimensions)==1 && all.dimensions=='year')
+    {
+        rv = get.state.averaged.knowledge.of.status(location,
+                                                    state.surveillance,
+                                                    years=years,
+                                                    census.totals = ALL.DATA.MANAGERS$census.totals)
+        
+        dim(rv) = c(year=length(years))
+        dimnames(rv) = list(year = as.character(years))
+    }
+    else if (data.type=='suppression' && is.null(rv) &&
+             is.null(get.surveillance.data(surv, location.codes=location, data.type='suppression', throw.error.if.missing.data=F)))
+    {
+        states = states.for.msa(location)
+        if (length(states)==1)
+        {
+            truth.numerators = get.surveillance.data(state.surveillance, location.codes=states, data.type=data.type.for.surveillance,
+                                                     age=any(all.dimensions=='age'), race=any(all.dimensions=='race'),
+                                                     sex=any(all.dimensions=='sex'), risk=any(all.dimensions=='risk'),
+                                                     aggregate.locations = T, aggregate.years = F,
+                                                     throw.error.if.missing.data = F)
+        }
+    }
+    
+    rv
 }
 
-get.sim.df <- function()
+get.sim.df <- function(simset,
+                       data.type,
+                       years,
+                       keep.dimensions,
+                       dimension.subsets)
+{
+    all.dimensions = union(keep.dimensions, names(dimension.subsets))
+    
+    if (data.type=='suppression')
+    {
+        rv = sapply(simset@simulations, extract.suppression())
+    }
+}
+
+get.nontrivial.dimension.subsets <- function()
 {
     
 }

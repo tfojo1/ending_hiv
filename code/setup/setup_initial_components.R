@@ -124,7 +124,7 @@ setup.initial.components <- function(msa=BALTIMORE.MSA,
                                      t1=2010,
                                      t2=2020,
                                      t3=2030)
-    msa.components = set.aging.times(msa.components, route='heterosexual',
+    msa.components = set.aging.times(msa.components, route=c('heterosexual.male','heterosexual.female'),
                                      t.pre.spike=1980,
                                      t.spike=1990,
                                      t0=2000,

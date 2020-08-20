@@ -414,7 +414,7 @@ DEFAULT.PREVALENCE.BY.AGE = array(c(241,51,1940,7277,6560,5559,4232,4543,4389,32
 
 
 set.aging.times <- function(components,
-                            routes=c('idu','msm','heterosexual'),
+                            routes=c('idu','msm','heterosexual.male','heterosexual.female'),
                             races=c('black','hispanic','other'),
                             age.indices=1:5,
                             t.pre.spike=NA,
@@ -452,7 +452,7 @@ set.aging.times <- function(components,
 }
 
 set.aging.rates <- function(components,
-                            routes=c('idu','msm','heterosexual'),
+                            routes=c('idu','msm','heterosexual.male','heterosexual.female'),
                             races=c('black','hispanic','other'),
                             age.indices=1:5,
                             r.pre.spike=NA,
