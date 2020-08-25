@@ -237,7 +237,9 @@ plot.interval.coverage.applies.to.plot.format <- function(plot.format)
 #' $plot - a ggplot object
 #' $notes - a character vector (which may be empty) of notes
 plot.simulations <- function(
+  # Private meta params
   version,
+  # Public params; Selectable in UI
   location,
   intervention.names,
   years,
@@ -246,7 +248,7 @@ plot.simulations <- function(
   split.by,
   dimension.subsets,
   plot.format,
-  #
+  # Private params
   show.truth=T,
   #
   plot.interval.coverage=0.95,
