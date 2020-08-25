@@ -1,5 +1,8 @@
 # # EndingHiv; Page: Run Model (#page-run-model): output$ui_main
 # Settings & Imports ####
+library('shiny')
+library('shinyWidgets')
+
 source("R/ui.tools.R")  # plot.simulations
 source("R/plot_shiny_interface.R")  # plot.simulations
 
@@ -460,146 +463,204 @@ server.routes.runModel.get.hiv <- function(
       #  - https://shiny.rstudio.com/articles/sliders.html
       
       # #options
-      # Row1/4: Options1/4 - Algorithm ####
-      fluidRow(
-        column(
-          width=page.width,
-          box(
-            width=NULL, title="Algorithm",
-            status="primary", solidHeader=TRUE,
-            
-            checkboxInput(
-              "Confirm-RDT-negatives-with-a-NAT", 
-              "Confirm RDT negatives with a NAT", 
-              TRUE),
-            checkboxInput(
-              "Confirm-RDT-positives-with-a-NAT", 
-              "Confirm RDT positives with a NAT", 
-              FALSE),
-            checkboxInput(
-              "RDT-only", 
-              "RDT only", 
-              FALSE)
-          ))),
-      
-      # Row2/4: Options2/4 - Parameters ####
-      fluidRow(
-        column(
-          width=page.width,
-          box(
-            width=NULL, title="Parameters",
-            status="primary", solidHeader=TRUE,
-            # Temp; old boilerplate half-width cols
-            # column(width=page.width.half,sliderInput(
-            #   "range","xxx",min=1,max=1000,value=c(666, 999))),
-            
-            checkboxInput(
-              "Isolate-whilst-awaiting-NAT-result", 
-              "Isolate whilst awaiting NAT result", 
-              TRUE),
-            
-            sliderInput(
-              "Proportion-offered-a-NAT-test", 
-              "Proportion offered a NAT test",
-              min=0.10, 
-              max=1.00,
-              value=c(0.10, 0.90)),
-            sliderInput(
-              "NAT-turnaround-time_days", 
-              "NAT turnaround time (days)",
-              min=1.00, 
-              max=5.00,
-              value=c(2.00, 5.00)),
-            sliderInput(
-              "Cost-of-isolation-per-day_USD", 
-              "Cost of isolation per day ($)",
-              min=5.00, 
-              max=50.00,
-              value=c(5.00, 50.00)),
-            sliderInput(
-              "Cost-of-treatment-per-day_USD", 
-              "Cost of treatment per day ($)",
-              min=5.00, 
-              max=50.00,
-              value=c(5.00, 50.00)),
-            sliderInput(
-              "Cost-of-a-NAT_USD", 
-              "Cost of a NAT ($)",
-              min=20.00, 
-              max=70.00,
-              value=c(45.00, 60.00))
-            
-          ))),
-      
-      # Row3/4: Options3/4 - Advanced parameters ####
+      # Spatiotemporal dimensions ####
       # to-do: expand/collapse feature
       fluidRow(
         column(
           width=page.width,
           box(
-            width=NULL, title="Advanced parameters",
+            width=NULL, title="Spatiotemporal dimensions",
             status="primary", solidHeader=TRUE,
             
-            # TODO: #now (sliders all)
-            column(
-              width=page.width.half,
+            # column(
+              # width=page.width.half,
               sliderInput(
-                "NAT-sensitivity", 
-                "NAT sensitivity",
-                min=0.95, 
-                max=0.99,
-                value=c(0.95, 0.99))),
-            column(
-              width=page.width.half,
-              sliderInput(
-                "NAT-specificity", 
-                "NAT specificity",
-                min=0.98, 
-                max=1.00,
-                value=c(0.98, 1.00))),
-            column(
-              width=page.width.half,
-              sliderInput(
-                "Infectious-days-remaining_days", 
-                "Infectious days remaining (days)",
-                min=5.00, 
-                max=15.00,
-                value=c(5.00, 15.00))),
-            column(
-              width=page.width.half,
-              sliderInput(
-                "Proportion-with-severe-HIV", 
-                "Proportion with severe HIV",
-                min=0.05, 
-                max=0.15,
-                value=c(0.05, 0.15))),
-            column(
-              width=page.width.half,
-              sliderInput(
-                "Prop-of-severe-HIV-offered-treatment", 
-                "Prop of severe HIV offered treatment",
-                min=0.80, 
-                max=1.00,
-                value=c(0.80, 1.00))),
-            column(
-              width=page.width.half,
-              sliderInput(
-                "Prop-of-non-HIV-offered-treatment", 
-                "Prop of non-HIV offered treatment",
-                min=0.00, 
-                max=0.10,
-                value=c(0.00, 0.10))),
-            column(
-              width=page.width.half,
-              sliderInput(
-                "Prop-of-treated-severe-HIV-that-die", 
-                "Prop of treated severe HIV that die",
-                min=0.40, 
-                max=0.60,
-                value=c(0.40, 0.60)))
+                "years", 
+                "Year range",
+                min=1970, 
+                max=2030,
+                value=c(1970, 2030)),
+              # ),
+            # column(
+            #   width=page.width.half,
+              multiInput(
+                inputId="geographic-location", 
+                label="Geographic location",
+                choiceValues=c('12580', '33100'),
+                choiceNames=c(
+                  'Baltimore-Columbia-Towson, MD', 
+                  'Miami-Fort Lauderdale-Pompano Beach, FL'),
+                selected=c(FALSE, FALSE),
+                # choices=c(), options=NULL, width=NULL
+                  )
+            # )
           ))),
       
-      # Row4/4: Options4/4 - Output ####
+      # Demographic dimensions ####
+      # to-do: expand/collapse feature
+      fluidRow(
+        column(
+          width=page.width,
+          box(
+            width=NULL, title="Demographic dimensions",
+            status="primary", solidHeader=TRUE,
+            
+            column(
+              width=page.width.half,
+              selectInput(
+                inputId='age', 
+                label='Age', 
+                choices=c(
+                  '13-24 years',
+                  '25-34 years',
+                  '35-44 years',
+                  '45-54 years',
+                  '55+ years'), 
+                selected=NULL, 
+                multiple=TRUE,
+                selectize=TRUE, 
+                width=NULL, 
+                size=NULL),
+              selectInput(
+                inputId='race', 
+                label='Race', 
+                choices=c(
+                  'Black',
+                  'Hispanic',
+                  'Other'), 
+                selected=NULL, 
+                multiple=TRUE,
+                selectize=TRUE, 
+                width=NULL, 
+                size=NULL)),
+              
+              column(
+                width=page.width.half,
+                selectInput(
+                  inputId='sex', 
+                  label='Sex', 
+                  choices=c(
+                    'Male',
+                    'Female'), 
+                  selected=NULL, 
+                  multiple=TRUE,
+                  selectize=TRUE, 
+                  width=NULL, 
+                  size=NULL),
+                selectInput(
+                  inputId='hiv-risk-factor', 
+                  label='HIV Risk Factor', 
+                  choices=c(
+                    'MSM',
+                    'IDU',
+                    'MSM+IDU',
+                    'Heterosexual'), 
+                  selected=NULL, 
+                  multiple=TRUE,
+                  selectize=TRUE, 
+                  width=NULL, 
+                  size=NULL))
+          ))),
+      
+      
+      # Epidemiological dimensions ####
+      # to-do: expand/collapse feature
+      fluidRow(
+        column(
+          width=page.width,
+          box(
+            width=NULL, title="Epidemiological dimensions",
+            status="primary", solidHeader=TRUE,
+            
+            column(
+              width=page.width.half,
+              selectInput(
+                inputId='public-health-interventions', 
+                label='Public health interventions', 
+                choices=c(
+                  'no_intervention',
+                  'young_black_msm_testing_1py_0.8_suppressed_0.25_prep',
+                  'all_msm_idu_testing_1py_0.9_suppressed_0.5_prep'),
+                selected=NULL, 
+                multiple=FALSE,
+                selectize=TRUE, 
+                width=NULL, 
+                size=NULL)),
+            column(
+              width=page.width.half,
+              selectInput(
+                inputId='epidemiological-indicators', 
+                label='Epidemiological indicators', 
+                choices=c(
+                  'Reported Diagnoses'='new',
+                  'Estimated Prevalence'='prevalence',
+                  'HIV Mortality'='mortality',
+                  'Viral HIV Suppression'='suppression',
+                  "Awareness of HIV Diagnosis"='awareness',
+                  "HIV Incidence"='incidence'), 
+                selected=NULL, 
+                multiple=TRUE,
+                selectize=TRUE, 
+                width=NULL, 
+                size=NULL)),
+          ))),
+      # Aggregation options ####
+      # to-do: expand/collapse feature
+      fluidRow(
+        column(
+          width=page.width,
+          box(
+            width=NULL, title="Aggregation options",
+            status="primary", solidHeader=TRUE,
+            
+            column(
+              width=page.width.half,
+              selectInput(
+                inputId='facet', 
+                label='Multi-panel dis-aggregation', 
+                choices=c(
+                  'Age'='age',
+                  'Race'='race',
+                  'Sex'='sex',
+                  'HIV Risk Factor'='risk'),
+                selected=NULL, 
+                multiple=TRUE,
+                selectize=TRUE, 
+                width=NULL, 
+                size=NULL),
+              
+              selectInput(
+                inputId='split', 
+                label='Multi-line dis-aggregation', 
+                choices=c(
+                  'Age'='age',
+                  'Race'='race',
+                  'Sex'='sex',
+                  'HIV Risk Factor'='risk'),
+                selected=NULL, 
+                multiple=TRUE,
+                selectize=TRUE, 
+                width=NULL, 
+                size=NULL)),
+            column(
+              width=page.width.half,
+              selectInput(
+                inputId='aggregation-of-simulations-ran', 
+                label='Aggregation of simulations ran', 
+                choices=c(
+                  'Mean and Prediction Interval'='mean.and.interval',
+                  'Median and Prediction Interval'='median.and.interval',
+                  'Individual Simulations'='individual.simulations'),
+                selected=NULL, 
+                multiple=FALSE,
+                selectize=TRUE, 
+                width=NULL, 
+                size=NULL))
+            
+          ))),
+      
+      
+      # Button & Plot ####
       # #plot #button
       fluidRow(
         column(
@@ -610,18 +671,6 @@ server.routes.runModel.get.hiv <- function(
             
             # TODO: page width half? fluid row top?
             fluidRow(
-              
-              # #options
-              column(
-                width=page.width.half,
-                checkboxInput(
-                  "deaths-averted", 
-                  "Deaths averted", 
-                  TRUE),
-                checkboxInput(
-                  "infectious-days-averted", 
-                  "Infectious days averted", 
-                  FALSE)),
               
               # #button
               column(
