@@ -7,26 +7,29 @@ source("R/server.routes.runModel.R")
 
 suppressPackageStartupMessages(library(EpiModel))  # param.dcm, init.dcm
 
-# TODO @jef: Still in the middle of understanding this function. It's organized 
-# a little messily. Really I'd like to see 3 different files / distinct areas 
-# for each of the 3 pages/routes. But it looks like all of it is here, with also
-# what appear to be some intermediate calculations blotched in between. I dont' 
-# know which module/page/routes need which objects in this function, so I will 
-# not split it up at the moment. - jef 2020/08/01
+# TODO @jef: Still in the middle of understanding this function. 
+# It's organized a little messily. Really I'd like to see 3 different
+# files / distinct areas for each of the 3 pages/routes. But it looks
+# like all of it is here, with also what appear to be some intermediate
+# calculations blotched in between. I don't know which module/page/routes
+# need which objects in this function, so I willnot split it up at the
+#  moment. - jef 2020/08/01
 server <- function(input, output, session) {
 
-  # TODO: @jef: does this section 'defaults' apply  to all pages, or is this 
-  # all for the 'Parameters' page
-  # defaults ----------------------------------------------------------- ####
+  # TODO: @jef: does this section 'defaults' apply  to all pages, 
+  # or is this  all for the 'Parameters' page
+  # defaults ####
   param <- reactive({
-    # TODO @jef: put what I expect here; rather, get these from Todd's plot
-    #  interface constant.
-    beta_student_to_student <- input$R0_student_to_student / input$infectious
+    # TODO @jef: put what I expect here; rather, get these from Todd's
+    #  plot interface constant.
+    beta_student_to_student <- 
+      input$R0_student_to_student / input$infectious
     beta_on_to_on <- input$R0_on_to_on / input$infectious
     beta_saf <- input$R0_saf / input$infectious
     N <- input$N_on + input$N_off + input$N_saf
 
-# https://www.rdocumentation.org/packages/EpiModel/versions/1.2.8/topics/param.dcm
+# https://www.rdocumentation.org/
+# packages/EpiModel/versions/1.2.8/topics/param.dcm
     param.dcm(  # EpiModel::param.dcm
       latent                  = input$latent,
       infectious              = input$infectious,
@@ -65,10 +68,12 @@ server <- function(input, output, session) {
   init <- reactive({  # rshiny::reactive
     N_off <- input$N_stu - input$N_on # Based on number on campus
     
-# https://www.rdocumentation.org/packages/EpiModel/versions/1.2.8/topics/init.dcm
+# https://www.rdocumentation.org/
+# packages/EpiModel/versions/1.2.8/topics/init.dcm
     init.dcm(  # EpiModel::init.dcm
       # S_on must be input that updates with E I R N
-      S_on = input$N_on - (input$E_on + input$I_on + input$R_on), # number initially susceptible
+      # # number initially susceptible
+      S_on = input$N_on - (input$E_on + input$I_on + input$R_on), 
       E_on = input$E_on, # number initially incubating
       I_on = input$I_on, # number initially infectious
       P_on = input$P_on, # number initially isolated
@@ -119,9 +124,12 @@ server <- function(input, output, session) {
     input, control, init, param)
   output$ui_main = server.routes.runModel[['ui_main']]
   # Page: RunModel - Components####  
+  # output$mainDL = server.routes.runModel[['mainDL']]
+  # output$mainTable = server.routes.runModel[['mainTable']]
+     
+  # TODO: need this?
   output$mainPlot = server.routes.runModel[['mainPlot']]
-  output$mainDL = server.routes.runModel[['mainDL']]
-  output$mainTable = server.routes.runModel[['mainTable']]
+  
   res_main = server.routes.runModel[['res_main']]
   
   # Page: Docs (#page-docs): output$introductionText ####
@@ -129,15 +137,46 @@ server <- function(input, output, session) {
   # output$introductionText <- renderUI({includeMarkdown(
   #   "introductionText.Rmd")})
 
-  observe({
-    res_main()
-    update_init_vals_pattern("baseIni_", input, session)
-    update_init_vals_pattern("basePar_", input, session)
-    updateSliderInput(session, "baseCon_nsteps", value = input$nsteps)
-  })
+  # observe({
+  #   res_main()
+  #   update_init_vals_pattern("baseIni_", input, session)
+  #   update_init_vals_pattern("basePar_", input, session)
+  #   updateSliderInput(session, "baseCon_nsteps", value = input$nsteps)
+  # })
   
   # output$rawParamText  ####
   output$rawParamText <- renderUI({
     includeMarkdown("rawParamText.Rmd")
+  })
+  
+  # Events: Simulate & plot ####
+  # Plot: Pass to plot event handler function
+  # - Alternative method: ggplotly
+  # `# output$mainPlot = renderPlotly({ p = ggplot(); ggplotly(p) })``
+  
+  # TODO: connect to plot
+  # observeEvent(input$res_main, {
+  observeEvent(input$reset_main, {
+    # res_main()
+    output$mainPlot = renderPlotly({
+      version = names(get.version.options())[1]
+      p = plot.simulations(
+        version=version,
+        location=input[['geographic-location']],
+        intervention.names=input[['public-health-interventions']],
+        years=input[['years']],
+        data.types=input[['epidemiological-indicators']],
+        facet.by=input[['facet']],
+        split.by=input[['split']],
+        dimension.subsets=list(
+          'age'=input[['age']],
+          'race'=input[['race']],
+          'sex'=input[['sex']],
+          'risk'=input[['hiv-risk-factor']]),
+        plot.format=input[['aggregation-of-simulations-ran']],
+      )$plot
+      
+      ggplotly(p)
+    })
   })
 }
