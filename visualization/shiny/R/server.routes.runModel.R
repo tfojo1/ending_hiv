@@ -13,6 +13,67 @@ server.options.boilerplate.on = FALSE
 # Constants
 page.width = 12
 
+demog.choiceNames = c(
+  'Age',
+  'Race',
+  'Sex',
+  'HIV Risk Factor')
+demog.choiceValues = c(
+  'age',
+  'race',
+  'sex',
+  'risk')
+
+sex.choiceNames = c(
+  'Male',
+  'Female')
+sex.choiceValues = sex.choiceNames
+
+race.choiceNames = c(
+  'Other',
+  'Black',
+  'Hispanic')
+race.choiceValues = race.choiceNames
+
+age.choiceNames = c(
+  '13-24 years',
+  '25-34 years',
+  '35-44 years',
+  '45-54 years',
+  '55+ years')
+age.choiceValues = age.choiceNames
+
+risk.choiceNames = c(
+  'MSM',
+  'IDU',
+  'MSM+IDU',
+  'Heterosexual')
+risk.choiceValues=risk.choiceNames
+
+intervention.choiceNames = c(
+  'No intervention',
+  'Young black MSM testing1py 0.8 suppressed 0.25 prep',
+  'All MSM IDU testing1py 0.9 suppressed_0.5 prep')
+intervention.choiceValues = c(
+  'no_intervention',
+  'young_black_msm_testing_1py_0.8_suppressed_0.25_prep',
+  'all_msm_idu_testing_1py_0.9_suppressed_0.5_prep')
+
+indicator.choiceNames = c(
+  'Estimated Prevalence',
+  'Reported Diagnoses',
+  'HIV Mortality',
+  'Viral HIV Suppression',
+  'Awareness of HIV Diagnosis',
+  'HIV Incidence')
+indicator.choiceValues = c(
+  'prevalence',
+  'new',
+  'mortality',
+  'suppression',
+  'awareness',
+  'incidence')
+
 # Calculated variables
 page.width.half = round(page.width / 2)
 
@@ -211,33 +272,38 @@ server.routes.runModel.get.boilerplate <- function(
       # Row 1
       fluidRow(
         # Row 1, Box 1
-        column(          width=page.width,
-                         box(
-                           width=NULL, title=name2lab("model_plots", all_labs),
-                           status="primary", solidHeader=TRUE,
-                           
-                           column(
-                             width=10,
-                             
-                             plotlyOutput("mainPlot", height=500)
-                           ),
-                           column(
-                             width=2,
-                             checkboxGroupInput(
-                               "mainPlot_pop", name2lab("Plot_pop", all_labs),
-                               choiceValues=names(pop_labs),
-                               choiceNames=unname(pop_labs),
-                               selected=c("stu", "saf")
-                             ),
-                             checkboxGroupInput(
-                               "mainPlot_measures",
-                               name2lab("Plot_measures", all_labs),
-                               choiceValues=names(cp_labs),
-                               choiceNames=unname(cp_labs),
-                               selected=c("I", "Icum")
-                             )
-                           )
-                         )
+        column(
+          width=page.width,
+         box(
+           width=NULL, 
+           title=name2lab("model_plots", all_labs),
+           status="primary", solidHeader=TRUE,
+           
+           column(
+             width=page.width,
+             
+             plotlyOutput(
+               "mainPlot"
+                # height=500
+               )
+           ),
+           column(
+             width=2,
+             checkboxGroupInput(
+               "mainPlot_pop", name2lab("Plot_pop", all_labs),
+               choiceValues=names(pop_labs),
+               choiceNames=unname(pop_labs),
+               selected=c("stu", "saf")
+             ),
+             checkboxGroupInput(
+               "mainPlot_measures",
+               name2lab("Plot_measures", all_labs),
+               choiceValues=names(cp_labs),
+               choiceNames=unname(cp_labs),
+               selected=c("I", "Icum")
+             )
+           )
+         )
         )
         
         # # Attempt 1
@@ -402,54 +468,9 @@ server.routes.runModel.get.hiv <- function(
   
   # Component: Plot #mainPlot[renderPlotly] ####
   mainPlot = renderPlotly({
-    # Try1: boilerplate
-    # p <- ggplot(
-    #   df_plot(),
-    #   aes(x=time, y=value, col=scenario, label=measure)) +
-    #   geom_line() +
-    #   facet_grid(rows=vars(measure), cols=vars(pop), scales="free_y") +
-    #   theme(panel.border=element_rect(color="black", fill=NA)) +
-    #   xlab("Days") +
-    #   ylab("Value")
-    
-    # try 2: todd placeholder
-    version = names(get.version.options())[1]
-    location = names(get.location.options(version))[1]
-    interventions = get.intervention.options(version, location)
-    p = plot.simulations(
-      version=version,
-      location=location,
-      intervention.names = names(interventions)[1],
-      years = get.year.options(version, location),
-      data.types = get.data.type.options(version, location)[1:2],
-      facet.by = names(get.facet.by.options(version, location))[1],
-      split.by = names(get.split.by.options(version, location))[2],
-      dimension.subsets=get.dimension.value.options(version, location),
-      plot.format = names(get.plot.format.options(version, location))[1],
-      plot.interval.coverage=0.95,
-      summary.statistic=get.summary.statistic.options(version, location)[1],
-      summary.statistic.interval.coverage=0.95,
-      baseline.color='blue',
-      intervention.colors='red',
-      plot.interval.alpha=0.2,
-      simulation.alpha=0.2,
-      simulation.line.size=0.1,
-      show.truth=T,
-      truth.point.size=5
-    )$plot
-    
-    # Try 3: for real
-    # TODO: eventually
-    
-    ggplotly(
-      p)
-    # p, 
-    # tooltip=c("y", "label", "colour", "x")) %>%
-    # layout(legend=list(
-    #   orientation="h",
-    #   y=1.1))
+    p = ggplot()
+    ggplotly(p)
   })
-  
   
   # Component: PageDef #ui_main[renderUI] ####
   ui_main = renderUI({
@@ -459,8 +480,38 @@ server.routes.runModel.get.hiv <- function(
     list(  # returns-->list
       # Declartative UI
       # - Resources:
-      #  - https://shiny.rstudio.com/reference/shiny/0.12.2/sliderInput.html
-      #  - https://shiny.rstudio.com/articles/sliders.html
+      # https://shiny.rstudio.com/reference/shiny/0.12.2/sliderInput.html
+      # https://shiny.rstudio.com/articles/sliders.html
+      
+      # Button & Plot ####
+      # #plot #button
+      fluidRow(
+        column(
+          width=page.width,
+          box(
+            width=NULL, 
+            title="Output",
+            status="primary", 
+            solidHeader=TRUE,
+            
+            # #button
+            fluidRow(
+              column(
+                width=page.width.half,
+                actionButton(
+                  "reset_main", 
+                  "Run"))),
+            # #plot
+            fluidRow(
+              column(
+                width=page.width,
+                plotlyOutput(
+                  "mainPlot",
+                  # height="0%",
+                  width="0%"
+                  # height=500
+                  )))
+      ))), 
       
       # #options
       # Spatiotemporal dimensions ####
@@ -472,28 +523,29 @@ server.routes.runModel.get.hiv <- function(
             width=NULL, title="Spatiotemporal dimensions",
             status="primary", solidHeader=TRUE,
             
-            # column(
-              # width=page.width.half,
-              sliderInput(
-                "years", 
-                "Year range",
-                min=1970, 
-                max=2030,
-                value=c(1970, 2030)),
-              # ),
-            # column(
-            #   width=page.width.half,
-              multiInput(
+            column(
+              width=page.width,
+              selectInput(
                 inputId="geographic-location", 
                 label="Geographic location",
-                choiceValues=c('12580', '33100'),
-                choiceNames=c(
-                  'Baltimore-Columbia-Towson, MD', 
-                  'Miami-Fort Lauderdale-Pompano Beach, FL'),
-                selected=c(FALSE, FALSE),
-                # choices=c(), options=NULL, width=NULL
-                  )
-            # )
+                choices=c(
+                  'Baltimore-Columbia-Towson, MD'='12580', 
+                  'Miami-Fort Lauderdale-Pompano Beach, FL'='33100'), 
+                selected='Baltimore-Columbia-Towson, MD', 
+                multiple=FALSE,
+                selectize=TRUE, 
+                width=NULL, 
+                size=NULL) ),
+            
+            column(
+              width=page.width,
+              sliderInput(
+                  "years", 
+                  "Year range",
+                min=1970, 
+                max=2030,
+                value=c(1970, 2030)) )
+            
           ))),
       
       # Demographic dimensions ####
@@ -507,60 +559,40 @@ server.routes.runModel.get.hiv <- function(
             
             column(
               width=page.width.half,
-              selectInput(
+              checkboxGroupInput(
                 inputId='age', 
                 label='Age', 
-                choices=c(
-                  '13-24 years',
-                  '25-34 years',
-                  '35-44 years',
-                  '45-54 years',
-                  '55+ years'), 
-                selected=NULL, 
-                multiple=TRUE,
-                selectize=TRUE, 
-                width=NULL, 
-                size=NULL),
-              selectInput(
+                choiceNames=age.choiceNames,
+                choiceValues=age.choiceValues,
+                selected=age.choiceValues ),
+              
+              checkboxGroupInput(
                 inputId='race', 
                 label='Race', 
-                choices=c(
-                  'Black',
-                  'Hispanic',
-                  'Other'), 
-                selected=NULL, 
-                multiple=TRUE,
-                selectize=TRUE, 
-                width=NULL, 
-                size=NULL)),
+                choiceNames=race.choiceNames,
+                choiceValues=race.choiceValues,
+                selected=race.choiceNames )
+            ),  # </column>
+            
+            column(
+              width=page.width.half,  
               
-              column(
-                width=page.width.half,
-                selectInput(
-                  inputId='sex', 
-                  label='Sex', 
-                  choices=c(
-                    'Male',
-                    'Female'), 
-                  selected=NULL, 
-                  multiple=TRUE,
-                  selectize=TRUE, 
-                  width=NULL, 
-                  size=NULL),
-                selectInput(
-                  inputId='hiv-risk-factor', 
-                  label='HIV Risk Factor', 
-                  choices=c(
-                    'MSM',
-                    'IDU',
-                    'MSM+IDU',
-                    'Heterosexual'), 
-                  selected=NULL, 
-                  multiple=TRUE,
-                  selectize=TRUE, 
-                  width=NULL, 
-                  size=NULL))
-          ))),
+              checkboxGroupInput(
+                inputId='sex', 
+                label='Sex', 
+                choiceNames=sex.choiceNames,
+                choiceValues=sex.choiceValues,
+                selected=sex.choiceNames ),
+              
+              checkboxGroupInput(
+                inputId='hiv-risk-factor', 
+                label='HIV Risk Factor', 
+                choiceNames=risk.choiceNames,
+                choiceValues=risk.choiceValues,
+                selected=risk.choiceNames )
+            )  # </column>
+              
+      ))),
       
       
       # Epidemiological dimensions ####
@@ -572,38 +604,21 @@ server.routes.runModel.get.hiv <- function(
             width=NULL, title="Epidemiological dimensions",
             status="primary", solidHeader=TRUE,
             
-            column(
-              width=page.width.half,
-              selectInput(
-                inputId='public-health-interventions', 
-                label='Public health interventions', 
-                choices=c(
-                  'no_intervention',
-                  'young_black_msm_testing_1py_0.8_suppressed_0.25_prep',
-                  'all_msm_idu_testing_1py_0.9_suppressed_0.5_prep'),
-                selected=NULL, 
-                multiple=FALSE,
-                selectize=TRUE, 
-                width=NULL, 
-                size=NULL)),
-            column(
-              width=page.width.half,
-              selectInput(
-                inputId='epidemiological-indicators', 
-                label='Epidemiological indicators', 
-                choices=c(
-                  'Reported Diagnoses'='new',
-                  'Estimated Prevalence'='prevalence',
-                  'HIV Mortality'='mortality',
-                  'Viral HIV Suppression'='suppression',
-                  "Awareness of HIV Diagnosis"='awareness',
-                  "HIV Incidence"='incidence'), 
-                selected=NULL, 
-                multiple=TRUE,
-                selectize=TRUE, 
-                width=NULL, 
-                size=NULL)),
-          ))),
+            checkboxGroupInput(
+              inputId='public-health-interventions', 
+              label='Public health interventions', 
+              choiceNames=intervention.choiceNames,
+              choiceValues=intervention.choiceValues,
+              selected=intervention.choiceValues ),
+            
+            checkboxGroupInput(
+              inputId='epidemiological-indicators', 
+              label='Epidemiological indicators', 
+              choiceNames=indicator.choiceNames,
+              choiceValues=indicator.choiceValues,
+              selected=indicator.choiceValues )
+            
+      ))),
       # Aggregation options ####
       # to-do: expand/collapse feature
       fluidRow(
@@ -614,36 +629,7 @@ server.routes.runModel.get.hiv <- function(
             status="primary", solidHeader=TRUE,
             
             column(
-              width=page.width.half,
-              selectInput(
-                inputId='facet', 
-                label='Multi-panel dis-aggregation', 
-                choices=c(
-                  'Age'='age',
-                  'Race'='race',
-                  'Sex'='sex',
-                  'HIV Risk Factor'='risk'),
-                selected=NULL, 
-                multiple=TRUE,
-                selectize=TRUE, 
-                width=NULL, 
-                size=NULL),
-              
-              selectInput(
-                inputId='split', 
-                label='Multi-line dis-aggregation', 
-                choices=c(
-                  'Age'='age',
-                  'Race'='race',
-                  'Sex'='sex',
-                  'HIV Risk Factor'='risk'),
-                selected=NULL, 
-                multiple=TRUE,
-                selectize=TRUE, 
-                width=NULL, 
-                size=NULL)),
-            column(
-              width=page.width.half,
+              width=page.width,
               selectInput(
                 inputId='aggregation-of-simulations-ran', 
                 label='Aggregation of simulations ran', 
@@ -655,41 +641,27 @@ server.routes.runModel.get.hiv <- function(
                 multiple=FALSE,
                 selectize=TRUE, 
                 width=NULL, 
-                size=NULL))
+                size=NULL) ),
             
-          ))),
-      
-      
-      # Button & Plot ####
-      # #plot #button
-      fluidRow(
-        column(
-          width=page.width,
-          box(
-            width=NULL, title="Output",
-            status="primary", solidHeader=TRUE,
+            column(
+              width=page.width.half,
+              checkboxGroupInput(
+                inputId='facet', 
+                label='Multi-panel dis-aggregation', 
+                choiceNames=demog.choiceNames,
+                choiceValues=demog.choiceValues,
+                selected=demog.choiceValues )),
             
-            # TODO: page width half? fluid row top?
-            fluidRow(
-              
-              # #button
-              column(
-                width=page.width.half,
-                actionButton(
-                  "reset_main", 
-                  "Simulate"))),
-            
-            
-            # #plot
-            # TODO: Load static image for now
-            fluidRow(
-              column(
-                width=10,
-                plotlyOutput("mainPlot", height=500)))
-            
-          )))
-      
-    )  # </list>  #returns
+            column(
+              width=page.width.half,
+              checkboxGroupInput(
+                inputId='split', 
+                label='Multi-line dis-aggregation', 
+                choiceNames=demog.choiceNames,
+                choiceValues=demog.choiceValues,
+                selected=demog.choiceValues )) 
+    
+    ))))  # </list>  #returns
   })
   
   # Export ####

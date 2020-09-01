@@ -17,7 +17,8 @@ ui <- dashboardPage(
       # menuItem("Parameters", tabName="raw_params", icon=icon("th")),
       menuItem("Documentation", tabName="text", icon=icon("info"))
       # menuItem(
-      #   "Sensitivity Analysis", tabName="sens_ana", icon=icon("bar-chart"))
+      #   "Sensitivity Analysis", tabName="sens_ana", 
+      #   icon=icon("bar-chart"))
   )),
   
   # Body
