@@ -329,6 +329,62 @@ plot.calibration.race.sex <- function(sims,
                      ...)
 }
 
+plot.calibration.sex.race <- function(sims,
+                                      years=2010:2020,
+                                      data.types=c('new','prevalence'),
+                                      surv=msa.surveillance,
+                                      location=NULL,
+                                      population=NULL,
+                                      use.cdc=T,
+                                      ci.coverage=0.95,
+                                      facet.data.type.first=T,
+                                      ncol=3,
+                                      ...
+)
+{
+    plot.calibration(sims=sims,
+                     split.by='sex',
+                     facet.by = 'race',
+                     years=years,
+                     data.types=data.types,
+                     surv=surv,
+                     location=location,
+                     population=population,
+                     use.cdc=use.cdc,
+                     ci.coverage=ci.coverage,
+                     facet.data.type.first=facet.data.type.first,
+                     ncol=ncol,
+                     ...)
+}
+
+plot.calibration.race.sex <- function(sims,
+                                      years=2010:2020,
+                                      data.types=c('new','prevalence'),
+                                      surv=msa.surveillance,
+                                      location=NULL,
+                                      population=NULL,
+                                      use.cdc=T,
+                                      ci.coverage=0.95,
+                                      facet.data.type.first=T,
+                                      ncol=3,
+                                      ...
+)
+{
+    plot.calibration(sims=sims,
+                     split.by='race',
+                     facet.by = 'sex',
+                     years=years,
+                     data.types=data.types,
+                     surv=surv,
+                     location=location,
+                     population=population,
+                     use.cdc=use.cdc,
+                     ci.coverage=ci.coverage,
+                     facet.data.type.first=facet.data.type.first,
+                     ncol=ncol,
+                     ...)
+}
+
 plot.calibration.total <- function(sims,
                                    years=2010:2020,
                                    data.types=c('new','prevalence','mortality','diagnosed','suppression'),
