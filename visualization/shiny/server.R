@@ -1,5 +1,4 @@
 'EndingHIV RShiny Server process'
-
 source("R/ui.tools.R")
 source("R/plot_shiny_interface.R")
 source("R/server.routes.docs.R")
@@ -7,13 +6,6 @@ source("R/server.routes.runModel.R")
 
 suppressPackageStartupMessages(library(EpiModel))  # param.dcm, init.dcm
 
-# TODO @jef: Still in the middle of understanding this function. 
-# It's organized a little messily. Really I'd like to see 3 different
-# files / distinct areas for each of the 3 pages/routes. But it looks
-# like all of it is here, with also what appear to be some intermediate
-# calculations blotched in between. I don't know which module/page/routes
-# need which objects in this function, so I willnot split it up at the
-#  moment. - jef 2020/08/01
 server <- function(input, output, session) {
 
   # TODO: @jef: does this section 'defaults' apply  to all pages, 
@@ -154,8 +146,8 @@ server <- function(input, output, session) {
   # - Alternative method: ggplotly
   # `# output$mainPlot = renderPlotly({ p = ggplot(); ggplotly(p) })``
   
-  # TODO: connect to plot
   # observeEvent(input$res_main, {
+  
   observeEvent(input$reset_main, {
     # res_main()
     output$mainPlot = renderPlotly({
@@ -164,7 +156,7 @@ server <- function(input, output, session) {
         version=version,
         location=input[['geographic-location']],
         intervention.names=input[['public-health-interventions']],
-        years=input[['years']],
+        years=input[['years']][1]:input[['years']][2],
         data.types=input[['epidemiological-indicators']],
         facet.by=input[['facet']],
         split.by=input[['split']],

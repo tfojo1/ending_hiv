@@ -74,6 +74,42 @@ indicator.choiceValues = c(
   'awareness',
   'incidence')
 
+# TODO: Test dynamic loading
+# TODO: really return everything
+# TODO: hide or fix warnings
+version = 1
+location = 21205
+get.intervention.options.df <- function(version, location)
+{
+  no.int = list(target.groups='character()',
+                testing.frequency=0,
+                suppressed.proportion=0.0,
+                prep.coverage=0.0,
+                intervention.start.year=2021,
+                intervention.implemented.year=2022)
+  
+  int.1 = list(target.groups='Black MSM <35yo',
+               testing.frequency=1,
+               suppressed.proportion=0.8,
+               prep.coverage=0.25,
+               intervention.start.year=2021,
+               intervention.implemented.year=2022)
+  
+  int.2 = list(target.groups='All MSM and IDU',
+               testing.frequency=1,
+               suppressed.proportion=0.9,
+               prep.coverage=0.5,
+               intervention.start.year=2021,
+               intervention.implemented.year=2022)
+  
+  ints = list('no_intervention'=no.int,
+              'young_black_msm_testing_1py_0.8_suppressed_0.25_prep'=int.1,
+              'all_msm_idu_testing_1py_0.9_suppressed_0.5_prep'=int.2)
+  
+  bind_rows(as.data.frame(int.1), as.data.frame(int.2))
+}
+intervention.options = get.intervention.options.df()
+
 # Calculated variables
 page.width.half = round(page.width / 2)
 
@@ -659,8 +695,25 @@ server.routes.runModel.get.hiv <- function(
                 label='Multi-line dis-aggregation', 
                 choiceNames=demog.choiceNames,
                 choiceValues=demog.choiceValues,
-                selected=demog.choiceValues )) 
+                selected=demog.choiceValues )),
     
+      # [Testing dynamic loading] ####
+      
+      fluidRow(
+        column(
+          width=page.width,
+          box(
+            width=NULL, title="[Testing dynamic loading]",
+            status="primary", solidHeader=TRUE,
+            column(
+              width=page.width,
+              intervention.options %>%
+                selectInput(
+                  inputId='xxx', 
+                  # label='xxx', 
+                  label=intervention.options$target.groups,
+                  choices=c('xxx')
+      ))))) 
     ))))  # </list>  #returns
   })
   
@@ -680,4 +733,25 @@ if (server.options.boilerplate.on == T)
   server.routes.runModel.get = server.routes.runModel.get.boilerplate
 
 # Scratch ####
-# n/a
+# library(dataRetrieval)
+# library(tidyverse)
+# library(lubridate)
+# library(shiny)
+# library(shinyjs)
+# library(plotly)
+# library(here)
+# interface = paste(
+#   here(),"/visualization/shiny/R/plot_shiny_interface.R", sep='')
+# source(interface)
+# df = data.frame(a=1:1000, b=1:1000); View(df)
+# xxx = df %>% { df * df }
+# 
+# # inputId='aggregation-of-simulations-ran', 
+# # label='Aggregation of simulations ran', 
+# # choices=c(
+# #   'Mean and Prediction Interval'='mean.and.interval',
+# #   'Median and Prediction Interval'='median.and.interval',
+# #   'Individual Simulations'='individual.simulations'
+# 
+# #
+# xxx = data %>% { data$target.groups }
