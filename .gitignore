@@ -9,6 +9,7 @@
 cached
 cached_surveillance
 mcmc_runs
+env.R
 
 # User-specific
 ## joeflack4
