@@ -25,3 +25,10 @@ create.one.year.proportions <- function(age.proportions, #a vector with elements
 {
     or.age1 = age.proportions[1] * (1-age.proportions[3]) / (1-age.proportions[1]) / age.proportions[3]
 }
+
+
+#test code
+if (1==2)
+{
+    
+}

@@ -1,6 +1,7 @@
 
 #-- LIBRARY CALLS --#
 library(jheem)
+library(distributions)
 library(bayesian.simulations)
 library(data.table)
 

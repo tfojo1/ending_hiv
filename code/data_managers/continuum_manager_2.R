@@ -2,8 +2,10 @@
 if (1==2)
 {
     cm = create.continuum.manager(national.surveillance = national.surveillance,
-                                  suppression.anchor.year = 2010,
-                                  testing.anchor.year = 2010)
+                                  suppression.anchor.year = 2020,
+                                  testing.anchor.year = 2020)
+    ALL.DATA.MANAGERS$continuum = cm
+    save(ALL.DATA.MANAGERS, file='cached/ALL.DATA.MANAGERS.Rdata')
 }
 
 get.suppression.model <- function(cm,

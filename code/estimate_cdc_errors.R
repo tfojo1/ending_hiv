@@ -91,16 +91,16 @@ get.cdc.errors <- function(use.age.and.race=T, const.sd=0,
     #-- Load up the two data sources (estimated and not) --#
     if (use.total.msa.vs.atlas)
     {
-        load('../code/cached_surveillance/msa.surveillance.not.estimated.Rdata')
+        load('cached_surveillance/msa.surveillance.not.estimated.Rdata')
         estimated.data = msa.surveillance
-        load('../code/cached_surveillance/msa.surveillance.estimated.correct.to.county.Rdata')
+        load('cached_surveillance/msa.surveillance.estimated.correct.to.county.Rdata')
         nonestimated.data = msa.surveillance
     }
     else
     {
-        load('../code/cached_surveillance/msa.surveillance.estimated.Rdata')
+        load('cached_surveillance/msa.surveillance.estimated.Rdata')
         estimated.data = msa.surveillance
-        load('../code/cached_surveillance/msa.surveillance.not.estimated.Rdata')
+        load('cached_surveillance/msa.surveillance.not.estimated.Rdata')
         nonestimated.data = msa.surveillance
     }
 

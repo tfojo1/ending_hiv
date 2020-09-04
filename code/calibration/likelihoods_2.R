@@ -278,6 +278,7 @@ create.suppressed.likelihood <- function(location,
                                          backup.surv=state.surveillance,
                                          numerator.sd.inflation.if.backup=2,
                                          probability.decreasing.slope=0.05,
+                                         consider.decreasing.on.marginals=T,
                                          by.total=T,
                                          by.age=T,
                                          by.race=T,
@@ -378,6 +379,9 @@ create.suppressed.likelihood <- function(location,
                                     years=years,
                                     continuum='diagnosed',
                                     keep.dimensions=c('year','age','race','sex','risk'))
+        if (!consider.decreasing.on.marginals)
+            is.decreasing = as.numeric(rates[length(years),,,,] < rates[1,,,,])
+        
         rates = as.numeric(rates)
         
         #Multiply the denominators (as fraction of total population) by the total population 
@@ -420,31 +424,34 @@ create.suppressed.likelihood <- function(location,
         }
         else
         {
-            rates.age  = extract.suppression(sim,
-                                        years=years,
-                                        continuum='diagnosed',
-                                        keep.dimensions=c('year','age'),
-                                        use.cdc.categorizations = T)
-            rates.race = extract.suppression(sim,
-                                        years=years,
-                                        continuum='diagnosed',
-                                        keep.dimensions=c('year','race'),
-                                        use.cdc.categorizations = T)
-            rates.sex = extract.suppression(sim,
-                                        years=years,
-                                        continuum='diagnosed',
-                                        keep.dimensions=c('year','sex'),
-                                        use.cdc.categorizations = T)
-            rates.risk = extract.suppression(sim,
-                                        years=years,
-                                        continuum='diagnosed',
-                                        keep.dimensions=c('year','risk'),
-                                        use.cdc.categorizations = T)
-            is.decreasing = c(as.numeric(rates.age[length(years),] < rates.age[1,]),
-                              as.numeric(rates.race[length(years),] < rates.race[1,]),
-                              as.numeric(rates.sex[length(years),] < rates.sex[1,]),
-                              as.numeric(rates.risk[length(years),] < rates.risk[1,]))
-
+            if (consider.decreasing.on.marginals)
+            {
+                rates.age  = extract.suppression(sim,
+                                            years=years,
+                                            continuum='diagnosed',
+                                            keep.dimensions=c('year','age'),
+                                            use.cdc.categorizations = T)
+                rates.race = extract.suppression(sim,
+                                            years=years,
+                                            continuum='diagnosed',
+                                            keep.dimensions=c('year','race'),
+                                            use.cdc.categorizations = T)
+                rates.sex = extract.suppression(sim,
+                                            years=years,
+                                            continuum='diagnosed',
+                                            keep.dimensions=c('year','sex'),
+                                            use.cdc.categorizations = T)
+                rates.risk = extract.suppression(sim,
+                                            years=years,
+                                            continuum='diagnosed',
+                                            keep.dimensions=c('year','risk'),
+                                            use.cdc.categorizations = T)
+                is.decreasing = c(as.numeric(rates.age[length(years),] < rates.age[1,]),
+                                  as.numeric(rates.race[length(years),] < rates.race[1,]),
+                                  as.numeric(rates.sex[length(years),] < rates.sex[1,]),
+                                  as.numeric(rates.risk[length(years),] < rates.risk[1,]))
+            }
+            
             if (log)
                 lik.binary = sum(is.decreasing*log(probability.decreasing.slope) + (1-is.decreasing)*log(1-probability.decreasing.slope))
             else
@@ -480,11 +487,11 @@ create.knowledge.of.status.likelihood <- function(location,
         load('cached/knowledge_of_status_regressions.Rdata')
     
     #-- Set up for totals --#
-    total.suppression = get.surveillance.data(surv, location.codes = location, data.type='diagnosed', 
+    total.knowledge = get.surveillance.data(surv, location.codes = location, data.type='diagnosed', 
                                               years=years, throw.error.if.missing.data = F)
-    if (is.null(total.suppression))
+    if (is.null(total.knowledge))
     {
-        total.suppression = get.state.averaged.knowledge.of.status(msa=location,
+        total.knowledge = get.state.averaged.knowledge.of.status(msa=location,
                                                years=years,
                                                census.totals=census.totals,
                                                state.surveillance = state.surv)
@@ -494,15 +501,15 @@ create.knowledge.of.status.likelihood <- function(location,
         sd.mult = 1
 
     if (is.null(years))
-        total.years = as.numeric(names(total.suppression))
+        total.years = as.numeric(names(total.knowledge))
     else
         total.years = years
-    total.years = total.years[!is.na(total.suppression)]    
-    total.suppression = total.suppression[!is.na(total.suppression)]
+    total.years = total.years[!is.na(total.knowledge)]    
+    total.knowledge = total.knowledge[!is.na(total.knowledge)]
     
-    total.sds = total.numerator.sd(total.suppression) * sd.mult
+    total.sds = total.numerator.sd(total.knowledge) * sd.mult
     if (length(total.sds)==1)
-        total.sds = rep(total.sds, length(total.suppression))
+        total.sds = rep(total.sds, length(total.knowledge))
     
     diagnosed.prevalence.for.total = get.surveillance.data(surv, location.codes = location, data.type='prevalence',
                                                            years=total.years)
@@ -511,7 +518,7 @@ create.knowledge.of.status.likelihood <- function(location,
                                                              value.times=total.years[!is.na(diagnosed.prevalence.for.total)],
                                                              desired.times = total.years))
 
-    n.total = diagnosed.prevalence.for.total / total.suppression
+    n.total = diagnosed.prevalence.for.total / total.knowledge
     
     #-- Set up our 'years' argument (to include only years for which we have data) --# 
     if (is.null(years))

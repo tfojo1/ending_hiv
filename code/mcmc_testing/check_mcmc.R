@@ -5,10 +5,13 @@ if (1==2)
 
 source('code/source_code.R')
 
-mcmc = assemble.mcmc.from.cache('mcmc_runs/test_caches/la.73d_supp.wt.125_20K_2020-08-18/',T)
-mcmc = assemble.mcmc.from.cache('mcmc_runs/test_caches/la.81_supp.wt.1_20K_2020-08-18/',T)
-mcmc = assemble.mcmc.from.cache('mcmc_runs/test_caches/la.83_supp.wt.125_20K_2020-08-19/',T)
-    
+mcmc = assemble.mcmc.from.cache('mcmc_runs/test_caches/la.93b_supp.wt.1.decreasing.stratified_new.047cv.only_prev.058cv.only_prev.wt.25.no.cv.scaling_dx.wt.1_20K_2020-09-02/',T)
+mcmc = assemble.mcmc.from.cache('mcmc_runs/test_caches/la.94b_supp.wt.1.decreasing.stratified_new.047cv.only_prev.058cv.only_prev.wt.25.no.cv.scaling_dx.wt.1_20K_2020-09-02/',T)
+mcmc = assemble.mcmc.from.cache('mcmc_runs/test_caches/la.95_supp.wt.1.decreasing.stratified_new.047cv.only_prev.058cv.only_prev.wt.25.no.cv.scaling_dx.wt.1_20K_2020-09-03/',T)
+mcmc = assemble.mcmc.from.cache('mcmc_runs/test_caches/la.95_supp.wt.1.decreasing.stratified_new.047cv.only_prev.058cv.only_prev.wt.25.no.cv.scaling_dx.wt.1_idu.wt.32_20K_2020-09-03/',T)
+mcmc = assemble.mcmc.from.cache('mcmc_runs/test_caches/la.95_supp.wt.1.decreasing.stratified_new.047cv.only_prev.058cv.only_prev.wt.25.no.cv.scaling_dx.wt.1_idu.wt.8_20K_2020-09-03/',T)
+
+
 simset = extract.simset(mcmc, additional.burn=mcmc@n.iter/2, additional.thin=2^(as.numeric(mcmc@n.iter>100)+as.numeric(mcmc@n.iter>1000)))
 plot.calibration.race.risk(simset)
 plot.calibration.sex.age(simset)
@@ -20,8 +23,10 @@ plot.calibration.total(simset)
 plot.calibration.risk.race(simset)
 plot.calibration.race(simset)
 
+plot.calibration.idu.prevalence(simset, facet.by='sex')
+plot.calibration.idu.prevalence(simset, facet.by='race')
 
-#Breatk out suppression
+#Break out suppression
 plot.calibration.total(simset, data.types='suppression')
 plot.calibration.race(simset, data.types='suppression')
 plot.calibration.risk(simset, data.types='suppression')
