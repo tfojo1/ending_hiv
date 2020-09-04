@@ -357,16 +357,16 @@ create.msa.likelihood <- function(msa,
                                   EVERYTHING.WEIGHT=1/8,
                                   
                                   NEW.WEIGHT = 1,
-                                  PREV.WEIGHT = 1,
+                                  PREV.WEIGHT = 1/4,
                                   MORT.WEIGHT = 1,
                                   CUM.MORT.WEIGHT = 1,
-                                  IDU.WEIGHT = 64*8,
+                                  IDU.WEIGHT = 2,
                                   AIDS.DX.WEIGHT = 4,
-                                  TOTAL.DX.WEIGHT=1/8,
+                                  TOTAL.DX.WEIGHT=1,
                                   STRATIFIED.DX.WEIGHT=1/128/4,
-                                  SUPPRESSION.WEIGHT=1,
+                                  SUPPRESSION.WEIGHT=1/8,
                                   
-                                  prev.to.new.cv.ratio=1,
+                                  use.prev.to.new.cv.ratio=F,
                                   FOCUS.WEIGHT=1,#4,
                                   
                                   new.correlated.year.chunks=list(2008:2014, 2015:2018),
@@ -379,9 +379,10 @@ create.msa.likelihood <- function(msa,
                                   year.to.year.chunk.correlation=0.65,
                                   year.to.year.off.correlation=0.25,
                                   
-                                  measurement.error.cv.vs.sqrt.weight=0.5)
+                                  measurement.error.cv.vs.sqrt.weight=1,
+                                  measurement.error.sd.mult=1)
 {
-    
+    parameters = as.list(environment())
     
     #-- SETTINGS --#
 
@@ -396,20 +397,35 @@ create.msa.likelihood <- function(msa,
     SD.INFLATION.NEW = function(description){SD.INFLATION.NEW.NUM /
             (sqrt(FOCUS.WEIGHT)^as.numeric(to.focus(description)))}
     
-    NEW.SD = function(years, num){sqrt(measurement.error.cv.vs.sqrt.weight * (0.065*num)^2 +
-                                           (1-measurement.error.cv.vs.sqrt.weight) * (num^0.33)^2)}
+    NEW.SD = function(years, num){sqrt(measurement.error.cv.vs.sqrt.weight * (0.047*num)^2 +#from 2016 mult.exp
+#    NEW.SD = function(years, num){sqrt(measurement.error.cv.vs.sqrt.weight * (0.065*num)^2 +
+                                           (1-measurement.error.cv.vs.sqrt.weight) * (num^0.33)^2) *
+                                  measurement.error.sd.mult}
     
     
     #-- Elements for Prevalence --#
-    PREV.INFLATION = prev.to.new.cv.ratio * get.cv.weights(location=msa, weight.to='new')['prevalence']
-    
+    if (use.prev.to.new.cv.ratio)
+        PREV.INFLATION = get.cv.weights(location=msa, weight.to='new')['prevalence']
+    else
+        PREV.INFLATION = 1
+        
     SD.INFLATION.PREV.NUM = 1/sqrt(PREV.WEIGHT)/sqrt(EVERYTHING.WEIGHT)*PREV.INFLATION
     SD.INFLATION.PREV = function(description){SD.INFLATION.PREV.NUM /
             (sqrt(FOCUS.WEIGHT)^as.numeric(to.focus(description)))}
     
-    PREV.SD = function(years, num){sqrt(measurement.error.cv.vs.sqrt.weight * (0.09*num)^2 + 
-                                            (1-measurement.error.cv.vs.sqrt.weight) * (num^0.69)^2)}
+    #PREV.SD = function(years, num){sqrt(measurement.error.cv.vs.sqrt.weight * (0.09*num)^2 + 
+     #                                       (1-measurement.error.cv.vs.sqrt.weight) * (num^0.69)^2) *
+      #                              measurement.error.sd.mult}
     
+    #from 2009 intra-msa estimates
+    PREV.SD = function(years, num){sqrt(measurement.error.cv.vs.sqrt.weight * (0.058*num)^2 + 
+                                            (1-measurement.error.cv.vs.sqrt.weight) * (num^0.51)^2) *
+            measurement.error.sd.mult}
+    
+    #from 2009-2014 intra-msa estimates
+    #PREV.SD = function(years, num){sqrt(measurement.error.cv.vs.sqrt.weight * (0.034*num)^2 + 
+     #                                      (1-measurement.error.cv.vs.sqrt.weight) * (num^0.47)^2) *
+      #    measurement.error.sd.mult}
     
     #-- Elements for Mortality --#
     SD.INFLATION.MORT = 1/sqrt(MORT.WEIGHT)/sqrt(EVERYTHING.WEIGHT)
@@ -434,6 +450,7 @@ create.msa.likelihood <- function(msa,
     SUPPRESSION.SD.INFLATION = 1/sqrt(SUPPRESSION.WEIGHT)/sqrt(EVERYTHING.WEIGHT)
     SUPPRESSED.STATE.SD.INFLATION = 3
     PROBABILITY.SUPPRESSION.DECREASING = 0.05
+    CONSIDER.DECREASING.ON.MARGINALS = T
     
     #-- Elements for IDU --#
     IDU.LOG.SD = log(2) / sqrt(EVERYTHING.WEIGHT) / sqrt(IDU.WEIGHT)
@@ -532,7 +549,8 @@ create.msa.likelihood <- function(msa,
                                                   sd.inflation=SUPPRESSION.SD.INFLATION,
                                                   inflate.sd.by.n.obs.per.year = F,
                                                   numerator.sd.inflation.if.backup=SUPPRESSED.STATE.SD.INFLATION,
-                                                  probability.decreasing.slope=PROBABILITY.SUPPRESSION.DECREASING)
+                                                  probability.decreasing.slope=PROBABILITY.SUPPRESSION.DECREASING,
+                                                  consider.decreasing.on.marginals=CONSIDER.DECREASING.ON.MARGINALS)
     
     dx.lik = create.knowledge.of.status.likelihood(location=msa,
                                                    surv=msa.surveillance,
@@ -576,8 +594,9 @@ create.msa.likelihood <- function(msa,
                                                        cum.mort=cum.mort.lik, 
                                                        aids=aids.lik)
 
-
-    attr(full.likelihood, 'parameters') = list(EVERYTHING.WEIGHT=EVERYTHING.WEIGHT,
+    attr(full.likelihood, 'parameters') = parameters
+    
+    attr(full.likelihood, 'elements') = list(EVERYTHING.WEIGHT=EVERYTHING.WEIGHT,
                                                PREV.SD=PREV.SD,
                                                NEW.SD=NEW.SD,
                                                MORT.SD=MORT.SD,

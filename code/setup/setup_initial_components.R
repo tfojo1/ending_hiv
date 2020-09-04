@@ -71,7 +71,7 @@ setup.initial.components <- function(msa=BALTIMORE.MSA,
                                               idu.transition.end.year=run.to.year)
 
     msa.components = setup.trate.years(msa.components,
-                                       routes='msm',
+                                       routes=c('msm','msm.idu'),
                                        t.pre.peak=msm.pre.spike.year,
                                        t.peak.start=msm.spike.start.year,
                                        t.peak.end=msm.spike.end.year,
@@ -83,7 +83,7 @@ setup.initial.components <- function(msa=BALTIMORE.MSA,
                                        t.end=run.to.year)
 
     msa.components = setup.trate.years(msa.components,
-                                       routes='msm',
+                                       routes=c('msm','msm.idu'),
                                        age.indices = 1:2,
                                        t0.end = msm.young.t0)
 
@@ -105,7 +105,7 @@ setup.initial.components <- function(msa=BALTIMORE.MSA,
                                        t0.end = heterosexual.young.t0)
 
     msa.components = setup.trate.years(msa.components,
-                                       routes='idu',
+                                       routes=c('idu.msm','idu.male','idu.female'),
                                        t.pre.peak=idu.pre.spike.year,
                                        t.peak.start=idu.spike.start.year,
                                        t.peak.end=idu.spike.end.year,

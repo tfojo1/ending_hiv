@@ -316,10 +316,7 @@ setup.components.for.msa <- function(msa,
                               black.black.oe = data.managers$pairing$idu.oe.race['black','black'],
                               hispanic.hispanic.oe = data.managers$pairing$idu.oe.race['hispanic','hispanic'],
                               other.other.oe = data.managers$pairing$idu.oe.race['other','other'])
-    comps = setup.idu.by.sex(comps, sex.oes = data.managers$pairing$idu.oe.sex,
-                             female.susceptibility.ratio=1,
-                             msm.susceptibility.ratio=1,
-                             heterosexual.male.susceptibility.ratio=1)
+    comps = setup.idu.by.sex(comps, sex.oes = data.managers$pairing$idu.oe.sex)
 
     #-- Sexual availability --#
 

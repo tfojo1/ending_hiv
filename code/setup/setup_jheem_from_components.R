@@ -191,10 +191,10 @@ do.setup.crunch.or.fix <- function(components,
         (setting == PRODUCE.FROM.FIXED && comp.was.null) ||
         (setting == FIX && !comp.was.null)))
     {
-        for (i in 1:length(components$years.for.idu.transitions))
+        for (i in 1:length(components$interpolated.idu.transition.years))
         {
-            jheem = set.transition.array.hiv.negative(jheem, components$idu.transitions[[i]], time=components$years.for.idu.transitions[i])
-            jheem = set.transition.array.hiv.positive(jheem, components$idu.transitions[[i]], time=components$years.for.idu.transitions[i])
+            jheem = set.transition.array.hiv.negative(jheem, components$idu.transitions[[i]], time=components$interpolated.idu.transition.years[i])
+            jheem = set.transition.array.hiv.positive(jheem, components$idu.transitions[[i]], time=components$interpolated.idu.transition.years[i])
         }
     }
 
@@ -880,14 +880,53 @@ do.setup.idu.transitions <- function(components)
         if (is.null(components$incident.idu) || is.null(components$idu.remission) || is.null(components$idu.relapse))
             stop("IDU transition parameters have not been set in the components for the JHEEM")
 
-        idu.transitions = get.general.transition.array.skeleton(components$jheem, transition.dimension='risk')
-        components$idu.transitions = lapply(1:length(components$years.for.idu.transitions), function(i){
-            idu.transitions[,,,,'never_IDU','active_IDU'] = components$incident.idu[[i]]
-            idu.transitions[,,,,'active_IDU','IDU_in_remission'] = components$idu.remission[[i]]
-            idu.transitions[,,,,'IDU_in_remission', 'active_IDU'] = components$idu.relapse[[i]]
-
-            idu.transitions
-        })
+        if (length(components$years.for.idu.transitions)==2)
+        {
+            components$interpolated.idu.transition.years = components$years.for.idu.transitions[1]:components$end.year.idu.transition
+            
+            multi.incident.idu = calculate.change.ratios.logistic.array(r0.arr=components$incident.idu[[1]],
+                                                                        r1.arr=components$incident.idu[[2]],
+                                                                        times=components$interpolated.idu.transition.years,
+                                                                        t0=components$years.for.idu.transitions[1],
+                                                                        t1=components$years.for.idu.transitions[2],
+                                                                        fraction.of.asymptote.after.end=components$fraction.idu.transitions.change.after.last.year,
+                                                                        fraction.of.asymptote.before.start=0.025)
+            multi.idu.remission = calculate.change.ratios.logistic.array(r0.arr=components$idu.remission[[1]],
+                                                                         r1.arr=components$idu.remission[[2]],
+                                                                         times=components$interpolated.idu.transition.years,
+                                                                         t0=components$years.for.idu.transitions[1],
+                                                                         t1=components$years.for.idu.transitions[2],
+                                                                         fraction.of.asymptote.after.end=components$fraction.idu.transitions.change.after.last.year,
+                                                                         fraction.of.asymptote.before.start=0.025)
+            multi.idu.relapse = calculate.change.ratios.logistic.array(r0.arr=components$idu.relapse[[1]],
+                                                                       r1.arr=components$idu.relapse[[2]],
+                                                                       times=components$interpolated.idu.transition.years,
+                                                                       t0=components$years.for.idu.transitions[1],
+                                                                       t1=components$years.for.idu.transitions[2],
+                                                                       fraction.of.asymptote.after.end=components$fraction.idu.transitions.change.after.last.year,
+                                                                       fraction.of.asymptote.before.start=0.025)
+            
+            idu.transitions = get.general.transition.array.skeleton(components$jheem, transition.dimension='risk')
+            components$idu.transitions = lapply(1:length(1:length(multi.incident.idu)), function(i){
+                idu.transitions[,,,,'never_IDU','active_IDU'] = multi.incident.idu[[i]]
+                idu.transitions[,,,,'active_IDU','IDU_in_remission'] = multi.idu.remission[[i]]
+                idu.transitions[,,,,'IDU_in_remission', 'active_IDU'] = multi.idu.relapse[[i]] 
+                
+                idu.transitions
+            })
+        }
+        else
+        {
+            idu.transitions = get.general.transition.array.skeleton(components$jheem, transition.dimension='risk')
+            components$idu.transitions = lapply(1:length(components$years.for.idu.transitions), function(i){
+                idu.transitions[,,,,'never_IDU','active_IDU'] = components$incident.idu[[i]]
+                idu.transitions[,,,,'active_IDU','IDU_in_remission'] = components$idu.remission[[i]]
+                idu.transitions[,,,,'IDU_in_remission', 'active_IDU'] = components$idu.relapse[[i]]
+    
+                idu.transitions
+            })
+            components$interpolated.idu.transition.years = components$years.for.idu.transitions
+        }
     }
     else
     {
@@ -1062,8 +1101,8 @@ get.background.proportions <- function(base.model,
 
 add.additional.betas.to.array <- function(arr, additional.betas,
                                           idu.applies.to.in.remission=T,
-                                          idu.applies.to.msm.idu=T,
-                                          msm.applies.to.msm.idu=T)
+                                          idu.applies.to.msm.idu=!any(grepl('msm_idu', names(additional.betas))),
+                                          msm.applies.to.msm.idu=!any(grepl('msm_idu', names(additional.betas))))
 {
     if (idu.applies.to.in.remission)
         idu.strata = c('active_IDU','IDU_in_remission')
@@ -1104,6 +1143,8 @@ add.additional.betas.to.array <- function(arr, additional.betas,
         else if (grepl('other', name, ignore.case = T))
             arr[,'other',,] = arr[,'other',,] + additional.betas[name]
         
+        else if (grepl('msm_idu', name, ignore.case=T))
+            arr[,,'msm',idu.strata] = arr[,,'msm',idu.strata] + additional.betas[name]
         else if (grepl('idu', name, ignore.case = T))
             arr[,,idu.sexes,idu.strata] = arr[,,idu.sexes,idu.strata] + additional.betas[name]
         else if (grepl('msm', name, ignore.case = T))
@@ -1457,24 +1498,13 @@ do.setup.transmissibility <- function(components)
             transmissibility[,,,,,,components$settings$ACUTE_STATES,] * acute.transmissibility.rr[,,,,,,components$settings$ACUTE_STATES,]
         sexual.transmissibility = idu.transmissibility = transmissibility
 
-#        access(idu.transmissibility, continuum=components$settings$DIAGNOSED_STATES) =
-#            access(idu.transmissibility, continuum=components$settings$DIAGNOSED_STATES) * components$diagnosed.needle.sharing.rr
         idu.transmissibility[,,,,,components$settings$DIAGNOSED_STATES,,] =
             idu.transmissibility[,,,,,components$settings$DIAGNOSED_STATES,,] * components$diagnosed.needle.sharing.rr
 
-#        access(sexual.transmissibility, continuum=components$settings$DIAGNOSED_STATES, sex='heterosexual_male') =
-#            access(sexual.transmissibility, continuum=components$settings$DIAGNOSED_STATES, sex='heterosexual_male') *
-#            components$diagnosed.het.male.condomless.rr
         sexual.transmissibility[,,,'heterosexual_male',,components$settings$DIAGNOSED_STATES,,] =
             sexual.transmissibility[,,,'heterosexual_male',,components$settings$DIAGNOSED_STATES,,] * components$diagnosed.het.male.condomless.rr
-#        access(sexual.transmissibility, continuum=components$settings$DIAGNOSED_STATES, sex='female') =
-#            access(sexual.transmissibility, continuum=components$settings$DIAGNOSED_STATES, sex='female') *
-#            components$diagnosed.female.condomless.rr
         sexual.transmissibility[,,,'female',,components$settings$DIAGNOSED_STATES,,] =
             sexual.transmissibility[,,,'female',,components$settings$DIAGNOSED_STATES,,] * components$diagnosed.female.condomless.rr
-#        access(sexual.transmissibility, continuum=components$settings$DIAGNOSED_STATES, sex='msm') =
-#            access(sexual.transmissibility, continuum=components$settings$DIAGNOSED_STATES, sex='msm') *
-#            components$diagnosed.msm.condomless.rr
         sexual.transmissibility[,,,'msm',,components$settings$DIAGNOSED_STATES,,] =
             sexual.transmissibility[,,,'msm',,components$settings$DIAGNOSED_STATES,,] * components$diagnosed.msm.condomless.rr
 
@@ -1482,13 +1512,9 @@ do.setup.transmissibility <- function(components)
         {
             for (race in names(components$idu.transmissibility.rr.by.race))
                 idu.transmissibility[,race,,,,,,] = idu.transmissibility[,race,,,,,,] * components$idu.transmissibility.rr.by.race[race]
-#                access(idu.transmissibility, race=race) = access(idu.transmissibility, race=race) *
-#                components$idu.transmissibility.rr.by.race[race]
         }
         for (race in names(components$sexual.transmissibility.rr.by.race))
             sexual.transmissibility[,race,,,,,,] = sexual.transmissibility[,race,,,,,,] * components$sexual.transmissibility.rr.by.race[race]
-#            access(idu.transmissibility, race=race) = access(idu.transmissibility, race=race) *
-#            components$sexual.transmissibility.rr.by.race[race]
 
         #-- Pull year-specific suppression --#
 
@@ -1501,20 +1527,11 @@ do.setup.transmissibility <- function(components)
 
             sexual.transmissibility.for.year = sexual.transmissibility
 
-#            expanded.unsuppressed = 1 - access(expand.population.to.hiv.positive(components$jheem, suppressed.proportions), continuum=components$settings$DIAGNOSED_STATES)
-#            expanded.unsuppressed = 1 - expand.population.to.hiv.positive(components$jheem, suppressed.proportions)[,,,,,components$settings$DIAGNOSED_STATES,,]
             expanded.unsuppressed = 1 - suppressed.proportions[,,,,,components$settings$DIAGNOSED_STATES,,]
-
-#            access(sexual.transmissibility.for.year, continuum=components$settings$DIAGNOSED_STATES) =
-#                access(sexual.transmissibility.for.year, continuum=components$settings$DIAGNOSED_STATES) *
-#                expanded.unsuppressed
 
             sexual.transmissibility.for.year[,,,,,components$settings$DIAGNOSED_STATES,,] =
                 sexual.transmissibility.for.year[,,,,,components$settings$DIAGNOSED_STATES,,] * expanded.unsuppressed
 
-#print(expanded.unsuppressed[,1,'msm',1,1])
-#            sexual.transmissibility.for.year[1,1,1,'msm',1,3,1,1]=100
-#print(sexual.transmissibility.for.year[,1,1,'msm',1,,1,1])
             sexual.transmissibility.for.year
         })
         components$sexual.transmissibility.years = suppression$times
@@ -1525,13 +1542,8 @@ do.setup.transmissibility <- function(components)
 
                 idu.transmissibility.for.year = idu.transmissibility
 
-#                expanded.unsuppressed = 1 - access(expand.population.to.hiv.positive(components$jheem, suppressed.proportions), continuum=components$settings$DIAGNOSED_STATES)
-#                expanded.unsuppressed = 1 - expand.population.to.hiv.positive(components$jheem, suppressed.proportions)[,,,,,components$settings$DIAGNOSED_STATES,,]
                 expanded.unsuppressed = 1 - suppressed.proportions[,,,,,components$settings$DIAGNOSED_STATES,,]
 
-#                access(idu.transmissibility.for.year, continuum=components$settings$DIAGNOSED_STATES) =
-#                    access(idu.transmissibility.for.year, continuum=components$settings$DIAGNOSED_STATES) *
-#                    expanded.unsuppressed
                 idu.transmissibility.for.year[,,,,,components$settings$DIAGNOSED_STATES,,] =
                     idu.transmissibility.for.year[,,,,,components$settings$DIAGNOSED_STATES,,] * expanded.unsuppressed
 
@@ -1590,9 +1602,6 @@ do.setup.sexual.contact <- function(components)
         sexual.transmission.by.age[1,,] = sexual.transmission.by.age[1,,] *
             sum(age1.raw.counts) / sum(age.1.available.counts)
 
-   #     sexual.transmission.by.age[1,,] = sexual.transmission.by.age[1,,] * 1.1
-
-   #     sexual.transmission.by.age[1,,'msm'] = sexual.transmission.by.age[1,,'msm'] * 2
 
         #-- Sex by Race --#
 
@@ -1695,43 +1704,55 @@ do.setup.sexual.contact <- function(components)
     components
 }
 
-get.sexual.transmission.arrays <- function(components)
+get.sexual.transmission.arrays <- function(components,
+                                           idu.applies.to.in.remission=F)
 {
-    sexual.transmission.skeleton = get.contact.array.skeleton(components$jheem, race=T, sex=T, age=T)
-    sexual.transmission.mapping = get.contact.array.skeleton(components$jheem, race=T, sex=T, age=T, '')
+    sexual.transmission.skeleton = get.contact.array.skeleton(components$jheem, race=T, sex=T, age=T, risk=T)
+    sexual.transmission.mapping = get.contact.array.skeleton(components$jheem, race=T, sex=T, age=T, risk=T, '')
     sexual.transmission.mapping[] = as.character(NA)
 
     rates.and.times.list = list()
 
+    if (idu.applies.to.in.remission)
+        idu.strata = c('active_IDU','IDU_in_remission')
+    else
+        idu.strata = 'active_IDU'
+    non.idu.strata = setdiff(c('never_IDU','active_IDU','IDU_in_remission'), idu.strata)
+    
     for (race in components$jheem$race)
     {
         for (age.index in 1:length(components$jheem$age$labels))
         {
             age = paste0('age', age.index)
-
+            
             msm.trates = calculate.changing.trates.and.times(components$msm.trates[[race]][[age]])
+            msm.idu.trates = calculate.changing.trates.and.times(components$msm.idu.trates[[race]][[age]])
 
             heterosexual.male.trates = calculate.changing.trates.and.times(components$heterosexual.male.trates[[race]][[age]])
             heterosexual.female.trates = calculate.changing.trates.and.times(components$heterosexual.female.trates[[race]][[age]])
 
             msm.name = paste0(race, '.', age, '.msm')
+            msm.idu.name = paste0(race, '.', age, '.msm.idu')
             het.male.name = paste0(race, '.', age, '.het.male')
             het.female.name = paste0(race, '.', age, '.female')
 
             to.add = list(msm.trates,
+                          msm.idu.trates,
                           heterosexual.male.trates,
                           heterosexual.female.trates)
-            names(to.add) = c(msm.name, het.male.name, het.female.name)
+            names(to.add) = c(msm.name, msm.idu.name, het.male.name, het.female.name)
             rates.and.times.list = c(rates.and.times.list,
                                      to.add)
 
-
-            sexual.transmission.mapping[,,,age.index,race,'msm'] = msm.name
-            sexual.transmission.mapping[,,,age.index,race,'heterosexual_male'] = het.male.name
-            sexual.transmission.mapping[,,,age.index,race,'female'] = het.female.name
             
-            #This line lets msm transmission rates apply to heterosexual males engaging in sex with males
-            sexual.transmission.mapping[,,c('heterosexual_male','msm'),age.index,race,'heterosexual_male'] = msm.name
+            sexual.transmission.mapping[,,,,age.index,race,'msm',non.idu.strata] = msm.name
+            sexual.transmission.mapping[,,,,age.index,race,'msm',idu.strata] = msm.idu.name
+            sexual.transmission.mapping[,,,,age.index,race,'heterosexual_male',] = het.male.name
+            sexual.transmission.mapping[,,,,age.index,race,'female',] = het.female.name
+            
+            #These lines lets msm transmission rates apply to heterosexual males engaging in sex with males
+            sexual.transmission.mapping[,,c('heterosexual_male','msm'),,age.index,race,'heterosexual_male',non.idu.strata] = msm.name
+            sexual.transmission.mapping[,,c('heterosexual_male','msm'),,age.index,race,'heterosexual_male',idu.strata] = msm.idu.name
         }
     }
 
@@ -1777,29 +1798,10 @@ do.setup.idu.contact <- function(components)
                                                    components$proportions.msm.of.male)
         sex.counts = apply(population, 'sex', sum)
         idu.transmission.by.sex = get.pairing.proportions(components$idu.transmission$sex.oes, sex.counts)
-       
-        idu.transmission.by.sex[,'female'] = idu.transmission.by.sex['female',] * components$female.idu.susceptibility.ratio
-        idu.transmission.by.sex[,'msm'] = idu.transmission.by.sex['msm',] * components$msm.idu.susceptibility.ratio
-        idu.transmission.by.sex[,'heterosexual_male'] = idu.transmission.by.sex['heterosexual_male',] * components$heterosexual.male.idu.susceptibility.ratio
-        
+
         #-- IDU Transmission --#
-        # ASSUMING HERE THAT ALL AGES ARE THE SAME
-        black.idu.trates = calculate.changing.trates.and.times(components$idu.trates$black[[1]])
-        hispanic.idu.trates = calculate.changing.trates.and.times(components$idu.trates$hispanic[[1]])
-        other.idu.trates = calculate.changing.trates.and.times(components$idu.trates$other[[1]])
 
-        idu.transmission.skeleton = get.contact.array.skeleton(components$jheem, race=T)
-        idu.transmission.mapping = get.contact.array.skeleton(components$jheem, race=T, '')
-        #make our mapping onto race.to (not race from)
-        idu.transmission.mapping[,'black'] = 'black'
-        idu.transmission.mapping[,'hispanic'] = 'hispanic'
-        idu.transmission.mapping[,'other'] = 'other'
-
-        idu.transmission.arrays = array.merge.rates(skeleton.array = idu.transmission.skeleton,
-                                             rates.and.times.list = list(black=black.idu.trates,
-                                                                         hispanic=hispanic.idu.trates,
-                                                                         other=other.idu.trates),
-                                             array.indices.into.list = idu.transmission.mapping)
+        idu.transmission.arrays = get.idu.transmission.arrays(components)
 
         #-- Put it all together and set it --#
         components$idu.contact.arrays = lapply(idu.transmission.arrays$rates, function(idu.transmission)
@@ -1821,6 +1823,50 @@ do.setup.idu.contact <- function(components)
     }
 
     components
+}
+
+
+get.idu.transmission.arrays <- function(components)
+{
+    idu.transmission.skeleton = get.contact.array.skeleton(components$jheem, race=T, sex=T, age=T)
+    idu.transmission.mapping = get.contact.array.skeleton(components$jheem, race=T, sex=T, age=T, '')
+    idu.transmission.mapping[] = as.character(NA)
+    
+    rates.and.times.list = list()
+    
+    for (race in components$jheem$race)
+    {
+        for (age.index in 1:length(components$jheem$age$labels))
+        {
+            age = paste0('age', age.index)
+            
+            msm.trates = calculate.changing.trates.and.times(components$idu.msm.trates[[race]][[age]])
+            heterosexual.male.trates = calculate.changing.trates.and.times(components$idu.male.trates[[race]][[age]])
+            female.trates = calculate.changing.trates.and.times(components$idu.female.trates[[race]][[age]])
+            
+            msm.name = paste0(race, '.', age, '.msm')
+            het.male.name = paste0(race, '.', age, '.het.male')
+            female.name = paste0(race, '.', age, '.female')
+            
+            to.add = list(msm.trates,
+                          heterosexual.male.trates,
+                          female.trates)
+            names(to.add) = c(msm.name, het.male.name, female.name)
+            rates.and.times.list = c(rates.and.times.list,
+                                     to.add)
+            
+            
+            idu.transmission.mapping[,,,age.index,race,'msm'] = msm.name
+            idu.transmission.mapping[,,,age.index,race,'heterosexual_male'] = het.male.name
+            idu.transmission.mapping[,,,age.index,race,'female'] = female.name
+        }
+    }
+    
+    idu.transmission.arrays = array.merge.rates(skeleton.array = idu.transmission.skeleton,
+                                                   rates.and.times.list = rates.and.times.list,
+                                                   array.indices.into.list = idu.transmission.mapping)
+    
+    idu.transmission.arrays
 }
 
 do.setup.new.infection.proportions <- function(components)
