@@ -154,8 +154,8 @@ server <- function(input, output, session) {
   # - Alternative method: ggplotly
   # `# output$mainPlot = renderPlotly({ p = ggplot(); ggplotly(p) })``
   
-  # TODO: connect to plot
   # observeEvent(input$res_main, {
+  
   observeEvent(input$reset_main, {
     # res_main()
     output$mainPlot = renderPlotly({
@@ -164,7 +164,7 @@ server <- function(input, output, session) {
         version=version,
         location=input[['geographic-location']],
         intervention.names=input[['public-health-interventions']],
-        years=input[['years']],
+        years=input[['years']][1]:input[['years']][2],
         data.types=input[['epidemiological-indicators']],
         facet.by=input[['facet']],
         split.by=input[['split']],
