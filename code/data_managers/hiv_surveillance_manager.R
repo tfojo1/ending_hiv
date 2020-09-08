@@ -1253,6 +1253,9 @@ read.total.msa.data.from.counties <- function(msas,
         }
     }
     
+    #Set NA for clearly incorrect Cook county prevalence 2010-2011 
+    rv$prevalence.all[c('2010','2011'),'16980'] = NA
+    
     rv$new.all[rv$new.all<0] = NA
     rv$prevalence.all[rv$prevalence.all<0] = NA
     
@@ -1376,7 +1379,7 @@ correct.to.county.totals <- function(rv,
     }
     
     rv
-}
+} 
 
 #uses backups to calculate scaling factor if there are some NAs in target.to
 correct.array.to.total <- function(to.correct,

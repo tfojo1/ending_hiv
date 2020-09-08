@@ -340,7 +340,7 @@ create.suppressed.likelihood <- function(location,
 
     transformation.mapping = make.transformation.mapping(likelihood.elements$transformation.matrix)
     likelihood.elements$transformation.matrix = likelihood.elements$transformation.matrix[,transformation.mapping$first.in.signature]
-    
+     
     if (inflate.sd.by.n.obs.per.year || upweight.by.n.obs.per.year)
     {
         year = substr(likelihood.elements$descriptions, 1, 4)
