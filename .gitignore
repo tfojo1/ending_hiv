@@ -9,7 +9,9 @@
 cached
 cached_surveillance
 mcmc_runs
+results
 env.R
+visualization/test_simset.Rdata
 
 # User-specific
 ## joeflack4
