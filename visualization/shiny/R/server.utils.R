@@ -16,7 +16,6 @@ source('env.R')
 #   "AWS_SECRET_ACCESS_KEY"="mysecretkey",
 #   "AWS_DEFAULT_REGION"="us-east-1")
 
-
 # Constants ####
 config.test.testMode.on = FALSE
 config.test.runTests = FALSE
@@ -43,8 +42,9 @@ s3.list <- function(
   if (test.on == T) 
     return(config.test.filenames)
   else {
-    items = get_bucket(bucket=bucket.name)
-    return(items) }
+    items.list = get_bucket(bucket=bucket.name)
+    items.names = sapply(items.list, function(x) x$Key )
+    return(items.names) }
 }
 
 sims.list <- function(
@@ -165,17 +165,14 @@ if (config.test.runTests == T) {
 # Scratch ####
 
 # Temp testing:
-# buckets.df = bucketlist()
-# buckets.names = buckets.df[, 'Bucket']
-# testfile.name = 'test-file.txt'
-# sims.save(
-#   objOrFilepath='This is a test.',
-#   s3Obj.filename=testfile.name)
-# sims.list()
-# static.save(
-#   objOrFilepath='This is a test.',
-#   s3Obj.filename=testfile.name)
-# static.list()
+sims.save(
+  objOrFilepath='This is a test 2.',
+  s3Obj.filename='dfssdffsffs')
+simsList = sims.list()
+static.save(
+  objOrFilepath='This is a test.',
+  s3Obj.filename=testfile.name)
+staticList = static.list()
 
 # TODO: @Todd: I got an error when loading the plain text file I saved,
 # but not sure if this will be a problem with the objects you save. We
@@ -183,6 +180,6 @@ if (config.test.runTests == T) {
 # directly: https://s3.console.aws.amazon.com/s3/buckets/endinghiv.sims/?region=us-east-1&tab=overview
 # sim.test = sims.load(testfile.name)
 # static.test = sims.load(testfile.name)
-# xxx = s3load(
-#   object=testfile.name, 
-#   bucket='endinghiv.static')
+xxx = s3load(
+  object=testfile.name,
+  bucket='endinghiv.static')
