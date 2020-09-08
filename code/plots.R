@@ -1191,12 +1191,12 @@ plot.calibration <- function(sims,
 ##-- HELPERS --##
 ##-------------##
 
-
+ 
 
 
 int.breaks <- function(x)
 {
-    mask = round(x)==x
+    mask = !is.na(x) & round(x)==x
     rv = rep('', length(x))
     rv[mask] = as.character(round(x)[mask])
 

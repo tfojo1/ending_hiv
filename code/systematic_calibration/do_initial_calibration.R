@@ -11,6 +11,7 @@ source('code/targets/target_msas.R')
 
 set.seed(5556)
  
-msa=LA.MSA
+msa=CHICAGO.MSA 
+print(paste0("Setting up to run initial MCMC on ", msa.names(msa)))
 #mcmc = run.initial.mcmc.for.msa(msa)
 mcmc = setup.initial.mcmc.for.msa(msa, run=T)

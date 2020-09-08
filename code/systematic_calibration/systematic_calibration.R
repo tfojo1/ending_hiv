@@ -356,15 +356,15 @@ run.mcmc.for.msa.cache <- function(cache.dir,
 create.msa.likelihood <- function(msa,
                                   EVERYTHING.WEIGHT=1/8,
                                   
-                                  NEW.WEIGHT = 1,
-                                  PREV.WEIGHT = 1/4,
+                                  NEW.WEIGHT = 1/2,
+                                  PREV.WEIGHT = 1/8,
                                   MORT.WEIGHT = 1,
                                   CUM.MORT.WEIGHT = 1,
-                                  IDU.WEIGHT = 2,
+                                  IDU.WEIGHT = 1,
                                   AIDS.DX.WEIGHT = 4,
                                   TOTAL.DX.WEIGHT=1,
                                   STRATIFIED.DX.WEIGHT=1/128/4,
-                                  SUPPRESSION.WEIGHT=1/8,
+                                  SUPPRESSION.WEIGHT=1/4,
                                   
                                   use.prev.to.new.cv.ratio=F,
                                   FOCUS.WEIGHT=1,#4,
@@ -381,15 +381,15 @@ create.msa.likelihood <- function(msa,
                                   
                                   measurement.error.cv.vs.sqrt.weight=1,
                                   measurement.error.sd.mult=1)
-{
+{ 
     parameters = as.list(environment())
     
     #-- SETTINGS --#
 
     # The demographic groups to which we want to give added weight
     to.focus = function(description){
-        (grepl(' male',description) & (grepl('13-24', description) | grepl('25-34',description))) |
-            (grepl('black, msm$',description) | grepl('hispanic, msm$', description))
+        (grepl(' male',description) & (grepl('13-24', description) | grepl('25-34',description)))# |
+           # (grepl('black, msm$',description) | grepl('hispanic, msm$', description))
     }
     
     #-- Elements for New Diagnoses --#
@@ -397,8 +397,8 @@ create.msa.likelihood <- function(msa,
     SD.INFLATION.NEW = function(description){SD.INFLATION.NEW.NUM /
             (sqrt(FOCUS.WEIGHT)^as.numeric(to.focus(description)))}
     
-    NEW.SD = function(years, num){sqrt(measurement.error.cv.vs.sqrt.weight * (0.047*num)^2 +#from 2016 mult.exp
-#    NEW.SD = function(years, num){sqrt(measurement.error.cv.vs.sqrt.weight * (0.065*num)^2 +
+  #  NEW.SD = function(years, num){sqrt(measurement.error.cv.vs.sqrt.weight * (0.047*num)^2 +#from 2016 mult.exp
+    NEW.SD = function(years, num){sqrt(measurement.error.cv.vs.sqrt.weight * (0.065*num)^2 +
                                            (1-measurement.error.cv.vs.sqrt.weight) * (num^0.33)^2) *
                                   measurement.error.sd.mult}
     
@@ -416,16 +416,21 @@ create.msa.likelihood <- function(msa,
     #PREV.SD = function(years, num){sqrt(measurement.error.cv.vs.sqrt.weight * (0.09*num)^2 + 
      #                                       (1-measurement.error.cv.vs.sqrt.weight) * (num^0.69)^2) *
       #                              measurement.error.sd.mult}
+
+    #from 2015 estimates vs atlas
+#    PREV.SD = function(years, num){sqrt(measurement.error.cv.vs.sqrt.weight * (0.083*num)^2 + 
+#                                           (1-measurement.error.cv.vs.sqrt.weight) * (num^0.51)^2) *
+#            measurement.error.sd.mult}
     
     #from 2009 intra-msa estimates
-    PREV.SD = function(years, num){sqrt(measurement.error.cv.vs.sqrt.weight * (0.058*num)^2 + 
-                                            (1-measurement.error.cv.vs.sqrt.weight) * (num^0.51)^2) *
-            measurement.error.sd.mult}
+#    PREV.SD = function(years, num){sqrt(measurement.error.cv.vs.sqrt.weight * (0.058*num)^2 + 
+#                                            (1-measurement.error.cv.vs.sqrt.weight) * (num^0.51)^2) *
+#            measurement.error.sd.mult}
     
     #from 2009-2014 intra-msa estimates
-    #PREV.SD = function(years, num){sqrt(measurement.error.cv.vs.sqrt.weight * (0.034*num)^2 + 
-     #                                      (1-measurement.error.cv.vs.sqrt.weight) * (num^0.47)^2) *
-      #    measurement.error.sd.mult}
+    PREV.SD = function(years, num){sqrt(measurement.error.cv.vs.sqrt.weight * (0.034*num)^2 + 
+                                           (1-measurement.error.cv.vs.sqrt.weight) * (num^0.47)^2) *
+          measurement.error.sd.mult}
     
     #-- Elements for Mortality --#
     SD.INFLATION.MORT = 1/sqrt(MORT.WEIGHT)/sqrt(EVERYTHING.WEIGHT)
@@ -450,7 +455,7 @@ create.msa.likelihood <- function(msa,
     SUPPRESSION.SD.INFLATION = 1/sqrt(SUPPRESSION.WEIGHT)/sqrt(EVERYTHING.WEIGHT)
     SUPPRESSED.STATE.SD.INFLATION = 3
     PROBABILITY.SUPPRESSION.DECREASING = 0.05
-    CONSIDER.DECREASING.ON.MARGINALS = T
+    CONSIDER.DECREASING.ON.MARGINALS = F
     
     #-- Elements for IDU --#
     IDU.LOG.SD = log(2) / sqrt(EVERYTHING.WEIGHT) / sqrt(IDU.WEIGHT)
