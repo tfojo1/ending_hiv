@@ -17,48 +17,29 @@ source('env.R')
 #   "AWS_DEFAULT_REGION"="us-east-1")
 
 # Constants ####
-config.test.testMode.on = FALSE
-config.test.runTests = FALSE
-config.test.filenames = c(
-  'version(int)_city(str)_intervention(str).Rdata',
-  '1_Baltimore_No-intervention.Rdata',
-  '1_Baltimore_No-intervention (1).Rdata',
-  '1_Baltimore_No-intervention (2).Rdata',
-  '1_Baltimore_No-intervention (3).Rdata',
-  '1_Baltimore_No-intervention (4).Rdata',
-  '1_Baltimore_No-intervention (5).Rdata' )
-
-config.test.static.filenames = c('file 1', 'file 2')
-
 # BUCKET.NAME.GENERAL = 'endinghiv'
 BUCKET.NAME.SIMS = 'endinghiv.sims'
 BUCKET.NAME.STATIC = 'endinghiv.static'
 
 # Utils ####
 s3.list <- function(
-  test.on=config.test.testMode.on,
   bucket.name
 ) {
-  if (test.on == T) 
-    return(config.test.filenames)
-  else {
     items.list = get_bucket(bucket=bucket.name)
     items.names = sapply(items.list, function(x) x$Key )
-    return(items.names) }
+    return(items.names)
 }
 
 sims.list <- function(
-  test.on=config.test.testMode.on,
   bucket.name=BUCKET.NAME.SIMS
 ) {
-  s3.list(test.on, bucket.name)
+  s3.list(bucket.name)
 }
 
 static.list <- function(
-  test.on=config.test.testMode.on,
   bucket.name=BUCKET.NAME.STATIC
 ) {
-  s3.list(test.on, bucket.name)
+  s3.list(bucket.name)
 }
 
 s3.save <- function(
@@ -106,25 +87,11 @@ static.save <- function(
 
 s3.load <- function(
   filenames,  # char[]
-  bucket.name,
-  test.on=config.test.testMode.on
+  bucket.name
 ) {
-  if (test.on == T) {
-    report = list(
-      'loads.success'=c(),
-      'loads.fail'=c() )
-    for (file in filenames) {
-      if (file %in% config.test.filenames)
-        report[['loads.success']] = c(report[['loads.success']], file)
-      else
-        report[['loads.fail']] = c(report[['loads.fail']], file)
-      return(report) }
-    
-  } else {
     s3load(
       object=filenames, 
       bucket=bucket.name)
-  }
 }
 
 #'@param filenames: char[]: version_city_intervention (int)_(str)_(str)
@@ -148,38 +115,26 @@ static.load <- function(
 }
 
 # Test ####
-if (config.test.runTests == T) {
-  print("I wonder what beautiful data is up in the cloud waiting for me.")
-  print('$ sims.list()')
-  print(sims.list())
-  print(''); print(''); print('')
-  
-  print("Hmm, let's load the second and third ones.")
-  print("$sims.load('1_Baltimore_No-intervention.Rdata','1_Baltimore_No-intervention (1)))).Rdata')")
-  print(sims.load(c(
-    "1_Baltimore_No-intervention.Rdata",         
-    "1_Baltimore_No-intervention (1)))).Rdata")))
-  print(''); print(''); print('')
-}
+# n/a
 
 # Scratch ####
-
-# Temp testing:
-sims.save(
-  objOrFilepath='This is a test 2.',
-  s3Obj.filename='dfssdffsffs')
-simsList = sims.list()
-static.save(
-  objOrFilepath='This is a test.',
-  s3Obj.filename=testfile.name)
-staticList = static.list()
-
-# TODO: @Todd: I got an error when loading the plain text file I saved,
-# but not sure if this will be a problem with the objects you save. We
-# should check. Additionally, it may be better for you to upload objects
-# directly: https://s3.console.aws.amazon.com/s3/buckets/endinghiv.sims/?region=us-east-1&tab=overview
-# sim.test = sims.load(testfile.name)
-# static.test = sims.load(testfile.name)
-xxx = s3load(
-  object=testfile.name,
-  bucket='endinghiv.static')
+# # Temp testing:
+# testfile.name = xxx
+# sims.save(
+#   objOrFilepath='This is a test 2.',
+#   s3Obj.filename='dfssdffsffs')
+# simsList = sims.list()
+# static.save(
+#   objOrFilepath='This is a test.',
+#   s3Obj.filename=testfile.name)
+# staticList = static.list()
+# 
+# # TODO: @Todd: I got an error when loading the plain text file I saved,
+# # but not sure if this will be a problem with the objects you save. We
+# # should check. Additionally, it may be better for you to upload objects
+# # directly: https://s3.console.aws.amazon.com/s3/buckets/endinghiv.sims/?region=us-east-1&tab=overview
+# # sim.test = sims.load(testfile.name)
+# # static.test = sims.load(testfile.name)
+# xxx = s3load(
+#   object=testfile.name,
+#   bucket='endinghiv.static')

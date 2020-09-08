@@ -1,11 +1,12 @@
 # Imports ####
 # Libraries
-# TODO:
+# TODO: jheem is a gig. should just be a code
 library('jheem')
-
 library('distributions')
 library('bayesian.simulations')
 library('data.table')
+
+source('R/server.utils.R')
 
 # install.packages('tmvtnorm')
 # install.packages('matrixcalc')
@@ -24,25 +25,40 @@ library('data.table')
 #   repos=NULL,
 #   type='source')
 
-# Source
-source('code/systematic_calibration/postprocessing.R')
-# TODO: this need jheem:
-source('code/data_managers/locale_mappings.R')
 
-source('code/data_managers/hiv_surveillance_manager.R')
-source('code/data_managers/census_totals.R')
-source('code/setup/setup_jheem_from_components.R')
+# LOAD DATA OBJECTS ####
+for (static in static.list())
+  static.load(static)
+# load('visualization/resources/msa_surveillance.Rdata')
+# load('visualization/resources/state_surveillance.Rdata')
+# load('visualization/resources/census_totals.Rdata')
+# load('visualization/resources/locale_mapping.Rdata')
 
-# TODO: this need jheem:
-source('code/visualization/plot_simulations.R')
+# More library loads ####
 
-# #-- LOAD DATA OBJECTS --#
-# TODO: Need to use static.load():
-load('visualization/resources/msa_surveillance.Rdata')
-load('visualization/resources/state_surveillance.Rdata')
-load('visualization/resources/census_totals.Rdata')
-load('visualization/resources/locale_mapping.Rdata')
-# 
-# 
-# #-- TEMPORARY FUNCTION DEFINITIONS --#
-# 
+
+# Source ####
+tryCatch({
+  # Loading when server is not loaded:
+  source('code/systematic_calibration/postprocessing.R')
+  # TODO: this need jheem:
+  source('code/data_managers/locale_mappings.R')
+  
+  source('code/data_managers/hiv_surveillance_manager.R')
+  source('code/data_managers/census_totals.R')
+  source('code/setup/setup_jheem_from_components.R')
+  # TODO: this need jheem:
+  # source('code/visualization/plot_simulations.R')
+}, 
+warning=function(w) {}, 
+error=function(e) {
+  # Loading when server is loaded:
+  source('../../code/systematic_calibration/postprocessing.R')
+  # TODO: this need jheem:
+  source('../../code/data_managers/locale_mappings.R')
+  
+  source('../../code/data_managers/hiv_surveillance_manager.R')
+  source('../../code/data_managers/census_totals.R')
+  source('../../code/setup/setup_jheem_from_components.R')
+}, 
+finally={} )

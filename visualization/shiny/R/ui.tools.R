@@ -1,9 +1,8 @@
 '# EndingHIV RShiny utils
  Tools and prerequisite for the app'
+# TODO: Some of this is useful, and some isn't. Need to remove lots of stuff
 
-# TODO @jef: Tweak this boilerplate to our needs.
-
-# Libraries --------------------------------------------------------------------
+# Libraries ####
 library(shiny)
 library(shinydashboard)
 
@@ -20,7 +19,7 @@ library(kableExtra)
 library(plotly)
 library(ggplot2)
 
-# Utility functions ------------------------------------------------------------
+# Utility functions ####
 interval2rate <- function(interval) {
   if (interval == 0) 0 else 1 / interval
 }
