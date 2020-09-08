@@ -1,16 +1,9 @@
-<<<<<<< HEAD
 'Server utils
 - AWS Buckets: https://s3.console.aws.amazon.com/s3/buckets/
   endinghiv/?region=us-east-1&tab=overview'
 # Import ####
 # - aws.s3 docs: https://github.com/cloudyr/aws.s3
 library('aws.iam')
-=======
-'Server utils'
-# Import ####
-# - aws.s3 docs: https://github.com/cloudyr/aws.s3
-install.packages('aws.s3')
->>>>>>> master
 library('aws.s3')
 
 source('env.R')
@@ -21,12 +14,7 @@ source('env.R')
 # Sys.setenv(
 #   "AWS_ACCESS_KEY_ID"="mykey",
 #   "AWS_SECRET_ACCESS_KEY"="mysecretkey",
-<<<<<<< HEAD
 #   "AWS_DEFAULT_REGION"="us-east-1")
-=======
-#   "AWS_DEFAULT_REGION"="us-east-1",
-#   "AWS_SESSION_TOKEN"="mytoken")
->>>>>>> master
 
 
 # Constants ####
@@ -43,7 +31,6 @@ config.test.filenames = c(
 
 config.test.static.filenames = c('file 1', 'file 2')
 
-<<<<<<< HEAD
 # BUCKET.NAME.GENERAL = 'endinghiv'
 BUCKET.NAME.SIMS = 'endinghiv.sims'
 BUCKET.NAME.STATIC = 'endinghiv.static'
@@ -52,15 +39,6 @@ BUCKET.NAME.STATIC = 'endinghiv.static'
 s3.list <- function(
   test.on=config.test.testMode.on,
   bucket.name
-=======
-# Utils ####
-#'@description TODO: 
-#'@param xxx TODO
-#'@return List of filenames
-sims.list <- function(
-  apiKey='TODO: load from env',  # TODO
-  test.on=config.test.testMode.on
->>>>>>> master
 ) {
   if (test.on == T) 
     return(config.test.filenames)
@@ -110,7 +88,6 @@ s3.save <- function(
   }
 }
 
-<<<<<<< HEAD
 sims.save <- function(
   objOrFilepath,
   s3Obj.filename=NULL,
@@ -128,78 +105,19 @@ static.save <- function(
 }
 
 s3.load <- function(
-=======
-#'@description TODO:
-#'@param xxx TODO
-#'@return List of filenames
-static.list <- function(
-  apiKey='TODO: load from env',  # TODO
-  test.on=config.test.testMode.on
-) {
-  if (test.on == T) {
-    return(config.test.static.filenames)
-    
-  } else {
-    return(NULL)  # TODO
-  }
-  
-}
-
-#'@description TODO
-#'@param filenames: char[]: 
-#'@param all: 
-#'@return TODO
-static.load <- function(
-  filenames,  # char[]
-  all=FALSE,
-  apiKey='TODO: load from env',  # TODO
-  test.on=config.test.testMode.on
-) {
-  if (test.on == T) {
-    if (all == T) {
-      return(sims.load.all())
-    } else {
-      report = list(
-        'loads.success'=c(),
-        'loads.fail'=c() )
-      
-      for (file in filenames) {
-        if (file %in% config.test.filenames) {
-          report[['loads.success']] = c(report[['loads.success']], file)
-        } else {
-          report[['loads.fail']] = c(report[['loads.fail']], file)
-        }
-      }
-      
-      return(report)      
-    }
-    
-  } else {
-    return(NULL)  # TODO
-  }
-  
-}
-
-#'@description TODO
-#'@param filenames: char[]: version_city_intervention (int)_(str)_(str)
-#' (version city and intervention cant use underscore)
-#'@param all: 
-#'@return TODO
-sims.load <- function(
->>>>>>> master
   filenames,  # char[]
   bucket.name,
   test.on=config.test.testMode.on
 ) {
   if (test.on == T) {
-      report = list(
-        'loads.success'=c(),
-        'loads.fail'=c() )
-      for (file in filenames) {
-        if (file %in% config.test.filenames)
-          report[['loads.success']] = c(report[['loads.success']], file)
-        else
-          report[['loads.fail']] = c(report[['loads.fail']], file)
+    report = list(
+      'loads.success'=c(),
+      'loads.fail'=c() )
+    for (file in filenames) {
+      if (file %in% config.test.filenames)
+        report[['loads.success']] = c(report[['loads.success']], file)
+      else
+        report[['loads.fail']] = c(report[['loads.fail']], file)
       return(report) }
     
   } else {
@@ -245,32 +163,26 @@ if (config.test.runTests == T) {
 }
 
 # Scratch ####
-<<<<<<< HEAD
 
 # Temp testing:
 # buckets.df = bucketlist()
 # buckets.names = buckets.df[, 'Bucket']
-testfile.name = 'test-file.txt'
-sims.save(
-  objOrFilepath='This is a test.',
-  s3Obj.filename=testfile.name)
-sims.list()
-static.save(
-  objOrFilepath='This is a test.',
-  s3Obj.filename=testfile.name)
-static.list()
+# testfile.name = 'test-file.txt'
+# sims.save(
+#   objOrFilepath='This is a test.',
+#   s3Obj.filename=testfile.name)
+# sims.list()
+# static.save(
+#   objOrFilepath='This is a test.',
+#   s3Obj.filename=testfile.name)
+# static.list()
 
-# TODO:
-sim.test = sims.load(testfile.name)
-static.test = sims.load(testfile.name)
-
-
-
-xxx = s3load(
-  object=testfile.name, 
-  bucket='endinghiv.static')
-
-
-
-=======
->>>>>>> master
+# TODO: @Todd: I got an error when loading the plain text file I saved,
+# but not sure if this will be a problem with the objects you save. We
+# should check. Additionally, it may be better for you to upload objects
+# directly: https://s3.console.aws.amazon.com/s3/buckets/endinghiv.sims/?region=us-east-1&tab=overview
+# sim.test = sims.load(testfile.name)
+# static.test = sims.load(testfile.name)
+# xxx = s3load(
+#   object=testfile.name, 
+#   bucket='endinghiv.static')

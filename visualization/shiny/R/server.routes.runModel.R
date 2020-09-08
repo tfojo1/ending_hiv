@@ -724,6 +724,18 @@ server.routes.runModel.get.hiv <- function(
     'mainDL'=mainDL,
     'mainTable'=mainTable,
     'res_main'=res_main)
+  
+  # TODO: @Todd: This method looks like it will work. I just need to 
+  # full utilize it for all of the code. This is just an example: 
+  server.routes.runModel[['ui_main']] = renderUI({
+    iterable = get.intervention.options(version='1.0', location='12580')
+    map(
+      iterable, ~ textInput(
+        inputId=.x$name[1], 
+        label=.x$name[1], 
+        value=.x$name[1]) ) 
+  })
+  
   server.routes.runModel
 }
 

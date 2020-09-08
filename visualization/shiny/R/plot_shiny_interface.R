@@ -177,26 +177,34 @@ get.split.by.options <- function(version, location)
 #  fully ramped up
 get.intervention.options <- function(version, location)
 {
-  no.int = list(target.groups=character(),
-                testing.frequency=NA,
-                suppressed.proportion=NA,
-                prep.coverage=NA,
-                intervention.start.year=2021,
-                intervention.implemented.year=2022)
+  # TODO: @Todd: Might need to include this 'name' bit for my dynamic
+  # rendering.
+  no.int = list(
+    name='no_intervention',
+    target.groups=character(),
+    testing.frequency=NA,
+    suppressed.proportion=NA,
+    prep.coverage=NA,
+    intervention.start.year=2021,
+    intervention.implemented.year=2022)
   
-  int.1 = list(target.groups='Black MSM <35yo',
-               testing.frequency=1,
-               suppressed.proportion=0.8,
-               prep.coverage=0.25,
-               intervention.start.year=2021,
-               intervention.implemented.year=2022)
+  int.1 = list(
+    name='young_black_msm_testing_1py_0.8_suppressed_0.25_prep',
+    target.groups='Black MSM <35yo',
+    testing.frequency=1,
+    suppressed.proportion=0.8,
+    prep.coverage=0.25,
+    intervention.start.year=2021,
+    intervention.implemented.year=2022)
   
-  int.2 = list(target.groups='All MSM and IDU',
-               testing.frequency=1,
-               suppressed.proportion=0.9,
-               prep.coverage=0.5,
-               intervention.start.year=2021,
-               intervention.implemented.year=2022)
+  int.2 = list(
+    name='all_msm_idu_testing_1py_0.9_suppressed_0.5_prep',
+    target.groups='All MSM and IDU',
+    testing.frequency=1,
+    suppressed.proportion=0.9,
+    prep.coverage=0.5,
+    intervention.start.year=2021,
+    intervention.implemented.year=2022)
   
   list('no_intervention'=no.int,
        'young_black_msm_testing_1py_0.8_suppressed_0.25_prep'=int.1,
