@@ -71,7 +71,7 @@ setup.initial.components <- function(msa=BALTIMORE.MSA,
                                               idu.transition.end.year=run.to.year)
 
     msa.components = setup.trate.years(msa.components,
-                                       routes='msm',
+                                       routes=c('msm','msm.idu'),
                                        t.pre.peak=msm.pre.spike.year,
                                        t.peak.start=msm.spike.start.year,
                                        t.peak.end=msm.spike.end.year,
@@ -83,12 +83,12 @@ setup.initial.components <- function(msa=BALTIMORE.MSA,
                                        t.end=run.to.year)
 
     msa.components = setup.trate.years(msa.components,
-                                       routes='msm',
+                                       routes=c('msm','msm.idu'),
                                        age.indices = 1:2,
                                        t0.end = msm.young.t0)
 
     msa.components = setup.trate.years(msa.components,
-                                       routes='heterosexual',
+                                       routes=c('heterosexual.male','heterosexual.female'),
                                        t.pre.peak=heterosexual.pre.spike.year,
                                        t.peak.start=heterosexual.spike.start.year,
                                        t.peak.end=heterosexual.spike.end.year,
@@ -100,12 +100,12 @@ setup.initial.components <- function(msa=BALTIMORE.MSA,
                                        t.end=run.to.year)
 
     msa.components = setup.trate.years(msa.components,
-                                       routes='heterosexual',
+                                       routes=c('heterosexual.male','heterosexual.female'),
                                        age.indices = 1:2,
                                        t0.end = heterosexual.young.t0)
 
     msa.components = setup.trate.years(msa.components,
-                                       routes='idu',
+                                       routes=c('idu.msm','idu.male','idu.female'),
                                        t.pre.peak=idu.pre.spike.year,
                                        t.peak.start=idu.spike.start.year,
                                        t.peak.end=idu.spike.end.year,
@@ -124,7 +124,7 @@ setup.initial.components <- function(msa=BALTIMORE.MSA,
                                      t1=2010,
                                      t2=2020,
                                      t3=2030)
-    msa.components = set.aging.times(msa.components, route='heterosexual',
+    msa.components = set.aging.times(msa.components, route=c('heterosexual.male','heterosexual.female'),
                                      t.pre.spike=1980,
                                      t.spike=1990,
                                      t0=2000,

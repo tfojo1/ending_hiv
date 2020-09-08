@@ -414,7 +414,7 @@ DEFAULT.PREVALENCE.BY.AGE = array(c(241,51,1940,7277,6560,5559,4232,4543,4389,32
 
 
 set.aging.times <- function(components,
-                            routes=c('idu','msm','heterosexual'),
+                            routes=c('idu','msm','heterosexual.male','heterosexual.female'),
                             races=c('black','hispanic','other'),
                             age.indices=1:5,
                             t.pre.spike=NA,
@@ -452,7 +452,7 @@ set.aging.times <- function(components,
 }
 
 set.aging.rates <- function(components,
-                            routes=c('idu','msm','heterosexual'),
+                            routes=c('idu','msm','heterosexual.male','heterosexual.female'),
                             races=c('black','hispanic','other'),
                             age.indices=1:5,
                             r.pre.spike=NA,
@@ -572,13 +572,22 @@ setup.idu.availability.by.age <- function(components,
 ##-- IDU TRANSITIONS --##
 ##---------------------##
 
-setup.idu.transition.times <- function(components, years, end.year)
+setup.idu.transition.times <- function(components, 
+                                       years,
+                                       end.year,
+                                       fraction.change.after.last.year=0.05)
 {
-    components$years.for.idu.transitions = years
-    components$end.year.idu.transition = end.year
+    if (all(!is.na(years)))
+        components$years.for.idu.transitions = years
+    
+    if (!is.na(end.year))
+        components$end.year.idu.transition = end.year
 
-    components$incident.idu = components$idu.remission = components$idu.relapse = lapply(years, function(year){NA})
+#    components$incident.idu = components$idu.remission = components$idu.relapse = lapply(years, function(year){NA})
 
+    if (!is.na(fraction.change.after.last.year))
+        components$fraction.idu.transitions.change.after.last.year = fraction.change.after.last.year
+    
     components = clear.dependent.values(components, c('incident.idu','idu.remission','idu.relapse'))
     components
 }
@@ -626,6 +635,7 @@ set.background.hiv.testing.ors <- function(components,
                                            msm.or.intercept=NA,
                                            heterosexual.or.intercept=NA,
                                            idu.or.intercept=NA,
+                                           msm.idu.or.intercept=NA,
                                            black.or.intercept=NA,
                                            hispanic.or.intercept=NA,
                                            other.or.intercept=NA,
@@ -640,6 +650,7 @@ set.background.hiv.testing.ors <- function(components,
                                            msm.or.slope=NA,
                                            heterosexual.or.slope=NA,
                                            idu.or.slope=NA,
+                                           msm.idu.or.slope=NA,
                                            black.or.slope=NA,
                                            hispanic.or.slope=NA,
                                            other.or.slope=NA,
@@ -664,6 +675,8 @@ set.background.hiv.testing.ors <- function(components,
         components$background.testing$additional.intercept.ors['heterosexual'] = heterosexual.or.intercept
     if (!is.na(idu.or.intercept))
         components$background.testing$additional.intercept.ors['idu'] = idu.or.intercept
+    if (!is.na(msm.idu.or.intercept))
+        components$background.testing$additional.intercept.ors['msm_idu'] = msm.idu.or.intercept
     
     if (!is.na(black.or.intercept))
         components$background.testing$additional.intercept.ors['black'] = black.or.intercept
@@ -693,6 +706,8 @@ set.background.hiv.testing.ors <- function(components,
         components$background.testing$additional.slope.ors['heterosexual'] = heterosexual.or.slope
     if (!is.na(idu.or.slope))
         components$background.testing$additional.slope.ors['idu'] = idu.or.slope
+    if (!is.na(msm.idu.or.slope))
+        components$background.testing$additional.slope.ors['msm_idu'] = msm.idu.or.slope
     
     if (!is.na(black.or.slope))
         components$background.testing$additional.slope.ors['black'] = black.or.slope
@@ -798,7 +813,7 @@ set.foreground.hiv.testing.rates <- function(components,
 ##-----------------------------##
 
 setup.trate.years <- function(components,
-                              routes=c('idu','msm','heterosexual'),
+                              routes=c('idu.msm','idu.male','idu.female','msm','msm.idu','heterosexual,male','heterosexual.female'),
                               races=c('black','hispanic','other'),
                               age.indices=1:5,
                               t.pre.peak=NA,
@@ -844,7 +859,7 @@ setup.trate.years <- function(components,
 }
 
 setup.trates <- function(components,
-                         routes=c('idu','msm','heterosexual'),
+                         routes=c('idu.msm','idu.male','idu.female','msm','msm.idu','heterosexual,male','heterosexual.female'),
                          races=c('black','hispanic','other'),
                          age.indices = 1:5,
                          r.peak=NA,
@@ -1008,18 +1023,6 @@ setup.transmissibility <- function(components,
     components
 }
 
-setup.heterosexual.transmission <- function(components,
-                                            male.to.female.sexual.transmission.ratio,
-                                            female.to.male.sexual.transmission.ratio)
-{
-    components$male.to.female.sexual.transmission.ratio = male.to.female.sexual.transmission.ratio
-    components$female.to.male.sexual.transmission.ratio = female.to.male.sexual.transmission.ratio
-
-    components = clear.dependent.values(components, c('male.to.female.sexual.transmission',
-                                                      'female.to.male.sexual.transmission'))
-    components
-}
-
 setup.sex.by.age <- function(components,
                              heterosexual.male.age.model,
                              female.age.model,
@@ -1117,20 +1120,10 @@ setup.sex.by.idu <- function(components,
 }
 
 setup.idu.by.sex <- function(components,
-                             sex.oes=NULL,
-                             female.transmission.ratio=NA,
-                             msm.transmission.ratio=NA,
-                             heterosexual.male.transmission.ratio=NA)
+                             sex.oes=NULL)
 {
     if (!is.null(sex.oes))
         components$idu.transmission$sex.oes = sex.oes
-    
-    if (!is.na(female.transmission.ratio))
-        components$female.idu.transmission.ratio = female.transmission.ratio
-    if (!is.na(msm.transmission.ratio))
-        components$msm.idu.transmission.ratio = msm.transmission.ratio
-    if (!is.na(heterosexual.male.transmission.ratio))
-        components$heterosexual.male.idu.transmission.ratio = heterosexual.male.transmission.ratio
     
     components = clear.dependent.values(components, 'idu.transmission')
     components
@@ -1144,6 +1137,7 @@ set.background.suppression.ors <- function(components,
                                            msm.or.intercept=NA,
                                            heterosexual.or.intercept=NA,
                                            idu.or.intercept=NA,
+                                           msm.idu.or.intercept=NA,
                                            black.or.intercept=NA,
                                            hispanic.or.intercept=NA,
                                            other.or.intercept=NA,
@@ -1158,6 +1152,7 @@ set.background.suppression.ors <- function(components,
                                            msm.or.slope=NA,
                                            heterosexual.or.slope=NA,
                                            idu.or.slope=NA,
+                                           msm.idu.or.slope=NA,
                                            black.or.slope=NA,
                                            hispanic.or.slope=NA,
                                            other.or.slope=NA,
@@ -1182,6 +1177,8 @@ set.background.suppression.ors <- function(components,
         components$background.suppression$additional.intercept.ors['heterosexual'] = heterosexual.or.intercept
     if (!is.na(idu.or.intercept))
         components$background.suppression$additional.intercept.ors['idu'] = idu.or.intercept
+    if (!is.na(msm.idu.or.intercept))
+        components$background.suppression$additional.intercept.ors['msm_idu'] = msm.idu.or.intercept
     
     if (!is.na(black.or.intercept))
         components$background.suppression$additional.intercept.ors['black'] = black.or.intercept
@@ -1212,6 +1209,8 @@ set.background.suppression.ors <- function(components,
         components$background.suppression$additional.slope.ors['heterosexual'] = heterosexual.or.slope
     if (!is.na(idu.or.slope))
         components$background.suppression$additional.slope.ors['idu'] = idu.or.slope
+    if (!is.na(msm.idu.or.slope))
+        components$background.suppression$additional.slope.ors['msm_idu'] = msm.idu.or.slope
     
     if (!is.na(black.or.slope))
         components$background.suppression$additional.slope.ors['black'] = black.or.slope

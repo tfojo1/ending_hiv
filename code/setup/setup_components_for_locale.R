@@ -285,10 +285,6 @@ setup.components.for.msa <- function(msa,
                                    diagnosed.female.condomless.rr=parameters['diagnosed.female.condomless.rr'],
                                    diagnosed.msm.condomless.rr=parameters['diagnosed.msm.condomless.rr'])
 
-    comps = setup.heterosexual.transmission(comps,
-                                            female.to.male.sexual.transmission.ratio = parameters['female.to.male.sexual.transmission'],
-                                            male.to.female.sexual.transmission.ratio = parameters['male.to.female.sexual.transmission'])
-
     comps = setup.sex.by.age(comps,
                              heterosexual.male.age.model = data.managers$pairing$sex.age.models[['heterosexual_male']],
                              female.age.model = data.managers$pairing$sex.age.models[['female']],

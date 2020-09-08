@@ -164,6 +164,9 @@ calculate.change.ratios.logistic.array <- function(r0.arr,
     if ((fraction.of.asymptote.after.end+fraction.of.asymptote.before.start)>=1)
         stop("The sum of fraction.of.asymptote.after.end and fraction.of.asymptote.before.start must be less than 1")
 
+    if (all(r0.arr==r1.arr))
+        return (lapply(times, function(i){r0.arr}))
+    
     models = lapply(1:length(r0.arr), function(i){
 
         r0 = round(r0.arr[i], 10)

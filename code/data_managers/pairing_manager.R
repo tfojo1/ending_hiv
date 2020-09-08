@@ -275,27 +275,53 @@ read.pairing.manager <- function(dir='../data2/Pairing')
     rv$idu.oe.race['other','other'] = nonblack.with.nonblack.oe
 
 ##-- IDU PAIRINGS by SEX --##
-    male.with.male = 1.05
-    male.with.female = 0.65
-    female.with.male = 1.21
-    female.with.female = 1.27
 
-    dim.names = list(sex.from=c('heterosexual_male','msm','female'), sex.to=c('heterosexual_male','msm','female'))
-    rv$idu.oe.sex = array(0, dim=sapply(dim.names, length), dimnames=dim.names)
-    rv$idu.oe.sex['heterosexual_male','heterosexual_male'] = male.with.male
-    rv$idu.oe.sex['msm','heterosexual_male'] = male.with.female
-    rv$idu.oe.sex['female','heterosexual_male'] = male.with.female
-    rv$idu.oe.sex['heterosexual_male','msm'] = male.with.female
-    rv$idu.oe.sex['msm','msm'] = male.with.male
-    rv$idu.oe.sex['female','msm'] = male.with.female
-    rv$idu.oe.sex['heterosexual_male','female'] = female.with.male
-    rv$idu.oe.sex['msm','female'] = female.with.male
-    rv$idu.oe.sex['female','female'] = female.with.female
+    #older
+#    male.with.male = 1.05
+#    male.with.female = 0.65
+#    female.with.male = 1.21
+#    female.with.female = 1.27
+
+#    dim.names = list(sex.from=c('heterosexual_male','msm','female'), sex.to=c('heterosexual_male','msm','female'))
+#    rv$idu.oe.sex = array(0, dim=sapply(dim.names, length), dimnames=dim.names)
+#    rv$idu.oe.sex['heterosexual_male','heterosexual_male'] = male.with.male
+#    rv$idu.oe.sex['msm','heterosexual_male'] = male.with.female
+#    rv$idu.oe.sex['female','heterosexual_male'] = male.with.female
+#    rv$idu.oe.sex['heterosexual_male','msm'] = male.with.female
+#    rv$idu.oe.sex['msm','msm'] = male.with.male
+#    rv$idu.oe.sex['female','msm'] = male.with.female
+#    rv$idu.oe.sex['heterosexual_male','female'] = female.with.male
+#    rv$idu.oe.sex['msm','female'] = female.with.male
+#    rv$idu.oe.sex['female','female'] = female.with.female
 
     #get MSM with female from: https://www.cdc.gov/hiv/pdf/library/reports/surveillance/cdc-hiv-surveillance-special-report-number-22.pdf
     #heterosexual mixing
 
 
+    #https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6457905/
+    
+    dim.names = list(sex.from=c('heterosexual_male','msm','female'), sex.to=c('heterosexual_male','msm','female'))
+    sharing = array(0, dim=sapply(dim.names, length), dimnames=dim.names)
+    
+    sharing['female','msm'] = 0.30
+    sharing['heterosexual_male','msm'] = 0.13
+    sharing['msm','msm'] = 0.57
+    
+    sharing['female','heterosexual_male'] = 0.47
+    sharing['heterosexual_male','heterosexual_male'] = 0.44
+    sharing['msm','heterosexual_male'] = 0.08
+    
+    sharing['female','female'] = 0.18
+    sharing['heterosexual_male','female'] = 0.67
+    sharing['msm','female'] = 0.15
+    
+    counts = c(heterosexual_male=(1103-184),
+               msm=184,
+               female=606)
+    proportions = counts/sum(counts)
+    
+    rv$idu.oe.sex = sharing/proportions
+    
 ##-- SEXUAL PAIRINGS by SEX --##
 ##     (msm with females)     ##
 

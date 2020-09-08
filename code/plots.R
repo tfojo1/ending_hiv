@@ -18,7 +18,7 @@ MODEL.COLOR = BLUE
 MODEL.COLOR.2 = RED
 
 plot.calibration.risk <- function(sims,
-                                  risk=c('msm','idu','heterosexual'),
+                                  risk=c('msm','idu','msm_idu','heterosexual'),
                                   years=2010:2020,
                                   data.types=c('new','prevalence'),
                                   surv=msa.surveillance,
@@ -27,6 +27,7 @@ plot.calibration.risk <- function(sims,
                                   population=NULL,
                                   use.cdc=T,
                                   ci.coverage=0.95,
+                                  ncol=4,
                                   ...
 )
 {
@@ -41,6 +42,7 @@ plot.calibration.risk <- function(sims,
                      location=location,
                      population=population,
                      ci.coverage=ci.coverage,
+                     ncol=ncol,
                      ...)
 }
 
@@ -74,7 +76,7 @@ plot.calibration.race <- function(sims,
 
 plot.calibration.race.risk <- function(sims,
                                        race=c('black','hispanic','other'),
-                                       risk=c('msm','idu','heterosexual'),
+                                       risk=c('msm','idu','msm_idu','heterosexual'),
                                        years=2010:2020,
                                        data.types=c('new','prevalence'),
                                        surv=msa.surveillance,
@@ -82,6 +84,7 @@ plot.calibration.race.risk <- function(sims,
                                        population=NULL,
                                        use.cdc=T,
                                        ci.coverage=0.95,
+                                       ncol=4,
                                        ...
 )
 {
@@ -96,12 +99,13 @@ plot.calibration.race.risk <- function(sims,
                      location=location,
                      use.cdc=use.cdc,
                      ci.coverage=ci.coverage,
+                     ncol=ncol,
                      ...)
 }
 
 plot.calibration.risk.race <- function(sims,
                                   race=c('black','hispanic','other'),
-                                  risk=c('msm','idu','heterosexual'),
+                                  risk=c('msm','idu','msm_idu','heterosexual'),
                                   years=2010:2020,
                                   data.types=c('new','prevalence'),
                                   surv=msa.surveillance,
@@ -242,19 +246,77 @@ plot.calibration.sex.risk <- function(sims,
                                      #                                 age=c("13-24 years", "25-34 years", "35-44 years", "45-54 years", "55+ years" ),
                                      years=2010:2020,
                                      data.types=c('new','prevalence'),
+                                     risk=c('msm','idu','msm_idu','heterosexual'),
                                      surv=msa.surveillance,
                                      location=NULL,
                                      population=NULL,
                                      use.cdc=T,
                                      ci.coverage=0.95,
                                      facet.data.type.first=T,
-                                     ncol=3,
+                                     ncol=4,
                                      ...
 )
 {
     plot.calibration(sims=sims,
                      split.by='sex',
                      facet.by = 'risk',
+                     years=years,
+                     data.types=data.types,
+                     risk=risk,
+                     surv=surv,
+                     location=location,
+                     population=population,
+                     use.cdc=use.cdc,
+                     ci.coverage=ci.coverage,
+                     facet.data.type.first=facet.data.type.first,
+                     ncol=ncol,
+                     ...)
+}
+
+plot.calibration.sex.race <- function(sims,
+                                      years=2010:2020,
+                                      data.types=c('new','prevalence'),
+                                      surv=msa.surveillance,
+                                      location=NULL,
+                                      population=NULL,
+                                      use.cdc=T,
+                                      ci.coverage=0.95,
+                                      facet.data.type.first=T,
+                                      ncol=3,
+                                      ...
+)
+{
+    plot.calibration(sims=sims,
+                     split.by='sex',
+                     facet.by = 'race',
+                     years=years,
+                     data.types=data.types,
+                     surv=surv,
+                     location=location,
+                     population=population,
+                     use.cdc=use.cdc,
+                     ci.coverage=ci.coverage,
+                     facet.data.type.first=facet.data.type.first,
+                     ncol=ncol,
+                     ...)
+}
+
+plot.calibration.race.sex <- function(sims,
+                                      years=2010:2020,
+                                      data.types=c('new','prevalence'),
+                                      surv=msa.surveillance,
+                                      location=NULL,
+                                      population=NULL,
+                                      use.cdc=T,
+                                      ci.coverage=0.95,
+                                      facet.data.type.first=T,
+                                      ncol=3,
+                                      ...
+)
+{
+    plot.calibration(sims=sims,
+                     split.by='race',
+                     facet.by = 'sex',
                      years=years,
                      data.types=data.types,
                      surv=surv,
@@ -348,21 +410,56 @@ plot.calibration.total <- function(sims,
 }
 
 plot.calibration.idu.prevalence <- function(sims,
-                                years=2014:2016,
-                                x.variable=c('risk'),
-                                population=BALTIMORE.POPULATION,
-                                facet.by='race',
-                                split.by=NULL,
-                                use.cdc=F,
-                                risk=c('Active_IDU', 'IDU_in_remission'),
-                                plot.individual.simset.sims=F,
-                                fixed.facet.scales=T,
-                                use.bar=T,
-                                ...)
+                                            years=2014:2016,
+                                            x.variable=c('risk'),
+                                            population=NULL,
+                                            facet.by='race',
+                                            split.by=NULL,
+                                            use.cdc=F,
+                                            risk=c('Active_IDU', 'IDU_in_remission'),
+                                            plot.individual.simset.sims=F,
+                                            fixed.facet.scales=T,
+                                            use.bar=T,
+                                            ...)
 {
+    if (is.null(population))
+    {        
+        if (!is(sims, 'list'))
+            sims = list(sims)
+        
+        if (is(sims[[1]], 'jheem.results'))
+            location = attr(sims[[1]], 'location')
+        else if (is(sims[[1]], 'simset'))
+            location = attr(sims[[1]]@simulations[[1]], 'location')
+        else
+            stop("sims must be either a jheem.results object or a simset, or a list containing only jheem.results objects or only simsets")
+        
+        counties = counties.for.msa(location)
+        population = get.census.data(ALL.DATA.MANAGERS$census.collapsed.msm,
+                                               years=ALL.DATA.MANAGERS$census.collapsed.msm$years,
+                                               fips=counties,
+                                               aggregate.counties = T
+        )
+        population = collapse.races(population)
+#        population.totals = get.census.totals(ALL.DATA.MANAGERS$census.totals, msa)
+        
+        idu.30d.prevalence = get.idu.prevalence(ALL.DATA.MANAGERS$idu, ALL.DATA.MANAGERS$census.full.msm, age.cutoffs = SETTINGS$AGE_CUTOFFS,
+                                                use.30d=T, counties=counties, aggregate.counties = T)
+        idu.ever.prevalence = get.idu.prevalence(ALL.DATA.MANAGERS$idu, ALL.DATA.MANAGERS$census.full.msm, age.cutoffs = SETTINGS$AGE_CUTOFFS,
+                                                 use.ever=T, counties=counties, aggregate.counties = T)
+        
+        population = stratify.population.idu(population = population,
+                                                       active.idu.prevalence = idu.30d.prevalence,
+                                                       idu.ever.prevalence = idu.ever.prevalence)
+        population = apply(population, c('year','age','race','sex','risk'), function(x){x})
+        
+        if (use.cdc)
+            population = recategorize.to.cdc.risk.strata(population)
+    }
+    
     plot.calibration(sims,
                      data.types='population',
-                     population=BALTIMORE.POPULATION,
+                     population=population,
                      years=years,
                      x.variable=x.variable,
                      facet.by=facet.by,
@@ -600,8 +697,17 @@ plot.calibration <- function(sims,
                 if (data.type=='population')
                 {
                     truth.numerators = apply(access(population, year=as.character(years)), all.dimensions, sum)
-                    if (is.null(dim(truth.numerators)))
+                    if (!is.null(truth.numerators) && is.null(dim(truth.numerators)))
+                    {
+                        dim.names = list(names(truth.numerators))
+                        names(dim.names) = all.dimensions
+                        truth.numerators = array(truth.numerators, dim=sapply(dim.names, length), dimnames=dim.names)
+                    }
+                    
+                    if (is.null(dim(truth.numerators))) 
                         truth.denominators = truth.numerators
+                    else if (length(facet.by)==0)
+                        truth.denominators = sum(truth.numerators)
                     else
                         truth.denominators = apply(truth.numerators, facet.by, sum)
                     truth.denominators = expand.population(truth.denominators, target.dim.names=dimnames(truth.numerators))
@@ -738,6 +844,7 @@ plot.calibration <- function(sims,
                     #    dimnames(values) = dim.names
                     #}
                     #else
+                    
                     values = apply(values, all.dimensions, sum)
                     if (length(all.dimensions)==1)
                     {
@@ -752,7 +859,7 @@ plot.calibration <- function(sims,
                         names(one.df)[1] = all.dimensions
                     }
                     else
-                        one.df = melt(values)
+                        one.df = reshape2::melt(values)
 
                     one.df$group = rep(type, dim(one.df)[1])
                     one.df$ci.lower = one.df$ci.upper = rep(as.numeric(NA), dim(one.df)[1])
@@ -794,7 +901,7 @@ plot.calibration <- function(sims,
                                 names(one.sub.df)[1] = all.dimensions
                             }
                             else
-                                one.sub.df = melt(values)
+                                one.sub.df = reshape2::melt(values)
 
                             one.sub.df$group = rep(paste0(type, '.', i), dim(one.sub.df)[1])
                             one.df = rbind(one.df, one.sub.df)
@@ -821,11 +928,13 @@ plot.calibration <- function(sims,
                                                               use.sim.msm.proportions=use.sim.msm.proportions,
                                                               ci.coverage=ci.coverage)
 
-                        one.df = melt(dist.summary$mean)
+                        one.df = reshape2::melt(dist.summary$mean)
                         one.df$group = rep(type, dim(one.df)[1])
+                        if (is.null(dim(dist.summary$mean)))
+                            one.df[,all.dimensions] = names(dist.summary$mean)
 
-                        one.df$ci.lower = melt(dist.summary$ci.lower)$value
-                        one.df$ci.upper = melt(dist.summary$ci.upper)$value
+                        one.df$ci.lower = reshape2::melt(dist.summary$ci.lower)$value
+                        one.df$ci.upper = reshape2::melt(dist.summary$ci.upper)$value
 
                     }
                 }
@@ -853,7 +962,7 @@ plot.calibration <- function(sims,
                         names(one.df)[1] = x.variables[1]
                     }
                     else
-                        one.df = melt(values)
+                        one.df = reshape2::melt(values)
 
                     one.df$group = rep(type, dim(one.df)[1])
                     one.df$ci.lower = one.df$ci.upper = rep(as.numeric(NA), dim(one.df)[1])
@@ -865,7 +974,7 @@ plot.calibration <- function(sims,
                 one.df$value = one.df$value * data.type.denominators[data.type]
                 one.df$ci.lower = one.df$ci.lower * data.type.denominators[data.type]
                 one.df$ci.upper = one.df$ci.upper * data.type.denominators[data.type]
-
+                
                 if (!is.null(risk) && any(all.dimensions=='risk'))
                     one.df = one.df[sapply(tolower(one.df$risk), function(one.risk){any(one.risk==tolower(risk))}),]
                 if (!is.null(race) && any(all.dimensions=='race'))

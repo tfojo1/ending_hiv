@@ -53,3 +53,30 @@ get.hiv.burden <- function(msas = get.target.msas(use.divisions=use.divisions),
     else
         rv
 }
+
+get.hiv.burden.table <- function(new.year=2018,
+                                 prev.year=2017)
+{
+    counties = get.target.counties()
+    counties = counties[order(state.for.county(counties), county.names(counties))]
+    
+    msas = msa.for.county(counties)
+    
+    diagnoses = sapply(msas, function(msa){
+        get.surveillance.data(msa.surveillance, location.codes = msa, year=new.year, data.type='new')
+    })
+    
+    prev = sapply(msas, function(msa){
+        get.surveillance.data(msa.surveillance, location.codes = msa, year=prev.year, data.type='prevalence')
+    })
+    
+    o = order(diagnoses, decreasing = T)
+    
+    rv = data.frame(county=county.names(counties[o]),
+                    msa=unlist(msa.names(msas[o])),
+                    new_diagnoses=format(diagnoses[o], big.mark=','),
+                    estimated_prevalence=format(prev[o], big.mark=','))
+    
+    rv
+    
+}

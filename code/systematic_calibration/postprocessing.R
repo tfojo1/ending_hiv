@@ -31,7 +31,7 @@ extract.suppression <- function(sim,
 
     prevalence = extract.population.subset(sim, years=years, keep.dimensions = all.dimension.names,
                                     ages=ages, races=races, subpopulations=subpopulations,
-                                    sexes=sexes, risks=risks,
+                                    sexes=NULL, risks=NULL,
                                     continuum=continuum, cd4=cd4, hiv.subsets=hiv.subsets,
                                     include.hiv.negative = F)
 
@@ -47,6 +47,47 @@ extract.suppression <- function(sim,
     {
         numerators = sum.suppression.arr.to.cdc(numerators)
         prevalence = sum.suppression.arr.to.cdc(prevalence)
+    }
+    
+    if (!is.null(sexes) && !is.null(risks))
+    {
+        dim.names = dimnames(numerators)
+        dim.names[['sex']] = sexes
+        dim.names[['risk']] = risks
+        
+        numerators = numerators[,,,,sexes,risks,,,]
+        prevalence = prevalence[,,,,sexes,risks,,,]
+        
+        dim(numerators) = sapply(dim.names, length)
+        dimnames(numerators) = dim.names
+        dim(prevalence) = sapply(dim.names, length)
+        dimnames(prevalence) = dim.names
+    }
+    else if (!is.null(sexes))
+    {
+        dim.names = dimnames(numerators)
+        dim.names[['sex']] = sexes
+        
+        numerators = numerators[,,,,sexes,,,,]
+        prevalence = prevalence[,,,,sexes,,,,]
+        
+        dim(numerators) = sapply(dim.names, length)
+        dimnames(numerators) = dim.names
+        dim(prevalence) = sapply(dim.names, length)
+        dimnames(prevalence) = dim.names
+    }
+    else if (!is.null(risks))
+    {
+        dim.names = dimnames(numerators)
+        dim.names[['risk']] = risks
+        
+        numerators = numerators[,,,,,risks,,,]
+        prevalence = prevalence[,,,,,risks,,,]
+        
+        dim(numerators) = sapply(dim.names, length)
+        dimnames(numerators) = dim.names
+        dim(prevalence) = sapply(dim.names, length)
+        dimnames(prevalence) = dim.names
     }
     
     rv = apply(numerators, keep.dimensions, sum) / apply(prevalence, keep.dimensions, sum)

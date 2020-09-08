@@ -9,7 +9,7 @@ source('code/systematic_calibration/systematic_calibration.R')
 source('code/targets/target_msas.R')
 
 source('code/calibration/calibrated_parameters_68_helpers.R')
-source('code/calibration/calibrated_parameters_75.R')
+source('code/calibration/calibrated_parameters_75b.R')
 
 
 DC.MSA = cbsa.for.msa.name('Washington,DC')
@@ -28,8 +28,8 @@ CACHE.FREQUENCY = 500
 UPDATE.FREQUENCY = 200
 MAX.SIM.TIME=Inf
 
-FILE.PREFIX = 'la.75'
-DESCRIPTION = "V75"
+FILE.PREFIX = 'la.75b_neg.supp.slope.ok'
+DESCRIPTION = "V75b"
 RESUME.PRIOR.CACHE = NULL#'mcmc_runs/balt.70_wt.6.6.33_2020-07-16/'
 if (!is.null(RESUME.PRIOR.CACHE))
     print("THIS IS RESUMPTION OF A PRIOR CACHE!!!")
