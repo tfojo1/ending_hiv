@@ -1,9 +1,8 @@
 # Imports ####
 # Libraries
-# TODO: jheem is a gig. should just be a code
-library('jheem')
-library('distributions')
-library('bayesian.simulations')
+library('jheem')  # installable package is in /packages/
+library('distributions')  # installable package is in /packages/
+library('bayesian.simulations')  # installable package is in /packages/
 library('data.table')
 
 source('R/server.utils.R')
@@ -21,7 +20,7 @@ source('R/server.utils.R')
 
 # TODO: Install the final package needed:
 # install.packages(
-#   'jheem',
+#   'packages/jheem_0.1.0.tar.gz',
 #   repos=NULL,
 #   type='source')
 
