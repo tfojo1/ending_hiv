@@ -146,9 +146,6 @@ server <- function(input, output, session) {
   # Plot: Pass to plot event handler function
   # - Alternative method: ggplotly
   # `# output$mainPlot = renderPlotly({ p = ggplot(); ggplotly(p) })``
-  
-  # observeEvent(input$res_main, {
-  
   observeEvent(input$reset_main, {
     # res_main()
     output$mainPlot = renderPlotly({
