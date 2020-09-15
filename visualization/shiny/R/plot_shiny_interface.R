@@ -5,50 +5,56 @@ library('ggplot2')
 
 source("R/server.utils.R")
 
-# test.config.on = TRUE
 test.config.on = FALSE
 
-# TODO @jef: Need to replace boilerplate func 'model' object with a
-# matching one from EndingHIV. I do not believe that the main plot
-# function here will serve that purpose without repurposing. So I might
-# create a placeholder 'model' object out of parts of that function, 
-# and/or with some of my own modifications. Will still be able to use the
-#  body of the plot function for actual plotting. -jef 2020.08.10
-
 # Constants (TEMPORARY) ####
-# @jef: The constants below are just to let this file be self-contained
-# eventually they will be abstracted into a different file structure, so 
-# do not assume these will be here. -tj
-# @tj: Understood! -jef 
+# inputId='names(.x)',
+# label='names(.x)',
+# choiceNames=c(1, 2, 3),
+# choiceValues=c(1, 2, 3),
+# selected=T 
 
-# TODO @jef: Use these constants as a quick face-validation ref for UI
-AGES = c(
-  age1='13-24 years',
-  age2='25-34 years',
-  age3='35-44 years',
-  age4='45-54 years',
-  age5='55+ years')
 
-RACES = c(
-  black="Black",
-  hispanic="Hispanic",
-  other="Other")
+AGES = list(
+  name='age-groups',
+  label='Age groups',
+  choices=c(
+    age1='13-24 years',
+    age2='25-34 years',
+    age3='35-44 years',
+    age4='45-54 years',
+    age5='55+ years') )
 
-SEXES = c(
-  male='Male',
-  female='Female')
+RACES = list(
+  name='racial-groups',
+  label='Racial groups',
+  choices=c(
+    black="Black",
+    hispanic="Hispanic",
+    other="Other") )
 
-RISKS = c(
-  msm="MSM",
-  idu="IDU",
-  msm_idu="MSM+IDU",
-  heterosexual="Heterosexual")
+SEXES = list(
+  name='gender',
+  label='Gender',
+  choices=c(
+    male='Male',
+    female='Female') )
+
+RISKS = list(
+  name='risk-groups',
+  label='Risk groups',
+  choices=c(
+    msm="MSM",
+    idu="IDU",
+    msm_idu="MSM+IDU",
+    heterosexual="Heterosexual") )
 
 DIMENSION.VALUES = list(
   age=AGES,
   race=RACES,
   sex=SEXES,
   risk=RISKS)
+#
 
 DIMENSIONS = c(
   age='Age',
@@ -83,8 +89,18 @@ get.version.options <- function()
 #' be passed to plot.simulations
 get.location.options <- function(version)
 {
-  c('12580'='Baltimore-Columbia-Towson, MD',
-    '33100'='Miami-Fort Lauderdale-Pompano Beach, FL')
+  # list(
+  #   '12580'=list(
+  #     name='12580',
+  #     label='Baltimore-Columbia-Towson, MD'),
+  #   '33100'=list(
+  #     name='33100',
+  #     label='Miami-Fort Lauderdale-Pompano Beach, FL')
+  # )
+  c(
+    'Baltimore-Columbia-Towson, MD'='12580',
+    'Miami-Fort Lauderdale-Pompano Beach, FL'='33100'
+  )
 }
 
 #'@description Get the potential formats for plots
@@ -97,9 +113,14 @@ get.location.options <- function(version)
 #' the location codes to be passed to plot.simulations
 get.plot.format.options <- function(version, location)
 {
-  c(mean.and.interval='Mean and Prediction Interval',
-    median.and.interval='Median and Prediction Interval',
-    individual.simulations='Individual Simulations')
+  # TODO: @ Todd: Is it ok for labels to come first?
+  # I found flipping these easier. but if we do want names on left and
+  # labels on right, we should declare it as so and then invert it when
+  # returning for my purposes.
+  # https://rdrr.io/cran/searchable/man/invert.html
+  c('Mean and Prediction Interval'='mean.and.interval',
+    'Median and Prediction Interval'='median.and.interval',
+    'Individual Simulations'='individual.simulations')
 }
 
 #'@description Get the data types available for plotting for a location
@@ -124,6 +145,17 @@ get.data.type.options <- function(version, location)
 get.year.options <- function(version, location)
 {
   1970:2030
+}
+
+#'@description  TODO
+#'@param version The indicator for the version of the model. Corresponds
+#' to one of the values of names(get.version.options)
+#'@param location A location code. Corresponds to one of the values of
+#' names(get.location.options(version))
+#'@return TODO
+get.dimensions <- function(version, location)
+{
+  DIMENSION.VALUES
 }
 
 #'@description Get the potential names of dimensions by which a plot can
@@ -177,26 +209,37 @@ get.split.by.options <- function(version, location)
 #  fully ramped up
 get.intervention.options <- function(version, location)
 {
-  no.int = list(target.groups=character(),
-                testing.frequency=NA,
-                suppressed.proportion=NA,
-                prep.coverage=NA,
-                intervention.start.year=2021,
-                intervention.implemented.year=2022)
+  # TODO: @Todd: Might need to include this 'name' bit for my dynamic
+  # rendering.
+  no.int = list(
+    name='no_intervention',
+    label='No intervention',
+    target.groups=character(),
+    testing.frequency=NA,
+    suppressed.proportion=NA,
+    prep.coverage=NA,
+    intervention.start.year=2021,
+    intervention.implemented.year=2022)
   
-  int.1 = list(target.groups='Black MSM <35yo',
-               testing.frequency=1,
-               suppressed.proportion=0.8,
-               prep.coverage=0.25,
-               intervention.start.year=2021,
-               intervention.implemented.year=2022)
+  int.1 = list(
+    name='young_black_msm_testing_1py_0.8_suppressed_0.25_prep',
+    label='Young Black MSM testing (1py 0.8suppressed 0.25prep)',
+    target.groups='Black MSM <35yo',
+    testing.frequency=1,
+    suppressed.proportion=0.8,
+    prep.coverage=0.25,
+    intervention.start.year=2021,
+    intervention.implemented.year=2022)
   
-  int.2 = list(target.groups='All MSM and IDU',
-               testing.frequency=1,
-               suppressed.proportion=0.9,
-               prep.coverage=0.5,
-               intervention.start.year=2021,
-               intervention.implemented.year=2022)
+  int.2 = list(
+    name='all_msm_idu_testing_1py_0.9_suppressed_0.5_prep',
+    label='All MSM & IDU testing (1py 0.9suppressed 0.5prep)',
+    target.groups='All MSM and IDU',
+    testing.frequency=1,
+    suppressed.proportion=0.9,
+    prep.coverage=0.5,
+    intervention.start.year=2021,
+    intervention.implemented.year=2022)
   
   list('no_intervention'=no.int,
        'young_black_msm_testing_1py_0.8_suppressed_0.25_prep'=int.1,
@@ -375,7 +418,7 @@ plot.simulations <- function(
     df, aes(year, value, color=intervention, group=split.by)) + 
     geom_line() +
     facet_wrap(facet.formula)
-  
+   
   # Return: List[ggplot(), char[]] ####
   list(
     plot=plot,
@@ -413,91 +456,6 @@ if (test.config.on == T) {
   )$plot
   
   View(test.me)
-}
-
-# Boilerplate Model ####
-model.boilerplate <- function(t, t0, parms) {
-  with(as.list(c(t0, parms)), {
-    # ODEs
-    # On campus students
-    dS_on <- 
-      -((beta_student_to_student*(I_off+I_on) + (beta_on_to_on*I_on) +
-           (beta_saf*I_saf))*S_on)/N - community*S_on  - 
-      testing*(1-p_asympt_stu)*I_on*sensitivity * 
-      (contacts-R0_on_to_on-R0_student_to_student)*p_contacts_reached + 
-      1/isolation*Q_on* 
-      ((contacts-R0_on_to_on-R0_student_to_student)/contacts)
-    
-    dE_on <-  ((beta_student_to_student*(I_off+I_on) + 
-                  (beta_on_to_on*I_on) + (beta_saf*I_saf))*S_on)/N +
-      community*S_on - 1/latent*E_on  - screening*E_on*sensitivity -
-      testing*(1-p_asympt_stu)*I_on*sensitivity*
-      (R0_on_to_on+R0_student_to_student)*p_contacts_reached
-    #last term represents contract tracing
-    dI_on <- 1/latent*E_on - testing*(1-p_asympt_stu)*sensitivity*I_on 
-    - 1/infectious*I_on - screening*I_on*sensitivity
-    dR_on <- 1/infectious*I_on + 1/isolation*P_on + 1/isolation*
-      Q_on*((R0_on_to_on+R0_student_to_student)/contacts)
-    
-    dP_on <- testing*(1-p_asympt_stu)*sensitivity*I_on + screening*
-      (E_on+I_on)*sensitivity - 1/isolation*P_on
-    dQ_on <- testing*(1-p_asympt_stu)*I_on*sensitivity*contacts*
-      p_contacts_reached  - 1/isolation*Q_on
-    
-    dIcum_on <- (
-      1-p_asympt_stu)*
-      ((beta_student_to_student*(I_off+I_on) +
-          (beta_on_to_on*I_on) + (beta_saf*I_saf))*S_on)/N
-    dPcum_on <- testing*(1-p_asympt_stu)*I_on*sensitivity + 
-      screening*(E_on+I_on)*sensitivity
-    dQcum_on <- testing*(1-p_asympt_stu)*I_on*sensitivity*contacts
-    dHcum_on <- (
-      (1-p_asympt_stu)*((beta_student_to_student*(I_off+I_on) +
-                           (beta_on_to_on*I_on) + (beta_saf*I_saf))*
-                          S_on)/N)*p_hosp_stu
-    dDcum_on <- ((1-p_asympt_stu)*(
-      (beta_student_to_student*(I_off+I_on) + (beta_on_to_on*I_on) +
-         (beta_saf*I_saf))*S_on)/N)*p_death_stu
-    
-    # Off campus students
-    dS_off <- -((beta_student_to_student*(I_off+I_on)+(beta_saf*I_saf))*S_off)/N - community*S_off - testing*(1-p_asympt_stu)*I_off*sensitivity*(contacts - R0_student_to_student)*p_contacts_reached + 1/isolation*Q_off*((contacts-R0_student_to_student)/contacts)
-    dE_off <-  ((beta_student_to_student*(I_off+I_on)+(beta_saf*I_saf))*S_off)/N + community*S_off - (1/latent)*E_off - screening*E_off*sensitivity - testing*(1-p_asympt_stu)*I_off*sensitivity*(R0_student_to_student)*p_contacts_reached
-    dI_off <- 1/latent*E_off - testing*(1-p_asympt_stu)*I_off*sensitivity - 1/infectious*I_off - screening*I_off*sensitivity
-    dR_off <- 1/infectious*I_off + 1/isolation*P_off + 1/isolation*Q_off*(R0_student_to_student/contacts)
-    
-    dP_off <- testing*(1-p_asympt_stu)*I_off*sensitivity - 1/isolation*P_off + screening*(E_off+I_off)*sensitivity
-    dQ_off <- testing*(1-p_asympt_stu)*I_off*sensitivity*contacts*p_contacts_reached - 1/isolation*Q_off
-    
-    dIcum_off = (1-p_asympt_stu)*((beta_student_to_student*(I_off+I_on)+(beta_saf*I_saf))*S_off)/N
-    dPcum_off <- testing*(1-p_asympt_stu)*I_off*sensitivity + screening*(E_off+I_off)*sensitivity
-    dQcum_off <-testing*(1-p_asympt_stu)*I_off*sensitivity*contacts
-    dHcum_off <- ((1-p_asympt_stu)*((beta_student_to_student*(I_off+I_on)+(beta_saf*I_saf))*S_off)/N)*p_hosp_stu
-    dDcum_off <- ((1-p_asympt_stu)*((beta_student_to_student*(I_off+I_on)+(beta_saf*I_saf))*S_off)/N)*p_death_stu
-    
-    
-    
-    # Staff and faculty
-    dS_saf <- -beta_saf*(I_on+I_off+I_saf)*S_saf/N - community*S_saf - testing*(1-p_asympt_saf)*I_saf*sensitivity*(contacts-R0_saf)*p_contacts_reached + 1/isolation*Q_saf*((contacts-R0_saf)/contacts)
-    dE_saf <-  beta_saf*(I_on+I_off+I_saf)*S_saf/N + community*S_saf - 1/latent*E_saf - screening*E_saf*sensitivity - testing*(1-p_asympt_saf)*I_saf*sensitivity*(R0_saf)*p_contacts_reached
-    dI_saf <- 1/latent*E_saf - testing*(1-p_asympt_saf)*I_saf*sensitivity- 1/infectious*I_saf - screening*I_saf*sensitivity
-    dR_saf <- 1/infectious*I_saf + 1/isolation*P_saf + 1/isolation*Q_saf*(R0_saf/contacts)
-    
-    dP_saf <- testing*(1-p_asympt_saf)*I_saf*sensitivity - 1/isolation*P_saf + screening*(E_saf+I_saf)*sensitivity
-    dQ_saf <- testing*(1-p_asympt_saf)*I_saf*sensitivity*contacts*p_contacts_reached - 1/isolation*Q_saf
-    
-    dIcum_saf = (1-p_asympt_saf)*beta_saf*(I_on+I_off+I_saf)*S_saf/N
-    dPcum_saf <- testing*(1-p_asympt_saf)*I_saf*sensitivity  + screening*(E_saf+I_saf)*sensitivity
-    dHcum_saf <- ((1-p_asympt_saf)*beta_saf*(I_on+I_off+I_saf)*S_saf/N)*p_hosp_saf
-    dDcum_saf <- ((1-p_asympt_saf)*beta_saf*(I_on+I_off+I_saf)*S_saf/N)*p_death_saf
-    
-    dTest <- N*screening + ((I_on+I_off+I_saf)*testing) + N*ili*ifelse(testing > 0, 1, 0)
-    
-    state_list <- c(dS_on,dE_on,dI_on,dP_on,dR_on,dIcum_on, dPcum_on, dQ_on, dQcum_on, dHcum_on, dDcum_on,
-                    dS_off,dE_off,dI_off,dP_off,dR_off,dIcum_off, dPcum_off, dQ_off, dQcum_off, dHcum_off, dDcum_off,
-                    dS_saf,dE_saf,dI_saf,dP_saf,dR_saf,dIcum_saf,dPcum_saf, dQ_saf, dHcum_saf, dDcum_saf, dTest)
-    out <- list(state_list)
-    return(out)
-  })
 }
 
 # Export ####
