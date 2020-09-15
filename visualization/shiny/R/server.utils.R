@@ -85,33 +85,52 @@ static.save <- function(
   s3.save(objOrFilepath, s3Obj.filename, bucket.name)
 }
 
-s3.load <- function(
-  filenames,  # char[]
-  bucket.name
-) {
-    s3load(
-      object=filenames, 
-      bucket=bucket.name)
-}
-
 #'@param filenames: char[]: version_city_intervention (int)_(str)_(str)
 #' (version city and intervention cant use underscore)
 sims.load <- function(
   filenames,  # char[]
   bucket.name=BUCKET.NAME.SIMS
 ) {
-  s3.load(
+  s3load(
     filenames,
-    bucket.name=bucket.name)
+    bucket=bucket.name,
+    ennvir=parent.frame())
 }
 
+# TODO: add docs
 static.load <- function(
   filenames,  # char[]
   bucket.name=BUCKET.NAME.STATIC
 ) {
-  s3.load(
+  # TODO: handle the static loading issue; for some reason wrong bucket name?
+  # - needs to load env
+  
+  # List of 5
+  # $ Code      : chr "NoSuchBucket"
+  # $ Message   : chr "The specified bucket does not exist"
+  # $ BucketName: chr "census_totals.Rdata"
+  # $ RequestId : chr "E8CDAC4870DC2F76"
+  # $ HostId    : chr "V33XWtVPZs7R6s+uwfOf7xTXBG01RxVJQ0pheBT9IYBZ3lh4799HlY77lwBbnTcpc3OGgQS76a8="
+  # - attr(*, "headers")=List of 6
+  # ..$ x-amz-request-id : chr "E8CDAC4870DC2F76"
+  # ..$ x-amz-id-2       : chr "V33XWtVPZs7R6s+uwfOf7xTXBG01RxVJQ0pheBT9IYBZ3lh4799HlY77lwBbnTcpc3OGgQS76a8="
+  # ..$ content-type     : chr "application/xml"
+  # ..$ transfer-encoding: chr "chunked"
+  # ..$ date             : chr "Tue, 15 Sep 2020 19:41:23 GMT"
+  # ..$ server           : chr "AmazonS3"
+  # ..- attr(*, "class")= chr [1:2] "insensitive" "list"
+  # - attr(*, "class")= chr "aws_error"
+  # - attr(*, "request_canonical")= chr "GET\n/census_totals.Rdata/census_totals.Rdata\n\nhost:s3.amazonaws.com\nx-amz-date:20200915T194124Z\n\nhost;x-a"| __truncated__
+  # - attr(*, "request_string_to_sign")= chr "AWS4-HMAC-SHA256\n20200915T194124Z\n20200915/us-east-1/s3/aws4_request\n5b9852fed23c6edaa5cf56bc72a0f9419a330d6"| __truncated__
+  # - attr(*, "request_signature")= chr "AWS4-HMAC-SHA256 Credential=AKIAIRMV4HP5F3IOTSNA/20200915/us-east-1/s3/aws4_request,SignedHeaders=host;x-amz-da"| __truncated__
+  # NULL
+  # Error in parse_aws_s3_response(r, Sig, verbose = verbose) : 
+  #   Not Found (HTTP 404).
+  s3load(
     filenames,
-    bucket.name=bucket.name)
+    bucket=bucket.name,
+    ennvir=parent.frame())
+  browser()
 }
 
 # Test ####

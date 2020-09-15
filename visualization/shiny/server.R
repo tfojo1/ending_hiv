@@ -147,7 +147,6 @@ server <- function(input, output, session) {
   # - Alternative method: ggplotly
   # `# output$mainPlot = renderPlotly({ p = ggplot(); ggplotly(p) })``
   observeEvent(input$reset_main, {
-    # res_main()
     output$mainPlot = renderPlotly({
       version = names(get.version.options())[1]
       p = plot.simulations(
@@ -158,11 +157,11 @@ server <- function(input, output, session) {
         data.types=input[['epidemiological-indicators']],
         facet.by=input[['facet']],
         split.by=input[['split']],
-        dimension.subsets=list(
-          'age'=input[['age']],
-          'race'=input[['race']],
-          'sex'=input[['sex']],
-          'risk'=input[['hiv-risk-factor']]),
+        dimension.subsets=list(  # TODO
+          'age'=input[['age-groups']],
+          'race'=input[['racial-groups']],
+          'sex'=input[['sex']],  # aka gender
+          'risk'=input[['risk-groups']]),
         plot.format=input[['aggregation-of-simulations-ran']],
       )$plot
       
