@@ -358,69 +358,51 @@ plot.simulations <- function(
   simulation.line.size=0.1,
   truth.point.size=5
 ) {
-  # TODO: The next step
-  # 1. plot manager code.; should be able to acces from here
-  # 2. query the data (Todd will rewrite this function)
-  # 3. plot
-  static.list()
-  resources = static.load('census_totals.Rdata')
-  browser()
-  
-  # Preprocessing ####
-  dimensions = unique(c(facet.by, split.by))  # char[]
-  dimension.values = dimension.subsets
-  
-  # browser()
-  
-  # This is just a temporary hack to give us a test plot
-  base.df = NULL
-  for (d in 1:length(data.types)) {
-    for (i in 1:length(intervention.names)) {
-      base.df = rbind(
-        base.df,
-        suppressWarnings(data.frame(
-          data_type=data.types[d],
-          intervention=intervention.names[i],
-          year=years,
-          value= 100 * d + 10 * i + 2 - 2*(1:length(years))) ))}}
-  
-  df = base.df
-  for (d in dimensions) {
-    base.df = df
-    df = NULL
-    for (i in 1:length(dimension.values[[d]])) {
-      one.df = base.df
-      one.df[,d] = dimension.values[[d]][i]
-      one.df$value = one.df$value + 20*i - 20
-      df = rbind(df, one.df) }}
-  
-  if (length(split.by)==0)
-    df$split.by='all'
-  else if (length(split.by)==1)
-    df$split.by=paste0(split.by, '=', df[,split.by])
-  else {
-    df$split.by=paste0(split.by[1], '=', df[,split.by[1]])
-    for (split in split.by[-1])
-      df$split.by = paste0(df$split.by, ', ', split, '=', df[,split]) }
-  
-  if (length(facet.by)==0)
-    facet.formula = ~ data.type
-  else
-    facet.formula = as.formula(
-      paste0('~data_type + ', paste0(facet.by, collapse='+')) )
-  
-  # TODO: 
-  # Warning: Error in : At least one layer must contain all faceting variables: `data.type`.
-  # * Plot is missing `data.type`
-  # * Layer 1 is missing `data.type`
-  
-  # Plot ####
-  plot = ggplot(
-    df, aes(year, value, color=intervention, group=split.by)) + 
-    geom_line()
-    # facet_wrap(facet.formula)
-   
-  # Return: List[ggplot(), char[]]
+ 
+    sims.load('baseline.Rdata')
+    baseline.simset = simset
+    
+    sims.load('No_Invervention.Rdata')
+    intervention.simsets = list(no_intervention=simset)
+    
+    if (length(intervention.names)>1)
+    {
+        sims.load('int1.Rdata')
+        intervention.simsets = c(intervention.simsets,
+                                 list(intervention_1=simset))
+    }
+    
+    if (length(intervention.names)>2)
+    {
+        sims.load('int2.Rdata')
+        intervention.simsets = c(intervention.simsets,
+                                 list(intervention_2=simset))
+    }
+    
+    plot = do.plot.simulations(baseline.simset,
+                               intervention.simsets,
+                               
+                               years=years,
+                               data.types=data.types,
+                               facet.by,
+                               split.by,
+                               dimension.subsets,
+                               plot.format='individual.simulations', #for now, going to override the plot formats
+                               
+                               show.truth=T,
+                               
+                               plot.interval.coverage=plot.interval.coverage,
+                               summary.statistic=summary.statistic,
+                               summary.statistic.interval.coverage=summary.statistic.interval.coverage,
+                               
+                               baseline.color=baseline.color,
+                               truth.color=truth.color,
+                               intervention.colors=intervention.colors,
+                               plot.interval.alpha=plot.interval.alpha,
+                               simulation.alpha=simulation.alpha,
+                               simulation.line.size=simulation.line.size,
+                               truth.point.size=truth.point.size)
+    
   list(
     plot=plot,
     notes=c('test note 1', 'test note 2'))
