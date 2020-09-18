@@ -8,13 +8,6 @@ source("R/server.utils.R")
 test.config.on = FALSE
 
 # Constants (TEMPORARY) ####
-# inputId='names(.x)',
-# label='names(.x)',
-# choiceNames=c(1, 2, 3),
-# choiceValues=c(1, 2, 3),
-# selected=T 
-
-
 AGES = list(
   name='age-groups',
   label='Age groups',
@@ -34,7 +27,7 @@ RACES = list(
     other="Other") )
 
 SEXES = list(
-  name='gender',
+  name='sex',
   label='Gender',
   choices=c(
     male='Male',
@@ -54,7 +47,6 @@ DIMENSION.VALUES = list(
   race=RACES,
   sex=SEXES,
   risk=RISKS)
-#
 
 DIMENSIONS = c(
   age='Age',
@@ -145,17 +137,6 @@ get.data.type.options <- function(version, location)
 get.year.options <- function(version, location)
 {
   1970:2030
-}
-
-#'@description  TODO
-#'@param version The indicator for the version of the model. Corresponds
-#' to one of the values of names(get.version.options)
-#'@param location A location code. Corresponds to one of the values of
-#' names(get.location.options(version))
-#'@return TODO
-get.dimensions <- function(version, location)
-{
-  DIMENSION.VALUES
 }
 
 #'@description Get the potential names of dimensions by which a plot can
@@ -360,7 +341,7 @@ plot.simulations <- function(
   data.types,
   facet.by,
   split.by,
-  dimension.subsets,
+  dimension.subsets,  # TODO: Problem? all 4 vals are null
   plot.format,
   # Private params
   show.truth=T,
@@ -377,10 +358,21 @@ plot.simulations <- function(
   simulation.line.size=0.1,
   truth.point.size=5
 ) {
+  # TODO: The next step
+  # 1. plot manager code.; should be able to acces from here
+  # 2. query the data (Todd will rewrite this function)
+  # 3. plot
+  static.list()
+  resources = static.load('census_totals.Rdata')
+  browser()
+  
+  # Preprocessing ####
   dimensions = unique(c(facet.by, split.by))  # char[]
   dimension.values = dimension.subsets
   
-  #This is just a temporary hack to give us a test plot
+  # browser()
+  
+  # This is just a temporary hack to give us a test plot
   base.df = NULL
   for (d in 1:length(data.types)) {
     for (i in 1:length(intervention.names)) {
@@ -411,15 +403,24 @@ plot.simulations <- function(
     for (split in split.by[-1])
       df$split.by = paste0(df$split.by, ', ', split, '=', df[,split]) }
   
-  facet.formula = as.formula(
-    paste0('~data_type + ', paste0(facet.by, collapse='+')))
+  if (length(facet.by)==0)
+    facet.formula = ~ data.type
+  else
+    facet.formula = as.formula(
+      paste0('~data_type + ', paste0(facet.by, collapse='+')) )
   
+  # TODO: 
+  # Warning: Error in : At least one layer must contain all faceting variables: `data.type`.
+  # * Plot is missing `data.type`
+  # * Layer 1 is missing `data.type`
+  
+  # Plot ####
   plot = ggplot(
     df, aes(year, value, color=intervention, group=split.by)) + 
-    geom_line() +
-    facet_wrap(facet.formula)
+    geom_line()
+    # facet_wrap(facet.formula)
    
-  # Return: List[ggplot(), char[]] ####
+  # Return: List[ggplot(), char[]]
   list(
     plot=plot,
     notes=c('test note 1', 'test note 2'))
