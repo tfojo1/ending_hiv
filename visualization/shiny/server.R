@@ -7,8 +7,30 @@ source("R/server.routes.runModel.R")
 
 suppressPackageStartupMessages(library(EpiModel))  # param.dcm, init.dcm
 
-server <- function(input, output, session) {
+# Components
+rp <- function(input) {
+  renderPlotly({
+    version = names(get.version.options())[1]
+    p = plot.simulations(
+      version=version,
+      location=input[['geographic-location']],
+      intervention.names=input[['public-health-interventions']],
+      years=input[['years']][1]:input[['years']][2],
+      data.types=input[['epidemiological-indicators']],
+      facet.by=input[['facet']],
+      split.by=input[['split']],
+      dimension.subsets=list(  # TODO
+        'age'=input[['age-groups']],
+        'race'=input[['racial-groups']],
+        'sex'=input[['sex']],  # aka gender
+        'risk'=input[['risk-groups']]),
+      plot.format=input[['aggregation-of-simulations-ran']]
+    )$plot
+    ggplotly(p)
+})}
 
+server <- function(input, output, session) {
+  
   # TODO: @jef: does this section 'defaults' apply  to all pages, 
   # or is this  all for the 'Parameters' page
   # defaults ####
@@ -146,26 +168,17 @@ server <- function(input, output, session) {
   # Plot: Pass to plot event handler function
   # - Alternative method: ggplotly
   # `# output$mainPlot = renderPlotly({ p = ggplot(); ggplotly(p) })``
+  
+  # TODO: re-enable once plot works
+  rp(input)  # Plots at start
+  
   observeEvent(input$reset_main, {
-    output$mainPlot = renderPlotly({
-      version = names(get.version.options())[1]
-      p = plot.simulations(
-        version=version,
-        location=input[['geographic-location']],
-        intervention.names=input[['public-health-interventions']],
-        years=input[['years']][1]:input[['years']][2],
-        data.types=input[['epidemiological-indicators']],
-        facet.by=input[['facet']],
-        split.by=input[['split']],
-        dimension.subsets=list(  # TODO
-          'age'=input[['age-groups']],
-          'race'=input[['racial-groups']],
-          'sex'=input[['sex']],  # aka gender
-          'risk'=input[['risk-groups']]),
-        plot.format=input[['aggregation-of-simulations-ran']],
-      )$plot
-      
-      ggplotly(p)
-    })
+    output$mainPlot = rp(input)
   })
+  
+  # TODO: check simset
+  # filename = 'No_Intervention.Rdata'
+  # sims.load(filename)
+  # s3load(filename,'endinghiv.sims')
+  # browser()
 }

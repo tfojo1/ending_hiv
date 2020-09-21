@@ -22,6 +22,12 @@ BUCKET.NAME.SIMS = 'endinghiv.sims'
 BUCKET.NAME.STATIC = 'endinghiv.static'
 
 # Utils ####
+invert.keyVals <- function(x) {
+  y=names(x)
+  names(y) = as.character(x)
+  y
+}
+
 s3.list <- function(
   bucket.name
 ) {
@@ -130,7 +136,6 @@ static.load <- function(
     filenames,
     bucket=bucket.name,
     ennvir=parent.frame())
-  browser()
 }
 
 # Test ####
@@ -157,3 +162,4 @@ static.load <- function(
 # xxx = s3load(
 #   object=testfile.name,
 #   bucket='endinghiv.static')
+

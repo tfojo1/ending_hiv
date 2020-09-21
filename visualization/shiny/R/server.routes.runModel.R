@@ -137,10 +137,10 @@ server.routes.runModel.get <- function(
                 selectInput(
                   inputId="geographic-location", 
                   label="Geographic location",
-                  choices=get.location.options(
-                    version=version),
-                  selected=get.location.options(
-                    version=version)[1],
+                  choices=invert.keyVals(get.location.options(
+                    version=version)),
+                  selected=invert.keyVals(get.location.options(
+                    version=version))[1],
                   multiple=FALSE,
                   selectize=TRUE, 
                   width=NULL, 
@@ -252,9 +252,9 @@ server.routes.runModel.get <- function(
             selectInput(
               inputId='aggregation-of-simulations-ran', 
               label='Aggregation of simulations ran', 
-              choices=get.plot.format.options(
+              choices=invert.keyVals(get.plot.format.options(
                 version=version,
-                location=input[['geographic-location']]),
+                location=input[['geographic-location']])),
               selected=NULL, 
               multiple=FALSE,
               selectize=TRUE, 
