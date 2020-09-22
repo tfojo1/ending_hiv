@@ -90,8 +90,8 @@ get.location.options <- function(version)
   #     label='Miami-Fort Lauderdale-Pompano Beach, FL')
   # )
   c(
-    'Baltimore-Columbia-Towson, MD'='12580',
-    'Miami-Fort Lauderdale-Pompano Beach, FL'='33100'
+    '12580'='Baltimore-Columbia-Towson, MD',
+    '33100'='Miami-Fort Lauderdale-Pompano Beach, FL'
   )
 }
 
@@ -110,9 +110,9 @@ get.plot.format.options <- function(version, location)
   # labels on right, we should declare it as so and then invert it when
   # returning for my purposes.
   # https://rdrr.io/cran/searchable/man/invert.html
-  c('Mean and Prediction Interval'='mean.and.interval',
-    'Median and Prediction Interval'='median.and.interval',
-    'Individual Simulations'='individual.simulations')
+  c('mean.and.interval'='Mean and Prediction Interval',
+    'median.and.interval'='Median and Prediction Interval',
+    'individual.simulations'='Individual Simulations')
 }
 
 #'@description Get the data types available for plotting for a location
@@ -358,9 +358,11 @@ plot.simulations <- function(
   simulation.line.size=0.1,
   truth.point.size=5
 ) {
- 
-    sims.load('baseline.Rdata')
+  browser()  # TODO: debug
+  
+  sims.load('baseline.Rdata')  # TODO: seems to still be stuck loading this?
     baseline.simset = simset
+    
     
     sims.load('No_Invervention.Rdata')
     intervention.simsets = list(no_intervention=simset)
@@ -403,6 +405,8 @@ plot.simulations <- function(
                                simulation.line.size=simulation.line.size,
                                truth.point.size=truth.point.size)
     
+    
+    
   list(
     plot=plot,
     notes=c('test note 1', 'test note 2'))
@@ -442,7 +446,6 @@ if (test.config.on == T) {
 }
 
 # Export ####
-model.todd = plot.simulations  # TODO @jef: is this true?
-model.boilerplate = model.boilerplate
-model = model.boilerplate
+model.todd = plot.simulations
+
 # Scratch ####
