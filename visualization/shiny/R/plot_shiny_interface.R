@@ -278,6 +278,18 @@ plot.interval.coverage.applies.to.plot.format <- function(plot.format)
     individual.simulations=F)
 }
 
+
+#@joe
+# Returns a vector of character filenames that will be loaded with sims.load 
+# within the plot function
+get.sims.to.load <- function(version,
+                              location,
+                              intervention.names)
+{
+    
+}
+
+
 # Main Function: THE PLOT FUNCTION ####
 #'@param description The function that actually generates plots
 #'

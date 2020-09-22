@@ -100,7 +100,10 @@ sims.load <- function(
   s3load(
     filenames,
     bucket=bucket.name,
-    ennvir=parent.frame())
+    envir = environment())
+#    ennvir=parent.frame())
+    
+    simset
 }
 
 # TODO: add docs
