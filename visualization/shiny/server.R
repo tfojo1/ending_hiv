@@ -11,6 +11,14 @@ suppressPackageStartupMessages(library(EpiModel))  # param.dcm, init.dcm
 rp <- function(input) {
   renderPlotly({
     version = names(get.version.options())[1]
+    
+    #update the sims cache
+    filenames = get.sim.filenames.to.load(version,
+                                          location=input[['geographic-location']],
+                                          intervention.names=input[['public-health-interventions']])
+    CACHE = update.sims.cache(filenames=filenames,
+                              cache=CACHE)
+    
     p = plot.simulations(
       version=version,
       location=input[['geographic-location']],

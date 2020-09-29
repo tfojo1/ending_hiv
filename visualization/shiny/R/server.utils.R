@@ -97,39 +97,35 @@ static.save <- function(
 #   CACHE
 # }
 
+
+update.sims.cache <- function(
+    filenames,  # char
+    bucket.name=BUCKET.NAME.SIMS,
+    cache=CACHE)
+{
+    for (filename in filenames)
+    {
+        if (!(filename %in% names(cache))) {
+            # simset = s3load(
+            s3load(
+                filename,
+                bucket=bucket.name,
+                envir=environment())
+            
+            cache[[filename]] = simset
+        }    
+    }
+        
+    cache
+}
+
 #'@param filename: char[]: version_city_intervention (int)_(str)_(str)
 #' (version city and intervention cant use underscore)
 sims.load <- function(
   filename,  # char
-  bucket.name=BUCKET.NAME.SIMS,
   cache=CACHE
 ) {
-  if (filename %in% names(cache)) {
-    return(list(
-      'cache'=cache,
-      'simset'=cache[[filename]] ))
-  } else {
-    # simset = s3load(
-    s3load(
-      filename,
-      bucket=bucket.name,
-      envir=environment())
-    # ennvir=parent.frame())
-    
-    # to-do:
-    # All sim obj's are named 'simset'. But what if this is ever not the case, or
-    # there is a name collisison? Probably would be better to assign the return of
-    # s3load() to a new variable to avoid this.
-    
-    # CACHE.sims.update(
-    #   key=filename,
-    #   obj=simset)
-    cache[[filename]] = simset
-    
-    return(list(
-      'cache'=cache,
-      'simset'=simset ))
-  }
+    cache[[filename]]
 }
 
 static.load <- function(

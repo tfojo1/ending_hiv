@@ -190,42 +190,14 @@ get.split.by.options <- function(version, location)
 #  fully ramped up
 get.intervention.options <- function(version, location)
 {
-  # TODO: @Todd: Might need to include this 'name' bit for my dynamic
-  # rendering.
-  no.int = list(
-    name='no_intervention',
-    label='No intervention',
-    target.groups=character(),
-    testing.frequency=NA,
-    suppressed.proportion=NA,
-    prep.coverage=NA,
-    intervention.start.year=2021,
-    intervention.implemented.year=2022)
-  
-  int.1 = list(
-    name='young_black_msm_testing_1py_0.8_suppressed_0.25_prep',
-    label='Young Black MSM testing (1py 0.8suppressed 0.25prep)',
-    target.groups='Black MSM <35yo',
-    testing.frequency=1,
-    suppressed.proportion=0.8,
-    prep.coverage=0.25,
-    intervention.start.year=2021,
-    intervention.implemented.year=2022)
-  
-  int.2 = list(
-    name='all_msm_idu_testing_1py_0.9_suppressed_0.5_prep',
-    label='All MSM & IDU testing (1py 0.9suppressed 0.5prep)',
-    target.groups='All MSM and IDU',
-    testing.frequency=1,
-    suppressed.proportion=0.9,
-    prep.coverage=0.5,
-    intervention.start.year=2021,
-    intervention.implemented.year=2022)
-  
-  list('no_intervention'=no.int,
-       'young_black_msm_testing_1py_0.8_suppressed_0.25_prep'=int.1,
-       'all_msm_idu_testing_1py_0.9_suppressed_0.5_prep'=int.2)
-  
+    
+    desc = 'line one\nline two\nline 3'
+    strsplit(desc, split = '\n')
+    
+    data.frame(name='test_name',
+               label='test_label',
+               description='test_description')
+
 }
 
 #'@description Get the potential values (which can be subsetted) for each
@@ -285,12 +257,12 @@ plot.interval.coverage.applies.to.plot.format <- function(plot.format)
 #   get.sims.to.load
 # 3. load 
 # 4. pass data to plot
-get.sims.to.load <- function(
+get.sim.filenames.to.load <- function(
   version,
   location,
   intervention.names)
 {
-    
+    '1.0_12060_baseline.Rdata'
 }
 
 
@@ -374,29 +346,11 @@ plot.simulations <- function(
   simulation.line.size=0.1,
   truth.point.size=5
 ) {
-  browser()  # TODO: debug
+#  browser()  # TODO: debug
   
-  sims.load('baseline.Rdata')  # TODO: seems to still be stuck loading this?
-    baseline.simset = simset
-    
-    
-    sims.load('No_Invervention.Rdata')
-    intervention.simsets = list(no_intervention=simset)
-    
-    if (length(intervention.names)>1)
-    {
-        sims.load('int1.Rdata')
-        intervention.simsets = c(intervention.simsets,
-                                 list(intervention_1=simset))
-    }
-    
-    if (length(intervention.names)>2)
-    {
-        sims.load('int2.Rdata')
-        intervention.simsets = c(intervention.simsets,
-                                 list(intervention_2=simset))
-    }
-    
+  baseline.simset = sims.load('1.0_12060_baseline.Rdata')
+    intervention.simsets = NULL
+browser()
     plot = do.plot.simulations(baseline.simset,
                                intervention.simsets,
                                
