@@ -18,6 +18,7 @@ source('env.R')
 
 # Constants ####
 # BUCKET.NAME.GENERAL = 'endinghiv'
+CACHE = list()
 BUCKET.NAME.SIMS = 'endinghiv.sims'
 BUCKET.NAME.STATIC = 'endinghiv.static'
 
@@ -91,78 +92,86 @@ static.save <- function(
   s3.save(objOrFilepath, s3Obj.filename, bucket.name)
 }
 
-#'@param filenames: char[]: version_city_intervention (int)_(str)_(str)
+# CACHE.sims.update <- function(key, obj) {
+#   CACHE[[key]] = obj
+#   CACHE
+# }
+
+#'@param filename: char[]: version_city_intervention (int)_(str)_(str)
 #' (version city and intervention cant use underscore)
 sims.load <- function(
-  filenames,  # char[]
-  bucket.name=BUCKET.NAME.SIMS
+  filename,  # char
+  bucket.name=BUCKET.NAME.SIMS,
+  cache=CACHE
 ) {
-  s3load(
-    filenames,
-    bucket=bucket.name,
-    envir = environment())
-#    ennvir=parent.frame())
+  if (filename %in% names(cache)) {
+    return(list(
+      'cache'=cache,
+      'simset'=cache[[filename]] ))
+  } else {
+    # simset = s3load(
+    s3load(
+      filename,
+      bucket=bucket.name,
+      envir=environment())
+    # ennvir=parent.frame())
     
-    simset
+    # to-do:
+    # All sim obj's are named 'simset'. But what if this is ever not the case, or
+    # there is a name collisison? Probably would be better to assign the return of
+    # s3load() to a new variable to avoid this.
+    
+    # CACHE.sims.update(
+    #   key=filename,
+    #   obj=simset)
+    cache[[filename]] = simset
+    
+    return(list(
+      'cache'=cache,
+      'simset'=simset ))
+  }
 }
 
-# TODO: add docs
 static.load <- function(
-  filenames,  # char[]
+  filename,  # char[]
   bucket.name=BUCKET.NAME.STATIC
 ) {
-  # TODO: handle the static loading issue; for some reason wrong bucket name?
-  # - needs to load env
-  
-  # List of 5
-  # $ Code      : chr "NoSuchBucket"
-  # $ Message   : chr "The specified bucket does not exist"
-  # $ BucketName: chr "census_totals.Rdata"
-  # $ RequestId : chr "E8CDAC4870DC2F76"
-  # $ HostId    : chr "V33XWtVPZs7R6s+uwfOf7xTXBG01RxVJQ0pheBT9IYBZ3lh4799HlY77lwBbnTcpc3OGgQS76a8="
-  # - attr(*, "headers")=List of 6
-  # ..$ x-amz-request-id : chr "E8CDAC4870DC2F76"
-  # ..$ x-amz-id-2       : chr "V33XWtVPZs7R6s+uwfOf7xTXBG01RxVJQ0pheBT9IYBZ3lh4799HlY77lwBbnTcpc3OGgQS76a8="
-  # ..$ content-type     : chr "application/xml"
-  # ..$ transfer-encoding: chr "chunked"
-  # ..$ date             : chr "Tue, 15 Sep 2020 19:41:23 GMT"
-  # ..$ server           : chr "AmazonS3"
-  # ..- attr(*, "class")= chr [1:2] "insensitive" "list"
-  # - attr(*, "class")= chr "aws_error"
-  # - attr(*, "request_canonical")= chr "GET\n/census_totals.Rdata/census_totals.Rdata\n\nhost:s3.amazonaws.com\nx-amz-date:20200915T194124Z\n\nhost;x-a"| __truncated__
-  # - attr(*, "request_string_to_sign")= chr "AWS4-HMAC-SHA256\n20200915T194124Z\n20200915/us-east-1/s3/aws4_request\n5b9852fed23c6edaa5cf56bc72a0f9419a330d6"| __truncated__
-  # - attr(*, "request_signature")= chr "AWS4-HMAC-SHA256 Credential=AKIAIRMV4HP5F3IOTSNA/20200915/us-east-1/s3/aws4_request,SignedHeaders=host;x-amz-da"| __truncated__
-  # NULL
-  # Error in parse_aws_s3_response(r, Sig, verbose = verbose) : 
-  #   Not Found (HTTP 404).
   s3load(
-    filenames,
+    filename,
     bucket=bucket.name,
-    ennvir=parent.frame())
+    ennvir=environment())
 }
 
 # Test ####
-# n/a
+cacheTest <- function (
+  cache=CACHE
+) {
+  # browser()
+  t1 <- proc.time()
+  print('Loading from AWS')
+  fetched.1 = sims.load(filename='int1.Rdata', cache=cache)
+  # simset = fetched.1[['simset']]
+  cache = fetched.1[['cache']]
+  t2 <- proc.time()
+  elapsed.1 = (t2 - t1)[['elapsed']]
+  print('Elapsed: ')
+  print(elapsed.1)
+  
+  # browser()
+  t1b <- proc.time()
+  print('Loading from cache')
+  fetched.2 = sims.load(filename='int1.Rdata', cache=cache)
+  # simset = fetched.2[['simset']]
+  cache = fetched.2[['cache']]
+  t2b <- proc.time()
+  elapsed.2 = (t2b - t1b)[['elapsed']]
+  print('Elapsed: ')
+  print(elapsed.2)
+  
+  print('Cache loading took this fraction of time compared to AWS:' )
+  print(elapsed.2 / elapsed.1)
+}
 
 # Scratch ####
-# # Temp testing:
-# testfile.name = xxx
-# sims.save(
-#   objOrFilepath='This is a test 2.',
-#   s3Obj.filename='dfssdffsffs')
-# simsList = sims.list()
-# static.save(
-#   objOrFilepath='This is a test.',
-#   s3Obj.filename=testfile.name)
-# staticList = static.list()
-# 
-# # TODO: @Todd: I got an error when loading the plain text file I saved,
-# # but not sure if this will be a problem with the objects you save. We
-# # should check. Additionally, it may be better for you to upload objects
-# # directly: https://s3.console.aws.amazon.com/s3/buckets/endinghiv.sims/?region=us-east-1&tab=overview
-# # sim.test = sims.load(testfile.name)
-# # static.test = sims.load(testfile.name)
-# xxx = s3load(
-#   object=testfile.name,
-#   bucket='endinghiv.static')
-
+# TODO: Examine results with @Todd
+# cacheTest()

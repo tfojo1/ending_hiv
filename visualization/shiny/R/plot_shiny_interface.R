@@ -280,11 +280,15 @@ plot.interval.coverage.applies.to.plot.format <- function(plot.format)
 
 
 #@joe
-# Returns a vector of character filenames that will be loaded with sims.load 
-# within the plot function
-get.sims.to.load <- function(version,
-                              location,
-                              intervention.names)
+# 1. click simulate
+# 2. find out what datasets need to be fetched: 
+#   get.sims.to.load
+# 3. load 
+# 4. pass data to plot
+get.sims.to.load <- function(
+  version,
+  location,
+  intervention.names)
 {
     
 }
