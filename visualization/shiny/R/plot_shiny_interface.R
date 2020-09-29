@@ -388,7 +388,9 @@ plot.simulations <- function(
   baseline.simset = sims.load('1.0_12060_baseline.Rdata', cache)
     intervention.simsets = NULL
     # plot = do.plot.simulations(baseline.simset,
-    plot = plot.simulations(baseline.simset,
+    
+    if (1==2)
+    plot = do.plot.simulations(baseline.simset,
                                intervention.simsets,
                                
                                years=years,
@@ -412,7 +414,11 @@ plot.simulations <- function(
                                simulation.line.size=simulation.line.size,
                                truth.point.size=truth.point.size)
     
-    
+    else
+    {
+        plot = qplot(1:10, 10:1)
+        print('putting a test plot for now')
+    }
     
   list(
     plot=plot,
@@ -427,6 +433,7 @@ if (test.config.on == T) {
   location = names(get.location.options(version))[1]
   interventions = get.intervention.options(version, location)
   
+  print('test.me')
   test.me = plot.simulations(
     version=version,
     location=location,

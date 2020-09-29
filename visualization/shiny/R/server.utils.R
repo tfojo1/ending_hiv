@@ -125,12 +125,6 @@ sims.load <- function(
   filename,  # char
   cache
 ) {
-  browser()
-  # TODO: @Todd: I'm stuck here. I get this error on the next line.
-  
-  # Error in (new("standardGeneric", .Data = function (object)  : 
-  #                 A simset with 80 simulations from 120 parameters
-  
   cache[[filename]]
 }
 
