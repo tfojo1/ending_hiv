@@ -106,6 +106,7 @@ update.sims.cache <- function(
     for (filename in filenames)
     {
         if (!(filename %in% names(cache))) {
+            print(paste0("'", filename, "' not in cache. Pulling from S3"))
             # simset = s3load(
             s3load(
                 filename,
