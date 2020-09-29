@@ -787,10 +787,12 @@ setup.background.hiv.testing <- function(components,
 
 set.foreground.hiv.testing.rates <- function(components,
                                              testing.rates,
-                                             years)
+                                             years,
+                                             start.years='temp')
 {
     if (is.null(testing.rates))
-        components$foreground.testing.years = components$foreground.testing.rates = NULL
+        components$foreground.testing.years = components$foreground.testing.rates =
+            components$foreground.testing.start.years = NULL
     else
     {
         if (class(testing.rates)!='list')
@@ -802,6 +804,7 @@ set.foreground.hiv.testing.rates <- function(components,
         names(components$foreground.testing.rates) = as.character(years)
 
         components$foreground.testing.years = years
+        components$foreground.testing.start.years = expand.population.to.hiv.positive(components$jheem, start.years)
     }
 
     components = clear.dependent.values(components, 'foreground.testing.proportions')
@@ -1285,10 +1288,12 @@ setup.background.suppression <- function(components,
 
 set.foreground.suppression <- function(components,
                                        suppressed.proportions,
-                                       years)
+                                       years,
+                                       start.years='temp')
 {
     if (is.null(suppressed.proportions))
-        components$foreground.suppression.years = components$foreground.suppresion = NULL
+        components$foreground.suppression.years = components$foreground.suppression = 
+            components$foreground.suppression.start.years = NULL
     else
     {
         if (class(suppressed.proportions)!='list')
@@ -1298,6 +1303,7 @@ set.foreground.suppression <- function(components,
         names(components$foreground.suppression) = as.character(years)
 
         components$foreground.suppression.years = years
+        components$foreground.suppression.start.years = start.years
     }
 
     components = clear.dependent.values(components, 'foreground.suppression')
@@ -1430,10 +1436,12 @@ set.background.prep.coverage <- function(components,
 
 set.foreground.prep.coverage <- function(components,
                                          prep.coverage,
-                                         years)
+                                         years,
+                                         start.years='temp')
 {
     if (is.null(prep.coverage))
-        components$foreground.prep.years = components$foreground.prep.coverage = NULL
+        components$foreground.prep.years = components$foreground.prep.coverage =
+            components$foreground.prep.start.years = NULL
     else
     {
         if (class(prep.coverage)!='list')
@@ -1443,6 +1451,7 @@ set.foreground.prep.coverage <- function(components,
         names(components$foreground.prep.coverage) = as.character(years)
 
         components$foreground.prep.years = years
+        components$foreground.prep.start.years = start.years
     }
 
     components = clear.dependent.values(components, 'foreground.prep.coverage')

@@ -23,17 +23,18 @@ get.surveillance.data <- function(surv=msa.surveillance,
                            'diagnosed','diagnosed.ci.lower','diagnosed.ci.upper',
                            'suppression','suppression.ci.lower','suppression.ci.upper', 'prevalence.for.continuum',
                            'estimated.prevalence', 'estimated.prevalence.ci.lower','estimated.prevalence.ci.upper', 'estimated.prevalence.rse',
-                           'cumulative.aids.mortality', 'aids.diagnoses')
+                           'cumulative.aids.mortality', 'aids.diagnoses',
+                           'linkage','new.for.continuum')
     if (all(data.type!=ALLOWED.DATA.TYPES))
         stop(paste0("data.type must be one of: ",
                     paste0(paste0("'", ALLOWED.DATA.TYPES, "'"), collapse=", ")))
-
+    
     if (class(data.type) != 'character' || length(data.type)>1)
         stop("data.type must be a character of length one")
-
-
+    
+    
     categories = c('sex','age','race','risk')[c(sex, age, race, risk)]
-
+    
     #If there is a master array with all the data, pull from there
     if (!is.null(surv[[paste0(data.type, '.master')]]))
     {
@@ -45,12 +46,12 @@ get.surveillance.data <- function(surv=msa.surveillance,
         data.suffix = paste0(categories, collapse='.')
         if (data.suffix=='')
             data.suffix  = 'all'
-
+        
         data.name = paste0(data.type, '.', data.suffix)
-
+        
         #Check to make sure the requested data exists
         data = surv[[data.name]]
-
+        
         data.type.name = data.type
         if (data.type=='new')
             data.type.name = 'new cases'
@@ -63,19 +64,19 @@ get.surveillance.data <- function(surv=msa.surveillance,
                                    "the aggregate population.",
                                    paste0("strata of ",
                                           paste0(categories, collapse = ' x '))
-                                          )))
+                            )))
             else
                 return (NULL)
         }
-
+        
         from.master = F
     }
-
+    
     #check to make sure all location codes are present in the data
     missing.code = sapply(location.codes, function(code){
         all(dimnames(data)[['location']]!=code)
     })
-
+    
     if (any(missing.code))
     {
         if (throw.error.if.missing.data)
@@ -88,30 +89,30 @@ get.surveillance.data <- function(surv=msa.surveillance,
     #Pull and check the years
     if (is.null(years))
         years = dimnames(data)[['year']]
-
+    
     years = as.character(years)
     missing.years = sapply(years, function(year){
         all(dimnames(data)[['year']] != year)
     })
-
+    
     if (any(missing.years))
     {
         if (throw.error.if.missing.years)
             stop(paste0("The following year(s) are not present in the requested data: ",
                         paste0(years[missing.years], collapse=', ')))
     }
-
+    
     requested.years = years
     years = years[!missing.years]
-
+    
     if (length(years)==0)
         stop("No data is available for any of the requested years")
-
+    
     #pull the data
     target.dimnames = dimnames(data)[c('year','location',categories)]
     target.dimnames[['year']] = years
     target.dimnames[['location']] = location.codes
-
+    
     if (from.master)
     {
         data = data[years, location.codes,,,,]
@@ -123,29 +124,29 @@ get.surveillance.data <- function(surv=msa.surveillance,
         overwrite.dim = c(dim(data)[1:2], other=as.numeric(prod(dim(data))/dim(data)[1]/dim(data)[2]))
         dim(data) = overwrite.dim
         dimnames(data) = overwrite.dimnames
-
+        
         data = data[years, location.codes, ]
     }
-
+    
     dim(data) = sapply(target.dimnames, length)
     dimnames(data) = target.dimnames
-
-
+    
+    
     #collapse as needed and return
     keep.dimnames = dimnames(data)
     keep.dimnames.names = names(keep.dimnames)
-
+    
     if (aggregate.locations)
         keep.dimnames.names = setdiff(keep.dimnames.names, 'location')
     if (aggregate.years)
         keep.dimnames.names = setdiff(keep.dimnames.names, 'year')
-
+    
     keep.dimnames = keep.dimnames[keep.dimnames.names]
-
+    
     data = apply(data, keep.dimnames.names, sum)
     dim(data) = sapply(keep.dimnames, length)
     dimnames(data) = keep.dimnames
-
+    
     if (setequal(years, requested.years))
     {
         attr(data, 'years') = as.numeric(years)
@@ -221,52 +222,52 @@ read.msa.surveillance <- function(dir='cleaned_data/',
 {
     #-- READ IN FILES --#
     sub.dirs = list.dirs(file.path(dir, 'hiv_surveillance/msa/msa_surveillance_reports'))
-
+    
     filenames.full = unlist(sapply(sub.dirs, list.files, include.dirs=F, no..=T, pattern='.csv$', full.names=T))
     filenames = unlist(sapply(sub.dirs, list.files, include.dirs=F, no..=T, pattern='.csv$'))
-
+    
     is.total = grepl('total', filenames)
-
+    
     dfs = lapply(1:length(filenames.full), function(i){
-#        print(paste0('Reading ', filenames.full[i]))
+        #        print(paste0('Reading ', filenames.full[i]))
         read.msa.file(filenames.full[i], allow.misses = is.total[i], verbose=verbose)
     })
     all.codes = unique(unlist(lapply(dfs, function(df){df$code})))
-
+    
     #-- CATEGORIZE WHAT DATA IS IN EACH FILE --#
     is.prevalence = grepl('prevalence', filenames, ignore.case = T)
     is.incidence = grepl('new', filenames, ignore.case = T)
     is.mortality = grepl('death', filenames, ignore.case = T)
-
+    
     has.age = grepl('age', filenames, ignore.case=T)
     has.race = grepl('race', filenames, ignore.case=T)
     has.risk = grepl('risk', filenames, ignore.case=T)
-
+    
     for.female = grepl('female', filenames, ignore.case=T)
     for.male = grepl('male', filenames, ignore.case=T) & !for.female
-
+    
     for.black = grepl('black', filenames, ignore.case=T)
     for.hispanic = grepl('hispanic', filenames, ignore.case=T)
     for.white = grepl('white', filenames, ignore.case=T)
-
+    
     incidence.year = gsub('.*([0-9][0-9][0-9][0-9]) new.*', '\\1', filenames)
     incidence.year[!is.incidence] = NA
-
+    
     prevalence.year = gsub('.*([0-9][0-9][0-9][0-9]) prevalence.*', '\\1', filenames)
     prevalence.year[!is.prevalence] = NA
-
+    
     mortality.year = gsub('.*([0-9][0-9][0-9][0-9]) death.*', '\\1', filenames)
     mortality.year[!is.mortality] = NA
-
+    
     #-- SET UP RV ARRAY SKELETONS --#
     rv = list(params=list(use.adjusted.estimate=use.adjusted.estimate,
                           correct.new.to.county.level=F,
                           correct.prevalence.to.county.level=F))
-
+    
     all.incidence.years = sort(unique(incidence.year[is.incidence]))
     all.prevalence.years = sort(unique(prevalence.year[is.prevalence]))
     all.mortality.years = sort(unique(mortality.year[is.mortality]))
-
+    
     sexes = c('female', 'male')
     ages = c('13-24 years', '25-34 years', '35-44 years', '45-54 years', '55+ years')
     races = c('black', 'hispanic', 'white', 'american_indian_or_alaska_native', 'asian')
@@ -274,53 +275,53 @@ read.msa.surveillance <- function(dir='cleaned_data/',
     race.order = c(black=3, hispanic=4, white=5, american_indian_or_alaska_native=1, asian=2)
     risks = c('msm', 'idu', 'msm_idu', 'heterosexual', 'other')
     risk.order = c(msm=1, idu=2, msm_idu=3, heterosexual=4, other=5)
-
+    
     # Total
     dim.names = list(year=all.incidence.years, location=as.character(all.codes))
     rv$new.all = array(NA, dim=sapply(dim.names, length), dimnames=dim.names)
-
+    
     dim.names = list(year=all.prevalence.years, location=as.character(all.codes))
     rv$prevalence.all = array(NA, dim=sapply(dim.names, length), dimnames=dim.names)
-
+    
     # Sex
     dim.names = list(year=all.incidence.years, location=as.character(all.codes), sex=sexes)
     rv$new.sex = array(NA, dim=sapply(dim.names, length), dimnames=dim.names)
-
+    
     dim.names = list(year=all.prevalence.years, location=as.character(all.codes), sex=sexes)
     rv$prevalence.sex = array(NA, dim=sapply(dim.names, length), dimnames=dim.names)
-
+    
     # Sex x Age
     dim.names = list(year=all.incidence.years, location=as.character(all.codes), sex=sexes, age=ages)
     rv$new.sex.age = array(NA, dim=sapply(dim.names, length), dimnames=dim.names)
-
+    
     dim.names = list(year=all.prevalence.years, location=as.character(all.codes), sex=sexes, age=ages)
     rv$prevalence.sex.age = array(NA, dim=sapply(dim.names, length), dimnames=dim.names)
-
+    
     # Sex x Race
     dim.names = list(year=all.incidence.years, location=as.character(all.codes), sex=sexes, race=races)
     rv$new.sex.race = array(NA, dim=sapply(dim.names, length), dimnames=dim.names)
-
+    
     dim.names = list(year=all.prevalence.years, location=as.character(all.codes), sex=sexes, race=races)
     rv$prevalence.sex.race = array(NA, dim=sapply(dim.names, length), dimnames=dim.names)
-
+    
     # Sex x Risk
     dim.names = list(year=all.incidence.years, location=as.character(all.codes), sex=sexes, risk=risks)
     rv$new.sex.risk = array(NA, dim=sapply(dim.names, length), dimnames=dim.names)
-
+    
     dim.names = list(year=all.prevalence.years, location=as.character(all.codes), sex=sexes, risk=risks)
     rv$prevalence.sex.risk = array(NA, dim=sapply(dim.names, length), dimnames=dim.names)
-
+    
     # Race x risk
     dim.names = list(year=all.incidence.years, location=as.character(all.codes), race=races.limited, risk=risks)
     rv$new.race.risk = array(NA, dim=sapply(dim.names, length), dimnames=dim.names)
-
+    
     dim.names = list(year=all.prevalence.years, location=as.character(all.codes), race=races.limited, risk=risks)
     rv$prevalence.race.risk = array(NA, dim=sapply(dim.names, length), dimnames=dim.names)
-
+    
     # Mortality
     dim.names = list(year=as.character(all.mortality.years), location=as.character(all.codes), sex=sexes)
     rv$mortality.sex = array(NA, dim=sapply(dim.names, length), dimnames=dim.names)
-
+    
     # New
     for (year in all.incidence.years)
     {
@@ -328,21 +329,21 @@ read.msa.surveillance <- function(dir='cleaned_data/',
             print(paste0("Reading Incidence for year ", year))
         two.estimates = year <= 2014
         has.rank = year > 2010
-
+        
         #Total
         mask = is.incidence & !is.na(incidence.year) & incidence.year==year & is.total
-
+        
         if (sum(mask)>1)
             stop(paste0("Multiple files with incidence for year ", year, " for total"))
         else if (sum(mask))
         {
             df = dfs[mask][[1]]
             codes = intersect(all.codes, df$code)
-
+            
             if (year>=2008)
             {
                 rv$new.all[year,codes] = df[codes,2 + as.numeric(use.adjusted.estimate&&two.estimates)]
-
+                
                 #if the adjusted is missing, use the non-adjusted
                 if (use.adjusted.estimate && two.estimates)
                 {
@@ -354,7 +355,7 @@ read.msa.surveillance <- function(dir='cleaned_data/',
             else
                 rv$new.all[year,codes] = as.matrix(df[codes,4])
         }
-
+        
         #Female
         mask = is.incidence & !is.na(incidence.year) & incidence.year==year & for.female & !has.age & !has.race & !has.risk
         if (sum(mask)>1)
@@ -367,7 +368,7 @@ read.msa.surveillance <- function(dir='cleaned_data/',
             else
                 rv$new.sex[year,df$code,'female'] = as.matrix(df[,2])
         }
-
+        
         #Male
         mask = is.incidence & !is.na(incidence.year) & incidence.year==year & for.male & !has.age & !has.race & !has.risk
         if (sum(mask)>1)
@@ -380,7 +381,7 @@ read.msa.surveillance <- function(dir='cleaned_data/',
             else
                 rv$new.sex[year,df$code,'male'] = as.matrix(df[,2])
         }
-
+        
         #Female x age
         mask = is.incidence & !is.na(incidence.year) & incidence.year==year & has.age & for.female
         if (sum(mask)>1)
@@ -393,7 +394,7 @@ read.msa.surveillance <- function(dir='cleaned_data/',
             else
                 rv$new.sex.age[year,df$code,'female',] = as.matrix(df[,1+(1:5)*3-2])
         }
-
+        
         #Male x age
         mask = is.incidence & !is.na(incidence.year) & incidence.year==year & has.age & for.male
         if (sum(mask)>1)
@@ -406,7 +407,7 @@ read.msa.surveillance <- function(dir='cleaned_data/',
             else
                 rv$new.sex.age[year,df$code,'male',] = as.matrix(df[,1+(1:5)*3-2])
         }
-
+        
         #Female x race
         mask = is.incidence & !is.na(incidence.year) & incidence.year==year & has.race & for.female
         if (sum(mask)>1)
@@ -419,7 +420,7 @@ read.msa.surveillance <- function(dir='cleaned_data/',
             else
                 rv$new.sex.race[year,df$code,'female',races] = as.matrix(df[,1+race.order[races]*3-2])
         }
-
+        
         #Male x race
         mask = is.incidence & !is.na(incidence.year) & incidence.year==year & has.race & for.male
         if (sum(mask)>1)
@@ -865,7 +866,8 @@ add.local.data.one.location <- function(surv,
         
         if (any(df$data.type=='aware' | df$data.type=='suppressed' | df$data.type=='prevalent'))
         {
-            df = df[df$data.type=='aware' | df$data.type=='suppressed' | df$data.type=='prevalent',]
+            df = df[df$data.type=='aware' | df$data.type=='suppressed' | df$data.type=='prevalent' | 
+                        df$data.type=='linked' | df$data.type=='new',]
             df = df[,!is.na(names(df))]
             df = df[apply(!is.na(df), 1, any),]
             
@@ -875,8 +877,14 @@ add.local.data.one.location <- function(surv,
                     data.type = 'diagnosed'
                 else if (df$data.type[i]=='prevalent')
                     data.type = 'prevalence.for.continuum'
-                else
+                else if (df$data.type[i]=='suppressed')
                     data.type = 'suppression'
+                else if (df$data.type[i]=='linked')
+                    data.type = 'linkage'
+                else if (df$data.type[i]=='new')
+                    data.type = 'new.for.continuum'
+                else
+                    stop("Invalid data.type")
                 
                 if (any(!is.na(df[i,c('female','male')])))
                     surv = add.surveillance.data(surv,
@@ -943,6 +951,18 @@ add.local.data.one.location <- function(surv,
                                          location=location,
                                          years=df[,1],
                                          values=df$prevalent)
+        if (any(names(df)=='linked'))
+            surv = add.surveillance.data(surv,
+                                         data.type='linkage',
+                                         location=location,
+                                         years=df[,1],
+                                         values=df$linked)
+        if (any(names(df)=='new'))
+            surv = add.surveillance.data(surv,
+                                         data.type='new.for.continuum',
+                                         location=location,
+                                         years=df[,1],
+                                         values=df$new)
     }
     
     surv

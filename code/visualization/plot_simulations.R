@@ -530,7 +530,7 @@ extract.simset.new.diagnoses <- function(simset, years, all.dimensions,
                                          dimension.subsets, total.population)
 {
     total.population = total.population[as.character(years)]
-    eg = extract.new.diagnoses(simset@simulations[[1]],
+    eg = do.extract.new.diagnoses(simset@simulations[[1]],
                                years=years, 
                                keep.dimensions=all.dimensions,
                                per.population=NA,
@@ -546,7 +546,7 @@ extract.simset.new.diagnoses <- function(simset, years, all.dimensions,
                                use.cdc.categorizations=T)
     rv = sapply(simset@simulations, function(sim)
     {
-        numerators = extract.new.diagnoses(sim,
+        numerators = do.extract.new.diagnoses(sim,
                                            years=years, 
                                            keep.dimensions=all.dimensions,
                                            per.population=NA,
@@ -560,7 +560,7 @@ extract.simset.new.diagnoses <- function(simset, years, all.dimensions,
                                            cd4=NULL,
                                            hiv.subsets=NULL,
                                            use.cdc.categorizations=T)
-        denominators = extract.population.subset(sim, years=years, keep.dimensions = 'year')
+        denominators = do.extract.population.subset(sim, years=years, keep.dimensions = 'year', use.cdc.categorizations = T)
         
         as.numeric(numerators) / as.numeric(denominators) * as.numeric(total.population)
     })
@@ -585,7 +585,7 @@ extract.simset.prevalence <- function(simset, years, all.dimensions,
                                          dimension.subsets, total.population)
 {
     total.population = total.population[as.character(years)]
-    eg = extract.prevalence(simset@simulations[[1]],
+    eg = do.extract.prevalence(simset@simulations[[1]],
                                years=years, 
                                keep.dimensions=all.dimensions,
                                per.population=NA,
@@ -600,7 +600,7 @@ extract.simset.prevalence <- function(simset, years, all.dimensions,
                                use.cdc.categorizations=T)
     rv = sapply(simset@simulations, function(sim)
     {
-        numerators = extract.prevalence(sim,
+        numerators = do.extract.prevalence(sim,
                                         years=years, 
                                         keep.dimensions=all.dimensions,
                                         per.population=NA,
@@ -613,7 +613,7 @@ extract.simset.prevalence <- function(simset, years, all.dimensions,
                                         cd4s=NULL,
                                         hiv.subsets=NULL,
                                         use.cdc.categorizations=T)
-        denominators = extract.population.subset(sim, years=years, keep.dimensions = 'year')
+        denominators = do.extract.population.subset(sim, years=years, keep.dimensions = 'year', use.cdc.categorizations = T)
         
         as.numeric(numerators) / as.numeric(denominators) * as.numeric(total.population)
     })
@@ -636,7 +636,7 @@ extract.simset.hiv.mortality <- function(simset, years, all.dimensions,
                                       dimension.subsets, total.population)
 {
     total.population = total.population[as.character(years)]
-    eg = extract.overall.hiv.mortality(simset@simulations[[1]],
+    eg = do.extract.overall.hiv.mortality(simset@simulations[[1]],
                             years=years, 
                             keep.dimensions=all.dimensions,
                             per.population=NA,
@@ -651,7 +651,7 @@ extract.simset.hiv.mortality <- function(simset, years, all.dimensions,
                             use.cdc.categorizations=T)
     rv = sapply(simset@simulations, function(sim)
     {
-        numerators = extract.overall.hiv.mortality(sim,
+        numerators = do.extract.overall.hiv.mortality(sim,
                                         years=years, 
                                         keep.dimensions=all.dimensions,
                                         per.population=NA,
@@ -664,7 +664,7 @@ extract.simset.hiv.mortality <- function(simset, years, all.dimensions,
                                         cd4s=NULL,
                                         hiv.subsets=NULL,
                                         use.cdc.categorizations=T)
-        denominators = extract.population.subset(sim, years=years, keep.dimensions = 'year')
+        denominators = do.extract.population.subset(sim, years=years, keep.dimensions = 'year', use.cdc.categorizations = T)
         
         as.numeric(numerators) / as.numeric(denominators) * as.numeric(total.population)
     })
@@ -730,7 +730,7 @@ extract.simset.suppression <- function(simset, years, all.dimensions,
 extract.simset.knowledge.of.status <- function(simset, years, all.dimensions,
                                        dimension.subsets)
 {
-    eg = extract.diagnosed.hiv(simset@simulations[[1]],
+    eg = do.extract.diagnosed.hiv(simset@simulations[[1]],
                              years=years, 
                              keep.dimensions=all.dimensions,
                              per.population=1,
@@ -742,7 +742,7 @@ extract.simset.knowledge.of.status <- function(simset, years, all.dimensions,
                              cd4=NULL,
                              hiv.subsets=NULL,
                              use.cdc.categorizations=T)
-    rv = sapply(simset@simulations, extract.diagnosed.hiv,
+    rv = sapply(simset@simulations, do.extract.diagnosed.hiv,
                 years=years, 
                 keep.dimensions=all.dimensions,
                 per.population=1,

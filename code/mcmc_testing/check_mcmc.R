@@ -4,25 +4,31 @@ if (1==2)
 }
 
 source('code/source_code.R')
-mcmc = assemble.mcmc.from.cache('mcmc_runs/test_caches/la.93b_supp.wt.1.decreasing.stratified_new.047cv.only_prev.058cv.only_prev.wt.25.no.cv.scaling_dx.wt.1_20K_2020-09-02/',T)
-mcmc = assemble.mcmc.from.cache('mcmc_runs/test_caches/la.94b_supp.wt.1.decreasing.stratified_new.047cv.only_prev.058cv.only_prev.wt.25.no.cv.scaling_dx.wt.1_20K_2020-09-02/',T)
-mcmc = assemble.mcmc.from.cache('mcmc_runs/test_caches/la.95_supp.wt.1.decreasing.stratified_new.047cv.only_prev.058cv.only_prev.wt.25.no.cv.scaling_dx.wt.1_20K_2020-09-03/',T)
-mcmc = assemble.mcmc.from.cache('mcmc_runs/test_caches/la.95_supp.wt.1.decreasing.stratified_new.047cv.only_prev.058cv.only_prev.wt.25.no.cv.scaling_dx.wt.1_idu.wt.32_20K_2020-09-03/',T)
-mcmc = assemble.mcmc.from.cache('mcmc_runs/test_caches/la.95_supp.wt.1.decreasing.stratified_new.047cv.only_prev.058cv.only_prev.wt.25.no.cv.scaling_dx.wt.1_idu.wt.8_20K_2020-09-03/',T)
+mcmc = assemble.mcmc.from.cache('mcmc_runs/systematic_caches/12060_1x20K_t.25.25_dx.4_2020-09-28/',T)
+mcmc = assemble.mcmc.from.cache('mcmc_runs/systematic_caches/12060_1x20K_t.25.25_dx.2_2020-09-28/',T)
 
+acceptance.plot(mcmc, window.iterations = 200) + geom_hline(yintercept = c(0.238,0.1))
 simset = extract.simset(mcmc, additional.burn=mcmc@n.iter/2, additional.thin=2^(as.numeric(mcmc@n.iter>100)+as.numeric(mcmc@n.iter>1000)))
-plot.calibration.race.risk(simset)
-plot.calibration.sex.age(simset)
-plot.calibration.sex.age(simset, sex='female')
+
 plot.calibration.sex.risk(simset)
+plot.calibration.sex.age(simset)
+
+plot.calibration.total(simset, data.types=c('diagnosed','testing'))
+#plot.calibration.sex.age(simset, sex='female')
+plot.calibration.race.risk(simset)
 #plot.calibration(simset, facet.by=c('race'), risk='msm')
 plot.calibration.risk(simset)
 plot.calibration.total(simset)
 plot.calibration.risk.race(simset)
 plot.calibration.race(simset)
+plot.calibration.age(simset)
+
+
+plot.calibration.risk.race(simset, risk='msm_idu')
 
 plot.calibration.idu.prevalence(simset, facet.by='sex')
 plot.calibration.idu.prevalence(simset, facet.by='race')
+plot.calibration.idu.prevalence(simset, facet.by=c('sex','race'))
 
 #Break out suppression
 plot.calibration.total(simset, data.types='suppression')
@@ -31,8 +37,17 @@ plot.calibration.risk(simset, data.types='suppression')
 plot.calibration.age(simset, data.types='suppression')
 plot.calibration.sex(simset, data.types='suppression')
 
+plot.calibration.total(simset, data.types='testing')
+plot.calibration.race(simset, data.types='testing')
+plot.calibration.risk(simset, data.types='testing')
+plot.calibration.age(simset, data.types='testing')
+plot.calibration.sex(simset, data.types='testing')
 
 
+cvs = apply(simset@parameters, 2, sd) / colMeans(simset@parameters)
+cvs = sort(cvs)
+cvs[1:10]
+trace.plot(mcmc, names(cvs)[1:16])
 
 print(paste0('N Iterations = ', mcmc@n.iter))
 

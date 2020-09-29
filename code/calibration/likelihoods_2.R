@@ -190,22 +190,22 @@ create.likelihood.function <- function(data.type=c('new','prevalence','mortality
         !(use.sim.msm.proportions && !aggregate.denominator.males && any(denominator.dimensions=='sex')))
     {
         transformation.mapping = make.transformation.mapping(likelihood.elements$transformation.matrix)
-
+        
         likelihood.elements$transformation.matrix = likelihood.elements$transformation.matrix[,transformation.mapping$first.in.signature]
-#        fixed.denominator.elements$denominator.vector = fixed.denominator.elements$denominator.vector[transformation.mapping$first.in.signature]
-
+        #        fixed.denominator.elements$denominator.vector = fixed.denominator.elements$denominator.vector[transformation.mapping$first.in.signature]
+        
         if (!is.null(fixed.denominator.elements$denominator.covar.mat))
             fixed.denominator.elements$denominator.covar.mat = fixed.denominator.elements$denominator.covar.mat[transformation.mapping$first.in.signature,transformation.mapping$first.in.signature]
     }
     else
         transformation.mapping = NULL
-
+    
     ##----------------------------------------------------##
     ##-- Make and return the actual likelihood function --##
     ##----------------------------------------------------##
-
+    
     function(jheem.results, log=T){
-
+        
         # Check if we terminated early
         if (jheem.results$terminated)
         {
@@ -214,7 +214,7 @@ create.likelihood.function <- function(data.type=c('new','prevalence','mortality
             else
                 return (0)
         }
-
+        
         # Set up the denominators
         if (denominators.are.totals)
             denominator.elements = fixed.denominator.elements
@@ -224,10 +224,10 @@ create.likelihood.function <- function(data.type=c('new','prevalence','mortality
             sim.pop = extract.population.subset(jheem.results, years=years,
                                                 per.population=NA,
                                                 keep.dimensions = c('year','age','race','sex','risk'))
-
+            
             sim.pop.sums.by.year = apply(sim.pop, 'year', sum)
             sim.pop = sim.pop * population.sums.by.year / sim.pop.sums.by.year
-
+            
             denominator.elements = create.simple.denominator.elements(sim.pop,
                                                                       msm.cv = msm.cv, idu.cv = idu.cv)
         }
@@ -237,14 +237,14 @@ create.likelihood.function <- function(data.type=c('new','prevalence','mortality
                                                                                            idu.cv = idu.cv)
         else
             denominator.elements = fixed.denominator.elements
-
-
+        
+        
         rates = pull.simulations.rates(jheem.results,
                                        data.type=data.type,
                                        years=years,
                                        denominator.dimensions=denominator.dimensions,
                                        aggregate.denominator.males=aggregate.denominator.males)
-
+        
         # Pass it all to the sub-function to crunch
         likelihood.sub(rates,
                        transformation.matrix = likelihood.elements$transformation.matrix,
@@ -278,7 +278,7 @@ create.suppressed.likelihood <- function(location,
                                          backup.surv=state.surveillance,
                                          numerator.sd.inflation.if.backup=2,
                                          probability.decreasing.slope=0.05,
-                                         consider.decreasing.on.marginals=T,
+                                         consider.decreasing.on.marginals=F,
                                          by.total=T,
                                          by.age=T,
                                          by.race=T,
@@ -301,18 +301,18 @@ create.suppressed.likelihood <- function(location,
         else
             numerator.sd = numerator.sd.inflation.if.backup * numerator.sd
         
-         surv.for.likelihood.elements = backup.surv
-         states = states.for.msa(location)
-         if (length(states)==0)
-             stop(paste0("No data for location, '", location, "', and it is not an msa within a state"))
-         else if (length(states)>1)
-         {
-             if (location=='14460')
-                 states = 'MA'
-             else
-                 stop(paste0("More than one state for location '", location, "' ('", msa.names(location), "')"))
-         }
-         location.for.likelihood.elements = states
+        surv.for.likelihood.elements = backup.surv
+        states = states.for.msa(location)
+        if (length(states)==0)
+            stop(paste0("No data for location, '", location, "', and it is not an msa within a state"))
+        else if (length(states)>1)
+        {
+            if (location=='14460')
+                states = 'MA'
+            else
+                stop(paste0("More than one state for location '", location, "' ('", msa.names(location), "')"))
+        }
+        location.for.likelihood.elements = states
     }
     else
     {
@@ -337,10 +337,10 @@ create.suppressed.likelihood <- function(location,
                                                                    numerator.year.to.year.chunk.correlation=numerator.year.to.year.chunk.correlation,
                                                                    numerator.year.to.year.off.correlation=numerator.year.to.year.off.correlation,
                                                                    numerator.chunk.years=numerator.chunk.years)
-
+    
     transformation.mapping = make.transformation.mapping(likelihood.elements$transformation.matrix)
     likelihood.elements$transformation.matrix = likelihood.elements$transformation.matrix[,transformation.mapping$first.in.signature]
-     
+    
     if (inflate.sd.by.n.obs.per.year || upweight.by.n.obs.per.year)
     {
         year = substr(likelihood.elements$descriptions, 1, 4)
@@ -402,17 +402,17 @@ create.suppressed.likelihood <- function(location,
         
         # Pass it all to the sub-function to crunch
         lik.continuous = likelihood.sub(rates,
-                       transformation.matrix = likelihood.elements$transformation.matrix,
-                       response.vector = likelihood.elements$response.vector * aggregated.denominators,
-                       denominator.vector = denominators,
-                       denominator.covar.mat = NULL,
-                       numerator.covar.mat = numerator.covar.mat,
-                       corr.mat = NULL,
-                       sd.inflation=sd.inflation,
-                       log=log,
-                       sim=sim,
-                       transformation.mapping=transformation.mapping,
-                       description=likelihood.elements$descriptions)
+                                        transformation.matrix = likelihood.elements$transformation.matrix,
+                                        response.vector = likelihood.elements$response.vector * aggregated.denominators,
+                                        denominator.vector = denominators,
+                                        denominator.covar.mat = NULL,
+                                        numerator.covar.mat = numerator.covar.mat,
+                                        corr.mat = NULL,
+                                        sd.inflation=sd.inflation,
+                                        log=log,
+                                        sim=sim,
+                                        transformation.mapping=transformation.mapping,
+                                        description=likelihood.elements$descriptions)
         
         #the binary likelihood
         if (is.na(probability.decreasing.slope))
@@ -427,25 +427,25 @@ create.suppressed.likelihood <- function(location,
             if (consider.decreasing.on.marginals)
             {
                 rates.age  = extract.suppression(sim,
-                                            years=years,
-                                            continuum='diagnosed',
-                                            keep.dimensions=c('year','age'),
-                                            use.cdc.categorizations = T)
+                                                 years=years,
+                                                 continuum='diagnosed',
+                                                 keep.dimensions=c('year','age'),
+                                                 use.cdc.categorizations = T)
                 rates.race = extract.suppression(sim,
-                                            years=years,
-                                            continuum='diagnosed',
-                                            keep.dimensions=c('year','race'),
-                                            use.cdc.categorizations = T)
+                                                 years=years,
+                                                 continuum='diagnosed',
+                                                 keep.dimensions=c('year','race'),
+                                                 use.cdc.categorizations = T)
                 rates.sex = extract.suppression(sim,
-                                            years=years,
-                                            continuum='diagnosed',
-                                            keep.dimensions=c('year','sex'),
-                                            use.cdc.categorizations = T)
+                                                years=years,
+                                                continuum='diagnosed',
+                                                keep.dimensions=c('year','sex'),
+                                                use.cdc.categorizations = T)
                 rates.risk = extract.suppression(sim,
-                                            years=years,
-                                            continuum='diagnosed',
-                                            keep.dimensions=c('year','risk'),
-                                            use.cdc.categorizations = T)
+                                                 years=years,
+                                                 continuum='diagnosed',
+                                                 keep.dimensions=c('year','risk'),
+                                                 use.cdc.categorizations = T)
                 is.decreasing = c(as.numeric(rates.age[length(years),] < rates.age[1,]),
                                   as.numeric(rates.race[length(years),] < rates.race[1,]),
                                   as.numeric(rates.sex[length(years),] < rates.sex[1,]),
@@ -479,27 +479,29 @@ create.knowledge.of.status.likelihood <- function(location,
                                                   years=2010:2018,
                                                   total.sd.inflation=1,
                                                   stratified.ors.sd.inflation=1,
+                                                  use.stratified.ors=T,
                                                   total.rho=0.5,
                                                   total.numerator.sd=function(...){0},
-                                                  total.sd.multiplier.if.state=3)
+                                                  total.sd.multiplier.if.state=3,
+                                                  probability.decreasing.testing.slope=NA)
 {
     if (is.null(knowledge.of.status.regressions))
         load('cached/knowledge_of_status_regressions.Rdata')
     
     #-- Set up for totals --#
     total.knowledge = get.surveillance.data(surv, location.codes = location, data.type='diagnosed', 
-                                              years=years, throw.error.if.missing.data = F)
+                                            years=years, throw.error.if.missing.data = F)
     if (is.null(total.knowledge))
     {
         total.knowledge = get.state.averaged.knowledge.of.status(msa=location,
-                                               years=years,
-                                               census.totals=census.totals,
-                                               state.surveillance = state.surv)
+                                                                 years=years,
+                                                                 census.totals=census.totals,
+                                                                 state.surveillance = state.surv)
         sd.mult = total.sd.multiplier.if.state
     }
     else
         sd.mult = 1
-
+    
     if (is.null(years))
         total.years = as.numeric(names(total.knowledge))
     else
@@ -513,11 +515,11 @@ create.knowledge.of.status.likelihood <- function(location,
     
     diagnosed.prevalence.for.total = get.surveillance.data(surv, location.codes = location, data.type='prevalence',
                                                            years=total.years)
-
+    
     diagnosed.prevalence.for.total = unlist(interpolate.parameters(values=diagnosed.prevalence.for.total[!is.na(diagnosed.prevalence.for.total)],
-                                                             value.times=total.years[!is.na(diagnosed.prevalence.for.total)],
-                                                             desired.times = total.years))
-
+                                                                   value.times=total.years[!is.na(diagnosed.prevalence.for.total)],
+                                                                   desired.times = total.years))
+    
     n.total = diagnosed.prevalence.for.total / total.knowledge
     
     #-- Set up our 'years' argument (to include only years for which we have data) --# 
@@ -537,8 +539,8 @@ create.knowledge.of.status.likelihood <- function(location,
     
     total.prevalence.for.ors = get.surveillance.data(surv, location.codes = location, data.type='prevalence', years=years)
     total.prevalence.for.ors = unlist(interpolate.parameters(values=total.prevalence.for.ors[!is.na(total.prevalence.for.ors)],
-                                                     value.times=years[!is.na(total.prevalence.for.ors)],
-                                                     desired.times = years))
+                                                             value.times=years[!is.na(total.prevalence.for.ors)],
+                                                             desired.times = years))
     
     function(sim, log=T, verbose=F)
     {
@@ -553,71 +555,78 @@ create.knowledge.of.status.likelihood <- function(location,
         denominators = as.numeric(denominators / rowSums(denominators) * total.prevalence.for.ors)
         
         #-- Set up a data frame that we're going to use to run regressions --#
-        sim.diagnosed.prevalence = extract.prevalence(sim, years=years,
-                                                      continuum='diagnosed',
-                                                      keep.dimensions = c('year','age','race','sex','risk'),
-                                                      per.population = NA)
-        sim.prevalence = extract.prevalence(sim, years=years,
-                                                      keep.dimensions = c('year','age','race','sex','risk'),
-                                            per.population = NA)
-        
-        df = melt(sim.prevalence)
-        df$fraction = as.numeric(sim.diagnosed.prevalence / sim.prevalence)
-
-#if (any(df$fraction<0) || any(df$fraction>1))
-#{
-#    browser()
-#    print("FRACTION OUT OF BOUNDS")
-#    print(df[df$fraction<0 | df$fraction>1,])
-#    save(sim, file=paste0('code/debugging/funny.fraction.aware_', Sys.Date(), '.Rdata'))
-#}
-        df$fraction = pmax(0, pmin(1, df$fraction))
-        
-        df$n = as.numeric(denominators)
-        
-        df$black = as.numeric(df$race=='black')
-        df$hispanic = as.numeric(df$race=='hispanic')
-        
-        msm.mask = df$sex=='msm'
-        idu.mask = df$risk!='never_IDU'
-        
-        df$msm = as.numeric(msm.mask & !idu.mask)
-        df$msm_idu = as.numeric(msm.mask & idu.mask)
-        df$heterosexual = as.numeric(!msm.mask & !idu.mask)
-        df$idu = as.numeric(idu.mask & !msm.mask)
-        
-        df$age1 = as.numeric(df$age=='13-24 years')
-        df$age2 = as.numeric(df$age=='25-34 years')
-        df$age3 = as.numeric(df$age=='35-44 years')
-        df$age4 = as.numeric(df$age=='45-54 years')
-        df$age5 = as.numeric(df$age=='55+ years')
-        
-        df$female = as.numeric(df$sex=='female')
-        
-        #-- Do the Regressions on the sim --#
-        fits.age.race.sex.msm = lapply(age.race.sex.msm.years, do.knowledge.age.race.sex.msm.regression, df=df)
-        fits.race.sex.idu = lapply(race.sex.idu.years, do.knowledge.race.sex.idu.regression, df=df)
-        
-        #-- Calculate the likelihood of the 'true' log ORs given the mean and cov.mat from the fit to sim --#
-        age.race.sex.likelihoods = sapply(1:length(age.race.sex.msm.years), function(i){
-            obs.mask = knowledge.of.status.regressions$age.race.sex.msm.years==age.race.sex.msm.years[i]
+        if (use.stratified.ors)
+        {
+            sim.diagnosed.prevalence = extract.prevalence(sim, years=years,
+                                                          continuum='diagnosed',
+                                                          keep.dimensions = c('year','age','race','sex','risk'),
+                                                          per.population = NA)
+            sim.prevalence = extract.prevalence(sim, years=years,
+                                                keep.dimensions = c('year','age','race','sex','risk'),
+                                                per.population = NA)
             
-            dmvnorm(x=as.numeric(knowledge.of.status.regressions$age.race.sex.msm[obs.mask][[1]]$mean),
-                    mean=fits.age.race.sex.msm[[i]]$mean,
-                    sigma = fits.age.race.sex.msm[[i]]$cov.mat*stratified.ors.sd.inflation,
-                    log=log)
-        })
-        race.sex.idu.likelihoods = sapply(1:length(race.sex.idu.years), function(i){
-            obs.mask = knowledge.of.status.regressions$race.sex.idu.years==race.sex.idu.years[i]
+            df = melt(sim.prevalence)
+            df$fraction = as.numeric(sim.diagnosed.prevalence / sim.prevalence)
             
-            dmvnorm(x=as.numeric(knowledge.of.status.regressions$race.sex.idu[obs.mask][[1]]$mean),
-                    mean=fits.race.sex.idu[[i]]$mean,
-                    sigma = fits.race.sex.idu[[i]]$cov.mat*stratified.ors.sd.inflation,
-                    log=log)
-        })
-
+            #if (any(df$fraction<0) || any(df$fraction>1))
+            #{
+            #    browser()
+            #    print("FRACTION OUT OF BOUNDS")
+            #    print(df[df$fraction<0 | df$fraction>1,])
+            #    save(sim, file=paste0('code/debugging/funny.fraction.aware_', Sys.Date(), '.Rdata'))
+            #}
+            df$fraction = pmax(0, pmin(1, df$fraction))
+            
+            df$n = as.numeric(denominators)
+            
+            df$black = as.numeric(df$race=='black')
+            df$hispanic = as.numeric(df$race=='hispanic')
+            
+            msm.mask = df$sex=='msm'
+            idu.mask = df$risk!='never_IDU'
+            
+            df$msm = as.numeric(msm.mask & !idu.mask)
+            df$msm_idu = as.numeric(msm.mask & idu.mask)
+            df$heterosexual = as.numeric(!msm.mask & !idu.mask)
+            df$idu = as.numeric(idu.mask & !msm.mask)
+            
+            df$age1 = as.numeric(df$age=='13-24 years')
+            df$age2 = as.numeric(df$age=='25-34 years')
+            df$age3 = as.numeric(df$age=='35-44 years')
+            df$age4 = as.numeric(df$age=='45-54 years')
+            df$age5 = as.numeric(df$age=='55+ years')
+            
+            df$female = as.numeric(df$sex=='female')
+            
+            #-- Do the Regressions on the sim --#
+            fits.age.race.sex.msm = lapply(age.race.sex.msm.years, do.knowledge.age.race.sex.msm.regression, df=df)
+            fits.race.sex.idu = lapply(race.sex.idu.years, do.knowledge.race.sex.idu.regression, df=df)
+            
+            #-- Calculate the likelihood of the 'true' log ORs given the mean and cov.mat from the fit to sim --#
+            age.race.sex.likelihoods = sapply(1:length(age.race.sex.msm.years), function(i){
+                obs.mask = knowledge.of.status.regressions$age.race.sex.msm.years==age.race.sex.msm.years[i]
+                
+                dmvnorm(x=as.numeric(knowledge.of.status.regressions$age.race.sex.msm[obs.mask][[1]]$mean),
+                        mean=fits.age.race.sex.msm[[i]]$mean,
+                        sigma = fits.age.race.sex.msm[[i]]$cov.mat*stratified.ors.sd.inflation,
+                        log=log)
+            })
+            race.sex.idu.likelihoods = sapply(1:length(race.sex.idu.years), function(i){
+                obs.mask = knowledge.of.status.regressions$race.sex.idu.years==race.sex.idu.years[i]
+                
+                dmvnorm(x=as.numeric(knowledge.of.status.regressions$race.sex.idu[obs.mask][[1]]$mean),
+                        mean=fits.race.sex.idu[[i]]$mean,
+                        sigma = fits.race.sex.idu[[i]]$cov.mat*stratified.ors.sd.inflation,
+                        log=log)
+            })
+        }
+        else
+        {
+            age.race.sex.likelihoods = race.sex.idu.likelihoods = numeric()
+        }
+        
         #-- Calculate the likelihood for total --#
-
+        
         p = extract.prevalence(sim, years=total.years, keep.dimensions = 'year', continuum='diagnosed') /
             extract.prevalence(sim, years=total.years, keep.dimensions = 'year')
         
@@ -636,11 +645,35 @@ create.knowledge.of.status.likelihood <- function(location,
             print(paste0('race.sex.idu.likelihoods = ', sum(race.sex.idu.likelihoods)))
         }
         
+        #-- The probability of decreasing slope component --#
+        
+        if (is.na(probability.decreasing.testing.slope))
+        {
+            if (log)
+                decreasing.slope.likelihood = 0
+            else
+                decreasing.slope.likelihood = 1
+        }
+        else
+        {
+            testing.rates = extract.testing.rates(sim, years=max(years)-c(1,0), 
+                                                  keep.dimensions = c('year','age','race','sex','risk'))
+            is.decreasing = testing.rates[1,,,,] < testing.rates[2,,,,]
+            
+            if (log)
+                decreasing.slope.likelihood = sum(is.decreasing*log(probability.decreasing.testing.slope) + (1-is.decreasing)*log(1-probability.decreasing.testing.slope))
+            else
+                decreasing.slope.likelihood = prod(probability.decreasing.testing.slope ^ is.decreasing * (1-probability.decreasing.testing.slope)^(1-is.decreasing))
+            
+        }
+        
+        #        print(paste0('decreasing.slope.likelihood = ', decreasing.slope.likelihood))
+        
         #-- Combine it all and return --#
         if (log)
-            sum(age.race.sex.likelihoods) + sum(race.sex.idu.likelihoods) + total.likelihood
+            sum(age.race.sex.likelihoods) + sum(race.sex.idu.likelihoods) + total.likelihood + decreasing.slope.likelihood
         else
-            prod(age.race.sex.likelihoods) * prod(race.sex.idu.likelihoods) * total.likelihood
+            prod(age.race.sex.likelihoods) * prod(race.sex.idu.likelihoods) * total.likelihood + decreasing.slope.likelihood
         
     }
     
@@ -723,7 +756,7 @@ do.knowledge.of.status.regressions <- function(dir='cleaned_data/continuum/natio
     
     age.race.sex.msm.years = sort(unique(df.cleaned.age.race.sex$year))
     race.sex.idu.years = sort(unique(df.cleaned.sex.race.risk$year))
-   
+    
     list(
         age.race.sex.msm.years = age.race.sex.msm.years,
         race.sex.idu.years = race.sex.idu.years,
@@ -740,13 +773,13 @@ do.knowledge.age.race.sex.msm.regression <- function(df,
         df = df[df$year==year,]
     
     fit = suppressWarnings(glm(fraction ~ black + hispanic +
-                               age1 + age2 + age4 + age5 + 
-                               female +
-                               msm + msm:black + msm:hispanic +
-                               msm:age1 + msm:age2 + msm:age4 + msm:age5,
-                           family=binomial(),
-                           data=df,
-                           weights = n))
+                                   age1 + age2 + age4 + age5 + 
+                                   female +
+                                   msm + msm:black + msm:hispanic +
+                                   msm:age1 + msm:age2 + msm:age4 + msm:age5,
+                               family=binomial(),
+                               data=df,
+                               weights = n))
     
     names.to.keep = names(fit$coefficients)[-1]
     
@@ -760,12 +793,12 @@ do.knowledge.race.sex.idu.regression <- function(df, year=NA)
         df = df[df$year==year,]
     
     fit = suppressWarnings(glm(fraction ~ black + hispanic +
-                                female +
-                                msm + msm:black + msm:hispanic + 
-                                idu + idu:black + idu:hispanic + msm_idu,
-                            family=binomial(),
-                            data=df,
-                            weights = n))
+                                   female +
+                                   msm + msm:black + msm:hispanic + 
+                                   idu + idu:black + idu:hispanic + msm_idu,
+                               family=binomial(),
+                               data=df,
+                               weights = n))
     
     names.to.keep = c('idu', 'black:idu', 'hispanic:idu', 'msm_idu')
     
@@ -797,6 +830,348 @@ get.state.averaged.knowledge.of.status <- function(msa,
         
         rowSums(p * state.populations.from.counties / rowSums(state.populations.from.counties))
     }
+}
+
+##-------------##
+##-- TESTING --##
+##-------------##
+
+create.testing.likelihood <- function(location,
+                                      continuum.manager,
+                                      census.totals,
+                                      years=NULL,
+                                      sd.inflation.total=1,
+                                      sd.inflation.stratified=1,
+                                      sd.inflation.if.location.missing=3,
+                                      rho.total=0.5,
+                                      rho.stratified=0.5,
+                                      log.sd.ever.to.12mo=log(2)/2,
+                                      probability.decreasing.slope=0.05,
+                                      decreasing.slope.years=c(2014,2017),
+                                      decreasing.slope.threshold=-0.1) #based on calcs at the bottom of continuum_manager_2.R from NHBS proportions tested
+{
+    #-- SET UP FOR TOTAL --#
+    # Pull fraction ever tested
+    
+    total.tested.by.location = get.proportion.ever.tested(continuum.manager, location)
+    if (is.null(total.tested.by.location))
+    {
+        total.tested.by.location = get.proportion.ever.tested.in.state.msas(continuum.manager, location)
+        sd.mult = sd.inflation.if.location.missing
+    }
+    else
+        sd.mult = 1
+    
+    sds = sqrt(total.tested.by.location$ever.tested * (1-total.tested.by.location$ever.tested) / 
+                   total.tested.by.location$sample.size) * sd.mult# * sd.inflation.total
+    
+    #subset out the years
+    if (is.null(years))
+        total.years = sort(as.character(total.tested.by.location$years))
+    else
+        total.years = sort(as.character(intersect(years, total.tested.by.location$years)))
+    
+    if (length(total.years)==0)
+        stop(paste0("No data on testing rates available for location ", location, 
+                    "for years ",
+                    paste0(years, collapse=', ')))
+    
+    mask = sapply(total.tested.by.location$years, function(year){any(year==total.years)})
+    
+    #set up the obs and obs covariance matrix
+    obs.total.p.ever.tested = total.tested.by.location$ever.tested[mask]
+    obs.total.sds = sds[mask]
+    obs.total.cov.mat = make.compound.symmetry.matrix(obs.total.sds, rho.total)
+    
+    #print(paste0('obs.total.p.ever.tested = ', paste0(obs.total.p.ever.tested, collapse=', ')))
+    
+    #-- SET UP FOR AGE/RACE/SEX --#
+    states = states.for.msa(location)
+    by.age = get.proportion.ever.tested.in.states(continuum.manager, states, age=T)
+    by.race = get.proportion.ever.tested.in.states(continuum.manager, states, race=T)
+    by.sex = get.proportion.ever.tested.in.states(continuum.manager, states, sex=T)
+    
+    if (is.null(years))
+        stratified.years = as.character(by.race$years)
+    else
+        stratified.years = as.character(intersect(years, by.race$years))
+    
+    # Race
+    race.yes = by.race$numerators
+    race.no = by.race$denominators - by.race$numerators
+    
+    obs.log.or.black = log(race.yes[,'black']) - log(race.no[,'black']) + log(race.no[,'other']) - log(race.yes[,'other'])
+    obs.log.or.se.black = sqrt(1/race.yes[,'black'] + 1/race.no[,'black'] + 1/race.no[,'other'] + 1/race.yes[,'other']) *
+        sd.inflation.stratified
+    obs.log.cov.mat.black = make.compound.symmetry.matrix(obs.log.or.se.black, rho.stratified)
+    
+    obs.log.or.hispanic = log(race.yes[,'hispanic']) - log(race.no[,'hispanic']) + log(race.no[,'other']) - log(race.yes[,'other'])
+    obs.log.or.se.hispanic = sqrt(1/race.yes[,'hispanic'] + 1/race.no[,'hispanic'] + 1/race.no[,'other'] + 1/race.yes[,'other']) *
+        sd.inflation.stratified
+    obs.log.cov.mat.hispanic = make.compound.symmetry.matrix(obs.log.or.se.hispanic, rho.stratified)
+    
+    # age
+    age.yes = by.age$numerators
+    age.no = by.age$denominators - by.age$numerators
+    
+    obs.log.or.age1 = log(age.yes[,1]) - log(age.no[,1]) + log(age.no[,3]) - log(age.yes[,3])
+    obs.log.or.se.age1 = sqrt(1/age.yes[,1] + 1/age.no[,1] + 1/age.no[,3] + 1/age.yes[,3]) * 
+        sd.inflation.stratified
+    obs.log.cov.mat.age1 = make.compound.symmetry.matrix(obs.log.or.se.age1, rho.stratified)
+    
+    obs.log.or.age2 = log(age.yes[,2]) - log(age.no[,2]) + log(age.no[,3]) - log(age.yes[,3])
+    obs.log.or.se.age2 = sqrt(1/age.yes[,2] + 1/age.no[,2] + 1/age.no[,3] + 1/age.yes[,3]) *
+        sd.inflation.stratified
+    obs.log.cov.mat.age2 = make.compound.symmetry.matrix(obs.log.or.se.age1, rho.stratified)
+    
+    obs.log.or.age4 = log(age.yes[,4]) - log(age.no[,4]) + log(age.no[,3]) - log(age.yes[,3])
+    obs.log.or.se.age4 = sqrt(1/age.yes[,4] + 1/age.no[,4] + 1/age.no[,3] + 1/age.yes[,3]) *
+        sd.inflation.stratified
+    obs.log.cov.mat.age4 = make.compound.symmetry.matrix(obs.log.or.se.age1, rho.stratified)
+    
+    obs.log.or.age5 = log(age.yes[,5]) - log(age.no[,5]) + log(age.no[,3]) - log(age.yes[,3])
+    obs.log.or.se.age5 = sqrt(1/age.yes[,5] + 1/age.no[,5] + 1/age.no[,3] + 1/age.yes[,3]) * 
+        sd.inflation.stratified
+    obs.log.cov.mat.age5 = make.compound.symmetry.matrix(obs.log.or.se.age1, rho.stratified)
+    
+    # sex
+    sex.yes = by.sex$numerators
+    sex.no = by.sex$denominators - by.sex$numerators
+    
+    obs.log.or.female = log(sex.yes[,'female']) - log(sex.no[,'female']) + log(sex.no[,'male']) - log(sex.yes[,'male'])
+    obs.log.or.se.female = sqrt(1/sex.yes[,'female'] + 1/sex.no[,'female'] + 1/sex.no[,'male'] + 1/sex.yes[,'male']) * 
+        sd.inflation.stratified
+    obs.log.cov.mat.female = make.compound.symmetry.matrix(obs.log.or.se.female, rho.stratified)
+    
+    
+    all.years = as.numeric(sort(union(total.years, stratified.years)))
+    total.populations = get.census.totals(census.totals, location=location, years=all.years, flatten.single.dim.array = T)
+    
+    #-- THE LIKELIHOOD FUNCTION --#
+    
+    function(sim, log=T, verbose=F)
+    {
+        #-- TOTAL --#
+        
+        rates = extract.testing.rates(sim, years=all.years,
+                                      keep.dimensions = c('year','age','race','subpopulation','sex','risk'))
+        sim.population = extract.population.subset(sim, years=all.years,
+                                                   keep.dimensions = c('year','age','race','subpopulation','sex','risk'),
+                                                   include.hiv.positive = T, 
+                                                   include.hiv.negative = T)
+        sim.population[sim.population<0] = 0 #for numerical errors
+        
+        weights = sim.population / rowSums(sim.population)
+        
+        #get p.ever from rates and log multiplier
+        
+        #if treating ever.to.12mo as normal
+        #ever.to.12mo.mean = continuum.manager$testing$ever.to.12mo.model$mean
+        #ever.to.12mo.var = (log.cv.ever.to.12mo * continuum.manager$testing$ever.to.12mo.model$mean * rates)^2
+        
+        #if treating ever.to.12mo-1 as log-normal
+        log.var = log.sd.ever.to.12mo^2
+        log.mean = log(continuum.manager$testing$ever.to.12mo.model$mean)
+        ever.to.12mo.mean = exp(log.mean + log.var/2)
+        ever.to.12mo.var = (exp(log.var) - 1) * exp(2*log.mean + log.var)
+        
+        log.mean.1.minus.p.ever.by.stratum = -rates * ever.to.12mo.mean
+        log.var.1.minus.p.ever.by.stratum = ever.to.12mo.var * rates^2
+        
+        mean.p.ever.by.stratum = 1 - exp(log.mean.1.minus.p.ever.by.stratum + log.var.1.minus.p.ever.by.stratum/2)
+        mean.p.ever.by.stratum[mean.p.ever.by.stratum<0] = 0
+            #we can get a <0 probability because of the normal approximation of lognormal
+        var.p.ever.by.stratum = (exp(log.var.1.minus.p.ever.by.stratum)-1) * exp(2*log.mean.1.minus.p.ever.by.stratum + log.var.1.minus.p.ever.by.stratum)
+        
+        if (is.na(sd.inflation.total))
+        {
+            if (log)
+                lik.total = 0
+            else
+                lik.total = 1
+        }
+        else
+        {
+            mean.total.p.ever = rowSums(mean.p.ever.by.stratum * weights)[total.years]
+            var.total.p.ever = rowSums(var.p.ever.by.stratum * weights^2)[total.years]
+            sd.total.p.ever = sqrt(var.total.p.ever)
+            
+            #The binomial variance from model
+            binomial.total.var = (rowSums(weights * mean.p.ever.by.stratum * (1-mean.p.ever.by.stratum)) /
+                                      total.populations)[total.years]
+            
+            #put it all together and run an MVN
+            cov.mat = obs.total.cov.mat + diag(binomial.total.var * sd.inflation.total^2) + 
+                (sd.total.p.ever %*% t(sd.total.p.ever) * sd.inflation.total^2)
+            total.mask = !is.na(obs.total.p.ever.tested)
+            lik.total = dmvnorm(x=obs.total.p.ever.tested[total.mask],
+                                mean=mean.total.p.ever[total.mask],
+                                sigma=cov.mat[total.mask,total.mask],
+                                log=log)
+            
+            #print(paste0('obs.total.p.ever.tested = ', paste0(obs.total.p.ever.tested, collapse=', ')))
+            #print(paste0('mean.total.p.ever = ', paste0(round(mean.total.p.ever,2), collapse=', ')))
+            #print(sqrt(diag(cov.mat)))
+            #print(cov2cor(cov.mat))
+        }            
+        
+        if (is.na(sd.inflation.stratified))
+        {
+            if (log)
+                lik.black = lik.hispanic = lik.age1 = lik.age2 = lik.age4 = lik.age5 = lik.female = 0
+            else
+                lik.black = lik.hispanic = lik.age1 = lik.age2 = lik.age4 = lik.age5 = lik.female = 1
+        }
+        else
+        {
+            #by race
+            lik.hispanic = calculate.log.or.likelihood(mean.p.1.by.stratum = mean.p.ever.by.stratum[stratified.years,,'hispanic',,,],
+                                                       mean.p.0.by.stratum = mean.p.ever.by.stratum[stratified.years,,'other',,,],
+                                                       pop.1 = weights[stratified.years,,'hispanic',,,] * total.populations[stratified.years],
+                                                       pop.0 = weights[stratified.years,,'other',,,] * total.populations[stratified.years],
+                                                       obs.log.or = obs.log.or.hispanic,
+                                                       obs.log.or.cov.mat = obs.log.cov.mat.hispanic,
+                                                       log=log,
+                                                       sd.inflation = sd.inflation.stratified)
+            
+            lik.black = calculate.log.or.likelihood(mean.p.1.by.stratum = mean.p.ever.by.stratum[stratified.years,,'black',,,],
+                                                    mean.p.0.by.stratum = mean.p.ever.by.stratum[stratified.years,,'other',,,],
+                                                    pop.1 = weights[stratified.years,,'black',,,] * total.populations[stratified.years],
+                                                    pop.0 = weights[stratified.years,,'other',,,] * total.populations[stratified.years],
+                                                    obs.log.or = obs.log.or.black,
+                                                    obs.log.or.cov.mat = obs.log.cov.mat.black,
+                                                    log=log,
+                                                    sd.inflation = sd.inflation.stratified)
+            
+            #by age
+            
+            lik.age1 = calculate.log.or.likelihood(mean.p.1.by.stratum = mean.p.ever.by.stratum[stratified.years,1,,,,],
+                                                    mean.p.0.by.stratum = mean.p.ever.by.stratum[stratified.years,1,,,,],
+                                                    pop.1 = weights[stratified.years,1,,,,] * total.populations[stratified.years],
+                                                    pop.0 = weights[stratified.years,1,,,,] * total.populations[stratified.years],
+                                                    obs.log.or = obs.log.or.age1,
+                                                    obs.log.or.cov.mat = obs.log.cov.mat.age1,
+                                                    log=log,
+                                                   sd.inflation = sd.inflation.stratified)
+            
+            lik.age2 = calculate.log.or.likelihood(mean.p.1.by.stratum = mean.p.ever.by.stratum[stratified.years,2,,,,],
+                                                   mean.p.0.by.stratum = mean.p.ever.by.stratum[stratified.years,2,,,,],
+                                                   pop.1 = weights[stratified.years,2,,,,] * total.populations[stratified.years],
+                                                   pop.0 = weights[stratified.years,2,,,,] * total.populations[stratified.years],
+                                                   obs.log.or = obs.log.or.age2,
+                                                   obs.log.or.cov.mat = obs.log.cov.mat.age2,
+                                                   log=log,
+                                                   sd.inflation = sd.inflation.stratified)
+            
+            lik.age4 = calculate.log.or.likelihood(mean.p.1.by.stratum = mean.p.ever.by.stratum[stratified.years,4,,,,],
+                                                   mean.p.0.by.stratum = mean.p.ever.by.stratum[stratified.years,4,,,,],
+                                                   pop.1 = weights[stratified.years,4,,,,] * total.populations[stratified.years],
+                                                   pop.0 = weights[stratified.years,4,,,,] * total.populations[stratified.years],
+                                                   obs.log.or = obs.log.or.age4,
+                                                   obs.log.or.cov.mat = obs.log.cov.mat.age4,
+                                                   log=log,
+                                                   sd.inflation = sd.inflation.stratified)
+            
+            lik.age5 = calculate.log.or.likelihood(mean.p.1.by.stratum = mean.p.ever.by.stratum[stratified.years,5,,,,],
+                                                   mean.p.0.by.stratum = mean.p.ever.by.stratum[stratified.years,5,,,,],
+                                                   pop.1 = weights[stratified.years,5,,,,] * total.populations[stratified.years],
+                                                   pop.0 = weights[stratified.years,5,,,,] * total.populations[stratified.years],
+                                                   obs.log.or = obs.log.or.age5,
+                                                   obs.log.or.cov.mat = obs.log.cov.mat.age5,
+                                                   log=log,
+                                                   sd.inflation = sd.inflation.stratified)
+
+            #by sex
+            
+            weights.male = (weights[stratified.years,,,,'heterosexual_male',] + weights[stratified.years,,,,'msm',])
+            lik.female = calculate.log.or.likelihood(mean.p.1.by.stratum = mean.p.ever.by.stratum[stratified.years,,,,'female',],
+                                                    mean.p.0.by.stratum = (mean.p.ever.by.stratum[stratified.years,,,,'heterosexual_male',] * weights[stratified.years,,,,'heterosexual_male',] +
+                                                                    mean.p.ever.by.stratum[stratified.years,,,,'msm',] * weights[stratified.years,,,,'msm',])/
+                                                        weights.male,
+                                                    pop.1 = weights[stratified.years,,,,'female',] * total.populations[stratified.years],
+                                                    pop.0 = weights.male * total.populations[stratified.years],
+                                                    obs.log.or = obs.log.or.female,
+                                                    obs.log.or.cov.mat = obs.log.cov.mat.female,
+                                                    log=log,
+                                                    sd.inflation = sd.inflation.stratified)
+        }
+        
+        # Decreasing slope
+        if (is.na(probability.decreasing.slope))
+        {
+            if (log)
+                lik.decreasing = 0
+            else
+                lik.decreasing = 1
+        }
+        else
+        {
+            rates.for.decreasing = extract.testing.rates(sim, years=decreasing.slope.years,
+                                                         keep.dimensions = c('year','age','race','subpopulation','sex','risk'))
+            
+            p.for.decreasing = 1-exp(-rates.for.decreasing)
+            slope = (p.for.decreasing[2,,,,,] - p.for.decreasing[1,,,,,]) / p.for.decreasing[1,,,,,]
+            is.decreasing = slope < decreasing.slope.threshold
+            
+            if (log)
+                lik.decreasing = sum(is.decreasing*log(probability.decreasing.slope) + (1-is.decreasing)*log(1-probability.decreasing.slope))
+            else
+                lik.decreasing = prod(probability.decreasing.slope ^ is.decreasing * (1-probability.decreasing.slope)^(1-is.decreasing))
+        }
+        
+        # Put it all together
+        
+        if (verbose)
+        {
+            print(paste0("total likelihood = ", lik.total))
+            print(paste0("stratified likelihood = ", lik.black + lik.hispanic + lik.female +
+                             lik.age1 + lik.age2 + lik.age4 + lik.age5))
+            print(paste0("black likelihood = ", lik.black))
+            print(paste0("hispanic likelihood = ", lik.hispanic))
+            print(paste0("female likelihood = ", lik.female))
+            print(paste0("age 1 likelihood = ", lik.age1))
+            print(paste0("age 2 likelihood = ", lik.age2))
+            print(paste0("age 4 likelihood = ", lik.age4))
+            print(paste0("age 5 likelihood = ", lik.age5))
+        }
+        
+        # Put it all together
+        if (log)
+            lik.total + lik.black + lik.hispanic + lik.female +
+            lik.age1 + lik.age2 + lik.age4 + lik.age5 + lik.decreasing
+        else
+            lik.total * lik.black * lik.hispanic * lik.female *
+            lik.age1 * lik.age2 * lik.age4 * lik.age5 * lik.decreasing
+    }
+}
+
+calculate.log.or.likelihood <- function(mean.p.1.by.stratum, 
+                                        mean.p.0.by.stratum,
+                                        pop.1, pop.0,
+                                        obs.log.or,
+                                        obs.log.or.cov.mat,
+                                        sd.inflation=1,
+                                        log)
+{
+    total.pop.1 = rowSums(pop.1)
+    total.pop.0 = rowSums(pop.0)
+    
+    mean.p.1 = rowSums(mean.p.1.by.stratum * pop.1) / total.pop.1
+    mean.p.0 = rowSums(mean.p.0.by.stratum * pop.0) / total.pop.0
+    
+    mean.log.or = log(mean.p.1) - log(1-mean.p.1) - log(mean.p.0) + log(1-mean.p.0)
+    
+    binomial.var.1 = rowSums(pop.1 * mean.p.1.by.stratum * (1-mean.p.1.by.stratum)) / total.pop.1^2
+    binomial.var.0 = rowSums(pop.0 * mean.p.0.by.stratum * (1-mean.p.0.by.stratum)) / total.pop.0^2
+    log.binomial.var = binomial.var.1 * (1/mean.p.1 - 1/(1-mean.p.1))^2 +
+        binomial.var.0 * (1/mean.p.0 - 1/(1-mean.p.0))^2
+   
+    cov.mat = obs.log.or.cov.mat + diag(log.binomial.var * sd.inflation^2)
+    
+    dmvnorm(x=obs.log.or,
+            mean=mean.log.or,
+            sigma=cov.mat,
+            log=log)
 }
 
 ##---------------------------------##
@@ -888,10 +1263,11 @@ create.cumulative.mortality.likelihood <- function(years=1981:2000,
     
     function(sim, log=T)
     {
-        numerators = extract.overall.hiv.mortality(sim, years=years, keep.dimensions = c('race','sex','risk'),
+        numerators = do.extract.overall.hiv.mortality(sim, years=years, keep.dimensions = c('race','sex','risk'),
                                                    continuum = 'diagnosed',
                                                    use.cdc.categorizations = T, per.population = NA)
-        denominator = extract.population.subset(sim, years=years, keep.dimensions = character(),
+        
+        denominator = do.extract.population.subset(sim, years=years, keep.dimensions = character(),
                                                  use.cdc.categorizations = T, per.population = NA)
         
         rates = numerators[mask] / denominator * fraction.captured
@@ -1071,6 +1447,9 @@ create.joint.likelihood.function <- function(...)
             print(paste0("Likelihood components: ",
                          paste0(names(sub.likelihoods), '=', sub.values, collapse = ', ')))
 
+        if (any(is.na(sub.values)))
+            browser()
+        
         if (log)
             sum(sub.values)
         else
@@ -2086,7 +2465,7 @@ get.sd.inflation <- function(match.to.response = likelihood.elements$response.ve
 
         matched.cvs = cv.2[match.catg.indices][]
     })
-    browser()
+    
     #I gave up and abandoned this here
 }
 

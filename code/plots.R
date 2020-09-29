@@ -387,7 +387,7 @@ plot.calibration.race.sex <- function(sims,
 
 plot.calibration.total <- function(sims,
                                    years=2010:2020,
-                                   data.types=c('new','prevalence','mortality','diagnosed','suppression'),
+                                   data.types=c('new','prevalence','mortality','diagnosed','suppression','testing'),
                                    surv=msa.surveillance,
                                    location=NULL,
                                    population=NULL,
@@ -587,6 +587,7 @@ plot.calibration <- function(sims,
                              diagnosed.name = 'PWH with Diagnosed HIV (%)',
                              population.name = 'Population (%)',
                              suppression.name = 'Suppression (%)', 
+                             testing.name = 'Testing',
                              incidence.name = if (show.rates) 'Incidence (per 100,000)' else 'Incidence (number of cases)',
                              cumulative.mortality.name = if (show.rates) 'Cumulative HIV Mortality (per 100,000 PWH)' else if (normalize.within.facet) 'HIV Mortality (%)' else 'Cumulative HIV Mortality (number of cases)',
                              cdc.label = 'CDC',
@@ -653,11 +654,12 @@ plot.calibration <- function(sims,
                         population=population.name,
                         incidence=incidence.name,
                         cumulative.mortality=cumulative.mortality.name,
-                        suppression=suppression.name)
+                        suppression=suppression.name,
+                        testing=testing.name)
     if (show.rates)
-        data.type.denominators = c(new=100000, prevalence=100000, mortality=100000, population=100, diagnosed=100, suppression=100, incidence=100000, cumulative.mortality=100000)
+        data.type.denominators = c(new=100000, prevalence=100000, mortality=100000, population=100, diagnosed=100, suppression=100, incidence=100000, cumulative.mortality=100000, testing=1)
     else
-        data.type.denominators = c(new=1, prevalence=1, mortality=1, population=100, diagnosed=100, suppression=100, incidence=1, cumulative.mortality=1)
+        data.type.denominators = c(new=1, prevalence=1, mortality=1, population=100, diagnosed=100, suppression=100, incidence=1, cumulative.mortality=1, testing=1)
 
     race.names = c(black='Black',hispanic="Hispanic", other='Other')
     risk.names = c(msm='MSM', idu='IDU', msm_idu='MSM+IDU', heterosexual='Heterosexual',
@@ -682,7 +684,7 @@ plot.calibration <- function(sims,
             #Set up denominators
             #In general, we are going to pull the years we need from the population given
             #If years are missing from the given population, will just use the nearest year
-            if (data.type=='diagnosed' || data.type=='population' || data.type=='suppression')
+            if (data.type=='diagnosed' || data.type=='population' || data.type=='suppression' || data.type=='testing')
                 denominators = 1
             else
                 denominators = get.denominator.population(population=population,
@@ -736,6 +738,8 @@ plot.calibration <- function(sims,
                         else
                             data.type.for.surveillance = NULL
                     }
+                    else if (data.type=='testing')
+                        data.type.for.surveillance = NULL
                     else
                         data.type.for.surveillance = data.type
 
@@ -1227,14 +1231,17 @@ get.sim.values <- function(sim,
 
     years = intersect(years, sim$years)
     if (data.type=='diagnosed')
-        model.rates = extract.diagnosed.hiv(sim, years=years, keep.dimensions=all.dimensions,
+        model.rates = do.extract.diagnosed.hiv(sim, years=years, keep.dimensions=all.dimensions,
                                             per.population = 1, use.cdc.categorizations = use.cdc)
     else if (data.type=='population')
-        model.rates = extract.population.subset(sim, years=years, keep.dimensions = all.dimensions,
+        model.rates = do.extract.population.subset(sim, years=years, keep.dimensions = all.dimensions,
                                                 denominator.dimensions = facet.by, per.population = 1,
                                                 use.cdc.categorizations = use.cdc)
     else if (data.type=='suppression')
         model.rates = extract.suppression(sim, years=years, keep.dimensions=all.dimensions,
+                                          use.cdc.categorizations = use.cdc)
+    else if (data.type=='testing')
+        model.rates = extract.testing.rates(sim, years=years, keep.dimensions=all.dimensions,
                                           use.cdc.categorizations = use.cdc)
     else
         model.rates = get.sim.projections(jheem.results=sim,
@@ -1245,7 +1252,7 @@ get.sim.values <- function(sim,
                                           use.cdc=use.cdc,
                                           denominator.dimensions = denominator.dimensions)
 
-    if (show.rates || data.type=='population' || data.type=='diagnosed' || data.type=='suppression')
+    if (show.rates || data.type=='population' || data.type=='diagnosed' || data.type=='suppression' || data.type=='testing')
         values = model.rates
     else
     {
@@ -1317,35 +1324,38 @@ get.sim.projections <- function(jheem.results, data.type, years, keep.dimensions
     }
 
     if (data.type=='diagnosed')
-        extract.diagnosed.hiv(jheem.results, years=years, keep.dimensions=keep.dimensions,
+        do.extract.diagnosed.hiv(jheem.results, years=years, keep.dimensions=keep.dimensions,
                               per.population = 1, use.cdc.categorizations = use.cdc)
     else if (data.type=='population')
-        extract.population.subset(jheem.results, years=years, keep.dimensions = keep.dimensions,
+        do.extract.population.subset(jheem.results, years=years, keep.dimensions = keep.dimensions,
                                   denominator.dimensions = facet.by, per.population = 1,
                                   use.cdc.categorizations = use.cdc)
     else if (data.type=='suppression')
         model.rates = extract.suppression(jheem.results, years=years, keep.dimensions=keep.dimensions,
                                           use.cdc.categorizations = use.cdc)
+    else if (data.type=='testing')
+        model.rates = extract.testing.rates(jheem.results, years=years, keep.dimensions=keep.dimensions,
+                                            use.cdc.categorizations = use.cdc)
     else
-    {
+    {   
         if (data.type=='new')
-            numerators = extract.new.diagnoses(jheem.results, years=years, keep.dimensions = keep.dimensions,
+            numerators = do.extract.new.diagnoses(jheem.results, years=years, keep.dimensions = keep.dimensions,
                                                per.population = NA, use.cdc.categorizations = use.cdc)
         else if (data.type=='incidence')
-            numerators = extract.incidence(jheem.results, years=years, keep.dimensions = keep.dimensions,
+            numerators = do.extract.incidence(jheem.results, years=years, keep.dimensions = keep.dimensions,
                                                per.population = NA, use.cdc.categorizations = use.cdc)
         else if (data.type=='prevalence')
-            numerators = extract.prevalence(jheem.results, continuum='diagnosed', years=years, keep.dimensions = keep.dimensions,
+            numerators = do.extract.prevalence(jheem.results, continuum='diagnosed', years=years, keep.dimensions = keep.dimensions,
                                             per.population = NA, use.cdc.categorizations = use.cdc)
         else if (data.type=='mortality' || data.type=='cumulative.mortality')
-            numerators = extract.overall.hiv.mortality(jheem.results, continuum='diagnosed', years=years, keep.dimensions = keep.dimensions,
+            numerators = do.extract.overall.hiv.mortality(jheem.results, continuum='diagnosed', years=years, keep.dimensions = keep.dimensions,
                                                        per.population = NA, use.cdc.categorizations = use.cdc)
         else
             stop("data.type must be either 'new', 'prevalence', 'mortality', 'diagnosed', 'incidence', or 'population'")
 
 
         keep.plus.denominator.dimensions = order.jheem.dimensions(union(denominator.dimensions, keep.dimensions))
-        denominators = get.denominator.population(population=extract.population.subset(jheem.results, years=years, keep.dimensions = keep.plus.denominator.dimensions,
+        denominators = get.denominator.population(population=do.extract.population.subset(jheem.results, years=years, keep.dimensions = keep.plus.denominator.dimensions,
                                                                                        per.population = NA, use.cdc.categorizations = use.cdc),
                                                   years=years,
                                                   denominator.dimensions=denominator.dimensions,
@@ -1423,7 +1433,7 @@ get.denominator.population <- function(population,
 #    population = apply(access(population, year=as.character(present.years), collapse.length.one.dimensions = F), denominator.dimensions, sum)
     population.dim.names = dimnames(population)[intersect(names(dimnames(population)), denominator.dimensions)]
 
-    population = apply(population, denominator.dimensions, sum)
+    population = apply(population, denominator.dimensions, sum, na.rm=T)
     dim(population) = sapply(population.dim.names, length)
     dimnames(population) = population.dim.names
 
@@ -1463,7 +1473,7 @@ get.denominator.population <- function(population,
             }
         }
     }
-
+    
     # Return
     rv
 }
