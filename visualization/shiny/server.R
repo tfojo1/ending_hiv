@@ -18,8 +18,10 @@ rp <- function(input) {
                                           intervention.names=input[['public-health-interventions']])
     CACHE = update.sims.cache(filenames=filenames,
                               cache=CACHE)
+
     
     p = plot.simulations(
+        cache=CACHE,
       version=version,
       location=input[['geographic-location']],
       intervention.names=input[['public-health-interventions']],

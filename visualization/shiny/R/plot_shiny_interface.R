@@ -191,13 +191,49 @@ get.split.by.options <- function(version, location)
 get.intervention.options <- function(version, location)
 {
     
-    desc = 'line one\nline two\nline 3'
-    strsplit(desc, split = '\n')
+ #   desc = 'line one\nline two\nline 3'
+  #  strsplit(desc, split = '\n')
+   # data.frame(name='test_name',
+    #           label='test_label',
+     #          description='test_description')
     
-    data.frame(name='test_name',
-               label='test_label',
-               description='test_description')
-
+    
+  # TODO: @Todd: Might need to include this 'name' bit for my dynamic
+  # rendering.
+  no.int = list(
+    name='no_intervention',
+    label='No intervention',
+    target.groups=character(),
+    testing.frequency=NA,
+    suppressed.proportion=NA,
+    prep.coverage=NA,
+    intervention.start.year=2021,
+    intervention.implemented.year=2022)
+  
+  int.1 = list(
+    name='young_black_msm_testing_1py_0.8_suppressed_0.25_prep',
+    label='Young Black MSM testing (1py 0.8suppressed 0.25prep)',
+    target.groups='Black MSM <35yo',
+    testing.frequency=1,
+    suppressed.proportion=0.8,
+    prep.coverage=0.25,
+    intervention.start.year=2021,
+    intervention.implemented.year=2022)
+  
+  int.2 = list(
+    name='all_msm_idu_testing_1py_0.9_suppressed_0.5_prep',
+    label='All MSM & IDU testing (1py 0.9suppressed 0.5prep)',
+    target.groups='All MSM and IDU',
+    testing.frequency=1,
+    suppressed.proportion=0.9,
+    prep.coverage=0.5,
+    intervention.start.year=2021,
+    intervention.implemented.year=2022)
+  
+  list('no_intervention'=no.int,
+       'young_black_msm_testing_1py_0.8_suppressed_0.25_prep'=int.1,
+       'all_msm_idu_testing_1py_0.9_suppressed_0.5_prep'=int.2)
+  
 }
 
 #'@description Get the potential values (which can be subsetted) for each
@@ -320,6 +356,7 @@ get.sim.filenames.to.load <- function(
 #' $plot - a ggplot object
 #' $notes - a character vector (which may be empty) of notes
 plot.simulations <- function(
+    cache,
   # Private meta params
   version,
   # Public params; Selectable in UI
@@ -348,9 +385,9 @@ plot.simulations <- function(
 ) {
 #  browser()  # TODO: debug
   
-  baseline.simset = sims.load('1.0_12060_baseline.Rdata')
+  baseline.simset = sims.load('1.0_12060_baseline.Rdata', cache)
     intervention.simsets = NULL
-browser()
+
     plot = do.plot.simulations(baseline.simset,
                                intervention.simsets,
                                
