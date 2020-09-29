@@ -356,7 +356,7 @@ get.sim.filenames.to.load <- function(
 #' $plot - a ggplot object
 #' $notes - a character vector (which may be empty) of notes
 plot.simulations <- function(
-    cache,
+  cache,
   # Private meta params
   version,
   # Public params; Selectable in UI
@@ -387,8 +387,8 @@ plot.simulations <- function(
   
   baseline.simset = sims.load('1.0_12060_baseline.Rdata', cache)
     intervention.simsets = NULL
-
-    plot = do.plot.simulations(baseline.simset,
+    # plot = do.plot.simulations(baseline.simset,
+    plot = plot.simulations(baseline.simset,
                                intervention.simsets,
                                
                                years=years,

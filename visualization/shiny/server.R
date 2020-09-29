@@ -7,40 +7,46 @@ source("R/server.routes.runModel.R")
 
 suppressPackageStartupMessages(library(EpiModel))  # param.dcm, init.dcm
 
-# Components
-rp <- function(input) {
-  renderPlotly({
-    version = names(get.version.options())[1]
-    
-    #update the sims cache
-    filenames = get.sim.filenames.to.load(version,
-                                          location=input[['geographic-location']],
-                                          intervention.names=input[['public-health-interventions']])
-    CACHE = update.sims.cache(filenames=filenames,
-                              cache=CACHE)
+# Constants / initiliazers
+CACHE = list()
 
-    
-    p = plot.simulations(
-        cache=CACHE,
-      version=version,
-      location=input[['geographic-location']],
-      intervention.names=input[['public-health-interventions']],
-      years=input[['years']][1]:input[['years']][2],
-      data.types=input[['epidemiological-indicators']],
-      facet.by=input[['facet']],
-      split.by=input[['split']],
-      dimension.subsets=list(  # TODO
-        'age'=input[['age-groups']],
-        'race'=input[['racial-groups']],
-        'sex'=input[['sex']],  # aka gender
-        'risk'=input[['risk-groups']]),
-      plot.format=input[['aggregation-of-simulations-ran']]
-    )$plot
-    ggplotly(p)
-})}
+# Functional components
+plotAndCache <- function(input, cache) {
+  version = names(get.version.options())[1]
+  filenames = get.sim.filenames.to.load(
+    version,
+    location=input[['geographic-location']],
+    intervention.names=input[['public-health-interventions']])
+  cache = update.sims.cache(
+    filenames=filenames,
+    cache=cache)
+
+  plot.results = plot.simulations(
+    cache=cache,
+    version=version,
+    location=input[['geographic-location']],
+    intervention.names=input[['public-health-interventions']],
+    years=input[['years']][1]:input[['years']][2],
+    data.types=input[['epidemiological-indicators']],
+    facet.by=input[['facet']],
+    split.by=input[['split']],
+    dimension.subsets=list(  # TODO
+      'age'=input[['age-groups']],
+      'race'=input[['racial-groups']],
+      'sex'=input[['sex']],  # aka gender
+      'risk'=input[['risk-groups']]),
+    plot.format=input[['aggregation-of-simulations-ran']] )
+  p = plot.results$plot
+  
+  list(
+    'cache'=cache,
+    'plot'=renderPlotly({
+      ggplotly(p)
+    }) )
+}
 
 server <- function(input, output, session) {
-  
+  cache = CACHE
   # TODO: @jef: does this section 'defaults' apply  to all pages, 
   # or is this  all for the 'Parameters' page
   # defaults ####
@@ -53,6 +59,7 @@ server <- function(input, output, session) {
     beta_saf <- input$R0_saf / input$infectious
     N <- input$N_on + input$N_off + input$N_saf
 
+    # TODO: get rid of stuff i don't need
 # https://www.rdocumentation.org/
 # packages/EpiModel/versions/1.2.8/topics/param.dcm
     param.dcm(  # EpiModel::param.dcm
@@ -179,16 +186,16 @@ server <- function(input, output, session) {
   # - Alternative method: ggplotly
   # `# output$mainPlot = renderPlotly({ p = ggplot(); ggplotly(p) })``
   
-  # TODO: re-enable once plot works
-  rp(input)  # Plots at start
+  # Plot at start:
   
+  plot.and.cache = plotAndCache(input, cache)
+  cache = plot.and.cache$cache
+  output$mainPlot = plot.and.cache$plot
+  
+  # Plot when clicking 'Run':
   observeEvent(input$reset_main, {
-    output$mainPlot = rp(input)
+    plot.and.cache = plotAndCache(input, cache)
+    cache = plot.and.cache$cache
+    output$mainPlot = plot.and.cache$plot
   })
-  
-  # TODO: check simset
-  # filename = 'No_Intervention.Rdata'
-  # sims.load(filename)
-  # s3load(filename,'endinghiv.sims')
-  # browser()
 }

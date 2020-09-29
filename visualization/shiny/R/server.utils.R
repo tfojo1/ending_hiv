@@ -100,8 +100,8 @@ static.save <- function(
 
 update.sims.cache <- function(
     filenames,  # char
-    bucket.name=BUCKET.NAME.SIMS,
-    cache=CACHE)
+    cache,
+    bucket.name=BUCKET.NAME.SIMS)
 {
     for (filename in filenames)
     {
@@ -123,9 +123,15 @@ update.sims.cache <- function(
 #' (version city and intervention cant use underscore)
 sims.load <- function(
   filename,  # char
-  cache=CACHE
+  cache
 ) {
-    cache[[filename]]
+  browser()
+  # TODO: @Todd: I'm stuck here. I get this error on the next line.
+  
+  # Error in (new("standardGeneric", .Data = function (object)  : 
+  #                 A simset with 80 simulations from 120 parameters
+  
+  cache[[filename]]
 }
 
 static.load <- function(
@@ -140,7 +146,7 @@ static.load <- function(
 
 # Test ####
 cacheTest <- function (
-  cache=CACHE
+  cache=list()
 ) {
   # browser()
   t1 <- proc.time()
