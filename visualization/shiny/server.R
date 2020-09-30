@@ -4,6 +4,7 @@ source("R/ui.tools.R")
 source("R/plot_shiny_interface.R")
 source("R/server.routes.docs.R")
 source("R/server.routes.runModel.R")
+source("R/plot_simulations.R")
 
 suppressPackageStartupMessages(library(EpiModel))  # param.dcm, init.dcm
 
@@ -188,9 +189,9 @@ server <- function(input, output, session) {
   
   # Plot at start:
   
-  plot.and.cache = plotAndCache(input, cache)
-  cache = plot.and.cache$cache
-  output$mainPlot = plot.and.cache$plot
+ # plot.and.cache = plotAndCache(input, cache)
+ # cache = plot.and.cache$cache
+ # output$mainPlot = plot.and.cache$plot
   
   # Plot when clicking 'Run':
   observeEvent(input$reset_main, {
