@@ -389,7 +389,7 @@ plot.simulations <- function(
     intervention.simsets = NULL
     # plot = do.plot.simulations(baseline.simset,
     
-    if (1==2)
+    if (1==1)
     plot = do.plot.simulations(baseline.simset,
                                intervention.simsets,
                                

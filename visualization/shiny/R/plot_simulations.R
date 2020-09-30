@@ -117,7 +117,7 @@ do.plot.simulations <- function(baseline.simset,
         else
         {
             intervention.is.no.intervention = sapply(intervention.simsets, function(simset){
-                is.null(attr(simset, 'intervention'))
+                is.null.intervention(attr(simset, 'intervention'))
             })
             
             if (is.null(names(intervention.simsets)))
@@ -139,12 +139,24 @@ do.plot.simulations <- function(baseline.simset,
         baseline.name = baseline.color = NULL
     else if (!is(baseline.simset, 'simset'))
         stop("baseline.simset must be of class 'simset")
-    else if (!is.null(intervention.names) && any(intervention.is.no.intervention))
+    else if (!is.null(intervention.names))
     {
-        baseline.name = intervention.names[intervention.is.no.intervention][1]
+        if (any(intervention.is.no.intervention))
+        {
+            baseline.name = intervention.names[intervention.is.no.intervention][1]
+            intervention.colors[intervention.is.no.intervention]
+        }
+        else
+        {
+            baseline.name = "Pre-Intervention"
+        }
+        
+        intervention.years = unique(unlist(sapply(intervention.simsets, function(ss){
+            ss@simulations[[1]]$years[-1]
+        })))
+        
         baseline.years = setdiff(intersect(years, baseline.simset@simulations[[1]]$years),
-                                 intervention.simsets[[1]]@simulations[[1]]$years)
-        intervention.colors[intervention.is.no.intervention]
+                                 intervention.years)    
     }
     else
     {
@@ -159,7 +171,7 @@ do.plot.simulations <- function(baseline.simset,
         names(simset.colors) = c(baseline.name, intervention.names)
     else
         names(simset.colors) = c(baseline.name, intervention.names[!intervention.is.no.intervention])
-    years.for.simset = list(baseline.years,
+    years.for.simset = c(list(baseline.years),
                             lapply(intervention.simsets, function(simest){
                                 intersect(years, simset@simulations[[1]]$years)
                             }))
@@ -230,15 +242,17 @@ do.plot.simulations <- function(baseline.simset,
     
     df.sim$data.type = factor(DATA.TYPE.NAMES[df.sim$data.type],
                               levels=DATA.TYPE.NAMES[data.types])
-    df.truth$data.type = factor(DATA.TYPE.NAMES[df.truth$data.type],
-                                levels=DATA.TYPE.NAMES[data.types])
+    if (!is.null(df.truth))
+        df.truth$data.type = factor(DATA.TYPE.NAMES[df.truth$data.type],
+                                    levels=DATA.TYPE.NAMES[data.types])
     
     for (dimension in keep.dimensions[keep.dimensions!='year'])
     {
         df.sim[,dimension] = factor(PRETTY.NAMES[[dimension]][df.sim[,dimension]],
                                       levels=PRETTY.NAMES[[dimension]][dimension.subsets[[dimension]]])
-        df.truth[,dimension] = factor(PRETTY.NAMES[[dimension]][df.truth[,dimension]],
-                                      levels=PRETTY.NAMES[[dimension]][dimension.subsets[[dimension]]])
+        if (!is.null(df.truth))
+            df.truth[,dimension] = factor(PRETTY.NAMES[[dimension]][df.truth[,dimension]],
+                                          levels=PRETTY.NAMES[[dimension]][dimension.subsets[[dimension]]])
     }
     
     
@@ -249,17 +263,20 @@ do.plot.simulations <- function(baseline.simset,
     if (length(split.by)==0)
     {
         df.sim$split = 'All'
-        df.truth$split = 'All'
+        if (!is.null(df.truth))
+            df.truth$split = 'All'
     }
     else if (length(split.by)==1)
     {
         df.sim$split = df.sim[,split.by]
-        df.truth$split = df.truth[,split.by]
+        if (!is.null(df.truth))
+            df.truth$split = df.truth[,split.by]
     }
     else
     {
         df.sim$split = apply(df.sim[,split.by], 1, paste0, collapse=", ")
-        df.truth$split = apply(df.truth[,split.by], 1, paste0, collapse=", ")
+        if (!is.null(df.truth))
+            df.truth$split = apply(df.truth[,split.by], 1, paste0, collapse=", ")
     }
         
     splits = unique(df.truth$split)
@@ -271,9 +288,9 @@ do.plot.simulations <- function(baseline.simset,
     #-------------------#
     
     if (plot.format=='individual.simulations')
-        df.sim$group = paste0(df.sim$split, "_", df.sim$simulation)
+        df.sim$group = paste0(df.sim$split, "_", df.sim$intervention, "_", df.sim$simulation)
     else
-        df.sim$group = df.sim$split
+        df.sim$group = paste0(df.sim$intervention, "_", df.sim$split)
     
     #-- SET UP STYLES (colors, etc) --#
     
@@ -461,6 +478,12 @@ get.individual.sim.df <- function(simset,
                                            all.dimensions = keep.dimensions,
                                            dimension.subsets = dimension.subsets,
                                            total.population = total.population)
+    else if (data.type=='incidence')
+        arr = extract.simset.incidence(simset,
+                                       years = years, 
+                                       all.dimensions = keep.dimensions,
+                                       dimension.subsets = dimension.subsets,
+                                       total.population = total.population)
     else if (data.type=='prevalence')
         arr = extract.simset.prevalence(simset,
                                         years = years, 
@@ -485,7 +508,7 @@ get.individual.sim.df <- function(simset,
                                                  dimension.subsets = dimension.subsets)
     else
         stop(paste0("'", data.type, "' is not a valid data.type. data.type must be one of ",
-                    paste0("'", names(DATA.TYPE.NAMES), "'")))
+                    paste0("'", names(DATA.TYPE.NAMES), "'", collapse=', ')))
     
     reshape2::melt(arr)
 }
@@ -565,6 +588,60 @@ extract.simset.new.diagnoses <- function(simset, years, all.dimensions,
         as.numeric(numerators) / as.numeric(denominators) * as.numeric(total.population)
     })
       
+    if (is.null(dim(eg)))
+    {
+        dim.names = list(names(eg), 1:simset@n.sim)
+        names(dim.names) = c(all.dimensions, 'simulation')
+    }
+    else
+        dim.names = c(dimnames(eg), list(simulation=1:simset@n.sim))
+    
+    dim(rv) = sapply(dim.names, length)
+    dimnames(rv) = dim.names
+    
+    rv
+}
+
+#per total population in year
+extract.simset.incidence <- function(simset, years, all.dimensions,
+                                         dimension.subsets, total.population)
+{
+    total.population = total.population[as.character(years)]
+    eg = do.extract.incidence(simset@simulations[[1]],
+                                  years=years, 
+                                  keep.dimensions=all.dimensions,
+                                  per.population=NA,
+                                  ages=dimension.subsets[['age']],
+                                  races=dimension.subsets[['race']],
+                                  subpopulations=dimension.subsets[['subpopulation']],
+                                  sexes=dimension.subsets[['sex']],
+                                  risks=dimension.subsets[['risk']],
+                                  non.hiv.subsets = NULL,
+                                  continuum=NULL,
+                                  cd4=NULL,
+                                  hiv.subsets=NULL,
+                                  use.cdc.categorizations=T)
+    rv = sapply(simset@simulations, function(sim)
+    {
+        numerators = do.extract.incidence(sim,
+                                              years=years, 
+                                              keep.dimensions=all.dimensions,
+                                              per.population=NA,
+                                              ages=dimension.subsets[['age']],
+                                              races=dimension.subsets[['race']],
+                                              subpopulations=dimension.subsets[['subpopulation']],
+                                              sexes=dimension.subsets[['sex']],
+                                              risks=dimension.subsets[['risk']],
+                                              non.hiv.subsets = NULL,
+                                              continuum=NULL,
+                                              cd4=NULL,
+                                              hiv.subsets=NULL,
+                                              use.cdc.categorizations=T)
+        denominators = do.extract.population.subset(sim, years=years, keep.dimensions = 'year', use.cdc.categorizations = T)
+        
+        as.numeric(numerators) / as.numeric(denominators) * as.numeric(total.population)
+    })
+    
     if (is.null(dim(eg)))
     {
         dim.names = list(names(eg), 1:simset@n.sim)
