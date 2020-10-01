@@ -1,4 +1,4 @@
-#113 - like 108 but with peak multiplier
+#113 - like 108 but with peak multiplier 
 library(distributions)
 
 MSM.BASE.TRATE.MEAN = 1
@@ -173,18 +173,18 @@ parameters.prior = join.distributions(
     female.vs.heterosexual.male.idu.susceptibility.rr = Lognormal.Distribution(log(.777/.755*.364/.309), 0.5*log(2)),
     
     #-- HIV Testing --#
-    heterosexual.proportion.tested.or = Lognormal.Distribution(0, 0.5*log(2)),
-    msm.proportion.tested.or = Lognormal.Distribution(0, 0.5*log(2)),
-    idu.proportion.tested.or = Lognormal.Distribution(0, 0.5*log(2)),
-    msm.idu.proportion.tested.or = Lognormal.Distribution(0, 0.5*log(2)),
+    heterosexual.proportion.tested.or = Lognormal.Distribution(0, log(2)),
+    msm.proportion.tested.or = Lognormal.Distribution(0, log(2)),
+    idu.proportion.tested.or = Lognormal.Distribution(0, log(2)),
+    msm.idu.proportion.tested.or = Lognormal.Distribution(0, log(2)),
     
-    black.proportion.tested.or = Lognormal.Distribution(0, 0.5*log(2)),
-    hispanic.proportion.tested.or = Lognormal.Distribution(0, 0.5*log(2)),
+    black.proportion.tested.or = Lognormal.Distribution(0, log(2)),
+    hispanic.proportion.tested.or = Lognormal.Distribution(0, log(2)),
     
-    age1.proportion.tested.or = Lognormal.Distribution(0, 0.5*log(2)),
-    age2.proportion.tested.or = Lognormal.Distribution(0, 0.5*log(2)),
-    age4.proportion.tested.or = Lognormal.Distribution(0, 0.5*log(2)),
-    age5.proportion.tested.or = Lognormal.Distribution(0, 0.5*log(2)),
+    age1.proportion.tested.or = Lognormal.Distribution(0, log(2)),
+    age2.proportion.tested.or = Lognormal.Distribution(0, log(2)),
+    age4.proportion.tested.or = Lognormal.Distribution(0, log(2)),
+    age5.proportion.tested.or = Lognormal.Distribution(0, log(2)),
     
     heterosexual.proportion.tested.slope.or = Lognormal.Distribution(0, 0.5*log(2)/5),
     msm.proportion.tested.slope.or = Lognormal.Distribution(0, 0.5*log(2)/5),
@@ -208,18 +208,18 @@ parameters.prior = join.distributions(
     age4.suppressed.or = Lognormal.Distribution(0, log(2)),
     age5.suppressed.or = Lognormal.Distribution(0, log(2)),
     
-    heterosexual.suppressed.slope.or = Lognormal.Distribution(0, log(2)/5),
-    msm.suppressed.slope.or = Lognormal.Distribution(0, log(2)/5),
-    idu.suppressed.slope.or = Lognormal.Distribution(0, log(2)/5),
-    msm.idu.suppressed.slope.or = Lognormal.Distribution(0, log(2)/5),
+    heterosexual.suppressed.slope.or = Lognormal.Distribution(0, 0.5*log(2)/5),
+    msm.suppressed.slope.or = Lognormal.Distribution(0, 0.5*log(2)/5),
+    idu.suppressed.slope.or = Lognormal.Distribution(0, 0.5*log(2)/5),
+    msm.idu.suppressed.slope.or = Lognormal.Distribution(0, 0.5*log(2)/5),
     
-    black.suppressed.slope.or = Lognormal.Distribution(0, log(2)/5),
-    hispanic.suppressed.slope.or = Lognormal.Distribution(0, log(2)/5),
+    black.suppressed.slope.or = Lognormal.Distribution(0, 0.5*log(2)/5),
+    hispanic.suppressed.slope.or = Lognormal.Distribution(0, 0.5*log(2)/5),
     
-    age1.suppressed.slope.or = Lognormal.Distribution(0, log(2)/5),
-    age2.suppressed.slope.or = Lognormal.Distribution(0, log(2)/5),
-    age4.suppressed.slope.or = Lognormal.Distribution(0, log(2)/5),
-    age5.suppressed.slope.or = Lognormal.Distribution(0, log(2)/5),
+    age1.suppressed.slope.or = Lognormal.Distribution(0, 0.5*log(2)/5),
+    age2.suppressed.slope.or = Lognormal.Distribution(0, 0.5*log(2)/5),
+    age4.suppressed.slope.or = Lognormal.Distribution(0, 0.5*log(2)/5),
+    age5.suppressed.slope.or = Lognormal.Distribution(0, 0.5*log(2)/5),
     
     #-- Proportion MSM --#
     proportion.msm.of.male.mult = Lognormal.Distribution(0, 0.125*log(2)),
