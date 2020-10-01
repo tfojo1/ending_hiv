@@ -45,6 +45,7 @@ source('R/model_code/census_totals.R')
 source('R/model_code/setup_jheem_from_components.R')
 source('R/model_code/interpolating.R')
 source('R/model_code/file_manager.R')
+source('R/model_code/default_jheem_settings.R')
 
 source('R/model_code/intervention_units.R')
 source('R/model_code/target_population.R')
