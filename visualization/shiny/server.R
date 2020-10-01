@@ -4,7 +4,8 @@ source("R/ui.tools.R")
 source("R/plot_shiny_interface.R")
 source("R/server.routes.docs.R")
 source("R/server.routes.runModel.R")
-source("R/plot_simulations.R")
+source("R/plot_manager.R")
+source("R/model_code/plot_simulations.R")
 
 suppressPackageStartupMessages(library(EpiModel))  # param.dcm, init.dcm
 

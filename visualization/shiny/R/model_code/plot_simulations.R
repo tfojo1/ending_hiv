@@ -1,25 +1,4 @@
 
-
-# Set up to make sure we have what we need
-if (1==2)
-{
-    source('code/systematic_calibration/postprocessing.R')
-    source('code/data_managers/locale_mappings.R')
-    source('code/data_managers/hiv_surveillance_manager.R')
-    source('code/data_managers/census_totals.R')
-    source('code/setup/setup_jheem_from_components.R')
-
-    
-    load('cached/DEFAULT.LOCALE.MAPPING.Rdata')
-    load('cached/ALL.DATA.MANAGERS.Rdata')
-    CENSUS.TOTALS = ALL.DATA.MANAGERS$census.totals
-    load('cached/msa.surveillance.Rdata')
-    load('cached/state.surveillance.Rdata')
-    
-    #for now
-    load('mcmc_runs/test_simsets/31080.Rdata')
-}
-
 library(jheem)
 library(bayesian.simulations)
 library(data.table)
@@ -90,6 +69,12 @@ do.plot.simulations <- function(baseline.simset,
     
     keep.dimensions = unique(c('year', facet.by, split.by))
     
+    #map ages
+    age.mapping = names(PRETTY.NAMES$age)
+    names(age.mapping) = paste0('age', 1:5)
+    if (!is.null(dimension.subsets) && !is.null(dimension.subsets$age))
+        dimension.subsets$age = age.mapping[dimension.subsets$age]
+    
     #-----------------------#
     #-- Argument Checking --#
     #-----------------------#
@@ -98,7 +83,7 @@ do.plot.simulations <- function(baseline.simset,
     {
         if (!any(data.type==names(DATA.TYPE.NAMES)))
             stop(paste0("'", data.type, "' is not a valid data.type. data.type must be one of ",
-                        paste0("'", names(DATA.TYPE.NAMES), "'")))
+                        paste0("'", names(DATA.TYPE.NAMES), "'", collapse=', ')))
     }
     
     #------------------------------------#

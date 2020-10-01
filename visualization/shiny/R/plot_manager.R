@@ -26,38 +26,28 @@ source('R/server.utils.R')
 
 
 # LOAD DATA OBJECTS ####
-for (static in static.list())
-  static.load(static)
-# load('visualization/resources/msa_surveillance.Rdata')
-# load('visualization/resources/state_surveillance.Rdata')
-# load('visualization/resources/census_totals.Rdata')
-# load('visualization/resources/locale_mapping.Rdata')
+#for (static in static.list())
+#  static.load(static)
+load('resources/msa_surveillance.Rdata')
+load('resources/state_surveillance.Rdata')
+load('resources/census_totals.Rdata')
+load('resources/locale_mapping.Rdata')
 
 # More library loads ####
 
 
 # Source ####
-tryCatch({
-  # Loading when server is not loaded:
-  source('code/systematic_calibration/postprocessing.R')
-  # TODO: this need jheem:
-  source('code/data_managers/locale_mappings.R')
-  
-  source('code/data_managers/hiv_surveillance_manager.R')
-  source('code/data_managers/census_totals.R')
-  source('code/setup/setup_jheem_from_components.R')
-  # TODO: this need jheem:
-  # source('code/visualization/plot_simulations.R')
-}, 
-warning=function(w) {}, 
-error=function(e) {
-  # Loading when server is loaded:
-  source('../../code/systematic_calibration/postprocessing.R')
-  # TODO: this need jheem:
-  source('../../code/data_managers/locale_mappings.R')
-  
-  source('../../code/data_managers/hiv_surveillance_manager.R')
-  source('../../code/data_managers/census_totals.R')
-  source('../../code/setup/setup_jheem_from_components.R')
-}, 
-finally={} )
+source('R/model_code/plot_simulations.R')
+source('R/model_code/postprocessing.R')
+source('R/model_code/locale_mappings.R')
+source('R/model_code/hiv_surveillance_manager.R')
+source('R/model_code/census_totals.R')
+source('R/model_code/setup_jheem_from_components.R')
+source('R/model_code/interpolating.R')
+source('R/model_code/file_manager.R')
+
+source('R/model_code/intervention_units.R')
+source('R/model_code/target_population.R')
+source('R/model_code/interventions.R')
+source('R/model_code/intervention_presets.R')
+ 

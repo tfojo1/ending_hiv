@@ -59,7 +59,7 @@ DATA.TYPES = c(
   prevalence='Estimated Prevalence',
   mortality='HIV Mortality',
   suppression='Viral HIV Suppression',
-  awareness="Awareness of HIV Diagnosis",
+  diagnosed="Awareness of HIV Diagnosis",
   incidence="HIV Incidence")
 
 # Support functions 1: FUNCTIONS TO GET THE OPTIONS FOR ARGUMENTS ####
@@ -89,10 +89,13 @@ get.location.options <- function(version)
   #     name='33100',
   #     label='Miami-Fort Lauderdale-Pompano Beach, FL')
   # )
-  c(
-    '12580'='Baltimore-Columbia-Towson, MD',
-    '33100'='Miami-Fort Lauderdale-Pompano Beach, FL'
-  )
+  sims.names = sims.list()
+  locations = get.locations.from.filenames(sims.names)
+  location.names = unlist(msa.names(locations))
+  names(location.names) = locations
+  location.names = sort(location.names)
+  
+  location.names
 }
 
 #'@description Get the potential formats for plots
@@ -110,9 +113,10 @@ get.plot.format.options <- function(version, location)
   # labels on right, we should declare it as so and then invert it when
   # returning for my purposes.
   # https://rdrr.io/cran/searchable/man/invert.html
-  c('mean.and.interval'='Mean and Prediction Interval',
-    'median.and.interval'='Median and Prediction Interval',
-    'individual.simulations'='Individual Simulations')
+  c('individual.simulations'='Individual Simulations',
+    'mean.and.interval'='Mean and Prediction Interval',
+    'median.and.interval'='Median and Prediction Interval'
+    )
 }
 
 #'@description Get the data types available for plotting for a location
@@ -136,7 +140,7 @@ get.data.type.options <- function(version, location)
 #'@return A numeric vector of potential years for the location
 get.year.options <- function(version, location)
 {
-  1970:2030
+  2000:2030
 }
 
 #'@description Get the potential names of dimensions by which a plot can
@@ -200,6 +204,15 @@ get.intervention.options <- function(version, location)
     
   # TODO: @Todd: Might need to include this 'name' bit for my dynamic
   # rendering.
+  
+    
+    sims.names = sims.list()
+    sims.locations = get.locations.from.filenames(sims.names)
+    sims.names = sims.names[sims.locations==location]
+    interventions = get.interventions.from.filenames(sims.names)
+    
+    df = data.frame()
+   
   no.int = list(
     name='no_intervention',
     label='No intervention',
