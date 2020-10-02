@@ -1,5 +1,5 @@
 'EndingHIV RShiny Server process'
-
+# Source files
 source("R/ui.tools.R")
 source("R/plot_shiny_interface.R")
 source("R/server.routes.docs.R")
@@ -47,6 +47,7 @@ plotAndCache <- function(input, cache) {
     }) )
 }
 
+# Server
 server <- function(input, output, session) {
   cache = CACHE
   # TODO: @jef: does this section 'defaults' apply  to all pages, 
