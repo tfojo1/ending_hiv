@@ -4,6 +4,7 @@ library('jheem')  # installable package is in /packages/
 library('distributions')  # installable package is in /packages/
 library('bayesian.simulations')  # installable package is in /packages/
 library('data.table')
+library('ggsci')
 
 source('R/server.utils.R')
 

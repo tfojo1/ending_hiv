@@ -140,7 +140,7 @@ get.data.type.options <- function(version, location)
 #'@return A numeric vector of potential years for the location
 get.year.options <- function(version, location)
 {
-  2000:2030
+  2010:2030
 }
 
 #'@description Get the potential names of dimensions by which a plot can
@@ -394,7 +394,7 @@ plot.simulations <- function(
   plot.interval.alpha=0.2,
   simulation.alpha=0.2,
   simulation.line.size=0.1,
-  truth.point.size=5
+  truth.point.size=3
 ) {
 #  browser()  # TODO: debug
   
@@ -402,9 +402,10 @@ plot.simulations <- function(
     intervention.simsets = NULL
     # plot = do.plot.simulations(baseline.simset,
     
+    simsets = list(baseline.simset)
+    
     if (1==1)
-    plot = do.plot.simulations(baseline.simset,
-                               intervention.simsets,
+    plot = do.plot.simulations(simsets,
                                
                                years=years,
                                data.types=data.types,
@@ -419,9 +420,8 @@ plot.simulations <- function(
                                summary.statistic=summary.statistic,
                                summary.statistic.interval.coverage=summary.statistic.interval.coverage,
                                
-                               baseline.color=baseline.color,
-                               truth.color=truth.color,
-                               intervention.colors=intervention.colors,
+                               colors=pal_jama(),
+                               
                                plot.interval.alpha=plot.interval.alpha,
                                simulation.alpha=simulation.alpha,
                                simulation.line.size=simulation.line.size,
