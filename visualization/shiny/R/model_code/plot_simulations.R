@@ -38,8 +38,10 @@ ORANGE = 'darkorange3'
 ##-- THE MAIN FUNCTION --##
 ##-----------------------##
 
-do.plot.simulations <- function(baseline.simset,
-                                intervention.simsets,
+#'@param color.by How to set colors. If color.by=='intervention', each intervention (and the baseline) gets a different color. If color.by=='split' each line denoted by split.by gets a different color
+#'@param colors Information on what colors to use. Can be either a vector of colors or a function that takes an argument (n) and generates n colors. 
+#'
+do.plot.simulations <- function(simsets,
                                 years,
                                 data.types,
                                 facet.by,
@@ -52,21 +54,20 @@ do.plot.simulations <- function(baseline.simset,
                                 summary.statistic='none',
                                 summary.statistic.interval.coverage=0.95,
                                 
-                                baseline.color=BLUE,
-                                truth.color=GREEN,
-                                intervention.colors=c(RED,ORANGE),
+                                colors=pal_jama(),
+                                color.by=c('intervention','split')[1],
                                 plot.interval.alpha=0.2,
                                 simulation.alpha=0.2,
                                 simulation.line.size=0.1,
                                 truth.point.size=3,
                                 truth.shapes=TRUTH.SHAPES,
+                                truth.name='Epidemiological Target',
+                                truth.color=NULL,
                                 
                                 ncol=NULL,
                                 nrow=NULL,
                                 fixed.y=F)
 {
-    location = attr(baseline.simset@simulations[[1]], 'location')
-    
     keep.dimensions = unique(c('year', facet.by, split.by))
     
     #map ages
@@ -86,81 +87,49 @@ do.plot.simulations <- function(baseline.simset,
                         paste0("'", names(DATA.TYPE.NAMES), "'", collapse=', ')))
     }
     
-    #------------------------------------#
-    #-- Aggregate and Name the Simsets --#
-    #------------------------------------#
+    #--------------------------------#
+    #-- Parse and Name the Simsets --#
+    #--------------------------------#
     
-    if (is(intervention.simsets, 'simset'))
-        intervention.simsets = list(intervention.simsets)
-    
-    if (is.null(intervention.simsets))
-        intervention.names = intervention.colors = NULL
-    else if (is(intervention.simsets, 'list'))
+    if (is.null(simsets))
+        stop("simsets cannot be null - it must either be either a simset object or a list of simset objects")
+    else if (is(simsets, 'simset'))
+        simsets = list(simsets)
+    else if (is(simsets, 'list'))
     {
-        if (length(intervention.simsets)==0)
-            intervention.names = intervention.colors = NULL
-        else
-        {
-            intervention.is.no.intervention = sapply(intervention.simsets, function(simset){
-                is.null.intervention(attr(simset, 'intervention'))
-            })
-            
-            if (is.null(names(intervention.simsets)))
-            {
-                intervention.names = paste0("Intervention ", 1:length(intervention.simsets))
-                intervention.names[intervention.is.no.intervention] = "No Intervention"
-            }
-            else
-                intervention.names = names(intervention.simsets)
-            
-            intervention.colors = rep(intervention.colors, ceiling(length(intervention.names)/length(intervention.colors)))[1:length(intervention.names)]
-        }
+        not.simset = !sapply(simsets, is, 'simset')
+        if (any(not.simset))
+            stop("simsets must be either a simset object or a list of simset objects")
     }
     else
-        stop("intervention.simset must be either of class 'simset' or a list containing only 'simset' objects")
+        stop("simsets must be either a simset object or a list of simset objects")
     
-    baseline.years = NULL
-    if (is.null(baseline.simset))
-        baseline.name = baseline.color = NULL
-    else if (!is(baseline.simset, 'simset'))
-        stop("baseline.simset must be of class 'simset")
-    else if (!is.null(intervention.names))
+    interventions = lapply(simsets, function(ss){attr(ss, 'intervention')})
+    is.baseline = sapply(interventions, is.null)
+    is.no.intervention = sapply(interventions, is.null.intervention) & !is.baseline
+    
+    if (is.null(names(simsets)))
+       simset.names = sapply(interventions, get.intervention.short.name) 
+    else
+       simset.names = names(simsets)
+   
+    if (any(is.baseline) && any(is.no.intervention))
+        simset.names[is.baseline] = simset.names[is.no.intervention][1]
+
+    years.for.simset = lapply(simsets, function(ss){
+        intersect(years, ss@simulations[[1]]$years)
+    })
+
+    if (any(is.baseline) && any(!is.baseline))
     {
-        if (any(intervention.is.no.intervention))
-        {
-            baseline.name = intervention.names[intervention.is.no.intervention][1]
-            intervention.colors[intervention.is.no.intervention]
-        }
-        else
-        {
-            baseline.name = "Pre-Intervention"
-        }
-        
-        intervention.years = unique(unlist(sapply(intervention.simsets, function(ss){
+        intervention.years = unique(as.numeric(sapply(simsets[!is.baseline], function(ss){
             ss@simulations[[1]]$years[-1]
         })))
-        
-        baseline.years = setdiff(intersect(years, baseline.simset@simulations[[1]]$years),
-                                 intervention.years)    
-    }
-    else
-    {
-        baseline.name = "Pre-Intervention"
-        baseline.years = intersect(years, baseline.simset@simulations[[1]]$years)
+        for (i in (1:length(simsets))[is.baseline])
+            years.for.simset[[i]] = setdiff(years.for.simset[[i]], intervention.years)
     }
     
-    all.simsets = c(list(baseline.simset), intervention.simsets)
-    simset.colors = c(baseline.color, intervention.colors)
-    names(all.simsets) = c(baseline.name, intervention.names)
-    if (is.null(baseline.name) || is.null(intervention.names) || !any(intervention.is.no.intervention))
-        names(simset.colors) = c(baseline.name, intervention.names)
-    else
-        names(simset.colors) = c(baseline.name, intervention.names[!intervention.is.no.intervention])
-    years.for.simset = c(list(baseline.years),
-                            lapply(intervention.simsets, function(simest){
-                                intersect(years, simset@simulations[[1]]$years)
-                            }))
-    
+    location = attr(simsets[[1]]@simulations[[1]], 'location')
     
     #----------------------------#
     #-- Set up the Data Frames --#
@@ -191,14 +160,14 @@ do.plot.simulations <- function(baseline.simset,
                                          years=years)[,1]
     
     #-- Individual Simulations --#
-    n.sim.dfs = length(all.simsets) * length(data.types)
-    if (plot.format=='individual.simulations' && length(all.simsets)>0)
+    n.sim.dfs = length(simsets) * length(data.types)
+    if (plot.format=='individual.simulations' && length(simsets)>0)
     {
         sim.sub.dfs = lapply(1:n.sim.dfs, function(i){
             simset.index = ceiling(i/length(data.types))
             data.type.index = (i-1) %% length(data.types) + 1
             
-            one.df.sim = get.individual.sim.df(simset=all.simsets[[simset.index]],
+            one.df.sim = get.individual.sim.df(simset=simsets[[simset.index]],
                                               data.type=data.types[data.type.index],
                                               years=years.for.simset[[simset.index]],
                                               keep.dimensions=keep.dimensions,
@@ -208,7 +177,7 @@ do.plot.simulations <- function(baseline.simset,
             if (!is.null(one.df.sim))
             {
                 one.df.sim$data.type = data.types[data.type.index]#DATA.TYPE.NAMES[data.types[data.type.index]]
-                one.df.sim$intervention = names(all.simsets)[simset.index]
+                one.df.sim$intervention = simset.names[simset.index]
             }
             
             one.df.sim
@@ -277,8 +246,65 @@ do.plot.simulations <- function(baseline.simset,
     else
         df.sim$group = paste0(df.sim$intervention, "_", df.sim$split)
     
-    #-- SET UP STYLES (colors, etc) --#
+    #-------------------#
+    #-- SET UP COLORS --#
+    #-------------------#
     
+    if (color.by=='split')
+        color.names = splits
+    else
+        color.names = c(truth.name, unique(simset.names))
+    
+    if (is(colors, 'function'))
+    {
+        if (color.by=='intervention' && !is.null(truth.color))
+            colors = c(truth.color, colors(length(color.names)-1))
+        else
+            colors = colors(length(color.names))
+    }
+    else if (is(colors, 'character'))
+    {
+        if (color.by=='intervention' && !is.null(truth.color))
+        {   
+            if (length(colors)<(length(color.by)-1))
+                stop(paste0("Not enough colors given in 'colors': ", length(color.by)-1, " colors are needed"))
+            
+            colors = c(truth.color, colors[1:(length(color.names)-1)])
+        }
+        else
+        {
+            if (length(colors)<length(color.by))
+                stop(paste0("Not enough colors given in 'colors': ", length(color.by), " colors are needed"))
+            
+            colors = colors[1:length(color.names)]
+        }
+    }
+    else
+        stop("'colors' must be either a character vector or a function that creates a character vector")
+    
+        
+    names(colors) = color.names
+    if (color.by=='intervention')
+    {
+        truth.color = colors[1]
+        colors = colors[-1]
+    }
+    
+    if (!is.null(df.sim))
+    {
+        if (color.by=='split')
+            df.sim$color.by = df.sim$split
+        else
+            df.sim$color.by = df.sim$intervention
+    }
+    
+    if (!is.null(df.truth))
+    {
+        if (color.by=='split')
+            df.truth$color.by = df.truth$split
+        else
+            df.truth$color.by = truth.name
+    }
     
     #-------------------#
     #-- MAKE THE PLOT --#
@@ -286,18 +312,23 @@ do.plot.simulations <- function(baseline.simset,
     
     plot = ggplot()
     if (plot.format=='individual.simulations')
-        plot = plot + geom_line(data=df.sim, aes(x=year, y=value, group=group, color=intervention),
+    {
+        plot = plot + geom_line(data=df.sim, aes(x=year, y=value, group=group, color=color.by),
                                 alpha=simulation.alpha, size=simulation.line.size)
+    }
     else
-        plot = plot + 
-            geom_ribbon(data=df.sim, aes(x=year, ymin=ci.lower, ymax=ci.upper,
-                                         group=split.by, color=intervention, fill=intervention), alpha=plot.interval.alpha) +
-            geom_line(data=df.sim, aes(x=year, y=value, group=group, color=intervention), size=simulation.line.size)
+    {
+            plot = plot + 
+                geom_ribbon(data=df.sim, aes(x=year, ymin=ci.lower, ymax=ci.upper,
+                                             group=split.by, color=color.by, fill=color.by), alpha=plot.interval.alpha) +
+                geom_line(data=df.sim, aes(x=year, y=value, group=group, color=color.by), size=simulation.line.size)
+    }
 
     if (!is.null(df.truth))
-        plot = plot + geom_point(data=df.truth, aes(x=year, y=value, shape=split), 
-                                 fill=truth.color, size=truth.point.size)
-    
+    {
+        plot = plot + geom_point(data=df.truth, aes(x=year, y=value, shape=split), fill=truth.color, 
+                                 size=truth.point.size)
+    }
     
     #-----------------------#
     #-- SET UP FACET WRAP --#
@@ -348,25 +379,41 @@ do.plot.simulations <- function(baseline.simset,
     #-- Styles --#
     #------------#
     
+    split.legend.name = NULL#paste0(DIMENSION.NAMES[split.by], collapse=", ")
+    
+    #colors
+    if (color.by=='split')
+    {
+        if (length(split.by)==0)
+            plot = plot + scale_color_manual(values=colors, guide=F) +
+                scale_fill_manual(values=colors, guide=F)
+        else
+            plot = plot + scale_color_manual(values=colors, name=split.legend.name) +
+                scale_fill_manual(values=colors, name=split.legend.name)
+        
+    }
+    else
+    {
+        if (length(simsets)>1)
+            plot = plot + scale_color_manual(values=colors, name="Intervention")
+        else
+            plot = plot + scale_color_manual(values=colors, guide=F)
+    }
+    
     if (length(split.by)==0)
         plot = plot +
             scale_shape_manual(values=split.shapes, guide=F)
     else
     {
-        split.legend.name = paste0(DIMENSION.NAMES[split.by], collapse=", ")
         plot = plot +
             scale_shape_manual(values=split.shapes, name=split.legend.name)
     }
     
-    if (length(all.simsets)>1)
-        plot = plot + scale_color_manual(values=simset.colors, name="Intervention")
-    else
-        plot = plot + scale_color_manual(values=simset.colors, guide=F)
-    
     plot = plot + 
         theme(panel.grid=element_blank(), panel.background=element_blank(),
               axis.line.x.bottom = element_line(color = 'black'),
-              axis.line.y.left = element_line(color = 'black'))
+              axis.line.y.left = element_line(color = 'black'),
+              legend.position = 'bottom', legend.direction = 'vertical')
     
     #------------#
     #-- RETURN --#

@@ -2,7 +2,7 @@
 compress.simset <- function(simset,
                             keep.cdc=F,
                             keep.non.cdc=T,
-                            keep.years=2000:2030,
+                            keep.years=2008:2030,
                             keep.dimensions=c('year','age','race','subpopulation','sex','risk','continuum'),
                             compress.continuum.to.diagnosed.vs.undiagnosed=T)
 {
@@ -181,7 +181,8 @@ compress.jheem.array <- function(arr,
         dimnames(arr) = dim.names
     }
     
-    if (compress.continuum.to.diagnosed.vs.undiagnosed && any(non.compress.dimensions=='continuum'))
+    if (compress.continuum.to.diagnosed.vs.undiagnosed && any(non.compress.dimensions=='continuum') &&
+        length('continuum')>1)
     {
         non.continuum.dimensions = setdiff(names(dim.names), 'continuum')
         undiagnosed.continuum.states = setdiff(dim.names[['continuum']], sim$diagnosed.continuum.states)

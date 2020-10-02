@@ -4,6 +4,7 @@ library('jheem')  # installable package is in /packages/
 library('distributions')  # installable package is in /packages/
 library('bayesian.simulations')  # installable package is in /packages/
 library('data.table')
+library('ggsci')
 
 source('R/server.utils.R')
 
@@ -45,6 +46,7 @@ source('R/model_code/census_totals.R')
 source('R/model_code/setup_jheem_from_components.R')
 source('R/model_code/interpolating.R')
 source('R/model_code/file_manager.R')
+source('R/model_code/default_jheem_settings.R')
 
 # TODO: @Todd: Temporarily disabled; files were not located.
 # source('R/model_code/intervention_units.R')

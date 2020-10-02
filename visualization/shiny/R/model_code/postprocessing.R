@@ -1,6 +1,9 @@
 
 ##-- EXTRACT RESULTS (with option for CDC categorization) --##
 
+CDC.SEXES = c('male','female')
+CDC.RISKS = c('msm', 'idu', 'msm_idu', 'heterosexual')
+
 do.extract.population.subset <- function(results,
                                           years=NULL,
                                           ages=NULL,
@@ -20,8 +23,16 @@ do.extract.population.subset <- function(results,
                                           transformation.fn=NULL,
                                           use.cdc.categorizations=F)
 {
+    if (setequal(risks, CDC.RISKS))
+        risks = NULL
+    if (setequal(sexes, CDC.SEXES))
+        sexes = NULL
+    
     if (use.cdc.categorizations &&
-        (any(keep.dimensions=='sex') || any(keep.dimensions=='risk')))
+        (any(keep.dimensions=='sex') ||
+         any(keep.dimensions=='risk') ||
+         !is.null(risks) ||
+         !is.null(sexes)))
     {
         numerators = extract.population.subset(results=results,
                                             years=years,
@@ -102,8 +113,16 @@ do.extract.diagnosed.hiv <- function(results,
                                   use.cdc.categorizations=F
 )
 {
+    if (setequal(risks, CDC.RISKS))
+        risks = NULL
+    if (setequal(sexes, CDC.SEXES))
+        sexes = NULL
+    
     if (use.cdc.categorizations &&
-        (any(keep.dimensions=='sex') || any(keep.dimensions=='risk')))
+        (any(keep.dimensions=='sex') ||
+         any(keep.dimensions=='risk') ||
+         !is.null(risks) ||
+         !is.null(sexes)))
     {
         numerators = extract.diagnosed.hiv(results=results,
                                             years=years,
@@ -172,8 +191,16 @@ do.extract.incidence <- function(results,
                               use.cdc.categorizations=F
 )
 {
+    if (setequal(risks, CDC.RISKS))
+        risks = NULL
+    if (setequal(sexes, CDC.SEXES))
+        sexes = NULL
+    
     if (use.cdc.categorizations &&
-        (any(keep.dimensions=='sex') || any(keep.dimensions=='risk')))
+        (any(keep.dimensions=='sex') ||
+         any(keep.dimensions=='risk') ||
+         !is.null(risks) ||
+         !is.null(sexes)))
     {
         if (!is.na(per.population))
             stop("collapsing to CDC not implemented for non-NA per.population")
@@ -230,8 +257,16 @@ do.extract.prevalence <- function(results,
                                use.cdc.categorizations=F
 )
 {
+    if (setequal(risks, CDC.RISKS))
+        risks = NULL
+    if (setequal(sexes, CDC.SEXES))
+        sexes = NULL
+    
     if (use.cdc.categorizations &&
-        (any(keep.dimensions=='sex') || any(keep.dimensions=='risk')))
+        (any(keep.dimensions=='sex') ||
+         any(keep.dimensions=='risk') ||
+         !is.null(risks) ||
+         !is.null(sexes)))
     {
         if (!is.na(per.population))
             stop("collapsing to CDC not implemented for non-NA per.population")
@@ -286,8 +321,16 @@ do.extract.new.diagnoses <- function(results,
                                   use.cdc.categorizations=F
 )
 {
+    if (setequal(risks, CDC.RISKS))
+        risks = NULL
+    if (setequal(sexes, CDC.SEXES))
+        sexes = NULL
+    
     if (use.cdc.categorizations &&
-        (any(keep.dimensions=='sex') || any(keep.dimensions=='risk')))
+        (any(keep.dimensions=='sex') ||
+         any(keep.dimensions=='risk') ||
+         !is.null(risks) ||
+         !is.null(sexes)))
     {
         if (!is.na(per.population))
             stop("collapsing to CDC not implemented for non-NA per.population")
@@ -341,8 +384,16 @@ do.extract.overall.hiv.mortality <- function(results,
                                           use.cdc.categorizations=F
 )
 {
+    if (setequal(risks, CDC.RISKS))
+        risks = NULL
+    if (setequal(sexes, CDC.SEXES))
+        sexes = NULL
+    
     if (use.cdc.categorizations &&
-        (any(keep.dimensions=='sex') || any(keep.dimensions=='risk')))
+        (any(keep.dimensions=='sex') ||
+         any(keep.dimensions=='risk') ||
+         !is.null(risks) ||
+         !is.null(sexes)))
     {
         if (!is.na(per.population))
             stop("collapsing to CDC not implemented for non-NA per.population")
@@ -761,52 +812,163 @@ sum.arr.to.cdc <- function(arr,
     idu.states = setdiff(dim.names[['risk']], non.idu.states)
     
     # Set up the new dim names
+    if (is.null(sexes))
+        sexes = CDC.SEXES
+    else
+        sexes = intersect(sexes, CDC.SEXES)
+        
     if (any(keep.dimensions=='sex'))
-    {
-        cdc.sexes = c('male','female')
-        if (is.null(sexes))
-            sexes = cdc.sexes
         dim.names[['sex']] = sexes
-    }
     else
         dim.names = dim.names[names(dim.names)!='sex']
     
+    if (is.null(risks))
+        risks = CDC.RISKS
+    else
+        risks = intersect(risks, CDC.RISKS)
+    
     if (any(keep.dimensions=='risk'))
-    {
         cdc.risks = c('msm','idu','msm_idu','heterosexual')
-        if (is.null(risks))
-            risks = c('msm','idu','msm_idu','heterosexual')
-        else
-            risks = cdc.risks[sapply(cdc.risks, function(risk){any(risk==risks)})]
-        dim.names[['risk']] = risks
-    }
     else
         dim.names = dim.names[names(dim.names)!='risk']
+    
+    if (any(sapply(sexes, function(sex){all(sex!=CDC.SEXES)})))
+        stop(paste0("subscript out of bounds. sexes must be a subset of ",
+                    paste0("'", CDC.SEXES, "'", collapse=', ')))
+    if (any(sapply(risks, function(risk){all(risk!=CDC.RISKS)})))
+        stop(paste0("subscript out of bounds. risks must be a subset of ",
+                    paste0("'", CDC.RISKS, "'", collapse=', ')))
     
     # Set up the return array
     rv = array(female.msm.value, dim=sapply(dim.names,length), dimnames=dim.names)
     non.risk.non.sex.dimensions = setdiff(names(dim.names), c('risk','sex'))
 
     # Pull from the non-cdc categorizations into rv
+    if (all(keep.dimensions!='sex') && all(keep.dimensions!='risk'))
+    {
+        if (setequal(risks, CDC.RISKS))
+        {
+            if (setequal(sexes, CDC.SEXES))
+                rv = apply(arr, non.risk.non.sex.dimensions, sum)
+            else if (any(sexes=='male'))
+                rv = apply(access(arr, sex=c('heterosexual_male','msm')), non.risk.non.sex.dimensions, sum)
+            else #sexes == 'female'
+                rv = apply(access(arr, sex='female'), non.risk.non.sex.dimensions, sum)
+        }
+        else
+        {
+            if (setequal(sexes, CDC.SEXES) || any(sexes=='male'))
+            {
+                if (setequal(sexes, CDC.SEXES))
+                    non.msm.sexes = c('heterosexual_male', 'female')
+                else
+                    non.msm.sexes = 'heterosexual_male'
+                
+                msm.keep.risks = character()
+                if (any(risks=='msm'))
+                    msm.keep.risks = c(msm.keep.risks, 'never_IDU')
+                if (any(risks=='msm_idu'))
+                    msm.keep.risks = c(msm.keep.risks, idu.states)
+                
+                non.msm.keep.risks = character()
+                if (any(risks=='heterosexual'))
+                    non.msm.keep.risks = c(non.msm.keep.risks, 'never_IDU')
+                if (any(risks=='idu'))
+                    non.msm.keep.risks = c(non.msm.keep.risks, idu.states)
+                
+                if (length(msm.keep.risks)>0 && length(non.msm.keep.risks)>0)
+                    rv = apply(access(arr, sex='msm', risk=msm.keep.risks), non.risk.non.sex.dimensions, sum) +
+                    apply(access(arr, sex=non.msm.sexes, risk=non.msm.keep.risks), non.risk.non.sex.dimensions, sum)
+                else if (length(msm.keep.risks)>0)
+                    rv = apply(access(arr, sex='msm', risk=msm.keep.risks), non.risk.non.sex.dimensions, sum)
+                else if (length(non.msm.keep.risks)>0)
+                    rv = apply(access(arr, sex=non.msm.sexes, risk=non.msm.keep.risks), non.risk.non.sex.dimensions, sum)
+                
+            }
+            else #sexes == 'female
+            {
+                if (any(risks=='heterosexual') && any(risks=='idu'))
+                    rv = apply(access(arr, sex='female'), non.risk.non.sex.dimensions, sum)
+                else if (any(risks=='heterosexual'))
+                    rv = access(arr, sex='female', risk='never_IDU')
+                else #risks == idu
+                    rv = apply(access(arr, sex='female', risk=idu.states), non.risk.non.sex.dimensions, sum)
+            }
+        }
+    }
     if (all(keep.dimensions!='sex')) #risk only
     {
-        if (any(risks=='msm'))
-            access(rv, risk='msm') = access(arr, sex='msm', risk='never_IDU')
-        if (any(risks=='msm_idu'))
-            access(rv, risk='msm_idu') = apply(access(arr, sex='msm', risk=idu.states, collapse.length.one.dimensions = F), non.risk.non.sex.dimensions, sum)
-        if (any(risks=='idu'))
-            access(rv, risk='idu') = apply(access(arr, sex=c('heterosexual_male','female'), risk=idu.states, collapse.length.one.dimensions = F), non.risk.non.sex.dimensions, sum)
-        if (any(risks=='heterosexual'))
-            access(rv, risk='heterosexual') = apply(access(arr, sex=c('heterosexual_male','female'), risk='never_IDU'), non.risk.non.sex.dimensions, sum)
+        if (any(sexes=='male'))
+        {
+            if (any(risks=='msm'))
+                access(rv, risk='msm') = access(arr, sex='msm', risk='never_IDU')
+            if (any(risks=='msm_idu'))
+                access(rv, risk='msm_idu') = apply(access(arr, sex='msm', risk=idu.states, collapse.length.one.dimensions = F), non.risk.non.sex.dimensions, sum)
+        }
+        
+        if (setequal(sexes, CDC.SEXES))
+        {
+            if (any(risks=='idu'))
+                access(rv, risk='idu') = apply(access(arr, sex=c('heterosexual_male','female'), risk=idu.states, collapse.length.one.dimensions = F), non.risk.non.sex.dimensions, sum)
+            if (any(risks=='heterosexual'))
+                access(rv, risk='heterosexual') = apply(access(arr, sex=c('heterosexual_male','female'), risk='never_IDU'), non.risk.non.sex.dimensions, sum)
+        }
+        else if (any(sexes=='male'))
+        {
+            if (any(risks=='idu'))
+                access(rv, risk='idu') = apply(access(arr, sex='heterosexual_male', risk=idu.states, collapse.length.one.dimensions = F), non.risk.non.sex.dimensions, sum)
+            if (any(risks=='heterosexual'))
+                access(rv, risk='heterosexual') = access(arr, sex='heterosexual_male', risk='never_IDU')
+        }
+        else #sexes == female
+        {
+            if (any(risks=='idu'))
+                access(rv, risk='idu') = apply(access(arr, sex='female', risk=idu.states, collapse.length.one.dimensions = F), non.risk.non.sex.dimensions, sum)
+            if (any(risks=='heterosexual'))
+                access(rv, risk='heterosexual') = access(arr, sex='female', risk='never_IDU')
+        }
     }
     else if (all(keep.dimensions!='risk')) #sex only
     {
         if (any(sexes=='male'))
-            access(rv, sex='male') = apply(access(arr, sex=c('heterosexual_male','msm')), non.risk.non.sex.dimensions, sum)
+        {
+            if (setequal(risks, CDC.RISKS))
+                access(rv, sex='male') = apply(access(arr, sex=c('heterosexual_male','msm')), non.risk.non.sex.dimensions, sum)
+            else
+            {
+                msm.keep.risks = character()
+                if (any(risks=='msm'))
+                    msm.keep.risks = c(msm.keep.risks, 'never_IDU')
+                if (any(risks=='msm_idu'))
+                    msm.keep.risks = c(msm.keep.risks, idu.states)
+                
+                het.male.keep.risks = character()
+                if (any(risks=='heterosexual'))
+                    het.male.keep.risks = c(het.male.keep.risks, 'never_IDU')
+                if (any(risks=='idu'))
+                    het.male.keep.risks = c(het.male.keep.risks, idu.states)
+                
+                if (length(msm.keep.risks)>0 && length(het.male.keep.risks)>0)
+                    access(rv, sex='male') = apply(access(arr, sex='msm', risk=msm.keep.risks), non.risk.non.sex.dimensions, sum) +
+                        apply(access(arr, sex='heterosexual_male', risk=het.male.keep.risks), non.risk.non.sex.dimensions, sum)
+                else if (length(msm.keep.risks)>0)
+                    access(rv, sex='male') = apply(access(arr, sex='msm', risk=msm.keep.risks), non.risk.non.sex.dimensions, sum)
+                else if (length(het.male.keep.risks)>0)
+                    access(rv, sex='male') = apply(access(arr, sex='heterosexual_male', risk=het.male.keep.risks), non.risk.non.sex.dimensions, sum)
+            }
+        }
+        
         if (any(sexes=='female'))
-            access(rv, sex='female') = apply(access(arr, sex='female'), non.risk.non.sex.dimensions, sum)
+        {
+            if (any(risks=='idu') && any(risks=='heterosexual'))
+                access(rv, sex='female') = apply(access(arr, sex='female'), non.risk.non.sex.dimensions, sum)
+            else if (any(risks=='idu'))
+                access(rv, sex='female') = apply(access(arr, sex='female', risk=idu.states), non.risk.non.sex.dimensions, sum)
+            else if (any(risks=='heterosexual'))
+                access(rv, sex='female') = access(arr, sex='female', risk='never_IDU')
+        }
     }
-    else
+    else #keeping both sex and risk
     {
         if (any(sexes=='male'))
         {

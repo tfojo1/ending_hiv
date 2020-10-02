@@ -10,19 +10,19 @@ library(jheem)
 library(bayesian.simulations)
 library(data.table)
 
-source('code/visualization/plot_simulations.R')
+source('visualization/shiny/R/model_code/plot_simulations.R')
 
 if (!exists('msa.surveillance'))
-    load('visualization/resources/msa_surveillance.Rdata')
+    load('visualization/shiny/resources/msa_surveillance.Rdata')
 
 if (!exists('state.surveillance'))
-    load('visualization/resources/state_surveillance.Rdata')
+    load('visualization/shiny/resources/state_surveillance.Rdata')
 
 if (!exists('CENSUS.TOTALS'))
-    load('visualization/resources/census_totals.Rdata')
+    load('visualization/shiny/resources/census_totals.Rdata')
 
 if (!exists('DEFAULT.LOCALE.MAPPING'))
-    load('visualization/resources/locale_mapping.Rdata')
+    load('visualization/shiny/resources/locale_mapping.Rdata')
 
 DEFAULT.AGES = c("13-24 years", "25-34 years", "35-44 years", "45-54 years", "55+ years")
 DEFAULT.RACES = c('black', 'hispanic', 'other')
@@ -33,8 +33,7 @@ DEFAULT.RISKS = c('msm', 'idu', 'msm_idu', 'heterosexual')
 ##-- WRAPPER FUNCTIONS --##
 ##-----------------------##
 
-plot.simulations.total <- function(baseline.simset=NULL,
-                                   intervention.simsets=NULL,
+plot.simulations.total <- function(simsets,
                                    years=2010:2020,
                                    data.types=names(DATA.TYPE.NAMES)[1:5],
                                    dimension.subsets=NULL,
@@ -42,8 +41,7 @@ plot.simulations.total <- function(baseline.simset=NULL,
                                    show.truth=T,
                                    ...)
 {
-    do.plot.simulations(baseline.simset = baseline.simset,
-                        intervention.simsets = intervention.simsets,
+    do.plot.simulations(simsets,
                         years = years,
                         data.types = data.types,
                         facet.by=NULL,
@@ -54,8 +52,7 @@ plot.simulations.total <- function(baseline.simset=NULL,
                         ...)
 }
 
-plot.simulations.flex <- function(baseline.simset=NULL,
-                                  intervention.simsets=NULL,
+plot.simulations.flex <- function(simsets,
                                   years=2010:2020,
                                   data.types=c('new','prevalence'),
                                   split.by=NULL,
@@ -68,8 +65,7 @@ plot.simulations.flex <- function(baseline.simset=NULL,
                                   show.truth=T,
                                   ...)
 {
-    do.plot.simulations(baseline.simset = baseline.simset,
-                        intervention.simsets = intervention.simsets,
+    do.plot.simulations(simsets,
                         years = years,
                         data.types = data.types,
                         facet.by=facet.by,
@@ -83,8 +79,7 @@ plot.simulations.flex <- function(baseline.simset=NULL,
                         ...)
 }
 
-plot.simulations.race.risk <- function(baseline.simset=NULL,
-                                       intervention.simsets=NULL,
+plot.simulations.race.risk <- function(simsets,
                                        years=2010:2020,
                                        data.types=c('new','prevalence'),
                                        ages=DEFAULT.AGES,
@@ -96,8 +91,7 @@ plot.simulations.race.risk <- function(baseline.simset=NULL,
                                        ...
                                        )
 {
-    do.plot.simulations(baseline.simset = baseline.simset,
-                        intervention.simsets = intervention.simsets,
+    do.plot.simulations(simsets,
                         years = years,
                         data.types = data.types,
                         facet.by='risk',

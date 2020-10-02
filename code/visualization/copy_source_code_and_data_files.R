@@ -19,6 +19,8 @@ file.copy('code/setup/setup_jheem_from_components.R', file.path(CODE.DIR, 'setup
 file.copy('code/setup/interpolating.R', file.path(CODE.DIR, 'interpolating.R'), overwrite = T)
 file.copy('code/systematic_calibration/file_manager.R', file.path(CODE.DIR, 'file_manager.R'), overwrite=T)
 
+file.copy('code/setup/default_jheem_settings.R', file.path(CODE.DIR, 'default_jheem_settings.R'), overwrite=T)
+
 file.copy('code/interventions/intervention_units.R', file.path(CODE.DIR, 'intervention_units.R'), overwrite=T)
 file.copy('code/interventions/target_population.R', file.path(CODE.DIR, 'target_population.R'), overwrite=T)
 file.copy('code/interventions/interventions.R', file.path(CODE.DIR, 'interventions.R'), overwrite=T)
