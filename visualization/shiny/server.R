@@ -164,7 +164,7 @@ server <- function(input, output, session) {
   # TODO: need this?
   output$mainPlot = server.routes.runModel[['mainPlot']]
   
-  res_main = server.routes.runModel[['res_main']]
+  # res_main = server.routes.runModel[['res_main']]
   
   # Page: Docs (#page-docs): output$introductionText ####
   output$introductionText = server.routes.docs
@@ -181,6 +181,22 @@ server <- function(input, output, session) {
   # output$rawParamText  ####
   output$rawParamText <- renderUI({
     includeMarkdown("rawParamText.Rmd")
+  })
+  output[['intervention1-description']] <- renderText({
+    options = get.intervention.options(
+      version=input[['version']],
+      location=input[['location']])
+    # description = ''
+    description = options[[input[['intervention1']]]]$description
+    description
+  })
+  output[['intervention2-description']] <- renderText({ 
+    options = get.intervention.options(
+      version=input[['version']], 
+      location=input[['location']])
+    # description = ''
+    description = options[[input[['intervention2']]]]$description
+    description
   })
   
   # Events: Simulate & plot ####

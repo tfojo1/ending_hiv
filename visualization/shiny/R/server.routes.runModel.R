@@ -79,7 +79,7 @@ year.ticks = get.year.options(
     version,
     get.location.options(version)[1])
 
-# Implementation: Dynamic ####
+# Implementation ####
 server.routes.runModel.get <- function(
   input, control, init, param
 ) {
@@ -125,7 +125,7 @@ server.routes.runModel.get <- function(
       column(
         width=page.width,
         box(
-          title="Spatiotemporal dimensions",
+          title="Location and year range",
           status="primary",
           width=NULL, 
           solidHeader=TRUE,
@@ -189,9 +189,7 @@ server.routes.runModel.get <- function(
       
     ))),
     
-    # TODO: #now
     # Epidemiological dimensions ####
-    # to-do: expand/collapse feature
     'epidemiological-dimensions'=fluidRow(
       column(
         width=page.width,
@@ -200,27 +198,8 @@ server.routes.runModel.get <- function(
           status="primary", solidHeader=TRUE,
           
           checkboxGroupInput(
-            inputId='public-health-interventions', 
-            label='Public health interventions', 
-            choiceNames=unname(map(
-              get.intervention.options(
-                version=version, 
-                location=input[['geographic-location']]),
-              ~ .x$label )),
-            choiceValues=names(map(
-              get.intervention.options(
-                version=version, 
-                location=input[['geographic-location']]),
-              ~ .x$name )),
-            selected=unname(map(
-              get.intervention.options(
-                version=version, 
-                location=input[['geographic-location']]),
-              ~ .x$name )) ),
-          
-          checkboxGroupInput(
             inputId='epidemiological-indicators', 
-            label='Epidemiological indicators', 
+            label='Indicators', 
             choiceNames=unname(map(
               get.data.type.options(
                 version=version, 
@@ -238,14 +217,76 @@ server.routes.runModel.get <- function(
               ~ .x )) ),
           
     ))),
+    
+    # Interventions ####
+    'epidemiological-interventions'=fluidRow(
+      column(
+        width=page.width,
+        box(
+          width=NULL, 
+          title="Interventions",
+          status="primary", 
+          solidHeader=TRUE,
+          
+          # TODO: 
+          fluidRow(
+            column(
+              width=page.width.half,
+                selectInput(
+                  inputId="intervention1", 
+                  label="Intervention 1",
+                  choices=invert.keyVals(
+                    get.interventions.simpleList(
+                      version=version, 
+                      location=input[['geographic-location']])),
+                  selected=invert.keyVals(get.interventions.simpleList(
+                    version=version, input[['geographic-location']]))[1],
+                  multiple=FALSE,
+                  selectize=TRUE, 
+                  width='auto', 
+                  size=NULL ),
+              textOutput(outputId='intervention1-description')
+            ),
+            column(
+              width=page.width.half,
+                selectInput(
+                  inputId="intervention2", 
+                  label="Intervention 2",
+                  choices=invert.keyVals(
+                    get.interventions.simpleList(
+                    version=version, 
+                    location=input[['geographic-location']])),
+                  selected=invert.keyVals(get.interventions.simpleList(
+                    version=version, input[['geographic-location']]))[1],
+                  multiple=FALSE,
+                  selectize=TRUE, 
+                  width='auto', 
+                  size=NULL ),
+                textOutput(outputId='intervention2-description')
+            ),
+          ),  # </fluidRow>
+          fluidRow(
+            column(
+              width=page.width,
+            checkboxInput(
+              inputId='no_intervention_checkbox', 
+              label='Include "No intervention" in results', 
+              value=TRUE,  
+              width='100%' )),
+          ),  # </fluidRow>
+          
+        ))),
+    
     # Aggregation options ####
     # to-do: expand/collapse feature
     'aggregation-options'=fluidRow(
       column(
         width=page.width,
         box(
-          width=NULL, title="Aggregation options",
-          status="primary", solidHeader=TRUE,
+          width=NULL, 
+          title="Aggregation",
+          status="primary", 
+          solidHeader=TRUE,
           
           column(
             width=page.width,

@@ -21,30 +21,32 @@ get.interventions.from.filenames <- function(filenames,
                                              remove.null=T,
                                              remove.unregistered=F)
 {
-    pattern = "^[^_]+_[^_]+_(.*).Rdata$"
-    intervention.codes = gsub(pattern, '\\1', filenames)
-    rv = lapply(intervention.codes, intervention.from.code)
-    
-    if (remove.null)
-    {
-        null.mask = sapply(rv, is.null)
-        rv = rv[!null.mask]
-    }
-    else
-    {
-        unregistered.mask = sapply(rv, is.null) & intervention.codes != 'baseline'
-        
-        if (any(unregistered.mask))
-        {
-            if (remove.unregistered)
-                rv = rv[!unregistered.mask]
-            else
-                stop(paste0("The following are not registered intervention codes: ",
-                            paste0("'", intervention.codes[unregistered.mask], "'", collapse=', ')))
-        }
-    }
-    
-    rv
+    # pattern = "^[^_]+_[^_]+_(.*).Rdata$"
+    # intervention.codes = gsub(pattern, '\\1', filenames)
+    # rv = lapply(
+    #     intervention.codes, 
+    #     intervention.from.code)  # TODO: <-- @Todd: Not found
+    # 
+    # if (remove.null)
+    # {
+    #     null.mask = sapply(rv, is.null)
+    #     rv = rv[!null.mask]
+    # }
+    # else
+    # {
+    #     unregistered.mask = sapply(rv, is.null) & intervention.codes != 'baseline'
+    #     
+    #     if (any(unregistered.mask))
+    #     {
+    #         if (remove.unregistered)
+    #             rv = rv[!unregistered.mask]
+    #         else
+    #             stop(paste0("The following are not registered intervention codes: ",
+    #                         paste0("'", intervention.codes[unregistered.mask], "'", collapse=', ')))
+    #     }
+    # }
+    # 
+    # rv
 }
 
 VERSION = '1.0'
@@ -56,8 +58,13 @@ get.simset.filename <- function(simset)
     intervention = attr(simset, 'intervention')
     if (is.null(intervention))
         intervention.code = 'baseline'
-    else
-        intervention.code = get.intervention.code(intervention)
+    else {
+        # intervention.code = get.intervention.code(
+        #     intervention)  # TODO: <-- @Todd: Not found
+        intervention.code = 999999
+        print('TODO: `get.intervention.code(intervention)`')
+    }
+
     
     if (is.null(intervention.code))
         stop("The given intervention has not been registered with the intervention manager")
