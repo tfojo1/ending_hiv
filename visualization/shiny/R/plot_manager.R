@@ -48,8 +48,9 @@ source('R/model_code/interpolating.R')
 source('R/model_code/file_manager.R')
 source('R/model_code/default_jheem_settings.R')
 
-source('R/model_code/intervention_units.R')
-source('R/model_code/target_population.R')
-source('R/model_code/interventions.R')
-source('R/model_code/intervention_presets.R')
+# TODO: @Todd: Temporarily disabled; files were not located.
+# source('R/model_code/intervention_units.R')
+# source('R/model_code/target_population.R')
+# source('R/model_code/interventions.R')
+# source('R/model_code/intervention_presets.R')
  

@@ -1170,7 +1170,7 @@ read.msa.file <- function(file, verbose=T, allow.misses=F)
               grepl('metropolitan', df[,1], ignore.case = T) |
               grepl('countie', df[,1], ignore.case = T)
               )))
-        browser()
+        # browser()
 
     division.mask = division.mask[!is.na(df$code)]
     df = df[!is.na(df$code),]
