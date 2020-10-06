@@ -1,15 +1,15 @@
-install.packages(
-  "resources/distributions_0.1.0.tar.gz", 
-  repos=NULL, 
-  type="source")
-install.packages(
-  "resources/bayesian.simulations_0.2.2.tar.gz", 
-  repos=NULL, 
-  type="source")
-install.packages(
-  "resources/jheem_0.1.0.tar.gz", 
-  repos=NULL, 
-  type="source")
+# install.packages(
+#   "resources/distributions_0.1.0.tar.gz", 
+#   repos=NULL, 
+#   type="source")
+# install.packages(
+#   "resources/bayesian.simulations_0.2.2.tar.gz", 
+#   repos=NULL, 
+#   type="source")
+# install.packages(
+#   "resources/jheem_0.1.0.tar.gz", 
+#   repos=NULL, 
+#   type="source")
 
 # Custom installations
 # By default, the directories in .libPaths() aren't writable on shinyapps.io, so

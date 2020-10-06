@@ -106,8 +106,36 @@ do.plot.simulations <- function(simsets,
     
     interventions = lapply(simsets, function(ss){attr(ss, 'intervention')})
     is.baseline = sapply(interventions, is.null)
-    is.no.intervention = sapply(interventions, is.null.intervention) & !is.baseline
     
+    # TODO @Todd: Error:
+    # Warning: Error in sapply: object 'get.intervention.short.name' not found
+    
+    # Warning: Error in sapply: object 'is.null.intervention' not found
+    # 77: match.fun [R/model_code/plot_simulations.R#109]
+    # 76: sapply
+    # 75: do.plot.simulations [R/model_code/plot_simulations.R#109]
+    # 74: plot.simulations [/Users/joeflack4/projects/ending-hiv/
+    # visualization/shiny/R/plot_shiny_interface.R#420]
+    # 73: plotAndCache [/Users/joeflack4/projects/ending-hiv/visualization/
+    # shiny/server.R#26]
+    # 72: observeEventHandler [/Users/joeflack4/projects/ending-hiv/
+    # visualization/shiny/server.R#219]
+    # 1: runApp
+    is.no.intervention = sapply(
+      interventions, is.null.intervention) & !is.baseline
+    
+    # TODO:
+    # Warning: Error in sapply: object 'get.intervention.short.name' not found
+    # 77: match.fun [R/model_code/plot_simulations.R#124]
+    # 76: sapply
+    # 75: do.plot.simulations [R/model_code/plot_simulations.R#124]
+    # 74: plot.simulations [/Users/joeflack4/projects/ending-hiv/
+    # visualization/shiny/R/plot_shiny_interface.R#420]
+    # 73: plotAndCache [/Users/joeflack4/projects/ending-hiv/
+    # visualization/shiny/server.R#26]
+    # 72: observeEventHandler [/Users/joeflack4/projects/ending-hiv/
+    # visualization/shiny/server.R#219]
+    # 1: runApp
     if (is.null(names(simsets)))
        simset.names = sapply(interventions, get.intervention.short.name) 
     else
