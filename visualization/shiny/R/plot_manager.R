@@ -1,8 +1,8 @@
 # Imports ####
 # Libraries
-library('jheem')  # installable package is in /packages/
-library('distributions')  # installable package is in /packages/
-library('bayesian.simulations')  # installable package is in /packages/
+#library('jheem')  # installable package is in /packages/
+#library('distributions')  # installable package is in /packages/
+#library('bayesian.simulations')  # installable package is in /packages/
 library('data.table')
 library('ggsci')
 
@@ -49,8 +49,8 @@ source('R/model_code/file_manager.R')
 source('R/model_code/default_jheem_settings.R')
 
 # TODO: @Todd: Temporarily disabled; files were not located.
-# source('R/model_code/intervention_units.R')
-# source('R/model_code/target_population.R')
-# source('R/model_code/interventions.R')
-# source('R/model_code/intervention_presets.R')
+source('R/model_code/intervention_units.R')
+source('R/model_code/target_population.R')
+source('R/model_code/interventions.R')
+source('R/model_code/intervention_presets.R')
  

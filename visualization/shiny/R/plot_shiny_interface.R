@@ -55,12 +55,12 @@ DIMENSIONS = c(
   risk='HIV Risk Factor')
 
 DATA.TYPES = c(
+    incidence="HIV Incidence",
   new='Reported Diagnoses',
   prevalence='Estimated Prevalence',
   mortality='HIV Mortality',
   suppression='Viral HIV Suppression',
-  diagnosed="Awareness of HIV Diagnosis",
-  incidence="HIV Incidence")
+  diagnosed="Awareness of HIV Diagnosis")
 
 # Support functions 1: FUNCTIONS TO GET THE OPTIONS FOR ARGUMENTS ####
 
@@ -416,6 +416,13 @@ plot.simulations <- function(
     # plot = do.plot.simulations(baseline.simset,
     
     simsets = list(baseline.simset)
+    
+    
+    #map ages
+    age.mapping = names(PRETTY.NAMES$age)
+    names(age.mapping) = paste0('age', 1:5)
+    if (!is.null(dimension.subsets) && !is.null(dimension.subsets$age))
+        dimension.subsets$age = age.mapping[dimension.subsets$age]
     
     if (1==1)
     plot = do.plot.simulations(simsets,

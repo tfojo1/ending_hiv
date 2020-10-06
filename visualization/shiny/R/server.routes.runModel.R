@@ -241,7 +241,7 @@ server.routes.runModel.get <- function(
               get.data.type.options(
                 version=version, 
                 location=input[['geographic-location']]),
-              ~ .x )) ),
+              ~ .x ))[1:2] ),
           
         ))),
     
