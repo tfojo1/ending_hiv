@@ -16,11 +16,11 @@ DIMENSION.NAMES = c(age='Age',
                     sex='Sex',
                     risk='Risk Factor')
 
-PRETTY.NAMES = list(age=c("13-24 years"="13-24 years", 
-                          "25-34 years"="25-34 years",
-                          "35-44 years"="35-44 years",
-                          "45-54 years"="45-54 years",
-                          "55+ years"="55+ years"),
+PRETTY.NAMES = list(age=c("13-24 years"="13-24", 
+                          "25-34 years"="25-34",
+                          "35-44 years"="35-44",
+                          "45-54 years"="45-54",
+                          "55+ years"="55+"),
                     race=c(black='Black', hispanic='Hispanic', other='Other'),
                     risk=c(msm='MSM', idu='IDU', msm_idu='MSM+IDU', heterosexual='Heterosexual'),
                     sex=c(male='Male', female='Female'))
@@ -64,17 +64,19 @@ do.plot.simulations <- function(simsets,
                                 truth.name='Epidemiological Target',
                                 truth.color=NULL,
                                 
+                                label.change=F,
+                                label.change.ci=T,
+                                label.change.from=c(2020,2030),
+                                label.change.decrease.as.positive=T,
+                                label.change.size=5,
+                                label.change.nudge.x=0,
+                                
                                 ncol=NULL,
                                 nrow=NULL,
                                 fixed.y=F)
 {
     keep.dimensions = unique(c('year', facet.by, split.by))
-    
-    #map ages
-    age.mapping = names(PRETTY.NAMES$age)
-    names(age.mapping) = paste0('age', 1:5)
-    if (!is.null(dimension.subsets) && !is.null(dimension.subsets$age))
-        dimension.subsets$age = age.mapping[dimension.subsets$age]
+
     
     #-----------------------#
     #-- Argument Checking --#
@@ -122,9 +124,14 @@ do.plot.simulations <- function(simsets,
 
     if (any(is.baseline) && any(!is.baseline))
     {
-        intervention.years = unique(as.numeric(sapply(simsets[!is.baseline], function(ss){
-            ss@simulations[[1]]$years[-1]
-        })))
+        intervention.years = unique(as.numeric(unlist(
+          sapply( (1:length(simsets))[!is.baseline], function(i){
+            ss = simsets[[i]]
+            if (is.no.intervention[i])
+                ss@simulations[[1]]$years
+            else
+                ss@simulations[[1]]$years[-1]
+        }))))
         for (i in (1:length(simsets))[is.baseline])
             years.for.simset[[i]] = setdiff(years.for.simset[[i]], intervention.years)
     }
@@ -190,6 +197,7 @@ do.plot.simulations <- function(simsets,
     if (plot.format!='individual.simulations')
             stop("We have not set up plotting besides individual simsets")
     
+    
     #-------------------------------------------------#
     #-- RENAME and FACTOR DIMENSIONS and DATA TYPES --#
     #-------------------------------------------------#
@@ -236,6 +244,74 @@ do.plot.simulations <- function(simsets,
     splits = unique(df.truth$split)
     split.shapes = rep(truth.shapes, ceiling(length(splits)/length(truth.shapes)))[1:length(splits)]
     names(split.shapes) = splits
+    
+    
+    
+    ##--------------------------##
+    ##-- CALCULATE THE CHANGE --##
+    ##--------------------------##
+    
+    df.change = NULL
+    if (label.change && length(split.by)==0)
+    {
+        for (i in 1:length(simsets))
+        {
+            if (any(simsets[[i]]@simulations[[1]]$years==label.change.from[1]) &&
+                any(simsets[[i]]@simulations[[1]]$years==label.change.from[2]) )
+            {
+                for (data.type in data.types)
+                {
+                    if (is.null(splits))
+                        splits.for.loop = 'All'
+                    else
+                      splits.for.loop = splits
+                    
+                    for (split in splits.for.loop)
+                    {
+                        dist = get.data.type.level.and.change.dist(simsets[[i]],
+                                                                   data.type=data.type,
+                                                                   year1=label.change.from[1],
+                                                                   year2=label.change.from[2],
+                                                                   decrease.is.positive = label.change.decrease.as.positive)
+                        
+                        
+                        if (plot.format=='median.and.ci')
+                          stats = get.medians(dist)
+                        else
+                          stats = get.means(dist)
+                        
+                        cis = get.intervals(dist)
+                        
+                        level.2.mask = df.sim$data.type==DATA.TYPE.NAMES[data.type] & 
+                                        df.sim$year==label.change.from[2] & 
+                                        df.sim$intervention==simset.names[i] &
+                                        df.sim$split == split
+                        
+                        if (plot.format=='individual.simulations')
+                          level.2 = mean(df.sim$value[level.2.mask])
+                        else
+                          level.2 = df.sim$value[level.2.mask]
+                        
+                        label = paste0(round(100*stats['change']), '%')
+                        if (label.change.ci)
+                          label = paste0(label, ' [',
+                                         round(100*cis['lower','change']),
+                                         '-',
+                                         round(100*cis['upper','change']),
+                                         ']')
+                        
+                        df.change = rbind(df.change,
+                                          data.frame(intervention=simset.names[i],
+                                                     data.type = DATA.TYPE.NAMES[data.type],
+                                                     label=label,
+                                                     x=label.change.from[2],
+                                                     y=level.2,
+                                                     split=split))
+                    }
+                }
+            }
+        }
+    }
     
     #-------------------#
     #-- SET UP GROUPS --#
@@ -284,11 +360,11 @@ do.plot.simulations <- function(simsets,
     
         
     names(colors) = color.names
-    if (color.by=='intervention')
-    {
-        truth.color = colors[1]
-        colors = colors[-1]
-    }
+#    if (color.by=='intervention')
+#    {
+#        truth.color = colors[1]
+#        colors = colors[-1]
+#    }
     
     if (!is.null(df.sim))
     {
@@ -304,6 +380,14 @@ do.plot.simulations <- function(simsets,
             df.truth$color.by = df.truth$split
         else
             df.truth$color.by = truth.name
+    }
+    
+    if (!is.null(df.change))
+    {
+      if (color.by=='split')
+        df.change$color.by = df.change$split
+      else
+        df.change$color.by = df.change$intervention
     }
     
     #-------------------#
@@ -326,8 +410,18 @@ do.plot.simulations <- function(simsets,
 
     if (!is.null(df.truth))
     {
-        plot = plot + geom_point(data=df.truth, aes(x=year, y=value, shape=split), fill=truth.color, 
+        
+        plot = plot + geom_point(data=df.truth, aes(x=year, y=value, shape=split, fill=color.by), 
                                  size=truth.point.size)
+    }
+    
+    
+    #Add labeled change
+    if (!is.null(df.change))
+    {
+        plot = plot + geom_label(data=df.change, aes(x=x, y=y, label=label, fill=color.by), 
+                                 hjust='center', size=label.change.size, alpha=0.5,
+                                 label.padding = unit(0.15, 'lines'), nudge_x = label.change.nudge.x)
     }
     
     #-----------------------#
@@ -398,6 +492,14 @@ do.plot.simulations <- function(simsets,
             plot = plot + scale_color_manual(values=colors, name="Intervention")
         else
             plot = plot + scale_color_manual(values=colors, guide=F)
+        
+        if (!is.null(df.change))
+        {
+            if (length(simsets)>1)
+              plot = plot + scale_fill_manual(values=colors, name="Intervention")
+            else
+              plot = plot + scale_fill_manual(values=colors, guide=F)
+        }
     }
     
     if (length(split.by)==0)
@@ -420,6 +522,49 @@ do.plot.simulations <- function(simsets,
     #------------#
     
     plot
+}
+
+get.data.type.level.and.change.dist <- function(simset,
+                                           data.type,
+                                           year1,
+                                           year2,
+                                           decrease.is.positive=T,
+                                           statistic=c('mean','median')[1])
+{
+    if (all(simset@simulations[[1]]$years != year1))
+        stop("The year ", year1, " is not contained in the simulation")
+    if (all(simset@simulations[[1]]$years != year2))
+        stop("The year ", year2, " is not contained in the simulation")
+  
+    if (data.type=='incidence')
+        extract.fn = function(sim, years){extract.incidence(sim, years=years, per.population=NA)}
+    else if (data.type=='new')
+        extract.fn = function(sim, years){extract.new.diagnoses(sim, years=years, per.population=NA)}
+    else if (data.type=='prevalence')
+        extract.fn = function(sim, years){extract.prevalence(sim, years=years, per.population=NA)}
+    else if (data.type=='diagnosed')
+        extract.fn = function(sim, years){extract.diagnosed.hiv(sim, years=years, per.population=1)}
+    else if (data.type=='suppression')
+        extract.fn = function(sim, years){extract.suppression(sim, years=years, per.population=1)}
+    else if (data.type=='mortality')
+        extract.fn = function(sim, years){extract.overall.hiv.mortality(sim, years=years, per.population=1)}
+    else if (data.type=='testing.rate')
+        extract.fn = function(sim, years){extract.testing.rates(sim, years=years, per.population=1)}
+    else
+        stop(paste0("'", data.type, "' is not a valid data type"))
+
+    
+    fn = function(sim,...){
+        values = extract.fn(sim, c(year1,year2))
+        rv = c(value1=as.numeric(values[1]),
+               value2=as.numeric(values[2]),
+               change=as.numeric((values[2]-values[1])/values[1]))
+        if (decrease.is.positive)
+            rv[3] = -rv[3]
+        rv
+    }
+    
+    extract.simset.distribution(simset, fn)
 }
 
 ##---------------------------------------------------------##
