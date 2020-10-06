@@ -125,7 +125,7 @@ server.routes.runModel.get <- function(
       column(
         width=page.width,
         box(
-          title="Location and year range",
+          title="Location",
           status="primary",
           width=NULL, 
           solidHeader=TRUE,
@@ -144,51 +144,78 @@ server.routes.runModel.get <- function(
                   multiple=FALSE,
                   selectize=TRUE, 
                   width=NULL, 
-                  size=NULL )
-          )),
+                  size=NULL ) ))
           
-          column(
-            width=page.width,
-            sliderInput(
-              inputId="years", 
-              label="Year range",
-              min=min(year.ticks),
-              max=max(year.ticks),
-              value=c(
-                min(year.ticks), 
-                max(year.ticks)) )
+          # column(
+          #   width=page.width,
+          #   sliderInput(
+          #     inputId="years", 
+          #     label="Year range",
+          #     min=min(year.ticks),
+          #     max=max(year.ticks),
+          #     value=c(
+          #       min(year.ticks), 
+          #       max(year.ticks)) ))
             
-    )))),
-    
-    # Demographic dimensions ####
-    # to-do: expand/collapse feature
-    'demographic-dimensions'=fluidRow(
+    ))),
+    # Interventions ####
+    'epidemiological-interventions'=fluidRow(
       column(
         width=page.width,
         box(
-          title="Demographic dimensions",
-          status="primary",
           width=NULL, 
+          title="Interventions",
+          status="primary", 
           solidHeader=TRUE,
-
-          map(
-            get.dimension.value.options(
-              version=version,
-              location=input[['geographic-location']]), 
-            function(dim) {
-              column(
-                width=page.width.half,
-              checkboxGroupInput(
-                inputId=dim[['name']],
-                label=dim[['label']],
-                choiceNames=unname(dim[['choices']]),
-                choiceValues=names(dim[['choices']]),
-                selected=names(dim[['choices']])
-              ) )
-            })
-      
-    ))),
-    
+          
+          fluidRow(
+            column(
+              width=page.width,
+              checkboxInput(
+                inputId='no_intervention_checkbox', 
+                label='Include "No intervention" in results', 
+                value=TRUE,  
+                width='100%' )),
+          ),  # </fluidRow>
+          
+          fluidRow(
+            column(
+              width=page.width.half,
+              selectInput(
+                inputId="intervention1", 
+                label="Intervention 1",
+                choices=invert.keyVals(
+                  get.interventions.simpleList(
+                    version=version, 
+                    location=input[['geographic-location']])),
+                selected=invert.keyVals(get.interventions.simpleList(
+                  version=version, input[['geographic-location']]))[1],
+                multiple=FALSE,
+                selectize=TRUE, 
+                width='auto', 
+                size=NULL ),
+              textOutput(outputId='intervention1-description')
+            ),
+            column(
+              width=page.width.half,
+              selectInput(
+                inputId="intervention2", 
+                label="Intervention 2",
+                choices=invert.keyVals(
+                  get.interventions.simpleList(
+                    version=version, 
+                    location=input[['geographic-location']])),
+                selected=invert.keyVals(get.interventions.simpleList(
+                  version=version, input[['geographic-location']]))[1],
+                multiple=FALSE,
+                selectize=TRUE, 
+                width='auto', 
+                size=NULL ),
+              textOutput(outputId='intervention2-description')
+            ),
+          ),  # </fluidRow>
+          
+        ))),
     # Epidemiological dimensions ####
     'epidemiological-dimensions'=fluidRow(
       column(
@@ -216,66 +243,8 @@ server.routes.runModel.get <- function(
                 location=input[['geographic-location']]),
               ~ .x ))[1:2] ),
           
-    ))),
-    
-    # Interventions ####
-    'epidemiological-interventions'=fluidRow(
-      column(
-        width=page.width,
-        box(
-          width=NULL, 
-          title="Interventions",
-          status="primary", 
-          solidHeader=TRUE,
-          
-          # TODO: 
-          fluidRow(
-            column(
-              width=page.width.half,
-                selectInput(
-                  inputId="intervention1", 
-                  label="Intervention 1",
-                  choices=invert.keyVals(
-                    get.interventions.simpleList(
-                      version=version, 
-                      location=input[['geographic-location']])),
-                  selected=invert.keyVals(get.interventions.simpleList(
-                    version=version, input[['geographic-location']]))[1],
-                  multiple=FALSE,
-                  selectize=TRUE, 
-                  width='auto', 
-                  size=NULL ),
-              textOutput(outputId='intervention1-description')
-            ),
-            column(
-              width=page.width.half,
-                selectInput(
-                  inputId="intervention2", 
-                  label="Intervention 2",
-                  choices=invert.keyVals(
-                    get.interventions.simpleList(
-                    version=version, 
-                    location=input[['geographic-location']])),
-                  selected=invert.keyVals(get.interventions.simpleList(
-                    version=version, input[['geographic-location']]))[1],
-                  multiple=FALSE,
-                  selectize=TRUE, 
-                  width='auto', 
-                  size=NULL ),
-                textOutput(outputId='intervention2-description')
-            ),
-          ),  # </fluidRow>
-          fluidRow(
-            column(
-              width=page.width,
-            checkboxInput(
-              inputId='no_intervention_checkbox', 
-              label='Include "No intervention" in results', 
-              value=TRUE,  
-              width='100%' )),
-          ),  # </fluidRow>
-          
         ))),
+    
     
     # Aggregation options ####
     # to-do: expand/collapse feature
@@ -337,8 +306,38 @@ server.routes.runModel.get <- function(
           #     choiceValues=demog.choiceValues,
           #     selected=demog.choiceValues ) )
           
-        ))))  # </list>  #returns
-  })
+      ))),  # </list>  #returns
+    
+    # Demographic dimensions ####
+    # to-do: expand/collapse feature
+    'demographic-dimensions'=fluidRow(
+      column(
+        width=page.width,
+        box(
+          title="Demographic dimensions",
+          status="primary",
+          width=NULL, 
+          solidHeader=TRUE,
+
+          map(
+            get.dimension.value.options(
+              version=version,
+              location=input[['geographic-location']]), 
+            function(dim) {
+              column(
+                width=page.width.half,
+              checkboxGroupInput(
+                inputId=dim[['name']],
+                label=dim[['label']],
+                choiceNames=unname(dim[['choices']]),
+                choiceValues=names(dim[['choices']]),
+                selected=names(dim[['choices']])
+              ) )
+            })
+      
+    )))
+    
+  )})
   # Export ####
   server.routes.runModel = list(
     'ui_main'=ui_main,

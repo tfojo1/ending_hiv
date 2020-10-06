@@ -28,7 +28,10 @@ plotAndCache <- function(input, cache) {
     version=version,
     location=input[['geographic-location']],
     intervention.names=input[['public-health-interventions']],
-    years=input[['years']][1]:input[['years']][2],
+    # years=input[['years']][1]:input[['years']][2],
+    years=get.year.options(
+      version,
+      get.location.options(version)[1]),
     data.types=input[['epidemiological-indicators']],
     facet.by=input[['facet']],
     split.by=input[['split']],
