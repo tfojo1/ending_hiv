@@ -1,0 +1,144 @@
+Autoregressive.Multivariate.Normal.Distribution
+                        Create a multivariate normal distribution with
+                        a Continuous Autoregressive 1 (CAR-1)
+                        correlation structure
+Bernoulli.Distribution
+                        Create a Univariate Bernoulli Distribution
+                        Object
+Beta.Distribution       Create a Univariate Beta Distribution Object
+Binomial.Distribution   Create a Univariate Binomial Distribution
+                        Object
+Canonical.Mixture.Distribution
+                        Create a mixture distribution object based off
+                        of a canonical, univariate distribution
+Canonical_Mixture_Distribution
+                        The Canonical_Mixture_Distribution class
+Compound.Symmetry.Multivariate.Normal.Distribution
+                        Create a multivariate normal distribution with
+                        a Compound Symmetry correlation structure
+Continuous.Support      Create an object which represents support over
+                        a range of integers
+Discrete.Set.Support    Create a support over an arbitrary set of
+                        values
+Discrete_Set_Support    An object representing support over an
+                        arbitrary set of real numbers
+Distribution            The abstract superclass for all Distribution
+                        objects
+Empiric.Distribution    Create an empiric distribution from a set of
+                        samples
+Empiric_Distribution    The Empiric_Distribution Class
+Integer.Support         Create an object which represents support over
+                        a range of integers
+Joint_Independent_Distributions
+                        The Joint_Independent_Distributions class
+Logitnormal.Distribution
+                        Create a Univariate Logit-Normal Distribution
+                        Object
+Logitnormal.Mixture     Create a Mixture Univariate Logit-Normal
+                        Distributions
+Logituniform.Distribution
+                        Create a Logit-Uniform Distribution Object
+Lognormal.Distribution
+                        Create a Univariate Log-Normal Distribution
+                        Object
+Lognormal.Mixture       Create a Mixture of Univariate Log-Normal
+                        Distributions
+Loguniform.Distribution
+                        Create a Log-Uniform Distribution Object
+Multivariate.Logitnormal.Distribution
+                        Create a Multivariate Logit-Normal Distribution
+                        Object
+Multivariate.Lognormal.Distribution
+                        Create a Multivariate Log-Normal Distribution
+                        Object
+Multivariate.Normal.Distribution
+                        Create a Multivariate Normal Distribution
+                        Object
+Multivariate.Support    Join multiple Support objects into a
+                        multivariate Support
+Multivariate_Normal_Distribution
+                        The Multivariate_Normal_Distribution Class
+Multivariate_Support    An object representing support (on the real
+                        numbers) over across multiple variables
+Normal.Distribution     Create a Univariate Normal Distribution Object
+Normal.Mixture          Create a Mixture of Univariate Normal
+                        Distributions
+Range_Support           An object representing support over a range of
+                        real numbers
+Smoothed.Empiric.Distribution
+                        Create an smoothed empiric distribution from a
+                        set of samples
+Smoothed_Empiric_Distribution
+                        The Smoothed_Empiric_Distribution Class
+Support                 An object representing support over real
+                        numbers
+Support.Union           Join multiple univariate Support objects into
+                        one univariate Support
+Transformed.Multivariate.Normal.Distribution
+                        Create a transformed multivariate normal
+                        distribution object
+Transformed.Normal.Distribution
+                        Create a Distribution of a Random Variable that
+                        is Normal after an arbitrary transformation
+Transformed.Normal.Mixture
+                        Create a Mixture of Transformed Normal
+                        Distributions
+Uniform.Distribution    Create a Uniform Distribution Object
+Union_Support           An object representing the union of two or more
+                        supports over a range of real numbers
+Univariate.Canonical.Distribution
+                        Create a distribution object based off of a
+                        canonical, univariate distribution
+Univariate_Canonical_Distribution
+                        The Univariate_Canonical_Distribution class
+calculate.cdf           Calculate the cumulative distribution function
+                        for a distribution
+calculate.marginal.cdfs
+                        Calculate a marginal cumulative distribution
+                        function for each variable in a distribution
+calculate.marginal.densities
+                        Calculate a marginal density for each variable
+                        in a distribution
+create.transformation   Create an object representing a transformation
+do.calculate.density    Internal function for subclasses to calculate
+                        the density for a distribution
+generate.random.marginal.samples
+                        Generate marginal random samples for each
+                        variable in a distribution
+generate.random.samples
+                        Generate random samples from a distribution
+get.covariance.matrix   Get the variance-covariance matrix for
+                        variables in a distribution
+get.defined.transformation
+                        Get Pre-Defined Transformation Objects by Name
+get.density.function    Get a function that calculates the density for
+                        the distribution
+get.description         Get the description of a Distribution object
+get.equal.tailed.intervals
+                        Get equal-tailed intervals (confidence/credible
+                        intervals) for the variables in a distribution
+get.highest.density.intervals
+                        Get highest-density intervals
+                        (confidence/credible intervals) for the
+                        variables in a distribution
+get.intervals           Get intervals (confidence/credible intervals)
+                        for the variables in a distribution
+get.means               Get means of the variables in a distribution
+get.medians             Get medians of the variables in a distribution
+get.quantiles           Get quantiles for the variables in a
+                        distribution
+get.random.generator.function
+                        Get a function that generates random samples
+                        form the distribution
+get.sds                 Get the standard deviations of the variables in
+                        a distribution
+get.support.bounds      Get the maximum and minimm values within a
+                        support over real numbers
+hello                   Hello, World!
+is.supported            Test if numeric values fall within a defined
+                        support
+join.distributions      Join Multiple Distributions
+subset.distribution     Get a distribution that describes a subset of
+                        the variables in a given distribution
+subset.support          Subset a Support object
+transformation          The transformation class

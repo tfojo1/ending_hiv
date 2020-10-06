@@ -1,0 +1,29 @@
+add.parameters          Add parameters to a simset or parameter_set
+assemble.mcmc.from.cache
+                        Assemble an MCMC object from iterations stored
+                        in a cache
+cache.progress          Report the progress of an MCMC process running
+                        from a cache
+create.mcmc.cache       Set up a cache for running an MCMC from
+extend.simulations      Extend the simulations of a simset
+extract.simset          Extracts a simset from an object containing
+                        simulations
+extract.simset.distribution
+                        Extract a distribution of simulation results
+extract.simset.parameter.distribution
+                        Extract the distribution of parameters in a
+                        simset
+get.rhats               Calculate R-hat statistics for an MCMC object
+hello                   Hello, World!
+is.mcmc.cache.complete
+                        Check if a cached MCMC has completed sampling
+mcmc.merge.parallel     Merge MCMC objects in parallel
+mcmc.merge.serial       Merge MCMC objects in serial
+pair.plot               Generate a pairs plot of variables from an mcmc
+                        run
+process.transformations
+                        exporting for now for debugging
+remove.mcmc.cache       Delete previously set-up cache for running MCMC
+run.mcmc.from.cache     Run MCMC from a previously set-up cache
+simset                  The simset class
+trace.plot              Generate a trace plot from an mcmc run

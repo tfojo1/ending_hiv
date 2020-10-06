@@ -1,0 +1,21 @@
+Package: bayesian.simulations
+Type: Package
+Title: Bayesian Methods for Calibrating Simulation Sets
+Version: 0.2.2
+Author: Who wrote it
+Maintainer: Anthony Todd Fojo <anthony.fojo@jhmi.edu>
+Description: More about what it does (maybe more than one line)
+    Use four spaces when indenting paragraphs within the Description.
+License: What license is it under?
+Encoding: UTF-8
+LazyData: true
+Collate: 'parallelization.R' 'mcmc_class.R' 'transformations.R'
+        'simset_class.R' 'sampling.R' 'helpers.R' 'merge.R' 'cache.R'
+        'run_interface.R' 'adaptive_blockwise_metropolis.R'
+        'postprocessing.R' 'output.R'
+Imports: mvtnorm, ggplot2, parallel, reshape2, distributions, lhs
+RoxygenNote: 7.0.2
+NeedsCompilation: no
+Packaged: 2020-08-25 14:53:59 UTC; Todd Fojo
+Depends: R (>= 3.5.0)
+Built: R 3.6.3; ; 2020-10-02 15:47:29 UTC; unix
