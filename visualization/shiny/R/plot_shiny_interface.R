@@ -206,50 +206,24 @@ get.intervention.options <- function(version, location)
   # rendering.
   
     
+  if (length(location)>0 && location !='')
+  {
     sims.names = sims.list()
     sims.locations = get.locations.from.filenames(sims.names)
     sims.names = sims.names[sims.locations==location]
     interventions = get.interventions.from.filenames(sims.names)
     
-    df = data.frame()
-   
-  no.int = list(
-    name='no_intervention',
-    label='No intervention',
-    description='This is the description text for: No intervention',
-    target.groups=character(),
-    testing.frequency=NA,
-    suppressed.proportion=NA,
-    prep.coverage=NA,
-    intervention.start.year=2021,
-    intervention.implemented.year=2022)
+    rv = lapply(interventions, function(int){
+        list(name=get.intervention.code(int),
+              label=get.intervention.short.name(int),
+              description='placeholder description')
+    })
+    names(rv)=sapply(rv, function(elem){elem$label})
+  }
+  else
+    rv = list()
   
-  int.1 = list(
-    name='young_black_msm_testing_1py_0.8_suppressed_0.25_prep',
-    label='Young Black MSM testing (1py 0.8suppressed 0.25prep)',
-    description='This is the description text for: Young Black MSM testing (1py 0.8suppressed 0.25prep)',
-    target.groups='Black MSM <35yo',
-    testing.frequency=1,
-    suppressed.proportion=0.8,
-    prep.coverage=0.25,
-    intervention.start.year=2021,
-    intervention.implemented.year=2022)
-  
-  int.2 = list(
-    name='all_msm_idu_testing_1py_0.9_suppressed_0.5_prep',
-    label='All MSM & IDU testing (1py 0.9suppressed 0.5prep)',
-    description='This is the description text for: All MSM & IDU testing (1py 0.9suppressed 0.5prep)',
-    target.groups='All MSM and IDU',
-    testing.frequency=1,
-    suppressed.proportion=0.9,
-    prep.coverage=0.5,
-    intervention.start.year=2021,
-    intervention.implemented.year=2022)
-  
-  list(
-    # 'no_intervention'=no.int,
-    'young_black_msm_testing_1py_0.8_suppressed_0.25_prep'=int.1,
-    'all_msm_idu_testing_1py_0.9_suppressed_0.5_prep'=int.2)
+  rv
 }
 
 get.interventions.simpleList <- function(version, location) {
@@ -259,6 +233,7 @@ get.interventions.simpleList <- function(version, location) {
   })
   simpleList = c('None', simpleList)
   names(simpleList) = c('none', names(options))
+  
   simpleList
 }
 
@@ -324,7 +299,7 @@ get.sim.filenames.to.load <- function(
   location,
   intervention.names)
 {
-    '1.0_12060_baseline.Rdata'
+    '1.0_35620_baseline.Rdata'
 }
 
 
@@ -411,11 +386,12 @@ plot.simulations <- function(
 ) {
 #  browser()  # TODO: debug
   
-  baseline.simset = sims.load('1.0_12060_baseline.Rdata', cache)
-    intervention.simsets = NULL
-    # plot = do.plot.simulations(baseline.simset,
+ # baseline.simset = sims.load('1.0_35620_baseline.Rdata', cache)
     
-    simsets = list(baseline.simset)
+  filenames = get.sim.filenames.to.load(version=version,
+                                        location=location,
+                                        intervention.names=intervention.names)
+    simsets = lapply(filenames, sims.load, cache)
     
     
     #map ages
