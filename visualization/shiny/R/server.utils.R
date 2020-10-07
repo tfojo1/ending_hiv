@@ -98,23 +98,29 @@ static.save <- function(
 # }
 
 
+simsetFilenameToCacheKey <- function(filename) {
+  filename = tolower(filename)
+  filename = str_replace_all(filename, "[[:punct:]]", "")
+  filename
+}
+
+
 update.sims.cache <- function(
     filenames,  # char
-    cache,
+    cache,  # DiskCache[R6]
     bucket.name=BUCKET.NAME.SIMS)
 {
-    for (filename in filenames)
-    {
-        if (!(filename %in% names(cache))) {
-            print(paste0("'", filename, "' not in cache. Pulling from S3"))
+    for (filename in filenames) {
+        if (!(simsetFilenameToCacheKey(filename) %in% cache$keys())) {
+          print(paste0("'", filename, "' not in cache. Pulling from S3s"))
             # simset = s3load(
             s3load(
                 filename,
                 bucket=bucket.name,
                 envir=environment())
-            
-            cache[[filename]] = simset
-        }    
+            cache$set(simsetFilenameToCacheKey(filename), simset)
+        } else
+          print(paste0("'", filename, "'in cache. Grabbing."))
     }
         
     cache

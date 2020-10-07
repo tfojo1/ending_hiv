@@ -1,7 +1,9 @@
 # # EndingHiv; Page: Run Model (#page-run-model): output$ui_main
 # Settings & Imports ####
 library('shiny')
+library('shinycssloaders')
 library('shinyWidgets')
+
 
 source("R/ui.tools.R")  # plot.simulations
 source("R/plot_shiny_interface.R")  # plot.simulations
@@ -113,7 +115,7 @@ server.routes.runModel.get <- function(
                 outputId="mainPlot",
                 height="auto",
                 width="auto",
-                inline=T)))
+                inline=T)  %>% withSpinner(color="#0dc5c1")))
           
         ))), 
     
@@ -133,14 +135,14 @@ server.routes.runModel.get <- function(
           # #button
           fluidRow(
             column(
-              width=page.width.half,
+              width=page.width,
                 selectInput(
                   inputId="geographic-location", 
                   label="Geographic location",
                   choices=invert.keyVals(get.location.options(
                     version=version)),
-                  selected=invert.keyVals(get.location.options(
-                    version=version))[1],
+                  selected=get.location.options(
+                    version=version)[1],
                   multiple=FALSE,
                   selectize=TRUE, 
                   width=NULL, 

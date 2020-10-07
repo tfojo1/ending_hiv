@@ -13,9 +13,13 @@ ui <- dashboardPage(
   #  - Appear in app in order shown below
   dashboardSidebar(
     sidebarMenu(
-      menuItem("Run Model", tabName="main", icon=icon("dashboard")),
+      menuItem("Visualize projections", tabName="main", icon=icon("dashboard")),
       # menuItem("Parameters", tabName="raw_params", icon=icon("th")),
-      menuItem("Documentation", tabName="text", icon=icon("info"))
+      menuItem("Design interventions", tabName="design-interventions", 
+               icon=icon("dashboard")),
+      menuItem("About the model", tabName="text", icon=icon("info")),
+      menuItem("Help and feedback", tabName="help-and-feedback", icon=icon("info"))
+      
       # menuItem(
       #   "Sensitivity Analysis", tabName="sens_ana", 
       #   icon=icon("bar-chart"))
@@ -24,21 +28,19 @@ ui <- dashboardPage(
   # Body
   dashboardBody(
     tabItems(
-      # Page: Docs
-      # - Dynamic page; rendered in server.R under "#page-run-model"
-      tabItem(
-        tabName="text",
-        uiOutput("introductionText")),
-      
-      # Page: Run model
-      # - Dynamic page; rendered in server.R under "#page-docs"
       tabItem(
         tabName="main",
         uiOutput("ui_main")),
+      tabItem(
+        tabName="design-interventions",
+        uiOutput("design-interventions")),
+      tabItem(
+        tabName="text",
+        uiOutput("introductionText")),
+      tabItem(
+        tabName="help-and-feedback",
+        uiOutput("help-and-feedback"))
       
-      # Page: Params
-      # - Static page; defined here
-      ui.pages.params  # tabItem
     )  # </Body (tabItems)>
   )  # </Body (dashboardBody)>
 

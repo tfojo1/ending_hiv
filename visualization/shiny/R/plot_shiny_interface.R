@@ -384,15 +384,14 @@ plot.simulations <- function(
   simulation.line.size=0.1,
   truth.point.size=3
 ) {
-#  browser()  # TODO: debug
-  
- # baseline.simset = sims.load('1.0_35620_baseline.Rdata', cache)
-    
-  filenames = get.sim.filenames.to.load(version=version,
-                                        location=location,
-                                        intervention.names=intervention.names)
-    simsets = lapply(filenames, sims.load, cache)
-    
+    filenames = get.sim.filenames.to.load(
+      version=version,
+      location=location,
+      intervention.names=intervention.names)
+    simsets = lapply(filenames, function(file) {
+      key = simsetFilenameToCacheKey(file)
+      simset = cache$get(key)
+      simset })
     
     #map ages
     age.mapping = names(PRETTY.NAMES$age)
@@ -401,27 +400,28 @@ plot.simulations <- function(
         dimension.subsets$age = age.mapping[dimension.subsets$age]
     
     if (1==1)
-    plot = do.plot.simulations(simsets,
-                               
-                               years=years,
-                               data.types=data.types,
-                               facet.by,
-                               split.by,
-                               dimension.subsets,
-                               plot.format='individual.simulations', #for now, going to override the plot formats
-                               
-                               show.truth=T,
-                               
-                               plot.interval.coverage=plot.interval.coverage,
-                               summary.statistic=summary.statistic,
-                               summary.statistic.interval.coverage=summary.statistic.interval.coverage,
-                               
-                               colors=pal_jama(),
-                               
-                               plot.interval.alpha=plot.interval.alpha,
-                               simulation.alpha=simulation.alpha,
-                               simulation.line.size=simulation.line.size,
-                               truth.point.size=truth.point.size)
+    plot = do.plot.simulations(
+      simsets,
+      years=years,
+      data.types=data.types,
+      facet.by,
+      split.by,
+      dimension.subsets,
+      #for now, going to override the plot formats
+      plot.format='individual.simulations', 
+      
+      show.truth=T,
+      
+      plot.interval.coverage=plot.interval.coverage,
+      summary.statistic=summary.statistic,
+      summary.statistic.interval.coverage=summary.statistic.interval.coverage,
+      
+      colors=pal_jama(),
+      
+      plot.interval.alpha=plot.interval.alpha,
+      simulation.alpha=simulation.alpha,
+      simulation.line.size=simulation.line.size,
+      truth.point.size=truth.point.size)
     
     else
     {
