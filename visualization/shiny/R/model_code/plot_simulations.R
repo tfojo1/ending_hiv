@@ -1,4 +1,3 @@
-
 library(jheem)
 library(bayesian.simulations)
 library(data.table)
@@ -41,39 +40,40 @@ ORANGE = 'darkorange3'
 #'@param color.by How to set colors. If color.by=='intervention', each intervention (and the baseline) gets a different color. If color.by=='split' each line denoted by split.by gets a different color
 #'@param colors Information on what colors to use. Can be either a vector of colors or a function that takes an argument (n) and generates n colors. 
 #'
-do.plot.simulations <- function(simsets,
-                                years,
-                                data.types,
-                                facet.by,
-                                split.by,
-                                dimension.subsets,
-                                plot.format='individual.simulations',
-                                show.truth=T,
-                                
-                                plot.interval.coverage=0.95,
-                                summary.statistic='none',
-                                summary.statistic.interval.coverage=0.95,
-                                
-                                colors=pal_jama(),
-                                color.by=c('intervention','split')[1],
-                                plot.interval.alpha=0.2,
-                                simulation.alpha=0.2,
-                                simulation.line.size=0.1,
-                                truth.point.size=3,
-                                truth.shapes=TRUTH.SHAPES,
-                                truth.name='Epidemiological Target',
-                                truth.color=NULL,
-                                
-                                label.change=F,
-                                label.change.ci=T,
-                                label.change.from=c(2020,2030),
-                                label.change.decrease.as.positive=T,
-                                label.change.size=5,
-                                label.change.nudge.x=0,
-                                
-                                ncol=NULL,
-                                nrow=NULL,
-                                fixed.y=F)
+do.plot.simulations <- function(
+  simsets,
+  years,
+  data.types,
+  facet.by,
+  split.by,
+  dimension.subsets,
+  plot.format='individual.simulations',
+  show.truth=T,
+  
+  plot.interval.coverage=0.95,
+  summary.statistic='none',
+  summary.statistic.interval.coverage=0.95,
+  
+  colors=pal_jama(),
+  color.by=c('intervention','split')[1],
+  plot.interval.alpha=0.2,
+  simulation.alpha=0.2,
+  simulation.line.size=0.1,
+  truth.point.size=3,
+  truth.shapes=TRUTH.SHAPES,
+  truth.name='Epidemiological Target',
+  truth.color=NULL,
+  
+  label.change=F,
+  label.change.ci=T,
+  label.change.from=c(2020,2030),
+  label.change.decrease.as.positive=T,
+  label.change.size=5,
+  label.change.nudge.x=0,
+  
+  ncol=NULL,
+  nrow=NULL,
+  fixed.y=F)
 {
     keep.dimensions = unique(c('year', facet.by, split.by))
 
@@ -85,14 +85,15 @@ do.plot.simulations <- function(simsets,
     for (data.type in data.types)
     {
         if (!any(data.type==names(DATA.TYPE.NAMES)))
-            stop(paste0("'", data.type, "' is not a valid data.type. data.type must be one of ",
-                        paste0("'", names(DATA.TYPE.NAMES), "'", collapse=', ')))
+            stop(
+              paste0("'", data.type, 
+                     "' is not a valid data.type. data.type must be one of ",
+                     paste0("'", names(DATA.TYPE.NAMES), "'", collapse=', ')))
     }
     
     #--------------------------------#
     #-- Parse and Name the Simsets --#
     #--------------------------------#
-    
     if (is.null(simsets))
         stop("simsets cannot be null - it must either be either a simset object or a list of simset objects")
     else if (is(simsets, 'simset'))

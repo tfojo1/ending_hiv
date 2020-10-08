@@ -1,16 +1,22 @@
 'EndingHIV RShiny Server process'
+library('stringr')
+
 # Source files
 source("R/ui.tools.R")
 source("R/plot_shiny_interface.R")
 source("R/server.routes.docs.R")
+# source("R/server.routes.designInterventions.R")
+# source("R/server.routes.helpAndFeedback.R")
 source("R/server.routes.runModel.R")
 source("R/plot_manager.R")
 source("R/model_code/plot_simulations.R")
 
 suppressPackageStartupMessages(library(EpiModel))  # param.dcm, init.dcm
+shinyOptions(cache=diskCache(file.path(dirname(tempdir()), "myapp-cache")))
 
 # Constants / initiliazers
-CACHE = list()
+# CACHE = memoryCache(size = 20e6)
+CACHE = diskCache(max_size = 20e6)
 
 # Functional components
 plotAndCache <- function(input, cache) {
@@ -19,10 +25,11 @@ plotAndCache <- function(input, cache) {
     version,
     location=input[['geographic-location']],
     intervention.names=input[['public-health-interventions']])
+  
   cache = update.sims.cache(
     filenames=filenames,
     cache=cache)
-
+  
   plot.results = plot.simulations(
     cache=cache,
     version=version,
@@ -172,6 +179,8 @@ server <- function(input, output, session) {
   
   # Page: Docs (#page-docs): output$introductionText ####
   output$introductionText = server.routes.docs
+  output[['design-interventions']] = server.routes.designInterventions
+  output[['help-and-feedback']] = server.routes.helpAndFeedback
   # output$introductionText <- renderUI({includeMarkdown(
   #   "introductionText.Rmd")})
 
@@ -216,6 +225,8 @@ server <- function(input, output, session) {
   
   # Plot when clicking 'Run':
   observeEvent(input$reset_main, {
+    # %>%
+    # output$mainPlot = withSpinner(color="#0dc5c1")
     plot.and.cache = plotAndCache(input, cache)
     cache = plot.and.cache$cache
     output$mainPlot = plot.and.cache$plot
