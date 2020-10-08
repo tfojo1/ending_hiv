@@ -51,12 +51,16 @@ VERSION = '1.0'
 get.simset.filename <- function(simset,
                                 location=attr(simset@simulations[[1]], 'location'),
                                 intervention=attr(simset, 'intervention'),
+                                intervention.code=NULL,
                                 version=VERSION)
 {
-    if (is.null(intervention))
-        intervention.code = 'baseline'
-    else
-        intervention.code = get.intervention.code(intervention)
+    if (is.null(intervention.code))
+    {
+        if (is.null(intervention))
+            intervention.code = 'baseline'
+        else
+            intervention.code = get.intervention.code(intervention)
+    }
     
     if (is.null(intervention.code))
         stop("The given intervention has not been registered with the intervention manager")

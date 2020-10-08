@@ -294,6 +294,17 @@ intervention.name.to.code <- function(name, manager=INTERVENTION.MANAGER.1.0)
         NULL
 }
 
+intervention.short.name.to.code <- function(name, manager=INTERVENTION.MANAGER.1.0)
+{
+    mask = manager$short.name==name
+    if (any(mask))
+        as.character(manager$code[[ (1:length(manager$code))[mask] ]])
+    else
+        NULL
+}
+
+
+
 ##------------------------------------##
 ##-- PROCESS AN INTERVENTION OBJECT --##
 ##------------------------------------##

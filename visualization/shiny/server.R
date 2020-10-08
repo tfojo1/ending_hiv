@@ -21,10 +21,23 @@ CACHE = diskCache(max_size = 20e6)
 # Functional components
 plotAndCache <- function(input, cache) {
   version = names(get.version.options())[1]
+
+  # Pull Intervention Names from Input
+  if (input[['no_intervention_checkbox']])
+    intervention.names = get.intervention.name(NO.INTERVENTION)
+  else
+    intervention.names = character()
+  intervention.names = c(intervention.names,
+                    input[['intervention1']],
+                    input[['intervention2']])
+  intervention.names = intervention.names[intervention.names != 'none']
+  
+  
+  # Get the filenames to pre-cache
   filenames = get.sim.filenames.to.load(
     version,
     location=input[['geographic-location']],
-    intervention.names=input[['public-health-interventions']])
+    intervention.names=intervention.names)
   
   cache = update.sims.cache(
     filenames=filenames,

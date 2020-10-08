@@ -299,7 +299,17 @@ get.sim.filenames.to.load <- function(
   location,
   intervention.names)
 {
-    '1.0_35620_baseline.Rdata'
+    baseline.filename = get.simset.filename(version=version,
+                                            location=location,
+                                            intervention=NULL)
+    
+    other.filenames = sapply(intervention.names, function(int.name){
+      code = intervention.short.name.to.code(int.name)
+      get.simset.filename(location = location,
+                          intervention.code = code)
+    })
+
+    c(baseline.filename, other.filenames)
 }
 
 
@@ -384,6 +394,12 @@ plot.simulations <- function(
   simulation.line.size=0.1,
   truth.point.size=3
 ) {
+  
+  #Hard Overrides for now
+  plot.format = 'individual.simulations'
+  print(paste0("Original Years: ", min(years), " - ", max(years)))
+  years = 2010:2030
+  
     filenames = get.sim.filenames.to.load(
       version=version,
       location=location,
@@ -408,7 +424,7 @@ plot.simulations <- function(
       split.by,
       dimension.subsets,
       #for now, going to override the plot formats
-      plot.format='individual.simulations', 
+      plot.format=plot.format, 
       
       show.truth=T,
       
