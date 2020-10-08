@@ -216,7 +216,7 @@ get.intervention.options <- function(version, location)
     rv = lapply(interventions, function(int){
         list(name=get.intervention.code(int),
               label=get.intervention.short.name(int),
-              description='placeholder description')
+              description='placeholder description\nsecond line\nthird line')
     })
     names(rv)=sapply(rv, function(elem){elem$label})
   }
@@ -397,8 +397,7 @@ plot.simulations <- function(
   
   #Hard Overrides for now
   plot.format = 'individual.simulations'
-  print(paste0("Original Years: ", min(years), " - ", max(years)))
-  years = 2010:2030
+
   
     filenames = get.sim.filenames.to.load(
       version=version,

@@ -39,15 +39,17 @@ plotAndCache <- function(input, cache) {
     location=input[['geographic-location']],
     intervention.names=intervention.names)
   
+  # Pre-fetch them simsets
   cache = update.sims.cache(
     filenames=filenames,
     cache=cache)
   
+  # Make the plot
   plot.results = plot.simulations(
     cache=cache,
     version=version,
     location=input[['geographic-location']],
-    intervention.names=input[['public-health-interventions']],
+    intervention.names=intervention.names,
     # years=input[['years']][1]:input[['years']][2],
     years=get.year.options(
       version,
