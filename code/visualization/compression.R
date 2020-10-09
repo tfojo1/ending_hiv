@@ -64,7 +64,7 @@ compress.jheem.results <- function(sim,
     
     #-- Redo the jheem results metadata --#
     
-    sim$years = keep.years
+    sim$years = intersect(sim$years, keep.years)
     
     if (compress.continuum.to.diagnosed.vs.undiagnosed && any(keep.dimensions=='continuum'))
     {

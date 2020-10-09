@@ -60,9 +60,20 @@ calculate.change.ratios.two.logistic <- function(r1,r2,
     if ((fraction.of.asymptote.after.end+fraction.of.asymptote.before.start)>=1)
         stop("The sum of fraction.of.asymptote.after.end and fraction.of.asymptote.before.start must be less than 1")
 
-    r0.to.1 = r1/r0
-    r0.to.2 = r2/r0
-    r1.to.2 = r0.to.2 / r0.to.1
+    if (r0==0 && r1==0)
+        r0.to.1 = 1
+    else
+        r0.to.1 = r1/r0
+    
+    if (r0==0 && r2==0)
+        r0.to.2 = 1
+    else
+        r0.to.2 = r2/r0
+    
+    if (r1==0 && r2==0)
+        r1.to.2 = 1
+    else
+        r1.to.2 = r0.to.2 / r0.to.1
 
     if (r0.to.1 == 1 && r1.to.2 == 1)
     {

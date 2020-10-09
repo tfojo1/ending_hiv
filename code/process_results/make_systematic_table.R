@@ -1,21 +1,25 @@
 
 IMAGE.DIR = '../Manuscripts/manuscript_1/images/'
 
+
 if (1==2)
 {
-    df = make.systematic.table('mcmc_runs/test_simset_interventions/')
-    write.csv(df, file='results/table2_test.csv')
+#    df = make.systematic.table('mcmc_runs/visualization_simsets//')
+#    write.csv(df, file='results/table2_test.csv')
     
-    df = read.csv('results/table2_test.csv')
-    df.full = df
-    df = df[!apply(df,1,function(x){any(x=='')}),]
+#    df = read.csv('results/table2_test.csv')
+#    df.full = df
+#    df = df[!apply(df,1,function(x){any(x=='')}),]
     
-    est = get.estimates.and.intervals('mcmc_runs/test_simset_interventions/', 
+    est = get.estimates.and.intervals('mcmc_runs/visualization_simsets/', 
                                     msas=get.hiv.burden()$CBSA,
                                     interventions=INTERVENTION.SET)
     save(est, file='results/quick_estimated.Rdata')
     load('results/quick_estimated.Rdata')
     
+    write.systematic.table(est, file='results/table3_raw.xlsx')
+    
+    #The old way with a plot
     plot.systematic.table(est)
     
     png(file.path(IMAGE.DIR, 'Figure 3.png'), pointsize=10, width=3.92, height=5.01, res=300, units='in')
@@ -26,30 +30,7 @@ if (1==2)
         #theme(axis.title=element_blank(), axis.ticks = element_blank(), axis.text = element_blank(), legend.position = 'none' )
     dev.off()
     
-    
-    write.systematic.table(est, file='results/table3_raw.xlsx')
-    
-    #testing write table
-    write.xlsx(est$estimates, file='results/test.xlsx')
-    
-    wb <- createWorkbook()
-    sheet <- createSheet(wb, "Sheet1")
-    row1  <- createRow(sheet, rowIndex=1)    
-    cell.1 <- createCell(row1, colIndex=1)[[1,1]]     
-    setCellValue(cell.1, "Hello R!")
-    cellStyle1 <- CellStyle(wb) +
-        Fill(backgroundColor="orange", foregroundColor="orange",
-             pattern="SOLID_FOREGROUND") 
-    setCellStyle(cell.1, cellStyle1) 
-    row3  <- createRow(sheet, rowIndex=3)
-    cell.3 <- createCell(row3, colIndex=2)[[1,1]]     
-    setCellValue(cell.3, "Hello R 3!")
-    cellStyle3 <- CellStyle(wb) +
-        Fill(backgroundColor="orange", foregroundColor="blue",
-             pattern="SOLID_FOREGROUND") 
-    setCellStyle(cell.3, cellStyle3) 
-    # Then save the workbook 
-    saveWorkbook(wb, "results/test_color.xlsx")
+
     
 }
 
@@ -57,8 +38,9 @@ library(scales)
 library(cowplot)
 library(xlsx)
 
+source('code/source_code.R')
 source('code/targets/parse_targets.R')
-source('code/systematic_calibration/systematic_interventions.R')
+source('code/interventions/systematic_interventions.R')
 source('code/interventions/synthesize_interventions.R')
 
 make.systematic.table <- function(dir,
@@ -79,9 +61,9 @@ make.systematic.table <- function(dir,
         int = interventions[[i]]
         if (verbose)
             print(paste0("Reading ", length(msas), " locations for intervention ", i, " of ", length(interventions),
-                         ": ", get.intervention.filename(int)))
+                         ": ", get.intervention.name(int)))
         sapply(as.character(msas), function(msa){
-            filename = file.path(dir, msa, paste0(get.intervention.filename(int), '.Rdata'))
+            filename = file.path(dir, msa, get.simset.filename(location=msa, intervention=int))
             if (file.exists(filename))
             {
                 if (verbose)
@@ -122,7 +104,7 @@ get.estimates.and.intervals <- function(dir,
             print(paste0("Reading ", length(msas), " locations for intervention ", i, " of ", length(interventions),
                          ": ", get.intervention.filename(int)))
         sapply(as.character(msas), function(msa){
-            filename = file.path(dir, msa, paste0(get.intervention.filename(int), '.Rdata'))
+            filename = file.path(dir, msa, get.simset.filename(location=msa, intervention=int))
             if (file.exists(filename))
             {
                 if (verbose)
@@ -233,8 +215,8 @@ write.systematic.table <- function(estimates,
         }
     })
     
-    dimnames(labels)[[1]] = msa.names(as.character(attr(estimates, 'location')))
-    dimnames(labels)[[2]] = get.intervention.filename(interventions)
+    dimnames(labels)[[1]] = unlist(msa.names(as.character(attr(estimates, 'location'))))
+    dimnames(labels)[[2]] = sapply(interventions, get.intervention.name)
     
     write.shaded.xlsx(x=labels,
                       colors=colors,

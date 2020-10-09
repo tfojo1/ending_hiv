@@ -11,8 +11,8 @@ source('code/targets/target_msas.R')
 
 set.seed(5556)
  
-msa=ATLANTA.MSA
-save.suffix = 't.25.25.dec.thresh_dx.1'
+msa=CLEVELAND.MSA
+save.suffix = ''
 
 print('----------------------------------------------------')
 print(paste0("Setting up to run initial MCMC on ", msa.names(msa)))
@@ -23,3 +23,26 @@ print('----------------------------------------------------')
 mcmc = setup.initial.mcmc.for.msa(msa, run=T, save.suffix = save.suffix, 
                                   target.acceptance.rate = 0.100, derive.step.size.from.prior.mcmc = T)
 
+if (1==2)
+{
+    mcmc = run.mcmc.for.msa.cache('mcmc_runs/systematic_caches/27260_1x20K_2020-10-04/')
+}
+
+
+#to make the visualization simset
+if (1==2)
+{
+    source('code/interventions/systematic_interventions.R')
+    simset = extract.simset(mcmc, additional.burn=520, additional.thin=6)
+    simset@n.sim
+    msa.names(attr(simset@simulations[[1]], 'location'))
+    run.systematic.interventions(simset, 
+                                 dst.dir=file.path('mcmc_runs/visualization_simsets', attr(simset@simulations[[1]], 'location')),
+                                 overwrite = T)
+    
+    #to rerun the test code
+    source('code/source_code.R')
+    source('code/systematic_calibration/systematic_calibration.R')
+    source('code/targets/target_msas.R')
+    load('mcmc_runs/systematic_initial/35620_1x20K_2020-10-01.Rdata')
+}

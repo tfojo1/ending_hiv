@@ -1,36 +1,36 @@
 "","V1","V2","V3","V4","V5","V6","V7","V8","V9","V10","V11","V12","V13","V14"
-"35620",New York-Newark-Jersey City, NY-NJ-PA,25%,60%,65%,63%,67%,75%,81%,84%,87%,81%,88%,90%,94%
-"35620",New York-Newark-Jersey City, NY-NJ-PA,[16-37],[55-66],[60-70],[58-69],[62-72],[73-78],[79-83],[82-86],[85-89],[80-83],[87-90],[89-91],[93-94]
-"33100",Miami-Fort Lauderdale-Pompano Beach, FL,23%,56%,62%,59%,64%,73%,78%,80%,83%,84%,91%,92%,95%
-"33100",Miami-Fort Lauderdale-Pompano Beach, FL,[14-33],[48-62],[53-67],[51-65],[55-69],[66-77],[72-82],[74-84],[77-87],[82-86],[89-92],[91-93],[95-96]
-"31080",Los Angeles-Long Beach-Anaheim, CA,5%,57%,64%,59%,65%,85%,90%,92%,95%,86%,92%,93%,96%
-"31080",Los Angeles-Long Beach-Anaheim, CA,[-3-17],[53-63],[59-70],[55-66],[61-71],[83-86],[89-91],[91-93],[94-95],[84-87],[91-92],[92-94],[95-96]
-"12060",Atlanta-Sandy Springs-Alpharetta, GA,8%,61%,67%,64%,69%,82%,86%,88%,90%,89%,93%,94%,97%
-"12060",Atlanta-Sandy Springs-Alpharetta, GA,[2-18],[54-68],[60-73],[57-71],[62-75],[77-85],[81-89],[83-91],[85-93],[87-90],[92-94],[94-95],[96-97]
-"26420",Houston-The Woodlands-Sugar Land, TX,25%,68%,73%,71%,75%,84%,88%,90%,92%,88%,92%,94%,96%
-"26420",Houston-The Woodlands-Sugar Land, TX,[11-40],[64-74],[69-78],[67-77],[70-80],[81-87],[85-91],[88-92],[90-94],[85-90],[91-94],[93-95],[95-97]
-"19100",Dallas-Fort Worth-Arlington, TX,5%,61%,67%,64%,69%,85%,89%,91%,93%,88%,93%,94%,96%
-"19100",Dallas-Fort Worth-Arlington, TX,[-6-18],[56-67],[61-72],[59-70],[63-74],[82-87],[87-91],[89-93],[91-95],[87-89],[91-94],[93-95],[96-97]
-"16980",Chicago-Naperville-Elgin, IL-IN-WI,-12%,55%,61%,57%,63%,84%,88%,90%,92%,90%,94%,95%,97%
-"16980",Chicago-Naperville-Elgin, IL-IN-WI,[-24--4],[47-60],[53-66],[49-62],[56-68],[80-86],[84-90],[86-92],[87-94],[88-91],[93-94],[94-95],[96-97]
-"47900",Washington-Arlington-Alexandria, DC-VA-MD-WV,30%,65%,69%,68%,71%,76%,81%,83%,85%,85%,91%,92%,95%
-"47900",Washington-Arlington-Alexandria, DC-VA-MD-WV,[12-49],[58-71],[62-75],[61-74],[64-76],[68-81],[72-85],[74-87],[77-90],[82-88],[89-93],[90-94],[94-96]
-"37980",Philadelphia-Camden-Wilmington, PA-NJ-DE-MD,28%,56%,59%,58%,61%,74%,78%,80%,82%,85%,90%,93%,95%
-"37980",Philadelphia-Camden-Wilmington, PA-NJ-DE-MD,[18-44],[49-63],[52-67],[51-65],[54-69],[67-80],[69-84],[72-86],[73-88],[84-88],[89-92],[92-94],[95-96]
-"36740",Orlando-Kissimmee-Sanford, FL,6%,49%,54%,52%,56%,73%,77%,79%,81%,88%,92%,94%,96%
-"36740",Orlando-Kissimmee-Sanford, FL,[-7-18],[37-59],[43-65],[41-62],[45-67],[58-82],[62-86],[65-88],[67-90],[84-90],[91-94],[92-95],[95-97]
-"41860",San Francisco-Oakland-Berkeley, CA,13%,50%,55%,52%,56%,81%,87%,89%,92%,84%,90%,92%,95%
-"41860",San Francisco-Oakland-Berkeley, CA,[-9-29],[36-64],[41-69],[38-66],[43-70],[79-84],[85-90],[88-91],[90-94],[81-87],[88-92],[90-93],[94-96]
-"38060",Phoenix-Mesa-Chandler, AZ,21%,58%,64%,60%,65%,86%,90%,92%,94%,88%,93%,94%,96%
-"38060",Phoenix-Mesa-Chandler, AZ,[-6-46],[41-69],[49-74],[43-71],[51-75],[84-88],[88-92],[90-93],[93-96],[86-90],[91-94],[93-95],[95-97]
-"45300",Tampa-St. Petersburg-Clearwater, FL,,,,,,,,,,,,,
-"45300",Tampa-St. Petersburg-Clearwater, FL,,,,,,,,,,,,,
+"35620",New York-Newark-Jersey City, NY-NJ-PA,16%,45%,,,,,,,,,,,
+"35620",New York-Newark-Jersey City, NY-NJ-PA,[1-35],[41-52],,,,,,,,,,,
+"31080",Los Angeles-Long Beach-Anaheim, CA,6%,42%,,,,,,,,,,,
+"31080",Los Angeles-Long Beach-Anaheim, CA,[0-15],[39-46],,,,,,,,,,,
+"33100",Miami-Fort Lauderdale-Pompano Beach, FL,16%,,,,,,,,,,,,
+"33100",Miami-Fort Lauderdale-Pompano Beach, FL,[7-25],,,,,,,,,,,,
+"12060",Atlanta-Sandy Springs-Alpharetta, GA,-1%,,,,,,,,,,,,
+"12060",Atlanta-Sandy Springs-Alpharetta, GA,[-8-9],,,,,,,,,,,,
+"26420",Houston-The Woodlands-Sugar Land, TX,,,,,,,,,,,,,
+"26420",Houston-The Woodlands-Sugar Land, TX,,,,,,,,,,,,,
+"19100",Dallas-Fort Worth-Arlington, TX,,,,,,,,,,,,,
+"19100",Dallas-Fort Worth-Arlington, TX,,,,,,,,,,,,,
+"16980",Chicago-Naperville-Elgin, IL-IN-WI,,,,,,,,,,,,,
+"16980",Chicago-Naperville-Elgin, IL-IN-WI,,,,,,,,,,,,,
+"47900",Washington-Arlington-Alexandria, DC-VA-MD-WV,,,,,,,,,,,,,
+"47900",Washington-Arlington-Alexandria, DC-VA-MD-WV,,,,,,,,,,,,,
+"37980",Philadelphia-Camden-Wilmington, PA-NJ-DE-MD,,,,,,,,,,,,,
+"37980",Philadelphia-Camden-Wilmington, PA-NJ-DE-MD,,,,,,,,,,,,,
+"36740",Orlando-Kissimmee-Sanford, FL,,,,,,,,,,,,,
+"36740",Orlando-Kissimmee-Sanford, FL,,,,,,,,,,,,,
+"41860",San Francisco-Oakland-Berkeley, CA,,,,,,,,,,,,,
+"41860",San Francisco-Oakland-Berkeley, CA,,,,,,,,,,,,,
+"38060",Phoenix-Mesa-Chandler, AZ,,,,,,,,,,,,,
+"38060",Phoenix-Mesa-Chandler, AZ,,,,,,,,,,,,,
 "40140",Riverside-San Bernardino-Ontario, CA,,,,,,,,,,,,,
 "40140",Riverside-San Bernardino-Ontario, CA,,,,,,,,,,,,,
+"45300",Tampa-St. Petersburg-Clearwater, FL,,,,,,,,,,,,,
+"45300",Tampa-St. Petersburg-Clearwater, FL,,,,,,,,,,,,,
 "19820",Detroit-Warren-Dearborn, MI,,,,,,,,,,,,,
 "19820",Detroit-Warren-Dearborn, MI,,,,,,,,,,,,,
-"12580",Baltimore-Columbia-Towson, MD,31%,56%,59%,59%,61%,71%,75%,78%,81%,83%,89%,92%,94%
-"12580",Baltimore-Columbia-Towson, MD,[19-47],[47-65],[50-68],[50-67],[52-70],[63-78],[66-82],[70-85],[72-88],[81-86],[87-91],[90-93],[93-95]
+"12580",Baltimore-Columbia-Towson, MD,,,,,,,,,,,,,
+"12580",Baltimore-Columbia-Towson, MD,,,,,,,,,,,,,
 "29820",Las Vegas-Henderson-Paradise, NV,,,,,,,,,,,,,
 "29820",Las Vegas-Henderson-Paradise, NV,,,,,,,,,,,,,
 "14460",Boston-Cambridge-Newton, MA-NH,,,,,,,,,,,,,
@@ -59,7 +59,7 @@
 "18140",Columbus, OH,,,,,,,,,,,,,
 "12940",Baton Rouge, LA,,,,,,,,,,,,,
 "12940",Baton Rouge, LA,,,,,,,,,,,,,
-"17460",Cleveland-Elyria, OH,,,,,,,,,,,,,
-"17460",Cleveland-Elyria, OH,,,,,,,,,,,,,
 "40900",Sacramento-Roseville-Folsom, CA,,,,,,,,,,,,,
 "40900",Sacramento-Roseville-Folsom, CA,,,,,,,,,,,,,
+"17460",Cleveland-Elyria, OH,,,,,,,,,,,,,
+"17460",Cleveland-Elyria, OH,,,,,,,,,,,,,

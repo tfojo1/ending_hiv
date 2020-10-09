@@ -20,11 +20,13 @@ create.msa.likelihood <- function(msa,
                                   STRATIFIED.DX.WEIGHT=1/128/4,
                                   use.stratified.dx = F,
                                   SUPPRESSION.WEIGHT = 1/4,
-                                  TOTAL.TESTING.WEIGHT = 1/4,
+                                  TOTAL.TESTING.WEIGHT = 1/8,
                                   STRATIFIED.TESTING.WEIGHT = 1/4,
                                   TOTAL.TESTING.LOG.SD.EVER.TO.12MO = log(2),
                                   TOTAL.TESTING.RHO = 0.5,
+                                  TOTAL.TESTING.ERROR.MULT=2,
                                   PROB.TESTING.DECREASING = 0.05,
+                                  TESTING.DECREASE.THRESHOLD = -0.1,
                                   
                                   use.prev.to.new.cv.ratio=T,#F,
                                   FOCUS.WEIGHT=1,#4,
@@ -244,18 +246,17 @@ create.msa.likelihood <- function(msa,
                                                    total.sd.multiplier.if.state = DX.SD.MULTIPLIER.IF.STATE,
                                                    use.stratified.ors = use.stratified.dx)
     
-    if (is.na(TOTAL.TESTING.WEIGHT) && is.na(STRATIFIED.TESTING.WEIGHT))
-        testing.lik = function(...){0}
-    else
-        testing.lik = create.testing.likelihood(location=msa,
-                                                continuum.manager=ALL.DATA.MANAGERS$continuum,
-                                                census.totals=ALL.DATA.MANAGERS$census.totals,
-                                                sd.inflation.total = 1/sqrt(TOTAL.TESTING.WEIGHT)/sqrt(EVERYTHING.WEIGHT),
-                                                sd.inflation.stratified = 1/sqrt(STRATIFIED.TESTING.WEIGHT)/sqrt(EVERYTHING.WEIGHT),
-                                                log.sd.ever.to.12mo = TOTAL.TESTING.LOG.SD.EVER.TO.12MO,
-                                                rho.total = TOTAL.TESTING.RHO,
-                                                sd.inflation.if.location.missing = 3,
-                                                probability.decreasing.slope = PROB.TESTING.DECREASING)
+    testing.lik = create.testing.likelihood(location=msa,
+                                            continuum.manager=ALL.DATA.MANAGERS$continuum,
+                                            census.totals=ALL.DATA.MANAGERS$census.totals,
+                                            sd.inflation.total = 1/sqrt(TOTAL.TESTING.WEIGHT)/sqrt(EVERYTHING.WEIGHT),
+                                            sd.inflation.stratified = 1/sqrt(STRATIFIED.TESTING.WEIGHT)/sqrt(EVERYTHING.WEIGHT),
+                                            log.sd.ever.to.12mo = TOTAL.TESTING.LOG.SD.EVER.TO.12MO,
+                                            rho.total = TOTAL.TESTING.RHO,
+                                            sd.inflation.if.location.missing = 3,
+                                            probability.decreasing.slope = PROB.TESTING.DECREASING,
+                                            decreasing.slope.threshold = TESTING.DECREASE.THRESHOLD,
+                                            sd.error.total.mult = TOTAL.TESTING.ERROR.MULT)
     
     idu.lik = create.idu.likelihood(idu.manager=ALL.DATA.MANAGERS$idu,
                                     census=ALL.DATA.MANAGERS$census.full,
@@ -705,6 +706,10 @@ create.run.simulation.function <- function(msa,
         tryCatch({
             components = get.components.for.calibrated.parameters(parameters, init.components)
             sim = run.jheem.from.components(components, max.run.time.seconds = max.sim.time)
+            
+            if (sum(sapply(sim, function(x){sum(is.na(x))}))>0)
+                stop("NA values in simulation")
+            
             sim
         },
         error = function(e){

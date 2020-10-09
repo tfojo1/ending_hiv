@@ -85,7 +85,7 @@ get.census.totals <- function(census.totals, location, years=census.totals$years
             census.totals$data[nearest.year, location]
         }
     }))
-
+    
     if (length(location)==1)
     {
         if (!flatten.single.dim.array)
@@ -94,6 +94,8 @@ get.census.totals <- function(census.totals, location, years=census.totals$years
             dim(rv) = c(year=length(years), location=1)
             dimnames(rv) = dim.names
         }
+        else
+            rv = rv[1,]
     }
     else
     {

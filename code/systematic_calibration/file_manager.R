@@ -48,16 +48,19 @@ get.interventions.from.filenames <- function(filenames,
 }
 
 VERSION = '1.0'
-get.simset.filename <- function(simset)
+get.simset.filename <- function(simset,
+                                location=attr(simset@simulations[[1]], 'location'),
+                                intervention=attr(simset, 'intervention'),
+                                intervention.code=NULL,
+                                version=VERSION)
 {
-    version = VERSION
-    location = attr(simset@simulations[[1]], 'location')
-    
-    intervention = attr(simset, 'intervention')
-    if (is.null(intervention))
-        intervention.code = 'baseline'
-    else
-        intervention.code = get.intervention.code(intervention)
+    if (is.null(intervention.code))
+    {
+        if (is.null(intervention))
+            intervention.code = 'baseline'
+        else
+            intervention.code = get.intervention.code(intervention)
+    }
     
     if (is.null(intervention.code))
         stop("The given intervention has not been registered with the intervention manager")
@@ -82,15 +85,15 @@ save.simset <- function(simset,
     save(simset, file=file.path(dir, filename))
 }
 
-make.and.save.baseline.and.seed <- function(simset,
-                                      dir='mcmc_runs/visualization_simsets',
-                                      keep.years=2018:2020)
+make.and.save.compressed.baseline.and.seed <- function(simset,
+                                                       dir='mcmc_runs/visualization_simsets',
+                                                       seed.keep.to.year=2020)
 {
     save.simset(simset, dir=dir, compress=T)
     
     simset = prepare.simset.for.interventions(simset)
     run.from.year = attr(simset, 'run.from.year')
-    simset = subset.simset.by.year(simset, (run.from.year-1):2020)
+    simset = subset.simset.by.year(simset, (run.from.year-1):seed.keep.to.year)
     
     filename = make.filenames.from.elements(version=VERSION,
                                            location=attr(simset@simulations[[1]], 'location'),

@@ -266,7 +266,7 @@ create.likelihood.function <- function(data.type=c('new','prevalence','mortality
 ##---------------------------##
 
 create.suppressed.likelihood <- function(location,
-                                         years=2010:2018,
+                                         years=2008:2018,
                                          surv=msa.surveillance,
                                          numerator.year.to.year.chunk.correlation=0,
                                          numerator.year.to.year.off.correlation=0,
@@ -302,17 +302,8 @@ create.suppressed.likelihood <- function(location,
             numerator.sd = numerator.sd.inflation.if.backup * numerator.sd
         
         surv.for.likelihood.elements = backup.surv
-        states = states.for.msa(location)
-        if (length(states)==0)
-            stop(paste0("No data for location, '", location, "', and it is not an msa within a state"))
-        else if (length(states)>1)
-        {
-            if (location=='14460')
-                states = 'MA'
-            else
-                stop(paste0("More than one state for location '", location, "' ('", msa.names(location), "')"))
-        }
-        location.for.likelihood.elements = states
+        
+        location.for.likelihood.elements = get.states.for.msa.suppression(location)
     }
     else
     {
@@ -458,13 +449,31 @@ create.suppressed.likelihood <- function(location,
                 lik.binary = prod(probability.decreasing.slope ^ is.decreasing * (1-probability.decreasing.slope)^(1-is.decreasing))
         }
         
-        
         #put them together
         if (log)
             lik.continuous + lik.binary
         else
             lik.continuous * lik.binary
     }
+}
+
+get.states.for.msa.suppression <- function(msa)
+{
+    states = states.for.msa(msa)
+    
+    if (length(states)==0)
+        stop(paste0("No data for location, '", msa, "', and it is not an msa within a state"))
+    else if (length(states)>1)
+    {
+        if (msa=='14460') #Boston
+            states = 'MA'
+        else if (msa=='16740') #Charlotte
+            states = 'NC'
+        else
+            stop(paste0("More than one state for msa '", msa, "' ('", msa.names(msa), "') - cannot supply suppression data"))
+    }
+    
+    states
 }
 
 ##----------------------------##
@@ -841,6 +850,7 @@ create.testing.likelihood <- function(location,
                                       census.totals,
                                       years=NULL,
                                       sd.inflation.total=1,
+                                      sd.error.total.mult=2,
                                       sd.inflation.stratified=1,
                                       sd.inflation.if.location.missing=3,
                                       rho.total=0.5,
@@ -863,7 +873,7 @@ create.testing.likelihood <- function(location,
         sd.mult = 1
     
     sds = sqrt(total.tested.by.location$ever.tested * (1-total.tested.by.location$ever.tested) / 
-                   total.tested.by.location$sample.size) * sd.mult# * sd.inflation.total
+                   total.tested.by.location$sample.size) * sd.mult * sd.error.total.mult
     
     #subset out the years
     if (is.null(years))
@@ -1448,7 +1458,13 @@ create.joint.likelihood.function <- function(...)
                          paste0(names(sub.likelihoods), '=', sub.values, collapse = ', ')))
 
         if (any(is.na(sub.values)))
-            browser()
+        {
+           # browser()
+            if (log)
+                return (-Inf)
+            else
+                return (0)
+        }
         
         if (log)
             sum(sub.values)

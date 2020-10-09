@@ -163,6 +163,7 @@ RESERVED.INTERVENTION.CODES = c('baseline','seed')
 register.intervention <- function(int, 
                                   code,
                                   name,
+                                  short.name=name,
                                   manager=INTERVENTION.MANAGER.1.0)
 {
     if (!is(int, 'intervention'))
@@ -204,10 +205,14 @@ register.intervention <- function(int,
     manager$intervention = c(manager$intervention, list(int))
     names(manager$intervention) = code
     
-    manager$name = c(manager$name, name)
-    names(manager$name) = code
-    
     manager$code = c(manager$code, code)
+    
+    manager$name = c(manager$name, name)
+    names(manager$name) = manager$code
+    
+    manager$short.name = c(manager$short.name, short.name)
+    names(manager$short.name) = manager$code
+    
     
     manager
 }
@@ -239,6 +244,20 @@ get.intervention.name <- function(int, manager=INTERVENTION.MANAGER.1.0)
         NULL
 }
 
+get.intervention.short.name <- function(int, manager=INTERVENTION.MANAGER.1.0)
+{   
+    if (is.null(int))
+        return ("No Intervention")
+    
+    mask = sapply(manager$intervention, function(comp){
+        interventions.equal(int, comp)
+    })
+    if (any(mask))
+        as.character(manager$short.name[mask])
+    else
+        NULL
+}
+
 intervention.from.code <- function(code, manager=INTERVENTION.MANAGER.1.0)
 {
     mask = manager$code==code
@@ -257,6 +276,15 @@ intervention.code.to.name <- function(code, manager=INTERVENTION.MANAGER.1.0)
         NULL
 }
 
+intervention.code.to.short.name <- function(code, manager=INTERVENTION.MANAGER.1.0)
+{
+    mask = manager$code==code
+    if (any(mask))
+        as.character(manager$short.name[mask])
+    else
+        NULL
+}
+
 intervention.name.to.code <- function(name, manager=INTERVENTION.MANAGER.1.0)
 {
     mask = manager$name==name
@@ -264,6 +292,29 @@ intervention.name.to.code <- function(name, manager=INTERVENTION.MANAGER.1.0)
         as.character(manager$code[[ (1:length(manager$code))[mask] ]])
     else
         NULL
+}
+
+intervention.short.name.to.code <- function(name, manager=INTERVENTION.MANAGER.1.0)
+{
+    mask = manager$short.name==name
+    if (any(mask))
+        as.character(manager$code[[ (1:length(manager$code))[mask] ]])
+    else
+        NULL
+}
+
+#returns an indexing such that, if applied to the list of interventions,
+#interventions appear in the order they do in manager
+order.interventions <- function(interventions,
+                                manager=INTERVENTION.MANAGER.1.0,
+                                decreasing=F)
+{
+    codes = sapply(interventions, get.intervention.code)
+    all.values = 1:length(manager$code)
+    names(all.values) = manager$code
+    
+    values = all.values[codes]
+    order(values, decreasing = decreasing)
 }
 
 ##------------------------------------##

@@ -666,9 +666,9 @@ robust.match.state.name <- function(state.names, return.na.if.no.match = F,
 ##-- READ IN DEFAULT MAPPINGS --##
 ##------------------------------##
 
-if (!exists('DEFAULT.LOCALE.MAPPING'))
-{
-    print("Reading in a default locale mapping")
-    DEFAULT.LOCALE.MAPPING = create.locale.mappings()
-}
+#if (!exists('DEFAULT.LOCALE.MAPPING'))
+#{
+#    print("Reading in a default locale mapping")
+#    DEFAULT.LOCALE.MAPPING = create.locale.mappings()
+#}
 

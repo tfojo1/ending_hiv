@@ -4,8 +4,7 @@ if (1==2)
 }
 
 source('code/source_code.R')
-mcmc = assemble.mcmc.from.cache('mcmc_runs/systematic_caches/12060_1x20K_t.25.25_dx.4_2020-09-28/',T)
-mcmc = assemble.mcmc.from.cache('mcmc_runs/systematic_caches/12060_1x20K_t.25.25_dx.2_2020-09-28/',T)
+#mcmc = assemble.mcmc.from.cache('mcmc_runs/systematic_caches/35620_1x20K_2020-10-02/',T)
 
 acceptance.plot(mcmc, window.iterations = 200) + geom_hline(yintercept = c(0.238,0.1))
 simset = extract.simset(mcmc, additional.burn=mcmc@n.iter/2, additional.thin=2^(as.numeric(mcmc@n.iter>100)+as.numeric(mcmc@n.iter>1000)))
@@ -14,11 +13,15 @@ plot.calibration.sex.risk(simset)
 plot.calibration.sex.age(simset)
 
 plot.calibration.total(simset, data.types=c('diagnosed','testing'))
+plot.calibration.risk(simset, data.types='testing')
+plot.calibration.race(simset, data.types='suppression')
+
 #plot.calibration.sex.age(simset, sex='female')
 plot.calibration.race.risk(simset)
+plot.calibration.total(simset)
+
 #plot.calibration(simset, facet.by=c('race'), risk='msm')
 plot.calibration.risk(simset)
-plot.calibration.total(simset)
 plot.calibration.risk.race(simset)
 plot.calibration.race(simset)
 plot.calibration.age(simset)

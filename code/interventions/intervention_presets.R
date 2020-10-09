@@ -1,5 +1,5 @@
 
-source('code/setup/default_jheem_settings.R')
+#source('code/setup/default_jheem_settings.R')
 
 ##------------------------##
 ##-- TARGET POPULATIONS --##

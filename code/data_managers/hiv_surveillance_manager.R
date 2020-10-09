@@ -1,6 +1,4 @@
 
-source('code/targets/target_msas.R')
-
 ##-----------------##
 ##-- THE GETTERS --##
 ##-----------------##
@@ -1968,6 +1966,7 @@ HIV.ATLAS.NUMERIC.COLUMNS = c('Cases',
                               'Population')
 read.hiv.atlas.file <- function(file)
 {
+    print(paste0("Reading HIV Atlas File: ", file))
     df = read.csv(file, stringsAsFactors = F)
     cols = intersect(names(df), HIV.ATLAS.NUMERIC.COLUMNS)
 
