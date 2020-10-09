@@ -544,13 +544,21 @@ do.plot.simulations <- function(
         theme(panel.grid=element_blank(), panel.background=element_blank(),
               axis.line.x.bottom = element_line(color = 'black'),
               axis.line.y.left = element_line(color = 'black'),
-              legend.position = 'bottom', legend.direction = 'vertical')
+              legend.position = 'bottom', legend.direction = 'vertical') +
+            ylab(NULL)
     
     #------------#
     #-- RETURN --#
     #------------#
     
     plot
+}
+
+do.render.plot <- function(plot)
+{
+  renderPlotly({
+    ggplotly(plot)
+  })
 }
 
 get.data.type.level.and.change.dist <- function(simset,

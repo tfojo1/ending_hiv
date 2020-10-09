@@ -90,12 +90,18 @@ server.routes.runModel.get <- function(
     list(  # returns-->list
     # Button & Plot ####
     # #plot #button
+    
+    #This code sets the position and style for the progress bar when loading simulations
+    tags$head(tags$style(".shiny-notification {position: fixed; top: 10% ;left: 25%; color: black;font-size: 20px;font-style: normal;")),
+#    tags$head(tags$style(".shiny-progress {top: 10% !important;left: 25% !important;margin-top: -100px !important;margin-left: -250px !important; color: blue;font-size: 20px;font-style: italic;}")),   
+
+
     'output'=fluidRow(
       column(
         width=page.width,
         box(
           width=NULL, 
-          title="Output",
+          title="Figure",
           status="primary", 
           solidHeader=TRUE,
           
@@ -105,7 +111,7 @@ server.routes.runModel.get <- function(
               width=page.width.half,
               actionButton(
                 "reset_main", 
-                "Run"))),
+                "Generate Figure"))),
           
           # #plot
           fluidRow(
@@ -114,7 +120,7 @@ server.routes.runModel.get <- function(
               plotlyOutput(
                 outputId="mainPlot",
                 height="auto",
-                width="auto",
+                width='100%',#"auto",
                 inline=T)  %>% withSpinner(color="#0dc5c1")))
           
         ))), 
@@ -138,7 +144,7 @@ server.routes.runModel.get <- function(
               width=page.width,
                 selectInput(
                   inputId="geographic-location", 
-                  label="Geographic location",
+                  label="Metropolitan Statistical Area (MSA)",
                   choices=invert.keyVals(get.location.options(
                     version=version)),
                   selected=get.location.options(
@@ -166,7 +172,7 @@ server.routes.runModel.get <- function(
         width=page.width,
         box(
           width=NULL, 
-          title="Interventions",
+          title="Potential Interventions",
           status="primary", 
           solidHeader=TRUE,
           
@@ -175,7 +181,7 @@ server.routes.runModel.get <- function(
               width=page.width,
               checkboxInput(
                 inputId='no_intervention_checkbox', 
-                label='Include "No intervention" in results', 
+                label='Display "No intervention"', 
                 value=TRUE,  
                 width='100%' )),
           ),  # </fluidRow>
@@ -185,7 +191,7 @@ server.routes.runModel.get <- function(
               width=page.width.half,
               selectInput(
                 inputId="intervention1", 
-                label="Intervention 1",
+                label="First Intervention to Display",
                 choices=invert.keyVals(
                   get.interventions.simpleList(
                     version=version, 
@@ -202,7 +208,7 @@ server.routes.runModel.get <- function(
               width=page.width.half,
               selectInput(
                 inputId="intervention2", 
-                label="Intervention 2",
+                label="Second Intervention to Display",
                 choices=invert.keyVals(
                   get.interventions.simpleList(
                     version=version, 
@@ -223,7 +229,7 @@ server.routes.runModel.get <- function(
       column(
         width=page.width,
         box(
-          width=NULL, title="Epidemiological dimensions",
+          width=NULL, title="Epidemiological Indicators",
           status="primary", solidHeader=TRUE,
           
           checkboxGroupInput(
@@ -255,7 +261,7 @@ server.routes.runModel.get <- function(
         width=page.width,
         box(
           width=NULL, 
-          title="Aggregation",
+          title="Plot Options (how to slice the projections)",
           status="primary", 
           solidHeader=TRUE,
           
@@ -263,7 +269,7 @@ server.routes.runModel.get <- function(
             width=page.width,
             selectInput(
               inputId='aggregation-of-simulations-ran', 
-              label='Aggregation of simulations ran', 
+              label='What to Plot', 
               choices=invert.keyVals(get.plot.format.options(
                 version=version,
                 location=input[['geographic-location']])),
@@ -277,7 +283,7 @@ server.routes.runModel.get <- function(
             width=page.width.half,
             checkboxGroupInput(
               inputId='facet', 
-              label='Multi-panel dis-aggregation', 
+              label='Make Separate Panels for Each:', 
               choiceNames=unname(get.facet.by.options(
                 version=version,
                 location=input[['geographic-location']])),
@@ -290,7 +296,7 @@ server.routes.runModel.get <- function(
             width=page.width.half,
             checkboxGroupInput(
               inputId='split', 
-              label='Multi-line dis-aggregation', 
+              label='Within a Panel, Plot Separate Lines for Each:', 
               choiceNames=unname(get.split.by.options(
                 version=version,
                 location=input[['geographic-location']])),
@@ -316,7 +322,7 @@ server.routes.runModel.get <- function(
       column(
         width=page.width,
         box(
-          title="Demographic dimensions",
+          title="Demographic Subgroups",
           status="primary",
           width=NULL, 
           solidHeader=TRUE,

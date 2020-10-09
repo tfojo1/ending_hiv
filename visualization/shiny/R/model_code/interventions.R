@@ -303,7 +303,19 @@ intervention.short.name.to.code <- function(name, manager=INTERVENTION.MANAGER.1
         NULL
 }
 
-
+#returns an indexing such that, if applied to the list of interventions,
+#interventions appear in the order they do in manager
+order.interventions <- function(interventions,
+                                manager=INTERVENTION.MANAGER.1.0,
+                                decreasing=F)
+{
+    codes = sapply(interventions, get.intervention.code)
+    all.values = 1:length(manager$code)
+    names(all.values) = manager$code
+    
+    values = all.values[codes]
+    order(values, decreasing = decreasing)
+}
 
 ##------------------------------------##
 ##-- PROCESS AN INTERVENTION OBJECT --##

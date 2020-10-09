@@ -21,15 +21,15 @@ CACHE = diskCache(max_size = 20e6)
 # Functional components
 plotAndCache <- function(input, cache) {
   version = names(get.version.options())[1]
-
+  
   # Pull Intervention Names from Input
   if (input[['no_intervention_checkbox']])
     intervention.names = get.intervention.name(NO.INTERVENTION)
   else
     intervention.names = character()
   intervention.names = c(intervention.names,
-                    input[['intervention1']],
-                    input[['intervention2']])
+                         input[['intervention1']],
+                         input[['intervention2']])
   intervention.names = intervention.names[intervention.names != 'none']
   
   
@@ -39,37 +39,57 @@ plotAndCache <- function(input, cache) {
     location=input[['geographic-location']],
     intervention.names=intervention.names)
   
-  # Pre-fetch them simsets
-  cache = update.sims.cache(
-    filenames=filenames,
-    cache=cache)
+  filenames = filenames[!is.sim.cached(filenames, cache=cache)]
   
-  # Make the plot
-  plot.results = plot.simulations(
-    cache=cache,
-    version=version,
-    location=input[['geographic-location']],
-    intervention.names=intervention.names,
-    # years=input[['years']][1]:input[['years']][2],
-    years=get.year.options(
-      version,
-      get.location.options(version)[1]),
-    data.types=input[['epidemiological-indicators']],
-    facet.by=input[['facet']],
-    split.by=input[['split']],
-    dimension.subsets=list(  # TODO
-      'age'=input[['age-groups']],
-      'race'=input[['racial-groups']],
-      'sex'=input[['sex']],  # aka gender
-      'risk'=input[['risk-groups']]),
-    plot.format=input[['aggregation-of-simulations-ran']] )
-  p = plot.results$plot
+  # Pre-fetch them simsets
+  if (length(filenames)>0)
+  {
+    if (length(filenames)==1)
+      msg = "Loading 1 Simulation File from Remote Server:"
+    else
+      msg = paste0("Loading ", length(filenames), " Simulations Files from Remote Server:")
+    withProgress(
+      message=msg, min=0, max=length(filenames), value=0,
+      {
+        for (i in 1:length(filenames))
+        {
+          setProgress((i-1),
+                      detail = paste("Loading file ", i, " of ", length(filenames)))
+          filename = filenames[i]
+          cache = update.sims.cache(
+            filenames=filename,
+            cache=cache)
+          
+        }
+        setProgress(length(filenames), detail='Done')
+    })
+  }
+  
+    # Make the plot
+    plot.results = plot.simulations(
+      cache=cache,
+      version=version,
+      location=input[['geographic-location']],
+      intervention.names=intervention.names,
+      # years=input[['years']][1]:input[['years']][2],
+      years=get.year.options(
+        version,
+        get.location.options(version)[1]),
+      data.types=input[['epidemiological-indicators']],
+      facet.by=input[['facet']],
+      split.by=input[['split']],
+      dimension.subsets=list(  # TODO
+        'age'=input[['age-groups']],
+        'race'=input[['racial-groups']],
+        'sex'=input[['sex']],  # aka gender
+        'risk'=input[['risk-groups']]),
+      plot.format=input[['aggregation-of-simulations-ran']] )
+    p = plot.results$plot
+
   
   list(
     'cache'=cache,
-    'plot'=renderPlotly({
-      ggplotly(p)
-    }) )
+    'plot'= do.render.plot(p) )
 }
 
 # Server

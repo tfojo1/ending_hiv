@@ -104,6 +104,19 @@ simsetFilenameToCacheKey <- function(filename) {
   filename
 }
 
+is.sim.cached <- function(filenames,
+                          cache)
+{
+    filename.keys = simsetFilenameToCacheKey(filenames)
+    cached.keys = cache$keys()
+    rv = sapply(filename.keys, function(fkey){
+        any(fkey == cached.keys)
+    })
+    names(rv) = filenames
+    rv
+}
+
+
 
 update.sims.cache <- function(
     filenames,  # char

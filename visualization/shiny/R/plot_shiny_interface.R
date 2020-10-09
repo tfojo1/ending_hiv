@@ -212,6 +212,7 @@ get.intervention.options <- function(version, location)
     sims.locations = get.locations.from.filenames(sims.names)
     sims.names = sims.names[sims.locations==location]
     interventions = get.interventions.from.filenames(sims.names)
+    interventions = interventions[!sapply(interventions, is.null.intervention)]
     
     rv = lapply(interventions, function(int){
         list(name=get.intervention.code(int),
@@ -219,6 +220,9 @@ get.intervention.options <- function(version, location)
               description='placeholder description\nsecond line\nthird line')
     })
     names(rv)=sapply(rv, function(elem){elem$label})
+    
+    o = order.interventions(interventions)
+    rv = rv[o]
   }
   else
     rv = list()
@@ -414,7 +418,6 @@ plot.simulations <- function(
     if (!is.null(dimension.subsets) && !is.null(dimension.subsets$age))
         dimension.subsets$age = age.mapping[dimension.subsets$age]
     
-    if (1==1)
     plot = do.plot.simulations(
       simsets,
       years=years,
@@ -438,11 +441,12 @@ plot.simulations <- function(
       simulation.line.size=simulation.line.size,
       truth.point.size=truth.point.size)
     
-    else
-    {
-        plot = qplot(1:10, 10:1)
-        print('putting a test plot for now')
-    }
+    plot = plot + theme(panel.border = element_rect(colour = "black", fill=NA, size=1),
+                        text = element_text(size=16),
+                        axis.text.x = element_text(angle = 45, vjust = 0.5, hjust=1),
+                        legend.position = 'bottom')
+    
+#    plot = plot + theme(legend.position = 'none')
     
   list(
     plot=plot,
