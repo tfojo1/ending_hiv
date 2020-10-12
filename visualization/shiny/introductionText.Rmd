@@ -1,11 +1,3 @@
-# Ending HIV Docs
+# About the Model
 
-### The User Interface
-**The "Parameters" Page**
-The **"Parameters"** page allows for manipulation the default values for model. parameters. You can change them to explore different scenarios.
-<!-- **Warning**: *this is an advanced feature. Entering certain values will cause the model to not run or give implausible results. Be careful before you change any values on this page.* -->
-
-
-**The "Run Model" Page**
-The **"Run Model"** page shows a single run of the model outcome using the parameters set on the "Parameters" page.
-<!-- You can change the model options to better fit your campus characteristics. In addition, you can modify the intervention you wish to explore. And, you can change which output is visualized in the graphs. After selecting the parameters set in each model, the model will automatically update the plots and summary data tables. -->
+My plan is to have a brief description of the science behind the model, as well as a citation and link to publications

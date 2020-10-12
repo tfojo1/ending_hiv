@@ -10,6 +10,17 @@ DATA.TYPE.NAMES = c(new='Reported Diagnoses',
                     testing.rate='Rate of HIV Testing',
                     incidence='Incidence')
 
+
+DATA.TYPE.AXIS.LABELS = c(
+    incidence='Incident Cases (n)',
+    new='Reported Cases (n)',
+    prevalence='Prevalent Cases (n)',
+    mortality='Deaths in PWH (n)',
+    suppression='Proportion Suppressed (%)',
+    diagnosed='Proportion Aware (%)',
+    testing.rate='Average Tests per Person per Year'
+)
+
 DIMENSION.NAMES = c(age='Age',
                     race='Race',
                     sex='Sex',
@@ -24,7 +35,8 @@ PRETTY.NAMES = list(age=c("13-24 years"="13-24",
                     risk=c(msm='MSM', idu='IDU', msm_idu='MSM+IDU', heterosexual='Heterosexual'),
                     sex=c(male='Male', female='Female'))
 
-TRUTH.SHAPES = c(21,23,22,24,25)
+TRUTH.SHAPES.GGPLOT = c(21,23,22,24,25)
+TRUTH.SHAPES.PLOTLY = c(0,2,1,5,6)
 
 RED = '#C75D4D'
 GREEN = '#458B00'
@@ -37,46 +49,56 @@ ORANGE = 'darkorange3'
 ##-- THE MAIN FUNCTION --##
 ##-----------------------##
 
+FRACTION.PROGRESS.SETUP.DF = 0.5
+
 #'@param color.by How to set colors. If color.by=='intervention', each intervention (and the baseline) gets a different color. If color.by=='split' each line denoted by split.by gets a different color
 #'@param colors Information on what colors to use. Can be either a vector of colors or a function that takes an argument (n) and generates n colors. 
 #'
 do.plot.simulations <- function(
-  simsets,
-  years,
-  data.types,
-  facet.by,
-  split.by,
-  dimension.subsets,
-  plot.format='individual.simulations',
-  show.truth=T,
-  
-  plot.interval.coverage=0.95,
-  summary.statistic='none',
-  summary.statistic.interval.coverage=0.95,
-  
-  colors=pal_jama(),
-  color.by=c('intervention','split')[1],
-  plot.interval.alpha=0.2,
-  simulation.alpha=0.2,
-  simulation.line.size=0.1,
-  truth.point.size=3,
-  truth.shapes=TRUTH.SHAPES,
-  truth.name='Epidemiological Target',
-  truth.color=NULL,
-  
-  label.change=F,
-  label.change.ci=T,
-  label.change.from=c(2020,2030),
-  label.change.decrease.as.positive=T,
-  label.change.size=5,
-  label.change.nudge.x=0,
-  
-  ncol=NULL,
-  nrow=NULL,
-  fixed.y=F)
+    simsets,
+    years,
+    data.types,
+    facet.by,
+    split.by,
+    dimension.subsets,
+    plot.format='individual.simulations',
+    show.truth=T,
+    
+    plot.interval.coverage=0.95,
+  #  summary.statistic='none',
+   # summary.statistic.interval.coverage=0.95,
+    
+    colors=pal_jama(),
+    color.by=c('intervention','split')[1],
+    plot.interval.alpha=0.2,
+    simulation.alpha=0.1,
+    simulation.line.size=0.1,
+    truth.point.size=3*4^use.plotly,
+    truth.shapes= if (use.plotly) TRUTH.SHAPES.PLOTLY else TRUTH.SHAPES.GGPLOT,
+    truth.name='Epidemiological Target',
+    truth.color=NULL,
+    
+    label.change=F,
+    label.change.ci=T,
+    change.years=c(2020,2030),
+    change.decrease.is.positive=T,
+    label.change.size=5,
+    label.change.nudge.x=0,
+    
+    name.interventions.by.number=T,
+    hide.legend=F,
+    
+    ncol=NULL,
+    nrow=NULL,
+    fixed.y=F,
+    use.plotly=T,
+    
+    progress.update=function(p){},
+    data.type.names = DATA.TYPE.NAMES,
+    return.change.data.frame=F)
 {
     keep.dimensions = unique(c('year', facet.by, split.by))
-
+    
     
     #-----------------------#
     #-- Argument Checking --#
@@ -84,11 +106,11 @@ do.plot.simulations <- function(
     
     for (data.type in data.types)
     {
-        if (!any(data.type==names(DATA.TYPE.NAMES)))
+        if (!any(data.type==names(data.type.names)))
             stop(
-              paste0("'", data.type, 
-                     "' is not a valid data.type. data.type must be one of ",
-                     paste0("'", names(DATA.TYPE.NAMES), "'", collapse=', ')))
+                paste0("'", data.type, 
+                       "' is not a valid data.type. data.type must be one of ",
+                       paste0("'", names(data.type.names), "'", collapse=', ')))
     }
     
     #--------------------------------#
@@ -110,57 +132,45 @@ do.plot.simulations <- function(
     interventions = lapply(simsets, function(ss){attr(ss, 'intervention')})
     is.baseline = sapply(interventions, is.null)
     
-    # TODO @Todd: Error:
-    # Warning: Error in sapply: object 'get.intervention.short.name' not found
-    
-    # Warning: Error in sapply: object 'is.null.intervention' not found
-    # 77: match.fun [R/model_code/plot_simulations.R#109]
-    # 76: sapply
-    # 75: do.plot.simulations [R/model_code/plot_simulations.R#109]
-    # 74: plot.simulations [/Users/joeflack4/projects/ending-hiv/
-    # visualization/shiny/R/plot_shiny_interface.R#420]
-    # 73: plotAndCache [/Users/joeflack4/projects/ending-hiv/visualization/
-    # shiny/server.R#26]
-    # 72: observeEventHandler [/Users/joeflack4/projects/ending-hiv/
-    # visualization/shiny/server.R#219]
-    # 1: runApp
     is.no.intervention = sapply(
-      interventions, is.null.intervention) & !is.baseline
+        interventions, is.null.intervention) & !is.baseline
     
-    # TODO:
-    # Warning: Error in sapply: object 'get.intervention.short.name' not found
-    # 77: match.fun [R/model_code/plot_simulations.R#124]
-    # 76: sapply
-    # 75: do.plot.simulations [R/model_code/plot_simulations.R#124]
-    # 74: plot.simulations [/Users/joeflack4/projects/ending-hiv/
-    # visualization/shiny/R/plot_shiny_interface.R#420]
-    # 73: plotAndCache [/Users/joeflack4/projects/ending-hiv/
-    # visualization/shiny/server.R#26]
-    # 72: observeEventHandler [/Users/joeflack4/projects/ending-hiv/
-    # visualization/shiny/server.R#219]
-    # 1: runApp
-    if (is.null(names(simsets)))
-       simset.names = sapply(interventions, get.intervention.short.name) 
+    if (name.interventions.by.number)
+    {
+        simset.names = character(length(simsets))
+        simset.names[is.baseline] = 'Baseline'
+        simset.names[is.no.intervention] = 'No Intervention'
+        
+        non.null.int.mask = !is.baseline & !is.no.intervention
+        if (sum(non.null.int.mask)==1)
+            simset.names[non.null.int.mask] = 'Intervention'
+        else
+            simset.names[non.null.int.mask] = paste0('Intervention ', 1:sum(non.null.int.mask))
+    }
+    else if (is.null(names(simsets)))
+            simset.names = sapply(interventions, get.intervention.short.name)
     else
-       simset.names = names(simsets)
+        simset.names = names(simsets)
+    
    
+    
     if (any(is.baseline) && any(is.no.intervention))
         simset.names[is.baseline] = simset.names[is.no.intervention][1]
-
+    
     years.for.simset = lapply(simsets, function(ss){
         intersect(years, ss@simulations[[1]]$years)
     })
-
+    
     if (any(is.baseline) && any(!is.baseline))
     {
         intervention.years = unique(as.numeric(unlist(
-          sapply( (1:length(simsets))[!is.baseline], function(i){
-            ss = simsets[[i]]
-            if (is.no.intervention[i])
-                ss@simulations[[1]]$years
-            else
-                ss@simulations[[1]]$years[-1]
-        }))))
+            sapply( (1:length(simsets))[!is.baseline], function(i){
+                ss = simsets[[i]]
+                if (is.no.intervention[i])
+                    ss@simulations[[1]]$years
+                else
+                    ss@simulations[[1]]$years[-1]
+            }))))
         for (i in (1:length(simsets))[is.baseline])
             years.for.simset[[i]] = setdiff(years.for.simset[[i]], intervention.years)
     }
@@ -180,7 +190,7 @@ do.plot.simulations <- function(
                                     keep.dimensions=keep.dimensions,
                                     dimension.subsets = dimension.subsets)
         if (!is.null(one.df.truth))
-            one.df.truth$data.type = data.type #DATA.TYPE.NAMES[data.type]
+            one.df.truth$data.type = data.type #data.type.names[data.type]
         
         one.df.truth
     })
@@ -189,7 +199,10 @@ do.plot.simulations <- function(
         df.truth = truth.sub.dfs[[1]]
     else
         df.truth = as.data.frame(rbindlist(truth.sub.dfs))
-
+    
+    if (any(keep.dimensions=='risk') && any(keep.dimensions=='sex'))
+        df.truth = df.truth[df.truth$sex != 'female' | (df.truth$risk != 'msm' & df.truth$risk != 'msm_idu'),]
+    
     #-- Get total population --#
     total.population = get.census.totals(CENSUS.TOTALS,
                                          location=location,
@@ -197,55 +210,109 @@ do.plot.simulations <- function(
     
     #-- Individual Simulations --#
     n.sim.dfs = length(simsets) * length(data.types)
-    if (plot.format=='individual.simulations' && length(simsets)>0)
+    if (length(simsets)>0)
     {
-        sim.sub.dfs = lapply(1:n.sim.dfs, function(i){
+        sim.sub.df.pairs = lapply(1:n.sim.dfs, function(i){
             simset.index = ceiling(i/length(data.types))
             data.type.index = (i-1) %% length(data.types) + 1
             
-            one.df.sim = get.individual.sim.df(simset=simsets[[simset.index]],
-                                              data.type=data.types[data.type.index],
-                                              years=years.for.simset[[simset.index]],
-                                              keep.dimensions=keep.dimensions,
-                                              dimension.subsets=dimension.subsets,
-                                              total.population = total.population)
+            if (plot.format=='median.and.ci')
+                aggregate.statistic='median'
+            else
+                aggregate.statistic='mean'
+            one.dfs.sim = get.sim.dfs(simset=simsets[[simset.index]],
+                                      data.type=data.types[data.type.index],
+                                      years=years.for.simset[[simset.index]],
+                                      keep.dimensions=keep.dimensions,
+                                      dimension.subsets=dimension.subsets,
+                                      total.population = total.population,
+                                      get.individual.sims = plot.format=='individual.simulations',
+                                      get.change.df=label.change || return.change.data.frame,
+                                      aggregate.statistic = aggregate.statistic,
+                                      ci.coverage=plot.interval.coverage,
+                                      change.years=change.years,
+                                      change.decrease.is.positive=change.decrease.is.positive)
+  
+            progress.update(FRACTION.PROGRESS.SETUP.DF * i/n.sim.dfs)
             
-            if (!is.null(one.df.sim))
-            {
-                one.df.sim$data.type = data.types[data.type.index]#DATA.TYPE.NAMES[data.types[data.type.index]]
-                one.df.sim$intervention = simset.names[simset.index]
-            }
-            
-            one.df.sim
+            one.dfs.sim
         })
         
-        df.sim = as.data.frame(rbindlist(sim.sub.dfs))
-    }
+        df.sim.subs = lapply(1:length(sim.sub.df.pairs), function(i){
+            
+            pair = sim.sub.df.pairs[[i]]
+            simset.index = ceiling(i/length(data.types))
+            data.type.index = (i-1) %% length(data.types) + 1
+            
+            if (is.null(pair))
+                NULL
+            else
+            {
+                pair$df.sim$data.type = data.types[data.type.index]#data.type.names[data.types[data.type.index]]
+                pair$df.sim$intervention = simset.names[simset.index]
+                pair$df.sim
+            }
+        })
         
-    #-- Aggregated Simulations --#
-    if (plot.format!='individual.simulations')
-            stop("We have not set up plotting besides individual simsets")
-    
+        df.sim = as.data.frame(rbindlist(df.sim.subs))
+        
+        if (any(keep.dimensions=='risk') && any(keep.dimensions=='sex'))
+            df.sim = df.sim[df.sim$sex != 'female' | (df.sim$risk != 'msm' & df.sim$risk != 'msm_idu'),]
+        
+        if (label.change || return.change.data.frame)
+        {
+            df.change.subs = lapply(1:length(sim.sub.df.pairs), function(i){
+                
+                pair = sim.sub.df.pairs[[i]]
+                simset.index = ceiling(i/length(data.types))
+                data.type.index = (i-1) %% length(data.types) + 1
+                
+                if (is.null(pair) || is.null(pair$df.change))
+                    NULL
+                else
+                {
+                    pair$df.change = cbind(intervention = simset.names[simset.index],
+                                           data.type = data.type.names[data.types[data.type.index]],
+                                           pair$df.change)
+                    pair$df.change
+                }
+            })
+            df.change = as.data.frame(rbindlist(df.change.subs))
+            if (any(keep.dimensions=='risk') && any(keep.dimensions=='sex'))
+                df.change = df.change[df.change$sex != 'female' | (df.change$risk != 'msm' & df.change$risk != 'msm_idu'),]
+        }
+            
+    }
     
     #-------------------------------------------------#
     #-- RENAME and FACTOR DIMENSIONS and DATA TYPES --#
     #-------------------------------------------------#
     
-    df.sim$data.type = factor(DATA.TYPE.NAMES[df.sim$data.type],
-                              levels=DATA.TYPE.NAMES[data.types])
+    df.sim$data.type = factor(data.type.names[df.sim$data.type],
+                              levels=data.type.names[data.types])
     if (!is.null(df.truth))
-        df.truth$data.type = factor(DATA.TYPE.NAMES[df.truth$data.type],
-                                    levels=DATA.TYPE.NAMES[data.types])
+        df.truth$data.type = factor(data.type.names[df.truth$data.type],
+                                    levels=data.type.names[data.types])
     
     for (dimension in keep.dimensions[keep.dimensions!='year'])
     {
-        df.sim[,dimension] = factor(PRETTY.NAMES[[dimension]][df.sim[,dimension]],
-                                      levels=PRETTY.NAMES[[dimension]][dimension.subsets[[dimension]]])
-        if (!is.null(df.truth))
-            df.truth[,dimension] = factor(PRETTY.NAMES[[dimension]][df.truth[,dimension]],
-                                          levels=PRETTY.NAMES[[dimension]][dimension.subsets[[dimension]]])
+        if (use.plotly)
+        {
+            df.sim[,dimension] = PRETTY.NAMES[[dimension]][as.character(df.sim[,dimension])]
+            
+            if (!is.null(df.truth))
+                df.truth[,dimension] = PRETTY.NAMES[[dimension]][as.character(df.truth[,dimension])]
+        }
+        else
+        {
+            df.sim[,dimension] = factor(PRETTY.NAMES[[dimension]][as.character(df.sim[,dimension])],
+                                        levels=PRETTY.NAMES[[dimension]][dimension.subsets[[dimension]]])
+        
+            if (!is.null(df.truth))
+                df.truth[,dimension] = factor(PRETTY.NAMES[[dimension]][as.character(df.truth[,dimension])],
+                                              levels=PRETTY.NAMES[[dimension]][dimension.subsets[[dimension]]])
+        }
     }
-    
     
     #-------------------#
     #-- SET UP SPLITS --#
@@ -269,78 +336,11 @@ do.plot.simulations <- function(
         if (!is.null(df.truth))
             df.truth$split = apply(df.truth[,split.by], 1, paste0, collapse=", ")
     }
-        
+    
     splits = unique(df.truth$split)
     split.shapes = rep(truth.shapes, ceiling(length(splits)/length(truth.shapes)))[1:length(splits)]
     names(split.shapes) = splits
     
-    
-    
-    ##--------------------------##
-    ##-- CALCULATE THE CHANGE --##
-    ##--------------------------##
-    
-    df.change = NULL
-    if (label.change && length(split.by)==0)
-    {
-        for (i in 1:length(simsets))
-        {
-            if (any(simsets[[i]]@simulations[[1]]$years==label.change.from[1]) &&
-                any(simsets[[i]]@simulations[[1]]$years==label.change.from[2]) )
-            {
-                for (data.type in data.types)
-                {
-                    if (is.null(splits))
-                        splits.for.loop = 'All'
-                    else
-                      splits.for.loop = splits
-                    
-                    for (split in splits.for.loop)
-                    {
-                        dist = get.data.type.level.and.change.dist(simsets[[i]],
-                                                                   data.type=data.type,
-                                                                   year1=label.change.from[1],
-                                                                   year2=label.change.from[2],
-                                                                   decrease.is.positive = label.change.decrease.as.positive)
-                        
-                        
-                        if (plot.format=='median.and.ci')
-                          stats = get.medians(dist)
-                        else
-                          stats = get.means(dist)
-                        
-                        cis = get.intervals(dist)
-                        
-                        level.2.mask = df.sim$data.type==DATA.TYPE.NAMES[data.type] & 
-                                        df.sim$year==label.change.from[2] & 
-                                        df.sim$intervention==simset.names[i] &
-                                        df.sim$split == split
-                        
-                        if (plot.format=='individual.simulations')
-                          level.2 = mean(df.sim$value[level.2.mask])
-                        else
-                          level.2 = df.sim$value[level.2.mask]
-                        
-                        label = paste0(round(100*stats['change']), '%')
-                        if (label.change.ci)
-                          label = paste0(label, ' [',
-                                         round(100*cis['lower','change']),
-                                         '-',
-                                         round(100*cis['upper','change']),
-                                         ']')
-                        
-                        df.change = rbind(df.change,
-                                          data.frame(intervention=simset.names[i],
-                                                     data.type = DATA.TYPE.NAMES[data.type],
-                                                     label=label,
-                                                     x=label.change.from[2],
-                                                     y=level.2,
-                                                     split=split))
-                    }
-                }
-            }
-        }
-    }
     
     #-------------------#
     #-- SET UP GROUPS --#
@@ -387,13 +387,12 @@ do.plot.simulations <- function(
     else
         stop("'colors' must be either a character vector or a function that creates a character vector")
     
-        
     names(colors) = color.names
-#    if (color.by=='intervention')
-#    {
-#        truth.color = colors[1]
-#        colors = colors[-1]
-#    }
+    if (color.by=='intervention')
+    {
+        truth.color = colors[1]
+        colors = colors[-1]
+    }
     
     if (!is.null(df.sim))
     {
@@ -411,168 +410,373 @@ do.plot.simulations <- function(
             df.truth$color.by = truth.name
     }
     
-    if (!is.null(df.change))
-    {
-      if (color.by=='split')
-        df.change$color.by = df.change$split
-      else
-        df.change$color.by = df.change$intervention
-    }
+#    if (!is.null(df.change))
+#    {
+#        if (color.by=='split')
+#            df.change$color.by = df.change$split
+#        else
+#            df.change$color.by = df.change$intervention
+#    }
     
+    
+    
+    #-------------------#
     #-------------------#
     #-- MAKE THE PLOT --#
     #-------------------#
+    #-------------------#
     
-    plot = ggplot()
-    if (plot.format=='individual.simulations')
+    if (use.plotly)
     {
-        plot = plot + geom_line(data=df.sim, aes(x=year, y=value, group=group, color=color.by),
-                                alpha=simulation.alpha, size=simulation.line.size)
+        df.sim = format.values.for.plotly(df.sim, data.type.names)
+        
+        if (!is.null(df.truth))
+            df.truth = format.values.for.plotly(df.truth, data.type.names)
+        
+        df.sim$facet = df.sim$data.type
+        if (!is.null(df.truth))
+            df.truth$facet = df.truth$data.type
+        
+        if (length(facet.by)>0)
+        {
+            for (ff in facet.by)
+            {
+                df.sim$facet = paste0(df.sim$facet, '\n', df.sim[,ff])
+                if (!is.null(df.truth))
+                    df.truth$facet = paste0(df.truth$facet, '\n', df.truth[,ff])
+            }
+        }
+        facet.categories = as.character(unique(df.sim$facet))
+        data.types.for.facet.categories = sapply(strsplit(facet.categories, '\n'), function(spl){spl[1]})
+        names(data.types.for.facet.categories) = facet.categories
+        
+        #This lets us show the truth legend exactly once for each split
+        show.truth.legend.for.facet = sapply(splits, function(split){
+            non.empty = sapply(facet.categories, function(ff){
+                mask = df.truth$facet==ff & df.truth$split==split
+                any(!is.na(df.truth$value[mask]))
+            })
+            facet.categories[non.empty][1]
+        })
+        names(show.truth.legend.for.facet) = splits
+        
+        # Calculate the number of rows
+        if (is.null(nrow))
+        {
+            if (is.null(ncol))
+                nrow = floor(sqrt(length(facet.categories)))
+            else
+                nrow = ceiling(length(facet.categories) / ncol)
+        }
+        
+        unique.simset.names = unique(simset.names)
+        n.steps = length(facet.categories) * length(unique.simset.names) * length(splits)
+        
+        #Make a different subplot for each facet panel
+        subplots = lapply(1:length(facet.categories), function(ff.i){
+            
+            ff = facet.categories[ff.i]
+            
+            plot = plot_ly(x=~year)
+            
+            #df.facet = df.sim[df.sim$facet == ff,]
+            facet.mask = df.sim$facet==ff
+            
+            #make the sim
+            if (plot.format=='individual.simulations')
+            {
+                for (int.i in 1:length(unique.simset.names))
+                {
+                    intervention = unique.simset.names[int.i]
+                    int.mask = facet.mask & df.sim$intervention==intervention
+                    
+                    sims = unique(df.sim$simulation[int.mask])
+                    for (split.i in 1:length(splits))
+                    {
+                        split = splits[split.i]
+                        split.mask = int.mask & df.sim$split==split
+                        
+                        show.legend = ff==facet.categories[1] && !hide.legend
+                        
+                        path.name = intervention
+                        if (color.by == 'split' && length(split.by)>0)
+                        {
+                            color = colors[split]
+                            path.name = paste0('Simulations, ', split)
+                            show.legend = show.legend && intervention == simset.names[1]
+                        }
+                        else
+                        {
+                            color = colors[intervention]
+                            path.name = intervention
+                            show.legend = show.legend && split == splits[1]
+                        }
+                        
+                        #this code makes the lines in the legend show up without opacity
+                        if (show.legend)
+                            plot = add_paths(plot, data=df.sim[split.mask & !is.na(df.sim$value),],
+                                             x=~year[1], y=~value[1], color=color, 
+                                             opacity=1,
+                                             legendgroup='Simulations',
+                                             line = list(color=color),
+                                             name=path.name,
+                                             showlegend = T)
+                        
+                        plot = add_paths(plot, data=df.sim[split.mask,],
+                                         y=~value, color=color, 
+                                         opacity=simulation.alpha,
+                                         legendgroup='Simulations',
+                                         line = list(color=color),
+                                         name=path.name,
+                                         showlegend = F,
+                                         transforms = list(
+                                             list(type = 'groupby',
+                                                  groups = ~simulation))
+                        )
+                        
+                        progress.update(FRACTION.PROGRESS.SETUP.DF +
+                                            (1-FRACTION.PROGRESS.SETUP.DF) *
+                                            (split.i + (int.i-1) * length(splits) +
+                                            (ff.i-1) * length(splits) * length(unique.simset.names)) /
+                                            n.steps)
+                    }
+                }
+            }
+            else
+            {
+                stop('have not implemented mean/median + CI')
+            }
+            
+            if (!is.null(df.truth))
+            {
+                for (split in splits)
+                {
+                    mask = df.truth$facet==ff & df.truth$split==split
+                    if (any(!is.na(df.truth$value[mask])))
+                    {
+                        show.legend = !is.na(show.truth.legend.for.facet[split]) &&
+                            show.truth.legend.for.facet[split] == ff &&
+                            !hide.legend
+                        
+                        if (color.by!='split')
+                            show.legend = show.legend && split == splits[1]
+                        
+                        one.truth.name = truth.name
+                        if (color.by == 'split')
+                        {
+                            color = colors[split]
+                            one.truth.name = paste0(one.truth.name, ', ', split)
+                        }
+                        else
+                            color = truth.color
+                        
+                        plot = add_markers(plot, data=df.truth[mask,],
+                                           y=~value, color=color,
+                                           name=one.truth.name,
+                                           marker = list(color=color,
+                                                         size=truth.point.size,
+                                                         symbol=split.shapes[split],
+                                                         line = list(
+                                                             color = '#000000FF',
+                                                             width = 1
+                                                         )),
+                                           legendgroup='Truth',
+                                           showlegend = show.legend)
+                    }
+                }
+            }
+            
+            axis.title = DATA.TYPE.AXIS.LABELS[names(data.type.names)[data.types.for.facet.categories[ff]==data.type.names]]
+            if (is.pct.data.type(data.types.for.facet.categories[ff], data.type.names))
+                plot = layout(plot,
+                              yaxis = list(rangemode = "tozero",
+                                           tickformat = '%',
+                                           title = axis.title))
+            else
+                plot = layout(plot,
+                              yaxis = list(rangemode = "tozero",
+                                           tickformat = ',d',
+                                           title = axis.title))
+                
+            plot = add_annotations(plot,
+                                   text = ff,
+                                   x = 0.5,
+                                   y = 1.05,
+                                   yref = "paper",
+                                   xref = "paper",
+                                   align = "center",
+                                   xanchor = "center",
+                                   yanchor = "top",
+                            #       font = list(size = 15),
+                                   showarrow = FALSE
+            )
+            
+            plot
+        })
+
+        
+        if (length(facet.categories)==1)
+            plot = subplots[[1]]
+        else
+            plot = subplot(subplots, shareY = fixed.y, titleY=T, nrows=nrow, 
+                           margin=c(0.05,0.05,0.06,0.06)) #L,R,T,B
+        
+        plot = layout(plot, 
+                      legend = list(orientation = 'h', 
+                                    traceorder='grouped')
+                          )
+        
+   
     }
     else
     {
+        plot = ggplot()
+        if (plot.format=='individual.simulations')
+        {
+            plot = plot + geom_line(data=df.sim, aes(x=year, y=value, group=group, color=color.by),
+                                    alpha=simulation.alpha, size=simulation.line.size)
+        }
+        else
+        {
             plot = plot + 
                 geom_ribbon(data=df.sim, aes(x=year, ymin=ci.lower, ymax=ci.upper,
                                              group=split.by, color=color.by, fill=color.by), alpha=plot.interval.alpha) +
                 geom_line(data=df.sim, aes(x=year, y=value, group=group, color=color.by), size=simulation.line.size)
-    }
-
-    if (!is.null(df.truth))
-    {
+        }
         
-        plot = plot + geom_point(data=df.truth, aes(x=year, y=value, shape=split, fill=color.by), 
-                                 size=truth.point.size)
-    }
-    
-    
-    #Add labeled change
-    if (!is.null(df.change))
-    {
-        plot = plot + geom_label(data=df.change, aes(x=x, y=y, label=label, fill=color.by), 
-                                 hjust='center', size=label.change.size, alpha=0.5,
-                                 label.padding = unit(0.15, 'lines'), nudge_x = label.change.nudge.x)
-    }
-    
-    #-----------------------#
-    #-- SET UP FACET WRAP --#
-    #-----------------------#
-    
-    if (fixed.y)
-        facet.scales = 'fixed'
-    else
-        facet.scales = 'free_y'
-    
-    if (length(data.types)>1)
-    {
-        if (length(facet.by)>0 && any(sapply(dimension.subsets[facet.by], length)>1))
-            facet.formula = as.formula(paste0('~data.type+', paste0(facet.by, collapse='+')))
-        else
-            facet.formula = ~data.type
-    }
-    else
-    {
-        if (length(facet.by)>0 && any(sapply(dimension.subsets[facet.by], length)>1))
-            facet.formula = as.formula(paste0('~', paste0(facet.by, collapse='+')))
-        else
-            facet.formula = NULL
+        if (!is.null(df.truth))
+        {
+            
+            plot = plot + geom_point(data=df.truth, aes(x=year, y=value, shape=split, fill=color.by), 
+                                     size=truth.point.size)
+        }
         
-    }
-    
-    if (!is.null(facet.formula))
-        plot = plot + facet_wrap(facet.formula, scales=facet.scales)
-    
-    
-    #----------#
-    #-- Axes --#
-    #----------#
-    
-    plot = plot + 
-        scale_y_continuous(name=NULL,
-                           labels=function(x){
-                               if (all(is.na(x) | x <= 1))
-                                   paste0(100*x, '%')
-                               else
-                                   format(x, big.mark = ',')
-                           },
-                           limits = c(0,NA)) +
-        scale_x_continuous(name='Year',
-                           labels = round)
-    
-    #------------#
-    #-- Styles --#
-    #------------#
-    
-    split.legend.name = NULL#paste0(DIMENSION.NAMES[split.by], collapse=", ")
-    
-    #colors
-    if (color.by=='split')
-    {
-        if (length(split.by)==0)
-            plot = plot + scale_color_manual(values=colors, guide=F) +
-                scale_fill_manual(values=colors, guide=F)
-        else
-            plot = plot + scale_color_manual(values=colors, name=split.legend.name) +
-                scale_fill_manual(values=colors, name=split.legend.name)
         
-    }
-    else
-    {
-        if (length(simsets)>1)
-            plot = plot + scale_color_manual(values=colors, name="Intervention")
-        else
-            plot = plot + scale_color_manual(values=colors, guide=F)
-        
+        #Add labeled change
         if (!is.null(df.change))
         {
-            if (length(simsets)>1)
-              plot = plot + scale_fill_manual(values=colors, name="Intervention")
-            else
-              plot = plot + scale_fill_manual(values=colors, guide=F)
+            plot = plot + geom_label(data=df.change, aes(x=x, y=y, label=label, fill=color.by), 
+                                     hjust='center', size=label.change.size, alpha=0.5,
+                                     label.padding = unit(0.15, 'lines'), nudge_x = label.change.nudge.x)
         }
-    }
-    
-    if (length(split.by)==0)
-        plot = plot +
+        
+        #-----------------------#
+        #-- SET UP FACET WRAP --#
+        #-----------------------#
+        
+        if (fixed.y)
+            facet.scales = 'fixed'
+        else
+            facet.scales = 'free_y'
+        
+        if (length(data.types)>1)
+        {
+            if (length(facet.by)>0 && any(sapply(dimension.subsets[facet.by], length)>1))
+                facet.formula = as.formula(paste0('~data.type+', paste0(facet.by, collapse='+')))
+            else
+                facet.formula = ~data.type
+        }
+        else
+        {
+            if (length(facet.by)>0 && any(sapply(dimension.subsets[facet.by], length)>1))
+                facet.formula = as.formula(paste0('~', paste0(facet.by, collapse='+')))
+            else
+                facet.formula = NULL
+            
+        }
+        
+        if (!is.null(facet.formula))
+            plot = plot + facet_wrap(facet.formula, scales=facet.scales)
+        
+        
+        #----------#
+        #-- Axes --#
+        #----------#
+        
+        plot = plot + 
+            scale_y_continuous(name=NULL,
+                               labels=function(x){
+                                   if (all(is.na(x) | x <= 1))
+                                       paste0(100*x, '%')
+                                   else
+                                       format(x, big.mark = ',')
+                               },
+                               limits = c(0,NA)) +
+            scale_x_continuous(name='Year',
+                               labels = round)
+        
+        #------------#
+        #-- Styles --#
+        #------------#
+        
+        split.legend.name = NULL#paste0(DIMENSION.NAMES[split.by], collapse=", ")
+        
+        #colors
+        if (color.by=='split')
+        {
+            if (length(split.by)==0)
+                plot = plot + scale_color_manual(values=colors, guide=F) +
+                    scale_fill_manual(values=colors, guide=F)
+            else
+                plot = plot + scale_color_manual(values=colors, name=split.legend.name) +
+                    scale_fill_manual(values=colors, name=split.legend.name)
+            
+        }
+        else
+        {
+            if (length(simsets)>1)
+                plot = plot + scale_color_manual(values=colors, name="Intervention")
+            else
+                plot = plot + scale_color_manual(values=colors, guide=F)
+            
+            if (!is.null(df.change))
+            {
+                if (length(simsets)>1)
+                    plot = plot + scale_fill_manual(values=colors, name="Intervention")
+                else
+                    plot = plot + scale_fill_manual(values=colors, guide=F)
+            }
+        }
+        
+        if (length(split.by)==0)
+            plot = plot +
             scale_shape_manual(values=split.shapes, guide=F)
-    else
-    {
-        plot = plot +
-            scale_shape_manual(values=split.shapes, name=split.legend.name)
-    }
-    
-    plot = plot + 
-        theme(panel.grid=element_blank(), panel.background=element_blank(),
-              axis.line.x.bottom = element_line(color = 'black'),
-              axis.line.y.left = element_line(color = 'black'),
-              legend.position = 'bottom', legend.direction = 'vertical') +
+        else
+        {
+            plot = plot +
+                scale_shape_manual(values=split.shapes, name=split.legend.name)
+        }
+        
+        plot = plot + 
+            theme(panel.grid=element_blank(), panel.background=element_blank(),
+                  axis.line.x.bottom = element_line(color = 'black'),
+                  axis.line.y.left = element_line(color = 'black'),
+                  legend.position = 'bottom', legend.direction = 'vertical') +
             ylab(NULL)
+    }
     
     #------------#
     #-- RETURN --#
     #------------#
     
-    plot
-}
-
-do.render.plot <- function(plot)
-{
-  renderPlotly({
-    ggplotly(plot)
-  })
+    if (return.change.data.frame)
+        list(plot=plot, change.df=df.change)
+    else
+        plot
 }
 
 get.data.type.level.and.change.dist <- function(simset,
-                                           data.type,
-                                           year1,
-                                           year2,
-                                           decrease.is.positive=T,
-                                           statistic=c('mean','median')[1])
+                                                data.type,
+                                                year1,
+                                                year2,
+                                                decrease.is.positive=T,
+                                                statistic=c('mean','median')[1])
 {
     if (all(simset@simulations[[1]]$years != year1))
         stop("The year ", year1, " is not contained in the simulation")
     if (all(simset@simulations[[1]]$years != year2))
         stop("The year ", year2, " is not contained in the simulation")
-  
+    
     if (data.type=='incidence')
         extract.fn = function(sim, years){extract.incidence(sim, years=years, per.population=NA)}
     else if (data.type=='new')
@@ -589,7 +793,7 @@ get.data.type.level.and.change.dist <- function(simset,
         extract.fn = function(sim, years){extract.testing.rates(sim, years=years, per.population=1)}
     else
         stop(paste0("'", data.type, "' is not a valid data type"))
-
+    
     
     fn = function(sim,...){
         values = extract.fn(sim, c(year1,year2))
@@ -618,7 +822,7 @@ get.truth.df <- function(location,
     dimension.subsets = get.nontrivial.dimension.subsets(dimension.subsets,
                                                          data.type=data.type,
                                                          surv=surv)
-
+    
     all.dimensions = union(keep.dimensions, names(dimension.subsets))
     if (data.type=='incidence')
         return (NULL)
@@ -672,12 +876,18 @@ get.truth.df <- function(location,
     }
 }
 
-get.individual.sim.df <- function(simset,
-                                  data.type,
-                                  years,
-                                  keep.dimensions,
-                                  dimension.subsets,
-                                  total.population)
+get.sim.dfs <- function(simset,
+                       data.type,
+                       years,
+                       keep.dimensions,
+                       dimension.subsets,
+                       total.population,
+                       get.individual.sims=T,
+                       get.change.df=F,
+                       aggregate.statistic = 'mean',
+                       ci.coverage=0.95,
+                       change.years,
+                       change.decrease.is.positive)
 {
     years = intersect(simset@simulations[[1]]$years, years)
     if (length(years)==0)
@@ -722,9 +932,128 @@ get.individual.sim.df <- function(simset,
                                                  dimension.subsets = dimension.subsets)
     else
         stop(paste0("'", data.type, "' is not a valid data.type. data.type must be one of ",
-                    paste0("'", names(DATA.TYPE.NAMES), "'", collapse=', ')))
+                    paste0("'", names(data.type.names), "'", collapse=', ')))
     
-    reshape2::melt(arr)
+    
+    if (get.individual.sims)
+      df.sim = reshape2::melt(arr)
+    
+    #Aggregate to mean/median and CI if requested
+    #Generate the change df if requested
+    df.change = NULL
+    sim.years = as.numeric(dimnames(arr)[['year']])
+    if (!get.individual.sims || get.change.df)
+    {
+        n.dim.arr = length(dim(arr))
+        n.sim = dim(arr)['simulation']
+        dim.names.arr = dimnames(arr) 
+        
+        if (aggregate.statistic=='mean')
+            stat = rowMeans(arr, dims = length(keep.dimensions))
+        else if (stat=='median')
+            stat = apply(arr, keep.dimensions, median)
+        else
+            stop("stat must be either 'mean' or 'median'")
+        
+        if (is.null(dim(stat)))
+        {
+            dim(stat) = c(year=length(sim.years))
+            dimnames(stat) = list(year=as.character(sim.years))
+        }
+        else
+        {
+            dim(stat) = sapply(dim.names.arr[-n.dim.arr], length)
+            dimnames(stat) = dim.names.arr[-n.dim.arr]
+        }
+        
+        alpha = (1-ci.coverage)/2
+        arr[is.na(arr)] = 0 #this fixes female msm
+        ci = apply(arr, keep.dimensions, quantile, probs=c(alpha, 1-alpha), na.rm=T)
+        dim(ci) = c(2, dim(ci)[2], prod(dim(ci)[-(1:2)]))
+        
+        if (!get.individual.sims)
+        {
+            df.sim = reshape2::melt(stat, value.name='value')
+            df.sim = cbind(df.sim, 
+                           'lower'=as.numeric(ci[1,,]), 
+                           'upper'=as.numeric(ci[2,,]))
+        }
+        
+        if (get.change.df && any(sim.years==change.years[1]) && any(sim.years==change.years[2]))
+        {
+            year1.index = (1:length(sim.years))[sim.years==change.years[1]]
+            year2.index = (1:length(sim.years))[sim.years==change.years[2]]
+            
+            dim(stat) = c(length(sim.years), prod(dim(stat)[-1]))
+            
+            
+            if (n.dim.arr==2)
+            {
+                change.v = (arr[year2.index,] - arr[year1.index,]) / arr[year1.index,]
+                if (change.decrease.is.positive)
+                    change.v = -change.v
+                
+                if (aggregate.statistic=='mean')
+                    stat.change = mean(change.v)
+                else
+                    stat.change = median(change.v)
+                
+             #   dim(stat.change) = 1
+                
+                change.ci = quantile(change.v, probs=c(alpha,1-alpha))
+                dim(change.ci) = c(2,1)
+                
+            }
+            else
+            {
+                dim(arr) = c(length(sim.years), prod(dim(arr)[-c(1,n.dim.arr)]), n.sim)
+                change.arr = (arr[year2.index,,] - arr[year1.index,,]) / arr[year1.index,,]
+                if (change.decrease.is.positive)
+                    change.arr = -change.arr
+                dim(change.arr) = sapply(dim.names.arr[-1], length)
+                
+                if (aggregate.statistic=='mean')
+                    stat.change = rowMeans(change.arr, dims=length(dim(change.arr))-1)
+                else
+                    stat.change = apply(change.arr, 1:(length(dim(change.arr))-1), median)
+                
+                dim(stat.change) = sapply(dim.names.arr[-c(1,n.dim.arr)], length)
+                dimnames(stat.change) = dim.names.arr[-c(1,n.dim.arr)]
+                
+                change.arr[is.na(change.arr)] = 0
+                change.ci = apply(change.arr, 1:(length(dim(change.arr))-1), quantile, probs=c(alpha,1-alpha))
+                dim(change.ci) = c(2,prod(dim(stat.change)))
+            }
+            
+            df.change = reshape2::melt(stat.change, value.name='value')
+            for (d in names(df.change)[names(df.change)!='value'])
+                df.change[,d] = PRETTY.NAMES[[d]][df.change[,d]]
+            names(df.change)[names(df.change)=='value'] = paste0("change_", change.years[1], "_to_", change.years[2])
+            
+            df.change = cbind(df.change,
+                              lower=change.ci[1,],
+                              upper=change.ci[2,],
+                              year1=stat[year1.index,],
+                              year1.lower=ci[1,year1.index,],
+                              year1.upper=ci[2,year1.index,],
+                              year2=stat[year2.index,],
+                              year2.lower=ci[1,year2.index,],
+                              year2.upper=ci[2,year2.index,])
+            names(df.change)[names(df.change)=='lower'] = paste0("change_", change.years[1], "_to_", change.years[2], "_interval_lower")
+            names(df.change)[names(df.change)=='upper'] = paste0("change_", change.years[1], "_to_", change.years[2], "_interval_upper")
+            
+            names(df.change)[names(df.change)=='year1'] = paste0(change.years[1], "_", aggregate.statistic)
+            names(df.change)[names(df.change)=='year1.lower'] = paste0(change.years[1], "_interval_lower")
+            names(df.change)[names(df.change)=='year1.upper'] = paste0(change.years[1], "_interval_upper")
+            
+            names(df.change)[names(df.change)=='year2'] = paste0(change.years[2], "_", aggregate.statistic)
+            names(df.change)[names(df.change)=='year2.lower'] = paste0(change.years[2], "_interval_lower")
+            names(df.change)[names(df.change)=='year2.upper'] = paste0(change.years[2], "_interval_upper")
+        }
+    }
+    
+    list(df.sim=df.sim,
+         df.change=df.change)
 }
 
 
@@ -758,6 +1087,57 @@ get.nontrivial.dimension.subsets <- function(dimension.subsets,
 }
 
 
+make.pretty.change.data.frame <- function(change.df)
+{
+    df.names = names(change.df)
+    pre.change.index = (1:length(df.names))[grepl('change',df.names)][1]-1
+    
+    rv = change.df[,1:pre.change.index]
+    
+    names(rv)[names(rv)=='data.type'] = "Epidemiological Indicator"
+    names(rv) = gsub("\\.", " ", names(rv))
+    names(rv)[names(rv)=='risk'] = 'Risk Factor'
+    names(rv) = toupper.first(names(rv))
+    
+    year1 = substr(df.names[pre.change.index+4],1,4)
+    year2 = substr(df.names[pre.change.index+7],1,4)
+    
+    rv$reduction = paste0(round(100*change.df[,pre.change.index+1]),
+                          '% [',
+                          round(100*change.df[,pre.change.index+2]), 
+                          ' to ',
+                          round(100*change.df[,pre.change.index+3]),
+                          ']')
+    names(rv)[names(rv)=='reduction'] = paste0("Reduction\n(", year1, " to ", year2, ")")
+    
+    rv$year1 = paste0(round(change.df[,pre.change.index+4]), 
+                      ' [',
+                      round(change.df[,pre.change.index+5]),
+                      ' - ',
+                      round(change.df[,pre.change.index+6]),
+                      ']')
+    names(rv)[names(rv)=='year1'] = paste0(year1, " Level")
+    
+    rv$year2 = paste0(round(change.df[,pre.change.index+7]), 
+                      ' [',
+                      round(change.df[,pre.change.index+8]),
+                      ' - ',
+                      round(change.df[,pre.change.index+9]),
+                      ']')
+    names(rv)[names(rv)=='year2'] = paste0(year2, " Level")
+    
+    rv
+}
+
+toupper.first <- function(x)
+{
+    spl = strsplit(x, ' ')
+    sapply(spl, function(z){
+        capitalized = paste0(toupper(substr(z,1,1)), substr(z,2,nchar(z)))
+        paste0(capitalized, collapse=' ')
+    })
+}
+
 ##-------------------------------##
 ##-- EXTRACT SIMSET QUANTITIES --##
 ##-------------------------------##
@@ -768,60 +1148,6 @@ extract.simset.new.diagnoses <- function(simset, years, all.dimensions,
 {
     total.population = total.population[as.character(years)]
     eg = do.extract.new.diagnoses(simset@simulations[[1]],
-                               years=years, 
-                               keep.dimensions=all.dimensions,
-                               per.population=NA,
-                               ages=dimension.subsets[['age']],
-                               races=dimension.subsets[['race']],
-                               subpopulations=dimension.subsets[['subpopulation']],
-                               sexes=dimension.subsets[['sex']],
-                               risks=dimension.subsets[['risk']],
-                               continuum.from=NULL,
-                               continuum.to=NULL,
-                               cd4=NULL,
-                               hiv.subsets=NULL,
-                               use.cdc.categorizations=T)
-    rv = sapply(simset@simulations, function(sim)
-    {
-        numerators = do.extract.new.diagnoses(sim,
-                                           years=years, 
-                                           keep.dimensions=all.dimensions,
-                                           per.population=NA,
-                                           ages=dimension.subsets[['age']],
-                                           races=dimension.subsets[['race']],
-                                           subpopulations=dimension.subsets[['subpopulation']],
-                                           sexes=dimension.subsets[['sex']],
-                                           risks=dimension.subsets[['risk']],
-                                           continuum.from=NULL,
-                                           continuum.to=NULL,
-                                           cd4=NULL,
-                                           hiv.subsets=NULL,
-                                           use.cdc.categorizations=T)
-        denominators = do.extract.population.subset(sim, years=years, keep.dimensions = 'year', use.cdc.categorizations = T)
-        
-        as.numeric(numerators) / as.numeric(denominators) * as.numeric(total.population)
-    })
-      
-    if (is.null(dim(eg)))
-    {
-        dim.names = list(names(eg), 1:simset@n.sim)
-        names(dim.names) = c(all.dimensions, 'simulation')
-    }
-    else
-        dim.names = c(dimnames(eg), list(simulation=1:simset@n.sim))
-    
-    dim(rv) = sapply(dim.names, length)
-    dimnames(rv) = dim.names
-    
-    rv
-}
-
-#per total population in year
-extract.simset.incidence <- function(simset, years, all.dimensions,
-                                         dimension.subsets, total.population)
-{
-    total.population = total.population[as.character(years)]
-    eg = do.extract.incidence(simset@simulations[[1]],
                                   years=years, 
                                   keep.dimensions=all.dimensions,
                                   per.population=NA,
@@ -830,14 +1156,14 @@ extract.simset.incidence <- function(simset, years, all.dimensions,
                                   subpopulations=dimension.subsets[['subpopulation']],
                                   sexes=dimension.subsets[['sex']],
                                   risks=dimension.subsets[['risk']],
-                                  non.hiv.subsets = NULL,
-                                  continuum=NULL,
+                                  continuum.from=NULL,
+                                  continuum.to=NULL,
                                   cd4=NULL,
                                   hiv.subsets=NULL,
                                   use.cdc.categorizations=T)
     rv = sapply(simset@simulations, function(sim)
     {
-        numerators = do.extract.incidence(sim,
+        numerators = do.extract.new.diagnoses(sim,
                                               years=years, 
                                               keep.dimensions=all.dimensions,
                                               per.population=NA,
@@ -846,8 +1172,8 @@ extract.simset.incidence <- function(simset, years, all.dimensions,
                                               subpopulations=dimension.subsets[['subpopulation']],
                                               sexes=dimension.subsets[['sex']],
                                               risks=dimension.subsets[['risk']],
-                                              non.hiv.subsets = NULL,
-                                              continuum=NULL,
+                                              continuum.from=NULL,
+                                              continuum.to=NULL,
                                               cd4=NULL,
                                               hiv.subsets=NULL,
                                               use.cdc.categorizations=T)
@@ -870,10 +1196,64 @@ extract.simset.incidence <- function(simset, years, all.dimensions,
     rv
 }
 
+#per total population in year
+extract.simset.incidence <- function(simset, years, all.dimensions,
+                                     dimension.subsets, total.population)
+{
+    total.population = total.population[as.character(years)]
+    eg = do.extract.incidence(simset@simulations[[1]],
+                              years=years, 
+                              keep.dimensions=all.dimensions,
+                              per.population=NA,
+                              ages=dimension.subsets[['age']],
+                              races=dimension.subsets[['race']],
+                              subpopulations=dimension.subsets[['subpopulation']],
+                              sexes=dimension.subsets[['sex']],
+                              risks=dimension.subsets[['risk']],
+                              non.hiv.subsets = NULL,
+                              continuum=NULL,
+                              cd4=NULL,
+                              hiv.subsets=NULL,
+                              use.cdc.categorizations=T)
+    rv = sapply(simset@simulations, function(sim)
+    {
+        numerators = do.extract.incidence(sim,
+                                          years=years, 
+                                          keep.dimensions=all.dimensions,
+                                          per.population=NA,
+                                          ages=dimension.subsets[['age']],
+                                          races=dimension.subsets[['race']],
+                                          subpopulations=dimension.subsets[['subpopulation']],
+                                          sexes=dimension.subsets[['sex']],
+                                          risks=dimension.subsets[['risk']],
+                                          non.hiv.subsets = NULL,
+                                          continuum=NULL,
+                                          cd4=NULL,
+                                          hiv.subsets=NULL,
+                                          use.cdc.categorizations=T)
+        denominators = do.extract.population.subset(sim, years=years, keep.dimensions = 'year', use.cdc.categorizations = T)
+        
+        as.numeric(numerators) / as.numeric(denominators) * as.numeric(total.population)
+    })
+    
+    if (is.null(dim(eg)))
+    {
+        dim.names = list(names(eg), 1:simset@n.sim)
+        names(dim.names) = c(all.dimensions, 'simulation')
+    }
+    else
+        dim.names = c(dimnames(eg), list(simulation=1:simset@n.sim))
+    
+    dim(rv) = sapply(dim.names, length)
+    dimnames(rv) = dim.names
+    
+    rv
+}
+
 #prevalence of those aware of diagnosis
 #per total population in year
 extract.simset.prevalence <- function(simset, years, all.dimensions,
-                                         dimension.subsets, total.population)
+                                      dimension.subsets, total.population)
 {
     total.population = total.population[as.character(years)]
     eg = do.extract.prevalence(simset@simulations[[1]],
@@ -892,18 +1272,18 @@ extract.simset.prevalence <- function(simset, years, all.dimensions,
     rv = sapply(simset@simulations, function(sim)
     {
         numerators = do.extract.prevalence(sim,
-                                        years=years, 
-                                        keep.dimensions=all.dimensions,
-                                        per.population=NA,
-                                        ages=dimension.subsets[['age']],
-                                        races=dimension.subsets[['race']],
-                                        subpopulations=dimension.subsets[['subpopulation']],
-                                        sexes=dimension.subsets[['sex']],
-                                        risks=dimension.subsets[['risk']],
-                                        continuum='diagnosed',
-                                        cd4s=NULL,
-                                        hiv.subsets=NULL,
-                                        use.cdc.categorizations=T)
+                                           years=years, 
+                                           keep.dimensions=all.dimensions,
+                                           per.population=NA,
+                                           ages=dimension.subsets[['age']],
+                                           races=dimension.subsets[['race']],
+                                           subpopulations=dimension.subsets[['subpopulation']],
+                                           sexes=dimension.subsets[['sex']],
+                                           risks=dimension.subsets[['risk']],
+                                           continuum='diagnosed',
+                                           cd4s=NULL,
+                                           hiv.subsets=NULL,
+                                           use.cdc.categorizations=T)
         denominators = do.extract.population.subset(sim, years=years, keep.dimensions = 'year', use.cdc.categorizations = T)
         
         as.numeric(numerators) / as.numeric(denominators) * as.numeric(total.population)
@@ -924,37 +1304,37 @@ extract.simset.prevalence <- function(simset, years, all.dimensions,
 }
 
 extract.simset.hiv.mortality <- function(simset, years, all.dimensions,
-                                      dimension.subsets, total.population)
+                                         dimension.subsets, total.population)
 {
     total.population = total.population[as.character(years)]
     eg = do.extract.overall.hiv.mortality(simset@simulations[[1]],
-                            years=years, 
-                            keep.dimensions=all.dimensions,
-                            per.population=NA,
-                            ages=dimension.subsets[['age']],
-                            races=dimension.subsets[['race']],
-                            subpopulations=dimension.subsets[['subpopulation']],
-                            sexes=dimension.subsets[['sex']],
-                            risks=dimension.subsets[['risk']],
-                            continuum='diagnosed',
-                            cd4s=NULL,
-                            hiv.subsets=NULL,
-                            use.cdc.categorizations=T)
+                                          years=years, 
+                                          keep.dimensions=all.dimensions,
+                                          per.population=NA,
+                                          ages=dimension.subsets[['age']],
+                                          races=dimension.subsets[['race']],
+                                          subpopulations=dimension.subsets[['subpopulation']],
+                                          sexes=dimension.subsets[['sex']],
+                                          risks=dimension.subsets[['risk']],
+                                          continuum='diagnosed',
+                                          cd4s=NULL,
+                                          hiv.subsets=NULL,
+                                          use.cdc.categorizations=T)
     rv = sapply(simset@simulations, function(sim)
     {
         numerators = do.extract.overall.hiv.mortality(sim,
-                                        years=years, 
-                                        keep.dimensions=all.dimensions,
-                                        per.population=NA,
-                                        ages=dimension.subsets[['age']],
-                                        races=dimension.subsets[['race']],
-                                        subpopulations=dimension.subsets[['subpopulation']],
-                                        sexes=dimension.subsets[['sex']],
-                                        risks=dimension.subsets[['risk']],
-                                        continuum='diagnosed',
-                                        cd4s=NULL,
-                                        hiv.subsets=NULL,
-                                        use.cdc.categorizations=T)
+                                                      years=years, 
+                                                      keep.dimensions=all.dimensions,
+                                                      per.population=NA,
+                                                      ages=dimension.subsets[['age']],
+                                                      races=dimension.subsets[['race']],
+                                                      subpopulations=dimension.subsets[['subpopulation']],
+                                                      sexes=dimension.subsets[['sex']],
+                                                      risks=dimension.subsets[['risk']],
+                                                      continuum='diagnosed',
+                                                      cd4s=NULL,
+                                                      hiv.subsets=NULL,
+                                                      use.cdc.categorizations=T)
         denominators = do.extract.population.subset(sim, years=years, keep.dimensions = 'year', use.cdc.categorizations = T)
         
         as.numeric(numerators) / as.numeric(denominators) * as.numeric(total.population)
@@ -1019,20 +1399,20 @@ extract.simset.suppression <- function(simset, years, all.dimensions,
 }
 
 extract.simset.knowledge.of.status <- function(simset, years, all.dimensions,
-                                       dimension.subsets)
+                                               dimension.subsets)
 {
     eg = do.extract.diagnosed.hiv(simset@simulations[[1]],
-                             years=years, 
-                             keep.dimensions=all.dimensions,
-                             per.population=1,
-                             ages=dimension.subsets[['age']],
-                             races=dimension.subsets[['race']],
-                             subpopulations=dimension.subsets[['subpopulation']],
-                             sexes=dimension.subsets[['sex']],
-                             risks=dimension.subsets[['risk']],
-                             cd4=NULL,
-                             hiv.subsets=NULL,
-                             use.cdc.categorizations=T)
+                                  years=years, 
+                                  keep.dimensions=all.dimensions,
+                                  per.population=1,
+                                  ages=dimension.subsets[['age']],
+                                  races=dimension.subsets[['race']],
+                                  subpopulations=dimension.subsets[['subpopulation']],
+                                  sexes=dimension.subsets[['sex']],
+                                  risks=dimension.subsets[['risk']],
+                                  cd4=NULL,
+                                  hiv.subsets=NULL,
+                                  use.cdc.categorizations=T)
     rv = sapply(simset@simulations, do.extract.diagnosed.hiv,
                 years=years, 
                 keep.dimensions=all.dimensions,
@@ -1060,3 +1440,26 @@ extract.simset.knowledge.of.status <- function(simset, years, all.dimensions,
     rv
 }
 
+##------------------##
+##-- MISC HELPERS --##
+##------------------##
+
+
+is.pct.data.type <- function(data.type, data.type.names)
+{
+    data.type == data.type.names['suppression'] | 
+        data.type == data.type.names['diagnosed']
+}
+
+format.values.for.plotly <- function(df,
+                                     data.type.names,
+                                     pct.digits=1,
+                                     non.pct.digits=0)
+{
+    pct.mask = is.pct.data.type(df$data.type, data.type.names)
+    
+    df$value[pct.mask] = round(df$value[pct.mask], pct.digits+2)
+    df$value[!pct.mask] = round(df$value[!pct.mask], non.pct.digits)
+    
+    df
+}

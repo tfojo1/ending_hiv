@@ -1084,7 +1084,8 @@ get.background.proportions <- function(base.model,
                                        idu.applies.to.msm.idu=T,
                                        msm.applies.to.msm.idu=T,
                                        transformation = function(x){base.model$max.proportion / (1+exp(-x))},
-                                       jheem)
+                                       jheem,
+                                       expand.population=T)
 {
     intercept = add.additional.betas.to.array(base.model$intercept, additional.intercepts,
                                               idu.applies.to.in.remission = idu.applies.to.in.remission,
@@ -1096,8 +1097,11 @@ get.background.proportions <- function(base.model,
                                           msm.applies.to.msm.idu = msm.applies.to.msm.idu)
 
     lapply(years, function(year){
-        expand.population.to.hiv.positive(jheem,
-                                          transformation(intercept + slope * (year-base.model$anchor.year) + future.slope * max(0,year-future.slope.after.year)))
+        p = transformation(intercept + slope * (year-base.model$anchor.year) + future.slope * max(0,year-future.slope.after.year))
+        if (expand.population)
+            expand.population.to.hiv.positive(jheem, p)
+        else
+            p
     })
 }
 

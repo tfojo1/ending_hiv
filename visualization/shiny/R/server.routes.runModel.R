@@ -92,7 +92,7 @@ server.routes.runModel.get <- function(
     # #plot #button
     
     #This code sets the position and style for the progress bar when loading simulations
-    tags$head(tags$style(".shiny-notification {position: fixed; top: 10% ;left: 25%; color: black;font-size: 20px;font-style: normal;")),
+    tags$head(tags$style(".shiny-notification {position: fixed; top: 10% ;left: 25%; color: black;font-size: 20px;font-style: normal; padding-left: 50px; padding-right: 50px")),
 #    tags$head(tags$style(".shiny-progress {top: 10% !important;left: 25% !important;margin-top: -100px !important;margin-left: -250px !important; color: blue;font-size: 20px;font-style: italic;}")),   
 
 
@@ -111,19 +111,41 @@ server.routes.runModel.get <- function(
               width=page.width.half,
               actionButton(
                 "reset_main", 
-                "Generate Figure"))),
+                "Generate Projections")),
+            column(
+                width=page.width.half,
+                radioGroupButtons(
+                    inputId="toggle_main", 
+                    selected='Figure',
+                    choices=c('Figure','Table')))
+            ),
           
           # #plot
           fluidRow(
+              tags$head(tags$style("#tbl {white-space: nowrap;}")),
             column(
               width=page.width,
-              plotlyOutput(
-                outputId="mainPlot",
-                height="auto",
-                width='100%',#"auto",
-                inline=T)  %>% withSpinner(color="#0dc5c1")))
+              
+              conditionalPanel(
+                  condition = "input.toggle_main == 'Figure'",
+                  plotlyOutput(
+                      outputId="mainPlot",
+                      height="auto",
+                      width='100%',#"auto",
+                      inline=T)  %>% withSpinner(color="#0dc5c1")
+                  ),
+              
+              conditionalPanel(
+                  condition = "input.toggle_main == 'Table'",
+                  div(style = 'overflow-x: scroll', 
+                      dataTableOutput(outputId="mainTable")
+                      )
+                  )
+              
+              ))
+            )
           
-        ))), 
+         )), 
     
     # #options
     # Spatiotemporal dimensions ####
@@ -144,7 +166,7 @@ server.routes.runModel.get <- function(
               width=page.width,
                 selectInput(
                   inputId="geographic-location", 
-                  label="Metropolitan Statistical Area (MSA)",
+                  label=NULL,#"Metropolitan Statistical Area (MSA)",
                   choices=invert.keyVals(get.location.options(
                     version=version)),
                   selected=get.location.options(
@@ -234,7 +256,7 @@ server.routes.runModel.get <- function(
           
           checkboxGroupInput(
             inputId='epidemiological-indicators', 
-            label='Indicators', 
+            label=NULL,#'Indicators', 
             choiceNames=unname(map(
               get.data.type.options(
                 version=version, 

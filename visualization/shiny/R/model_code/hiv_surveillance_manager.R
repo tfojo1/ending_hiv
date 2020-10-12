@@ -1170,7 +1170,7 @@ read.msa.file <- function(file, verbose=T, allow.misses=F)
               grepl('metropolitan', df[,1], ignore.case = T) |
               grepl('countie', df[,1], ignore.case = T)
               )))
-        # browser()
+        browser()
 
     division.mask = division.mask[!is.na(df$code)]
     df = df[!is.na(df$code),]
@@ -1966,6 +1966,7 @@ HIV.ATLAS.NUMERIC.COLUMNS = c('Cases',
                               'Population')
 read.hiv.atlas.file <- function(file)
 {
+    print(paste0("Reading HIV Atlas File: ", file))
     df = read.csv(file, stringsAsFactors = F)
     cols = intersect(names(df), HIV.ATLAS.NUMERIC.COLUMNS)
 

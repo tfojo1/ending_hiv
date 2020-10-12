@@ -45,23 +45,25 @@ plotAndCache <- function(input, cache) {
   if (length(filenames)>0)
   {
     if (length(filenames)==1)
-      msg = "Loading 1 Simulation File from Remote Server:"
+      msg = "Fetching 1 Simulation File from Remote Server:"
     else
-      msg = paste0("Loading ", length(filenames), " Simulations Files from Remote Server:")
+      msg = paste0("Fetching ", length(filenames), " Simulations Files from Remote Server:")
     withProgress(
-      message=msg, min=0, max=length(filenames), value=0,
+      message=msg, min=0, max=1, value=0.2/length(filenames),
+      detail=paste("Fetching file 1 of ", length(filenames)),
       {
         for (i in 1:length(filenames))
         {
-          setProgress((i-1),
-                      detail = paste("Loading file ", i, " of ", length(filenames)))
+            if (i>1)
+              setProgress((i-1)/length(filenames),
+                          detail = paste("Fetching file ", i, " of ", length(filenames)))
           filename = filenames[i]
           cache = update.sims.cache(
             filenames=filename,
             cache=cache)
           
+          setProgress(1, detail='Done')
         }
-        setProgress(length(filenames), detail='Done')
     })
   }
   
@@ -84,12 +86,9 @@ plotAndCache <- function(input, cache) {
         'sex'=input[['sex']],  # aka gender
         'risk'=input[['risk-groups']]),
       plot.format=input[['aggregation-of-simulations-ran']] )
-    p = plot.results$plot
-
-  
-  list(
-    'cache'=cache,
-    'plot'= do.render.plot(p) )
+    
+  plot.results$cache = cache
+  plot.results
 }
 
 # Server
@@ -260,10 +259,19 @@ server <- function(input, output, session) {
   
   # Plot when clicking 'Run':
   observeEvent(input$reset_main, {
-    # %>%
-    # output$mainPlot = withSpinner(color="#0dc5c1")
     plot.and.cache = plotAndCache(input, cache)
+    
     cache = plot.and.cache$cache
-    output$mainPlot = plot.and.cache$plot
+    
+    output$mainPlot = renderPlotly(plot.and.cache$plot)
+    
+    pretty.table = make.pretty.change.data.frame(plot.and.cache$change.df)
+    last.two.cols = (dim(pretty.table)[2]-1):dim(pretty.table)[2]
+    pretty.table = datatable(pretty.table) %>% formatStyle(last.two.cols,"white-space"="nowrap")
+    output$mainTable = renderDataTable(pretty.table)
+  })
+  
+  observeEvent(input$toggle_main, {
+    
   })
 }

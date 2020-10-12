@@ -10,7 +10,7 @@ test.config.on = FALSE
 # Constants (TEMPORARY) ####
 AGES = list(
   name='age-groups',
-  label='Age groups',
+  label='Age',
   choices=c(
     age1='13-24 years',
     age2='25-34 years',
@@ -20,7 +20,7 @@ AGES = list(
 
 RACES = list(
   name='racial-groups',
-  label='Racial groups',
+  label='Race',
   choices=c(
     black="Black",
     hispanic="Hispanic",
@@ -28,14 +28,14 @@ RACES = list(
 
 SEXES = list(
   name='sex',
-  label='Gender',
+  label='Sex',
   choices=c(
     male='Male',
     female='Female') )
 
 RISKS = list(
   name='risk-groups',
-  label='Risk groups',
+  label='Risk Factor',
   choices=c(
     msm="MSM",
     idu="IDU",
@@ -56,11 +56,12 @@ DIMENSIONS = c(
 
 DATA.TYPES = c(
     incidence="HIV Incidence",
-  new='Reported Diagnoses',
-  prevalence='Estimated Prevalence',
-  mortality='HIV Mortality',
-  suppression='Viral HIV Suppression',
-  diagnosed="Awareness of HIV Diagnosis")
+    new='Reported Diagnoses',
+    prevalence='Estimated Prevalence',
+    mortality='HIV Mortality',
+    suppression='Viral HIV Suppression',
+    diagnosed="Awareness of HIV Diagnosis")
+
 
 # Support functions 1: FUNCTIONS TO GET THE OPTIONS FOR ARGUMENTS ####
 
@@ -387,8 +388,8 @@ plot.simulations <- function(
   show.truth=T,
   #
   plot.interval.coverage=0.95,
-  summary.statistic='none',
-  summary.statistic.interval.coverage=0.95,
+#  summary.statistic='none',
+#  summary.statistic.interval.coverage=0.95,
   #
   baseline.color='blue',
   truth.color='green',
@@ -396,7 +397,7 @@ plot.simulations <- function(
   plot.interval.alpha=0.2,
   simulation.alpha=0.2,
   simulation.line.size=0.1,
-  truth.point.size=3
+  truth.point.size=10
 ) {
   
   #Hard Overrides for now
@@ -418,39 +419,52 @@ plot.simulations <- function(
     if (!is.null(dimension.subsets) && !is.null(dimension.subsets$age))
         dimension.subsets$age = age.mapping[dimension.subsets$age]
     
-    plot = do.plot.simulations(
-      simsets,
-      years=years,
-      data.types=data.types,
-      facet.by,
-      split.by,
-      dimension.subsets,
-      #for now, going to override the plot formats
-      plot.format=plot.format, 
-      
-      show.truth=T,
-      
-      plot.interval.coverage=plot.interval.coverage,
-      summary.statistic=summary.statistic,
-      summary.statistic.interval.coverage=summary.statistic.interval.coverage,
-      
-      colors=pal_jama(),
-      
-      plot.interval.alpha=plot.interval.alpha,
-      simulation.alpha=simulation.alpha,
-      simulation.line.size=simulation.line.size,
-      truth.point.size=truth.point.size)
+    #Figure out coloring
+    if (length(simsets)<=2 && length(split.by)>0)
+        color.by = 'split'
+    else
+        color.by = 'intervention'
     
-    plot = plot + theme(panel.border = element_rect(colour = "black", fill=NA, size=1),
-                        text = element_text(size=16),
-                        axis.text.x = element_text(angle = 45, vjust = 0.5, hjust=1),
-                        legend.position = 'bottom')
+    withProgress(min=0, max=1, value = 0, 
+                 message="Building Figure and Table...",
+                 {
+                     rv = do.plot.simulations(
+                         simsets,
+                         years=years,
+                         data.types=data.types,
+                         facet.by,
+                         split.by,
+                         dimension.subsets,
+                         #for now, going to override the plot formats
+                         plot.format=plot.format, 
+                         
+                         show.truth=T,
+                         
+                         plot.interval.coverage=plot.interval.coverage,
+                         #summary.statistic=summary.statistic,
+                         #summary.statistic.interval.coverage=summary.statistic.interval.coverage,
+                         
+                         colors=pal_jama(),
+                         
+                         plot.interval.alpha=plot.interval.alpha,
+                         simulation.alpha=simulation.alpha,
+                         simulation.line.size=simulation.line.size,
+                         truth.point.size=truth.point.size,
+                         
+                         color.by = color.by,
+                         
+                         progress.update = setProgress,
+                         
+                         data.type.names = DATA.TYPES,
+                         return.change.data.frame = T)
+                     
+                     setProgress(value=1)
+                 }
+    )
     
-#    plot = plot + theme(legend.position = 'none')
     
-  list(
-    plot=plot,
-    notes=c('test note 1', 'test note 2'))
+    rv$notes = c('test note 1', 'test note 2')
+    rv
 }
 
 # Tests: TEST CODE ####
@@ -473,8 +487,8 @@ if (test.config.on == T) {
     dimension.subsets=get.dimension.value.options(version, location),
     plot.format = names(get.plot.format.options(version, location))[1],
     plot.interval.coverage=0.95,
-    summary.statistic=get.summary.statistic.options(version, location)[1],
-    summary.statistic.interval.coverage=0.95,
+ #   summary.statistic=get.summary.statistic.options(version, location)[1],
+ #   summary.statistic.interval.coverage=0.95,
     baseline.color='blue',
     intervention.colors='red',
     plot.interval.alpha=0.2,

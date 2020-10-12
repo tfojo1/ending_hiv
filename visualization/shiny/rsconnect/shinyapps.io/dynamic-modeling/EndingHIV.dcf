@@ -5,8 +5,8 @@ account: dynamic-modeling
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 2955620
-bundleId: 3709424
+bundleId: 3727993
 url: https://dynamic-modeling.shinyapps.io/EndingHIV/
-when: 1602004453.32099
+when: 1602479097.70284
 asMultiple: FALSE
 asStatic: FALSE
