@@ -72,11 +72,12 @@ do.plot.simulations <- function(
     color.by=c('intervention','split')[1],
     plot.interval.alpha=0.2,
     simulation.alpha=0.1,
-    simulation.line.size=0.1,
+    simulation.line.size= (if (plot.format=='individual.simulations') 2 else 5) / (10^(!use.plotly)),
     truth.point.size=3*4^use.plotly,
     truth.shapes= if (use.plotly) TRUTH.SHAPES.PLOTLY else TRUTH.SHAPES.GGPLOT,
     truth.name='Epidemiological Target',
     truth.color=NULL,
+    ribbon.alpha = 0.25,
     
     label.change=F,
     label.change.ci=T,
@@ -428,11 +429,14 @@ do.plot.simulations <- function(
     
     if (use.plotly)
     {
+        #-- SOME INITIAL FORMATTING  (rounding, etc) --#
         df.sim = format.values.for.plotly(df.sim, data.type.names)
         
         if (!is.null(df.truth))
             df.truth = format.values.for.plotly(df.truth, data.type.names)
         
+        
+        #-- SET UP THE FACET CATEGORIES --#
         df.sim$facet = df.sim$data.type
         if (!is.null(df.truth))
             df.truth$facet = df.truth$data.type
@@ -450,6 +454,8 @@ do.plot.simulations <- function(
         data.types.for.facet.categories = sapply(strsplit(facet.categories, '\n'), function(spl){spl[1]})
         names(data.types.for.facet.categories) = facet.categories
         
+        
+        #-- PRE-CRHUNCH FOR LEGEND --#
         #This lets us show the truth legend exactly once for each split
         show.truth.legend.for.facet = sapply(splits, function(split){
             non.empty = sapply(facet.categories, function(ff){
@@ -460,7 +466,8 @@ do.plot.simulations <- function(
         })
         names(show.truth.legend.for.facet) = splits
         
-        # Calculate the number of rows
+        
+        #-- CALCULATE THE NUMBER OF ROWS --#
         if (is.null(nrow))
         {
             if (is.null(ncol))
@@ -469,9 +476,14 @@ do.plot.simulations <- function(
                 nrow = ceiling(length(facet.categories) / ncol)
         }
         
+
+        #-- SET UP FOR PROGRESS --#        
         unique.simset.names = unique(simset.names)
         n.steps = length(facet.categories) * length(unique.simset.names) * length(splits)
         
+
+        
+        #-- GENERATE THE PLOTLY OBJECT --#
         #Make a different subplot for each facet panel
         subplots = lapply(1:length(facet.categories), function(ff.i){
             
@@ -482,8 +494,9 @@ do.plot.simulations <- function(
             #df.facet = df.sim[df.sim$facet == ff,]
             facet.mask = df.sim$facet==ff
             
-            #make the sim
-            if (plot.format=='individual.simulations')
+            
+            #-- SET UP RIBBONS (if using mean/median + interval) --#
+            if (plot.format != 'individual.simulations')
             {
                 for (int.i in 1:length(unique.simset.names))
                 {
@@ -512,13 +525,59 @@ do.plot.simulations <- function(
                             show.legend = show.legend && split == splits[1]
                         }
                         
+                        plot = add_ribbons(plot, data=df.sim[split.mask,],
+                                         ymin=~lower, ymax=~upper,
+                                         fillcolor=color, 
+                                         opacity=ribbon.alpha,
+                                         legendgroup='Simulations',
+                                         line = list(color=color,
+                                                     width=simulation.line.size/5),
+                                         name=path.name,
+                                         showlegend = F)
+                    }
+                }
+            }
+            
+            #-- SET UP THE MAIN LINES (sim or mean/median) AND TRUTH --#
+            #make the sim
+            for (int.i in 1:length(unique.simset.names))
+            {
+                intervention = unique.simset.names[int.i]
+                int.mask = facet.mask & df.sim$intervention==intervention
+                
+                sims = unique(df.sim$simulation[int.mask])
+                for (split.i in 1:length(splits))
+                {
+                    split = splits[split.i]
+                    split.mask = int.mask & df.sim$split==split
+                    
+                    show.legend = ff==facet.categories[1] && !hide.legend
+                    
+                    path.name = intervention
+                    if (color.by == 'split' && length(split.by)>0)
+                    {
+                        color = colors[split]
+                        path.name = paste0('Simulations, ', split)
+                        show.legend = show.legend && intervention == simset.names[1]
+                    }
+                    else
+                    {
+                        color = colors[intervention]
+                        path.name = intervention
+                        show.legend = show.legend && split == splits[1]
+                    }
+                    
+                    
+                    if (plot.format=='individual.simulations')
+                    {
                         #this code makes the lines in the legend show up without opacity
                         if (show.legend)
                             plot = add_paths(plot, data=df.sim[split.mask & !is.na(df.sim$value),],
                                              x=~year[1], y=~value[1], color=color, 
                                              opacity=1,
                                              legendgroup='Simulations',
-                                             line = list(color=color),
+                                             line = list(color=color,
+                                                         width=simulation.line.size),
                                              name=path.name,
                                              showlegend = T)
                         
@@ -526,25 +585,34 @@ do.plot.simulations <- function(
                                          y=~value, color=color, 
                                          opacity=simulation.alpha,
                                          legendgroup='Simulations',
-                                         line = list(color=color),
+                                         line = list(color=color,
+                                                     width=simulation.line.size),
                                          name=path.name,
                                          showlegend = F,
                                          transforms = list(
                                              list(type = 'groupby',
                                                   groups = ~simulation))
                         )
-                        
-                        progress.update(FRACTION.PROGRESS.SETUP.DF +
-                                            (1-FRACTION.PROGRESS.SETUP.DF) *
-                                            (split.i + (int.i-1) * length(splits) +
-                                            (ff.i-1) * length(splits) * length(unique.simset.names)) /
-                                            n.steps)
                     }
+                    else
+                    {
+                        plot = add_paths(plot, data=df.sim[split.mask & !is.na(df.sim$value),],
+                                         y=~value, color=color,
+                                         opacity=1,
+                                         legendgroup='Simulations',
+                                         line = list(color=color,
+                                                     width=simulation.line.size),
+                                         name=path.name,
+                                         showlegend = show.legend
+                                         )
+                    }
+                    
+                    progress.update(FRACTION.PROGRESS.SETUP.DF +
+                                        (1-FRACTION.PROGRESS.SETUP.DF) *
+                                        (split.i + (int.i-1) * length(splits) +
+                                        (ff.i-1) * length(splits) * length(unique.simset.names)) /
+                                        n.steps)
                 }
-            }
-            else
-            {
-                stop('have not implemented mean/median + CI')
             }
             
             if (!is.null(df.truth))
@@ -628,6 +696,11 @@ do.plot.simulations <- function(
         
    
     }
+    
+    
+    
+    
+    
     else
     {
         plot = ggplot()

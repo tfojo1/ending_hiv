@@ -26,6 +26,14 @@ plot.simulations.flex(list(baseline, noint), data.types='new', years=2010:2030, 
                         color.by='split',
                       return.change.data.frame=F, plot.format='individual.simulations')
 
+plot.simulations.total(list(baseline, noint), data.types=c('incidence','new'), years=2010:2030, use.plotly=T,
+                       plot.format='mean.and.interval')
+
+plot.simulations.flex(list(baseline, noint), data.types='new', years=2010:2030, facet.by='race', split.by='sex',
+                      color.by='split',
+                      return.change.data.frame=F,
+                      plot.format='mean.and.interval')
+
 
 x=plot.simulations.flex(list(baseline, noint), data.types='new', years=2010:2030, facet.by='risk', split.by='age',
                       color.by='split',

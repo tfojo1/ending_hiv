@@ -396,12 +396,12 @@ plot.simulations <- function(
   intervention.colors='red',
   plot.interval.alpha=0.2,
   simulation.alpha=0.2,
-  simulation.line.size=0.1,
+  simulation.line.size=if (plot.format=='individual.simulations') 2 else 5,
   truth.point.size=10
 ) {
   
   #Hard Overrides for now
-  plot.format = 'individual.simulations'
+  #plot.format = 'individual.simulations'
 
   
     filenames = get.sim.filenames.to.load(
