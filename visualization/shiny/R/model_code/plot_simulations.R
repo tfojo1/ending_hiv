@@ -1160,7 +1160,7 @@ get.nontrivial.dimension.subsets <- function(dimension.subsets,
 }
 
 
-make.pretty.change.data.frame <- function(change.df)
+make.pretty.change.data.frame <- function(change.df, data.type.names=DATA.TYPE.NAMES)
 {
     df.names = names(change.df)
     pre.change.index = (1:length(df.names))[grepl('change',df.names)][1]-1
@@ -1183,19 +1183,28 @@ make.pretty.change.data.frame <- function(change.df)
                           ']')
     names(rv)[names(rv)=='reduction'] = paste0("Reduction\n(", year1, " to ", year2, ")")
     
-    rv$year1 = paste0(format(round(change.df[,pre.change.index+4]), big.mark = ','), 
+    
+    pct.mask = is.pct.data.type(change.df$data.type, data.type.names)
+    mult = rep(1, length(pct.mask))
+    mult[pct.mask] = 100
+    unit = rep('', length(pct.mask))
+    unit[pct.mask] = '%'
+    
+    rv$year1 = paste0(format(round(mult*change.df[,pre.change.index+4]), big.mark = ','), 
+                      unit,
                       ' [',
-                      format(round(change.df[,pre.change.index+5]), big.mark = ','),
+                      format(round(mult*change.df[,pre.change.index+5]), big.mark = ','),
                       ' - ',
-                      format(round(change.df[,pre.change.index+6]), big.mark = ','),
+                      format(round(mult*change.df[,pre.change.index+6]), big.mark = ','),
                       ']')
     names(rv)[names(rv)=='year1'] = paste0(year1, " Level")
     
-    rv$year2 = paste0(format(round(change.df[,pre.change.index+7]), big.mark = ','), 
+    rv$year2 = paste0(format(round(mult*change.df[,pre.change.index+7]), big.mark = ','), 
+                      unit,
                       ' [',
-                      format(round(change.df[,pre.change.index+8]), big.mark = ','),
+                      format(round(mult*change.df[,pre.change.index+8]), big.mark = ','),
                       ' - ',
-                      format(round(change.df[,pre.change.index+9]), big.mark = ','),
+                      format(round(mult*change.df[,pre.change.index+9]), big.mark = ','),
                       ']')
     names(rv)[names(rv)=='year2'] = paste0(year2, " Level")
     

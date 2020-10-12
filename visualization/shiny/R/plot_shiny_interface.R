@@ -394,8 +394,8 @@ plot.simulations <- function(
   baseline.color='blue',
   truth.color='green',
   intervention.colors='red',
-  plot.interval.alpha=0.2,
-  simulation.alpha=0.2,
+  plot.interval.alpha=0.25,
+  simulation.alpha=0.125,
   simulation.line.size=if (plot.format=='individual.simulations') 2 else 5,
   truth.point.size=10
 ) {

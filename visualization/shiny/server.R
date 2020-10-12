@@ -206,7 +206,7 @@ server <- function(input, output, session) {
   # Page: RunModel - Components####  
   # output$mainDL = server.routes.runModel[['mainDL']]
   # output$mainTable = server.routes.runModel[['mainTable']]
-     
+
   # TODO: need this?
   output$mainPlot = server.routes.runModel[['mainPlot']]
   
@@ -266,7 +266,7 @@ server <- function(input, output, session) {
     
     output$mainPlot = renderPlotly(plot.and.cache$plot)
     
-    pretty.table = make.pretty.change.data.frame(plot.and.cache$change.df)
+    pretty.table = make.pretty.change.data.frame(plot.and.cache$change.df, data.type.names=DATA.TYPES)
    # last.two.cols = (dim(pretty.table)[2]-1):dim(pretty.table)[2]
     #pretty.table = datatable(pretty.table) %>% formatStyle(last.two.cols,"white-space"="nowrap")
     output$mainTable = renderDataTable(pretty.table)

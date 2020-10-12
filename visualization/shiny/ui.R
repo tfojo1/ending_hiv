@@ -13,12 +13,12 @@ ui <- dashboardPage(
   #  - Appear in app in order shown below
   dashboardSidebar(
     sidebarMenu(
-      menuItem("Visualize projections", tabName="main", icon=icon("dashboard")),
+      menuItem("Visualize projections", tabName="main", icon=icon("chart-line")),
       # menuItem("Parameters", tabName="raw_params", icon=icon("th")),
       menuItem("Design interventions", tabName="design-interventions", 
-               icon=icon("dashboard")),
-      menuItem("About the model", tabName="text", icon=icon("info")),
-      menuItem("Help and feedback", tabName="help-and-feedback", icon=icon("info"))
+               icon=icon("wrench")),
+      menuItem("About the model", tabName="text", icon=icon("info-circle")),
+      menuItem("Help and feedback", tabName="help-and-feedback", icon=icon("question-circle"))
       
       # menuItem(
       #   "Sensitivity Analysis", tabName="sens_ana", 
