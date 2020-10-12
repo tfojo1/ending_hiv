@@ -1,5 +1,6 @@
 'EndingHIV RShiny Server process'
 library('stringr')
+library('DT')
 
 # Source files
 source("R/ui.tools.R")
@@ -47,7 +48,7 @@ plotAndCache <- function(input, cache) {
     if (length(filenames)==1)
       msg = "Fetching 1 Simulation File from Remote Server:"
     else
-      msg = paste0("Fetching ", length(filenames), " Simulations Files from Remote Server:")
+      msg = paste0("Fetching ", length(filenames), " Simulation Files from Remote Server:")
     withProgress(
       message=msg, min=0, max=1, value=0.2/length(filenames),
       detail=paste("Fetching file 1 of ", length(filenames)),
@@ -266,8 +267,8 @@ server <- function(input, output, session) {
     output$mainPlot = renderPlotly(plot.and.cache$plot)
     
     pretty.table = make.pretty.change.data.frame(plot.and.cache$change.df)
-    last.two.cols = (dim(pretty.table)[2]-1):dim(pretty.table)[2]
-    pretty.table = datatable(pretty.table) %>% formatStyle(last.two.cols,"white-space"="nowrap")
+   # last.two.cols = (dim(pretty.table)[2]-1):dim(pretty.table)[2]
+    #pretty.table = datatable(pretty.table) %>% formatStyle(last.two.cols,"white-space"="nowrap")
     output$mainTable = renderDataTable(pretty.table)
   })
   

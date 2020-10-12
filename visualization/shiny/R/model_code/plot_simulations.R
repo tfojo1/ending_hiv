@@ -1110,19 +1110,19 @@ make.pretty.change.data.frame <- function(change.df)
                           ']')
     names(rv)[names(rv)=='reduction'] = paste0("Reduction\n(", year1, " to ", year2, ")")
     
-    rv$year1 = paste0(round(change.df[,pre.change.index+4]), 
+    rv$year1 = paste0(format(round(change.df[,pre.change.index+4]), big.mark = ','), 
                       ' [',
-                      round(change.df[,pre.change.index+5]),
+                      format(round(change.df[,pre.change.index+5]), big.mark = ','),
                       ' - ',
-                      round(change.df[,pre.change.index+6]),
+                      format(round(change.df[,pre.change.index+6]), big.mark = ','),
                       ']')
     names(rv)[names(rv)=='year1'] = paste0(year1, " Level")
     
-    rv$year2 = paste0(round(change.df[,pre.change.index+7]), 
+    rv$year2 = paste0(format(round(change.df[,pre.change.index+7]), big.mark = ','), 
                       ' [',
-                      round(change.df[,pre.change.index+8]),
+                      format(round(change.df[,pre.change.index+8]), big.mark = ','),
                       ' - ',
-                      round(change.df[,pre.change.index+9]),
+                      format(round(change.df[,pre.change.index+9]), big.mark = ','),
                       ']')
     names(rv)[names(rv)=='year2'] = paste0(year2, " Level")
     
