@@ -147,6 +147,69 @@ is.null.intervention <- function(int)
     length(int$raw) == 0
 }
 
+get.intervention.description <- function(int,
+                                         delimiter='\n',
+                                         bullet.pre=' - ',
+                                         bullet.post='',
+                                         pre.header='',
+                                         post.header='',
+                                         pre.list='',
+                                         post.list='',
+                                         pre.target.pop='',
+                                         post.target.pop='')
+{
+    rv = NULL
+    for (type in names(int$raw))
+    {
+        if (is.null(rv))
+            rv = ''
+        else
+            rv = paste0(rv, delimiter)
+        
+        rv = paste0(rv, pre.header, INTERVENTION.UNIT.TYPE.PRETTY.NAMES[type], ":", post.header)
+        
+        subset = int$raw[[type]]
+        
+        rv = paste0(rv, pre.list)
+        for (i in 1:length(subset$target.populations))
+        {
+            rv = paste0(rv, delimiter, bullet.pre)
+            rv = paste0(rv, pre.target.pop,
+                        target.population.name(subset$target.populations[[i]]), ": ",
+                        post.target.pop)
+            rv = paste0(rv, get.intervention.unit.name(subset$intervention.units[[i]],
+                                                       include.start.text = 'ramping up from'))
+            rv = paste0(rv, bullet.post)
+        }
+        rv = paste0(rv, post.list)
+    }
+    
+    rv
+}
+
+get.intervention.html.description <- function(int,
+                                              delimiter='',
+                                              bullet.pre='<li>',
+                                              bullet.post='</li>',
+                                              pre.header='<b>',
+                                              post.header='</b>',
+                                              pre.list='<ul>',
+                                              post.list='</ul>',
+                                              pre.target.pop="<i>",
+                                              post.target.pop="</i>")
+{
+    get.intervention.description(int,
+                                 delimiter=delimiter,
+                                 bullet.pre=bullet.pre,
+                                 bullet.post=bullet.post,
+                                 pre.header=pre.header,
+                                 post.header=post.header,
+                                 pre.list=pre.list,
+                                 post.list=post.list,
+                                 pre.target.pop=pre.target.pop,
+                                 post.target.pop=post.target.pop)
+}
+
 ##------------------------------##
 ##-- THE INTERVENTION MANAGER --##
 ##------------------------------##
@@ -265,6 +328,15 @@ intervention.from.code <- function(code, manager=INTERVENTION.MANAGER.1.0)
         manager$intervention[[ (1:length(manager$intervention))[mask] ]]
     else
         NULL
+}
+
+intervention.from.short.name <- function(short.name, manager=INTERVENTION.MANAGER.1.0)
+{
+    code = intervention.short.name.to.code(short.name, manager=manager)
+    if (is.null(code))
+        NULL
+    else
+        intervention.from.code(code, manager=manager)
 }
 
 intervention.code.to.name <- function(code, manager=INTERVENTION.MANAGER.1.0)

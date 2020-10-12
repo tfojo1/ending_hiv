@@ -1,4 +1,9 @@
 
+
+INTERVENTION.UNIT.TYPE.PRETTY.NAMES = c(testing='Testing',
+                                        prep='PrEP',
+                                        suppression='Viral Suppression')
+
 ##------------------------##
 ##-- INTERVENTION UNITS --##
 ##------------------------##
@@ -53,7 +58,7 @@ create.intervention.unit <- function(type=c('testing','prep','suppression'),
 }
 
 get.intervention.unit.name <- function(unit, 
-                                       include.start=F,
+                                       include.start.text=NA,
                                        round.digits=1)
 {
     if (unit$type=='testing')
@@ -88,8 +93,8 @@ get.intervention.unit.name <- function(unit,
     else
         stop("Only 'testing', 'prep', and 'suppression' are currently supported unit types")
     
-    if (include.start)
-        rv = paste0("starting in ", unit$start.year, ', ', rv)
+    if (!is.na(include.start.text))
+        rv = paste0(include.start.text," ", unit$start.year, ', ', rv)
     
     rv
 }

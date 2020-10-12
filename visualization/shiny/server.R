@@ -275,4 +275,26 @@ server <- function(input, output, session) {
   observeEvent(input$toggle_main, {
     
   })
+  
+  observeEvent(input$intervention1, {
+      if (input$intervention1=='none')
+          output$intervention1_description = NULL
+      else
+      {
+          int = intervention.from.short.name(input$intervention1)
+          description = get.intervention.html.description(int)
+          output$intervention1_description = renderText(description)
+      }
+  })
+  
+  observeEvent(input$intervention2, {
+      if (input$intervention2=='none')
+          output$intervention2_description = NULL
+      else
+      {
+          int = intervention.from.short.name(input$intervention2)
+          description = get.intervention.html.description(int)
+          output$intervention2_description = renderText(description)
+      }
+  })
 }

@@ -224,7 +224,7 @@ server.routes.runModel.get <- function(
                 selectize=TRUE, 
                 width='auto', 
                 size=NULL ),
-              textOutput(outputId='intervention1-description')
+              htmlOutput(outputId='intervention1_description')
             ),
             column(
               width=page.width.half,
@@ -241,7 +241,7 @@ server.routes.runModel.get <- function(
                 selectize=TRUE, 
                 width='auto', 
                 size=NULL ),
-              textOutput(outputId='intervention2-description')
+              htmlOutput(outputId='intervention2_description')
             ),
           ),  # </fluidRow>
           

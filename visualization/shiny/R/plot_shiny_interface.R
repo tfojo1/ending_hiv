@@ -218,7 +218,7 @@ get.intervention.options <- function(version, location)
     rv = lapply(interventions, function(int){
         list(name=get.intervention.code(int),
               label=get.intervention.short.name(int),
-              description='placeholder description\nsecond line\nthird line')
+              description=get.intervention.description(int))
     })
     names(rv)=sapply(rv, function(elem){elem$label})
     
