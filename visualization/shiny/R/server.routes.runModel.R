@@ -3,9 +3,10 @@
 library('shiny')
 library('shinycssloaders')
 library('shinyWidgets')
+library('purrr')
 
 
-source("R/ui.tools.R")  # plot.simulations
+#source("R/ui.tools.R")  # plot.simulations
 source("R/plot_shiny_interface.R")  # plot.simulations
 
 
@@ -75,6 +76,9 @@ indicator.choiceValues = c(
   'awareness',
   'incidence')
 
+
+
+
 # Calculated variables
 page.width.half = round(page.width / 2)
 year.ticks = get.year.options(
@@ -85,8 +89,15 @@ year.ticks = get.year.options(
 server.routes.runModel.get <- function(
   input, control, init, param
 ) {
+  
   # Component: PageDef #ui_main[renderUI]
   ui_main = renderUI({
+    
+    location.choice = input[['geographic_location']]
+    if (is.null(location.choice))
+        location.choice = invert.keyVals(get.location.options(version))[1]
+    
+    
     list(  # returns-->list
     # Button & Plot ####
     # #plot #button
@@ -128,8 +139,7 @@ server.routes.runModel.get <- function(
               
               conditionalPanel(
                   condition = "input.toggle_main == 'Figure'",
-                  plotlyOutput(
-                      outputId="mainPlot",
+                  plotlyOutput(outputId="mainPlot",
                       height="auto",
                       width='100%',#"auto",
                       inline=T)  %>% withSpinner(color="#0dc5c1")
@@ -137,6 +147,7 @@ server.routes.runModel.get <- function(
               
               conditionalPanel(
                   condition = "input.toggle_main == 'Table'",
+                  verbatimTextOutput('mainTable_message', placeholder = FALSE),
                   div(style = 'overflow-x: scroll', 
                       dataTableOutput(outputId="mainTable")
                       )
@@ -165,12 +176,11 @@ server.routes.runModel.get <- function(
             column(
               width=page.width,
                 selectInput(
-                  inputId="geographic-location", 
+                  inputId="geographic_location", 
                   label=NULL,#"Metropolitan Statistical Area (MSA)",
                   choices=invert.keyVals(get.location.options(
                     version=version)),
-                  selected=get.location.options(
-                    version=version)[1],
+                  selected=location.choice,#get.location.options(version=version)[1],
                   multiple=FALSE,
                   selectize=TRUE, 
                   width=NULL, 
@@ -217,9 +227,9 @@ server.routes.runModel.get <- function(
                 choices=invert.keyVals(
                   get.interventions.simpleList(
                     version=version, 
-                    location=input[['geographic-location']])),
+                    location=input[['geographic_location']])),
                 selected=invert.keyVals(get.interventions.simpleList(
-                  version=version, input[['geographic-location']]))[1],
+                  version=version, input[['geographic_location']]))[1],
                 multiple=FALSE,
                 selectize=TRUE, 
                 width='auto', 
@@ -234,9 +244,9 @@ server.routes.runModel.get <- function(
                 choices=invert.keyVals(
                   get.interventions.simpleList(
                     version=version, 
-                    location=input[['geographic-location']])),
+                    location=input[['geographic_location']])),
                 selected=invert.keyVals(get.interventions.simpleList(
-                  version=version, input[['geographic-location']]))[1],
+                  version=version, input[['geographic_location']]))[1],
                 multiple=FALSE,
                 selectize=TRUE, 
                 width='auto', 
@@ -260,17 +270,17 @@ server.routes.runModel.get <- function(
             choiceNames=unname(map(
               get.data.type.options(
                 version=version, 
-                location=input[['geographic-location']]),
+                location=input[['geographic_location']]),
               ~ .x )),
             choiceValues=names(map(
               get.data.type.options(
                 version=version, 
-                location=input[['geographic-location']]),
+                location=input[['geographic_location']]),
               ~ .x )),
             selected=names(map(
               get.data.type.options(
                 version=version, 
-                location=input[['geographic-location']]),
+                location=input[['geographic_location']]),
               ~ .x ))[1:2] ),
           
         ))),
@@ -289,15 +299,16 @@ server.routes.runModel.get <- function(
           
           column(
             width=page.width,
-            selectInput(
+            radioGroupButtons(
+#            selectInput(
               inputId='aggregation-of-simulations-ran', 
               label='What to Plot', 
               choices=invert.keyVals(get.plot.format.options(
                 version=version,
-                location=input[['geographic-location']])),
+                location=input[['geographic_location']])),
               selected=NULL, 
-              multiple=FALSE,
-              selectize=TRUE, 
+              #multiple=FALSE,
+              #selectize=TRUE, 
               width=NULL, 
               size=NULL) ),
           
@@ -308,10 +319,10 @@ server.routes.runModel.get <- function(
               label='Make Separate Panels for Each:', 
               choiceNames=unname(get.facet.by.options(
                 version=version,
-                location=input[['geographic-location']])),
+                location=input[['geographic_location']])),
               choiceValues=names(get.facet.by.options(
                 version=version,
-                location=input[['geographic-location']])),
+                location=input[['geographic_location']])),
               selected=NULL)),
           
           column(
@@ -321,10 +332,10 @@ server.routes.runModel.get <- function(
               label='Within a Panel, Plot Separate Lines for Each:', 
               choiceNames=unname(get.split.by.options(
                 version=version,
-                location=input[['geographic-location']])),
+                location=input[['geographic_location']])),
               choiceValues=names(get.split.by.options(
                 version=version,
-                location=input[['geographic-location']])),
+                location=input[['geographic_location']])),
               selected=NULL))
           
           # column(
@@ -352,7 +363,7 @@ server.routes.runModel.get <- function(
           map(
             get.dimension.value.options(
               version=version,
-              location=input[['geographic-location']]), 
+              location=input[['geographic_location']]), 
             function(dim) {
               column(
                 width=page.width.half,

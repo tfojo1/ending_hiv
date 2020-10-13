@@ -1,9 +1,10 @@
 'EndingHIV RShiny Server process'
 library('stringr')
-library('DT')
+#library('DT')
+#library('shinyjs')
 
 # Source files
-source("R/ui.tools.R")
+#source("R/ui.tools.R")
 source("R/plot_shiny_interface.R")
 source("R/server.routes.docs.R")
 # source("R/server.routes.designInterventions.R")
@@ -37,7 +38,7 @@ plotAndCache <- function(input, cache) {
   # Get the filenames to pre-cache
   filenames = get.sim.filenames.to.load(
     version,
-    location=input[['geographic-location']],
+    location=input[['geographic_location']],
     intervention.names=intervention.names)
   
   filenames = filenames[!is.sim.cached(filenames, cache=cache)]
@@ -72,7 +73,7 @@ plotAndCache <- function(input, cache) {
     plot.results = plot.simulations(
       cache=cache,
       version=version,
-      location=input[['geographic-location']],
+      location=input[['geographic_location']],
       intervention.names=intervention.names,
       # years=input[['years']][1]:input[['years']][2],
       years=get.year.options(
@@ -92,112 +93,21 @@ plotAndCache <- function(input, cache) {
   plot.results
 }
 
+
+BLANK.MESSAGE = "Select intervention(s) and click 'Generate Projections'"
+make.plotly.message <- function(message=BLANK.MESSAGE)
+{
+    plot = plotly_empty()
+    plot = add_text(plot, text=message, x=0, y=0)
+    #plot = layout(plot, xaxis=list(range = c(-0.5,0.5)))
+    #plot = layout(plot, uniformtext=list(minsize=8, mode='hide'))
+    
+    plot
+}
+
 # Server
 server <- function(input, output, session) {
   cache = CACHE
-  # TODO: @jef: does this section 'defaults' apply  to all pages, 
-  # or is this  all for the 'Parameters' page
-  # defaults ####
-  param <- reactive({
-    # TODO @jef: put what I expect here; rather, get these from Todd's
-    #  plot interface constant.
-    beta_student_to_student <- 
-      input$R0_student_to_student / input$infectious
-    beta_on_to_on <- input$R0_on_to_on / input$infectious
-    beta_saf <- input$R0_saf / input$infectious
-    N <- input$N_on + input$N_off + input$N_saf
-
-    # TODO: get rid of stuff i don't need
-# https://www.rdocumentation.org/
-# packages/EpiModel/versions/1.2.8/topics/param.dcm
-    param.dcm(  # EpiModel::param.dcm
-      latent                  = input$latent,
-      infectious              = input$infectious,
-      isolation               = input$isolation,
-
-      R0_on_to_on             = input$R0_on_to_on,
-      R0_student_to_student   = input$R0_student_to_student,
-      R0_saf                  = input$R0_saf,
-      beta_student_to_student = beta_student_to_student,
-      beta_on_to_on           = beta_on_to_on,
-      beta_saf                = beta_saf,
-
-      community               = input$community,
-      p_asympt_stu            = input$p_asympt_stu,
-      p_asympt_saf            = input$p_asympt_saf,
-
-      p_hosp_stu              = input$p_hosp_stu,
-      p_hosp_saf              = input$p_hosp_saf,
-
-      p_death_stu             = input$p_death_stu,
-      p_death_saf             = input$p_death_saf,
-
-      contacts                = input$contacts,
-      p_contacts_reached      = input$p_contacts_reached,
-      sensitivity             = input$sensitivity,
-      testing                 = 0,#input$testing,
-      screening               = 0,#input$screening,
-      p_asympt_stu            = input$p_asympt_stu,
-      p_asympt_saf            = input$p_asympt_saf,
-      ili                     = input$ili,
-      N                       = N
-    )
-  })
-
-  # TODO @jef: put what I expect here
-  init <- reactive({  # rshiny::reactive
-    N_off <- input$N_stu - input$N_on # Based on number on campus
-    
-# https://www.rdocumentation.org/
-# packages/EpiModel/versions/1.2.8/topics/init.dcm
-    init.dcm(  # EpiModel::init.dcm
-      # S_on must be input that updates with E I R N
-      # # number initially susceptible
-      S_on = input$N_on - (input$E_on + input$I_on + input$R_on), 
-      E_on = input$E_on, # number initially incubating
-      I_on = input$I_on, # number initially infectious
-      P_on = input$P_on, # number initially isolated
-      R_on = input$R_on, # initially immune
-      Icum_on = 0, # cumulative cases -- for counting incidence
-      Pcum_on = 0,
-      Q_on = input$Q_on,
-      Qcum_on = 0,
-      Hcum_on = 0,
-      Dcum_on = 0,
-
-      S_off = input$N_off - (input$E_off + input$I_off + input$R_off),
-      E_off = input$E_off,
-      I_off = input$I_off,
-      P_off = input$P_off,
-      R_off = input$R_off,
-      Icum_off = 0,
-      Pcum_off = 0,
-      Q_off = input$Q_off,
-      Qcum_off = 0,
-      Hcum_off = 0,
-      Dcum_off = 0,
-
-      S_saf = input$N_saf - (input$E_saf + input$I_saf + input$R_saf),
-      E_saf = input$E_saf,
-      I_saf = input$I_saf,
-      P_saf = input$P_saf,
-      R_saf = input$R_saf,
-      Icum_saf = 0,
-      Pcum_saf = 0,
-      Q_saf = input$Q_saf,
-      ## Qcum_saf = input$Qcum_saf,
-      Hcum_saf = 0,
-      Dcum_saf = 0,
-
-      Test = input$Test
-    )
-  })
-
-  control <- reactive(control.dcm(nsteps = input$nsteps, new.mod = model))
-
-  observeEvent(input$btn_reload, {
-    session$reload()
-  })
 
   # Page: RunModel - Def ####  
   server.routes.runModel = server.routes.runModel.get(
@@ -219,33 +129,7 @@ server <- function(input, output, session) {
   # output$introductionText <- renderUI({includeMarkdown(
   #   "introductionText.Rmd")})
 
-  # observe({
-  #   res_main()
-  #   update_init_vals_pattern("baseIni_", input, session)
-  #   update_init_vals_pattern("basePar_", input, session)
-  #   updateSliderInput(session, "baseCon_nsteps", value = input$nsteps)
-  # })
-  
-  # output$rawParamText  ####
-  output$rawParamText <- renderUI({
-    includeMarkdown("rawParamText.Rmd")
-  })
-  output[['intervention1-description']] <- renderText({
-    options = get.intervention.options(
-      version=input[['version']],
-      location=input[['location']])
-    # description = ''
-    description = options[[input[['intervention1']]]]$description
-    description
-  })
-  output[['intervention2-description']] <- renderText({ 
-    options = get.intervention.options(
-      version=input[['version']], 
-      location=input[['location']])
-    # description = ''
-    description = options[[input[['intervention2']]]]$description
-    description
-  })
+
   
   # Events: Simulate & plot ####
   # Plot: Pass to plot event handler function
@@ -260,6 +144,8 @@ server <- function(input, output, session) {
   
   # Plot when clicking 'Run':
   observeEvent(input$reset_main, {
+      print('responding to reset main')
+      print(paste0("Selected location = ", input[['geographic_location']]))
     plot.and.cache = plotAndCache(input, cache)
     
     cache = plot.and.cache$cache
@@ -270,10 +156,7 @@ server <- function(input, output, session) {
    # last.two.cols = (dim(pretty.table)[2]-1):dim(pretty.table)[2]
     #pretty.table = datatable(pretty.table) %>% formatStyle(last.two.cols,"white-space"="nowrap")
     output$mainTable = renderDataTable(pretty.table)
-  })
-  
-  observeEvent(input$toggle_main, {
-    
+    output$mainTable_message = NULL
   })
   
   observeEvent(input$intervention1, {
@@ -297,4 +180,15 @@ server <- function(input, output, session) {
           output$intervention2_description = renderText(description)
       }
   })
+  
+  observeEvent(input$geographic_location, {
+        
+      output$mainPlot = renderPlotly(make.plotly.message(BLANK.MESSAGE))
+      
+      message.df = data.frame(BLANK.MESSAGE)
+      names(message.df) = NULL
+      output$mainTable = renderDataTable(message.df)#matrix(BLANK.MESSAGE,nrow=1,ncol=1))
+      output$mainTable_message = renderText(BLANK.MESSAGE)
+  })
+  
 }

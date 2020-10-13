@@ -1,9 +1,7 @@
 'EndingHIV RShiny web front-end process: UI spec'
 
-source("R/ui.tools.R")
-source("R/ui.pages.params.R")
-
-# UI
+library('shinydashboard')
+# UI 
 ui <- dashboardPage(
   
   ## Header

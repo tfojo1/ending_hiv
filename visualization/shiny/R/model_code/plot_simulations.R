@@ -211,16 +211,18 @@ do.plot.simulations <- function(
     
     #-- Individual Simulations --#
     n.sim.dfs = length(simsets) * length(data.types)
+    
+    if (plot.format=='median.and.ci')
+        aggregate.statistic='median'
+    else
+        aggregate.statistic='mean'
+    
     if (length(simsets)>0)
     {
         sim.sub.df.pairs = lapply(1:n.sim.dfs, function(i){
             simset.index = ceiling(i/length(data.types))
             data.type.index = (i-1) %% length(data.types) + 1
             
-            if (plot.format=='median.and.ci')
-                aggregate.statistic='median'
-            else
-                aggregate.statistic='mean'
             one.dfs.sim = get.sim.dfs(simset=simsets[[simset.index]],
                                       data.type=data.types[data.type.index],
                                       years=years.for.simset[[simset.index]],
@@ -281,6 +283,8 @@ do.plot.simulations <- function(
             df.change = as.data.frame(rbindlist(df.change.subs))
             if (any(keep.dimensions=='risk') && any(keep.dimensions=='sex'))
                 df.change = df.change[df.change$sex != 'female' | (df.change$risk != 'msm' & df.change$risk != 'msm_idu'),]
+            attr(df.change, 'stat') = aggregate.statistic
+            attr(df.change, 'interval.coverage') = plot.interval.coverage
         }
             
     }
@@ -1164,6 +1168,8 @@ make.pretty.change.data.frame <- function(change.df, data.type.names=DATA.TYPE.N
 {
     df.names = names(change.df)
     pre.change.index = (1:length(df.names))[grepl('change',df.names)][1]-1
+    stats.description = paste0(", ", attr(change.df, 'stat'), 
+                               " [", round(100*attr(change.df, 'interval.coverage')), "% interval]")
     
     rv = change.df[,1:pre.change.index]
     
@@ -1181,7 +1187,8 @@ make.pretty.change.data.frame <- function(change.df, data.type.names=DATA.TYPE.N
                           ' to ',
                           round(100*change.df[,pre.change.index+3]),
                           ']')
-    names(rv)[names(rv)=='reduction'] = paste0("Reduction\n(", year1, " to ", year2, ")")
+    names(rv)[names(rv)=='reduction'] = paste0("Reduction ", year1, " to ", year2, 
+                                               stats.description)
     
     
     pct.mask = is.pct.data.type(change.df$data.type, data.type.names)
@@ -1197,7 +1204,7 @@ make.pretty.change.data.frame <- function(change.df, data.type.names=DATA.TYPE.N
                       ' - ',
                       format(round(mult*change.df[,pre.change.index+6]), big.mark = ','),
                       ']')
-    names(rv)[names(rv)=='year1'] = paste0(year1, " Level")
+    names(rv)[names(rv)=='year1'] = paste0(year1, " Level", stats.description)
     
     rv$year2 = paste0(format(round(mult*change.df[,pre.change.index+7]), big.mark = ','), 
                       unit,
@@ -1206,7 +1213,7 @@ make.pretty.change.data.frame <- function(change.df, data.type.names=DATA.TYPE.N
                       ' - ',
                       format(round(mult*change.df[,pre.change.index+9]), big.mark = ','),
                       ']')
-    names(rv)[names(rv)=='year2'] = paste0(year2, " Level")
+    names(rv)[names(rv)=='year2'] = paste0(year2, " Level", stats.description)
     
     rv
 }

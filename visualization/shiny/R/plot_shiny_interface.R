@@ -92,6 +92,7 @@ get.location.options <- function(version)
   # )
   sims.names = sims.list()
   locations = get.locations.from.filenames(sims.names)
+  locations = unique(locations)
   location.names = unlist(msa.names(locations))
   names(location.names) = locations
   location.names = sort(location.names)
