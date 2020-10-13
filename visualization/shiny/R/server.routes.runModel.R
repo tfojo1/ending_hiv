@@ -1,94 +1,34 @@
 # # EndingHiv; Page: Run Model (#page-run-model): output$ui_main
-# Settings & Imports ####
+
+##-------------------------------##
+##-- LIBRARIES and SOURCE CODE --##
+##-------------------------------##
+
 library('shiny')
 library('shinycssloaders')
 library('shinyWidgets')
 library('purrr')
 
+# This sourcing will be done by the parent server.R file
+#source("R/plot_shiny_interface.R")  # plot.simulations
 
-#source("R/ui.tools.R")  # plot.simulations
-source("R/plot_shiny_interface.R")  # plot.simulations
+##--------------##
+##- CONSTANTS --##
+##--------------##
 
-
-# Variables ####
-# Constants
-version = '1.0'
+#version = '1.0'
 page.width = 12
-
-demog.choiceNames = c(
-  'Age',
-  'Race',
-  'Sex',
-  'HIV Risk Factor')
-demog.choiceValues = c(
-  'age',
-  'race',
-  'sex',
-  'risk')
-
-sex.choiceNames = c(
-  'Male',
-  'Female')
-sex.choiceValues = sex.choiceNames
-
-race.choiceNames = c(
-  'Other',
-  'Black',
-  'Hispanic')
-race.choiceValues = race.choiceNames
-
-age.choiceNames = c(
-  '13-24 years',
-  '25-34 years',
-  '35-44 years',
-  '45-54 years',
-  '55+ years')
-age.choiceValues = age.choiceNames
-
-risk.choiceNames = c(
-  'MSM',
-  'IDU',
-  'MSM+IDU',
-  'Heterosexual')
-risk.choiceValues=risk.choiceNames
-
-intervention.choiceNames = c(
-  'No intervention',
-  'Young black MSM testing1py 0.8 suppressed 0.25 prep',
-  'All MSM IDU testing1py 0.9 suppressed_0.5 prep')
-intervention.choiceValues = c(
-  'no_intervention',
-  'young_black_msm_testing_1py_0.8_suppressed_0.25_prep',
-  'all_msm_idu_testing_1py_0.9_suppressed_0.5_prep')
-
-indicator.choiceNames = c(
-  'Estimated Prevalence',
-  'Reported Diagnoses',
-  'HIV Mortality',
-  'Viral HIV Suppression',
-  'Awareness of HIV Diagnosis',
-  'HIV Incidence')
-indicator.choiceValues = c(
-  'prevalence',
-  'new',
-  'mortality',
-  'suppression',
-  'awareness',
-  'incidence')
-
-
-
-
-# Calculated variables
 page.width.half = round(page.width / 2)
-year.ticks = get.year.options(
-    version,
-    get.location.options(version)[1])
 
-# Implementation ####
-server.routes.runModel.get <- function(
-  input, control, init, param
-) {
+
+
+##-----------------------------------------------------##
+##-- THE FUNCTION THAT GENERATES THE UI FOR THE PAGE --##
+##-----------------------------------------------------##
+
+#reutrns 
+server.routes.runModel.get <- function(input) 
+{
   
   # Component: PageDef #ui_main[renderUI]
   ui_main = renderUI({
@@ -99,14 +39,11 @@ server.routes.runModel.get <- function(
     
     
     list(  # returns-->list
-    # Button & Plot ####
-    # #plot #button
     
     #This code sets the position and style for the progress bar when loading simulations
     tags$head(tags$style(".shiny-notification {position: fixed; top: 10% ;left: 25%; color: black;font-size: 20px;font-style: normal; padding-left: 50px; padding-right: 50px")),
-#    tags$head(tags$style(".shiny-progress {top: 10% !important;left: 25% !important;margin-top: -100px !important;margin-left: -250px !important; color: blue;font-size: 20px;font-style: italic;}")),   
 
-
+    #The panel for 
     'output'=fluidRow(
       column(
         width=page.width,
@@ -185,17 +122,6 @@ server.routes.runModel.get <- function(
                   selectize=TRUE, 
                   width=NULL, 
                   size=NULL ) ))
-          
-          # column(
-          #   width=page.width,
-          #   sliderInput(
-          #     inputId="years", 
-          #     label="Year range",
-          #     min=min(year.ticks),
-          #     max=max(year.ticks),
-          #     value=c(
-          #       min(year.ticks), 
-          #       max(year.ticks)) ))
             
     ))),
     # Interventions ####
@@ -388,6 +314,8 @@ server.routes.runModel.get <- function(
     # 'res_main'=res_main,
     )
   server.routes.runModel
+  
+  ui_main
 }
 
 # Scratch ####

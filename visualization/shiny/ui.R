@@ -1,7 +1,16 @@
 'EndingHIV RShiny web front-end process: UI spec'
 
+##-------------------##
+##-- LIBRARY CALLS --##
+##-------------------##
+
 library('shinydashboard')
-# UI 
+
+
+##------------------##
+##-- DEFINE the UI--##
+##------------------##
+
 ui <- dashboardPage(
   
   ## Header

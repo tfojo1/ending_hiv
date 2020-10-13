@@ -1,133 +1,65 @@
-'EndingHIV RShiny Server process'
-library('stringr')
+
+##-------------------##
+##-- LIBRARY CALLS --##
+##-------------------##
+
+library(shiny)
+
+#library('stringr')
 #library('DT')
 #library('shinyjs')
+#suppressPackageStartupMessages(library(EpiModel))  # param.dcm, init.dcm
 
-# Source files
-#source("R/ui.tools.R")
+
+##------------------##
+##-- SOURCE FILES --##
+##------------------##
+
+source("R/plot_resources.R")
 source("R/plot_shiny_interface.R")
+source('R/server_helpers.R')
+source('R/server_utils.R')
+
 source("R/server.routes.docs.R")
-# source("R/server.routes.designInterventions.R")
-# source("R/server.routes.helpAndFeedback.R")
 source("R/server.routes.runModel.R")
-source("R/plot_manager.R")
 source("R/model_code/plot_simulations.R")
 
-suppressPackageStartupMessages(library(EpiModel))  # param.dcm, init.dcm
-shinyOptions(cache=diskCache(file.path(dirname(tempdir()), "myapp-cache")))
 
+##----------------------##
+##-- SET UP THE CACHE --##
+##----------------------##
+shinyOptions(cache=diskCache(file.path(dirname(tempdir()), "myapp-cache")))
 # Constants / initiliazers
 # CACHE = memoryCache(size = 20e6)
 CACHE = diskCache(max_size = 20e6)
 
-# Functional components
-plotAndCache <- function(input, cache) {
-  version = names(get.version.options())[1]
-  
-  # Pull Intervention Names from Input
-  if (input[['no_intervention_checkbox']])
-    intervention.names = get.intervention.name(NO.INTERVENTION)
-  else
-    intervention.names = character()
-  intervention.names = c(intervention.names,
-                         input[['intervention1']],
-                         input[['intervention2']])
-  intervention.names = intervention.names[intervention.names != 'none']
-  
-  
-  # Get the filenames to pre-cache
-  filenames = get.sim.filenames.to.load(
-    version,
-    location=input[['geographic_location']],
-    intervention.names=intervention.names)
-  
-  filenames = filenames[!is.sim.cached(filenames, cache=cache)]
-  
-  # Pre-fetch them simsets
-  if (length(filenames)>0)
-  {
-    if (length(filenames)==1)
-      msg = "Fetching 1 Simulation File from Remote Server:"
-    else
-      msg = paste0("Fetching ", length(filenames), " Simulation Files from Remote Server:")
-    withProgress(
-      message=msg, min=0, max=1, value=0.2/length(filenames),
-      detail=paste("Fetching file 1 of ", length(filenames)),
-      {
-        for (i in 1:length(filenames))
-        {
-            if (i>1)
-              setProgress((i-1)/length(filenames),
-                          detail = paste("Fetching file ", i, " of ", length(filenames)))
-          filename = filenames[i]
-          cache = update.sims.cache(
-            filenames=filename,
-            cache=cache)
-          
-          setProgress(1, detail='Done')
-        }
-    })
-  }
-  
-    # Make the plot
-    plot.results = plot.simulations(
-      cache=cache,
-      version=version,
-      location=input[['geographic_location']],
-      intervention.names=intervention.names,
-      # years=input[['years']][1]:input[['years']][2],
-      years=get.year.options(
-        version,
-        get.location.options(version)[1]),
-      data.types=input[['epidemiological-indicators']],
-      facet.by=input[['facet']],
-      split.by=input[['split']],
-      dimension.subsets=list(  # TODO
-        'age'=input[['age-groups']],
-        'race'=input[['racial-groups']],
-        'sex'=input[['sex']],  # aka gender
-        'risk'=input[['risk-groups']]),
-      plot.format=input[['aggregation-of-simulations-ran']] )
-    
-  plot.results$cache = cache
-  plot.results
-}
 
+##------------------------------##
+##-- THE MAIN SERVER FUNCTION --##
+##------------------------------##
 
-BLANK.MESSAGE = "Select intervention(s) and click 'Generate Projections'"
-make.plotly.message <- function(message=BLANK.MESSAGE)
-{
-    plot = plotly_empty()
-    plot = add_text(plot, text=message, x=0, y=0)
-    #plot = layout(plot, xaxis=list(range = c(-0.5,0.5)))
-    #plot = layout(plot, uniformtext=list(minsize=8, mode='hide'))
-    
-    plot
-}
 
 # Server
 server <- function(input, output, session) {
+  
+  # Print an initial message - useful for debugging on shinyapps.io servers
+  print(paste0("Launching server() function - ", Sys.time()))
+  
+  # Make our session cache the cache available to all sessions
   cache = CACHE
 
   # Page: RunModel - Def ####  
-  server.routes.runModel = server.routes.runModel.get(
-    input, control, init, param)
-  output$ui_main = server.routes.runModel[['ui_main']]
-  # Page: RunModel - Components####  
-  # output$mainDL = server.routes.runModel[['mainDL']]
-  # output$mainTable = server.routes.runModel[['mainTable']]
+  #server.routes.runModel = server.routes.runModel.get(
+  #  input, control, init, param)
+  #output$ui_main = server.routes.runModel[['ui_main']]
 
-  # TODO: need this?
-  output$mainPlot = server.routes.runModel[['mainPlot']]
+  output$ui_main = server.routes.runModel.get(input)
   
-  # res_main = server.routes.runModel[['res_main']]
   
   # Page: Docs (#page-docs): output$introductionText ####
   output$introductionText = server.routes.docs
   output[['design-interventions']] = server.routes.designInterventions
   output[['help-and-feedback']] = server.routes.helpAndFeedback
-  # output$introductionText <- renderUI({includeMarkdown(
-  #   "introductionText.Rmd")})
 
 
   
@@ -144,20 +76,25 @@ server <- function(input, output, session) {
   
   # Plot when clicking 'Run':
   observeEvent(input$reset_main, {
-      print('responding to reset main')
-      print(paste0("Selected location = ", input[['geographic_location']]))
-    plot.and.cache = plotAndCache(input, cache)
     
-    cache = plot.and.cache$cache
+    plot.and.cache = generate.plot.and.table(input, cache)
     
+    # This is not needed for diskCache
+    # cache = plot.and.cache$cache
+
+    # Update the plot
     output$mainPlot = renderPlotly(plot.and.cache$plot)
     
+    # Update the table
     pretty.table = make.pretty.change.data.frame(plot.and.cache$change.df, data.type.names=DATA.TYPES)
-   # last.two.cols = (dim(pretty.table)[2]-1):dim(pretty.table)[2]
-    #pretty.table = datatable(pretty.table) %>% formatStyle(last.two.cols,"white-space"="nowrap")
     output$mainTable = renderDataTable(pretty.table)
     output$mainTable_message = NULL
   })
+  
+
+##------------------------------------##  
+##-- INTERVENTION SELECTOR HANDLERS --##
+##------------------------------------##
   
   observeEvent(input$intervention1, {
       if (input$intervention1=='none')
@@ -181,6 +118,8 @@ server <- function(input, output, session) {
       }
   })
   
+  
+##-- LOCATION HANDLER --##
   observeEvent(input$geographic_location, {
         
       output$mainPlot = renderPlotly(make.plotly.message(BLANK.MESSAGE))

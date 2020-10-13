@@ -3,8 +3,9 @@
   endinghiv/?region=us-east-1&tab=overview'
 # Import ####
 # - aws.s3 docs: https://github.com/cloudyr/aws.s3
-library('aws.iam')
-library('aws.s3')
+library(aws.iam)
+library(aws.s3)
+library(stringr)
 
 source('env.R')
 # - env.R has to be created manually. It is ignored from the repository 

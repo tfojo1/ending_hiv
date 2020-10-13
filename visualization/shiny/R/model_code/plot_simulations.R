@@ -1,6 +1,7 @@
-library(jheem)
-library(bayesian.simulations)
-library(data.table)
+
+##---------------##
+##-- CONSTANTS --##
+##---------------##
 
 DATA.TYPE.NAMES = c(new='Reported Diagnoses',
                     prevalence='PWH',
@@ -38,18 +39,13 @@ PRETTY.NAMES = list(age=c("13-24 years"="13-24",
 TRUTH.SHAPES.GGPLOT = c(21,23,22,24,25)
 TRUTH.SHAPES.PLOTLY = c(0,2,1,5,6)
 
-RED = '#C75D4D'
-GREEN = '#458B00'
-#GREEN = 'darkgreen'
-BLUE = '#3278FA'
-ORANGE = 'darkorange3'
 
+
+FRACTION.PROGRESS.SETUP.DF = 0.5
 
 ##-----------------------##
 ##-- THE MAIN FUNCTION --##
 ##-----------------------##
-
-FRACTION.PROGRESS.SETUP.DF = 0.5
 
 #'@param color.by How to set colors. If color.by=='intervention', each intervention (and the baseline) gets a different color. If color.by=='split' each line denoted by split.by gets a different color
 #'@param colors Information on what colors to use. Can be either a vector of colors or a function that takes an argument (n) and generates n colors. 
@@ -972,7 +968,7 @@ get.sim.dfs <- function(simset,
     
     all.dimensions = union(keep.dimensions, names(dimension.subsets))
     
-    print(paste0('data.type = ', data.type))
+    #print(paste0('data.type = ', data.type))
     if (data.type=='new')
         arr = extract.simset.new.diagnoses(simset,
                                            years = years, 

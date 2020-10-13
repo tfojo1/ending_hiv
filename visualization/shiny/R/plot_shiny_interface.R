@@ -1,11 +1,6 @@
 # EndingHIV model ####
 '# EndingHIV Model::RShiny Interface'
 
-library('ggplot2')
-
-source("R/server.utils.R")
-
-test.config.on = FALSE
 
 # Constants (TEMPORARY) ####
 AGES = list(
@@ -369,10 +364,11 @@ get.sim.filenames.to.load <- function(
 #'@param truth.point.size The point size for plotted 'truth' (epi
 #' surveillance) values#'
 #'
-#'@return A list with two values:
-#' $plot - a ggplot object
+#'@return A list with three values:
+#' $plot - a plotly object
+#' $change.df - a data frame
 #' $notes - a character vector (which may be empty) of notes
-plot.simulations <- function(
+make.simulations.plot.and.table <- function(
   cache,
   # Private meta params
   version,
@@ -467,42 +463,3 @@ plot.simulations <- function(
     rv$notes = c('test note 1', 'test note 2')
     rv
 }
-
-# Tests: TEST CODE ####
-# test.config.on = FALSE
-# test.config.on = TRUE
-if (test.config.on == T) {
-  version = names(get.version.options())[1]
-  location = names(get.location.options(version))[1]
-  interventions = get.intervention.options(version, location)
-  
-  print('test.me')
-  test.me = plot.simulations(
-    version=version,
-    location=location,
-    intervention.names = names(interventions)[1],
-    years = get.year.options(version, location),
-    data.types = get.data.type.options(version, location)[1:2],
-    facet.by = names(get.facet.by.options(version, location))[1],
-    split.by = names(get.split.by.options(version, location))[2],
-    dimension.subsets=get.dimension.value.options(version, location),
-    plot.format = names(get.plot.format.options(version, location))[1],
-    plot.interval.coverage=0.95,
- #   summary.statistic=get.summary.statistic.options(version, location)[1],
- #   summary.statistic.interval.coverage=0.95,
-    baseline.color='blue',
-    intervention.colors='red',
-    plot.interval.alpha=0.2,
-    simulation.alpha=0.2,
-    simulation.line.size=0.1,
-    show.truth=T,
-    truth.point.size=5
-  )$plot
-  
-  View(test.me)
-}
-
-# Export ####
-model.todd = plot.simulations
-
-# Scratch ####
