@@ -96,27 +96,6 @@ server <- function(input, output, session) {
 ##-- INTERVENTION SELECTOR HANDLERS --##
 ##------------------------------------##
   
-  observeEvent(input$intervention1, {
-      if (input$intervention1=='none')
-          output$intervention1_description = NULL
-      else
-      {
-          int = intervention.from.short.name(input$intervention1)
-          description = get.intervention.html.description(int)
-          output$intervention1_description = renderText(description)
-      }
-  })
-  
-  observeEvent(input$intervention2, {
-      if (input$intervention2=='none')
-          output$intervention2_description = NULL
-      else
-      {
-          int = intervention.from.short.name(input$intervention2)
-          description = get.intervention.html.description(int)
-          output$intervention2_description = renderText(description)
-      }
-  })
   
   
 ##-- LOCATION HANDLER --##
@@ -129,5 +108,4 @@ server <- function(input, output, session) {
       output$mainTable = renderDataTable(message.df)#matrix(BLANK.MESSAGE,nrow=1,ncol=1))
       output$mainTable_message = renderText(BLANK.MESSAGE)
   })
-  
 }

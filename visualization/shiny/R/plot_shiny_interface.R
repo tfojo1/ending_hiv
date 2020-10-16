@@ -189,42 +189,37 @@ get.split.by.options <- function(version, location)
 #  ramp up
 # $intervention.implemented.year - the year at which the interventions are
 #  fully ramped up
-get.intervention.options <- function(version, location)
+get.intervention.options <- function(version, location,
+                                     return.intervention.objects = F)
 {
     
- #   desc = 'line one\nline two\nline 3'
-  #  strsplit(desc, split = '\n')
-   # data.frame(name='test_name',
-    #           label='test_label',
-     #          description='test_description')
+    if (length(location)>0 && location !='')
+    {
+        sims.names = sims.list()
+        sims.locations = get.locations.from.filenames(sims.names)
+        sims.names = sims.names[sims.locations==location]
+        interventions = get.interventions.from.filenames(sims.names)
+        interventions = interventions[!sapply(interventions, is.null.intervention)]
+        
+        o = order.interventions(interventions)
+        interventions = interventions[o]
+        
+        if (return.intervention.objects)
+            rv = interventions
+        else
+        {
+            rv = lapply(interventions, function(int){
+                list(name=get.intervention.code(int),
+                     label=get.intervention.short.name(int),
+                     description=get.intervention.description(int))
+            })
+            names(rv)=sapply(rv, function(elem){elem$label})
+        }
+    }
+    else
+        rv = list()
     
-    
-  # TODO: @Todd: Might need to include this 'name' bit for my dynamic
-  # rendering.
-  
-    
-  if (length(location)>0 && location !='')
-  {
-    sims.names = sims.list()
-    sims.locations = get.locations.from.filenames(sims.names)
-    sims.names = sims.names[sims.locations==location]
-    interventions = get.interventions.from.filenames(sims.names)
-    interventions = interventions[!sapply(interventions, is.null.intervention)]
-    
-    rv = lapply(interventions, function(int){
-        list(name=get.intervention.code(int),
-              label=get.intervention.short.name(int),
-              description=get.intervention.description(int))
-    })
-    names(rv)=sapply(rv, function(elem){elem$label})
-    
-    o = order.interventions(interventions)
-    rv = rv[o]
-  }
-  else
-    rv = list()
-  
-  rv
+    rv
 }
 
 get.interventions.simpleList <- function(version, location) {
@@ -298,14 +293,14 @@ plot.interval.coverage.applies.to.plot.format <- function(plot.format)
 get.sim.filenames.to.load <- function(
   version,
   location,
-  intervention.names)
+  intervention.codes)
 {
     baseline.filename = get.simset.filename(version=version,
                                             location=location,
                                             intervention=NULL)
     
-    other.filenames = sapply(intervention.names, function(int.name){
-      code = intervention.short.name.to.code(int.name)
+    other.filenames = sapply(intervention.codes, function(code){
+      #code = intervention.short.name.to.code(int.name)
       get.simset.filename(location = location,
                           intervention.code = code)
     })
@@ -374,7 +369,7 @@ make.simulations.plot.and.table <- function(
   version,
   # Public params; Selectable in UI
   location,
-  intervention.names,
+  intervention.codes,
   years,
   data.types,
   facet.by,
@@ -404,7 +399,7 @@ make.simulations.plot.and.table <- function(
     filenames = get.sim.filenames.to.load(
       version=version,
       location=location,
-      intervention.names=intervention.names)
+      intervention.codes=intervention.codes)
     simsets = lapply(filenames, function(file) {
       key = simsetFilenameToCacheKey(file)
       simset = cache$get(key)

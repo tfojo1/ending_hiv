@@ -5,6 +5,11 @@
 ##-  This is the 'exported' interface -##
 ##-------------------------------------##
 
+target.population.hash <- function(tpop)
+{
+    logical.to.6.bit(tpop)
+}
+
 target.population.to.code <- function(tpop, manager=TARGET.POPULATION.MANAGER.1.0)
 {
     hash = logical.to.6.bit(tpop)
@@ -46,6 +51,21 @@ target.populations.equal <- function(tpop1, tpop2)
     logical.to.6.bit(tpop1) == logical.to.6.bit(tpop2)
 }
 
+#returns an indexing such that, if applied to the list of interventions,
+#interventions appear in the order they do in manager
+order.target.populations <- function(target.populations,
+                                manager=TARGET.POPULATION.MANAGER.1.0,
+                                decreasing=F)
+{
+    codes = sapply(target.populations, logical.to.6.bit)
+    all.values = 1:length(manager$hash)
+    names(all.values) = manager$hash
+    
+    values = all.values[codes]
+    order(values, decreasing = decreasing)
+}
+
+
 ##---------------------------------------##
 ##-- ADDING DEFINED TARGET POPULATIONS --##
 ##---------------------------------------##
@@ -57,6 +77,8 @@ create.target.population.manager <- function()
          name=character(),
          hash=character())
 }
+
+DISALLOWED.TPOP.CODE.CHARACTERS = c("_")
 
 add.target.population <- function(tpop, 
                                   code,
@@ -84,6 +106,11 @@ add.target.population <- function(tpop,
                         name, "') which is already present under the name '",
                         manager$name[mask], "'. There can only be one name per target population."))
     }
+    
+    # Check that the code does not have any disallowed characters
+    for (ch in DISALLOWED.TPOP.CODE.CHARACTERS)
+        if (grepl(ch, code))
+            stop(paste0("Target population codes cannot contain '", ch, "'"))
     
     # Check to confirm that name and code are unique
     if (any(manager$name==name))

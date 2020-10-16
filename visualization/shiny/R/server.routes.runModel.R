@@ -20,11 +20,25 @@ library('purrr')
 page.width = 12
 page.width.half = round(page.width / 2)
 
+##----------------------------------------------------------##
+##-- SOME HELPERS (that abstract away the 'input' object) --##
+##----------------------------------------------------------##
 
+#Here for future-proofing. For now, just one version possible
+get.version <- function(input)
+{
+   '1.0' 
+}
+
+get.location <- function(input)
+{
+    input$geographic_location
+}
 
 ##-----------------------------------------------------##
 ##-- THE FUNCTION THAT GENERATES THE UI FOR THE PAGE --##
 ##-----------------------------------------------------##
+
 
 #reutrns 
 server.routes.runModel.get <- function(input) 
@@ -50,6 +64,8 @@ server.routes.runModel.get <- function(input)
         box(
           width=NULL, 
           title="Figure",
+          collapsible=T,
+          collapsed=F,
           status="primary", 
           solidHeader=TRUE,
           
@@ -104,6 +120,8 @@ server.routes.runModel.get <- function(input)
         width=page.width,
         box(
           title="Location",
+          collapsible=T,
+          collapsed=F,
           status="primary",
           width=NULL, 
           solidHeader=TRUE,
@@ -131,6 +149,8 @@ server.routes.runModel.get <- function(input)
         box(
           width=NULL, 
           title="Potential Interventions",
+          collapsible=T,
+          collapsed=F,
           status="primary", 
           solidHeader=TRUE,
           
@@ -144,50 +164,23 @@ server.routes.runModel.get <- function(input)
                 width='100%' )),
           ),  # </fluidRow>
           
-          fluidRow(
-            column(
-              width=page.width.half,
-              selectInput(
-                inputId="intervention1", 
-                label="First Intervention to Display",
-                choices=invert.keyVals(
-                  get.interventions.simpleList(
-                    version=version, 
-                    location=input[['geographic_location']])),
-                selected=invert.keyVals(get.interventions.simpleList(
-                  version=version, input[['geographic_location']]))[1],
-                multiple=FALSE,
-                selectize=TRUE, 
-                width='auto', 
-                size=NULL ),
-              htmlOutput(outputId='intervention1_description')
-            ),
-            column(
-              width=page.width.half,
-              selectInput(
-                inputId="intervention2", 
-                label="Second Intervention to Display",
-                choices=invert.keyVals(
-                  get.interventions.simpleList(
-                    version=version, 
-                    location=input[['geographic_location']])),
-                selected=invert.keyVals(get.interventions.simpleList(
-                  version=version, input[['geographic_location']]))[1],
-                multiple=FALSE,
-                selectize=TRUE, 
-                width='auto', 
-                size=NULL ),
-              htmlOutput(outputId='intervention2_description')
-            ),
-          ),  # </fluidRow>
+          #div(HTML("<HR>")),
+          div(style = "font-size: 1.2em; padding: 0px 0px; margin-bottom:-20px",
+              HTML("<b>Intervention 1:</b>")),
+          create.intervention.selector.panel(1, input)
+  #        box(title='Intervention 1:', solidHeader=T, width=12,
+   #           create.intervention.selector.panel(1, input))
           
-        ))),
+          ))),  # </fluidRow>
+          
     # Epidemiological dimensions ####
     'epidemiological-dimensions'=fluidRow(
       column(
         width=page.width,
         box(
           width=NULL, title="Epidemiological Indicators",
+          collapsible=T,
+          collapsed=T,
           status="primary", solidHeader=TRUE,
           
           checkboxGroupInput(
@@ -220,6 +213,8 @@ server.routes.runModel.get <- function(input)
         box(
           width=NULL, 
           title="Plot Options (how to slice the projections)",
+          collapsible=T,
+          collapsed=T,
           status="primary", 
           solidHeader=TRUE,
           
@@ -282,6 +277,8 @@ server.routes.runModel.get <- function(input)
         width=page.width,
         box(
           title="Demographic Subgroups",
+          collapsible=T,
+          collapsed=T,
           status="primary",
           width=NULL, 
           solidHeader=TRUE,
