@@ -55,17 +55,27 @@ server.routes.runModel.get <- function(input)
           
           # #button
           fluidRow(
+            class='text-center',
             column(
-              width=page.width.half,
+              width=3,
               actionButton(
                 "reset_main", 
                 "Generate Projections")),
             column(
-                width=page.width.half,
+                width=6,
                 radioGroupButtons(
-                    inputId="toggle_main", 
-                    selected='Figure',
-                    choices=c('Figure','Table')))
+                  inputId="toggle_main", 
+                  selected='Figure',
+                  choices=c('Figure','Table'))),
+            column(
+              width=3,
+              conditionalPanel(
+                condition = "(input.show_download  !== undefined && input.show_download !== null)",
+                downloadLink(
+                  "downloadDataLink",
+                  actionButton(
+                    "downloadDataButton", 
+                    "Download"))) ),
             ),
           
           # #plot
