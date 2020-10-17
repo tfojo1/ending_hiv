@@ -210,6 +210,92 @@ get.intervention.html.description <- function(int,
                                  post.target.pop=post.target.pop)
 }
 
+get.intervention.description.by.target <- function(int,
+                                                   include.start.text=T,
+                                                   tpop.delimeter='\n',
+                                                   unit.delimiter=', ',
+                                                   pre='',
+                                                   post='',
+                                                   bullet.pre=' - ',
+                                                   bullet.post='',
+                                                   pre.header='',
+                                                   post.header=': ')
+{
+    tpops = get.target.populations.for.intervention(int)
+    
+    rv = pre
+    for (i in 1:length(tpops))
+    {
+        tpop = tpops[[i]]
+        if (i>1)
+            rv = paste0(rv, tpop.delimeter)
+        
+        #figure out if we can use the same year for all of them
+        units.for.tpop = list()
+        for (sub in int$raw)
+        {
+            tpop.indices = (1:length(sub$target.populations))[sapply(sub$target.populations, target.populations.equal, tpop)]
+            if (length(tpop.indices)>0)
+                units.for.tpop = c(units.for.tpop, list(sub$intervention.units[[tpop.indices]]))
+        }
+        
+        all.unit.years.same = all(sapply(units.for.tpop, function(unit){
+            length(unit$years)==1 && 
+                length(unit$years)==length(units.for.tpop[[1]]$years) &&
+                all(unit$years == units.for.tpop[[1]]$years)
+        }))
+        
+        all.unit.starts.same = all(sapply(units.for.tpop, function(unit){
+            unit$start.year == units.for.tpop[[1]]$start.year
+        }))
+        
+        units.text = ''
+        for (i in 1:length(units.for.tpop))
+        {
+            if (units.text != '')
+                units.text = paste0(units.text, unit.delimiter)
+            units.text = paste0(units.text, get.intervention.unit.name(units.for.tpop[[i]], 
+                                                             include.start.text=if (include.start.text && (!all.unit.starts.same || i==1)) 'ramping up from' else NA,
+                                                             include.by=!all.unit.years.same || i==length(units.for.tpop),
+                                                             round.digits=1))
+        }
+
+        rv = paste0(rv,
+                    bullet.pre,
+                    pre.header,
+                    target.population.name(tpop),
+                    post.header,
+                    units.text,
+                    bullet.post)
+    }
+    
+    rv = paste0(rv, post)
+    rv
+}
+
+get.intervention.html.description.by.target <- function(int,
+                                                        include.start.text=T,
+                                                   tpop.delimeter='',
+                                                   unit.delimiter=', ',
+                                                   pre='<ul>',
+                                                   post='</ul>',
+                                                   bullet.pre='<li>',
+                                                   bullet.post='</li>',
+                                                   pre.header='<b>',
+                                                   post.header=':</b> ')
+{
+    get.intervention.description.by.target(int,
+                                           include.start.text=include.start.text,
+                                           tpop.delimeter=tpop.delimeter,
+                                           unit.delimiter=unit.delimiter,
+                                           pre=pre,
+                                           post=post,
+                                           bullet.pre=bullet.pre,
+                                           bullet.post=bullet.post,
+                                           pre.header=pre.header,
+                                           post.header=post.header)
+}
+
 ##------------------------------##
 ##-- THE INTERVENTION MANAGER --##
 ##------------------------------##
@@ -387,6 +473,29 @@ order.interventions <- function(interventions,
     
     values = all.values[codes]
     order(values, decreasing = decreasing)
+}
+
+get.target.populations.for.intervention <- function(int)
+{
+    if (length(int$raw)==0)
+        list()
+    else
+    {
+        tpops = int$raw[[1]]$target.populations
+        if (length(int$raw)>1)
+        {
+            for (i in 2:length(int$raw))
+            {
+                tpops2 = int$raw[[i]]$target.populations
+                already.included = sapply(tpops2, function(tpop){
+                    any(sapply(tpops, target.populations.equal, tpop))
+                })
+                tpops = c(tpops, tpops2[!already.included])
+            }
+        }
+        
+        tpops
+    }
 }
 
 ##------------------------------------##

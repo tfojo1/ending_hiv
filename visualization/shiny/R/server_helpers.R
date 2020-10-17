@@ -13,24 +13,25 @@
 generate.plot.and.table <- function(input, cache) 
 {
     # For now there is only one version
-    version = names(get.version.options())[1]
+    version = get.version()
     
     #-- Pull Intervention Names from Input --#
     if (input[['no_intervention_checkbox']])
-        intervention.names = get.intervention.name(NO.INTERVENTION)
+        intervention.codes = get.intervention.code(NO.INTERVENTION)
     else
-        intervention.names = character()
-    intervention.names = c(intervention.names,
-                           input[['intervention1']],
-                           input[['intervention2']])
-    intervention.names = intervention.names[intervention.names != 'none']
+        intervention.codes = character()
+    
+    intervention.codes = c(intervention.codes,
+                           get.intervention.selection(1, input))
+    
+    intervention.codes = intervention.codes[intervention.codes != 'none']
     
     
     #-- Get the filenames to pre-cache --#
     filenames = get.sim.filenames.to.load(
         version,
         location=input[['geographic_location']],
-        intervention.names=intervention.names)
+        intervention.codes=intervention.codes)
     
     filenames = filenames[!is.sim.cached(filenames, cache=cache)]
     
@@ -65,7 +66,7 @@ generate.plot.and.table <- function(input, cache)
         cache=cache,
         version=version,
         location=input[['geographic_location']],
-        intervention.names=intervention.names,
+        intervention.codes=intervention.codes,
         # years=input[['years']][1]:input[['years']][2],
         years=get.year.options(
             version,

@@ -59,6 +59,7 @@ create.intervention.unit <- function(type=c('testing','prep','suppression'),
 
 get.intervention.unit.name <- function(unit, 
                                        include.start.text=NA,
+                                       include.by=F,
                                        round.digits=1)
 {
     if (unit$type=='testing')
@@ -71,14 +72,19 @@ get.intervention.unit.name <- function(unit,
         text.values[unit$rates>1] = paste0(per.year[unit$rates>1], ' times per year')
         text.values[unit$rates==2] = 'twice a year'
         
-        rv = paste0("tested ",
-                    paste0(text.values, ' by ', unit$years, collapse=', '))
+        if (include.by || length(text.values)>1)
+            rv = paste0("tested ",
+                        paste0(text.values, ' by ', unit$years, collapse=', '))
+        else
+            rv = paste0("tested ", text.values)
     }
     else if (unit$type=='prep')
     {
         text.values = paste0(round(100*unit$rates, round.digits), '%')
         
-        rv = paste0(text.values[1], ' on PrEP by ', unit$years[1])
+        rv = paste0(text.values[1], ' on PrEP')
+        if (include.by || length(unit$rates)>1)
+            rv = paste0(rv, ' by ', unit$years[1])
         if (length(unit$rates)>1)
             rv = paste0(rv, ', ', paste0(text.values[-1], ' by ', unit$years[-1]), collapse=', ')
     }
@@ -86,7 +92,9 @@ get.intervention.unit.name <- function(unit,
     {
         text.values = paste0(round(100*unit$rates, round.digits), '%')
         
-        rv = paste0(text.values[1], ' suppressed by ', unit$years[1])
+        rv = paste0(text.values[1], ' suppressed')
+        if (include.by || length(text.values)>1)
+            rv = paste0(rv, ' by ', unit$years[1])
         if (length(unit$rates)>1)
             rv = paste0(rv, ', ', paste0(text.values[-1], ' by ', unit$years[-1]), collapse=', ')
     }

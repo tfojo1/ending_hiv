@@ -90,27 +90,6 @@ server <- function(input, output, session) {
 ##-- INTERVENTION SELECTOR HANDLERS --##
 ##------------------------------------##
   
-  observeEvent(input$intervention1, {
-      if (input$intervention1=='none')
-          output$intervention1_description = NULL
-      else
-      {
-          int = intervention.from.short.name(input$intervention1)
-          description = get.intervention.html.description(int)
-          output$intervention1_description = renderText(description)
-      }
-  })
-  
-  observeEvent(input$intervention2, {
-      if (input$intervention2=='none')
-          output$intervention2_description = NULL
-      else
-      {
-          int = intervention.from.short.name(input$intervention2)
-          description = get.intervention.html.description(int)
-          output$intervention2_description = renderText(description)
-      }
-  })
   
   
 ##-- LOCATION HANDLER --##
@@ -123,17 +102,27 @@ server <- function(input, output, session) {
     output$mainPlot = renderPlotly(make.plotly.message(BLANK.MESSAGE))
       message.df = data.frame(BLANK.MESSAGE)
       names(message.df) = NULL
-      output$mainTable = renderDataTable(message.df)#matrix(BLANK.MESSAGE,nrow=1,ncol=1))
+      output$mainTable = renderDataTable(message.df) #matrix(BLANK.MESSAGE,nrow=1,ncol=1))
       output$mainTable_message = renderText(BLANK.MESSAGE)
   })
   
-  # TODO: https://shiny.rstudio.com/reference/shiny/0.14/downloadHandler.html
+  # TODO: Not yet working
+  # can download: table 
+  # can download: plot
+  # (can do: 1 button that can do both, or 2 diff buttons)
+  # todd knows how to write the files. how to write the table file, 
+  # temp directory, and delete it afterwards
+  # https://shiny.rstudio.com/reference/shiny/0.14/downloadHandler.html
+  # https://shiny.rstudio.com/articles/communicating-with-js.html
+  # https://shiny.rstudio.com/articles/js-send-message.html
+  # https://stackoverflow.com/questions/37883046/shiny-dashboard-reset-the-conditional-panel-state-when-we-navigate-across-diffe
+  # https://shiny.rstudio.com/reference/shiny/0.11/conditionalPanel.html
+  # https://shiny.rstudio.com/reference/shiny/1.4.0/conditionalPanel.html
   output$downloadDataLink <- downloadHandler(
-    filename = function() {
-      paste("data-", Sys.Date(), ".csv", sep="")
-    },
-    content = function(file) {
-      browser()
-      write.csv(pretty.table, file)
-    })
+    filename=function() {
+      paste("data-", Sys.Date(), ".csv", sep="") },
+    content=function(file) {
+      write.csv(pretty.table, file) }
+  )
+
 }
