@@ -11,7 +11,7 @@ source('code/targets/target_msas.R')
 
 set.seed(5556)
  
-msa=CLEVELAND.MSA
+msa=BATON.ROUGE.MSA
 save.suffix = ''
 
 print('----------------------------------------------------')
@@ -32,11 +32,15 @@ if (1==2)
 #to make the visualization simset
 if (1==2)
 {
+    source('code/source_code.R')
     source('code/interventions/systematic_interventions.R')
+    load('mcmc_runs/systematic_initial/17460_1x20K_2020-10-08.Rdata')
+    
     simset = extract.simset(mcmc, additional.burn=520, additional.thin=6)
     simset@n.sim
     msa.names(attr(simset@simulations[[1]], 'location'))
     run.systematic.interventions(simset, 
+                                 interventions = ALL.INTERVENTIONS,
                                  dst.dir=file.path('mcmc_runs/visualization_simsets', attr(simset@simulations[[1]], 'location')),
                                  overwrite = T)
     

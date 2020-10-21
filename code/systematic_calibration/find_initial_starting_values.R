@@ -55,7 +55,7 @@ set.pp.to.default <- function(pp)
 
 #-- MSA specific --#
 
-msa = CLEVELAND.MSA
+msa = BATON.ROUGE.MSA
 pp2 = set.pp.to.default(pp)
 run.simulation = create.run.simulation.function(msa, start.values=pp)
 
@@ -69,18 +69,20 @@ plot.calibration.risk(list(sim1,sim2))
 
 
 pp2 = set.pp.to.default(pp)
-pp2[msm.trates] = pp[msm.trates] *  0.97 * 1.05
+pp2[msm.trates] = pp[msm.trates] *  1.1
 pp2[msm.trates.1] = pp[msm.trates.1] * 1.06 * 1.05
 pp2[msm.trates.2] = pp[msm.trates.2] * 0.8 * 1.05
-pp2[idu.trates] = pp[idu.trates] * 0.6
+pp2[idu.trates] = pp[idu.trates] * 2.2
 pp2[idu.trates.1] = pp[idu.trates.1] * .6
-pp2[idu.trates.2] = pp[idu.trates.2] * 1.4
-pp2[msm.idu.multipliers] = pp[msm.idu.multipliers] * .5
+pp2[idu.trates.2] = pp[idu.trates.2] * .7
+pp2[msm.idu.multipliers] = pp[msm.idu.multipliers] * 5
 pp2['msm.vs.heterosexual.male.idu.susceptibility.rr.2'] = pp['msm.vs.heterosexual.male.idu.susceptibility.rr.2'] * .3
-pp2[het.trates] = pp[het.trates] * 1.08
+pp2[het.trates] = pp[het.trates] * 0.67
 pp2[het.trates.1] = pp[het.trates.1] * 0.7
-pp2[het.trates.2] = pp[het.trates.2] * 0.7
+pp2[het.trates.2] = pp[het.trates.2] * 0.8
 
+pp2['msm.incident.idu.multiplier.0'] = pp['msm.incident.idu.multiplier.0'] * 4
+pp2['msm.incident.idu.multiplier.2'] = pp['msm.incident.idu.multiplier.2'] * 4
 
 sim2 = run.simulation(pp2); plot.calibration.risk(list(sim2))
 

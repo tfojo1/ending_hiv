@@ -1,7 +1,4 @@
 
-source('code/systematic_calibration/systematic_settings.R')
-source('code/systematic_calibration/starting_value_generator.R')
-
 
 ##---------------------------##
 ##-- CREATE THE LIKELIHOOD --##

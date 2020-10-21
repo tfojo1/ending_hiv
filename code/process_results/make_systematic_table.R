@@ -4,33 +4,28 @@ IMAGE.DIR = '../Manuscripts/manuscript_1/images/'
 
 if (1==2)
 {
-#    df = make.systematic.table('mcmc_runs/visualization_simsets//')
-#    write.csv(df, file='results/table2_test.csv')
-    
-#    df = read.csv('results/table2_test.csv')
-#    df.full = df
-#    df = df[!apply(df,1,function(x){any(x=='')}),]
+
+    #-- FOR ANALYSIS 1: --#
     
     est = get.estimates.and.intervals('mcmc_runs/visualization_simsets/', 
                                     msas=get.hiv.burden()$CBSA,
-                                    interventions=INTERVENTION.SET)
-    save(est, file='results/quick_estimated.Rdata')
-    load('results/quick_estimated.Rdata')
-    
+                                    interventions=A1.INTERVENTION.SET,
+                                    n.sim=80)
+    save(est, file='results/quick_estimated_a1.Rdata')
+#    load('results/quick_estimated_a1.Rdata')
     write.systematic.table(est, file='results/table3_raw.xlsx')
     
-    #The old way with a plot
-    plot.systematic.table(est)
-    
-    png(file.path(IMAGE.DIR, 'Figure 3.png'), pointsize=10, width=3.92, height=5.01, res=300, units='in')
-    plot.systematic.table(est, label.size = 3) + theme_nothing() + 
-        scale_x_discrete(expand=c(0,0)) +
-        scale_y_discrete(expand=c(0,0)) +
-        labs(x = NULL, y = NULL)
-        #theme(axis.title=element_blank(), axis.ticks = element_blank(), axis.text = element_blank(), legend.position = 'none' )
-    dev.off()
-    
 
+    #-- FOR ANALYSIS 1: --#
+    
+    est = get.estimates.and.intervals('mcmc_runs/visualization_simsets/', 
+                                      msas=get.hiv.burden()$CBSA,
+                                      interventions=c(list(NO.INTERVENTION), A2.INTERVENTION.SET),
+                                      n.sim=80)
+    save(est, file='results/quick_estimated_a2.Rdata')
+    #load('results/quick_estimated_a2.Rdata')
+    write.systematic.table(est, file='results/table_s1_raw.xlsx')
+    
     
 }
 
@@ -41,64 +36,20 @@ library(xlsx)
 source('code/source_code.R')
 source('code/targets/parse_targets.R')
 source('code/interventions/systematic_interventions.R')
-source('code/interventions/synthesize_interventions.R')
-
-make.systematic.table <- function(dir,
-                                  msas=get.hiv.burden()$CBSA,
-                                  interventions=INTERVENTION.SET,
-                                  ci.spacer='-',
-                                  digits=0,
-                                  mean.pct='%',
-                                  ci.pct='',
-                                  year1=2020,
-                                  year2=2030,
-                                  ci.opening='[',
-                                  ci.closing=']',
-                                  verbose=T)
-{
-    dir = file.path(dir)
-    rv = sapply(1:length(interventions), function(i){
-        int = interventions[[i]]
-        if (verbose)
-            print(paste0("Reading ", length(msas), " locations for intervention ", i, " of ", length(interventions),
-                         ": ", get.intervention.name(int)))
-        sapply(as.character(msas), function(msa){
-            filename = file.path(dir, msa, get.simset.filename(location=msa, intervention=int))
-            if (file.exists(filename))
-            {
-                if (verbose)
-                    print(paste0(" - ", msa.names(msa)))
-                
-                load(filename)
-                reduction = get.simset.incidence.reduction(simset, year1=year1, year2=year2)
-                c(paste0(round(100*reduction['mean.reduction'], digits), mean.pct),
-                  paste0(ci.opening, round(100*reduction['ci.lower'], digits), ci.pct,
-                         ci.spacer, round(100*reduction['ci.upper'], digits), ci.pct, ci.closing))
-            }
-            else
-                c('','')
-        })
-    })
-    
-    rv = cbind(rep(msa.names(msas), each=2),
-               rv)
-    
-    attr(rv, 'interventions') = interventions
-    attr(rv, 'locations') = msas
-#    rv = as.data.frame(rv)
-    rv
-}
-
 
 get.estimates.and.intervals <- function(dir,
                                         msas=get.hiv.burden()$CBSA,
                                         interventions=INTERVENTION.SET,
+                                        n.sim,
                                         verbose=T,
                                         year1=2020,
-                                        year2=2030)
+                                        year2=2030,
+                                        summary.stat=mean,
+                                        interval.coverage=0.95,
+                                        calculate.total=T)
 {
     dir = file.path(dir)
-    all.mat = sapply(1:length(interventions), function(i){
+    all.arr = sapply(1:length(interventions), function(i){
         int = interventions[[i]]
         if (verbose)
             print(paste0("Reading ", length(msas), " locations for intervention ", i, " of ", length(interventions),
@@ -111,25 +62,54 @@ get.estimates.and.intervals <- function(dir,
                     print(paste0(" - ", msa.names(msa)))
                 
                 load(filename)
-                reduction = get.simset.incidence.reduction(simset, year1=year1, year2=year2)
-                reduction
+                
+                if (sum(simset@weights)<n.sim)
+                    stop(paste0("The simset for ", msa.names(msa), " on intervention '",
+                                get.intervention.name(int), "' does not have ",
+                                n.sim, " simulations"))
+                
+                indices = unlist(sapply(1:simset@n.sim, function(i){
+                    rep(i, simset@weights[i])
+                }))
+                indices = indices[1:n.sim]
+                
+                values = sapply(simset@simulations[unique(indices)], get.sim.absolute.incidence, years=c(year1,year2))
+                values = values[,indices]
+                values
             }
             else
-                rep(NA, 4)
+                rep(NA, n.sim*2)
         })
     })
     
-    dim(all.mat)=c(4,length(msas),length(interventions))
-    dim.names = list(1:4, location=as.character(msas), intervention=sapply(interventions, get.intervention.filename))
-    dimnames(all.mat) = dim.names
+    dim.names = list(year=c(year1,year2),
+                     sim=1:n.sim,
+                     location=msas,
+                     intervention=sapply(interventions, get.intervention.code))
+    dim(all.arr) = sapply(dim.names, length)
+    dimnames(all.arr) = dim.names
     
-    rv=list(estimates=all.mat[1,,],
-            ci.lower=all.mat[2,,],
-            ci.upper=all.mat[3,,],
-            probability=all.mat[4,,])
+    if (calculate.total)
+    {
+        dim.names$location = c(dim.names$location, 'Total')
+        new.all.arr = array(0, dim=sapply(dim.names, length), dimnames=dim.names)
+        new.all.arr[,,dimnames(all.arr)$location,] = all.arr
+        new.all.arr[,,'Total',] = apply(all.arr, c(1,2,4), sum, na.rm=T)
+        all.arr = new.all.arr
+    }
+    
+    #indexed [sim, msa, intervention]
+    rel.change = -(all.arr[2,,,] - all.arr[1,,,]) / all.arr[1,,,]
+
+    alpha = (1-interval.coverage)/2
+    rv=list(estimates=apply(rel.change, 2:3, summary.stat),
+            ci.lower=apply(rel.change, 2:3, quantile, probs=alpha),
+            ci.upper=apply(rel.change, 2:3, quantile, probs=1-alpha)
+            )
     
     attr(rv, 'interventions') = interventions
-    attr(rv, 'locations') = msas
+    attr(rv, 'locations') = dim.names$location
+    
     rv
 }
 

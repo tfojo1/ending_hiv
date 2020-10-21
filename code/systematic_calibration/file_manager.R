@@ -87,7 +87,8 @@ save.simset <- function(simset,
 
 make.and.save.compressed.baseline.and.seed <- function(simset,
                                                        dir='mcmc_runs/visualization_simsets',
-                                                       seed.keep.to.year=2020)
+                                                       seed.keep.to.year=2020,
+                                                       version=VERSION)
 {
     save.simset(simset, dir=dir, compress=T)
     
@@ -95,8 +96,24 @@ make.and.save.compressed.baseline.and.seed <- function(simset,
     run.from.year = attr(simset, 'run.from.year')
     simset = subset.simset.by.year(simset, (run.from.year-1):seed.keep.to.year)
     
-    filename = make.filenames.from.elements(version=VERSION,
-                                           location=attr(simset@simulations[[1]], 'location'),
-                                           intervention.code = 'seed')
+    filename = get.seed.filename(location=attr(simset@simulations[[1]], 'location'),
+                                 version=version)
     save(simset, file=file.path(dir, filename))
+}
+
+get.seed.filename <- function(location,
+                              version=VERSION)
+{
+    make.filenames.from.elements(version=version,
+                                 location=location,
+                                 intervention.code = 'seed')
+}
+
+get.baseline.filename <- function(location,
+                                  version=VERSION)
+{
+    get.simset.filename(simset=NULL,
+                        location=location,
+                        intervention.code=NULL,
+                        version=version)
 }
