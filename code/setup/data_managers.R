@@ -72,7 +72,7 @@ if (!exists('ALL.DATA.MANAGERS'))
 
     #MSM Proportions
     print('Reading MSM Proportions...')
-    ALL.DATA.MANAGERS$msm.propotions = read.msm.proportions()
+    ALL.DATA.MANAGERS$msm.proportions = read.msm.proportions()
     
     
     print("DONE READING DATA MANAGERS")
