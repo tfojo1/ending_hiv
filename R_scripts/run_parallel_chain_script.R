@@ -1,5 +1,6 @@
 
 #-- CHECK ARGUMENTS --#
+args = commandArgs(trailingOnly=TRUE)
 if (length(args)<2) {
     stop("Two arguments must be supplied", call.=FALSE)
 }
