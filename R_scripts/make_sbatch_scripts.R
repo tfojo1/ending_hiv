@@ -71,12 +71,28 @@ make.setup.scripts <- function(msa.indices,
     }
 }
 
-make.setup.master.script <- function(msa.indices,
+make.master.setup.script <- function(msa.indices,
                                      filename='R_scripts/master_scripts/setup_master.bat',
                                      path="Ending_HIV/R_scripts/setup_scripts/")
 {
     sink(filename)
     contents = cat(paste0(paste0("sbatch ", path, get.setup.filename(msa.indices)),
+                          collapse='\n'),
+                   sep='')
+    sink()
+}
+
+make.master.run.script <- function(msa.indices,
+                                   chains=1:4,
+                                     filename='R_scripts/master_scripts/setup_master.bat',
+                                     path="Ending_HIV/R_scripts/setup_scripts/")
+{
+    n.msa = length(msa.indices)
+    msa.indices = rep(msa.indices, each=length(chains))
+    chains = rep(chains, n.msa)
+    
+    sink(filename)
+    contents = cat(paste0(paste0("sbatch ", path, get.run.filename(msa.indices)),
                           collapse='\n'),
                    sep='')
     sink()
