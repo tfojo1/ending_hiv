@@ -29,6 +29,14 @@ if (is.na(chain) || chain<1 || chain>N.CHAINS)
 print(paste0("Running chain ", chain, " of the MCMC for ", msa.names(msa)))
 
 set.seed(1234)
-mcmc = run.mcmc.for.msa.cache('mcmc_runs/systematic_caches/31080_4x75K_2020-07-25/',
-                              chains=chain)
+cache.dirs = list.files('mcmc_runs/systematic_caches/')
+mask = grepl(msa, cache.dirs)
+
+if (!any(mask))
+    stop(paste0("No cache dir has been set up for '", msa, "' (", msa.names(msa), ")"))
+if (sum(mask)>0)
+    stop(paste0("There is more than one cache set up for '", msa, "' (", msa.names(msa), ")"))
+
+cache.dir = cache.dirs[mask]
+mcmc = run.mcmc.for.msa.cache(cache.dir, chains=chain)
 
