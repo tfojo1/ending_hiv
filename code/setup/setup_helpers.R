@@ -150,7 +150,9 @@ get.best.guess.msm.proportion <- function(fips,
                                           census,
                                           years)
 {
-    props = read.msm.proportions()[as.character(fips)]
+#    props = read.msm.proportions()[as.character(fips)]
+    props = ALL.DATA.MANAGERS$msm.proportions[as.character(fips)]
+    
     males = get.census.data(census, years=years, fips=fips,
                             sexes = 'male',
                             aggregate.ages = T,
@@ -170,7 +172,8 @@ get.best.guess.msm.proportions.by.race <- function(fips,
                                           census,
                                           years)
 {
-    props = read.msm.proportions()[as.character(fips)]
+#    props = read.msm.proportions()[as.character(fips)]
+    props = ALL.DATA.MANAGERS$msm.proportions[as.character(fips)]
     males.raw = get.census.data(census, years=years, fips=fips,
                                 sexes = 'male',
                                 aggregate.ages = T,
@@ -208,7 +211,9 @@ ORIG.get.best.guess.msm.proportions.by.race <- function(fips,
                                                    census,
                                                    years)
 {
-    props = read.msm.proportions()[as.character(fips)]
+#    props = read.msm.proportions()[as.character(fips)]
+    props = ALL.DATA.MANAGERS$msm.proportions[as.character(fips)]
+    
     if (length(fips)==1)
         c(black=as.numeric(props), hispanic=as.numeric(props), other=as.numeric(props))
     else

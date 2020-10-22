@@ -70,6 +70,10 @@ if (!exists('ALL.DATA.MANAGERS'))
     print('Reading HIV Surveillance...')
     ALL.DATA.MANAGERS$msa.surveillance = read.msa.surveillance(dir='../data2/HIV_Surveillance/by_msa')
 
-
+    #MSM Proportions
+    print('Reading MSM Proportions...')
+    ALL.DATA.MANAGERS$msm.propotions = read.msm.proportions()
+    
+    
     print("DONE READING DATA MANAGERS")
 }

@@ -179,7 +179,7 @@ set.up.census.indices <- function(dataset,
 #From Emory work:
 # http://www.emorycamp.org/item.php?i=28
 # https://publichealth.jmir.org/2016/1/e14/
-read.msm.proportions <- function(dir='../data2/MSM/')
+read.msm.proportions <- function(dir='cleaned_data')
 {
     msm.estimates = read.csv(paste0(dir, 'US MSM Estimates 2013.csv'))
     fips = combined.fips(msm.estimates$STATEFP, msm.estimates$COUNTYFP)
