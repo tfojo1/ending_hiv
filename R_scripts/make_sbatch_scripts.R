@@ -40,7 +40,7 @@ make.setup.scripts <- function(msa.indices,
         make.sbatch.script(filename=file.path(dir, get.setup.filename(i)),
                            job.name = paste0("setup_", msa.name),
                            output = paste0("Ending_HIV/mcmc_runs/output/setup_", msa.name, ".out"),
-                           commands= paste0("Ending_HIV/R_scripts/setup_parallel_mcmc_script.R ", i))
+                           commands= paste0("Rscript Ending_HIV/R_scripts/setup_parallel_mcmc_script.R ", i))
     }
 }
 
