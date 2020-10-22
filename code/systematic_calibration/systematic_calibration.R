@@ -791,6 +791,7 @@ run.mcmc.for.msa.cache <- function(cache.dir,
                                    update.detail='high',
                                    update.frequency=200)
 {
+    cache.dir = file.path(cache.dir)
     load(file.path(cache.dir, 'metadata.Rdata'))
     if (is.null(chains))
         chains = 1:metadata$n.chains
