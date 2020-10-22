@@ -65,6 +65,7 @@ make.setup.scripts <- function(msa.indices,
         msa.name = names(TARGET.MSAS)[i]
         make.sbatch.script(filename=file.path(dir, get.setup.filename(i)),
                            job.name = paste0("s", msa.name),
+                           partition='shared',
                            output = paste0("Ending_HIV/mcmc_runs/output/setup_", msa.name, ".out"),
                            commands= paste0("Rscript Ending_HIV/R_scripts/setup_parallel_mcmc_script.R ", i))
     }
