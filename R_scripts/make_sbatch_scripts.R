@@ -40,7 +40,8 @@ make.sbatch.script <- function(filename,
 
 make.run.scripts <- function(msa.indices,
                              chains=1:4,
-                               dir='R_scripts/run_scripts/')
+                             dir='R_scripts/run_scripts/',
+                             mem=NULL)
 {
     for (i in msa.indices)
     {
@@ -49,6 +50,7 @@ make.run.scripts <- function(msa.indices,
             msa.name = names(TARGET.MSAS)[i]
             make.sbatch.script(filename=file.path(dir, get.run.filename(i,chain)),
                                job.name = paste0("r", msa.name, chain),
+                               mem=mem,
                                output = paste0("Ending_HIV/mcmc_runs/output/run_", msa.name, "_", chain, ".out"),
                                partition = 'unlimited',
                                time.hours = 5*24,
