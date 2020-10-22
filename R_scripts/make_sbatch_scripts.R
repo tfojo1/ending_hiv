@@ -92,7 +92,7 @@ make.master.run.script <- function(msa.indices,
     chains = rep(chains, n.msa)
     
     sink(filename)
-    contents = cat(paste0(paste0("sbatch ", path, get.run.filename(msa.indices)),
+    contents = cat(paste0(paste0("sbatch ", path, get.run.filename(msa.indices, chains)),
                           collapse='\n'),
                    sep='')
     sink()
