@@ -29,12 +29,12 @@ if (is.na(chain) || chain<1 || chain>N.CHAINS)
 print(paste0("Running chain ", chain, " of the MCMC for ", msa.names(msa)))
 
 set.seed(1234)
-cache.dirs = list.files('mcmc_runs/systematic_caches/')
+cache.dirs = list.dirs('mcmc_runs/systematic_caches', recursive = F)
 mask = grepl(msa, cache.dirs)
 
 if (!any(mask))
     stop(paste0("No cache dir has been set up for '", msa, "' (", msa.names(msa), ")"))
-if (sum(mask)>0)
+if (sum(mask)>1)
     stop(paste0("There is more than one cache set up for '", msa, "' (", msa.names(msa), ")"))
 
 cache.dir = cache.dirs[mask]
