@@ -2,7 +2,6 @@
 source('code/targets/target_msas.R')
 
 make.sbatch.script <- function(filename,
-                               shared=T,
                               mem='16GB',
                               time.hours=NULL,
                               output=NULL,
@@ -16,9 +15,6 @@ make.sbatch.script <- function(filename,
     cat("#!/bin/bash\n\n")
     if (!is.null(job.name))
         cat("#SBATCH --job-name=", job.name, '\n', sep='')
-    
-    if (shared)
-        cat("#SBATCH --shared\n", sep='')
     
     if (!is.null(mem))
         cat("#SBATCH --mem=", mem, '\n', sep='')
