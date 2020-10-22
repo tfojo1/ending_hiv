@@ -85,7 +85,7 @@ make.master.setup.script <- function(msa.indices,
 make.master.run.script <- function(msa.indices,
                                    chains=1:4,
                                      filename='R_scripts/master_scripts/run_master.bat',
-                                     path="Ending_HIV/R_scripts/setup_scripts/")
+                                     path="Ending_HIV/R_scripts/run_scripts/")
 {
     n.msa = length(msa.indices)
     msa.indices = rep(msa.indices, each=length(chains))
