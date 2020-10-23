@@ -113,6 +113,25 @@ get.estimates.and.intervals <- function(dir,
     rv
 }
 
+make.systematic.legend <- function(below.threshold.min.color='red',
+                                   below.threshold.max.color='yellow2',
+                                   above.threshold.min.color='green3',
+                                   above.threshold.max.color='green4',
+                                   threshold=0.9)
+{
+    df = data.frame(x=1:4,
+                    y=10,
+                    d=c(0,threshold-.01,threshold,1))
+    ggplot(df, aes(x=x, y=y, fill=d)) +
+        geom_bar(stat='identity') +
+        scale_fill_gradientn(labels=function(x){paste0(round(100*x, 0), '%')},
+                             colors=c(below.threshold.min.color, below.threshold.max.color, above.threshold.min.color, above.threshold.max.color),
+                             values=c(0,threshold-.001,threshold,1),
+                             limits=c(0,1),
+                             name=NULL) + 
+        theme(legend.position = 'bottom')
+}
+
 plot.systematic.table <- function(estimates,
                                   interventions=attr(estimates, 'interventions'),
                                   include.interval=F,
