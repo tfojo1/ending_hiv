@@ -9,7 +9,7 @@ mcmc = assemble.mcmc.from.cache('mcmc_runs/systematic_caches/14460_4x100K_2020-1
 
 
 simset = extract.simset(mcmc, additional.burn=mcmc@n.iter/2, 
-                        additional.thin=2^(as.numeric(mcmc@n.iter>50)+as.numeric(mcmc@n.iter>200)))
+                        additional.thin=2)
 
 
 acceptance.plot(mcmc, window.iterations = 200) + geom_hline(yintercept = c(0.238,0.1))

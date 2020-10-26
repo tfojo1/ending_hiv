@@ -170,7 +170,7 @@ parameters.prior = join.distributions(
     #idu by sex from table 9 and 10 from
     #  https://www.cdc.gov/hiv/pdf/library/reports/surveillance/cdc-hiv-surveillance-special-report-number-24.pdf
     # RR of prob of daily use (heroin) * prob of needle sharing
-    female.vs.heterosexual.male.idu.susceptibility.rr = Lognormal.Distribution(log(.777/.755*.364/.309), 0.5*log(2)),
+    female.vs.heterosexual.male.idu.susceptibility.rr = Lognormal.Distribution(log(.777/.755*.626/.585), 0.5*log(2)),
     
     #-- HIV Testing --#
     heterosexual.proportion.tested.or = Lognormal.Distribution(0, log(2)),
