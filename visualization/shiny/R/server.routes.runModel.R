@@ -35,15 +35,48 @@ get.location <- function(input)
     input$geographic_location
 }
 
-tipBox <- function(message) {
+tipBox <- function(message,
+                   bg.color='#FFF3CD',
+                   border.color='black',
+                   padding=10,
+                   up.arrow=F,
+                   down.arrow=F,
+                   left.arrow=F,
+                   right.arrow=F)
+{
+    # https://www.htmlsymbols.xyz/arrow-symbols
+    up = down = right = left = '<td/>'
+    if (up.arrow)
+        up = "<td style='padding-bottom: 2px; font-size: 150%'>&#129093</td>"
+    if (down.arrow)
+        down = "<td style='padding-top: 2px; font-size: 150%'>&#129095</td>"
+    if (right.arrow)
+        right = "<td style='padding-left: 2px; font-size: 150%'>&#129094</td>"
+    if (left.arrow)
+        left = "<td style='padding-right: 5px; font-size: 150%'>&#129092</td>"
+
   fluidRow(
     column(
       width=page.width, 
       tags$div(
-        background='#FFF3CD', 
+        background=bg.color, 
         class="yellow-box", 
-        { message }
+        style=paste0('padding: ', padding, 'px;
+                     border-radius: 10px; 
+                     border-style: dotted;
+                     border-width: thin;
+                     border-color: ', border.color, ';'),
+        { 
+            HTML(paste0("<table>",
+                   "<tr><td/>",up,"</td></tr>",
+                   "<tr>",left,
+                        "<td>",message,"</td>",
+                        right,"</tr>",
+                    "<tr><td/>",down,"<td/></tr>",
+                    "</table>"))
+        }
   )))
+    
 }
 
 ##-----------------------------------------------------##
@@ -112,12 +145,6 @@ server.routes.runModel.get <- function(input)
               actionButton(
                 "reset_main", 
                 "Generate Projections")),
-            column(
-                width=6,
-                radioGroupButtons(
-                  inputId="toggle_main", 
-                  selected='Figure',
-                  choices=c('Figure','Table'))),
             
             # TODO: Download button: Not yet working
             column(
@@ -133,52 +160,40 @@ server.routes.runModel.get <- function(input)
             # ),
             ),
           
-          # #plot
+          # plot and table
           fluidRow(
-              tags$head(tags$style("#tbl {white-space: nowrap;}")),
+           #   tags$head(tags$style("#tbl {white-space: nowrap;}")),
+           #
+            #             ),
             column(
               width=page.width,
               
-              # Figure
-              conditionalPanel(
-                condition = "input.toggle_main == 'Figure'",
-                fluidRow(
-                  column(
-                    width=page.width, 
-                    tags$div(
-                      background='#FFF3CD', 
-                      class="yellow-box", 
-                      { 'Figure: [placeholder]'}
-              )))),
-              conditionalPanel(
-                condition = "input.toggle_main == 'Figure'",
-                plotlyOutput(outputId="mainPlot",
-                  height="auto",
-                  width='100%',#"auto",
-                  inline=T)  %>% withSpinner(color="#0dc5c1"),
-              ),
-              
-              # Table
-              conditionalPanel(
-                condition = "input.toggle_main == 'Table'",
-                fluidRow(
-                  column(
-                    width=page.width, 
-                    tags$div(
-                      background='#FFF3CD', 
-                      class="yellow-box", 
-                      { 'Table: [placeholder]'}
-              )))),
-              conditionalPanel(
-                  condition = "input.toggle_main == 'Table'",
-                  verbatimTextOutput(
-                    placeholder=FALSE,
-                    'mainTable_message'
+              tabsetPanel(
+                id='toggle_main',
+                selected='Figure',
+                type='tabs',
+                
+                #Figure
+                tabPanel(title='Figure',
+                         value='Figure',
+                         plotlyOutput(outputId="mainPlot",
+                                      height="auto",
+                                      width='100%',#"auto",
+                                      inline=T)  %>% withSpinner(color="#0dc5c1")
                   ),
-                  div(style = 'overflow-x: scroll', 
-                    dataTableOutput(outputId="mainTable")
-                  )
-              ),
+                
+                #Table
+                tabPanel(title='Table',
+                         value='Table',
+                         verbatimTextOutput(
+                           placeholder=FALSE,
+                           'mainTable_message'
+                         ),
+                         div(style = 'overflow-x: scroll', 
+                             dataTableOutput(outputId="mainTable")
+                         ))
+              )
+              
               
             ))
           )
@@ -238,7 +253,7 @@ server.routes.runModel.get <- function(input)
           ),  # </fluidRow>
           
           #div(HTML("<HR>")),
-          div(style = "font-size: 1.2em; padding: 0px 0px; margin-bottom:-20px",
+          div(style = "font-size: 1.2em; padding: 0px 0px; margin-bottom:0px",
               HTML("<b>Intervention 1:</b>")),
           create.intervention.selector.panel(1, input)
   #        box(title='Intervention 1:', solidHeader=T, width=12,
