@@ -35,15 +35,48 @@ get.location <- function(input)
     input$geographic_location
 }
 
-tipBox <- function(message) {
+tipBox <- function(message,
+                   bg.color='#FFF3CD',
+                   border.color='black',
+                   padding=10,
+                   up.arrow=F,
+                   down.arrow=F,
+                   left.arrow=F,
+                   right.arrow=F)
+{
+    # https://www.htmlsymbols.xyz/arrow-symbols
+    up = down = right = left = '<td/>'
+    if (up.arrow)
+        up = "<td style='padding-bottom: 2px; font-size: 150%'>&#129093</td>"
+    if (down.arrow)
+        down = "<td style='padding-top: 2px; font-size: 150%'>&#129095</td>"
+    if (right.arrow)
+        right = "<td style='padding-left: 2px; font-size: 150%'>&#129094</td>"
+    if (left.arrow)
+        left = "<td style='padding-right: 5px; font-size: 150%'>&#129092</td>"
+
   fluidRow(
     column(
       width=page.width, 
       tags$div(
-        background='#FFF3CD', 
+        background=bg.color, 
         class="yellow-box", 
-        { message }
+        style=paste0('padding: ', padding, 'px;
+                     border-radius: 10px; 
+                     border-style: dotted;
+                     border-width: thin;
+                     border-color: ', border.color, ';'),
+        { 
+            HTML(paste0("<table>",
+                   "<tr><td/>",up,"</td></tr>",
+                   "<tr>",left,
+                        "<td>",message,"</td>",
+                        right,"</tr>",
+                    "<tr><td/>",down,"<td/></tr>",
+                    "</table>"))
+        }
   )))
+    
 }
 
 ##-----------------------------------------------------##
@@ -125,9 +158,11 @@ server.routes.runModel.get <- function(input)
                     "Download"))) ),
             ),
           
-          # #plot
+          # plot and table
           fluidRow(
-              tags$head(tags$style("#tbl {white-space: nowrap;}")),
+           #   tags$head(tags$style("#tbl {white-space: nowrap;}")),
+           #
+            #             ),
             column(
               width=page.width,
               
