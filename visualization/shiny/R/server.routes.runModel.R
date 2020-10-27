@@ -122,13 +122,15 @@ server.routes.runModel.get <- function(input)
             # TODO: Download button: Not yet working
             column(
               width=3,
-              conditionalPanel(
-                condition="(input.show_download  !== undefined && input.show_download !== null)",
-                downloadLink(
-                  "downloadDataLink",
+              # conditionalPanel(
+              #   condition="(input.show_download  !== undefined && input.show_download !== null)",
+                # downloadLink(
+                #   "downloadDataLink",
                   actionButton(
                     "downloadDataButton", 
-                    "Download"))) ),
+                    "Download"))
+              # ) 
+            # ),
             ),
           
           # #plot

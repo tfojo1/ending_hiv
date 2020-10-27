@@ -118,11 +118,11 @@ server <- function(input, output, session) {
   # https://stackoverflow.com/questions/37883046/shiny-dashboard-reset-the-conditional-panel-state-when-we-navigate-across-diffe
   # https://shiny.rstudio.com/reference/shiny/0.11/conditionalPanel.html
   # https://shiny.rstudio.com/reference/shiny/1.4.0/conditionalPanel.html
-  output$downloadDataLink <- downloadHandler(
+  output$downloadDataButton <- downloadHandler(
     filename=function() {
       paste("data-", Sys.Date(), ".csv", sep="") },
     content=function(file) {
       write.csv(pretty.table, file) }
   )
-
+  
 }
