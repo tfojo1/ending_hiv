@@ -165,7 +165,7 @@ server.routes.runModel.get <- function(input)
           ),  # </fluidRow>
           
           #div(HTML("<HR>")),
-          div(style = "font-size: 1.2em; padding: 0px 0px; margin-bottom:-20px",
+          div(style = "font-size: 1.2em; padding: 0px 0px; margin-bottom:0px",
               HTML("<b>Intervention 1:</b>")),
           create.intervention.selector.panel(1, input)
   #        box(title='Intervention 1:', solidHeader=T, width=12,
