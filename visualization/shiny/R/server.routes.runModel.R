@@ -35,6 +35,17 @@ get.location <- function(input)
     input$geographic_location
 }
 
+tipBox <- function(message) {
+  fluidRow(
+    column(
+      width=page.width, 
+      tags$div(
+        background='#FFF3CD', 
+        class="yellow-box", 
+        { message }
+  )))
+}
+
 ##-----------------------------------------------------##
 ##-- THE FUNCTION THAT GENERATES THE UI FOR THE PAGE --##
 ##-----------------------------------------------------##
@@ -76,18 +87,10 @@ server.routes.runModel.get <- function(input)
           padding-left: 5px;
           padding-right: 5px;
         }
-        ")),
+        ")),  # TODO: yellow box: (1) rounded corners, (2) black border
 
     # Info box ####
-    fluidRow(
-      column(
-        width=page.width, 
-        tags$div(
-          background='#FFF3CD', 
-          class="yellow-box", 
-          { '[placeholder]'}
-        ))
-    ),
+    tipBox('placeholder'),  # acccepts HTML()
     
     # Output panel ####
     'output'=fluidRow(
