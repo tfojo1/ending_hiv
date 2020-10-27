@@ -8,6 +8,7 @@ make.sbatch.script <- function(filename,
                               job.name=NULL,
                               commands0 = 'ml R',
                               partition=NULL,
+                              account=NULL,
                               commands)
 {
     sink(filename)
@@ -28,6 +29,8 @@ make.sbatch.script <- function(filename,
     if (!is.null(partition))
         cat("#SBATCH --partition=", partition, '\n', sep='')
     
+    if (!is.null(account))
+        cat("#SBATCH --account=", account, '\n', sep='')
     
     if (!is.null(commands0))
         cat('\n', paste0(commands0, collapse='\n'), '\n', sep='')
@@ -41,6 +44,7 @@ make.sbatch.script <- function(filename,
 make.run.scripts <- function(msa.indices,
                              chains=1:4,
                              dir='R_scripts/run_scripts/',
+                             account='tfojo1',
                              mem=NULL)
 {
     for (i in msa.indices)
@@ -54,13 +58,15 @@ make.run.scripts <- function(msa.indices,
                                output = paste0("Ending_HIV/mcmc_runs/output/run_", msa.name, "_", chain, ".out"),
                                partition = 'unlimited',
                                time.hours = 5*24,
+                               account=account,
                                commands= paste0("Rscript Ending_HIV/R_scripts/run_parallel_chain_script.R ", i, " ", chain))
         }
     }
 }
 
 make.setup.scripts <- function(msa.indices,
-                               dir='R_scripts/setup_scripts/')
+                               dir='R_scripts/setup_scripts/',
+                               account='tfojo1')
 {
     for (i in msa.indices)
     {
@@ -68,6 +74,7 @@ make.setup.scripts <- function(msa.indices,
         make.sbatch.script(filename=file.path(dir, get.setup.filename(i)),
                            job.name = paste0("s", msa.name),
                            partition='shared',
+                           account=account,
                            output = paste0("Ending_HIV/mcmc_runs/output/setup_", msa.name, ".out"),
                            commands= paste0("Rscript Ending_HIV/R_scripts/setup_parallel_mcmc_script.R ", i))
     }

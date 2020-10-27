@@ -808,7 +808,7 @@ run.mcmc.for.msa.cache <- function(cache.dir,
                                update.detail = update.detail)
     
     
-    if (length(unique(chains))==mcmc@n.chains)
+    if (metadata$n.chains==mcmc@n.chains)
         to.save=T
     else if (is.mcmc.cache.complete(cache.dir))
     {

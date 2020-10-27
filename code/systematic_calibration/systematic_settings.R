@@ -1,5 +1,7 @@
 
-SYSTEMATIC.ROOT.DIR = 'mcmc_runs'
+SYSTEMATIC.ROOT.DIR = '../work-tfojo1/Ending_HIV/mcmc_runs' #for the cluster
+if (!dir.exists(SYSTEMATIC.ROOT.DIR))
+    SYSTEMATIC.ROOT.DIR = 'mcmc_runs'
 
 load.mcmc.from.dir <- function(location, 
                               dir=file.path(SYSTEMATIC.ROOT.DIR, 'systematic_initial'))
