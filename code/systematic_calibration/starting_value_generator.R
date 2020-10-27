@@ -1,7 +1,4 @@
-#library(distributions)
-#library(mcmc.sim)
-#source('code/source_code.R')
-source('code/systematic_calibration/systematic_settings.R')
+
 
 if (1==2)
 {
@@ -35,10 +32,10 @@ create.starting.sampling.distribution <- function(simset,
     
     # Get empiric means and correlation
     means = colMeans(parameters)
-    cov.mat = cov(parameters)
-    cov.mat = cov.mat * correlated.sd.inflation +  diag(diag(cov.mat)) * uncorrelated.sd.inflation 
-    #    diag(diag(cov.mat) + min(diag(cov.mat))/2) * uncorrelated.sd.inflation 
-    #the +min(diag...) is just to avoid rounding error non-positive definiteness
+    naive.cov.mat = cov(parameters)
+    
+    cov.mat = naive.cov.mat * correlated.sd.inflation + 
+      diag(diag(naive.cov.mat) + .01^2) * uncorrelated.sd.inflation 
     
     bounds = get.support.bounds(prior@support)
     dimnames(bounds)[[2]] = prior@var.names

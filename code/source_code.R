@@ -34,7 +34,6 @@ source('code/setup/interpolating.R')
 source('code/setup/default_jheem_settings.R')
 source('code/setup/base_parameters.R')
 source('code/setup/setup_helpers.R')
-source('code/setup/smoothing_proportions.R')
 source('code/setup/logit_transformations.R')
 source('code/setup/setup_jheem_from_components.R')
 source('code/setup/setup_jheem_components.R')
@@ -47,9 +46,14 @@ source('code/calibration/calibrated_parameters_113e.R')
 source('code/estimate_cdc_errors.R')
 source('code/calibration/likelihoods_2.R')
 
-#-- Plots --#
+#-- Systematic --#
+source('code/systematic_calibration/systematic_settings.R')
 source('code/systematic_calibration/postprocessing.R')
-source('code/plots.R')
+source('code/systematic_calibration/file_manager.R')
+source('code/systematic_calibration/systematic_calibration.R')
+source('code/systematic_calibration/starting_value_generator.R')
+source('code/visualization/compression.R')
+source('code/time_text.R') #from commoncode
 
 #-- Interventions --#
 source('code/interventions/target_population.R')
@@ -57,7 +61,7 @@ source('code/interventions/intervention_units.R')
 source('code/interventions/interventions.R')
 source('code/interventions/intervention_presets.R')
 source('code/interventions/interventions_for_simset.R')
-#source('code/interventions/systematic_interventions.R')
+source('code/interventions/systematic_interventions.R')
 
 #-- Redo Surveillance Manager to get rid of old version stuck somewhere in loaded object --#
 source('code/data_managers/hiv_surveillance_manager.R')

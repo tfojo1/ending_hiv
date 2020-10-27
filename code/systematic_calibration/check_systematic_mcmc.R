@@ -5,15 +5,34 @@ if (1==2)
 
 source('code/source_code.R')
 
-mcmc = assemble.mcmc.from.cache('mcmc_runs/systematic_caches/31080_1x20K_2020-07-19/',T)
+mcmc = assemble.mcmc.from.cache('mcmc_runs/systematic_caches/14460_4x100K_2020-10-22/',T)
 
 
 simset = extract.simset(mcmc, additional.burn=mcmc@n.iter/2, 
-                        additional.thin=2^(as.numeric(mcmc@n.iter>50)+as.numeric(mcmc@n.iter>200)))
+                        additional.thin=2)
 
-simset = extract.simset(mcmc, additional.burn=250, additional.thin=8)
-plot.calibration.race.risk(simset)
+
+acceptance.plot(mcmc, window.iterations = 200) + geom_hline(yintercept = c(0.238,0.1))
+simset = extract.simset(mcmc, additional.burn=mcmc@n.iter/2, additional.thin=2^(as.numeric(mcmc@n.iter>100)+as.numeric(mcmc@n.iter>1000)))
+
+plot.calibration.sex.risk(simset)
 plot.calibration.sex.age(simset)
+
+plot.calibration.total(simset, data.types=c('diagnosed','testing'))
+plot.calibration.risk(simset, data.types='testing')
+plot.calibration.race(simset, data.types='suppression')
+
+#plot.calibration.sex.age(simset, sex='female')
+plot.calibration.race.risk(simset)
+plot.calibration.total(simset)
+
+#plot.calibration(simset, facet.by=c('race'), risk='msm')
+plot.calibration.risk(simset)
+plot.calibration.risk.race(simset)
+plot.calibration.race(simset)
+plot.calibration.age(simset)
+
+
 
 
 get.rhats(mcmc, additional.burn = mcmc@n.iter/2)
@@ -66,7 +85,6 @@ plot.calibration(simset, facet.by=c('sex','age'), split.by='risk', sex='male', s
 
 #Difficult mixers
 ADDITIONAL.BURN = mcmc@n.iter/2
-ADDITIONAL.BURN=250
 get.rhats(mcmc, additional.burn = ADDITIONAL.BURN)[1:6]
 trace.plot(mcmc, names(get.rhats(mcmc, additional.burn = ADDITIONAL.BURN))[1:6], additional.burn = ADDITIONAL.BURN)
 

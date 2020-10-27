@@ -35,74 +35,6 @@ get.testing.model <- function(cm,
 #    OLD.get.testing.model(cm, location, population)
 }
 
-OLD.get.testing.model <- function(cm,
-                              location,
-                              population)
-{
-    location.mask = cm$testing$total.ever.tested$location==location
-    if (any(location.mask))
-    {
-        ever.tested = cm$testing$total.ever.tested$frac.ever[location.mask]
-        years = cm$testing$total.ever.tested$year[location.mask] - cm$testing$anchor.year
-        sample.size = cm$testing$total.ever.tested$sample.size[location.mask]
-    }
-    else #average fraction ever tested for locations in the same state
-    {
-        location.states = states.for.msa(location)
-        locations = unique(cm$testing$total.ever.tested$location)
-        same.state.mask = sapply(locations, function(loc){
-            states.for.loc = states.for.msa(loc)
-            any(sapply(location.states, function(st){
-                any(st == states.for.loc)
-            }))
-        })
-        if (any(same.state.mask))
-        {
-            locations = locations[same.state.mask]
-            location.mask = sapply(cm$testing$total.ever.tested$location, function(loc){
-                any(loc==locations)
-            })
-        }
-        else
-            location.mask = T
-        
-        years = sort(unique(cm$testing$total.ever.tested$year[location.mask]))
-        ever.tested = sapply(years, function(year){
-            year.mask = location.mask & cm$testing$total.ever.tested$year == year
-            sum(cm$testing$total.ever.tested$frac.ever[year.mask] * cm$testing$total.ever.tested$sample.size[year.mask]) /
-                sum(cm$testing$total.ever.tested$sample.size[year.mask])
-        })
-        sample.size = sapply(years, function(year){
-            year.mask = location.mask & cm$testing$total.ever.tested$year == year
-            ceiling(mean(cm$testing$total.ever.tested$sample.size[year.mask]))
-        })
-    }
-    frac.12mo = 1-exp(cm$testing$rate.ever.to.12mo.mult * log(1-ever.tested))
-    xs = round(frac.12mo*sample.size)
-
-    summed.population = sum(population)
-    fn <- function(params)
-    {
-        p.by.year = sapply(years, function(year){
-            sum(population / (1 + exp(-(cm$testing$stratified.log.odds.intercept + params[1] + 
-                                            year*cm$testing$stratified.log.odds.slope + year*params[2]))) * 
-                    cm$testing$max.proportion) /
-                summed.population
-        })
-        -sum(dbinom(xs, size=sample.size, prob=p.by.year, log=T))
-    }
-
-    opt = optim(par=c(0,0), 
-                fn = fn,control = list(maxit=500))
-    print(paste0("Intercept (exp scale) = ", exp(opt$par[1])))
-    print(paste0("Slope (exp scale) = ", exp(opt$par[2])))
-    
-    list(intercept = cm$testing$stratified.log.odds.intercept + opt$par[1],
-         slope = cm$testing$stratified.log.odds.slope + opt$par[2],
-         anchor.year = cm$testing$anchor.year,
-         max.proportion = cm$testing$max.proportion)
-}
-
 logit <- function(x){log(x) - log(1-x)}
 expit <- function(x){1/(1+exp(-x))}
 
@@ -337,17 +269,23 @@ run.suppression.regressions <- function(cm,
     cm$suppression = list(anchor.year=anchor.year,
                           max.proportion=max.suppressed.proportion)
     
+    # Save the log ORs for readability/reference (NOT used by model)
+    cm$testing$log.ors = numeric()
+    
     dim.names = list(age=settings$AGES$labels, race=settings$RACES, sex=settings$SEXES, risk=settings$RISK_STRATA)
     cm$suppression$stratified.log.odds.intercept = cm$suppression$stratified.log.odds.slope =
         array(0, dim=sapply(dim.names, length), dimnames=dim.names)
     
-    for (age in 1:length(dim.names[['age']]))
+    n.ages = length(dim.names[['age']])
+    for (age in 1:n.ages)
     {
         cm$suppression$stratified.log.odds.intercept[age,,,] = cm$suppression$stratified.log.odds.intercept[age,,,] + 
             fit.age$coefficients[paste0('age',age)]
         cm$suppression$stratified.log.odds.slope[age,,,] = cm$suppression$stratified.log.odds.slope[age,,,] + 
             fit.age$coefficients[paste0('age',age,':year')]
     }
+    cm$suppression$log.ors[paste0('age',1:n.ages)] = fit.age$coefficients[paste0('age',1:n.ages)]
+    cm$suppression$log.ors[paste0('age',1:n.ages,"_slope")] = fit.age$coefficients[paste0('age',1:n.ages,":year")]
     
     for (race in settings$RACES)
     {
@@ -356,6 +294,8 @@ run.suppression.regressions <- function(cm,
         cm$suppression$stratified.log.odds.slope[,race,,] = cm$suppression$stratified.log.odds.slope[,race,,] + 
             fit.race$coefficients[paste0(race,":year")]
     }
+    cm$suppression$log.ors[settings$RACES] = fit.race$coefficients[settings$RACES]
+    cm$suppression$log.ors[paste0(settings$RACES,"_slope")] = fit.race$coefficients[paste0(settings$RACES,":year")]
     
     idu.strata = setdiff(settings$RISK_STRATA, 'never_IDU')
     non.idu.strata = 'never_IDU'
@@ -368,6 +308,8 @@ run.suppression.regressions <- function(cm,
     cm$suppression$stratified.log.odds.slope[,,'female',non.idu.strata] = 
         cm$suppression$stratified.log.odds.slope[,,'female',non.idu.strata] + 
         fit.sex.risk$coefficients['year:heterosexual_female']
+    cm$suppression$log.ors['heterosexual_female'] = fit.sex.risk$coefficients['heterosexual_female']
+    cm$suppression$log.ors['heterosexual_female_slope'] = fit.sex.risk$coefficients['year:heterosexual_female']
     
     # Non-IDU, heterosexual male
     cm$suppression$stratified.log.odds.intercept[,,'heterosexual_male',non.idu.strata] = 
@@ -376,6 +318,8 @@ run.suppression.regressions <- function(cm,
     cm$suppression$stratified.log.odds.slope[,,'heterosexual_male',non.idu.strata] = 
         cm$suppression$stratified.log.odds.slope[,,'heterosexual_male',non.idu.strata] + 
         fit.sex.risk$coefficients['year:heterosexual_male']
+    cm$suppression$log.ors['heterosexual_male'] = fit.sex.risk$coefficients['heterosexual_male']
+    cm$suppression$log.ors['heterosexual_male_slope'] = fit.sex.risk$coefficients['year:heterosexual_male']
     
     # IDU female
     cm$suppression$stratified.log.odds.intercept[,,'female',idu.strata] = 
@@ -384,6 +328,8 @@ run.suppression.regressions <- function(cm,
     cm$suppression$stratified.log.odds.slope[,,'female',idu.strata] = 
         cm$suppression$stratified.log.odds.slope[,,'female',idu.strata] + 
         fit.sex.risk$coefficients['year:idu_female']
+    cm$suppression$log.ors['idu_female'] = fit.sex.risk$coefficients['idu_female']
+    cm$suppression$log.ors['idu_female_slope'] = fit.sex.risk$coefficients['year:idu_female']
     
     # IDU, heterosexual male
     cm$suppression$stratified.log.odds.intercept[,,'heterosexual_male',idu.strata] = 
@@ -392,6 +338,8 @@ run.suppression.regressions <- function(cm,
     cm$suppression$stratified.log.odds.slope[,,'heterosexual_male',idu.strata] = 
         cm$suppression$stratified.log.odds.slope[,,'heterosexual_male',idu.strata] + 
         fit.sex.risk$coefficients['year:idu_male']
+    cm$suppression$log.ors['idu_male'] = fit.sex.risk$coefficients['idu_male']
+    cm$suppression$log.ors['idu_male_slope'] = fit.sex.risk$coefficients['year:idu_male']
     
     # Non-IDU MSM
     cm$suppression$stratified.log.odds.intercept[,,'msm',non.idu.strata] = 
@@ -400,6 +348,8 @@ run.suppression.regressions <- function(cm,
     cm$suppression$stratified.log.odds.slope[,,'msm',non.idu.strata] = 
         cm$suppression$stratified.log.odds.slope[,,'msm',non.idu.strata] + 
         fit.sex.risk$coefficients['msm:year']
+    cm$suppression$log.ors['msm'] = fit.sex.risk$coefficients['msm']
+    cm$suppression$log.ors['msm_slope'] = fit.sex.risk$coefficients['year:msm']
     
     # IDU MSM
     cm$suppression$stratified.log.odds.intercept[,,'msm',idu.strata] = 
@@ -408,6 +358,8 @@ run.suppression.regressions <- function(cm,
     cm$suppression$stratified.log.odds.slope[,,'msm',idu.strata] = 
         cm$suppression$stratified.log.odds.slope[,,'msm',idu.strata] + 
         fit.sex.risk$coefficients['year:msm_idu']
+    cm$suppression$log.ors['msm_idu'] = fit.sex.risk$coefficients['msm_idu']
+    cm$suppression$log.ors['msm_idu_slope'] = fit.sex.risk$coefficients['year:msm_idu']
     
     
     #-- Return --#
@@ -522,19 +474,25 @@ run.testing.regressions <- function(cm,
     
     #-- STEP 4: PUT IT ALL TOGETHER --#
     
+    # Save the log ORs for readability/reference (NOT used by model)
+    cm$testing$log.ors = numeric()
     
     # Unpack the intercepts and slopes into arrays indexed [age,race,sex,risk]
     dim.names = list(age=settings$AGES$labels, race=settings$RACES, sex=settings$SEXES, risk=settings$RISK_STRATA)
     cm$testing$stratified.log.odds.intercept = array(base.log.or, dim=sapply(dim.names, length), dimnames=dim.names)
     cm$testing$stratified.log.odds.slope = array(0, dim=sapply(dim.names, length), dimnames=dim.names)
     
-    for (age in 1:length(dim.names[['age']]))
+    n.ages = length(dim.names[['age']])
+    for (age in 1:n.ages)
     {
         cm$testing$stratified.log.odds.intercept[age,,,] = cm$testing$stratified.log.odds.intercept[age,,,] + 
             fit.stratified.testing$coefficients[paste0('age',age)]
         cm$testing$stratified.log.odds.slope[age,,,] = cm$testing$stratified.log.odds.slope[age,,,] + 
             fit.stratified.testing$coefficients[paste0('year:age',age)]
     }
+    cm$testing$log.ors[paste0('age',1:n.ages)] = fit.stratified.testing$coefficients[paste0('age',1:n.ages)]
+    cm$testing$log.ors[paste0('age',1:n.ages,'_slope')] = fit.stratified.testing$coefficients[paste0('year:age',1:n.ages)]
+    
     
     for (race in settings$RACES)
     {
@@ -543,16 +501,24 @@ run.testing.regressions <- function(cm,
         cm$testing$stratified.log.odds.slope[,race,,] = cm$testing$stratified.log.odds.slope[,race,,] + 
             fit.stratified.testing$coefficients[paste0('year:',race)]
     }
+    cm$testing$log.ors[paste0(settings$RACES)] = fit.stratified.testing$coefficients[settings$RACES]
+    cm$testing$log.ors[paste0(settings$RACES,'_slope')] = fit.stratified.testing$coefficients[paste0('year:',settings$RACES)]
+    
     
     cm$testing$stratified.log.odds.intercept[,,'female',] = cm$testing$stratified.log.odds.intercept[,,'female',] + 
         fit.stratified.testing$coefficients['female']
     cm$testing$stratified.log.odds.slope[,,'female',] = cm$testing$stratified.log.odds.slope[,,'female',] + 
         fit.stratified.testing$coefficients['year:female']
+    cm$testing$log.ors['female'] = fit.stratified.testing$coefficients['female']
+    cm$testing$log.ors['female_slope'] = fit.stratified.testing$coefficients['year:female']
+    
     
     cm$testing$stratified.log.odds.intercept[,,'heterosexual_male',] = cm$testing$stratified.log.odds.intercept[,,'heterosexual_male',] + 
         fit.stratified.testing$coefficients['male']
     cm$testing$stratified.log.odds.slope[,,'heterosexual_male',] = cm$testing$stratified.log.odds.slope[,,'heterosexual_male',] + 
         fit.stratified.testing$coefficients['year:male']
+    cm$testing$log.ors['heterosexual_male'] = fit.stratified.testing$coefficients['male']
+    cm$testing$log.ors['heterosexual_male_slope'] = fit.stratified.testing$coefficients['year:male']
     
     non.active.idu = setdiff(settings$RISK_STRATA, 'active_IDU')
     
@@ -560,6 +526,8 @@ run.testing.regressions <- function(cm,
         fit.stratified.testing$coefficients['msm']
     cm$testing$stratified.log.odds.slope[,,'msm',] = cm$testing$stratified.log.odds.slope[,,'msm',] + 
         fit.stratified.testing$coefficients['msm:year']
+    cm$testing$log.ors['msm'] = fit.stratified.testing$coefficients['msm']
+    cm$testing$log.ors['msm_slope'] = fit.stratified.testing$coefficients['msm:year']
     
     #we're going to treat msm+idu as msm (by omitting them from the code below adding idu log ORs)
     cm$testing$stratified.log.odds.intercept[,,c('female','heterosexual_male'),'active_IDU'] = 
@@ -568,6 +536,8 @@ run.testing.regressions <- function(cm,
     cm$testing$stratified.log.odds.slope[,,c('female','heterosexual_male'),'active_IDU'] = 
         cm$testing$stratified.log.odds.slope[,,c('female','heterosexual_male'),'active_IDU'] + 
         fit.stratified.testing$coefficients['idu:year']
+    cm$testing$log.ors['idu'] = fit.stratified.testing$coefficients['idu']
+    cm$testing$log.ors['idu_slope'] = fit.stratified.testing$coefficients['idu:year']
     
     cm$testing$stratified.log.odds.intercept[,,c('female','heterosexual_male'),non.active.idu] = 
         cm$testing$stratified.log.odds.intercept[,,c('female','heterosexual_male'),non.active.idu] + 
@@ -575,6 +545,10 @@ run.testing.regressions <- function(cm,
     cm$testing$stratified.log.odds.slope[,,c('female','heterosexual_male'),non.active.idu] = 
         cm$testing$stratified.log.odds.slope[,,c('female','heterosexual_male'),non.active.idu] + 
         fit.stratified.testing$coefficients['heterosexual:year']
+    cm$testing$log.ors['heterosexual'] = fit.stratified.testing$coefficients['heterosexual']
+    cm$testing$log.ors['heterosexual_slope'] = fit.stratified.testing$coefficients['heterosexual:year']
+    
+    cm$testing$log.ors['base'] = base.log.or
     
     #-- Return --#
     cm

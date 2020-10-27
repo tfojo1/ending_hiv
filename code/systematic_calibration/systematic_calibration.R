@@ -1,7 +1,4 @@
 
-source('code/systematic_calibration/systematic_settings.R')
-source('code/systematic_calibration/starting_value_generator.R')
-
 
 ##---------------------------##
 ##-- CREATE THE LIKELIHOOD --##
@@ -335,7 +332,7 @@ create.msa.likelihood <- function(msa,
 ##-----------------##
 
 setup.initial.mcmc.for.msa <- function(msa,
-                                       likelihood=create.msa.likelihood(msa),
+                                       likelihood=NULL,
                                        prior=parameters.prior,
                                        parameter.var.blocks = PARAMETER.VAR.BLOCKS.1,
                                        template.mcmc=NULL,
@@ -359,9 +356,20 @@ setup.initial.mcmc.for.msa <- function(msa,
                                        COV.UPDATE.DECAY=0.5,#0.25
                                        
                                        run=T,
+                                       verbose=T,
                                        step.size.multiplier=1,
                                        derive.step.size.from.prior.mcmc=T)
 {
+    
+    # Likelihood
+    if (is.null(likelihood))
+    {
+        if (verbose)
+            print("Creating Likelihood")
+        likelihood = create.msa.likelihood(msa)
+    }
+    
+    # Start values
     start.value.file = file.path('mcmc_runs/start_values', paste0(msa, '.Rdata'))
     if (!file.exists(start.value.file))
         stop(paste0("Initial values have not been set for ", msa.names(msa)))
@@ -423,6 +431,7 @@ setup.initial.mcmc.for.msa <- function(msa,
                        save.suffix=save.suffix,
                        target.acceptance.rate = target.acceptance.rate,
                        run=run,
+                       verbose=verbose,
                        
                        initial.cov.mat = initial.cov.mat,
                        initial.scaling.parameters = initial.scaling.parameters,
@@ -460,12 +469,12 @@ create.start.value.generator.for.msa <- function(msa)
 ##-----------------------##
 
 setup.parallel.mcmc.for.msa <- function(msa,
-                                        likelihood=create.msa.likelihood(msa),
+                                        likelihood=NULL,
                                         prior=parameters.prior,
                                         parameter.var.blocks = PARAMETER.VAR.BLOCKS.1,
                                         start.value.generator=NULL,
                                         chains=4,
-                                        n.iter=75000,
+                                        n.iter=100000,
                                         thin=100,
                                         burn=0,
                                         max.sim.time=20,
@@ -480,9 +489,20 @@ setup.parallel.mcmc.for.msa <- function(msa,
                                         SCALING.UPDATE.PRIOR=100,
                                         SCALING.UPDATE.DECAY=.5,
                                         
-                                        run=F)
+                                        run=F,
+                                        verbose=T)
 {
+    # Likelihood
+    if (is.null(likelihood))
+    {
+        if (verbose)
+            print("Creating Likelihood")
+        likelihood = create.msa.likelihood(msa)
+    }
+    
     # Pull Initial MCMC
+    if (verbose)
+        print("Loading the initial MCMC")
     files = list.files(file.path(SYSTEMATIC.ROOT.DIR, 'systematic_initial'))
     full.files = list.files(file.path(SYSTEMATIC.ROOT.DIR, 'systematic_initial'), full.names = T)
     
@@ -492,6 +512,8 @@ setup.parallel.mcmc.for.msa <- function(msa,
     load(full.files[mask][sum(mask)])
     
     # Set up start value generator
+    if (verbose)
+        print("Creating starting value generator")
     simset = extract.simset(mcmc, additional.burn=mcmc@n.iter/2)
     start.value.generator = create.starting.sampling.distribution(simset, correlated.sd.inflation = .75, uncorrelated.sd.inflation = .5)
     
@@ -527,13 +549,14 @@ setup.parallel.mcmc.for.msa <- function(msa,
                        SCALING.UPDATE.PRIOR=SCALING.UPDATE.PRIOR,
                        SCALING.UPDATE.DECAY=SCALING.UPDATE.DECAY,
                        
-                       run=run
+                       run=run,
+                       verbose=verbose
     )
     
 }
 
 setup.mcmc.for.msa <- function(msa,
-                               likelihood=create.msa.likelihood(msa),
+                               likelihood=NULL,
                                prior=parameters.prior,
                                parameter.var.blocks = PARAMETER.VAR.BLOCKS.1,
                                start.value.generator=NULL,
@@ -560,11 +583,20 @@ setup.mcmc.for.msa <- function(msa,
                                initial.cov.mat=NULL,
                                initial.scaling.parameters=NULL,
                                run=F,
-                               plot.first.sim=run)
+                               plot.first.sim=run,
+                               verbose=T)
 {
     
+    # Likelihood
+    if (is.null(likelihood))
+    {
+        if (verbose)
+            print("Creating Likelihood")
+        likelihood = create.msa.likelihood(msa)
+    }
     
     #-- Start Values --#
+    
     if (is.null(start.value.generator))
     {
         load(file.path(SYSTEMATIC.ROOT.DIR, 'starting_value_generators',
@@ -582,6 +614,9 @@ setup.mcmc.for.msa <- function(msa,
     else
         first.start.values=start.values[1,]
     
+    if (verbose)
+        print("Creating run.simulation function")
+    
     run.simulation = create.run.simulation.function(msa=msa,
                                                     start.values=first.start.values,
                                                     max.sim.time=max.sim.time)
@@ -589,11 +624,16 @@ setup.mcmc.for.msa <- function(msa,
     
     if (plot.first.sim)
     {
+        if (verbose)
+            print("Running initial simulation to plot")
         init.sim = run.simulation(first.start.values)
         print(plot.calibration.risk(init.sim) + ggtitle(paste0("Initial Sim: ", msa.names(msa))))
     }
     
     #-- MCMC Control --#
+    if (verbose)
+        print("Creating MCMC Control")
+    
     if (is.null(initial.cov.mat))
     {
         param.medians = suppressWarnings(get.medians(prior))
@@ -668,6 +708,9 @@ setup.mcmc.for.msa <- function(msa,
     
     remove.mcmc.cache(cache.dir)
     
+    if (verbose)
+        print("Creating the cache")
+    
     create.mcmc.cache(dir=cache.dir,
                       control=ctrl,
                       n.iter=n.iter,
@@ -682,11 +725,19 @@ setup.mcmc.for.msa <- function(msa,
     save(metadata, file=file.path(cache.dir, 'metadata.Rdata'))
     
     if (run)
+    {
+        if (verbose)
+            print("Running MCMC")
         run.mcmc.for.msa.cache(cache.dir,
                                update.detail='high',
                                update.frequency=update.frequency)
+    }
     else
+    {
+        if (verbose)
+            print("Done")
         NULL
+    }
 }
 
 
@@ -740,6 +791,7 @@ run.mcmc.for.msa.cache <- function(cache.dir,
                                    update.detail='high',
                                    update.frequency=200)
 {
+    cache.dir = file.path(cache.dir)
     load(file.path(cache.dir, 'metadata.Rdata'))
     if (is.null(chains))
         chains = 1:metadata$n.chains
@@ -756,7 +808,7 @@ run.mcmc.for.msa.cache <- function(cache.dir,
                                update.detail = update.detail)
     
     
-    if (length(unique(chains))==mcmc@n.chains)
+    if (metadata$n.chains==mcmc@n.chains)
         to.save=T
     else if (is.mcmc.cache.complete(cache.dir))
     {

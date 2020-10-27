@@ -31,7 +31,7 @@ run.jheem.from.components <- function(components,
     attr(results, 'location') = attr(components, 'location')
     
     if (keep.components)
-        attr(results, 'components') = components
+        attr(results, 'components') = crunch.intervention.rates(components)
     
     #-- Return it --#
     results

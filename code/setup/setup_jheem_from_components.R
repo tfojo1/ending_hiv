@@ -41,6 +41,19 @@ setup.jheem.from.components <- function(components, verbose=F)
                            verbose=verbose)
 }
 
+#just does the rates we might intervene on (for pre-caching for plots)
+crunch.intervention.rates <- function(components)
+{
+    if (is.null(components$suppression.rates.and.times))
+        components = do.calculate.suppression(components)
+    if (is.null(components$testing.rates.and.times))
+        components = do.calculate.testing.rates(components)
+    if (is.null(components$prep.rates.and.times))
+        components = do.calculate.prep.coverage(components)
+    
+    components
+}
+
 FIX = 1
 CRUNCH = 2
 PRODUCE.FROM.UNFIXED = 3
@@ -164,7 +177,7 @@ do.setup.crunch.or.fix <- function(components,
     {
         if (verbose)
             print('Setting up HIV Mortality')
-        components = do.setup.hiv.mortality(components)
+        components = do.setup.hiv.mortality(components) #this needs to go before transmissibility for suppression
     }
     if (setting == PRODUCE.FROM.UNFIXED ||
         (setting == PRODUCE.FROM.FIXED && comp.was.null) ||
@@ -278,7 +291,7 @@ do.setup.crunch.or.fix <- function(components,
     {
         if (verbose)
             print("Setting up Susceptibility")
-        components = do.setup.susceptibility(components)
+        components = do.setup.susceptibility(components) #this needs to go before new infection proportion for crunch prep coverage
     }
     if (setting == PRODUCE.FROM.UNFIXED ||
         (setting == PRODUCE.FROM.FIXED && comp.was.null) ||
@@ -495,7 +508,10 @@ clear.dependent.values <- function(components,
                             'fix.strata.sizes.check',
                             'track.mortality.check',
                             'sexual.susceptibility',
-                            'aging.rates.hiv.positive')
+                            'aging.rates.hiv.positive',
+                            'suppression.rates.and.times',
+                            'testing.rates.and.times',
+                            'prep.rates.and.times')
     
     dependencies = list(model.idu=all.dependent.names,
                         model.hiv.transmission=all.dependent.names,
@@ -519,13 +535,13 @@ clear.dependent.values <- function(components,
                         aids.progression.rate='cd4.transitions',
                         cd4.recovery.rate='cd4.transitions',
                         prep.screening.frequency='continuum.transitions',
-                        background.testing.proportions='continuum.transitions',
-                        foreground.testing.proportions='continuum.transitions',
-                        background.testing.rate.ratios='continuum.transitions',
-                        background.suppression=c('hiv.mortality.rates','sexual.transmissibilities','idu.transmissibilities'),
-                        foreground.suppression=c('hiv.mortality.rates','sexual.transmissibilities','idu.transmissibilities'),
-                        background.prep.coverage=c('susceptibility','new.infection.proportions','new.infection.proportions.years'),
-                        foreground.prep.coverage=c('susceptibility','new.infection.proportions','new.infection.proportions.years'),
+                        background.testing.proportions=c('continuum.transitions','testing.rates.and.times'),
+                        foreground.testing.proportions=c('continuum.transitions','testing.rates.and.times'),
+                        background.testing.rate.ratios=c('continuum.transitions','testing.rates.and.times'),
+                        background.suppression=c('suppression.rates.and.times','hiv.mortality.rates','sexual.transmissibilities','idu.transmissibilities'),
+                        foreground.suppression=c('suppression.rates.and.times','hiv.mortality.rates','sexual.transmissibilities','idu.transmissibilities'),
+                        background.prep.coverage=c('prep.rates.and.times','susceptibility','new.infection.proportions','new.infection.proportions.years'),
+                        foreground.prep.coverage=c('prep.rates.and.times','susceptibility','new.infection.proportions','new.infection.proportions.years'),
                         prep.rr.heterosexual='sexual.susceptibility',
                         prep.rr.msm='sexual.susceptibility',
                         prep.rr.idu='idu.susceptibility',
@@ -788,6 +804,7 @@ do.setup.hiv.mortality <- function(components)
 {
     if (components$model.hiv.transmission)
     {
+        components = do.calculate.suppression(components)
         suppression = calculate.suppression(components)
         
         mortality.rates = get.hiv.mortality.rate.arrays(components)
@@ -963,6 +980,7 @@ do.setup.continuum.transitions <- function(components)
         
         #-- HIV Testing --#
         
+        components = do.calculate.testing.rates(components) #this caches them
         testing.rates = calculate.testing.rates(components)
         
         components$continuum.transitions = lapply(1:length(testing.rates$rates), function(i){
@@ -986,6 +1004,13 @@ do.setup.continuum.transitions <- function(components)
 ##-----------------------------##
 
 calculate.suppression <- function(components)
+{
+    if (is.null(components$suppression.rates.and.times))
+        components = do.calculate.suppression(components)
+    components$suppression.rates.and.times
+}
+
+do.calculate.suppression <- function(components)
 {
     #Pull background suppression proportions from logistic model
     background.suppression = get.background.proportions(base.model = components$background.suppression$model,
@@ -1020,11 +1045,19 @@ calculate.suppression <- function(components)
                                                            max.background.time = components$background.change.to.years$suppression,
                                                            allow.foreground.less = F)
     
-    #Return
-    suppression
+    
+    components$suppression.rates.and.times = suppression
+    components
 }
 
 calculate.testing.rates <- function(components)
+{
+    if (is.null(components$testing.rates.and.times))
+        components = do.calculate.testing.rates(components)
+    components$testing.rates.and.times
+}
+
+do.calculate.testing.rates <- function(components)
 {
     #Pull background testing proportions from logistic model
     background.testing.proportions = get.background.proportions(base.model = components$background.testing$model,
@@ -1071,7 +1104,28 @@ calculate.testing.rates <- function(components)
                                                              allow.foreground.less = F)
     
     #Return
-    testing.rates
+    components$testing.rates.and.times = testing.rates
+    components
+}
+
+calculate.prep.coverage <- function(components)
+{
+    if (is.null(components$prep.rates.and.times))
+        components = do.calculate.prep.coverage(components)
+    components$prep.rates.and.times
+}
+
+do.calculate.prep.coverage <- function(components)
+{
+    components$prep.rates.and.times = get.rates.from.background.and.foreground(background.rates = components$background.prep.coverage,
+                                                                               background.times = components$background.prep.years,
+                                                                               foreground.rates = components$foreground.prep.coverage,
+                                                                               foreground.times = components$foreground.prep.years,
+                                                                               foreground.start.times = components$foreground.prep.start.years,
+                                                                               max.background.time = components$background.change.to.years$prep,
+                                                                               allow.foreground.less = F)
+    
+    components
 }
 
 get.background.proportions <- function(base.model,
@@ -1104,6 +1158,7 @@ get.background.proportions <- function(base.model,
             p
     })
 }
+
 
 add.additional.betas.to.array <- function(arr, additional.betas,
                                           idu.applies.to.in.remission=T,
@@ -1445,13 +1500,8 @@ do.setup.susceptibility <- function(components)
 
     if (components$model.prep)
     {
-        rates.and.times = get.rates.from.background.and.foreground(background.rates = components$background.prep.coverage,
-                                                                  background.times = components$background.prep.years,
-                                                                  foreground.rates = components$foreground.prep.coverage,
-                                                                  foreground.times = components$foreground.prep.years,
-                                                                  foreground.start.times = components$foreground.prep.start.years,
-                                                                  max.background.time = components$background.change.to.years$prep,
-                                                                  allow.foreground.less = F)
+        components = do.calculate.prep.coverage(components)
+        rates.and.times = calculate.prep.coverage(components)
 
         components$sexual.susceptibility = lapply(rates.and.times$rates, function(prep.coverage){
 
@@ -1895,13 +1945,7 @@ do.setup.new.infection.proportions <- function(components)
     }
     else if (components$model.prep)
     {
-        rates.and.times = get.rates.from.background.and.foreground(background.rates = components$background.prep.coverage,
-                                                                  background.times = components$background.prep.years,
-                                                                  foreground.rates = components$foreground.prep.coverage,
-                                                                  foreground.times = components$foreground.prep.years,
-                                                                  foreground.start.times = components$foreground.prep.start.years,
-                                                                  max.background.time = components$background.change.to.years$prep,
-                                                                  allow.foreground.less = F)
+        rates.and.times = calculate.prep.coverage(components)
 
         components$new.infection.proportions = lapply(rates.and.times$rates, function(prep.coverage){
 
@@ -1968,7 +2012,7 @@ get.rates.from.background.and.foreground <- function(background.rates,
         names(sub.rates) = as.character(all.times)
         
         raw.rates = sapply(1:length(foreground.rates[[1]]), function(i){
-            sub.rates = sapply(interpolated.background.rates, function(bg){bg[i]})
+            bg.rates = sub.rates = sapply(interpolated.background.rates, function(bg){bg[i]}) #start off with the backgroundr rates
             
             from.foreground.times = as.character(foreground.times[foreground.times > foreground.start.times[i]])
             if (length(from.foreground.times)>0)
@@ -1990,6 +2034,9 @@ get.rates.from.background.and.foreground <- function(background.rates,
                     }
                 }
             }
+            
+            if (!allow.foreground.less)
+                sub.rates[sub.rates < bg.rates] = bg.rates[sub.rates < bg.rates]
             
             sub.rates
         })
