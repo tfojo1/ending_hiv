@@ -39,25 +39,57 @@ get.location <- function(input)
 ##-- THE FUNCTION THAT GENERATES THE UI FOR THE PAGE --##
 ##-----------------------------------------------------##
 
-
-#reutrns 
+#returns
 server.routes.runModel.get <- function(input) 
 {
-  
   # Component: PageDef #ui_main[renderUI]
   ui_main = renderUI({
     
     location.choice = input[['geographic_location']]
     if (is.null(location.choice))
-        location.choice = invert.keyVals(get.location.options(version))[1]
-    
+        location.choice = invert.keyVals(
+          get.location.options(version))[1]
     
     list(  # returns-->list
-    
-    #This code sets the position and style for the progress bar when loading simulations
-    tags$head(tags$style(".shiny-notification {position: fixed; top: 10% ;left: 25%; color: black;font-size: 20px;font-style: normal; padding-left: 50px; padding-right: 50px")),
+      # Header & styles ####
+      #This code sets the position and style for the progress bar when
+      # loading simulations
+      tags$head(
+        tags$style(
+        ".shiny-notification {
+           position: fixed;
+           top: 10%;
+           left: 25%;
+           color: black;
+           font-size: 20px;
+           font-style: normal;
+           padding-left: 50px;
+           padding-right: 50px;
+        }
+        .yellow-box {
+          background: #FFF3CD;
+          color: #856405;
+          margin-top: 10px;
+          margin-bottom: 10px;
+          padding-top: 5px;
+          padding-bottom: 5px;
+          padding-left: 5px;
+          padding-right: 5px;
+        }
+        ")),
 
-    #The panel for 
+    # Info box ####
+    fluidRow(
+      column(
+        width=page.width, 
+        tags$div(
+          background='#FFF3CD', 
+          class="yellow-box", 
+          { '[placeholder]'}
+        ))
+    ),
+    
+    # Output panel ####
     'output'=fluidRow(
       column(
         width=page.width,
@@ -71,17 +103,29 @@ server.routes.runModel.get <- function(input)
           
           # #button
           fluidRow(
+            class='text-center',
             column(
-              width=page.width.half,
+              width=3,
               actionButton(
                 "reset_main", 
                 "Generate Projections")),
             column(
-                width=page.width.half,
+                width=6,
                 radioGroupButtons(
-                    inputId="toggle_main", 
-                    selected='Figure',
-                    choices=c('Figure','Table')))
+                  inputId="toggle_main", 
+                  selected='Figure',
+                  choices=c('Figure','Table'))),
+            
+            # TODO: Download button: Not yet working
+            column(
+              width=3,
+              conditionalPanel(
+                condition="(input.show_download  !== undefined && input.show_download !== null)",
+                downloadLink(
+                  "downloadDataLink",
+                  actionButton(
+                    "downloadDataButton", 
+                    "Download"))) ),
             ),
           
           # #plot
@@ -90,25 +134,49 @@ server.routes.runModel.get <- function(input)
             column(
               width=page.width,
               
+              # Figure
               conditionalPanel(
-                  condition = "input.toggle_main == 'Figure'",
-                  plotlyOutput(outputId="mainPlot",
-                      height="auto",
-                      width='100%',#"auto",
-                      inline=T)  %>% withSpinner(color="#0dc5c1")
-                  ),
+                condition = "input.toggle_main == 'Figure'",
+                fluidRow(
+                  column(
+                    width=page.width, 
+                    tags$div(
+                      background='#FFF3CD', 
+                      class="yellow-box", 
+                      { 'Figure: [placeholder]'}
+              )))),
+              conditionalPanel(
+                condition = "input.toggle_main == 'Figure'",
+                plotlyOutput(outputId="mainPlot",
+                  height="auto",
+                  width='100%',#"auto",
+                  inline=T)  %>% withSpinner(color="#0dc5c1"),
+              ),
               
+              # Table
+              conditionalPanel(
+                condition = "input.toggle_main == 'Table'",
+                fluidRow(
+                  column(
+                    width=page.width, 
+                    tags$div(
+                      background='#FFF3CD', 
+                      class="yellow-box", 
+                      { 'Table: [placeholder]'}
+              )))),
               conditionalPanel(
                   condition = "input.toggle_main == 'Table'",
-                  verbatimTextOutput('mainTable_message', placeholder = FALSE),
+                  verbatimTextOutput(
+                    placeholder=FALSE,
+                    'mainTable_message'
+                  ),
                   div(style = 'overflow-x: scroll', 
-                      dataTableOutput(outputId="mainTable")
-                      )
+                    dataTableOutput(outputId="mainTable")
                   )
+              ),
               
-              ))
-            )
-          
+            ))
+          )
          )), 
     
     # #options
@@ -201,7 +269,15 @@ server.routes.runModel.get <- function(input)
                 version=version, 
                 location=input[['geographic_location']]),
               ~ .x ))[1:2] ),
-          
+          fluidRow(
+            column(
+              width=page.width, 
+              tags$div(
+                background='#FFF3CD', 
+                class="yellow-box", 
+                { '[placeholder]'}
+              ))
+          ),
         ))),
     
     
@@ -297,7 +373,16 @@ server.routes.runModel.get <- function(input)
                 choiceValues=names(dim[['choices']]),
                 selected=names(dim[['choices']])
               ) )
-            })
+            }),
+          fluidRow(
+            column(
+              width=page.width, 
+              tags$div(
+                background='#FFF3CD', 
+                class="yellow-box", 
+                { '[placeholder]'}
+              ))
+          ),
       
     )))
     

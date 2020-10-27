@@ -37,9 +37,6 @@ CACHE = diskCache(max_size = 20e6)
 ##------------------------------##
 ##-- THE MAIN SERVER FUNCTION --##
 ##------------------------------##
-
-
-# Server
 server <- function(input, output, session) {
   
   # Print an initial message - useful for debugging on shinyapps.io servers
@@ -55,14 +52,11 @@ server <- function(input, output, session) {
 
   output$ui_main = server.routes.runModel.get(input)
   
-  
   # Page: Docs (#page-docs): output$introductionText ####
   output$introductionText = server.routes.docs
   output[['design-interventions']] = server.routes.designInterventions
   output[['help-and-feedback']] = server.routes.helpAndFeedback
 
-
-  
   # Events: Simulate & plot ####
   # Plot: Pass to plot event handler function
   # - Alternative method: ggplotly
@@ -76,7 +70,6 @@ server <- function(input, output, session) {
   
   # Plot when clicking 'Run':
   observeEvent(input$reset_main, {
-    
     plot.and.cache = generate.plot.and.table(input, cache)
     
     # This is not needed for diskCache
@@ -86,7 +79,8 @@ server <- function(input, output, session) {
     output$mainPlot = renderPlotly(plot.and.cache$plot)
     
     # Update the table
-    pretty.table = make.pretty.change.data.frame(plot.and.cache$change.df, data.type.names=DATA.TYPES)
+    pretty.table = make.pretty.change.data.frame(
+      plot.and.cache$change.df, data.type.names=DATA.TYPES)
     output$mainTable = renderDataTable(pretty.table)
     output$mainTable_message = NULL
   })
@@ -100,12 +94,35 @@ server <- function(input, output, session) {
   
 ##-- LOCATION HANDLER --##
   observeEvent(input$geographic_location, {
-        
-      output$mainPlot = renderPlotly(make.plotly.message(BLANK.MESSAGE))
-      
+    # TODO: temp put here for now and then put on plot:
+    session$sendCustomMessage(
+      type='resetInputValue', 
+      message="show_download")
+    
+    output$mainPlot = renderPlotly(make.plotly.message(BLANK.MESSAGE))
       message.df = data.frame(BLANK.MESSAGE)
       names(message.df) = NULL
-      output$mainTable = renderDataTable(message.df)#matrix(BLANK.MESSAGE,nrow=1,ncol=1))
+      output$mainTable = renderDataTable(message.df) #matrix(BLANK.MESSAGE,nrow=1,ncol=1))
       output$mainTable_message = renderText(BLANK.MESSAGE)
   })
+  
+  # TODO: Not yet working
+  # can download: table 
+  # can download: plot
+  # (can do: 1 button that can do both, or 2 diff buttons)
+  # todd knows how to write the files. how to write the table file, 
+  # temp directory, and delete it afterwards
+  # https://shiny.rstudio.com/reference/shiny/0.14/downloadHandler.html
+  # https://shiny.rstudio.com/articles/communicating-with-js.html
+  # https://shiny.rstudio.com/articles/js-send-message.html
+  # https://stackoverflow.com/questions/37883046/shiny-dashboard-reset-the-conditional-panel-state-when-we-navigate-across-diffe
+  # https://shiny.rstudio.com/reference/shiny/0.11/conditionalPanel.html
+  # https://shiny.rstudio.com/reference/shiny/1.4.0/conditionalPanel.html
+  output$downloadDataLink <- downloadHandler(
+    filename=function() {
+      paste("data-", Sys.Date(), ".csv", sep="") },
+    content=function(file) {
+      write.csv(pretty.table, file) }
+  )
+
 }
