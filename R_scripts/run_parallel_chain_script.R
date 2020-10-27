@@ -29,7 +29,7 @@ if (is.na(chain) || chain<1 || chain>N.CHAINS)
 print(paste0("Running chain ", chain, " of the MCMC for ", msa.names(msa)))
 
 set.seed(1234)
-cache.dirs = list.dirs('mcmc_runs/systematic_caches', recursive = F)
+cache.dirs = list.dirs(file.path(SYSTEMATIC.ROOT.DIR, 'systematic_caches'), recursive = F)
 mask = grepl(msa, cache.dirs)
 
 if (!any(mask))

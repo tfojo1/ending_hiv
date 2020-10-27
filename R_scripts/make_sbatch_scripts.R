@@ -1,6 +1,8 @@
 
 source('code/targets/target_msas.R')
 
+OUTPUT.DIR = "Ending_HIV/R_scripts/output"
+
 make.sbatch.script <- function(filename,
                               mem='16GB',
                               time.hours=NULL,
@@ -53,9 +55,9 @@ make.run.scripts <- function(msa.indices,
         {
             msa.name = names(TARGET.MSAS)[i]
             make.sbatch.script(filename=file.path(dir, get.run.filename(i,chain)),
-                               job.name = paste0("r", msa.name, chain),
+                               job.name = paste0("r", chain, msa.name),
                                mem=mem,
-                               output = paste0("Ending_HIV/mcmc_runs/output/run_", msa.name, "_", chain, ".out"),
+                               output = file.path(OUTPUT.DIR, paste0("run_", msa.name, "_", chain, ".out")),
                                partition = 'unlimited',
                                time.hours = 5*24,
                                account=account,
@@ -75,7 +77,7 @@ make.setup.scripts <- function(msa.indices,
                            job.name = paste0("s", msa.name),
                            partition='shared',
                            account=account,
-                           output = paste0("Ending_HIV/mcmc_runs/output/setup_", msa.name, ".out"),
+                           output = file.path(OUTPUT.DIR, paste0("setup_", msa.name, ".out")),
                            commands= paste0("Rscript Ending_HIV/R_scripts/setup_parallel_mcmc_script.R ", i))
     }
 }
