@@ -109,12 +109,6 @@ server.routes.runModel.get <- function(input)
               actionButton(
                 "reset_main", 
                 "Generate Projections")),
-            column(
-                width=6,
-                radioGroupButtons(
-                  inputId="toggle_main", 
-                  selected='Figure',
-                  choices=c('Figure','Table'))),
             
             # TODO: Download button: Not yet working
             column(
@@ -134,46 +128,32 @@ server.routes.runModel.get <- function(input)
             column(
               width=page.width,
               
-              # Figure
-              conditionalPanel(
-                condition = "input.toggle_main == 'Figure'",
-                fluidRow(
-                  column(
-                    width=page.width, 
-                    tags$div(
-                      background='#FFF3CD', 
-                      class="yellow-box", 
-                      { 'Figure: [placeholder]'}
-              )))),
-              conditionalPanel(
-                condition = "input.toggle_main == 'Figure'",
-                plotlyOutput(outputId="mainPlot",
-                  height="auto",
-                  width='100%',#"auto",
-                  inline=T)  %>% withSpinner(color="#0dc5c1"),
-              ),
-              
-              # Table
-              conditionalPanel(
-                condition = "input.toggle_main == 'Table'",
-                fluidRow(
-                  column(
-                    width=page.width, 
-                    tags$div(
-                      background='#FFF3CD', 
-                      class="yellow-box", 
-                      { 'Table: [placeholder]'}
-              )))),
-              conditionalPanel(
-                  condition = "input.toggle_main == 'Table'",
-                  verbatimTextOutput(
-                    placeholder=FALSE,
-                    'mainTable_message'
+              tabsetPanel(
+                id='toggle_main',
+                selected='Figure',
+                type='tabs',
+                
+                #Figure
+                tabPanel(title='Figure',
+                         value='Figure',
+                         plotlyOutput(outputId="mainPlot",
+                                      height="auto",
+                                      width='100%',#"auto",
+                                      inline=T)  %>% withSpinner(color="#0dc5c1")
                   ),
-                  div(style = 'overflow-x: scroll', 
-                    dataTableOutput(outputId="mainTable")
-                  )
-              ),
+                
+                #Table
+                tabPanel(title='Table',
+                         value='Table',
+                         verbatimTextOutput(
+                           placeholder=FALSE,
+                           'mainTable_message'
+                         ),
+                         div(style = 'overflow-x: scroll', 
+                             dataTableOutput(outputId="mainTable")
+                         ))
+              )
+              
               
             ))
           )
