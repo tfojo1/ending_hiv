@@ -4,6 +4,86 @@
 CDC.SEXES = c('male','female')
 CDC.RISKS = c('msm', 'idu', 'msm_idu', 'heterosexual')
 
+get.sim.absolute.incidence <- function(sim,
+                                       keep.dimensions = 'year',
+                                       years=sim$years,
+                                       ages=NULL,
+                                       races=NULL,
+                                       subpopulations=NULL,
+                                       sexes=NULL,
+                                       risks=NULL,
+                                       census.totals = if (exists('ALL.DATA.MANAGERS')) ALL.DATA.MANAGERS$census.totals else CENSUS.TOTALS,
+                                       use.cdc.categorizations=T)
+{
+    total.population = get.total.population(sim=sim, years=years, census.totals = census.totals)
+    numerators = do.extract.incidence(sim,
+                                      years=years, 
+                                      keep.dimensions=keep.dimensions,
+                                      per.population=NA,
+                                      ages=ages,
+                                      races=races,
+                                      subpopulations=subpopulations,
+                                      sexes=sexes,
+                                      risks=risks,
+                                      non.hiv.subsets = NULL,
+                                      continuum=NULL,
+                                      cd4=NULL,
+                                      hiv.subsets=NULL,
+                                      use.cdc.categorizations=use.cdc.categorizations)
+
+    denominators = do.extract.population.subset(sim, years=years, keep.dimensions = 'year', use.cdc.categorizations = use.cdc.categorizations)
+    
+    rv = as.numeric(numerators) / as.numeric(denominators) * total.population
+    
+    if (is.null(dim(numerators)))
+        names(rv) = names(numerators)
+    else
+    {
+        dim(rv) = dim(numerators)
+        dimnames(rv) = dimnames(numerators)
+    }
+    
+    rv
+}
+
+get.total.population <- function(sim, 
+                                 years=sim$years,
+                                 census.totals = if (exists('ALL.DATA.MANAGERS')) ALL.DATA.MANAGERS$census.totals else CENSUS.TOTALS)
+{
+    last.census.year = max(census.totals$years)
+    years.after.census = years[years>last.census.year]
+    years.with.or.before.census = setdiff(years, years.after.census)
+    
+    if (length(years.with.or.before.census)==0)
+        rv.with.or.before.census = numeric()
+    else
+        rv.with.or.before.census = get.census.totals(census.totals, 
+                                                     location=attr(sim, 'location'), 
+                                                     years = years.with.or.before.census,
+                                                     interpolate.missing.years = T,
+                                                     flatten.single.dim.array = T)
+    
+    if (length(years.after.census)==0)
+        rv.after.census = numeric()
+    else
+    {
+        sim.pop.after.census = extract.population.subset(sim, keep.dimensions = 'year', years=years.after.census)
+        sim.pop.last.with.census = extract.population.subset(sim, keep.dimensions = 'year', years=last.census.year)
+        cen.pop.last.with.census = get.census.totals(census.totals, 
+                                                     location=attr(sim, 'location'), 
+                                                     years = last.census.year,
+                                                     interpolate.missing.years = F,
+                                                     flatten.single.dim.array = T)
+        
+        rv.after.census = sim.pop.after.census / sim.pop.last.with.census * cen.pop.last.with.census
+    }
+    
+    rv = c(rv.with.or.before.census, rv.after.census)
+    names(rv) = as.character(years)
+    rv
+}
+    
+    
 do.extract.population.subset <- function(results,
                                          years=NULL,
                                          ages=NULL,

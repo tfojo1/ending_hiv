@@ -147,6 +147,15 @@ is.null.intervention <- function(int)
     length(int$raw) == 0
 }
 
+get.intervention.unit.types <- function(int)
+{
+    names(int$raw)
+}
+
+##------------------##
+##-- DESCRIPTIONS --##
+##------------------##
+
 get.intervention.description <- function(int,
                                          delimiter='\n',
                                          bullet.pre=' - ',
@@ -343,9 +352,9 @@ register.intervention <- function(int,
     }
     
     # Check to confirm that name and code are unique
-    if (any(manager$name==name))
-        stop(paste0("A different intervention is already present under the name, '",
-                    name, "'. Intervention names must be unique"))
+ #   if (any(manager$name==name))
+ #       stop(paste0("A different intervention is already present under the name, '",
+ #                   name, "'. Intervention names must be unique"))
     if (any(manager$code==code))
         stop(paste0("A different intervention is already present under the code, '",
                     code, "'. Intervention codes must be unique"))

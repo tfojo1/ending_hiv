@@ -18,6 +18,7 @@ library(shiny)
 source("R/plot_resources.R")
 source("R/plot_shiny_interface.R")
 source('R/server_helpers.R')
+source('R/styling_helpers.R')
 source('R/server_utils.R')
 
 source("R/server.routes.docs.R")
@@ -41,7 +42,7 @@ server <- function(input, output, session) {
   
   # Print an initial message - useful for debugging on shinyapps.io servers
   print(paste0("Launching server() function - ", Sys.time()))
-  
+
   # Make our session cache the cache available to all sessions
   cache = CACHE
 
@@ -124,5 +125,8 @@ server <- function(input, output, session) {
     content=function(file) {
       write.csv(pretty.table, file) }
   )
+  
+  #for now
+  output$custom_int_msg_1 = renderText(NO.CUSTOM.INTERVENTIONS.MESSAGE)
 
 }
