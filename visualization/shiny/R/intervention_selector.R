@@ -62,6 +62,7 @@ get.intervention.selection <- function(num, input)
 {
     top.level.selector.id = paste0("intervention_",num,"_selector")
     top.level.selection = input[[top.level.selector.id]]
+    
     if (top.level.selection=='custom')
     {
         #for now
@@ -69,7 +70,7 @@ get.intervention.selection <- function(num, input)
     }
     else
     {
-        tpop.selector.id = paste0("preset_tpop_",num,"_selector")
+        tpop.selector.id = paste0("preset_tpop_",num)
         tpop.selection = input[[tpop.selector.id]]
         
         if (tpop.selection=='none')
@@ -79,7 +80,7 @@ get.intervention.selection <- function(num, input)
             unit.selector.id = tpop.selection
             unit.selection = input[[unit.selector.id]]
             
-            intervention.selector.id = paste0(unit.selection, '_selector')
+            intervention.selector.id = unit.selection
             input[[intervention.selector.id]]
         }
     }
@@ -128,39 +129,7 @@ make.interventions.by.tpop.panel <- function(num,
     names(tpop.choice.names) = names(tpop.choice.values) = NULL
     
     #add arrows
-    tpop.selector.id = paste0("preset_tpop_",num,"_selector")
-    
-    if (1==2)
-    {
-        #204e73
-    tpop.choice.names = lapply(1:length(tpop.choice.names), function(i){
-        one.name = tpop.choice.names[[i]]
-        tab.id = tpop.choice.values[i]
-        tags$table(
-            style='border-style: solid; border-color: #FF0000; width: 100%',
-            tags$tr(
-                tags$td(one.name),
-                tags$td(
-                    style='text-align: right; width=1px; border-style: solid; border-color: #FF0000;',
-                    conditionalPanel(
-                        condition=paste0("input.", tpop.selector.id, "=='", tab.id,"'"),
-                        HTML("<div style='color: #FF0000; font-size: 300%;
-                       #      padding-top: -100px;
-                        #     padding-bottom: -100px;
-                             line-height: 33%;
-                             margin-right: -30px;'>&#129078;</div>")
-                        )
-                    )
-                )
-            )
-    })
-    }
-    
-    the.icon = HTML(paste0("<div style='vertical-align: middle; color='#FF00000'>",
-                           "&#129078;",
-                           "</div>"))
-
-    tpop.selector.id = paste0("preset_tpop_",num,"_selector")
+    tpop.selector.id = paste0("preset_tpop_",num)
     tpop.selector = radioGroupButtons(tpop.selector.id,
                                       choiceNames=tpop.choice.names,
                                       choiceValues=tpop.choice.values,
@@ -190,7 +159,7 @@ make.interventions.by.tpop.panel <- function(num,
             inner.tabset = make.interventions.by.unit.panel(num=num,
                                                             interventions = interventions.for.tpop,
                                                             lumped.interventions = lumped.interventions.for.tpop,
-                                                            id.prefix = paste0(tab.id, "_"))
+                                                            selector.id = paste0(tab.id))
         }
         
         conditionalPanel(
@@ -213,7 +182,7 @@ make.interventions.by.tpop.panel <- function(num,
 make.interventions.by.unit.panel <- function(num,
                                             interventions,
                                             lumped.interventions,
-                                            id.prefix)
+                                            selector.id)
 {
     #-- Sort interventions (and lumped interventions) by unit type --#
     unit.types.for.interventions = lapply(interventions, function(int){
@@ -248,14 +217,13 @@ make.interventions.by.unit.panel <- function(num,
                    #  up.arrow = T, up.arrow.align='center')
     
     # The Unit Selector
-    unit.choice.values = paste0(id.prefix, "unit", 1:length(unique.unit.types.for.interventions))
+    unit.choice.values = paste0(selector.id, "_unit", 1:length(unique.unit.types.for.interventions))
     unit.choice.names = lapply(unique.unit.types.for.interventions, function(unit.types){
         unit.types.choice.names = div(unit.types.to.pretty.name(unit.types, font.size = TAB2.TITLE.FONT.SIZE))
     })
     names(unit.choice.values) = names(unit.choice.names) = NULL
     
-    unit.selector.id = paste0(id.prefix, 'selector')
-    unit.selector = radioGroupButtons(unit.selector.id,
+    unit.selector = radioGroupButtons(selector.id,
                                       choiceNames=unit.choice.names,
                                       choiceValues=unit.choice.values,
                                       selected=unit.choice.values[1],
@@ -278,13 +246,13 @@ make.interventions.by.unit.panel <- function(num,
         choice.names = lapply(choice.names, function(name){div(lump.idu.in.name(name))})
         names(choice.names) = names(choice.values) = NULL
         
-        buttons = radioButtons(inputId = paste0(tab.id, "_selector"),
+        buttons = radioButtons(inputId = tab.id,
                      label=NULL,
                      choiceValues = choice.values,
                      choiceNames = choice.names)
         
         conditionalPanel(
-            condition=paste0("input.", unit.selector.id, "=='", tab.id,"'"),
+            condition=paste0("input.", selector.id, "=='", tab.id,"'"),
             tipBox("Fourth, select an intervention from the list below", 
                    left.arrow=T, left.arrow.direction = 'down', left.arrow.align='bottom'),
             buttons
