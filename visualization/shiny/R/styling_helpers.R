@@ -91,7 +91,20 @@ tipBox <- function(message,
     
 }
 
+
+BOOTSTRAP.BLUE = '#3c8dbc'
+prettyActionButton <- function(inputId, label, icon=NULL, width=NULL, ...)
+{
+    actionButton(inputId = inputId,
+                 label = label,
+                 icon = icon,
+                 width = width,
+                 style = paste0("background: ", BOOTSTRAP.BLUE, "; font-size: 150%; color: white; "),
+                 ...)
+}
+
 nestedWellPanel <- function(...,
+                            style=NULL,
                             level=(1:2)[1])
 {
     WELL.COLORS = c('#F7F7F7',
@@ -104,20 +117,36 @@ nestedWellPanel <- function(...,
     bg.color = WELL.COLORS[level]
     border.color = WELL.COLORS[level+1]
     
-    tags$div(
-        style=paste0("box-shadow: inset 2px 2px 2px ", border.color, ";",
-               "border-style: solid;
+    
+    z = is.null(style)    
+    
+    style = paste0(paste0("box-shadow: inset 2px 2px 2px ", border.color, ";",
+                          "border-style: solid;
                border-color: ", border.color, ";
                 border-width: 1px;
                background: ", bg.color, ";
                width: 100%;
                height: 100%;
-               padding: 5px"),
-      #  tags$tr(
-       #     tags$td(
-        #        style='padding: 5px',
-                ...
-         #   )
-     #   )
+               padding: 5px;"),
+                   style)
+    
+    if (!z)
+        print(style)
+    
+    tags$div(
+        style=style,
+        ...
     )
+}
+
+
+add.style.to.top.level.tag <- function(elem, style)
+{
+    elem$attribs = c(elem$attribs, list(style=style))
+    elem
+}
+
+verticalSpacer <- function(height, unit='px')
+{
+    div(style=paste0("height: ", height, unit))
 }

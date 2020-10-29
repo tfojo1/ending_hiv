@@ -70,21 +70,30 @@ server <- function(input, output, session) {
  # output$mainPlot = plot.and.cache$plot
   
   # Plot when clicking 'Run':
-  observeEvent(input$reset_main, {
-    plot.and.cache = generate.plot.and.table(input, cache)
-    
-    # This is not needed for diskCache
-    # cache = plot.and.cache$cache
 
-    # Update the plot
-    output$mainPlot = renderPlotly(plot.and.cache$plot)
-    
-    # Update the table
-    pretty.table = make.pretty.change.data.frame(
-      plot.and.cache$change.df, data.type.names=DATA.TYPES)
-    output$mainTable = renderDataTable(pretty.table)
-    output$mainTable_message = NULL
-  })
+  reset.handler = function(input){
+      
+      plot.and.cache = generate.plot.and.table(input, cache)
+      
+      # This is not needed for diskCache
+      # cache = plot.and.cache$cache
+      
+      # Update the plot
+      output$mainPlot = renderPlotly(plot.and.cache$plot)
+      
+      # Update the table
+      pretty.table = make.pretty.change.data.frame(
+          plot.and.cache$change.df, data.type.names=DATA.TYPES)
+      output$mainTable = renderDataTable(pretty.table)
+      output$mainTable_message = NULL
+  }
+  
+  observeEvent(input$reset_main, {reset.handler(input)})
+  observeEvent(input$reset_main_sidebar, {
+#      shinyjs::runjs("window.scrollTo(0, 0)")
+      shinyjs::runjs("window.scrollTo({ top: 0, behavior: 'smooth' })")
+      reset.handler(input)
+      })
   
 
 ##------------------------------------##  
