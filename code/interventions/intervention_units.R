@@ -3,10 +3,15 @@
 INTERVENTION.UNIT.TYPE.PRETTY.NAMES = c(testing='Testing',
                                         prep='PrEP',
                                         suppression='Viral Suppression')
+get.pretty.unit.type.names <- function(type)
+{
+    INTERVENTION.UNIT.TYPE.PRETTY.NAMES[type]
+}
 
 ##------------------------##
 ##-- INTERVENTION UNITS --##
 ##------------------------##
+
 
 #'@param type The specific rates/proportions to which this intervention applies
 #'@param start.year The precise time at which the intervention starts to scale up (ie, the last time prior to which the intervention rates apply)

@@ -88,14 +88,28 @@ do.plot.simulations <- function(
     ncol=NULL,
     nrow=NULL,
     fixed.y=F,
-    use.plotly=T,
     
     progress.update=function(p){},
     data.type.names = DATA.TYPE.NAMES,
-    return.change.data.frame=F)
+    return.change.data.frame=F,
+  
+    use.plotly=T,
+    condense.legend=F,
+    title.subplots=T,
+  
+    text.size = 12,
+    title.size = text.size*1.25,
+    legend.text.size = text.size,
+    y.title.size = text.size,
+    tick.size = text.size*.8,
+  
+    y.axis.title.function = NULL
+  )
 {
     keep.dimensions = unique(c('year', facet.by, split.by))
     
+    if (is.null(y.axis.title.function))
+      y.axis.title.function = function(data.type){DATA.TYPE.NAMES[data.type]}
     
     #-----------------------#
     #-- Argument Checking --#
@@ -201,10 +215,12 @@ do.plot.simulations <- function(
         df.truth = df.truth[df.truth$sex != 'female' | (df.truth$risk != 'msm' & df.truth$risk != 'msm_idu'),]
     
     #-- Get total population --#
-    total.population = get.census.totals(CENSUS.TOTALS,
-                                         location=location,
-                                         years=years)[,1]
-    
+    total.population.per.simset = lapply(1:length(simsets), function(i){
+        sapply(simsets[[i]]@simulations, get.total.population, 
+               census.totals=CENSUS.TOTALS, 
+               years=years.for.simset[[i]])
+    })
+      
     #-- Individual Simulations --#
     n.sim.dfs = length(simsets) * length(data.types)
     
@@ -224,7 +240,7 @@ do.plot.simulations <- function(
                                       years=years.for.simset[[simset.index]],
                                       keep.dimensions=keep.dimensions,
                                       dimension.subsets=dimension.subsets,
-                                      total.population = total.population,
+                                      total.population = total.population.per.simset[[simset.index]],
                                       get.individual.sims = plot.format=='individual.simulations',
                                       get.change.df=label.change || return.change.data.frame,
                                       aggregate.statistic = aggregate.statistic,
@@ -338,7 +354,7 @@ do.plot.simulations <- function(
             df.truth$split = apply(df.truth[,split.by], 1, paste0, collapse=", ")
     }
     
-    splits = unique(df.truth$split)
+    splits = unique(c(unique(df.truth$split), unique(df.sim$split)))
     split.shapes = rep(truth.shapes, ceiling(length(splits)/length(truth.shapes)))[1:length(splits)]
     names(split.shapes) = splits
     
@@ -431,6 +447,8 @@ do.plot.simulations <- function(
     {
         #-- SOME INITIAL FORMATTING  (rounding, etc) --#
         df.sim = format.values.for.plotly(df.sim, data.type.names)
+        condense.legend.names = condense.legend && 
+          (color.by=='split' || length(unique(simset.names))==1)
         
         if (!is.null(df.truth))
             df.truth = format.values.for.plotly(df.truth, data.type.names)
@@ -509,7 +527,7 @@ do.plot.simulations <- function(
                         split = splits[split.i]
                         split.mask = int.mask & df.sim$split==split
                         
-                        show.legend = ff==facet.categories[1] && !hide.legend
+                        show.legend = !hide.legend && ff==facet.categories[1] && !hide.legend
                         
                         path.name = intervention
                         if (color.by == 'split' && length(split.by)>0)
@@ -529,7 +547,7 @@ do.plot.simulations <- function(
                                          ymin=~lower, ymax=~upper,
                                          fillcolor=color, 
                                          opacity=ribbon.alpha,
-                                         legendgroup='Simulations',
+                                         legendgroup=if (condense.legend) NULL else 'Simulations',
                                          line = list(color=color,
                                                      width=simulation.line.size/5),
                                          name=path.name,
@@ -551,7 +569,7 @@ do.plot.simulations <- function(
                     split = splits[split.i]
                     split.mask = int.mask & df.sim$split==split
                     
-                    show.legend = ff==facet.categories[1] && !hide.legend
+                    show.legend = !hide.legend && ff==facet.categories[1] && !hide.legend
                     
                     path.name = intervention
                     if (color.by == 'split' && length(split.by)>0)
@@ -571,11 +589,11 @@ do.plot.simulations <- function(
                     if (plot.format=='individual.simulations')
                     {
                         #this code makes the lines in the legend show up without opacity
-                        if (show.legend)
+                        if (show.legend && !condense.legend.names)
                             plot = add_paths(plot, data=df.sim[split.mask & !is.na(df.sim$value),],
                                              x=~year[1], y=~value[1], color=color, 
                                              opacity=1,
-                                             legendgroup='Simulations',
+                                             legendgroup=if (condense.legend) NULL else 'Simulations',
                                              line = list(color=color,
                                                          width=simulation.line.size),
                                              name=path.name,
@@ -584,7 +602,7 @@ do.plot.simulations <- function(
                         plot = add_paths(plot, data=df.sim[split.mask,],
                                          y=~value, color=color, 
                                          opacity=simulation.alpha,
-                                         legendgroup='Simulations',
+                                         legendgroup=if (condense.legend) NULL else 'Simulations',
                                          line = list(color=color,
                                                      width=simulation.line.size),
                                          name=path.name,
@@ -599,7 +617,7 @@ do.plot.simulations <- function(
                         plot = add_paths(plot, data=df.sim[split.mask & !is.na(df.sim$value),],
                                          y=~value, color=color,
                                          opacity=1,
-                                         legendgroup='Simulations',
+                                         legendgroup=if (condense.legend) NULL else 'Simulations',
                                          line = list(color=color,
                                                      width=simulation.line.size),
                                          name=path.name,
@@ -622,7 +640,7 @@ do.plot.simulations <- function(
                     mask = df.truth$facet==ff & df.truth$split==split
                     if (any(!is.na(df.truth$value[mask])))
                     {
-                        show.legend = !is.na(show.truth.legend.for.facet[split]) &&
+                        show.legend = !hide.legend && !is.na(show.truth.legend.for.facet[split]) &&
                             show.truth.legend.for.facet[split] == ff &&
                             !hide.legend
                         
@@ -633,10 +651,29 @@ do.plot.simulations <- function(
                         if (color.by == 'split')
                         {
                             color = colors[split]
-                            one.truth.name = paste0(one.truth.name, ', ', split)
+                            if (condense.legend.names)
+                                one.truth.name = split
+                            else
+                                one.truth.name = paste0(one.truth.name, ', ', split)
                         }
                         else
                             color = truth.color
+                        
+                        if (show.legend)
+                            plot = add_trace(plot, data=df.truth[mask,],
+                                             type='scatter',
+                                             mode = if (condense.legend.names) 'lines+markers' else 'markers',
+                                             x=~year[1], y=~value[1], color=color,
+                                             name=one.truth.name,
+                                             marker = list(color=color,
+                                                           size=truth.point.size,
+                                                           symbol=split.shapes[split],
+                                                           line = list(
+                                                               color = '#000000FF',
+                                                               width = 1
+                                                           )),
+                                             legendgroup=if (condense.legend) NULL else 'Truth',
+                                             showlegend = T)
                         
                         plot = add_markers(plot, data=df.truth[mask,],
                                            y=~value, color=color,
@@ -648,35 +685,44 @@ do.plot.simulations <- function(
                                                              color = '#000000FF',
                                                              width = 1
                                                          )),
-                                           legendgroup='Truth',
-                                           showlegend = show.legend)
+                                           legendgroup=if (condense.legend) NULL else 'Truth',
+                                           showlegend = F)
                     }
                 }
             }
             
             axis.title = DATA.TYPE.AXIS.LABELS[names(data.type.names)[data.types.for.facet.categories[ff]==data.type.names]]
+            axis.title = sapply(names(data.type.names)[data.types.for.facet.categories[ff]==data.type.names], function(data.type){
+                y.axis.title.function(data.type)
+            })
+            yaxis.list = list(rangemode = "tozero",
+                              title = list(text=axis.title,
+                                           standoff=20,
+                                           font=list(size=y.title.size)),
+                              tickfont = list(size=tick.size))
+            
             if (is.pct.data.type(data.types.for.facet.categories[ff], data.type.names))
-                plot = layout(plot,
-                              yaxis = list(rangemode = "tozero",
-                                           tickformat = '%',
-                                           title = axis.title))
+                yaxis.list$tickformat = '%'
             else
-                plot = layout(plot,
-                              yaxis = list(rangemode = "tozero",
-                                           tickformat = ',d',
-                                           title = axis.title))
+                yaxis.list$tickformat = ',d'
+            
+            plot = layout(plot,
+                          yaxis = yaxis.list,
+                          xaxis=list(title='',
+                                     tickfont = list(size=tick.size)))
                 
-            plot = add_annotations(plot,
-                                   text = ff,
-                                   x = 0.5,
-                                   y = 1.05,
-                                   yref = "paper",
-                                   xref = "paper",
-                                   align = "center",
-                                   xanchor = "center",
-                                   yanchor = "top",
-                            #       font = list(size = 15),
-                                   showarrow = FALSE
+            if (title.subplots)
+                plot = add_annotations(plot,
+                                       text = ff,
+                                       x = 0.5,
+                                       y = 1.05,
+                                       yref = "paper",
+                                       xref = "paper",
+                                       align = "center",
+                                       xanchor = "center",
+                                       yanchor = "top",
+                                       font = list(size = title.size),
+                                       showarrow = FALSE
             )
             
             plot
@@ -689,10 +735,14 @@ do.plot.simulations <- function(
             plot = subplot(subplots, shareY = fixed.y, titleY=T, nrows=nrow, 
                            margin=c(0.05,0.05,0.06,0.06)) #L,R,T,B
         
+        legend.list = list(orientation = 'h', 
+                           xanchor = "center",
+                           x = 0.5,
+                           font = list(size=legend.text.size))
+        if (!condense.legend)
+            legend.list$traceorder = 'grouped'
         plot = layout(plot, 
-                      legend = list(orientation = 'h', 
-                                    traceorder='grouped')
-                          )
+                      legend = legend.list)
         
    
     }
@@ -1129,6 +1179,126 @@ get.sim.dfs <- function(simset,
          df.change=df.change)
 }
 
+##----------------##
+##-- ADD LABELS --##
+##----------------##
+
+add.plot.label <- function(plot,
+                           text,
+                           x,
+                           y,
+                           color='black',
+                           fill='white',
+                           alpha=0.5,
+                           font.size=12,
+                           font.family=NULL,
+                           align='center',
+                           valign='middle',
+                           pad=2,
+                           border.color='black')
+{
+    rgb = as.character(col2rgb(fill))
+    bg.color = paste0("rgba(",
+                      rgb[1], ",",
+                      rgb[2], ",",
+                      rgb[3], ",",
+                      alpha, ",",
+                      ")")
+    
+    font.list = list(size=font.size,
+                     color=color)
+    if (!is.null(font.family))
+        font.list$family=font.family
+    
+    layout(plot, 
+           annotations=list(text=text,
+                            x=x,
+                            y=y,
+                            bgcolor=bg.color,
+                            font=font.list,
+                            showarrow=F,
+                            align=align,
+                            valign=valign,
+                            bordercolor=border.color,
+                            borderpad=pad)
+    )
+}
+
+add.plot.labels <- function(plot,
+                           text,
+                           x,
+                           y,
+                           width=NA,
+                           height=NA,
+                           fill='white',
+                           outline.color=fill,
+                           font.color='black',
+                           alpha=0.5,
+                           font.size=12,
+                           font.family=NA,
+                           valign=c('middle','top','bottom')[1],
+                           halign=c('center','left','right')[1])
+{
+    n = max(length(text), length(x), length(x))
+    if (length(fill)==1)
+        fill = rep(fill, n)
+    if (length(outline.color)==1)
+        outline.color = rep(outline.color, n)
+    if (length(font.color)==1)
+        font.color = rep(font.color, n)
+    if (length(alpha)==1)
+        alpha = rep(alpha, n)
+    if (length(font.size)==1)
+        font.size = rep(font.size, n)
+    if (length(font.family)==1)
+        font.family = rep(font.family, n)
+    if (length(width)==1)
+        width = rep(width, n)
+    if (length(height)==1)
+        height = rep(height, n)
+    if (length(valign)==1)
+        valign = rep(valign, n)
+    if (length(halign)==1)
+        halign = rep(halign, n)
+    
+    shapes.list = lapply(1:n, function(i){
+        if (!is.na(width[i] && !is.na(height[i])))
+            list(type = "rect",
+                 fillcolor = fill[i], line = list(color = outline.color[i]), opacity = alpha[i],
+                 x0 = x[i]-width[i]/2, x1 = x[i]+width[i]/2, xref = "x",
+                 y0 = y[i]-height[i]/2, y1 = y[i]+height[i]/2, yref = "y")
+        else
+            NULL
+    })
+    
+    shapes.list = shapes.list[!sapply(shapes.list, is.null)]
+       
+    if (length(shapes.list)>0)
+        plot = layout(plot,
+                      shapes = shapes.list
+        )
+    
+    
+    for (i in 1:n)
+    {
+        text.font = list(size = font.size[i],
+                         color = font.color[i])
+        if (!is.na(font.family[i]))
+            text.font$family = font.family[i]
+        
+        text.position = paste0(valign, " ", halign)
+        
+        plot = add_text(plot,
+                 x=x[i],
+                 y=y[i],
+                 text=text[i],
+                 textfont = text.font,
+                 showlegend=F,
+                 textposition=text.position)
+    }
+    
+    plot
+}
 
 ##-----------------------------##
 ##-- OTHER MID-LEVEL HELPERS --##
@@ -1231,7 +1401,6 @@ toupper.first <- function(x)
 extract.simset.new.diagnoses <- function(simset, years, all.dimensions,
                                          dimension.subsets, total.population)
 {
-    total.population = total.population[as.character(years)]
     eg = do.extract.new.diagnoses(simset@simulations[[1]],
                                   years=years, 
                                   keep.dimensions=all.dimensions,
@@ -1246,8 +1415,9 @@ extract.simset.new.diagnoses <- function(simset, years, all.dimensions,
                                   cd4=NULL,
                                   hiv.subsets=NULL,
                                   use.cdc.categorizations=T)
-    rv = sapply(simset@simulations, function(sim)
+    rv = sapply(1:length(simset@simulations), function(i)
     {
+        sim = simset@simulations[[i]]
         numerators = do.extract.new.diagnoses(sim,
                                               years=years, 
                                               keep.dimensions=all.dimensions,
@@ -1264,7 +1434,7 @@ extract.simset.new.diagnoses <- function(simset, years, all.dimensions,
                                               use.cdc.categorizations=T)
         denominators = do.extract.population.subset(sim, years=years, keep.dimensions = 'year', use.cdc.categorizations = T)
         
-        as.numeric(numerators) / as.numeric(denominators) * as.numeric(total.population)
+        as.numeric(numerators) / as.numeric(denominators) * total.population[,i]
     })
     
     if (is.null(dim(eg)))
@@ -1285,7 +1455,6 @@ extract.simset.new.diagnoses <- function(simset, years, all.dimensions,
 extract.simset.incidence <- function(simset, years, all.dimensions,
                                      dimension.subsets, total.population)
 {
-    total.population = total.population[as.character(years)]
     eg = do.extract.incidence(simset@simulations[[1]],
                               years=years, 
                               keep.dimensions=all.dimensions,
@@ -1300,8 +1469,9 @@ extract.simset.incidence <- function(simset, years, all.dimensions,
                               cd4=NULL,
                               hiv.subsets=NULL,
                               use.cdc.categorizations=T)
-    rv = sapply(simset@simulations, function(sim)
+    rv = sapply(1:length(simset@simulations), function(i)
     {
+        sim = simset@simulations[[i]]
         numerators = do.extract.incidence(sim,
                                           years=years, 
                                           keep.dimensions=all.dimensions,
@@ -1318,7 +1488,7 @@ extract.simset.incidence <- function(simset, years, all.dimensions,
                                           use.cdc.categorizations=T)
         denominators = do.extract.population.subset(sim, years=years, keep.dimensions = 'year', use.cdc.categorizations = T)
         
-        as.numeric(numerators) / as.numeric(denominators) * as.numeric(total.population)
+        as.numeric(numerators) / as.numeric(denominators) * total.population[,i]
     })
     
     if (is.null(dim(eg)))
@@ -1340,7 +1510,6 @@ extract.simset.incidence <- function(simset, years, all.dimensions,
 extract.simset.prevalence <- function(simset, years, all.dimensions,
                                       dimension.subsets, total.population)
 {
-    total.population = total.population[as.character(years)]
     eg = do.extract.prevalence(simset@simulations[[1]],
                                years=years, 
                                keep.dimensions=all.dimensions,
@@ -1354,8 +1523,9 @@ extract.simset.prevalence <- function(simset, years, all.dimensions,
                                cd4s=NULL,
                                hiv.subsets=NULL,
                                use.cdc.categorizations=T)
-    rv = sapply(simset@simulations, function(sim)
+    rv = sapply(1:length(simset@simulations), function(i)
     {
+        sim = simset@simulations[[i]]
         numerators = do.extract.prevalence(sim,
                                            years=years, 
                                            keep.dimensions=all.dimensions,
@@ -1371,8 +1541,8 @@ extract.simset.prevalence <- function(simset, years, all.dimensions,
                                            use.cdc.categorizations=T)
         denominators = do.extract.population.subset(sim, years=years, keep.dimensions = 'year', use.cdc.categorizations = T)
         
-        as.numeric(numerators) / as.numeric(denominators) * as.numeric(total.population)
-    })
+        as.numeric(numerators) / as.numeric(denominators) * total.population[,i]
+    }) 
     
     if (is.null(dim(eg)))
     {
@@ -1391,7 +1561,6 @@ extract.simset.prevalence <- function(simset, years, all.dimensions,
 extract.simset.hiv.mortality <- function(simset, years, all.dimensions,
                                          dimension.subsets, total.population)
 {
-    total.population = total.population[as.character(years)]
     eg = do.extract.overall.hiv.mortality(simset@simulations[[1]],
                                           years=years, 
                                           keep.dimensions=all.dimensions,
@@ -1405,8 +1574,9 @@ extract.simset.hiv.mortality <- function(simset, years, all.dimensions,
                                           cd4s=NULL,
                                           hiv.subsets=NULL,
                                           use.cdc.categorizations=T)
-    rv = sapply(simset@simulations, function(sim)
+    rv = sapply(1:length(simset@simulations), function(i)
     {
+        sim = simset@simulations[[i]]
         numerators = do.extract.overall.hiv.mortality(sim,
                                                       years=years, 
                                                       keep.dimensions=all.dimensions,
@@ -1422,7 +1592,7 @@ extract.simset.hiv.mortality <- function(simset, years, all.dimensions,
                                                       use.cdc.categorizations=T)
         denominators = do.extract.population.subset(sim, years=years, keep.dimensions = 'year', use.cdc.categorizations = T)
         
-        as.numeric(numerators) / as.numeric(denominators) * as.numeric(total.population)
+        as.numeric(numerators) / as.numeric(denominators) * total.population[,i]
     })
     
     if (is.null(dim(eg)))

@@ -147,6 +147,15 @@ is.null.intervention <- function(int)
     length(int$raw) == 0
 }
 
+get.intervention.unit.types <- function(int)
+{
+    names(int$raw)
+}
+
+##------------------##
+##-- DESCRIPTIONS --##
+##------------------##
+
 get.intervention.description <- function(int,
                                          delimiter='\n',
                                          bullet.pre=' - ',
