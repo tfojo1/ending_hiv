@@ -117,8 +117,8 @@ server.routes.runModel.get <- function(input, session)
     
     
     if (is.null(location.choice))
-        location.choice = invert.keyVals(
-          get.location.options(version))[1]
+      location.choice = invert.keyVals(
+        get.location.options(version))[1]
     
     list(  # returns-->list
       # Header & styles ####
@@ -126,7 +126,7 @@ server.routes.runModel.get <- function(input, session)
       # loading simulations
       tags$head(
         tags$style(
-        ".shiny-notification {
+          ".shiny-notification {
            position: fixed;
            top: 10%;
            left: 25%;
@@ -147,121 +147,117 @@ server.routes.runModel.get <- function(input, session)
           padding-right: 5px;
         }
         ")),  # TODO: yellow box: (1) rounded corners, (2) black border
+      
+      # Info box ####
+      
+      # Output panel ####
+      'output'=fluidRow(
+        column(
+          width=page.width,
 
-    # Info box ####
-    tipBox('placeholder'),  # acccepts HTML()
-    
-    # Output panel ####
-    'output'=fluidRow(
-      column(
-        width=page.width,
-        box(
-          width=NULL, 
-          title="Figure",
-          collapsible=T,
-          collapsed=F,
-          status="primary", 
-          solidHeader=TRUE,
+          verticalSpacer(40),
           
-          # #button
-          fluidRow(
-            class='text-center',
-            column(
-              width=3,
-              actionButton(
-                "reset_main", 
-                "Generate Projections")),
-            column(
-                width=6,
-                radioGroupButtons(
-                  inputId="toggle_main", 
-                  selected='Figure',
-                  choices=c('Figure','Table'))),
+          tags$table(
+            tags$tr(
+              tags$td(style='padding-right: 20px',
+                actionButton(
+                  style="background: #204C73; color: white; font-size:150%; margin: 0 auto;",
+                  #          style='material-flat', size='md', color='primary',
+                  "reset_main", 
+                  HTML("Generate<BR>Projections"))),
+              tags$td(
+                
+          tipBox(width=12,
+                 'To make projections:<ol>
+           <li> Select a location from the "Locations" tab </li>
+           <li> Select interventions from the "Potential Interventions" tab </li>
+           <li> Click "Generate Projections" </li>
+           </ol>')
+              )
+            )
+          ),
+          
+          box(
+            width=NULL, 
+            title="Projections",
+            collapsible=T,
+            collapsed=F,
+            status="primary", 
+            solidHeader=TRUE,
+            
+            
             
             # TODO: Download button: Not yet working
-            column(
-              width=3,
-              # conditionalPanel(
-              #   condition="(input.show_download  !== undefined && input.show_download !== null)",
-                # downloadLink(
-                #   "downloadDataLink",
-                  actionButton(
-                    "downloadDataButton", 
-                    "Download"))
-              # ) 
-            # ),
+            fluidRow(
+              column(
+                width=12,
+                conditionalPanel(
+                  condition="(input.show_download  !== undefined && input.show_download !== null)",
+                  downloadLink(
+                    "downloadDataLink",
+                    actionButton(
+                      "downloadDataButton", 
+                      "Download"))) ),
             ),
-          
-          # #plot
-          fluidRow(
-              tags$head(tags$style("#tbl {white-space: nowrap;}")),
-            column(
-              width=page.width,
-              
-              # Figure
-              conditionalPanel(
-                condition = "input.toggle_main == 'Figure'",
-                fluidRow(
-                  column(
-                    width=page.width, 
-                    tags$div(
-                      background='#FFF3CD', 
-                      class="yellow-box", 
-                      { 'Figure: [placeholder]'}
-              )))),
-              conditionalPanel(
-                condition = "input.toggle_main == 'Figure'",
-                plotlyOutput(outputId="mainPlot",
-                  height="auto",
-                  width='100%',#"auto",
-                  inline=T)  %>% withSpinner(color="#0dc5c1"),
-              ),
-              
-              # Table
-              conditionalPanel(
-                condition = "input.toggle_main == 'Table'",
-                fluidRow(
-                  column(
-                    width=page.width, 
-                    tags$div(
-                      background='#FFF3CD', 
-                      class="yellow-box", 
-                      { 'Table: [placeholder]'}
-              )))),
-              conditionalPanel(
-                  condition = "input.toggle_main == 'Table'",
-                  verbatimTextOutput(
-                    placeholder=FALSE,
-                    'mainTable_message'
+            
+            # plot and table
+            fluidRow(
+              #   tags$head(tags$style("#tbl {white-space: nowrap;}")),
+              #
+              #             ),
+              column(
+                width=page.width,
+                
+                tabsetPanel(
+                  id='toggle_main',
+                  selected='Figure',
+                  type='tabs',
+                  
+                  #Figure
+                  tabPanel(title='Figure',
+                           value='Figure',
+                           plotlyOutput(outputId="mainPlot",
+                                        height="auto",
+                                        width='100%',#"auto",
+                                        inline=T)  %>% withSpinner(color="#0dc5c1")
                   ),
-                  div(style = 'overflow-x: scroll', 
-                    dataTableOutput(outputId="mainTable")
-                  )
-              ),
-              
-            ))
+                  
+                  #Table
+                  tabPanel(title='Table',
+                           value='Table',
+                           verbatimTextOutput(
+                             placeholder=FALSE,
+                             'mainTable_message'
+                           ),
+                           div(style = 'overflow-x: scroll', 
+                               dataTableOutput(outputId="mainTable")
+                           ))
+                )
+                
+                
+              ))
           )
-         )), 
-    
-    # #options
-    # Spatiotemporal dimensions ####
-    # to-do: expand/collapse feature
-    
-    'spatiotemporal-dimensions'=fluidRow(
-      column(
-        width=page.width,
-        box(
-          title="Location",
-          collapsible=T,
-          collapsed=F,
-          status="primary",
-          width=NULL, 
-          solidHeader=TRUE,
-          
-          # #button
-          fluidRow(
-            column(
-              width=page.width,
+        )), 
+      
+      # #options
+      # Spatiotemporal dimensions ####
+      # to-do: expand/collapse feature
+      
+      'spatiotemporal-dimensions'=fluidRow(
+        column(
+          width=page.width,
+          box(
+            title="Location",
+            collapsible=T,
+            collapsed=F,
+            status="primary",
+            width=NULL, 
+            solidHeader=TRUE,
+            
+            # #button
+            fluidRow(
+              column(
+                width=page.width,
                 selectInput(
                   inputId="geographic_location", 
                   label=NULL,#"Metropolitan Statistical Area (MSA)",
@@ -274,20 +270,94 @@ server.routes.runModel.get <- function(input, session)
                   width=NULL, 
                   size=NULL ) ))
             
-    ))),
-    # Interventions ####
-    'epidemiological-interventions'=fluidRow(
-      column(
-        width=page.width,
-        box(
-          width=NULL, 
-          title="Potential Interventions",
-          collapsible=T,
-          collapsed=F,
-          status="primary", 
-          solidHeader=TRUE,
-          
-          fluidRow(
+          ))),
+      # Interventions ####
+      'epidemiological-interventions'=fluidRow(
+        column(
+          width=page.width,
+          box(
+            width=NULL, 
+            title="Potential Interventions",
+            collapsible=T,
+            collapsed=F,
+            status="primary", 
+            solidHeader=TRUE,
+            
+            fluidRow(
+              column(
+                width=page.width,
+                checkboxInput(
+                  inputId='no_intervention_checkbox', 
+                  label='Display "No intervention"', 
+                  value=TRUE,  
+                  width='100%' )),
+            ),  # </fluidRow>
+            
+            #div(HTML("<HR>")),
+            div(style = "font-size: 1.2em; padding: 0px 0px; margin-bottom:0px",
+                HTML("<b>Intervention 1:</b>")),
+            create.intervention.selector.panel(1, input)
+            #        box(title='Intervention 1:', solidHeader=T, width=12,
+            #           create.intervention.selector.panel(1, input))
+            
+          ))),  # </fluidRow>
+      
+      # Epidemiological dimensions ####
+      'epidemiological-dimensions'=fluidRow(
+        column(
+          width=page.width,
+          box(
+            width=NULL, title="Epidemiological Indicators",
+            collapsible=T,
+            collapsed=T,
+            status="primary", solidHeader=TRUE,
+            
+            fluidRow(
+              column(
+                width=3,
+                checkboxGroupInput(
+                  inputId='epidemiological-indicators', 
+                  label=NULL,#'Indicators', 
+                  choiceNames=unname(map(
+                    get.data.type.options(
+                      version=version, 
+                      location=input[['geographic_location']]),
+                    ~ .x )),
+                  choiceValues=names(map(
+                    get.data.type.options(
+                      version=version, 
+                      location=input[['geographic_location']]),
+                    ~ .x )),
+                  selected=names(map(
+                    get.data.type.options(
+                      version=version, 
+                      location=input[['geographic_location']]),
+                    ~ .x ))[1:2] )
+              ),
+              
+            
+                tags$div(
+                  background='#FFF3CD', 
+                  class="yellow-box", 
+                  { '[placeholder]'}
+                ))
+            ),
+          ))),
+      
+      
+      # Aggregation options ####
+      # to-do: expand/collapse feature
+      'aggregation-options'=fluidRow(
+        column(
+          width=page.width,
+          box(
+            width=NULL, 
+            title="Plot Options (how to slice the projections)",
+            collapsible=T,
+            collapsed=T,
+            status="primary", 
+            solidHeader=TRUE,
+            
             column(
               width=page.width,
               checkboxInput(
@@ -456,17 +526,70 @@ server.routes.runModel.get <- function(input, session)
           ),
           fluidRow(
             column(
-              width=page.width, 
-              tags$div(
-                background='#FFF3CD', 
-                class="yellow-box", 
-                { '[placeholder]'}
-              ))
-          ),
+              width=page.width.half,
+              checkboxGroupInput(
+                inputId='split', 
+                label='Within a Panel, Plot Separate Lines for Each:', 
+                choiceNames=unname(get.split.by.options(
+                  version=version,
+                  location=input[['geographic_location']])),
+                choiceValues=names(get.split.by.options(
+                  version=version,
+                  location=input[['geographic_location']])),
+                selected=NULL))
+            
+            # column(
+            #   width=page.width.half,
+            #   checkboxGroupInput(
+            #     inputId='split', 
+            #     label='Multi-line dis-aggregation', 
+            #     choiceNames=demog.choiceNames,
+            #     choiceValues=demog.choiceValues,
+            #     selected=demog.choiceValues ) )
+            
+          ))),  # </list>  #returns
       
-    )))
-    
-  )})
+      # Demographic dimensions ####
+      # to-do: expand/collapse feature
+      'demographic-dimensions'=fluidRow(
+        column(
+          width=page.width,
+          box(
+            title="Demographic Subgroups",
+            collapsible=T,
+            collapsed=T,
+            status="primary",
+            width=NULL, 
+            solidHeader=TRUE,
+            
+            map(
+              get.dimension.value.options(
+                version=version,
+                location=input[['geographic_location']]), 
+              function(dim) {
+                column(
+                  width=page.width.half,
+                  checkboxGroupInput(
+                    inputId=dim[['name']],
+                    label=dim[['label']],
+                    choiceNames=unname(dim[['choices']]),
+                    choiceValues=names(dim[['choices']]),
+                    selected=names(dim[['choices']])
+                  ) )
+              }),
+            fluidRow(
+              column(
+                width=page.width, 
+                tags$div(
+                  background='#FFF3CD', 
+                  class="yellow-box", 
+                  { '[placeholder]'}
+                ))
+            ),
+            
+          )))
+      
+    )})
   # Export ####
   server.routes.runModel = list(
     'ui_main'=ui_main,
@@ -474,7 +597,7 @@ server.routes.runModel.get <- function(input, session)
     # 'mainDL'=mainDL,
     # 'mainTable'=mainTable,
     # 'res_main'=res_main,
-    )
+  )
   server.routes.runModel
   
   ui_main
