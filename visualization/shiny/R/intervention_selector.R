@@ -121,7 +121,7 @@ make.interventions.by.tpop.panel <- function(num,
     
     # The T-Pop Selector
     tpop.choice.names = lapply(c(list('none'),unique.tpop.codes), function(name){
-        div(target.population.codes.to.pretty.name(name, font.size = TAB1.TITLE.FONT.SIZE))
+        target.population.codes.to.pretty.name(name, font.size = TAB1.TITLE.FONT.SIZE)
     })
     tpop.choice.values = c(list('none'), lapply(1:length(unique.tpop.codes), function(i){
         paste0("int",num, "_tpop",i)
@@ -141,6 +141,8 @@ make.interventions.by.tpop.panel <- function(num,
                                       size='lg',
                                       status='primary')
     
+    tpop.selector = make.radioButtonGroup.wrappable(tpop.selector)
+
     instruction.panel = tipBox("Second, select the demographic subgroups to which interventions may be applied",
                                left.arrow = T)
     
@@ -219,7 +221,7 @@ make.interventions.by.unit.panel <- function(num,
     # The Unit Selector
     unit.choice.values = paste0(selector.id, "_unit", 1:length(unique.unit.types.for.interventions))
     unit.choice.names = lapply(unique.unit.types.for.interventions, function(unit.types){
-        unit.types.choice.names = div(unit.types.to.pretty.name(unit.types, font.size = TAB2.TITLE.FONT.SIZE))
+        unit.types.to.pretty.name(unit.types, font.size = TAB2.TITLE.FONT.SIZE)
     })
     names(unit.choice.values) = names(unit.choice.names) = NULL
     
@@ -232,6 +234,8 @@ make.interventions.by.unit.panel <- function(num,
                                       individual=F,
                                       size='lg',
                                       status='primary')
+    
+    unit.selector = make.radioButtonGroup.wrappable(unit.selector)
     
     # The radio buttons for each group
     conditional.panels = lapply(1:length(unique.unit.types.for.interventions), function(i){
@@ -282,7 +286,7 @@ intervention.brief.description <- function(int, include.start.text=F)
                                                 include.start.text=include.start.text,
                                                 pre="<table>",
                                                 post="</table>",
-                                                bullet.pre = "<tr><td style='vertical-align: text-top;'>&#149;&nbsp;</td><td>",
+                                                bullet.pre = "<tr><td style='vertical-align: text-top; word-wrap:break-word;'>&#149;&nbsp;</td><td>",
                                                 bullet.post = "</td></tr>",
                                                 tpop.delimeter = '',
                                                 unit.delimiter = ', ',
@@ -328,6 +332,11 @@ target.population.codes.to.pretty.name <- function(tpop.codes, font.size='1em')
                        content,
                        "</td></tr>", collapse=''), 
            "</table>"))
+}
+
+wrap.radioGroupButtons <- function(buttons)
+{
+    sub = buttons$children[!sapply(buttons$children, is.null)]
 }
 
 lump.idu.for.intervention <- function(int)
