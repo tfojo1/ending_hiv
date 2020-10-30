@@ -272,7 +272,7 @@ server.routes.runModel.get <- function(input)
                   { '[placeholder]'}
                 ))
             ),
-          ))),
+          )),
       
       
       # Aggregation options ####
