@@ -150,3 +150,12 @@ verticalSpacer <- function(height, unit='px')
 {
     div(style=paste0("height: ", height, unit))
 }
+
+tableRow <- function(...)
+{
+    tds = lapply(list(...), function(elem){
+        tags$td(elem)
+    })
+    
+    t
+}

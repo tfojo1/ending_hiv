@@ -242,27 +242,30 @@ server.routes.runModel.get <- function(input)
             collapsed=T,
             status="primary", solidHeader=TRUE,
             
-            checkboxGroupInput(
-              inputId='epidemiological-indicators', 
-              label=NULL,#'Indicators', 
-              choiceNames=unname(map(
-                get.data.type.options(
-                  version=version, 
-                  location=input[['geographic_location']]),
-                ~ .x )),
-              choiceValues=names(map(
-                get.data.type.options(
-                  version=version, 
-                  location=input[['geographic_location']]),
-                ~ .x )),
-              selected=names(map(
-                get.data.type.options(
-                  version=version, 
-                  location=input[['geographic_location']]),
-                ~ .x ))[1:2] ),
             fluidRow(
               column(
-                width=page.width, 
+                width=3,
+                checkboxGroupInput(
+                  inputId='epidemiological-indicators', 
+                  label=NULL,#'Indicators', 
+                  choiceNames=unname(map(
+                    get.data.type.options(
+                      version=version, 
+                      location=input[['geographic_location']]),
+                    ~ .x )),
+                  choiceValues=names(map(
+                    get.data.type.options(
+                      version=version, 
+                      location=input[['geographic_location']]),
+                    ~ .x )),
+                  selected=names(map(
+                    get.data.type.options(
+                      version=version, 
+                      location=input[['geographic_location']]),
+                    ~ .x ))[1:2] )
+              ),
+              
+            
                 tags$div(
                   background='#FFF3CD', 
                   class="yellow-box", 
