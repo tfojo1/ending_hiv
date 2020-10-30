@@ -47,11 +47,7 @@ server <- function(input, output, session) {
   cache = CACHE
 
   # Page: RunModel - Def ####  
-  #server.routes.runModel = server.routes.runModel.get(
-  #  input, control, init, param)
-  #output$ui_main = server.routes.runModel[['ui_main']]
-
-  output$ui_main = server.routes.runModel.get(input)
+  output$ui_main = server.routes.runModel.get(input, session)
   
   # Page: Docs (#page-docs): output$introductionText ####
   output$introductionText = server.routes.docs
@@ -91,11 +87,43 @@ server <- function(input, output, session) {
 ##-- INTERVENTION SELECTOR HANDLERS --##
 ##------------------------------------##
   
+  ##-- URL query params --##
+  # to-do: @JEF/TF: this has been set up in the UI reactively,
+  # but this imperative style is also possible.
+  # observe({
+  #   query <- parseQueryString(session$clientData$url_search)
+  #   if (!is.null(query[['name']])) {
+  #     updateTextInput(session, "name", value = query[['name']])
+  # })
   
+  # Demographic dimensions: select all
+  # to-do: @Todd/@TF: I left everything unselected by default. But when 
+  # selected and deselected again, the app doesn't maintain
+  # memory of what the values were before, and does not restore them.
+  observeEvent(input$demog.selectAll, {
+    if (input$demog.selectAll == TRUE) {
+      dims.namesAndChoices = map(
+        get.dimension.value.options(
+          version=version,
+          location=input[['geographic_location']]), 
+        function(dim) {
+          list(
+            'choices'=names(dim[['choices']]),
+            'name'=dim[['name']] )
+        })
+      for (dim in dims.namesAndChoices) {
+        updateCheckboxGroupInput(
+          session, 
+          inputId=dim[['name']], 
+          selected=dim[['choices']])
+      }
+    }
+  })
   
-##-- LOCATION HANDLER --##
+  ##-- LOCATION HANDLER --##
   observeEvent(input$geographic_location, {
-    # TODO: temp put here for now and then put on plot:
+    # Download button (try 1/2)
+    # TODO: @Joe/@JEF: temp put here for now and then put on plot:
     session$sendCustomMessage(
       type='resetInputValue', 
       message="show_download")
@@ -103,11 +131,13 @@ server <- function(input, output, session) {
     output$mainPlot = renderPlotly(make.plotly.message(BLANK.MESSAGE))
       message.df = data.frame(BLANK.MESSAGE)
       names(message.df) = NULL
-      output$mainTable = renderDataTable(message.df) #matrix(BLANK.MESSAGE,nrow=1,ncol=1))
+      output$mainTable = renderDataTable(message.df)  # matrix(BLANK.MESSAGE,nrow=1,ncol=1))
+      
       output$mainTable_message = renderText(BLANK.MESSAGE)
   })
   
-  # TODO: Not yet working
+  # Download button (try 2/2) ###
+  # TODO: @Joe/@JEF: Not yet working
   # can download: table 
   # can download: plot
   # (can do: 1 button that can do both, or 2 diff buttons)
@@ -128,5 +158,4 @@ server <- function(input, output, session) {
   
   #for now
   output$custom_int_msg_1 = renderText(NO.CUSTOM.INTERVENTIONS.MESSAGE)
-
 }
