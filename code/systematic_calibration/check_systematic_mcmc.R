@@ -5,7 +5,7 @@ if (1==2)
 
 source('code/source_code.R')
 
-mcmc = assemble.mcmc.from.cache('mcmc_runs/systematic_caches/14460_4x100K_2020-10-22/',T)
+mcmc = assemble.mcmc.from.cache('mcmc_runs/systematic_caches/29820_4x100K_total.4_2020-10-27/',T)
 
 
 simset = extract.simset(mcmc, additional.burn=mcmc@n.iter/2, 
@@ -13,7 +13,7 @@ simset = extract.simset(mcmc, additional.burn=mcmc@n.iter/2,
 
 
 acceptance.plot(mcmc, window.iterations = 200) + geom_hline(yintercept = c(0.238,0.1))
-simset = extract.simset(mcmc, additional.burn=mcmc@n.iter/2, additional.thin=2^(as.numeric(mcmc@n.iter>100)+as.numeric(mcmc@n.iter>1000)))
+#simset = extract.simset(mcmc, additional.burn=mcmc@n.iter/2, additional.thin=2^(as.numeric(mcmc@n.iter>100)+as.numeric(mcmc@n.iter>1000)))
 
 plot.calibration.sex.risk(simset)
 plot.calibration.sex.age(simset)
