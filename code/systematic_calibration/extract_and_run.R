@@ -65,7 +65,7 @@ assemble.and.thin.mcmcs <- function(cache.dir, dst.dir,
         cat(" - Extracting MCMC for '", locations.for.cache[i], sep='')
         
         mcmc = assemble.mcmc.from.cache(file.path(cache.dir, cache))
-        mcmc = mcmc.subset(mcmc, additional.burn=additional.burn, additional.thin=additional.thin)
+        mcmc = subset.mcmc(mcmc, additional.burn=additional.burn, additional.thin=additional.thin)
         
         save(mcmc, file=file.path(dst.dir, paste0(cache, '.Rdata')))
         
