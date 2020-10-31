@@ -25,6 +25,8 @@ create.msa.likelihood <- function(msa,
                                   PROB.TESTING.DECREASING = 0.05,
                                   TESTING.DECREASE.THRESHOLD = -0.1,
                                   
+                                  SUPPRESSION.SD = 0.01,
+                                  
                                   use.prev.to.new.cv.ratio=T,#F,
                                   FOCUS.WEIGHT=1,#4,
                                   IDU.LOG.SD = log(2),
@@ -121,7 +123,7 @@ create.msa.likelihood <- function(msa,
     DX.SD.MULTIPLIER.IF.STATE = 3
     
     #-- Elements for Suppression --#
-    SUPPRESSED.SD = function(...){.005}
+    SUPPRESSED.SD = function(...){SUPPRESSION.SD}
     SUPPRESSION.SD.INFLATION = 1/sqrt(SUPPRESSION.WEIGHT)/sqrt(EVERYTHING.WEIGHT)
     SUPPRESSED.STATE.SD.INFLATION = 3
     PROBABILITY.SUPPRESSION.DECREASING = 0.05

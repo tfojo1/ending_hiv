@@ -7,6 +7,43 @@ done.mcmc.locations <- function(dir)
     gsub("^([^_]+)_.*$", "\\1", files)
 }
 
+extract.simset.and.run.interventions <- function(location,
+                                                 mcmc.dir, dst.dir)
+{
+    # Load the MCMC File
+    mcmc.files = list.files(mcmc.dir)    
+    locations.for.files = gsub("^([^_]+)_.*$", "\\1", mcmc.files)
+    
+    mask = locations.for.files==as.character(location)
+    if (sum(mask)==0)
+        stop(paste0("No MCMC has been done for location ", location))
+    else if (sum(mask) > 1)
+        stop(paste0("There is more than one MCMC file for location ", location))
+    
+    print(paste0("Loading mcmc from file: '", mcmc.files[mask], "'"))
+    load(mcmc.files[mask])
+    
+    # Set up the dir for the location
+    dst.dir = file.path(dst.dir, location)
+    if (!dir.exists(dst.dir))
+        dir.create(dst.dir)
+    
+    print("Extracting and saving simset...")
+    simset = extract.simset(mcmc)
+    full.filename = get.full.filename(location=location)
+    save(simset, file=file.path(dst.dir, full.filename))
+    
+    print("Running Systematic Interventions...")
+    run.systematic.interventions(simset,
+                                 dst.dir=dst.dir,
+                                 interventions=ALL.INTERVENTIONS,
+                                 overwrite=F,
+                                 compress=T,
+                                 run.to.year=2030,
+                                 verbose=T,
+                                 save.baseline.and.seed=F)
+}
+
 assemble.and.thin.mcmcs <- function(cache.dir, dst.dir,
                                     targets = TARGET.MSAS,
                                     redo.done = F,
@@ -62,7 +99,7 @@ assemble.and.thin.mcmcs <- function(cache.dir, dst.dir,
     for (i in 1:length(caches))
     {
         cache = caches[i]
-        cat(" - Extracting MCMC for '", locations.for.cache[i], sep='')
+        cat(" - Extracting MCMC for ", locations.for.cache[i], sep='')
         
         mcmc = assemble.mcmc.from.cache(file.path(cache.dir, cache))
         mcmc = subset.mcmc(mcmc, additional.burn=additional.burn, additional.thin=additional.thin)
