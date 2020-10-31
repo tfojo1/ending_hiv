@@ -76,7 +76,7 @@ make.intervention.scripts <- function(msa.indices,
     for (i in msa.indices)
     {
         msa.name = names(TARGET.MSAS)[i]
-        make.sbatch.script(filename=file.path(dir, get.intervention.script.filename(i,chain)),
+        make.sbatch.script(filename=file.path(dir, get.intervention.script.filename(i)),
                            job.name = paste0("i", msa.name),
                            mem=mem,
                            output = file.path(OUTPUT.DIR, paste0("int_", msa.name, ".out")),
