@@ -115,8 +115,8 @@ make.master.setup.script <- function(msa.indices,
 }
 
 make.master.interventions.script <- function(msa.indices,
-                                     filename='R_scripts/master_scripts/setup_master.bat',
-                                     path="Ending_HIV/R_scripts/setup_scripts/")
+                                     filename='R_scripts/master_scripts/interventions_master.bat',
+                                     path="Ending_HIV/R_scripts/intervention_scripts/")
 {
     msa.indices = check.msa.indices(msa.indices)
     
