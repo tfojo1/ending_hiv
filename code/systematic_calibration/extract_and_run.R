@@ -22,7 +22,7 @@ extract.simset.and.run.interventions <- function(location,
         stop(paste0("There is more than one MCMC file for location ", location))
     
     print(paste0("Loading mcmc from file: '", mcmc.files[mask], "'"))
-    load(mcmc.files[mask])
+    load(file.path(mcmc.dir, mcmc.files[mask]))
     
     # Set up the dir for the location
     dst.dir = file.path(dst.dir, location)
