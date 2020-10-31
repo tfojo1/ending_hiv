@@ -25,32 +25,54 @@ assemble.and.thin.mcmcs <- function(cache.dir, dst.dir,
     
     caches = caches[target.mask]
     locations.for.cache = locations.for.cache[target.mask]
+ 
+    cat(length(caches), " cache directories representing target locations found\n", sep='')
     
     location.counts = table(locations.for.cache)
     repeated.locations = names(location.counts)[location.counts>1]
     if (length(repeated.locations)>1)
-        print(paste0("NOTE: The following locations have more than one cache and will NOT be extracted: ",
-                     paste0("'", repeated.locations, "'", collapse=', ')))
+        cat("NOTE: The following locations have more than one cache and will NOT be extracted: ",
+                     paste0("'", repeated.locations, "'", collapse=', '),
+            "\n", sep='')
     
     not.repeated.mask = location.counts[locations.for.cache] == 1
     caches = caches[not.repeated.mask]
     locations.for.cache = locations.for.cache[not.repeated.mask]
     
-    print("Checking caches complete")
-    cache.complete = sapply(file.path(cache.dir, caches), is.mcmc.cache.complete)
+    if (length(repeated.locations)>1)
+        cat(length(Caches), " cache directories remain to be extracted\n", sep='')        
+    
+    cat("Checking which of the ", length(caches), " caches are complete...\n", sep='')
+    
+    cache.complete = sapply(1:length(caches), function(i){
+        file = file.path(cache.dir, caches[i])
+        cat(" - Checking ", locations.for.cache[i], sep='')
+        complete = is.mcmc.cache.complete(file)
+        if (complete)
+            cat(" - complete\n")
+        else
+            cat(" - NOT complete\n")
+        complete
+    })
+    
     caches = caches[cache.complete]
     locations.for.cache = locations.for.cache[cache.complete]
     
+    cat("Processing ", length(caches), " completed caches...\n", sep='')
     for (i in 1:length(caches))
     {
         cache = caches[i]
-        print(paste0("Extracting MCMC for '", locations.for.cache[i], "'"))
+        cat(" - Extracting MCMC for '", locations.for.cache[i], sep='')
         
         mcmc = assemble.mcmc.from.cache(file.path(cache.dir, cache))
-        mcmc = subset.mcmc(mcmc, additional.burn=additional.burn, additional.thin=additional.thin)
+        mcmc = mcmc.subset(mcmc, additional.burn=additional.burn, additional.thin=additional.thin)
         
         save(mcmc, file=file.path(dst.dir, paste0(cache, '.Rdata')))
+        
+        cat(" - DONE\n")
     }
+    
+    cat("All Done!\n")
 }
 
 extract.simset.and.run.interventions <- function(mcmc)
