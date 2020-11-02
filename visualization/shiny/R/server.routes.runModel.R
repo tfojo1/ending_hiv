@@ -41,16 +41,62 @@ get.location <- function(input)
 ##-----------------------------------------------------##
 
 #returns
-server.routes.runModel.get <- function(input) 
+server.routes.runModel.get <- function(input, session)
 {
   # Component: PageDef #ui_main[renderUI]
   ui_main = renderUI({
+    # Pre-processing: URL params & location ####
     
-    location.choice = input[['geographic_location']]
+    # Location.choice
+    # TODO: @Todd: From our meeting on Fri 10/30/2020:
+    #   I think I've added what I need here. - Joe
+    # ---
+    # "What we actually want to do is have 2 different options. 
+    # one is 'session=sessionId'. Todd will
+    # add a mapping. And it will return a vector of location codes. And 
+    # then Todd will do some work afterwards
+    # to invert, and check if the location passed is a valid location name.
+    
+    # to-do: @Todd/TF: want me to change 'location' to say 'locationId',
+    # 'locationCode', etc? To be more clear? This will be a lot easier
+    # than parsing special characters (especially any tranasformed 
+    # ones, e.g. from whitespace) from the URL query string. Also,
+    # if we did this we'd probably want it to be case insensitive.
+    if ('location' %in% names(
+      parseQueryString(session$clientData$url_search))) {
+      loc = parseQueryString(
+        session$clientData$url_search)[['location']]
+      # to-do: validate
+      # @Todd/TF: Right now if what they type is invalid, it will 
+      # thankfully rever to a default selection / first item in the
+      # list, rather than erroring out.
+      valid = TRUE  # placeholder
+      
+      # to-do: find out how to get: arrayOfValidLocationIds, and
+      # re-activate this code block:
+      # 
+      # by using this?:
+      # invert.keyVals(get.location.options(
+      # version=version))
+      # 
+      # arrayOfValidLocationIds = c(
+      #   'nothing', 'valid', 'here')  # placeholder
+      # if (!(loc %in% arrayOfValidLocationIds))
+      #   valid = FALSE  
+      
+      if (valid == TRUE)
+        location.choice = loc
+      
+      # to-do: Then update URL bar to fix conflict if user changes?
+      # to-do: Show warning message if invalid?
+    } else
+      location.choice = input[['geographic_location']]
+    
     if (is.null(location.choice))
       location.choice = invert.keyVals(
         get.location.options(version))[1]
     
+    # UI ####
     list(  # returns-->list
       # Header & styles ####
       #This code sets the position and style for the progress bar when
@@ -77,9 +123,7 @@ server.routes.runModel.get <- function(input)
           padding-left: 5px;
           padding-right: 5px;
         }
-        ")),  # TODO: yellow box: (1) rounded corners, (2) black border
-      
-      # Info box ####
+      ")),
       
       # Output panel ####
       'output'=fluidRow(
@@ -91,14 +135,15 @@ server.routes.runModel.get <- function(input)
           tags$table(
             tags$tr(
               tags$td(style='padding-right: 20px',
-                      actionButton(
-                        style="background: #204C73; color: white; font-size:150%; margin: 0 auto;",
-                        "reset_main", 
-                        HTML("Generate<BR>Projections"))),
+                actionButton(
+                  style="background: #204C73; color: white; font-size:150%; margin: 0 auto;",
+                  "reset_main", 
+                  HTML("Generate<BR>Projections"))
+              ),
               tags$td(
-                
-                tipBox(width=12,
-                       'To make projections:<ol>
+                tipBox(
+                  width=12,
+                  'To make projections:<ol>
            <li> Select a location from the "Locations" tab </li>
            <li> Select interventions from the "Potential Interventions" tab </li>
            <li> Click "Generate Projections" </li>
@@ -114,27 +159,11 @@ server.routes.runModel.get <- function(input)
             collapsed=F,
             status="primary", 
             solidHeader=TRUE,
-            
-            
-            
-            # TODO: Download button: Not yet working
-            fluidRow(
-              column(
-                width=12,
-                conditionalPanel(
-                  condition="(input.show_download  !== undefined && input.show_download !== null)",
-                  downloadLink(
-                    "downloadDataLink",
-                    actionButton(
-                      "downloadDataButton", 
-                      "Download"))) ),
-            ),
-            
+
             # plot and table
             fluidRow(
               #   tags$head(tags$style("#tbl {white-space: nowrap;}")),
-              #
-              #             ),
+              # ),
               column(
                 width=page.width,
                 
@@ -144,28 +173,56 @@ server.routes.runModel.get <- function(input)
                   type='tabs',
                   
                   #Figure
-                  tabPanel(title='Figure',
-                           value='Figure',
-                           plotlyOutput(outputId="mainPlot",
-                                        height="auto",
-                                        width='100%',#"auto",
-                                        inline=T)  %>% withSpinner(color="#0dc5c1")
+                  tabPanel(
+                    title='Figure',
+                    value='Figure',
+                    
+                    fluidRow(
+                      plotlyOutput(
+                        outputId="mainPlot",
+                        height="auto",
+                        width='100%',#"auto",
+                        inline=T)  %>% withSpinner(color="#0dc5c1") ),
+                    
+                    fluidRow(
+                      # to-do: Would be nice to only appear or not be
+                      # greyed out on some condition.
+                      # conditionalPanel(
+                      #   condition="(input.show_download  !== undefined && input.show_download !== null)",
+                      column(
+                        width=(page.width * 11/12),
+                        downloadButton(
+                          "downloadButton.plot", 
+                          "Download plot") ))
+                      # )
                   ),
                   
                   #Table
-                  tabPanel(title='Table',
-                           value='Table',
-                           verbatimTextOutput(
-                             placeholder=FALSE,
-                             'mainTable_message'
-                           ),
-                           div(style = 'overflow-x: scroll', 
-                               dataTableOutput(outputId="mainTable")
-                           ))
-                )
-                
-                
-              ))
+                  tabPanel(
+                    title='Table',
+                    value='Table',
+                    
+                    fluidRow( 
+                    verbatimTextOutput(
+                      placeholder=FALSE,
+                      'mainTable_message'),
+                    div(
+                       style='overflow-x: scroll', 
+                       dataTableOutput(outputId="mainTable")) ),
+                    fluidRow(
+                      # to-do: Would be nice to only appear or not be
+                      # greyed out on some condition.
+                      # conditionalPanel(
+                      #   condition="(input.show_download  !== undefined && input.show_download !== null)",
+                      column(
+                        width=(page.width * 11/12),
+                        downloadButton(
+                          "downloadButton.table", 
+                          "Download table") ))
+                    # )
+                  )
+                )  # /tabsetPanel
+            ))
           )
         )), 
       
@@ -264,7 +321,6 @@ server.routes.runModel.get <- function(input)
                     ~ .x ))[1:2] )
               ),
               
-              
               tags$div(
                 background='#FFF3CD', 
                 class="yellow-box", 
@@ -337,7 +393,7 @@ server.routes.runModel.get <- function(input)
             #     choiceValues=demog.choiceValues,
             #     selected=demog.choiceValues ) )
             
-          ))),  # </list>  #returns
+          ))),
       
       # Demographic dimensions ####
       # to-do: expand/collapse feature
@@ -351,35 +407,68 @@ server.routes.runModel.get <- function(input)
             status="primary",
             width=NULL, 
             solidHeader=TRUE,
-            
-            map(
-              get.dimension.value.options(
-                version=version,
-                location=input[['geographic_location']]), 
-              function(dim) {
-                column(
-                  width=page.width.half,
-                  checkboxGroupInput(
-                    inputId=dim[['name']],
-                    label=dim[['label']],
-                    choiceNames=unname(dim[['choices']]),
-                    choiceValues=names(dim[['choices']]),
-                    selected=names(dim[['choices']])
-                  ) )
-              }),
             fluidRow(
               column(
-                width=page.width, 
-                tags$div(
-                  background='#FFF3CD', 
-                  class="yellow-box", 
-                  { '[placeholder]'}
-                ))
+                width=page.width,
+                radioButtons(
+                  inputId='demog.selectAll', 
+                  label='Selections', 
+                  # label="Select all 'age', 'race', 'sex', 'risk factor'", 
+                  # choices=c('Select all'),
+                  choiceNames=c('Select all'),
+                  choiceValues=c('TRUE'),
+                  selected=c(''),
+                )
+            )),
+            fluidRow(
+              map(
+                get.dimension.value.options(
+                  version=version,
+                  location=input[['geographic_location']]), 
+                function(dim) {
+                  column(
+                    width=page.width / length(
+                      get.dimension.value.options(
+                        version=version, 
+                        location=input[['geographic_location']])),
+                    checkboxGroupInput(
+                      inputId=dim[['name']],
+                      label=dim[['label']],
+                      choiceNames=unname(dim[['choices']]),
+                      choiceValues=names(dim[['choices']]),
+                      # selected=names(dim[['choices']])
+                      # selected=ifelse(
+                      #   input[['demog.selectAll']] == F, 
+                      #   names(dim[['choices']]), 
+                      #   rep('', length(names(dim[['choices']]))) 
+                    ))
+                })
             ),
-            
-          )))
-      
-    )})
+            fluidRow(
+              column(
+                width=page.width.half,
+                checkboxGroupInput(
+                  inputId='split', 
+                  label='Within a Panel, Plot Separate Lines for Each:', 
+                  choiceNames=unname(get.split.by.options(
+                    version=version,
+                    location=input[['geographic_location']])),
+                  choiceValues=names(get.split.by.options(
+                    version=version,
+                    location=input[['geographic_location']])),
+                  selected=NULL))
+              # column(
+              #   width=page.width.half,
+              #   checkboxGroupInput(
+              #     inputId='split', 
+              #     label='Multi-line dis-aggregation', 
+              #     choiceNames=demog.choiceNames,
+              #     choiceValues=demog.choiceValues,
+              #     selected=demog.choiceValues ) )
+          )
+      )))  # /fluidrow
+    )})  # </list>  #returns
+  
   # Export ####
   server.routes.runModel = list(
     'ui_main'=ui_main,
