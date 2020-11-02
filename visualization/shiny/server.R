@@ -140,8 +140,8 @@ server <- function(input, output, session) {
     output$mainPlot = renderPlotly(make.plotly.message(BLANK.MESSAGE))
       message.df = data.frame(BLANK.MESSAGE)
       names(message.df) = NULL
-      output$mainTable = renderDataTable(message.df)  # matrix(BLANK.MESSAGE,nrow=1,ncol=1))
-      
+      # matrix(BLANK.MESSAGE,nrow=1,ncol=1))
+      output$mainTable = renderDataTable(message.df)  
       output$mainTable_message = renderText(BLANK.MESSAGE)
   })
   

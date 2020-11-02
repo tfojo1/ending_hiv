@@ -146,10 +146,7 @@ server.routes.runModel.get <- function(input, session)
           padding-left: 5px;
           padding-right: 5px;
         }
-        ")),  # TODO: yellow box: (1) rounded corners, (2) black border
-      
-      # Info box ####
-      
+        ")),
       # Output panel ####
       'output'=fluidRow(
         column(
@@ -342,8 +339,6 @@ server.routes.runModel.get <- function(input, session)
               ))
           ),
         )),
-      
-      
       # Aggregation options ####
       # to-do: expand/collapse feature
       'aggregation-options'=fluidRow(
@@ -364,18 +359,18 @@ server.routes.runModel.get <- function(input, session)
                 label='Display "No intervention"', 
                 value=TRUE,  
                 width='100%' )),
-          ),  # </fluidRow>
-          
+          ),
           #div(HTML("<HR>")),
-          div(style = "font-size: 1.2em; padding: 0px 0px; margin-bottom:-20px",
-              HTML("<b>Intervention 1:</b>")),
+          div(style=
+            "font-size: 1.2em; padding: 0px 0px; margin-bottom:-20px",
+            HTML("<b>Intervention 1:</b>")),
           create.intervention.selector.panel(1, input)
-  #        box(title='Intervention 1:', solidHeader=T, width=12,
-   #           create.intervention.selector.panel(1, input))
+   # box(title='Intervention 1:', solidHeader=T, width=12,
+   #  create.intervention.selector.panel(1, input))
           
-          ))),  # </fluidRow>
+    )),  # </fluidRow>
           
-    # Epidemiological dimensions ####
+      # Epidemiological dimensions ####
     'epidemiological-dimensions'=fluidRow(
       column(
         width=page.width,
@@ -415,7 +410,7 @@ server.routes.runModel.get <- function(input, session)
         ))),
     
     
-    # Aggregation options ####
+      # Aggregation options ####
     # to-do: expand/collapse feature
     'aggregation-options'=fluidRow(
       column(
@@ -480,74 +475,6 @@ server.routes.runModel.get <- function(input, session)
           
       ))),  # </list>  #returns
     
-    # Demographic dimensions ####
-    # to-do: expand/collapse feature
-    'demographic-dimensions'=fluidRow(
-      column(
-        width=page.width,
-        box(
-          title="Demographic Subgroups",
-          collapsible=T,
-          collapsed=T,
-          status="primary",
-          width=NULL, 
-          solidHeader=TRUE,
-          fluidRow(
-            column(
-              width=page.width,
-              checkboxInput(
-                inputId='demog.selectAll', 
-                label='Select all', 
-                value=F) )),
-          fluidRow(
-            map(
-              get.dimension.value.options(
-                version=version,
-                location=input[['geographic_location']]), 
-              function(dim) {
-                column(
-                  width=page.width / length(
-                    get.dimension.value.options(
-                    version=version, 
-                    location=input[['geographic_location']])),
-                checkboxGroupInput(
-                  inputId=dim[['name']],
-                  label=dim[['label']],
-                  choiceNames=unname(dim[['choices']]),
-                  choiceValues=names(dim[['choices']]),
-                  # selected=names(dim[['choices']])
-                  # selected=ifelse(
-                  #   input[['demog.selectAll']] == F, 
-                  #   names(dim[['choices']]), 
-                  #   rep('', length(names(dim[['choices']]))) 
-                ))
-            })
-          ),
-          fluidRow(
-            column(
-              width=page.width.half,
-              checkboxGroupInput(
-                inputId='split', 
-                label='Within a Panel, Plot Separate Lines for Each:', 
-                choiceNames=unname(get.split.by.options(
-                  version=version,
-                  location=input[['geographic_location']])),
-                choiceValues=names(get.split.by.options(
-                  version=version,
-                  location=input[['geographic_location']])),
-                selected=NULL))
-            
-            # column(
-            #   width=page.width.half,
-            #   checkboxGroupInput(
-            #     inputId='split', 
-            #     label='Multi-line dis-aggregation', 
-            #     choiceNames=demog.choiceNames,
-            #     choiceValues=demog.choiceValues,
-            #     selected=demog.choiceValues ) )
-            
-          ))),  # </list>  #returns
-      
       # Demographic dimensions ####
       # to-do: expand/collapse feature
       'demographic-dimensions'=fluidRow(
@@ -560,35 +487,62 @@ server.routes.runModel.get <- function(input, session)
             status="primary",
             width=NULL, 
             solidHeader=TRUE,
-            
-            map(
-              get.dimension.value.options(
-                version=version,
-                location=input[['geographic_location']]), 
-              function(dim) {
-                column(
-                  width=page.width.half,
+            fluidRow(
+              column(
+                width=page.width,
+                checkboxInput(
+                  inputId='demog.selectAll', 
+                  label='Select all', 
+                  value=F) )),
+            fluidRow(
+              map(
+                get.dimension.value.options(
+                  version=version,
+                  location=input[['geographic_location']]), 
+                function(dim) {
+                  column(
+                    width=page.width / length(
+                      get.dimension.value.options(
+                      version=version, 
+                      location=input[['geographic_location']])),
                   checkboxGroupInput(
                     inputId=dim[['name']],
                     label=dim[['label']],
                     choiceNames=unname(dim[['choices']]),
                     choiceValues=names(dim[['choices']]),
-                    selected=names(dim[['choices']])
-                  ) )
-              }),
+                    # selected=names(dim[['choices']])
+                    # selected=ifelse(
+                    #   input[['demog.selectAll']] == F, 
+                    #   names(dim[['choices']]), 
+                    #   rep('', length(names(dim[['choices']]))) 
+                  ))
+              })
+            ),
             fluidRow(
               column(
-                width=page.width, 
-                tags$div(
-                  background='#FFF3CD', 
-                  class="yellow-box", 
-                  { '[placeholder]'}
-                ))
-            ),
-            
-          )))
+                width=page.width.half,
+                checkboxGroupInput(
+                  inputId='split', 
+                  label='Within a Panel, Plot Separate Lines for Each:', 
+                  choiceNames=unname(get.split.by.options(
+                    version=version,
+                    location=input[['geographic_location']])),
+                  choiceValues=names(get.split.by.options(
+                    version=version,
+                    location=input[['geographic_location']])),
+                  selected=NULL))
+              # column(
+              #   width=page.width.half,
+              #   checkboxGroupInput(
+              #     inputId='split', 
+              #     label='Multi-line dis-aggregation', 
+              #     choiceNames=demog.choiceNames,
+              #     choiceValues=demog.choiceValues,
+              #     selected=demog.choiceValues ) )
+            )
       
-    )})
+    )))  # /fluidrow
+  )})  # </list>  #returns
   # Export ####
   server.routes.runModel = list(
     'ui_main'=ui_main,
