@@ -69,7 +69,7 @@ make.run.scripts <- function(msa.indices,
 make.intervention.scripts <- function(msa.indices,
                                       dir='R_scripts/intervention_scripts/',
                                       account='tfojo1',
-                                      mem=NULL)
+                                      mem='16G')
 {
     msa.indices = check.msa.indices(msa.indices)
     
@@ -102,6 +102,26 @@ make.setup.scripts <- function(msa.indices,
                            commands= paste0("Rscript Ending_HIV/R_scripts/setup_parallel_mcmc_script.R ", i))
     }
 }
+
+
+
+make.assemble.mcmc.script <- function(dir='R_scripts/other_scripts/',
+                                      account='tfojo1')
+{
+    msa.name = names(TARGET.MSAS)[i]
+    make.sbatch.script(filename=file.path(dir, 'assemble_mcmc.bat'),
+                       job.name = 'assemble',
+                       partition='shared',
+                       account=account,
+                       output = file.path(OUTPUT.DIR, paste0("assemble_mcmc.out")),
+                       commands= paste0("Rscript Ending_HIV/R_scripts/assemble_mcmc_script.R"))
+}
+
+
+
+##--------------------##
+##-- MASTER SCRIPTS --##
+##--------------------##
 
 make.master.setup.script <- function(msa.indices,
                                      filename='R_scripts/master_scripts/setup_master.bat',
@@ -142,6 +162,10 @@ make.master.run.script <- function(msa.indices,
                    sep='')
     sink()
 }
+
+##-------------##
+##-- HELPERS --##
+##-------------##
 
 get.run.filename <- function(index, chain)
 {
