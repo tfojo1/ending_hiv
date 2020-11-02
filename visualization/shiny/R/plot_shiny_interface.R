@@ -391,69 +391,64 @@ make.simulations.plot.and.table <- function(
   simulation.line.size=if (plot.format=='individual.simulations') 2 else 5,
   truth.point.size=10
 ) {
-  
   #Hard Overrides for now
   #plot.format = 'individual.simulations'
-
-  
-    filenames = get.sim.filenames.to.load(
+  filenames = get.sim.filenames.to.load(
       version=version,
       location=location,
       intervention.codes=intervention.codes)
-    simsets = lapply(filenames, function(file) {
-      key = simsetFilenameToCacheKey(file)
-      simset = cache$get(key)
-      simset })
-    
-    #map ages
-    age.mapping = names(PRETTY.NAMES$age)
-    names(age.mapping) = paste0('age', 1:5)
-    if (!is.null(dimension.subsets) && !is.null(dimension.subsets$age))
-        dimension.subsets$age = age.mapping[dimension.subsets$age]
-    
-    #Figure out coloring
-    if (length(simsets)<=2 && length(split.by)>0)
-        color.by = 'split'
-    else
-        color.by = 'intervention'
-    
-    withProgress(min=0, max=1, value = 0, 
-                 message="Building Figure and Table...",
-                 {
-                     rv = do.plot.simulations(
-                         simsets,
-                         years=years,
-                         data.types=data.types,
-                         facet.by,
-                         split.by,
-                         dimension.subsets,
-                         #for now, going to override the plot formats
-                         plot.format=plot.format, 
-                         
-                         show.truth=T,
-                         
-                         plot.interval.coverage=plot.interval.coverage,
-                         #summary.statistic=summary.statistic,
-                         #summary.statistic.interval.coverage=summary.statistic.interval.coverage,
-                         
-                         colors=pal_jama(),
-                         
-                         plot.interval.alpha=plot.interval.alpha,
-                         simulation.alpha=simulation.alpha,
-                         simulation.line.size=simulation.line.size,
-                         truth.point.size=truth.point.size,
-                         
-                         color.by = color.by,
-                         
-                         progress.update = setProgress,
-                         
-                         data.type.names = DATA.TYPES,
-                         return.change.data.frame = T)
-                     
-                     setProgress(value=1)
-                 }
-    )
-    
+  simsets = lapply(filenames, function(file) {
+    key = simsetFilenameToCacheKey(file)
+    simset = cache$get(key)
+    simset })
+  
+  #map ages
+  age.mapping = names(PRETTY.NAMES$age)
+  names(age.mapping) = paste0('age', 1:5)
+  if (!is.null(dimension.subsets) && !is.null(dimension.subsets$age))
+      dimension.subsets$age = age.mapping[dimension.subsets$age]
+  
+  #Figure out coloring
+  if (length(simsets)<=2 && length(split.by)>0)
+      color.by = 'split'
+  else
+      color.by = 'intervention'
+  
+  withProgress(
+    min=0, max=1, value = 0, 
+    message="Building Figure and Table...", {
+      rv = do.plot.simulations(
+        simsets,
+        years=years,
+        data.types=data.types,
+        facet.by,
+        split.by,
+        dimension.subsets,
+        #for now, going to override the plot formats
+        plot.format=plot.format, 
+        
+        show.truth=T,
+        
+        plot.interval.coverage=plot.interval.coverage,
+        #summary.statistic=summary.statistic,
+        #summary.statistic.interval.coverage=summary.statistic.interval.coverage,
+        
+        colors=pal_jama(),
+        
+        plot.interval.alpha=plot.interval.alpha,
+        simulation.alpha=simulation.alpha,
+        simulation.line.size=simulation.line.size,
+        truth.point.size=truth.point.size,
+        
+        color.by = color.by,
+        
+        progress.update = setProgress,
+        
+        data.type.names = DATA.TYPES,
+        return.change.data.frame = T)
+      
+      setProgress(value=1)
+    })
     
     rv$notes = c('test note 1', 'test note 2')
     rv
