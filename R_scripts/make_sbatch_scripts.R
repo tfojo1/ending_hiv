@@ -103,8 +103,6 @@ make.setup.scripts <- function(msa.indices,
     }
 }
 
-
-
 make.assemble.mcmc.script <- function(dir='R_scripts/other_scripts/',
                                       account='tfojo1')
 {
