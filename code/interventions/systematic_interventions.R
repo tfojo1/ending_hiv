@@ -57,7 +57,8 @@ run.systematic.interventions <- function(simset,
                                          overwrite=F,
                                          compress=T,
                                          run.to.year=2030,
-                                         verbose=T)
+                                         verbose=T,
+                                         save.baseline.and.seed=T)
 {
     if (!dir.exists(dst.dir))
         dir.create(dst.dir)
@@ -69,7 +70,7 @@ run.systematic.interventions <- function(simset,
     run.from.year=attr(base.simset, 'run.from.year')
     keep.years=run.from.year:run.to.year
     
-    if (compress)
+    if (save.baseline.and.seed && compress)
     {
         if (verbose)
             print("Compressing baseline simset...")

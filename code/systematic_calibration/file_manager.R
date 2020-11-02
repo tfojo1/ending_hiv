@@ -109,6 +109,14 @@ get.seed.filename <- function(location,
                                  intervention.code = 'seed')
 }
 
+get.full.filename <- function(location,
+                              version=VERSION)
+{
+    make.filenames.from.elements(version=version,
+                                 location=location,
+                                 intervention.code = 'full')
+}
+
 get.baseline.filename <- function(location,
                                   version=VERSION)
 {

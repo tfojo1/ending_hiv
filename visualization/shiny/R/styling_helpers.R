@@ -17,36 +17,27 @@ tipBox <- function(message,
 )
 {
     #-- SET UP ARROWS --#
+    arrows = c(up='&uarr;', down='&darr;', right='&rarr;', left='&larr;')
+    arrow.names = names(arrows)
+    arrows = paste0("<b>", arrows, "</b>")
+    names(arrows) = arrow.names
+    
     # https://www.htmlsymbols.xyz/arrow-symbols
-    if (left.arrow.direction=='up')
-        l.code = '&#129093'
-    else if (left.arrow.direction=='down')
-        l.code = '&#129095'
-    else
-        l.code = '&#129092'
-    
-    if (right.arrow.direction=='up')
-        r.code = '&#129093'
-    else if (right.arrow.direction=='down')
-        r.code = '&#129095'
-    else
-        r.code = '&#129094'
-    
     up = down = right = left = '<td/>'
     if (up.arrow)
         up = paste0("<td style='padding-bottom: 2px; font-size: 150%; text-align: ", 
-                    up.arrow.align, "'>&#129093</td>")
+                    up.arrow.align, "'>",arrows['up'],"</td>")
     if (down.arrow)
         down = paste0("<td style='padding-top: 2px; font-size: 150%; text-align: ", 
-                      down.arrow.align, "'>&#129095</td>")
+                      down.arrow.align, "'>",arrows['down'],"</td>")
     if (right.arrow)
         right = paste0("<td style='padding-left: 5px; font-size: 150%; vertical-align: ",
                        right.arrow.align, "'>",
-                       r.code, "</td>")
+                       arrows[right.arrow.direction], "</td>")
     if (left.arrow)
         left = paste0("<td style='padding-right: 5px; font-size: 150%; vertical-align: ",
                       left.arrow.align, "'>",
-                      l.code, "</td>")
+                      arrows[left.arrow.direction], "</td>")
     
     #-- SET UP THE PANEL --#
     box = tags$div(
@@ -139,16 +130,35 @@ nestedWellPanel <- function(...,
     )
 }
 
-
-add.style.to.top.level.tag <- function(elem, style)
+add.style.to.tag <- function(elem, style,
+                             recursive=F)
 {
+    if (is.null(elem))
+        return (NULL)
+    
+    style = paste0(gsub(';$', '', style), ';')
+    if (any(names(elem$attribs)=='style'))
+        elem$attribs$style = paste0(style, elem$attribs$style)
     elem$attribs = c(elem$attribs, list(style=style))
+    
+    if (recursive)
+        elem$children = lapply(elem$children, add.style.to.tag, style=style, recursive=T)
+    
     elem
 }
 
 verticalSpacer <- function(height, unit='px')
 {
     div(style=paste0("height: ", height, unit))
+}
+
+make.radioButtonGroup.wrappable <- function(button.group)
+{
+    button.group$children[[3]]$children[[1]]$children[[1]] = lapply(button.group$children[[3]]$children[[1]]$children[[1]], function(elem){
+        elem$children[[1]] = add.style.to.tag(elem$children[[1]], "white-space: normal; word-wrap: break-word;")
+    })
+    
+    button.group
 }
 
 tableRow <- function(...)

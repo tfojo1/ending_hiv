@@ -316,7 +316,7 @@ create.intervention.manager <- function()
          name=character())
 }
 
-RESERVED.INTERVENTION.CODES = c('baseline','seed')
+RESERVED.INTERVENTION.CODES = c('baseline','seed','full')
 
 register.intervention <- function(int, 
                                   code,

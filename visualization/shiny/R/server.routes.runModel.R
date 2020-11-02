@@ -27,12 +27,12 @@ page.width.half = round(page.width / 2)
 #Here for future-proofing. For now, just one version possible
 get.version <- function(input)
 {
-   '1.0' 
+  '1.0' 
 }
 
 get.location <- function(input)
 {
-    input$geographic_location
+  input$geographic_location
 }
 
 tipBox <- function(message) {
@@ -160,15 +160,14 @@ server.routes.runModel.get <- function(input, session)
           tags$table(
             tags$tr(
               tags$td(style='padding-right: 20px',
-                actionButton(
-                  style="background: #204C73; color: white; font-size:150%; margin: 0 auto;",
-                  #          style='material-flat', size='md', color='primary',
-                  "reset_main", 
-                  HTML("Generate<BR>Projections"))),
+                      actionButton(
+                        style="background: #204C73; color: white; font-size:150%; margin: 0 auto;",
+                        "reset_main", 
+                        HTML("Generate<BR>Projections"))),
               tags$td(
                 
-          tipBox(width=12,
-                 'To make projections:<ol>
+                tipBox(width=12,
+                       'To make projections:<ol>
            <li> Select a location from the "Locations" tab </li>
            <li> Select interventions from the "Potential Interventions" tab </li>
            <li> Click "Generate Projections" </li>
@@ -335,14 +334,14 @@ server.routes.runModel.get <- function(input, session)
                     ~ .x ))[1:2] )
               ),
               
-            
-                tags$div(
-                  background='#FFF3CD', 
-                  class="yellow-box", 
-                  { '[placeholder]'}
-                ))
-            ),
-          ))),
+              
+              tags$div(
+                background='#FFF3CD', 
+                class="yellow-box", 
+                { '[placeholder]'}
+              ))
+          ),
+        )),
       
       
       # Aggregation options ####

@@ -7,6 +7,8 @@
 library('shinydashboard')
 library(shinyjs)
 
+source('R/styling_helpers.R')
+
 
 ##------------------##
 ##-- DEFINE the UI--##
@@ -15,12 +17,12 @@ library(shinyjs)
 ui <- dashboardPage(
   
   ## Header
-  add.style.to.top.level.tag(dashboardHeader(title="Ending HIV in the US", disable=F),
+  add.style.to.tag(dashboardHeader(title="Ending HIV in the US", disable=F),
                         style='position: fixed; width:100%; z-index:99999'), #this keeps it pegged to the top/not scrollable
   
   ## Sidebar
   #  - Appear in app in order shown below
-  add.style.to.top.level.tag(style='position: fixed;', #this keeps it pegged to the top/not scrollable
+  add.style.to.tag(style='position: fixed;', #this keeps it pegged to the top/not scrollable
   dashboardSidebar(
     sidebarMenu(#style='position: fixed',
                 id = 'side_menu',

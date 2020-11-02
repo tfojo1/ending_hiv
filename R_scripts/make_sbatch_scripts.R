@@ -66,6 +66,27 @@ make.run.scripts <- function(msa.indices,
     }
 }
 
+make.intervention.scripts <- function(msa.indices,
+                                      dir='R_scripts/intervention_scripts/',
+                                      account='tfojo1',
+                                      mem=NULL)
+{
+    msa.indices = check.msa.indices(msa.indices)
+    
+    for (i in msa.indices)
+    {
+        msa.name = names(TARGET.MSAS)[i]
+        make.sbatch.script(filename=file.path(dir, get.intervention.script.filename(i)),
+                           job.name = paste0("i", msa.name),
+                           mem=mem,
+                           output = file.path(OUTPUT.DIR, paste0("int_", msa.name, ".out")),
+                           partition = 'shared',
+                           time.hours = 12,
+                           account=account,
+                           commands= paste0("Rscript Ending_HIV/R_scripts/run_interventions_script.R ", i))
+     }
+}
+
 make.setup.scripts <- function(msa.indices,
                                dir='R_scripts/setup_scripts/',
                                account='tfojo1')
@@ -88,6 +109,19 @@ make.master.setup.script <- function(msa.indices,
 {
     sink(filename)
     contents = cat(paste0(paste0("sbatch ", path, get.setup.filename(msa.indices)),
+                          collapse='\n'),
+                   sep='')
+    sink()
+}
+
+make.master.interventions.script <- function(msa.indices,
+                                     filename='R_scripts/master_scripts/interventions_master.bat',
+                                     path="Ending_HIV/R_scripts/intervention_scripts/")
+{
+    msa.indices = check.msa.indices(msa.indices)
+    
+    sink(filename)
+    contents = cat(paste0(paste0("sbatch ", path, get.intervention.script.filename(msa.indices)),
                           collapse='\n'),
                    sep='')
     sink()
@@ -117,4 +151,22 @@ get.run.filename <- function(index, chain)
 get.setup.filename <- function(index)
 {
     paste0("setup_", index, ".bat")
+}
+
+get.intervention.script.filename <- function(index)
+{
+    paste0("int_", index, ".bat")
+}
+
+check.msa.indices <- function(msa.indices)
+{
+    if (all(as.integer(msa.indices)>length(TARGET.MSAS)))
+    {
+        print("Treating msa.indices as msa codes")
+        msa.indices = msas.to.indices(msa.indices)
+        if (any(is.na(msa.indices)))
+            stop("some elements of msa indices were neither valid indices nor valid msa codes")
+    }
+    
+    msa.indices
 }

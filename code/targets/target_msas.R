@@ -74,3 +74,15 @@ TARGET.MSAS = c(NYC=NYC.MSA,
                 Baton_Rouge=BATON.ROUGE.MSA,
                 Sacramento=SACRAMENTO.MSA,
                 Cleveland=CLEVELAND.MSA)
+
+
+msas.to.indices <- function(msas)
+{
+    sapply(msas, function(msa){
+        mask = TARGET.MSAS==as.character(msa)
+        if (any(mask))
+            (1:length(TARGET.MSAS))[mask]
+        else
+            as.integer(NA)
+    })
+}
