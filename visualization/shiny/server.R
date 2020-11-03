@@ -168,8 +168,11 @@ server <- function(input, output, session) {
       } )
   
   observeEvent(input$downloadButton.plot, {
+      width = 1000 #we can fill in a user-specified width in pixels later
+      height = 650 #ditto
       shinyjs::runjs(paste0("plot=document.getElementById('mainPlot');
-                                    Plotly.downloadImage(plot, {format: 'png', filename: '", get.default.download.filename(input),"'})"))
+                                    Plotly.downloadImage(plot, {format: 'png', width: ", width, ", height: ", height, ", 
+                            filename: '", get.default.download.filename(input),"'})"))
    })
   
   
