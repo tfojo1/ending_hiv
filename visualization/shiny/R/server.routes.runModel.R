@@ -202,10 +202,11 @@ server.routes.runModel.get <- function(input, session)
                         #   condition="(input.show_download  !== undefined && input.show_download !== null)",
                         column(
                           width=(page.width * 11/12),
-                          downloadButton(
-                            "downloadButton.plot", 
-                            "Download plot") ))
-                        # )
+                          actionButton("downloadButton.plot",
+                                       label="Download Figure",
+                                       icon=icon('download'))
+                             ))
+                        
                     ),
                   
                   #Table
@@ -229,7 +230,7 @@ server.routes.runModel.get <- function(input, session)
                         width=(page.width * 11/12),
                         downloadButton(
                           "downloadButton.table", 
-                          "Download table") ))
+                          "Download Table") ))
                     # )
                   )
                 )  # /tabsetPanel
@@ -309,103 +310,39 @@ server.routes.runModel.get <- function(input, session)
             collapsed=T,
             status="primary", solidHeader=TRUE,
             
-            fluidRow(
-              column(
-                width=3,
-                checkboxGroupInput(
-                  inputId='epidemiological-indicators', 
-                  label=NULL,#'Indicators', 
-                  choiceNames=unname(map(
-                    get.data.type.options(
-                      version=version, 
-                      location=input[['geographic_location']]),
-                    ~ .x )),
-                  choiceValues=names(map(
-                    get.data.type.options(
-                      version=version, 
-                      location=input[['geographic_location']]),
-                    ~ .x )),
-                  selected=names(map(
-                    get.data.type.options(
-                      version=version, 
-                      location=input[['geographic_location']]),
-                    ~ .x ))[1:2] )
+            tableRow(inner.padding='25px',
+                fluidRow(
+                    column(
+                        width=12,
+                        checkboxGroupInput(
+                            inputId='epidemiological-indicators', 
+                            label=NULL,#'Indicators', 
+                            choiceNames=unname(map(
+                                get.data.type.options(
+                                    version=version, 
+                                    location=input[['geographic_location']]),
+                                ~ .x )),
+                            choiceValues=names(map(
+                                get.data.type.options(
+                                    version=version, 
+                                    location=input[['geographic_location']]),
+                                ~ .x )),
+                            selected=names(map(
+                                get.data.type.options(
+                                    version=version, 
+                                    location=input[['geographic_location']]),
+                                ~ .x ))[1:2] )
+                    )),
+                tipBox("Select the Epidemiological Indicators to be displayed as outcomes in the plot. Each indicator will be plotted on a separate panel",
+                       left.arrow = T, width=6)
+                
+                
               ),
-              
-              tags$div(
-                background='#FFF3CD', 
-                class="yellow-box", 
-                { '[placeholder]'}
-              ))
           ),
         )),
       
       
-      # Aggregation options ####
-      # to-do: expand/collapse feature
-      'aggregation-options'=fluidRow(
-        column(
-          width=page.width,
-          box(
-            width=NULL, 
-            title="Plot Options (how to slice the projections)",
-            collapsible=T,
-            collapsed=T,
-            status="primary", 
-            solidHeader=TRUE,
-            
-            column(
-              width=page.width,
-              radioGroupButtons(
-                #            selectInput(
-                inputId='aggregation-of-simulations-ran', 
-                label='What to Plot', 
-                choices=invert.keyVals(get.plot.format.options(
-                  version=version,
-                  location=input[['geographic_location']])),
-                selected=NULL, 
-                #multiple=FALSE,
-                #selectize=TRUE, 
-                width=NULL, 
-                size=NULL) ),
-            
-            column(
-              width=page.width.half,
-              checkboxGroupInput(
-                inputId='facet', 
-                label='Make Separate Panels for Each:', 
-                choiceNames=unname(get.facet.by.options(
-                  version=version,
-                  location=input[['geographic_location']])),
-                choiceValues=names(get.facet.by.options(
-                  version=version,
-                  location=input[['geographic_location']])),
-                selected=NULL)),
-            
-            column(
-              width=page.width.half,
-              checkboxGroupInput(
-                inputId='split', 
-                label='Within a Panel, Plot Separate Lines for Each:', 
-                choiceNames=unname(get.split.by.options(
-                  version=version,
-                  location=input[['geographic_location']])),
-                choiceValues=names(get.split.by.options(
-                  version=version,
-                  location=input[['geographic_location']])),
-                selected=NULL))
-            
-            # column(
-            #   width=page.width.half,
-            #   checkboxGroupInput(
-            #     inputId='split', 
-            #     label='Multi-line dis-aggregation', 
-            #     choiceNames=demog.choiceNames,
-            #     choiceValues=demog.choiceValues,
-            #     selected=demog.choiceValues ) )
-            
-          ))),
-      
+     
       # Demographic dimensions ####
       # to-do: expand/collapse feature
       'demographic-dimensions'=fluidRow(
@@ -418,19 +355,22 @@ server.routes.runModel.get <- function(input, session)
             status="primary",
             width=NULL, 
             solidHeader=TRUE,
-            fluidRow(
-              column(
-                width=page.width,
-                radioButtons(
-                  inputId='demog.selectAll', 
-                  label='Selections', 
-                  # label="Select all 'age', 'race', 'sex', 'risk factor'", 
-                  # choices=c('Select all'),
-                  choiceNames=c('Select all'),
-                  choiceValues=c('TRUE'),
-                  selected=c(''),
-                )
-            )),
+            
+            fluidRow(column(width=12, wellPanel(
+                tableRow(inner.padding = '30px',
+                    fluidRow(column(width=12,
+                        HTML("<b>Subgroups to Include in Plots:</b>"),
+                        checkboxInput(
+                            inputId='demog.selectAll', 
+                            label='Select All Subgroups', 
+                            value=F
+                        )
+                    )),
+                    tipBox("Only demographic subgroups whose characteristics are checked below will be included in the figures",
+                           left.arrow = T, left.arrow.direction = 'down', left.arrow.align = 'bottom',
+                           right.arrow = T, right.arrow.direction = 'down', right.arrow.align = 'bottom')
+                ),
+        
             fluidRow(
               map(
                 get.dimension.value.options(
@@ -447,37 +387,100 @@ server.routes.runModel.get <- function(input, session)
                       label=dim[['label']],
                       choiceNames=unname(dim[['choices']]),
                       choiceValues=names(dim[['choices']]),
-                      # selected=names(dim[['choices']])
-                      # selected=ifelse(
-                      #   input[['demog.selectAll']] == F, 
-                      #   names(dim[['choices']]), 
-                      #   rep('', length(names(dim[['choices']]))) 
+                      selected=names(dim[['choices']])
                     ))
                 })
-            ),
+            )
+            ))),
+           
             fluidRow(
-              column(
+            column(
                 width=page.width.half,
-                checkboxGroupInput(
-                  inputId='split', 
-                  label='Within a Panel, Plot Separate Lines for Each:', 
-                  choiceNames=unname(get.split.by.options(
-                    version=version,
-                    location=input[['geographic_location']])),
-                  choiceValues=names(get.split.by.options(
-                    version=version,
-                    location=input[['geographic_location']])),
-                  selected=NULL))
-              # column(
-              #   width=page.width.half,
-              #   checkboxGroupInput(
-              #     inputId='split', 
-              #     label='Multi-line dis-aggregation', 
-              #     choiceNames=demog.choiceNames,
-              #     choiceValues=demog.choiceValues,
-              #     selected=demog.choiceValues ) )
-          )
-      )))  # /fluidrow
+                wellPanel(fluidRow(
+                    
+                    column(width=6,
+                           tipBox("Any checked boxes here will result in outcomes for the corresponding subgroups being displayed in separate panels. For example, checking 'Race' will yield separate panels for 'Black', 'Hispanic', and 'Other'",
+                                  right.arrow = T, right.arrow.align = 'middle')
+                    ),
+                    
+                    column(width=6,
+                        checkboxGroupInput(
+                            inputId='facet', 
+                            label='Make Separate Panels for Each:', 
+                            choiceNames=unname(get.facet.by.options(
+                                version=version,
+                                location=input[['geographic_location']])),
+                            choiceValues=names(get.facet.by.options(
+                                version=version,
+                                location=input[['geographic_location']])),
+                            selected=NULL)
+                    )
+                ))),
+            
+            column(
+                width=page.width.half,
+                wellPanel(fluidRow(
+                    column(width=6,
+                           tipBox("Any checked boxes here will result in outcomes for the corresponding subgroups being represented by separate LINES within the same panel. For example, checking 'Race' will plot separate lines for 'Black', 'Hispanic', and 'Other' instead of one line for the total",
+                                  right.arrow = T, right.arrow.align = 'middle')
+                    ),
+                    
+                    column(width=6,
+                        checkboxGroupInput(
+                            inputId='split', 
+                            label='Within a Panel, Plot Separate Lines for Each:', 
+                            choiceNames=unname(get.split.by.options(
+                                version=version,
+                                location=input[['geographic_location']])),
+                            choiceValues=names(get.split.by.options(
+                                version=version,
+                                location=input[['geographic_location']])),
+                            selected=NULL)
+                    )
+                ))
+            )
+      )))
+      ),  # /fluidrow
+      
+      # Aggregation options ####
+      # to-do: expand/collapse feature
+      'plot-options'=fluidRow(
+          column(
+              width=page.width,
+              box(
+                  width=NULL, 
+                  title="Plot Options (how to slice the projections)",
+                  collapsible=T,
+                  collapsed=T,
+                  status="primary", 
+                  solidHeader=TRUE,
+                  
+                  column(
+                      width=page.width,
+                      radioGroupButtons(
+                          #            selectInput(
+                          inputId='aggregation-of-simulations-ran', 
+                          label='What to Plot', 
+                          choices=invert.keyVals(get.plot.format.options(
+                              version=version,
+                              location=input[['geographic_location']])),
+                          selected=NULL, 
+                          #multiple=FALSE,
+                          #selectize=TRUE, 
+                          width=NULL, 
+                          size=NULL) ),
+                  
+                  
+                  # column(
+                  #   width=page.width.half,
+                  #   checkboxGroupInput(
+                  #     inputId='split', 
+                  #     label='Multi-line dis-aggregation', 
+                  #     choiceNames=demog.choiceNames,
+                  #     choiceValues=demog.choiceValues,
+                  #     selected=demog.choiceValues ) )
+                  
+              )))
     )
     
     shinyjs::enable('reset_main_sidebar')

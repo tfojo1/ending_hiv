@@ -135,43 +135,43 @@ server <- function(input, output, session) {
     output$mainTable_message = renderText(BLANK.MESSAGE)
   })
   
+  # Select All Subgroups #
+  observeEvent(input$demog.selectAll, {
+      
+      checked = input$demog.selectAll
+      
+      dim.value.options = get.dimension.value.options()
+      subgroup.checkbox.ids = unname(sapply(dim.value.options, function(elem){elem$name}))
+      
+      if (checked)
+      {
+          for (i in 1:length(dim.value.options))
+          {
+              id = subgroup.checkbox.ids[i]
+              shinyjs::disable(id)
+        #      updateCheckboxGroupInput(session, inputId=id,
+         #                              selected=dim.value.options[[i]]$choices)
+          }
+      }
+      else
+      {
+          for (id in subgroup.checkbox.ids)
+              shinyjs::enable(id)
+      }
+  })
+  
   # Download buttons ##
   output$downloadButton.table <- downloadHandler(
-    filename=function() {
-      paste("Ending-HIV-in-the-US - DataTable", Sys.Date(), ".csv", sep="") },
+    filename=function() {get.default.download.filename(input, ext='csv')},
     content=function(filepath) {
       write.csv(plot.and.cache$change.df, filepath) 
       } )
   
-  output$downloadButton.plot <- downloadHandler(
-    filename=function() {
-      paste("Ending-HIV-in-the-US - Plot", Sys.Date(), ".png", sep="") },
-    content=function(filepath) {
-      # TODO: @Joe: Issues trying to save plot. Some possibilities:
-      # - Does plotly have a way to take a class 'plotly + htmlObject'
-      #   of which data.plot() is by this point, and save it?
-      # - If not, can we hack a process together?
-      # - Maybe we can update the `data.plot` reactiveVal within one of the 
-      #   nested plot functions, and save whatever that intermediate plot
-      #   object is. But it should appear the same. Otherwise, will have to
-      #   think of something else.
-      # - Do custom implementation of saving file to disk and sending to user
-      # Resources:
-      # - https://stackoverflow.com/questions/14810409/save-plots-made-in-a-shiny-app
-      #browser()
-      
-      orca(plot.and.cache$plot, file=filepath)
-      
-      # plot = data.plot()
-      # plot2 = plot_ly(plot)  # attempts to save & quits
-      # plot3 = plot_ly(plot$x)  # attempts to save & quits
-      # orca(plot$x, filepath)
-      # orca(renderPlotly(plot), filepath)
-      # orca(plot, filepath)
-      # ggsave(filepath, plot$x)
-      # ggsave(...) also tried with other 'device' attrs
-      # ggsave(fiepath, plot)
-  } )
+  observeEvent(input$downloadButton.plot, {
+      shinyjs::runjs(paste0("plot=document.getElementById('mainPlot');
+                                    Plotly.downloadImage(plot, {format: 'png', filename: '", get.default.download.filename(input),"'})"))
+   })
+  
   
   # for now
   output$custom_int_msg_1 = renderText(NO.CUSTOM.INTERVENTIONS.MESSAGE)

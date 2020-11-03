@@ -87,8 +87,7 @@ generate.plot.and.table <- function(input, cache)
     #-- Make the mode bar always visible --#
     
     plot.results$plot = format.plotly.toolbar(plot.results$plot,
-                                              location=input[['geographic_location']],
-                                              data.types=input[['epidemiological-indicators']])
+                                              input)
     
     
     #-- Return --#
@@ -96,8 +95,7 @@ generate.plot.and.table <- function(input, cache)
 }
 
 format.plotly.toolbar <- function(plot,
-                                  location,
-                                  data.types)
+                                  input)
 {
   # https://plotly.com/r/reference/#layout-updatemenus
   plot = layout(plot,
@@ -122,8 +120,7 @@ format.plotly.toolbar <- function(plot,
                 displaylogo=F,
                 scrollZoom=T,
                 
-                toImageButtonOptions=list(filename=paste0(get.location.short.name(location), " - ",
-                                                          paste0(DATA.TYPE.NAMES[data.types], collapse=", "))),
+                toImageButtonOptions=list(filename=get.default.download.filename(input)),
                 
                 modeBarButtons=list(
                   list('toImage'),
@@ -251,4 +248,18 @@ MSA.SHORT.NAMES = c(
 get.location.short.name <- function(location)
 {
     MSA.SHORT.NAMES[location]
+}
+
+get.default.download.filename <- function(input,
+                                          ext='')
+{
+    if (ext != '' && grepl("^\\.", ext))
+        ext = paste0(".", ext)
+    
+    location = input[['geographic_location']]
+    data.types=input[['epidemiological-indicators']]
+    
+    paste0(get.location.short.name(location), " - ",
+           paste0(DATA.TYPE.NAMES[data.types], collapse=", "),
+           ext)
 }

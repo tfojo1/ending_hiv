@@ -161,11 +161,23 @@ make.radioButtonGroup.wrappable <- function(button.group)
     button.group
 }
 
-tableRow <- function(...)
+tableRow <- function(...,
+                     vertical.align='top',
+                     inner.padding='25px')
 {
-    tds = lapply(list(...), function(elem){
-        tags$td(elem)
+    args = list(...)
+    tds = lapply(1:length(args), function(i){
+        elem = args[[i]]
+        style = paste0("vertical-align: ", vertical.align)
+        if (i>1)
+            style = paste0(style, "; ",
+                           "padding-left: ", inner.padding)
+        
+        tags$td(elem,
+                style=style)
     })
     
-    t
+    tags$table(
+        do.call(tags$tr, tds)
+    )
 }
