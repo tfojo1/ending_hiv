@@ -90,6 +90,9 @@ server <- function(input, output, session) {
       data.table(pretty.table)
       output$mainTable = renderDataTable(pretty.table)
       output$mainTable_message = NULL
+      
+      shinyjs::enable('downloadButton.table')
+      shinyjs::enable('downloadButton.plot')
   }
   
   observeEvent(input$reset_main, {reset.handler(input)})

@@ -204,7 +204,8 @@ server.routes.runModel.get <- function(input, session)
                           width=(page.width * 11/12),
                           actionButton("downloadButton.plot",
                                        label="Download Figure",
-                                       icon=icon('download'))
+                                       icon=icon('download'),
+                                       disabled=T)
                              ))
                         
                     ),
@@ -230,7 +231,9 @@ server.routes.runModel.get <- function(input, session)
                         width=(page.width * 11/12),
                         downloadButton(
                           "downloadButton.table", 
-                          "Download Table") ))
+                          "Download Table",
+                          disabled=T)
+                        ))
                     # )
                   )
                 )  # /tabsetPanel
