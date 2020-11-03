@@ -1,3 +1,4 @@
+library(htmltools)
 
 ##---------------##
 ##-- CONSTANTS --##
@@ -20,6 +21,16 @@ DATA.TYPE.AXIS.LABELS = c(
     suppression='Proportion Suppressed (%)',
     diagnosed='Proportion Aware (%)',
     testing.rate='Average Tests per Person per Year'
+)
+
+DATA.TYPE.UNITS = c(
+  incidece = 'Cases',
+  new = 'Cases',
+  prevalence = 'Cases',
+  mortality = 'Deaths',
+  suppression = 'Suppressed',
+  diagnosed = 'Aware',
+  testing.rate = 'Tests per year'
 )
 
 DIMENSION.NAMES = c(age='Age',
@@ -471,6 +482,9 @@ do.plot.simulations <- function(
         }
         facet.categories = as.character(unique(df.sim$facet))
         data.types.for.facet.categories = sapply(strsplit(facet.categories, '\n'), function(spl){spl[1]})
+        raw.data.types.for.facet.categories = sapply(data.types.for.facet.categories, function(dt){
+            names(data.type.names)[data.type.names==dt]
+        })
         names(data.types.for.facet.categories) = facet.categories
         
         
@@ -507,6 +521,7 @@ do.plot.simulations <- function(
         subplots = lapply(1:length(facet.categories), function(ff.i){
             
             ff = facet.categories[ff.i]
+            data.type = raw.data.types.for.facet.categories[ff.i]
             
             plot = plot_ly(x=~year)
             
@@ -544,6 +559,13 @@ do.plot.simulations <- function(
                             show.legend = show.legend && split == splits[1]
                         }
                         
+                        hover.text = make.hover.text(year=df.sim$year[split.mask],
+                                                     value=df.sim$value[split.mask],
+                                                     lower=df.sim$lower[split.mask],
+                                                     upper=df.sim$upper[split.mask],
+                                                     data.type=data.type,
+                                                     split=split)
+                        
                         plot = add_ribbons(plot, data=df.sim[split.mask,],
                                          ymin=~lower, ymax=~upper,
                                          fillcolor=color, 
@@ -551,6 +573,8 @@ do.plot.simulations <- function(
                                          legendgroup=if (condense.legend) NULL else 'Simulations',
                                          line = list(color=color,
                                                      width=simulation.line.size/5),
+                                         text = hover.text,
+                                         hoverinfo = 'text',
                                          name=path.name,
                                          showlegend = F)
                     }
@@ -600,6 +624,12 @@ do.plot.simulations <- function(
                                              name=path.name,
                                              showlegend = T)
                         
+                        hover.text = make.hover.text(year=df.sim$year[split.mask],
+                                                     value=df.sim$value[split.mask],
+                                                     sim=df.sim$simulation[split.mask],
+                                                     data.type=data.type,
+                                                     split=split)
+                        
                         plot = add_paths(plot, data=df.sim[split.mask,],
                                          y=~value, color=color, 
                                          opacity=simulation.alpha,
@@ -607,6 +637,8 @@ do.plot.simulations <- function(
                                          line = list(color=color,
                                                      width=simulation.line.size),
                                          name=path.name,
+                                         text=hover.text,
+                                         hoverinfo='text',
                                          showlegend = F,
                                          transforms = list(
                                              list(type = 'groupby',
@@ -615,6 +647,13 @@ do.plot.simulations <- function(
                     }
                     else
                     {
+                        hover.text = make.hover.text(year=df.sim$year[split.mask],
+                                                     value=df.sim$value[split.mask],
+                                                     lower=df.sim$lower[split.mask],
+                                                     upper=df.sim$upper[split.mask],
+                                                     data.type=data.type,
+                                                     split=split)
+                      
                         plot = add_paths(plot, data=df.sim[split.mask & !is.na(df.sim$value),],
                                          y=~value, color=color,
                                          opacity=1,
@@ -622,6 +661,8 @@ do.plot.simulations <- function(
                                          line = list(color=color,
                                                      width=simulation.line.size),
                                          name=path.name,
+                                         text=hover.text,
+                                         hoverinfo='text',
                                          showlegend = show.legend
                                          )
                     }
@@ -676,6 +717,12 @@ do.plot.simulations <- function(
                                              legendgroup=if (condense.legend) NULL else 'Truth',
                                              showlegend = T)
                         
+                        hover.text = make.hover.text(year=df.truth$year[mask],
+                                                     value=df.truth$value[mask],
+                                                     source=df.truth$Source[mask],
+                                                     data.type=data.type,
+                                                     split=split)
+                        
                         plot = add_markers(plot, data=df.truth[mask,],
                                            y=~value, color=color,
                                            name=one.truth.name,
@@ -686,6 +733,8 @@ do.plot.simulations <- function(
                                                              color = '#000000FF',
                                                              width = 1
                                                          )),
+                                           text = hover.text,
+                                           hoverinfo='text',
                                            legendgroup=if (condense.legend) NULL else 'Truth',
                                            showlegend = F)
                     }
@@ -996,7 +1045,14 @@ get.truth.df <- function(location,
                         collapse.length.one.dimensions = F)
         
         rv = reshape2::melt(rv)
-        rv[!is.na(rv$value),]
+        rv = rv[!is.na(rv$value),]
+        
+        if (data.type=='suppression' || data.type=='diagnosed')
+            rv$Source = 'Local Health Dept'
+        else
+            rv$Source = 'CDC'
+        
+        rv
     }
 }
 
@@ -1701,10 +1757,17 @@ extract.simset.knowledge.of.status <- function(simset, years, all.dimensions,
 ##------------------##
 
 
-is.pct.data.type <- function(data.type, data.type.names)
+is.pct.data.type <- function(data.type, data.type.names=NULL)
 {
-    data.type == data.type.names['suppression'] | 
-        data.type == data.type.names['diagnosed']
+    rv = data.type == 'suppression' |
+         data.type == 'diagnosed'
+    
+    if (!is.null(data.type.names))
+        rv = rv | 
+            data.type == data.type.names['suppression'] | 
+            data.type == data.type.names['diagnosed'] 
+    
+    rv
 }
 
 format.values.for.plotly <- function(df,
@@ -1717,5 +1780,63 @@ format.values.for.plotly <- function(df,
     df$value[pct.mask] = round(df$value[pct.mask], pct.digits+2)
     df$value[!pct.mask] = round(df$value[!pct.mask], non.pct.digits)
     
+    if (any(names(df)=='lower'))
+    {
+        df$lower[!pct.mask] = round(df$lower[!pct.mask], non.pct.digits)
+        df$lower[pct.mask] = round(df$lower[pct.mask], pct.digits+2)
+    }
+    if (any(names(df)=='upper'))
+    {
+        df$upper[!pct.mask] = round(df$upper[!pct.mask], non.pct.digits)
+        df$upper[pct.mask] = round(df$upper[pct.mask], pct.digits+2)
+    }
+    
     df
+}
+
+make.hover.text <- function(year,
+                            value,
+                            sim=NULL,
+                            lower=NULL,
+                            upper=NULL,
+                            data.type,
+                            split,
+                            source=NULL)
+{
+    if (is.pct.data.type(data.type))
+    {
+        value = paste0(100*value, '%')
+        if (!is.null(lower))
+            lower = 100*lower
+        if (!is.null(upper))
+            upper = paste0(100*upper, '%')
+    }
+    else
+    {
+        value = format(value, big.mark=',')
+        if (!is.null(lower))
+            lower = format(lower, big.mark=',')
+        if (!is.null(upper))
+            upper = format(upper, big.mark=',')
+    }
+    
+    hover.text = paste0("Year: ",year,
+           "\n", DATA.TYPE.UNITS[data.type], ": ", value)
+    
+    if (!is.null(lower) && !is.null(upper))
+        hover.text = paste0(hover.text,
+                            " [", lower, " to ", upper, "]")
+    
+    if (!is.null(sim))
+        hover.text = paste0(hover.text,
+                            "\nSimulation: ", sim)
+    
+    if (!is.null(source))
+        hover.text = paste0(hover.text,
+                            "\nSource: ", source)
+    
+    if (split != 'All')
+        hover.text = paste0("<b style='text-decoration: underline'>", split, ":</b>\n", hover.text)
+    
+    hover.text
 }

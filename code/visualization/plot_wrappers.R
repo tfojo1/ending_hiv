@@ -4,6 +4,7 @@ source('code/data_managers/hiv_surveillance_manager.R')
 source('code/data_managers/census_totals.R')
 source('code/setup/setup_jheem_from_components.R')
 source('code/setup/interpolating.R')
+source('code/interventions/interventions.R')
 
 library(ggplot2)
 library(jheem)
