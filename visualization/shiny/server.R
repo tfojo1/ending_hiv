@@ -42,6 +42,7 @@ CACHE = diskCache(max_size = 20e6)
 server <- function(input, output, session) {
   data.table <- reactiveVal()
   data.plot <- reactiveVal()
+  plot.and.cache = NULL
   
   # Print an initial message - useful for debugging on shinyapps.io servers
   print(paste0("Launching server() function - ", Sys.time()))
@@ -75,7 +76,7 @@ server <- function(input, output, session) {
   # Plot when clicking 'Run':
   reset.handler = function(input) {
       # Plot & cache
-      plot.and.cache = generate.plot.and.table(input, cache)
+      plot.and.cache <<- generate.plot.and.table(input, cache)
       # This is not needed for diskCache; only mem cache:
       # cache = plot.and.cache$cache
       
@@ -139,7 +140,8 @@ server <- function(input, output, session) {
     filename=function() {
       paste("Ending-HIV-in-the-US - DataTable", Sys.Date(), ".csv", sep="") },
     content=function(filepath) {
-      write.csv(data.table(), filepath) } )
+      write.csv(plot.and.cache$change.df, filepath) 
+      } )
   
   output$downloadButton.plot <- downloadHandler(
     filename=function() {
@@ -156,15 +158,17 @@ server <- function(input, output, session) {
       # - Do custom implementation of saving file to disk and sending to user
       # Resources:
       # - https://stackoverflow.com/questions/14810409/save-plots-made-in-a-shiny-app
-      browser()
+      #browser()
       
-      plot = data.plot()
+      orca(plot.and.cache$plot, file=filepath)
+      
+      # plot = data.plot()
       # plot2 = plot_ly(plot)  # attempts to save & quits
       # plot3 = plot_ly(plot$x)  # attempts to save & quits
       # orca(plot$x, filepath)
       # orca(renderPlotly(plot), filepath)
       # orca(plot, filepath)
-      # ggsave(fiepath, plot$x)
+      # ggsave(filepath, plot$x)
       # ggsave(...) also tried with other 'device' attrs
       # ggsave(fiepath, plot)
   } )

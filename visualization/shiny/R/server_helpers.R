@@ -84,8 +84,61 @@ generate.plot.and.table <- function(input, cache)
             'risk'=input[['risk-groups']]),
         plot.format=input[['aggregation-of-simulations-ran']] )
     
+    #-- Make the mode bar always visible --#
+    
+    plot.results$plot = format.plotly.toolbar(plot.results$plot,
+                                              location=input[['geographic_location']],
+                                              data.types=input[['epidemiological-indicators']])
+    
+    
     #-- Return --#
     plot.results
+}
+
+format.plotly.toolbar <- function(plot,
+                                  location,
+                                  data.types)
+{
+  # https://plotly.com/r/reference/#layout-updatemenus
+  plot = layout(plot,
+                modebar=list(
+                  orientation='v',
+                  borderwidth=1,
+                  bordercolor='black',
+                  bgcolor='#3c8dbc',#'#f6d8ac',
+                  font=list(size=30),
+                  position='left',
+                  height='30px',
+                  color='#f1f7e7',##3c8dbc',
+                  activecolor='#b8d585',#'#255876',
+                  x=0,
+                y=0,
+                xanchor='left',
+                yanchor='bottom'
+                ))
+  
+  plot = config(plot,
+                displayModeBar=T,
+                displaylogo=F,
+                scrollZoom=T,
+                
+                toImageButtonOptions=list(filename=paste0(get.location.short.name(location), " - ",
+                                                          paste0(DATA.TYPE.NAMES[data.types], collapse=", "))),
+                
+                modeBarButtons=list(
+                  list('toImage'),
+                  list('zoom2d'),
+                  list('pan2d'),
+                  list('zoomIn2d'),
+                  list('zoomOut2d'),
+                  list('autoScale2d')
+                )
+  )
+   #modebar button options at 
+  # https://github.com/plotly/plotly.js/blob/master/src/components/modebar/buttons.js
+  
+  
+  plot
 }
 
 ##----------------------------------------------##
@@ -100,5 +153,102 @@ make.plotly.message <- function(message=BLANK.MESSAGE)
     #plot = layout(plot, xaxis=list(range = c(-0.5,0.5)))
     #plot = layout(plot, uniformtext=list(minsize=8, mode='hide'))
     
+    plot = plot = config(plot, displayModeBar=F)
+    
     plot
+}
+
+
+##--------------------##
+##-- LOCATION NAMES --##
+##--------------------##
+
+
+get.location.long.name <- function(location)
+{
+    unlist(msa.names(location))
+}
+
+
+NYC.MSA = '35620'
+MIAMI.MSA = '33100'
+LA.MSA = '31080'
+
+ATLANTA.MSA = '12060'
+HOUSTON.MSA = '26420'
+DALLAS.MSA = '19100'
+
+CHICAGO.MSA = '16980'
+DC.MSA = '47900'
+PHILADELPHIA.MSA = '37980'
+
+ORLANDO.MSA = '36740'
+SF.MSA = '41860'
+PHOENIX.MSA = '38060'
+
+TAMPA.MSA = '45300'
+RIVERSIDE.MSA = '40140'
+DETROIT.MSA = '19820'
+
+BALTIMORE.MSA = '12580'
+VEGAS.MSA = '29820'
+BOSTON.MSA = '14460'
+
+SAN.DIEGO.MSA = '41740'
+CHARLOTTE.MSA = '16740'
+SAN.ANTONIO.MSA = '41700'
+
+JACKSONVILLE.MSA = '27260'
+NEW.ORLEANS.MSA = '35380'
+MEMPHIS.MSA = '32820'
+
+SEATTLE.MSA = '42660'
+AUSTIN.MSA = '12420'
+INDIANAPOLIS.MSA = '26900'
+
+CINCINATTI.MSA = '17140'
+COLUMBUS.MSA = '18140'
+BATON.ROUGE.MSA = '12940'
+
+SACRAMENTO.MSA = '40900'
+CLEVELAND.MSA = '17460'
+
+MSA.SHORT.NAMES = c(
+  '35620' = 'NYC',
+  '33100' = 'Miami',
+  '31080' = 'LA',
+  '12060' = 'Atlanta',
+  '26420' = 'Houston',
+  '19100' = 'Dallas',
+  '16980' = 'Chicago',
+  '47900' = 'DC',
+  '37980' = 'Philadelphia',
+  '36740' = 'Orlando',
+  '41860' = 'SF',
+  '38060' = 'Phoenix',
+  '45300' = 'Tampa',
+  '40140' = 'Riverside',
+  '19820' = 'Detroit',
+  '12580' = 'Baltimore',
+  '29820' = 'Vegas',
+  '14460' = 'Boston',
+  '41740' = 'San_Diego',
+  '16740' = 'Charlotte',
+  '41700' = 'San_Antonio',
+  '27260' = 'Jacksonville',
+  '35380' = 'New_Orleans',
+  '32820' = 'Memphis',
+  '42660' = 'Seattle',
+  '12420' = 'Austin',
+  '26900' = 'Indianapolis',
+  '17140' = 'Cincinatti',
+  '18140' = 'Columbus',
+  '12940' = 'Baton_Rouge',
+  '40900' = 'Sacramento',
+  '17460' = 'Cleveland'
+)
+
+get.location.short.name <- function(location)
+{
+    MSA.SHORT.NAMES[location]
 }

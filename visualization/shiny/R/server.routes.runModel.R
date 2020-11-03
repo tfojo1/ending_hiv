@@ -96,8 +96,10 @@ server.routes.runModel.get <- function(input, session)
       location.choice = invert.keyVals(
         get.location.options(version))[1]
     
+    shinyjs::disable("reset_main_sidebar")
+    
     # UI ####
-    list(  # returns-->list
+    rv = list(  # returns-->list
       # Header & styles ####
       #This code sets the position and style for the progress bar when
       # loading simulations
@@ -123,6 +125,15 @@ server.routes.runModel.get <- function(input, session)
           padding-left: 5px;
           padding-right: 5px;
         }
+        .modebar-container: {
+          background: 'black';
+          border-style: solid;
+          border-color: black
+        }
+        .modebar: {
+          orientation: 'v';
+          position: 'right'
+      }
       ")),
       
       # Output panel ####
@@ -166,36 +177,36 @@ server.routes.runModel.get <- function(input, session)
               # ),
               column(
                 width=page.width,
-                
-                tabsetPanel(
-                  id='toggle_main',
-                  selected='Figure',
-                  type='tabs',
-                  
-                  #Figure
-                  tabPanel(
-                    title='Figure',
-                    value='Figure',
+                div(style='padding: 10px',
+                  tabsetPanel(
+                    id='toggle_main',
+                    selected='Figure',
+                    type='tabs',
                     
-                    fluidRow(
-                      plotlyOutput(
-                        outputId="mainPlot",
-                        height="auto",
-                        width='100%',#"auto",
-                        inline=T)  %>% withSpinner(color="#0dc5c1") ),
-                    
-                    fluidRow(
-                      # to-do: Would be nice to only appear or not be
-                      # greyed out on some condition.
-                      # conditionalPanel(
-                      #   condition="(input.show_download  !== undefined && input.show_download !== null)",
-                      column(
-                        width=(page.width * 11/12),
-                        downloadButton(
-                          "downloadButton.plot", 
-                          "Download plot") ))
-                      # )
-                  ),
+                    #Figure
+                    tabPanel(
+                      title='Figure',
+                      value='Figure',
+                      
+                      fluidRow(
+                        plotlyOutput(
+                          outputId="mainPlot",
+                          height="auto",
+                          width='100%',#"auto",
+                          inline=T)  %>% withSpinner(color="#0dc5c1") ),
+                      
+                      fluidRow(
+                        # to-do: Would be nice to only appear or not be
+                        # greyed out on some condition.
+                        # conditionalPanel(
+                        #   condition="(input.show_download  !== undefined && input.show_download !== null)",
+                        column(
+                          width=(page.width * 11/12),
+                          downloadButton(
+                            "downloadButton.plot", 
+                            "Download plot") ))
+                        # )
+                    ),
                   
                   #Table
                   tabPanel(
@@ -222,7 +233,7 @@ server.routes.runModel.get <- function(input, session)
                     # )
                   )
                 )  # /tabsetPanel
-            ))
+            )))
           )
         )), 
       
@@ -467,17 +478,12 @@ server.routes.runModel.get <- function(input, session)
               #     selected=demog.choiceValues ) )
           )
       )))  # /fluidrow
-    )})  # </list>  #returns
-  
-  # Export ####
-  server.routes.runModel = list(
-    'ui_main'=ui_main,
-    'mainPlot'=renderUI({})
-    # 'mainDL'=mainDL,
-    # 'mainTable'=mainTable,
-    # 'res_main'=res_main,
-  )
-  server.routes.runModel
+    )
+    
+    shinyjs::enable('reset_main_sidebar')
+    
+    rv})  # </list>  #returns
+ 
   
   ui_main
 }

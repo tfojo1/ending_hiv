@@ -42,7 +42,8 @@ ui <- dashboardPage(
       actionButton(
         style="background: #204C73; color: white; font-size:120%; margin: 0 auto;",
         "reset_main_sidebar", 
-        HTML("Generate<BR>Projections")),
+        HTML("Generate<BR>Projections"),
+        disabled=T),
       href="#top"
       
       # menuItem(

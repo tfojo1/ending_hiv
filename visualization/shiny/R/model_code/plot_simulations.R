@@ -103,7 +103,8 @@ do.plot.simulations <- function(
     y.title.size = text.size,
     tick.size = text.size*.8,
   
-    y.axis.title.function = NULL
+    y.axis.title.function = NULL,
+    y.title.standoff=10
   )
 {
     keep.dimensions = unique(c('year', facet.by, split.by))
@@ -697,7 +698,7 @@ do.plot.simulations <- function(
             })
             yaxis.list = list(rangemode = "tozero",
                               title = list(text=axis.title,
-                                           standoff=20,
+                                           standoff=y.title.standoff,
                                            font=list(size=y.title.size)),
                               tickfont = list(size=tick.size))
             
