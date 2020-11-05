@@ -4,10 +4,10 @@ source('code/interventions/melissa_croi_interventions.R')
 source('code/process_results/make_systematic_table.R')
 source('code/targets/target_msas.R')
 
+location = LA.MSA
 #This code will run your list of interventions
 if (1==2)
 {
-    location = NYC.MSA
     load(file.path('mcmc_runs/quick_simsets', location, get.full.filename(location)))
     
     run.systematic.interventions(simset,
@@ -20,8 +20,6 @@ if (1==2)
 # then write it to a pretty excel file
 if (1==2)
 {
-    location = NYC.MSA
-    
     #Melissa, this should be a table with the intervention codes listed in the
     # order (row/column) in which you want the results to appear
     #I think this matches what you had, but I could be wrong
@@ -46,4 +44,5 @@ if (1==2)
     test.tab = get.estimates.for.interventions(intervention.codes = int.code.table,
                                                location = NYC.MSA,
                                                dir = 'mcmc_runs/visualization_simsets/')
+    write.shaded.table(test.tab, file='../temp/test.xlsx')
 }
