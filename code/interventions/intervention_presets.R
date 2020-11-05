@@ -42,8 +42,8 @@ TARGET.POPULATION.MANAGER.1.0 = add.target.population(ALL.HETEROSEXUAL.NON.ACTIV
 ##-- INTERVENTION UNITS --##
 ##------------------------##
 
-TESTING.YEARLY.20.21 = create.intervention.unit('testing', 2021, 1, 2022)
-TESTING.Q2Y.20.21 = create.intervention.unit('testing', 2021, 0.5, 2022)
+TESTING.YEARLY.21.22 = create.intervention.unit('testing', 2021, 1, 2022)
+TESTING.Q2Y.21.22 = create.intervention.unit('testing', 2021, 0.5, 2022)
 
 PREP.10.21.22 = create.intervention.unit('prep', 2021, 0.1, 2022)
 PREP.25.21.22 = create.intervention.unit('prep', 2021, 0.25, 2022)
@@ -70,12 +70,12 @@ INTERVENTION.MANAGER.1.0 = register.intervention(NO.INTERVENTION, code='noint', 
 
 # Testing
 YBHM.TQ2 = create.intervention(YOUNG.BLACK.HISPANIC.MSM,
-                               TESTING.Q2Y.20.21)
+                               TESTING.Q2Y.21.22)
 INTERVENTION.MANAGER.1.0 = register.intervention(YBHM.TQ2, code='ybhm.tq2',
                                                  name='Young Black and Hispanic MSM tested every 2 years')
 
 YBHM.TQ1 = create.intervention(YOUNG.BLACK.HISPANIC.MSM,
-                               TESTING.YEARLY.20.21)
+                               TESTING.YEARLY.21.22)
 INTERVENTION.MANAGER.1.0 = register.intervention(YBHM.TQ1, code='ybhm.tq1',
                                                  name='Young Black and Hispanic MSM tested yearly')
 
@@ -105,28 +105,28 @@ INTERVENTION.MANAGER.1.0 = register.intervention(YBHM.S90, code='ybhm.s90',
 #-- Multi-aspect Interventions --#
 
 YBHM.1.25.80 = create.intervention(YOUNG.BLACK.HISPANIC.MSM, 
-                                   TESTING.YEARLY.20.21,
+                                   TESTING.YEARLY.21.22,
                                    PREP.25.21.22,
                                    SUPPRESSION.80.21.22)
 INTERVENTION.MANAGER.1.0 = register.intervention(YBHM.1.25.80, code='ybhm.1.25.80', 
                                                  name='Young Black and Hispanic MSM tested yearly, 25% on PrEP, 80% suppressed')
 
 YBHM.1.25.90 = create.intervention(YOUNG.BLACK.HISPANIC.MSM, 
-                                   TESTING.YEARLY.20.21,
+                                   TESTING.YEARLY.21.22,
                                    PREP.25.21.22,
                                    SUPPRESSION.90.21.22)
 INTERVENTION.MANAGER.1.0 = register.intervention(YBHM.1.25.90, code='ybhm.1.25.90', 
                                                  name='Young Black and Hispanic MSM tested yearly, 25% on PrEP, 90% suppressed')
 
 YBHM.1.50.80 = create.intervention(YOUNG.BLACK.HISPANIC.MSM, 
-                                   TESTING.YEARLY.20.21,
+                                   TESTING.YEARLY.21.22,
                                    PREP.50.21.22,
                                    SUPPRESSION.80.21.22)
 INTERVENTION.MANAGER.1.0 = register.intervention(YBHM.1.50.80, code='ybhm.1.50.80', 
                                                  name='Young Black and Hispanic MSM tested yearly, 50% on PrEP, 80% suppressed')
 
 YBHM.1.50.90 = create.intervention(YOUNG.BLACK.HISPANIC.MSM, 
-                                   TESTING.YEARLY.20.21,
+                                   TESTING.YEARLY.21.22,
                                    PREP.50.21.22,
                                    SUPPRESSION.90.21.22)
 INTERVENTION.MANAGER.1.0 = register.intervention(YBHM.1.50.90, code='ybhm.1.50.90', 
@@ -141,13 +141,13 @@ INTERVENTION.MANAGER.1.0 = register.intervention(YBHM.1.50.90, code='ybhm.1.50.9
 # Testing
 MSM.IDU.TQ2.YBH.TQ1.X = join.interventions(YBHM.TQ1,
                                             create.intervention(ALL.MSM.AND.ACTIVE.IDU.MINUS.YOUNG.BH,
-                                                                   TESTING.Q2Y.20.21))
+                                                                   TESTING.Q2Y.21.22))
 INTERVENTION.MANAGER.1.0 = register.intervention(MSM.IDU.TQ2.YBH.TQ1.X, code='mi.tq2.ybh.tq1.x',
                                                  name='Young Black and Hispanic MSM tested yearly; All other MSM and all IDU tested every 2 years')
 
 MSM.IDU.TQ1.YBH.TQ1.X = join.interventions(YBHM.TQ1,
                                          create.intervention(ALL.MSM.AND.ACTIVE.IDU.MINUS.YOUNG.BH,
-                                                             TESTING.YEARLY.20.21))
+                                                             TESTING.YEARLY.21.22))
 INTERVENTION.MANAGER.1.0 = register.intervention(MSM.IDU.TQ1.YBH.TQ1.X, code='mi.tq1.ybh.tq1.x',
                                                  name='Young Black and Hispanic MSM tested yearly; All other MSM and all IDU tested every 2 years')
 
@@ -186,7 +186,7 @@ MSM.IDU.1.25.80.YBH.HIGH.X = join.interventions(YBHM.1.50.90,
                                               create.intervention(ALL.MSM.AND.IDU.MINUS.YOUNG.BH,
                                                                   SUPPRESSION.80.21.22),
                                               create.intervention(ALL.MSM.AND.ACTIVE.IDU.MINUS.YOUNG.BH,
-                                                                  TESTING.YEARLY.20.21,
+                                                                  TESTING.YEARLY.21.22,
                                                                   PREP.25.21.22))
 INTERVENTION.MANAGER.1.0 = register.intervention(MSM.IDU.1.25.80.YBH.HIGH.X,
                                                  code='mi.1.25.80.ybh.high.x',
@@ -196,7 +196,7 @@ MSM.IDU.1.25.90.YBH.HIGH.X = join.interventions(YBHM.1.50.90,
                                               create.intervention(ALL.MSM.AND.IDU.MINUS.YOUNG.BH,
                                                                   SUPPRESSION.90.21.22),
                                               create.intervention(ALL.MSM.AND.ACTIVE.IDU.MINUS.YOUNG.BH,
-                                                                  TESTING.YEARLY.20.21,
+                                                                  TESTING.YEARLY.21.22,
                                                                   PREP.25.21.22))
 INTERVENTION.MANAGER.1.0 = register.intervention(MSM.IDU.1.25.90.YBH.HIGH.X,
                                                  code='mi.1.25.90.ybh.high.x',
@@ -206,7 +206,7 @@ MSM.IDU.1.50.80.YBH.HIGH.X = join.interventions(YBHM.1.50.90,
                                               create.intervention(ALL.MSM.AND.IDU.MINUS.YOUNG.BH,
                                                                   SUPPRESSION.80.21.22),
                                               create.intervention(ALL.MSM.AND.ACTIVE.IDU.MINUS.YOUNG.BH,
-                                                                  TESTING.YEARLY.20.21,
+                                                                  TESTING.YEARLY.21.22,
                                                                   PREP.50.21.22))
 INTERVENTION.MANAGER.1.0 = register.intervention(MSM.IDU.1.50.80.YBH.HIGH.X,
                                                  code='mi.1.50.80.ybh.high.x',
@@ -216,7 +216,7 @@ MSM.IDU.1.50.90.YBH.HIGH.X = join.interventions(YBHM.1.50.90,
                                               create.intervention(ALL.MSM.AND.IDU.MINUS.YOUNG.BH,
                                                                   SUPPRESSION.90.21.22),
                                               create.intervention(ALL.MSM.AND.ACTIVE.IDU.MINUS.YOUNG.BH,
-                                                                  TESTING.YEARLY.20.21,
+                                                                  TESTING.YEARLY.21.22,
                                                                   PREP.50.21.22))
 INTERVENTION.MANAGER.1.0 = register.intervention(MSM.IDU.1.50.90.YBH.HIGH.X,
                                                  code='mi.1.50.90.ybh.high.x',
@@ -229,7 +229,7 @@ MSM.IDU.1.25.80.YBH.HIGH = join.interventions(YBHM.1.50.90,
                                               create.intervention(ALL.MSM.AND.IDU,
                                                                   SUPPRESSION.80.21.22),
                                               create.intervention(ALL.MSM.AND.ACTIVE.IDU,
-                                                                  TESTING.YEARLY.20.21,
+                                                                  TESTING.YEARLY.21.22,
                                                                   PREP.25.21.22))
 INTERVENTION.MANAGER.1.0 = register.intervention(MSM.IDU.1.25.80.YBH.HIGH,
                                                  code='mi.1.25.80.ybh.high',
@@ -239,7 +239,7 @@ MSM.IDU.1.25.90.YBH.HIGH = join.interventions(YBHM.1.50.90,
                                               create.intervention(ALL.MSM.AND.IDU,
                                                                   SUPPRESSION.90.21.22),
                                               create.intervention(ALL.MSM.AND.ACTIVE.IDU,
-                                                                  TESTING.YEARLY.20.21,
+                                                                  TESTING.YEARLY.21.22,
                                                                   PREP.25.21.22))
 INTERVENTION.MANAGER.1.0 = register.intervention(MSM.IDU.1.25.90.YBH.HIGH,
                                                  code='mi.1.25.90.ybh.high',
@@ -249,7 +249,7 @@ MSM.IDU.1.50.80.YBH.HIGH = join.interventions(YBHM.1.50.90,
                                               create.intervention(ALL.MSM.AND.IDU,
                                                                   SUPPRESSION.80.21.22),
                                               create.intervention(ALL.MSM.AND.ACTIVE.IDU,
-                                                                  TESTING.YEARLY.20.21,
+                                                                  TESTING.YEARLY.21.22,
                                                                   PREP.50.21.22))
 INTERVENTION.MANAGER.1.0 = register.intervention(MSM.IDU.1.50.80.YBH.HIGH,
                                                  code='mi.1.50.80.ybh.high',
@@ -259,7 +259,7 @@ MSM.IDU.1.50.90.YBH.HIGH = join.interventions(YBHM.1.50.90,
                                               create.intervention(ALL.MSM.AND.IDU,
                                                                   SUPPRESSION.90.21.22),
                                               create.intervention(ALL.MSM.AND.ACTIVE.IDU,
-                                                                  TESTING.YEARLY.20.21,
+                                                                  TESTING.YEARLY.21.22,
                                                                   PREP.50.21.22))
 INTERVENTION.MANAGER.1.0 = register.intervention(MSM.IDU.1.50.90.YBH.HIGH,
                                                  code='mi.1.50.90.ybh.high',
@@ -272,13 +272,13 @@ INTERVENTION.MANAGER.1.0 = register.intervention(MSM.IDU.1.50.90.YBH.HIGH,
 # Testing
 HET.TQ2.MI.TQ1.X = join.interventions(MSM.IDU.TQ1.YBH.TQ1.X,
                                            create.intervention(ALL.HETEROSEXUAL.NON.ACTIVE.IDU,
-                                                               TESTING.Q2Y.20.21))
+                                                               TESTING.Q2Y.21.22))
 INTERVENTION.MANAGER.1.0 = register.intervention(HET.TQ2.MI.TQ1.X, code='het.tq2.mi.tq1.x',
                                                  name='All MSM and all IDU tested yearly; heterosexuals tested every 2 years')
 
 HET.TQ1.MI.TQ1.X = join.interventions(MSM.IDU.TQ1.YBH.TQ1.X,
                                       create.intervention(ALL.HETEROSEXUAL.NON.ACTIVE.IDU,
-                                                          TESTING.YEARLY.20.21))
+                                                          TESTING.YEARLY.21.22))
 INTERVENTION.MANAGER.1.0 = register.intervention(HET.TQ1.MI.TQ1.X, code='het.tq1.mi.tq1.x',
                                                  name='Whole Population tested yearly')
 
@@ -318,7 +318,7 @@ HET.1.10.80.MI.HIGH.X = join.interventions(MSM.IDU.1.50.90.YBH.HIGH.X,
                                               create.intervention(ALL.HETEROSEXUAL.NON.IDU,
                                                                   SUPPRESSION.80.21.22),
                                               create.intervention(ALL.HETEROSEXUAL.NON.ACTIVE.IDU,
-                                                                  TESTING.YEARLY.20.21,
+                                                                  TESTING.YEARLY.21.22,
                                                                   PREP.10.21.22))
 INTERVENTION.MANAGER.1.0 = register.intervention(HET.1.10.80.MI.HIGH.X,
                                                  code='het.1.10.80.mi.high.x',
@@ -329,7 +329,7 @@ HET.1.10.90.MI.HIGH.X = join.interventions(MSM.IDU.1.50.90.YBH.HIGH.X,
                                          create.intervention(ALL.HETEROSEXUAL.NON.IDU,
                                                              SUPPRESSION.90.21.22),
                                          create.intervention(ALL.HETEROSEXUAL.NON.ACTIVE.IDU,
-                                                             TESTING.YEARLY.20.21,
+                                                             TESTING.YEARLY.21.22,
                                                              PREP.10.21.22))
 INTERVENTION.MANAGER.1.0 = register.intervention(HET.1.10.90.MI.HIGH.X,
                                                  code='het.1.10.90.mi.high.x',
@@ -340,7 +340,7 @@ HET.1.25.80.MI.HIGH.X = join.interventions(MSM.IDU.1.50.90.YBH.HIGH.X,
                                          create.intervention(ALL.HETEROSEXUAL.NON.IDU,
                                                              SUPPRESSION.80.21.22),
                                          create.intervention(ALL.HETEROSEXUAL.NON.ACTIVE.IDU,
-                                                             TESTING.YEARLY.20.21,
+                                                             TESTING.YEARLY.21.22,
                                                              PREP.25.21.22))
 INTERVENTION.MANAGER.1.0 = register.intervention(HET.1.25.80.MI.HIGH.X,
                                                  code='het.1.25.80.mi.high.x',
@@ -351,7 +351,7 @@ HET.1.25.90.MI.HIGH.X = join.interventions(MSM.IDU.1.50.90.YBH.HIGH.X,
                                          create.intervention(ALL.HETEROSEXUAL.NON.IDU,
                                                              SUPPRESSION.90.21.22),
                                          create.intervention(ALL.HETEROSEXUAL.NON.ACTIVE.IDU,
-                                                             TESTING.YEARLY.20.21,
+                                                             TESTING.YEARLY.21.22,
                                                              PREP.25.21.22))
 INTERVENTION.MANAGER.1.0 = register.intervention(HET.1.25.90.MI.HIGH.X,
                                                  code='het.1.25.90.mi.high.x',
@@ -365,7 +365,7 @@ HET.1.10.80.MI.HIGH = join.interventions(MSM.IDU.1.50.90.YBH.HIGH,
                                          create.intervention(ALL.HETEROSEXUAL.NON.IDU,
                                                              SUPPRESSION.80.21.22),
                                          create.intervention(ALL.HETEROSEXUAL.NON.ACTIVE.IDU,
-                                                             TESTING.YEARLY.20.21,
+                                                             TESTING.YEARLY.21.22,
                                                              PREP.10.21.22))
 INTERVENTION.MANAGER.1.0 = register.intervention(HET.1.10.80.MI.HIGH,
                                                  code='het.1.10.80.mi.high',
@@ -376,7 +376,7 @@ HET.1.10.90.MI.HIGH = join.interventions(MSM.IDU.1.50.90.YBH.HIGH,
                                          create.intervention(ALL.HETEROSEXUAL.NON.IDU,
                                                              SUPPRESSION.90.21.22),
                                          create.intervention(ALL.HETEROSEXUAL.NON.ACTIVE.IDU,
-                                                             TESTING.YEARLY.20.21,
+                                                             TESTING.YEARLY.21.22,
                                                              PREP.10.21.22))
 INTERVENTION.MANAGER.1.0 = register.intervention(HET.1.10.90.MI.HIGH,
                                                  code='het.1.10.90.mi.high',
@@ -387,7 +387,7 @@ HET.1.25.80.MI.HIGH = join.interventions(MSM.IDU.1.50.90.YBH.HIGH,
                                          create.intervention(ALL.HETEROSEXUAL.NON.IDU,
                                                              SUPPRESSION.80.21.22),
                                          create.intervention(ALL.HETEROSEXUAL.NON.ACTIVE.IDU,
-                                                             TESTING.YEARLY.20.21,
+                                                             TESTING.YEARLY.21.22,
                                                              PREP.25.21.22))
 INTERVENTION.MANAGER.1.0 = register.intervention(HET.1.25.80.MI.HIGH,
                                                  code='het.1.25.80.mi.high',
@@ -398,7 +398,7 @@ HET.1.25.90.MI.HIGH = join.interventions(MSM.IDU.1.50.90.YBH.HIGH,
                                          create.intervention(ALL.HETEROSEXUAL.NON.IDU,
                                                              SUPPRESSION.90.21.22),
                                          create.intervention(ALL.HETEROSEXUAL.NON.ACTIVE.IDU,
-                                                             TESTING.YEARLY.20.21,
+                                                             TESTING.YEARLY.21.22,
                                                              PREP.25.21.22))
 INTERVENTION.MANAGER.1.0 = register.intervention(HET.1.25.90.MI.HIGH,
                                                  code='het.1.25.90.mi.high',

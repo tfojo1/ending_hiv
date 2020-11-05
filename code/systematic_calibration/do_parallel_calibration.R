@@ -10,6 +10,6 @@ source('code/systematic_calibration/systematic_calibration.R')
 source('code/targets/target_msas.R')
 
 set.seed(1234)
-mcmc = run.mcmc.for.msa.cache('mcmc_runs/systematic_caches/29820_4x100K_total.2_2020-10-29/',
+mcmc = run.mcmc.for.msa.cache('mcmc_runs/systematic_caches/29820_4x100K_v2_2020-11-03/',
                               chains=4)
 

@@ -4,12 +4,13 @@ if (1==2)
 }
 
 source('code/source_code.R')
+source('code/plots.R')
 
-mcmc = assemble.mcmc.from.cache('mcmc_runs/systematic_caches/29820_4x100K_total.4_2020-10-27/',T)
+mcmc = assemble.mcmc.from.cache('mcmc_runs/systematic_caches/29820_4x100K_total.1_2020-10-27/',T)
 
 
 simset = extract.simset(mcmc, additional.burn=mcmc@n.iter/2, 
-                        additional.thin=2)
+                        additional.thin=8)
 
 
 acceptance.plot(mcmc, window.iterations = 200) + geom_hline(yintercept = c(0.238,0.1))
@@ -85,8 +86,9 @@ plot.calibration(simset, facet.by=c('sex','age'), split.by='risk', sex='male', s
 
 #Difficult mixers
 ADDITIONAL.BURN = mcmc@n.iter/2
-get.rhats(mcmc, additional.burn = ADDITIONAL.BURN)[1:6]
+get.rhats(mcmc, additional.burn = ADDITIONAL.BURN)[1:24]
 trace.plot(mcmc, names(get.rhats(mcmc, additional.burn = ADDITIONAL.BURN))[1:6], additional.burn = ADDITIONAL.BURN)
+trace.plot(mcmc, names(get.rhats(mcmc, additional.burn = ADDITIONAL.BURN))[6+1:6], additional.burn = ADDITIONAL.BURN)
 
 trace.plot(mcmc, c('global.trate','diagnosed.tra','acute.trans'), additional.burn = ADDITIONAL.BURN)
 trace.plot(mcmc, '*sexual.oe', additional.burn=ADDITIONAL.BURN)

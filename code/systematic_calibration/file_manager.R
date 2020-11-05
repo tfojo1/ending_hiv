@@ -76,12 +76,22 @@ get.simset.filename <- function(simset,
 
 save.simset <- function(simset, 
                         dir='mcmc_runs/visualization_simsets',
-                        compress=T)
+                        compress=!full,
+                        full=F)
 {
     if (compress)
         simset = compress.simset(simset)
     
-    filename = get.simset.filename(simset)
+    location = attr(simset@simulations[[1]], 'location')
+    
+    if (full)
+        filename = get.full.filename(location)
+    else
+        filename = get.simset.filename(simset)
+    
+    if (basename(dir) != location)
+        dir = file.path(dir, location)
+    
     save(simset, file=file.path(dir, filename))
 }
 

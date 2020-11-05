@@ -349,7 +349,7 @@ run.suppression.regressions <- function(cm,
         cm$suppression$stratified.log.odds.slope[,,'msm',non.idu.strata] + 
         fit.sex.risk$coefficients['msm:year']
     cm$suppression$log.ors['msm'] = fit.sex.risk$coefficients['msm']
-    cm$suppression$log.ors['msm_slope'] = fit.sex.risk$coefficients['year:msm']
+    cm$suppression$log.ors['msm_slope'] = fit.sex.risk$coefficients['msm:year']
     
     # IDU MSM
     cm$suppression$stratified.log.odds.intercept[,,'msm',idu.strata] = 

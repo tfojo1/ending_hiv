@@ -4,6 +4,7 @@ if (1==2)
 }
 
 source('code/source_code.R')
+source('code/plots.R')
 #mcmc = assemble.mcmc.from.cache('mcmc_runs/systematic_caches/35620_1x20K_2020-10-02/',T)
 
 acceptance.plot(mcmc, window.iterations = 200) + geom_hline(yintercept = c(0.238,0.1))
@@ -78,6 +79,7 @@ plot.calibration.sex.age(simset, years=1970:2020)
 plot.calibration.risk(simset, years=1970:2020)
 plot.calibration.total(simset, years=1970:2020)
 plot.calibration.total(simset, years=1970:2020, data.types=c('new','incidence'))
+plot.calibration.total(simset, years=1970:2020, data.types=c('new','prevalence'))
 
 plot.calibration.race.risk(simset)
 plot.calibration.risk.race(simset)
