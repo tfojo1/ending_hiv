@@ -5,8 +5,9 @@
 
 
 library(scales)
-library(cowplot)
-library(xlsx)
+#library(cowplot)
+if(.Platform$OS.type == 'windows')
+    library(xlsx)
 
 #source('code/source_code.R')
 source('code/targets/parse_targets.R')
