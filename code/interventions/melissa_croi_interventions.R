@@ -14,8 +14,8 @@ P25 = create.intervention.unit(type = "prep", rates = .25, start.year = 2021, ye
 P50 = create.intervention.unit(type = "prep", rates = .5, start.year = 2021, years = 2022)
 
 INT.G1T = create.intervention(GROUP1.PT, T1)
-INT.G2T = create.intervention(GROUP2.PT, T2)
-INT.G3T = create.intervention(GROUP3.PT, T3)
+INT.G2T = create.intervention(GROUP2.PT, T1)
+INT.G3T = create.intervention(GROUP3.PT, T1)
 
 INT.G1S = create.intervention(GROUP1.SUPP, S90)
 INT.G2S = create.intervention(GROUP2.SUPP, S90)
