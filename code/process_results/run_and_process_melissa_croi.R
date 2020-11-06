@@ -8,6 +8,7 @@ location = LA.MSA
 #This code will run your list of interventions
 if (1==2)
 {
+    location = LA.MSA
     load(file.path('mcmc_runs/quick_simsets', location, get.full.filename(location)))
     
     run.systematic.interventions(simset,
@@ -20,14 +21,22 @@ if (1==2)
 # then write it to a pretty excel file
 if (1==2)
 {
+    location = LA.MSA
+    # MS: I updated this based on the order I listed in the previous code 
+    intervention.code.table = matrix(c('INT.TTT', 'INT.TST', 'INT.TPT', 'INT.STT', 'INT.SST', 'INT.SPT', 'INT.PTT', 'INT.PST', 'INT.PPT', 
+                                        'INT.TTS', 'INT.TSS', 'INT.TPS', 'INT.STS', 'INT.SSS', 'INT.SPS', 'INT.PTS', 'INT.PSS', 'INT.PPS', 
+                                        'INT.TTP', 'INT.TSP', 'INT.TPP', 'INT.STP', 'INT.SSP', 'INT.SPP', 'INT.PTP', 'INT.PSP', 'INT.PPP'),
+                                     ncol=3)
+    
     #Melissa, this should be a table with the intervention codes listed in the
     # order (row/column) in which you want the results to appear
     #I think this matches what you had, but I could be wrong
-    intervention.code.table = matrix(c('INT.TTT', 'INT.TTP', 'INT.TTS', 'INT.PTT', 'INT.PTP', 'INT.PTS', 'INT.STT', 'INT.STP', 'INT.STS',
-                                       'INT.TPT', 'INT.TPP', 'INT.TPS', 'INT.PPT', 'INT.PPP', 'INT.PPS', 'INT.SPT', 'INT.SPP', 'INT.SPS',
-                                       'INT.TST', 'INT.TSP', 'INT.TSS', 'INT.PST', 'INT.PSP', 'INT.PSS', 'INT.SST', 'INT.SSP', 'INT.SSS'),
-                                     ncol=3)
+    # intervention.code.table = matrix(c('INT.TTT', 'INT.TTP', 'INT.TTS', 'INT.PTT', 'INT.PTP', 'INT.PTS', 'INT.STT', 'INT.STP', 'INT.STS',
+    #                                    'INT.TPT', 'INT.TPP', 'INT.TPS', 'INT.PPT', 'INT.PPP', 'INT.PPS', 'INT.SPT', 'INT.SPP', 'INT.SPS',
+    #                                    'INT.TST', 'INT.TSP', 'INT.TSS', 'INT.PST', 'INT.PSP', 'INT.PSS', 'INT.SST', 'INT.SSP', 'INT.SSS'),
+    #                                  ncol=3)
     
+
     tab = get.estimates.for.interventions(intervention.codes=intervention.code.table,
                                           location=location,
                                           dir='mcmc_runs/quick_simsets')
