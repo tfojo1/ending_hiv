@@ -350,7 +350,11 @@ setup.components.for.msa <- function(msa,
                                                                      '17'=.18,
                                                                      '18'=.18))
 
-    older.idu.availability = sapply(as.character(65:85), function(i){0})
+    #NSDUH 2015 and 2016 - 
+    # https://www.samhsa.gov/data/report/results-2016-national-survey-drug-use-and-health-detailed-tables
+    older.idu.availability = sapply(as.character(65:85), function(i){
+        (4.2 + 5.3) / (14.1+10.1  + 10.0+15.0)
+    })
     comps = setup.idu.availability.by.age(comps,
                                              age.index=5,
                                              availability.by.age = older.idu.availability)

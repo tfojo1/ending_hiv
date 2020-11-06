@@ -37,3 +37,22 @@ get.incidence.reduction <- function(sim,
     
     c(reduction=reduction, achieved.goal=reduction>=as.numeric(goal))
 }
+
+##-- AT THE SIMULAITON LEVEL --##
+
+extract.total.incidence.reduction.20.30 <- function(sim)
+{
+    extract.total.incidence.reduction(sim, year1=2020, year2=2030)
+}
+
+extract.total.incidence.reduction <- function(sim,
+                                        year1=2020,
+                                        year2=2030)
+{
+    inc = extract.incidence(sim, years=c(year1, year2), per.population = NA, keep.dimensions = 'year')
+    
+    reduction = (inc[1] - inc[2]) / inc[1]
+    reduction = as.numeric(reduction)
+    
+    reduction
+}
