@@ -82,7 +82,10 @@ generate.plot.and.table <- function(input, cache)
             'race'=input[['racial-groups']],
             'sex'=input[['sex']],  # aka gender
             'risk'=input[['risk-groups']]),
-        plot.format=input[['aggregation-of-simulations-ran']] )
+        plot.format=input[['plot_format']],
+        plot.interval.coverage = input[['interval_coverage']]/100,
+        label.change = input[['label_change']],
+        change.years = input[['change_years']])
     
     #-- Make the mode bar always visible --#
     
@@ -253,13 +256,24 @@ get.location.short.name <- function(location)
 get.default.download.filename <- function(input,
                                           ext='')
 {
-    if (ext != '' && grepl("^\\.", ext))
+    if (ext != '' && !grepl("^\\.", ext))
         ext = paste0(".", ext)
     
     location = input[['geographic_location']]
     data.types=input[['epidemiological-indicators']]
     
+    facet.by=input[['facet']]
+    split.by=input[['split']]
+    
+    if (length(facet.by)==0 && length(split.by)==0)
+        by.suffix = ''
+    else
+        by.suffix = paste0(" by ",
+                           paste0(unique(c(facet.by, split.by)), collapse=', ')
+                           )
+    
     paste0(get.location.short.name(location), " - ",
            paste0(DATA.TYPE.NAMES[data.types], collapse=", "),
+           by.suffix,
            ext)
 }

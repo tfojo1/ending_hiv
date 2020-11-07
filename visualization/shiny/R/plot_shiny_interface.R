@@ -376,16 +376,13 @@ make.simulations.plot.and.table <- function(
   split.by,
   dimension.subsets,  # TODO: Problem? all 4 vals are null
   plot.format,
-  # Private params
+  
+  label.change=T,
+  change.years=c(2020,2030),
+  
   show.truth=T,
-  #
   plot.interval.coverage=0.95,
-#  summary.statistic='none',
-#  summary.statistic.interval.coverage=0.95,
-  #
-  baseline.color='blue',
-  truth.color='green',
-  intervention.colors='red',
+  
   plot.interval.alpha=0.25,
   simulation.alpha=0.125,
   simulation.line.size=if (plot.format=='individual.simulations') 2 else 5,
@@ -441,6 +438,9 @@ make.simulations.plot.and.table <- function(
         truth.point.size=truth.point.size,
         
         color.by = color.by,
+        
+        label.change = label.change,
+        change.years = change.years,
         
         progress.update = setProgress,
         

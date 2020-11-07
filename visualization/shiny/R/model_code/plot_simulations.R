@@ -92,6 +92,8 @@ do.plot.simulations <- function(
     change.decrease.is.positive=T,
     label.change.size=5,
     label.change.nudge.x=0,
+    label.alpha = 0.5,
+    label.digits=0,
     
     name.interventions.by.number=T,
     hide.legend=F,
@@ -236,7 +238,7 @@ do.plot.simulations <- function(
     #-- Individual Simulations --#
     n.sim.dfs = length(simsets) * length(data.types)
     
-    if (plot.format=='median.and.ci')
+    if (plot.format=='median.and.interval')
         aggregate.statistic='median'
     else
         aggregate.statistic='mean'
@@ -352,21 +354,27 @@ do.plot.simulations <- function(
         df.sim$split = 'All'
         if (!is.null(df.truth))
             df.truth$split = 'All'
+        if (!is.null(df.change))
+            change.split = rep('All', dim(df.change)[1])
     }
     else if (length(split.by)==1)
     {
         df.sim$split = df.sim[,split.by]
         if (!is.null(df.truth))
             df.truth$split = df.truth[,split.by]
+        if (!is.null(df.change))
+            change.split = df.change[,split.by]
     }
     else
     {
         df.sim$split = apply(df.sim[,split.by], 1, paste0, collapse=", ")
         if (!is.null(df.truth))
             df.truth$split = apply(df.truth[,split.by], 1, paste0, collapse=", ")
+        if (!is.null(df.change))
+            change.split = apply(df.change[,split.by],1, paste0, collapse=", ")
     }
     
-    splits = unique(c(unique(df.truth$split), unique(df.sim$split)))
+    splits = unique(c(unique(df.truth$split), unique(df.sim$split), unique(df.change$split)))
     split.shapes = rep(truth.shapes, ceiling(length(splits)/length(truth.shapes)))[1:length(splits)]
     names(split.shapes) = splits
     
@@ -470,6 +478,8 @@ do.plot.simulations <- function(
         df.sim$facet = df.sim$data.type
         if (!is.null(df.truth))
             df.truth$facet = df.truth$data.type
+        if (!is.null(df.change))
+            change.facet = df.change$data.type
         
         if (length(facet.by)>0)
         {
@@ -478,6 +488,8 @@ do.plot.simulations <- function(
                 df.sim$facet = paste0(df.sim$facet, '\n', df.sim[,ff])
                 if (!is.null(df.truth))
                     df.truth$facet = paste0(df.truth$facet, '\n', df.truth[,ff])
+                if (!is.null(df.change))
+                    change.facet = paste0(change.facet, '\n', df.change[,ff])
             }
         }
         facet.categories = as.character(unique(df.sim$facet))
@@ -737,6 +749,60 @@ do.plot.simulations <- function(
                                            hoverinfo='text',
                                            legendgroup=if (condense.legend) NULL else 'Truth',
                                            showlegend = F)
+                    }
+                }
+            }
+            
+            ##-- ADD THE CHANGE LABELS --##
+            for (int.i in 1:length(unique.simset.names))
+            {
+                intervention = unique.simset.names[int.i]
+                for (split in splits)
+                {
+                    mask = change.facet==ff & change.split==split & df.change$intervention==intervention
+                    
+                    if (any(mask))
+                    {
+                        if (color.by == 'split' && length(split.by)>0)
+                            color = colors[split]
+                        else
+                            color = colors[intervention]
+                        
+                        change.name = paste0("change_", change.years[1], "_to_", change.years[2])
+                        if (plot.format=='median.and.interval')
+                            label.text = paste0(round(100*df.change[mask, paste0(change.name, "_median")], digits=label.digits), '%')
+                        else
+                            label.text = paste0(round(100*df.change[mask, paste0(change.name, "_mean")], digits=label.digits), '%')
+                        if (label.change.ci)
+                            label.text = paste0(label.text, " [",
+                                                round(100*df.change[mask, paste0(change.name, "_interval_lower")], label.digits),
+                                                " to ",
+                                                round(100*df.change[mask, paste0(change.name, "_interval_upper")], label.digits),
+                                                "%]")
+                        
+                        if (change.decrease.is.positive)
+                            label.text = paste0(label.text, " Reduction")
+                        else
+                            label.text = paste0(label.text, " Change")
+                        
+                        if (plot.format=='median.and.interval')
+                        {
+                         #   y1.name = paste0(change.years[1], "_median")
+                            y2.name = paste0(change.years[2], "_median")
+                        }
+                        else
+                        {
+                         #   y1.name = paste0(change.years[1], "_mean")
+                            y2.name = paste0(change.years[2], "_mean")
+                        }
+                        
+                        plot = add.plot.label(plot, 
+                                              text=label.text,
+                                              x=change.years[2] + label.change.nudge.x,
+                                              y=df.change[mask, y2.name],
+                                              xanchor = 'left',
+                                              fill=color,
+                                              alpha=label.alpha)
                     }
                 }
             }
@@ -1130,10 +1196,10 @@ get.sim.dfs <- function(simset,
         
         if (aggregate.statistic=='mean')
             stat = rowMeans(arr, dims = length(keep.dimensions))
-        else if (stat=='median')
+        else if (aggregate.statistic=='median')
             stat = apply(arr, keep.dimensions, median)
         else
-            stop("stat must be either 'mean' or 'median'")
+            stop("aggregate.statistic must be either 'mean' or 'median'")
         
         if (is.null(dim(stat)))
         {
@@ -1208,7 +1274,7 @@ get.sim.dfs <- function(simset,
             df.change = reshape2::melt(stat.change, value.name='value')
             for (d in names(df.change)[names(df.change)!='value'])
                 df.change[,d] = PRETTY.NAMES[[d]][df.change[,d]]
-            names(df.change)[names(df.change)=='value'] = paste0("change_", change.years[1], "_to_", change.years[2])
+            names(df.change)[names(df.change)=='value'] = paste0("change_", change.years[1], "_to_", change.years[2], "_", aggregate.statistic)
             
             df.change = cbind(df.change,
                               lower=change.ci[1,],
@@ -1251,6 +1317,8 @@ add.plot.label <- function(plot,
                            font.family=NULL,
                            align='center',
                            valign='middle',
+                           xanchor=c('left','center','right')[2],
+                           yanchor=c('top','middle','bottom')[2],
                            pad=2,
                            border.color='black')
 {
@@ -1276,85 +1344,11 @@ add.plot.label <- function(plot,
                             showarrow=F,
                             align=align,
                             valign=valign,
+                            xanchor=xanchor,
+                            yanchor=yanchor,
                             bordercolor=border.color,
                             borderpad=pad)
     )
-}
-
-add.plot.labels <- function(plot,
-                           text,
-                           x,
-                           y,
-                           width=NA,
-                           height=NA,
-                           fill='white',
-                           outline.color=fill,
-                           font.color='black',
-                           alpha=0.5,
-                           font.size=12,
-                           font.family=NA,
-                           valign=c('middle','top','bottom')[1],
-                           halign=c('center','left','right')[1])
-{
-    n = max(length(text), length(x), length(x))
-    if (length(fill)==1)
-        fill = rep(fill, n)
-    if (length(outline.color)==1)
-        outline.color = rep(outline.color, n)
-    if (length(font.color)==1)
-        font.color = rep(font.color, n)
-    if (length(alpha)==1)
-        alpha = rep(alpha, n)
-    if (length(font.size)==1)
-        font.size = rep(font.size, n)
-    if (length(font.family)==1)
-        font.family = rep(font.family, n)
-    if (length(width)==1)
-        width = rep(width, n)
-    if (length(height)==1)
-        height = rep(height, n)
-    if (length(valign)==1)
-        valign = rep(valign, n)
-    if (length(halign)==1)
-        halign = rep(halign, n)
-    
-    shapes.list = lapply(1:n, function(i){
-        if (!is.na(width[i] && !is.na(height[i])))
-            list(type = "rect",
-                 fillcolor = fill[i], line = list(color = outline.color[i]), opacity = alpha[i],
-                 x0 = x[i]-width[i]/2, x1 = x[i]+width[i]/2, xref = "x",
-                 y0 = y[i]-height[i]/2, y1 = y[i]+height[i]/2, yref = "y")
-        else
-            NULL
-    })
-    
-    shapes.list = shapes.list[!sapply(shapes.list, is.null)]
-       
-    if (length(shapes.list)>0)
-        plot = layout(plot,
-                      shapes = shapes.list
-        )
-    
-    
-    for (i in 1:n)
-    {
-        text.font = list(size = font.size[i],
-                         color = font.color[i])
-        if (!is.na(font.family[i]))
-            text.font$family = font.family[i]
-        
-        text.position = paste0(valign, " ", halign)
-        
-        plot = add_text(plot,
-                 x=x[i],
-                 y=y[i],
-                 text=text[i],
-                 textfont = text.font,
-                 showlegend=F,
-                 textposition=text.position)
-    }
-    
-    plot
 }
 
 ##-----------------------------##

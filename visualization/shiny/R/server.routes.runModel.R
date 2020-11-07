@@ -363,10 +363,12 @@ server.routes.runModel.get <- function(input, session)
                 tableRow(inner.padding = '30px',
                     fluidRow(column(width=12,
                         HTML("<b>Subgroups to Include in Plots:</b>"),
-                        checkboxInput(
+                        materialSwitch(
                             inputId='demog.selectAll', 
                             label='Select All Subgroups', 
-                            value=F
+                            value=F,
+                            right=T,
+                            status='primary'
                         )
                     )),
                     tipBox("Only demographic subgroups whose characteristics are checked below will be included in the figures",
@@ -452,36 +454,75 @@ server.routes.runModel.get <- function(input, session)
               width=page.width,
               box(
                   width=NULL, 
-                  title="Plot Options (how to slice the projections)",
+                  title="Figure Options",
                   collapsible=T,
                   collapsed=T,
                   status="primary", 
                   solidHeader=TRUE,
                   
-                  column(
-                      width=page.width,
-                      radioGroupButtons(
-                          #            selectInput(
-                          inputId='aggregation-of-simulations-ran', 
-                          label='What to Plot', 
-                          choices=invert.keyVals(get.plot.format.options(
-                              version=version,
-                              location=input[['geographic_location']])),
-                          selected=NULL, 
-                          #multiple=FALSE,
-                          #selectize=TRUE, 
-                          width=NULL, 
-                          size=NULL) ),
+                  fluidRow(
+                      column(width=12,
+                             tableRow(wellPanel(
+                                 tableRow(inner.padding = '25px',
+                                          column(width=12,
+                                                 radioGroupButtons(
+                                                     inputId='plot_format', 
+                                                     label='What to Plot',
+                                                     size='normal',
+                                                     direction='vertical',
+                                                     status = 'primary',
+                                                     choices=invert.keyVals(get.plot.format.options(
+                                                         version=version,
+                                                         location=input[['geographic_location']])),
+                                                     selected=NULL)
+                                          ),
+                                          
+                                          flowLayout(column(width=12,
+                                                            tipBox("If 'Individual Simulations' is chosen, a separate line will be plotted for each individual simulation.",
+                                                                   left.arrow = T),
+                                                            tipBox("Otherwise, set the coverage for the plotted prediction interval",
+                                                                   right.arrow = T)
+                                                            )),
+                                          
+                                          knobInput(
+                                              inputId = 'interval_coverage',
+                                              label = "Prediction Interval Coverage",
+                                              min=0,
+                                              max=100,
+                                              step=5,
+                                              value=95,
+                                              lineCap = 'default',
+                                              post='%')
+                                 )
+                             )),
+                             #),
+                      #column(width=6,
+                             tableRow(wellPanel(
+                                 tableRow(
+                                     flowLayout(tipBox("Indicate whether the figure should include labels indicating the change in the outcome for each intervention. By default, this denotes the change from 2020 to 2030; drag the slider to change the years.",
+                                                       right.arrow = T)),
+                                     column(width=12,
+                                            materialSwitch(
+                                                inputId='label_change', 
+                                                label=HTML('<b>Show Labels for the Change in Outcome</b>'), 
+                                                value=T,
+                                                right=T,
+                                                status='primary'
+                                            ),
+                                            sliderInput(
+                                                inputId='change_years',
+                                                label="From year to year",
+                                                min=2020,
+                                                max=2030,
+                                                step = 1,
+                                                value=c(2020,2030),
+                                                sep = ''
+                                            )
+                                     )
+                                 )
+                             )))
+                  )
                   
-                  
-                  # column(
-                  #   width=page.width.half,
-                  #   checkboxGroupInput(
-                  #     inputId='split', 
-                  #     label='Multi-line dis-aggregation', 
-                  #     choiceNames=demog.choiceNames,
-                  #     choiceValues=demog.choiceValues,
-                  #     selected=demog.choiceValues ) )
                   
               )))
     )

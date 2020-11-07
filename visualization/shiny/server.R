@@ -163,6 +163,13 @@ server <- function(input, output, session) {
       }
   })
   
+  #This does not seem to be working - take it out?
+  observeEvent(input$plot_format, {
+      updateKnobInput(session, 
+                      inputId='interval_coverage',
+                      options = list(readOnly = input$plot_format=='individual.simulations'))
+  })
+  
   # Download buttons ##
   output$downloadButton.table <- downloadHandler(
     filename=function() {get.default.download.filename(input, ext='csv')},

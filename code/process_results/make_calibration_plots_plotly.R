@@ -21,7 +21,7 @@ LEGEND.TEXT.SIZE = TEXT.SIZE * 0.75
 LABEL.SIZE = 26
 LABEL.ALPHA = 0.25
 
-load('mcmc_runs/visualization_simsets/35620/1.0_35620_baseline.Rdata')
+#load('mcmc_runs/visualization_simsets/35620/1.0_35620_baseline.Rdata')
 
 #INTERVENTIONS
 if (1==2)
