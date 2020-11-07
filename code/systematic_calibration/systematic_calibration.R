@@ -13,7 +13,7 @@ create.msa.likelihood <- function(msa,
                                   CUM.MORT.WEIGHT = 1,
                                   IDU.WEIGHT = 1,
                                   AIDS.DX.WEIGHT = 1,
-                                  TOTAL.DX.WEIGHT = 1,
+                                  TOTAL.DX.WEIGHT = 1/4,#1,
                                   STRATIFIED.DX.WEIGHT=1/128/4,
                                   use.stratified.dx = F,
                                   SUPPRESSION.WEIGHT = 1/16,#1/4,
@@ -791,7 +791,8 @@ create.run.simulation.function <- function(msa,
 run.mcmc.for.msa.cache <- function(cache.dir,
                                    chains=NULL,
                                    update.detail='high',
-                                   update.frequency=200)
+                                   update.frequency=200,
+                                   remove.cache.when.done=F)
 {
     cache.dir = file.path(cache.dir)
     load(file.path(cache.dir, 'metadata.Rdata'))
@@ -809,25 +810,27 @@ run.mcmc.for.msa.cache <- function(cache.dir,
                                update.frequency = update.frequency,
                                update.detail = update.detail)
     
-    
-    if (metadata$n.chains==mcmc@n.chains)
-        to.save=T
-    else if (is.mcmc.cache.complete(cache.dir))
+    if (remove.cache.when.done)
     {
-        mcmc = assemble.mcmc.from.cache(cache.dir)
-        to.save=T
-    }
-    else
-        to.save=F
-    
-    
-    #-- Save and return --#
-    if (to.save)
-    {
-        filename = paste0(basename(cache.dir), '.Rdata')
-        save(mcmc, file=file.path(metadata$save.dir, filename))
-        file.remove(file.path(cache.dir, 'metadata.Rdata'))
-        remove.mcmc.cache(cache.dir)
+        if (metadata$n.chains==mcmc@n.chains)
+            to.save=T
+        else if (is.mcmc.cache.complete(cache.dir))
+        {
+            mcmc = assemble.mcmc.from.cache(cache.dir)
+            to.save=T
+        }
+        else
+            to.save=F
+        
+        
+        #-- Save and return --#
+        if (to.save)
+        {
+            filename = paste0(basename(cache.dir), '.Rdata')
+            save(mcmc, file=file.path(metadata$save.dir, filename))
+            file.remove(file.path(cache.dir, 'metadata.Rdata'))
+            remove.mcmc.cache(cache.dir)
+        }
     }
     
     mcmc
