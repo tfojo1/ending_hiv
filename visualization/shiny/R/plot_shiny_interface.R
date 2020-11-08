@@ -379,6 +379,7 @@ make.simulations.plot.and.table <- function(
   
   label.change=T,
   change.years=c(2020,2030),
+  change.decrease.is.positive=F,
   
   show.truth=T,
   plot.interval.coverage=0.95,
@@ -441,6 +442,7 @@ make.simulations.plot.and.table <- function(
         
         label.change = label.change,
         change.years = change.years,
+        change.decrease.is.positive = change.decrease.is.positive,
         
         progress.update = setProgress,
         

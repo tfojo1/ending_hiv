@@ -20,8 +20,9 @@ create.intervention.selector.panel <- function(num, input,
     interventions = interventions[!sapply(interventions, is.null.intervention)]
     
     if (length(interventions)==0)
-        return(flowLayout(textOutput('No Intervention Options')))
-    
+    {
+        return(flowLayout(textOutput(outputId = paste0('temp_selector_',num))))
+    }
     
     prerun.panel = make.interventions.by.tpop.panel(num=num,
                                                     interventions=interventions,

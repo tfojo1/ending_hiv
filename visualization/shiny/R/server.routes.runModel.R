@@ -297,9 +297,15 @@ server.routes.runModel.get <- function(input, session)
             #div(HTML("<HR>")),
             div(style = "font-size: 1.2em; padding: 0px 0px; margin-bottom:0px",
                 HTML("<b>Intervention 1:</b>")),
-            create.intervention.selector.panel(1, input)
-            #        box(title='Intervention 1:', solidHeader=T, width=12,
-            #           create.intervention.selector.panel(1, input))
+            create.intervention.selector.panel(1, input),
+            checkboxInput(inputId = 'use_intervention_2',
+                          label = "Include a Second Intervention",
+                          value=F),
+            conditionalPanel(condition="(input.use_intervention_2)",
+                             div(style = "font-size: 1.2em; padding: 0px 0px; margin-bottom:0px",
+                                              HTML("<b>Intervention 2:</b>")),
+                             create.intervention.selector.panel(2, input),
+                             )
             
           ))),  # </fluidRow>
       

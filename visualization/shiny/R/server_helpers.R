@@ -18,13 +18,20 @@ generate.plot.and.table <- function(input, cache)
     
     #-- Pull Intervention Names from Input --#
     if (input[['no_intervention_checkbox']])
-        intervention.codes = get.intervention.code(NO.INTERVENTION)
+        intervention.codes = c('No Intervention' = get.intervention.code(NO.INTERVENTION))
     else
         intervention.codes = character()
     
     intervention.codes = c(
         intervention.codes,
-        get.intervention.selection(1, input))
+        'Intervention 1' = get.intervention.selection(1, input)
+        )
+    
+    if (input$use_intervention_2)
+        intervention.codes = c(
+            intervention.codes,
+            'Intervention 2' = get.intervention.selection(1, input)
+        )
     
     intervention.codes = intervention.codes[intervention.codes != 'none']
     
@@ -85,7 +92,8 @@ generate.plot.and.table <- function(input, cache)
         plot.format=input[['plot_format']],
         plot.interval.coverage = input[['interval_coverage']]/100,
         label.change = input[['label_change']],
-        change.years = input[['change_years']])
+        change.years = input[['change_years']],
+        change.decrease.is.positive = F)
     
     #-- Make the mode bar always visible --#
     
