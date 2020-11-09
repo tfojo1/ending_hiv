@@ -1,8 +1,8 @@
 
 source('code/source_code.R')
-source('code/interventions/melissa_croi_interventions.R')
 source('code/process_results/make_systematic_table.R')
 source('code/targets/target_msas.R')
+source('code/interventions/melissa_croi_interventions.R')
 
 location = LA.MSA
 #This code will run your list of interventions
@@ -23,7 +23,8 @@ if (1==2)
 {
     location = LA.MSA
     # MS: I updated this based on the order I listed in the previous code 
-    intervention.code.table = matrix(c('INT.TTT', 'INT.TST', 'INT.TPT', 'INT.STT', 'INT.SST', 'INT.SPT', 'INT.PTT', 'INT.PST', 'INT.PPT', 
+    # MELISSA - you need to change the 'INT.TTT' to 'm.ttt' (or analagous) for each of these, like I did below
+    intervention.code.table = matrix(c('m.ttt', 'm.tst', 'INT.TPT', 'INT.STT', 'INT.SST', 'INT.SPT', 'INT.PTT', 'INT.PST', 'INT.PPT', 
                                         'INT.TTS', 'INT.TSS', 'INT.TPS', 'INT.STS', 'INT.SSS', 'INT.SPS', 'INT.PTS', 'INT.PSS', 'INT.PPS', 
                                         'INT.TTP', 'INT.TSP', 'INT.TPP', 'INT.STP', 'INT.SSP', 'INT.SPP', 'INT.PTP', 'INT.PSP', 'INT.PPP'),
                                      ncol=3)
@@ -54,4 +55,11 @@ if (1==2)
                                                location = NYC.MSA,
                                                dir = 'mcmc_runs/visualization_simsets/')
     write.shaded.table(test.tab, file='../temp/test.xlsx')
+    
+    intervention.code.table = matrix(c('m.ttt', 'm.tst'),
+                                     ncol=2)
+  
+    tab = get.estimates.for.interventions(intervention.codes=intervention.code.table,
+                                          location=location,
+                                          dir='mcmc_runs/quick_simsets')
 }
