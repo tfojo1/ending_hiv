@@ -10,7 +10,8 @@ DATA.TYPE.NAMES = c(new='Reported Diagnoses',
                     suppression='Viral Suppression',
                     mortality='Mortality Among PWH',
                     testing.rate='Rate of HIV Testing',
-                    incidence='Incidence')
+                    incidence='Incidence',
+                    population='Population Size')
 
 
 DATA.TYPE.AXIS.LABELS = c(
@@ -20,7 +21,8 @@ DATA.TYPE.AXIS.LABELS = c(
     mortality='Deaths in PWH (n)',
     suppression='Proportion Suppressed (%)',
     diagnosed='Proportion Aware (%)',
-    testing.rate='Average Tests per Person per Year'
+    testing.rate='Average Tests per Person per Year',
+    population='Population (n)'
 )
 
 DATA.TYPE.UNITS = c(
@@ -30,7 +32,8 @@ DATA.TYPE.UNITS = c(
   mortality = 'Deaths',
   suppression = 'Suppressed',
   diagnosed = 'Aware',
-  testing.rate = 'Tests per year'
+  testing.rate = 'Tests per year',
+  population = 'People'
 )
 
 DIMENSION.NAMES = c(age='Age',
@@ -311,6 +314,7 @@ do.plot.simulations <- function(
                 df.change = df.change[df.change$sex != 'female' | (df.change$risk != 'msm' & df.change$risk != 'msm_idu'),]
             attr(df.change, 'stat') = aggregate.statistic
             attr(df.change, 'interval.coverage') = plot.interval.coverage
+            attr(df.change, 'decrease.is.positive') = change.decrease.is.positive
         }
             
     }
@@ -754,55 +758,58 @@ do.plot.simulations <- function(
             }
             
             ##-- ADD THE CHANGE LABELS --##
-            for (int.i in 1:length(unique.simset.names))
+            if (label.change)
             {
-                intervention = unique.simset.names[int.i]
-                for (split in splits)
+                for (int.i in 1:length(unique.simset.names))
                 {
-                    mask = change.facet==ff & change.split==split & df.change$intervention==intervention
-                    
-                    if (any(mask))
+                    intervention = unique.simset.names[int.i]
+                    for (split in splits)
                     {
-                        if (color.by == 'split' && length(split.by)>0)
-                            color = colors[split]
-                        else
-                            color = colors[intervention]
+                        mask = change.facet==ff & change.split==split & df.change$intervention==intervention
                         
-                        change.name = paste0("change_", change.years[1], "_to_", change.years[2])
-                        if (plot.format=='median.and.interval')
-                            label.text = paste0(round(100*df.change[mask, paste0(change.name, "_median")], digits=label.digits), '%')
-                        else
-                            label.text = paste0(round(100*df.change[mask, paste0(change.name, "_mean")], digits=label.digits), '%')
-                        if (label.change.ci)
-                            label.text = paste0(label.text, " [",
-                                                round(100*df.change[mask, paste0(change.name, "_interval_lower")], label.digits),
-                                                " to ",
-                                                round(100*df.change[mask, paste0(change.name, "_interval_upper")], label.digits),
-                                                "%]")
-                        
-                        if (change.decrease.is.positive)
-                            label.text = paste0(label.text, " Reduction")
-                        else
-                            label.text = paste0(label.text, " Change")
-                        
-                        if (plot.format=='median.and.interval')
+                        if (any(mask))
                         {
-                         #   y1.name = paste0(change.years[1], "_median")
-                            y2.name = paste0(change.years[2], "_median")
+                            if (color.by == 'split' && length(split.by)>0)
+                                color = colors[split]
+                            else
+                                color = colors[intervention]
+                            
+                            change.name = paste0("change_", change.years[1], "_to_", change.years[2])
+                            if (plot.format=='median.and.interval')
+                                label.text = paste0(round(100*df.change[mask, paste0(change.name, "_median")], digits=label.digits), '%')
+                            else
+                                label.text = paste0(round(100*df.change[mask, paste0(change.name, "_mean")], digits=label.digits), '%')
+                            if (label.change.ci)
+                                label.text = paste0(label.text, " [",
+                                                    round(100*df.change[mask, paste0(change.name, "_interval_lower")], label.digits),
+                                                    " to ",
+                                                    round(100*df.change[mask, paste0(change.name, "_interval_upper")], label.digits),
+                                                    "%]")
+                            
+                            if (change.decrease.is.positive)
+                                label.text = paste0(label.text, " Reduction")
+                            else
+                                label.text = paste0(label.text, "")
+                            
+                            if (plot.format=='median.and.interval')
+                            {
+                                #   y1.name = paste0(change.years[1], "_median")
+                                y2.name = paste0(change.years[2], "_median")
+                            }
+                            else
+                            {
+                                #   y1.name = paste0(change.years[1], "_mean")
+                                y2.name = paste0(change.years[2], "_mean")
+                            }
+                            
+                            plot = add.plot.label(plot, 
+                                                  text=label.text,
+                                                  x=change.years[2] + label.change.nudge.x,
+                                                  y=df.change[mask, y2.name],
+                                                  xanchor = 'left',
+                                                  fill=color,
+                                                  alpha=label.alpha)
                         }
-                        else
-                        {
-                         #   y1.name = paste0(change.years[1], "_mean")
-                            y2.name = paste0(change.years[2], "_mean")
-                        }
-                        
-                        plot = add.plot.label(plot, 
-                                              text=label.text,
-                                              x=change.years[2] + label.change.nudge.x,
-                                              y=df.change[mask, y2.name],
-                                              xanchor = 'left',
-                                              fill=color,
-                                              alpha=label.alpha)
                     }
                 }
             }
@@ -811,6 +818,11 @@ do.plot.simulations <- function(
             axis.title = sapply(names(data.type.names)[data.types.for.facet.categories[ff]==data.type.names], function(data.type){
                 y.axis.title.function(data.type)
             })
+            if (plot.format != 'individual.simulations')
+              axis.title = paste0(axis.title, " (",
+                                  round(100*plot.interval.coverage), 
+                                  '% Prediction Interval)')
+              
             yaxis.list = list(rangemode = "tozero",
                               title = list(text=axis.title,
                                            standoff=y.title.standoff,
@@ -1030,6 +1042,8 @@ get.data.type.level.and.change.dist <- function(simset,
         extract.fn = function(sim, years){extract.overall.hiv.mortality(sim, years=years, per.population=1)}
     else if (data.type=='testing.rate')
         extract.fn = function(sim, years){extract.testing.rates(sim, years=years, per.population=1)}
+    else if (data.type=='population')
+        extract.fn = function(sim, years){extract.population(sim, years=years)}
     else
         stop(paste0("'", data.type, "' is not a valid data type"))
     
@@ -1066,59 +1080,93 @@ get.truth.df <- function(location,
     if (data.type=='incidence')
         return (NULL)
     
-    rv = get.surveillance.data(surv, location.codes=location, data.type=data.type,
-                               years=years,
-                               age=any(all.dimensions=='age'), race=any(all.dimensions=='race'),
-                               sex=any(all.dimensions=='sex'), risk=any(all.dimensions=='risk'),
-                               aggregate.locations = T, aggregate.years = F,
-                               throw.error.if.missing.data = F)
-    
-    if (data.type=='diagnosed' && is.null(rv) && length(all.dimensions)==1 && all.dimensions=='year')
+    if (data.type=='population')
     {
-        rv = get.state.averaged.knowledge.of.status(location,
-                                                    state.surveillance,
-                                                    years=years,
-                                                    census.totals = ALL.DATA.MANAGERS$census.totals)
-        
-        dim(rv) = c(year=length(years))
-        dimnames(rv) = list(year = as.character(years))
-    }
-    else if (data.type=='suppression' && is.null(rv) &&
-             is.null(get.surveillance.data(surv, location.codes=location, data.type='suppression', throw.error.if.missing.data=F)))
-    {
-        states = states.for.msa(location)
-        if (length(states)==1)
-        {
-            rv = get.surveillance.data(state.surveillance, location.codes=states, data.type=data.type.for.surveillance,
-                                       years = years,
-                                       age=any(all.dimensions=='age'), race=any(all.dimensions=='race'),
-                                       sex=any(all.dimensions=='sex'), risk=any(all.dimensions=='risk'),
-                                       aggregate.locations = T, aggregate.years = F,
-                                       throw.error.if.missing.data = F)
-        }
-    }
-    
-    if (is.null(rv))
+        rv = get.population.from.census(location,
+                                        years=years,
+                                        keep.dimensions=keep.dimensions,
+                                        dimension.subsets=dimension.subsets)
+        rv$Source = 'US Census Bureau'
         rv
+    }
     else
     {
-        if (length(dimension.subsets)>0)
-            rv = access(rv, 
-                        age=dimension.subsets$age,
-                        race=dimension.subsets$race,
-                        sex=dimension.subsets$sex,
-                        risk=dimension.subsets$risk,
-                        collapse.length.one.dimensions = F)
-        
-        rv = reshape2::melt(rv)
-        rv = rv[!is.na(rv$value),]
-        
-        if (data.type=='suppression' || data.type=='diagnosed')
-            rv$Source = 'Local Health Dept'
+      rv = get.surveillance.data(surv, location.codes=location, data.type=data.type,
+                                 years=years,
+                                 age=any(all.dimensions=='age'), race=any(all.dimensions=='race'),
+                                 sex=any(all.dimensions=='sex'), risk=any(all.dimensions=='risk'),
+                                 aggregate.locations = T, aggregate.years = F,
+                                 throw.error.if.missing.data = F)
+      
+      if (data.type=='diagnosed' && is.null(rv) && length(all.dimensions)==1 && all.dimensions=='year')
+      {
+          rv = get.state.averaged.knowledge.of.status(location,
+                                                      state.surveillance,
+                                                      years=years,
+                                                      census.totals = ALL.DATA.MANAGERS$census.totals)
+          
+          dim(rv) = c(year=length(years))
+          dimnames(rv) = list(year = as.character(years))
+      }
+      else if (data.type=='suppression' && is.null(rv) &&
+               is.null(get.surveillance.data(surv, location.codes=location, data.type='suppression', throw.error.if.missing.data=F)))
+      {
+          states = states.for.msa(location)
+          if (length(states)==1)
+          {
+              rv = get.surveillance.data(state.surveillance, location.codes=states, data.type=data.type.for.surveillance,
+                                         years = years,
+                                         age=any(all.dimensions=='age'), race=any(all.dimensions=='race'),
+                                         sex=any(all.dimensions=='sex'), risk=any(all.dimensions=='risk'),
+                                         aggregate.locations = T, aggregate.years = F,
+                                         throw.error.if.missing.data = F)
+          }
+      }
+      
+      if (is.null(rv))
+          rv
+      else
+      {
+          if (length(dimension.subsets)>0)
+              rv = access(rv, 
+                          age=dimension.subsets$age,
+                          race=dimension.subsets$race,
+                          sex=dimension.subsets$sex,
+                          risk=dimension.subsets$risk,
+                          collapse.length.one.dimensions = F)
+          
+          rv = reshape2::melt(rv)
+          rv = rv[!is.na(rv$value),]
+          
+          if (data.type=='suppression' || data.type=='diagnosed')
+              rv$Source = 'Local Health Dept'
+          else
+              rv$Source = 'CDC'
+          
+          rv
+      }
+    }
+}
+
+get.population.from.census <- function(location,
+                                       years,
+                                       keep.dimensions,
+                                       dimension.subsets)
+{
+    counties = counties.for.msa(location)
+    years = intersect(years, CENSUS$years)
+    
+    if (any(keep.dimensions)=='risk')
+        NULL
+    else 
+    {
+        raw.totals = get.census.totals(CENSUS.TOTALS, location=counties, years=years, collapse.counties = T)
+        if (length(keep.dimension)==1 && keep.dimensions=='year')
+            raw.totals
         else
-            rv$Source = 'CDC'
-        
-        rv
+        {
+            stratified = get.census.data()
+        }
     }
 }
 
@@ -1398,13 +1446,17 @@ make.pretty.change.data.frame <- function(change.df, data.type.names=DATA.TYPE.N
     year1 = substr(df.names[pre.change.index+4],1,4)
     year2 = substr(df.names[pre.change.index+7],1,4)
     
-    rv$reduction = paste0(round(100*change.df[,pre.change.index+1]),
+    rv$change = paste0(round(100*change.df[,pre.change.index+1]),
                           '% [',
                           round(100*change.df[,pre.change.index+2]), 
                           ' to ',
                           round(100*change.df[,pre.change.index+3]),
                           ']')
-    names(rv)[names(rv)=='reduction'] = paste0("Reduction ", year1, " to ", year2, 
+    if (attr(change.df, 'decrease.is.positive'))
+      names(rv)[names(rv)=='change'] = paste0("Reduction ", year1, " to ", year2, 
+                                                 stats.description)
+    else
+        names(rv)[names(rv)=='change'] = paste0("Change ", year1, " to ", year2, 
                                                stats.description)
     
     
@@ -1819,7 +1871,7 @@ make.hover.text <- function(year,
     
     if (!is.null(lower) && !is.null(upper))
         hover.text = paste0(hover.text,
-                            " [", lower, " to ", upper, "]")
+                            " [", trimws(lower), " to ", trimws(upper), "]")
     
     if (!is.null(sim))
         hover.text = paste0(hover.text,

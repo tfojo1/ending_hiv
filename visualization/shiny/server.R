@@ -32,6 +32,9 @@ source("R/model_code/plot_simulations.R")
 ##----------------------##
 shinyOptions(cache=diskCache(file.path(dirname(tempdir()), "myapp-cache")))
 # Constants / initiliazers
+# TODO: @jef/@tf: Add a 2nd diskCache that is dedicated to the necessary
+# datasets we want to lazy load on app start for all sessions. For every,
+# city, pulls those 2 files from the diskCache.
 # CACHE = memoryCache(size = 20e6)
 CACHE = diskCache(max_size = 20e6)
 

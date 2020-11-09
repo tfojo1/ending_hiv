@@ -46,7 +46,7 @@ tipBox <- function(message,
         style=paste0('color: ', text.color, ';
                      padding: ', padding, 'px;
                      border-radius: 10px; 
-                     border-style: dotted;
+                     border-style: dashed;
                      border-width: thin;
                      border-color: ', border.color, ';'),
         { 
