@@ -24,9 +24,9 @@ if (1==2)
     location = LA.MSA
     # MS: I updated this based on the order I listed in the previous code 
     # MELISSA - you need to change the 'INT.TTT' to 'm.ttt' (or analagous) for each of these, like I did below
-    intervention.code.table = matrix(c('m.ttt', 'm.tst', 'INT.TPT', 'INT.STT', 'INT.SST', 'INT.SPT', 'INT.PTT', 'INT.PST', 'INT.PPT', 
-                                        'INT.TTS', 'INT.TSS', 'INT.TPS', 'INT.STS', 'INT.SSS', 'INT.SPS', 'INT.PTS', 'INT.PSS', 'INT.PPS', 
-                                        'INT.TTP', 'INT.TSP', 'INT.TPP', 'INT.STP', 'INT.SSP', 'INT.SPP', 'INT.PTP', 'INT.PSP', 'INT.PPP'),
+    intervention.code.table = matrix(c('m.ttt', 'm.tst', 'm.tpt', 'm.stt', 'm.sst', 'm.spt', 'm.ptt', 'm.pst', 'm.ppt', 
+                                        'm.tts', 'm.tss', 'm.tps', 'm.sts', 'm.sss', 'm.sps', 'm.pts', 'm.pss', 'm.pps', 
+                                        'm.ttp', 'm.tsp', 'm.tpp', 'm.stp', 'm.ssp', 'm.spp', 'm.ptp', 'm.psp', 'm.ppp'),
                                      ncol=3)
     
     #Melissa, this should be a table with the intervention codes listed in the
