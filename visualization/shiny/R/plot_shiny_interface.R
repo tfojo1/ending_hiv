@@ -37,11 +37,28 @@ RISKS = list(
     msm_idu="MSM+IDU",
     heterosexual="Heterosexual") )
 
+RISKS2 = list(
+  name='risk-groups',
+  label='Risk Factor',
+  choices=c(
+    msm="MSM",
+    iduActive="Active IDU",
+    iduPrior="Prior IDU",
+    msm_iduActive="MSM + active IDU",
+    msm_iduPrior="MSM + prior IDU",
+    heterosexual="Heterosexual") )
+
 DIMENSION.VALUES = list(
   age=AGES,
   race=RACES,
   sex=SEXES,
   risk=RISKS)
+
+DIMENSION.VALUES2 = list(
+  age=AGES,
+  race=RACES,
+  sex=SEXES,
+  risk=RISKS2)
 
 DIMENSIONS = c(
   age='Age',
@@ -250,9 +267,13 @@ get.interventions.simpleList <- function(version, location) {
 #'     argument
 #'  the values of get.dimension.value.options()[[d]] are 'displayable'
 #'   value names
-get.dimension.value.options <- function(version, location)
+get.dimension.value.options <- function(
+  version, location, msm_idu_mode=FALSE)
 {
-  DIMENSION.VALUES
+  if (msm_idu_mode == FALSE)
+    DIMENSION.VALUES
+  else
+    DIMENSION.VALUES2
 }
 
 #'@description Get the potential summary statistics to display

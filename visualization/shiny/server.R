@@ -40,6 +40,9 @@ CACHE = diskCache(max_size = 20e6)
 ##-- THE MAIN SERVER FUNCTION --##
 ##------------------------------##
 server <- function(input, output, session) {
+  state <- reactiveVal(
+    list(
+    'n-custom-interventions'=1))
   data.table <- reactiveVal()
   data.plot <- reactiveVal()
   plot.and.cache = NULL
@@ -59,7 +62,8 @@ server <- function(input, output, session) {
   
   # Page: Docs (#page-docs): output$introductionText ####
   output$introductionText = server.routes.docs
-  output[['design-interventions']] = server.routes.designInterventions
+  output[['design-interventions']] = 
+    server.routes.designInterventions.get(input, session, state)
   output[['help-and-feedback']] = server.routes.helpAndFeedback
 
   # Events: Simulate & plot ####
@@ -184,6 +188,13 @@ server <- function(input, output, session) {
                                     Plotly.downloadImage(plot, {format: 'png', width: ", width, ", height: ", height, ", 
                             filename: '", get.default.download.filename(input),"'})"))
    })
+  
+  observeEvent(input[['n-custom-interventions-btn']], {
+    state.temp = state()
+    state.temp[['n-custom-interventions']] = 
+      input[['n-custom-interventions']]
+    state(state.temp)
+  })
   
   
   # for now
