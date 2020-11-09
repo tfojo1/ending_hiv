@@ -129,12 +129,12 @@ format.plotly.toolbar <- function(plot,
   plot = config(plot,
                 displayModeBar=T,
                 displaylogo=F,
-                scrollZoom=T,
+                scrollZoom=F,
                 
                 toImageButtonOptions=list(filename=get.default.download.filename(input)),
                 
                 modeBarButtons=list(
-                  list('toImage'),
+            #      list('toImage'),
                   list('zoom2d'),
                   list('pan2d'),
                   list('zoomIn2d'),
