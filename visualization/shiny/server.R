@@ -1,4 +1,4 @@
-
+# Library calls & Source files ####
 ##-------------------##
 ##-- LIBRARY CALLS --##
 ##-------------------##
@@ -26,7 +26,7 @@ source("R/server.routes.docs.R")
 source("R/server.routes.runModel.R")
 source("R/model_code/plot_simulations.R")
 
-
+# Cache ####
 ##----------------------##
 ##-- SET UP THE CACHE --##
 ##----------------------##
@@ -38,14 +38,15 @@ shinyOptions(cache=diskCache(file.path(dirname(tempdir()), "myapp-cache")))
 # CACHE = memoryCache(size = 20e6)
 CACHE = diskCache(max_size = 20e6)
 
-
+# Main ####
 ##------------------------------##
 ##-- THE MAIN SERVER FUNCTION --##
 ##------------------------------##
 server <- function(input, output, session) {
-  state <- reactiveVal(
+  # state <- reactiveVal(list())
+  config <- reactiveVal(
     list(
-    'n-custom-interventions'=1))
+    'customInterventions.groups.max'=5))
   data.table <- reactiveVal()
   data.plot <- reactiveVal()
   plot.and.cache = NULL
@@ -66,7 +67,7 @@ server <- function(input, output, session) {
   # Page: Docs (#page-docs): output$introductionText ####
   output$introductionText = server.routes.docs
   output[['design-interventions']] = 
-    server.routes.designInterventions.get(input, session, state)
+    server.routes.designInterventions.get(input, session, config)
   output[['help-and-feedback']] = server.routes.helpAndFeedback
 
   # Events: Simulate & plot ####
@@ -102,6 +103,10 @@ server <- function(input, output, session) {
       shinyjs::enable('downloadButton.plot')
   }
   
+  observeEvent(input$run_custom_interventions, {
+    # TODO: @tf
+  })
+  
   observeEvent(input$reset_main, {reset.handler(input)})
   observeEvent(input$reset_main_sidebar, {
 #      shinyjs::runjs("window.scrollTo(0, 0)")
@@ -115,6 +120,7 @@ server <- function(input, output, session) {
 ##------------------------------------##
   
   # Demographic dimensions: select all
+  # - Visualize projections
   observeEvent(input$demog.selectAll, {
     if (input$demog.selectAll == 'TRUE') {
       dims.namesAndChoices = map(
@@ -134,6 +140,35 @@ server <- function(input, output, session) {
       }
     }
   })
+  
+  # Demographic dimensions: select all
+  # - Custom interventions
+  # TODO: How to implement?
+  # a. static: 5 blocks of these, w/ id suffixes 1-5
+  # b. for loop? for (i in 1:5) input[[paste0('custom...', i)]]
+  # c. reactiveVal? of some sort w/ all the logic inside the UI? if poss?
+  
+  # observeEvent(input$customInterventions.demog.selectAll, {
+  #   if (input$customInterventions.demog.selectAll == 'TRUE') {
+  
+  # to-do: Haven't updated this w/ correct id's, etc yet:
+  #     dims.namesAndChoices = map(
+  #       get.dimension.value.options(
+  #         version=version,
+  #         location=input[['geographic_location']]), 
+  #       function(dim) {
+  #         list(
+  #           'choices'=names(dim[['choices']]),
+  #           'name'=dim[['name']] )
+  #       })
+  #     for (dim in dims.namesAndChoices) {
+  #       updateCheckboxGroupInput(
+  #         session, 
+  #         inputId=dim[['name']], 
+  #         selected=dim[['choices']])
+  #     }
+  #   }
+  # })
   
   ##-- LOCATION HANDLER --##
   observeEvent(input$geographic_location, {
