@@ -26,7 +26,7 @@ DATA.TYPE.AXIS.LABELS = c(
 )
 
 DATA.TYPE.UNITS = c(
-  incidece = 'Cases',
+  incidence = 'Cases',
   new = 'Cases',
   prevalence = 'Cases',
   mortality = 'Deaths',
@@ -1433,7 +1433,7 @@ make.pretty.change.data.frame <- function(change.df, data.type.names=DATA.TYPE.N
 {
     df.names = names(change.df)
     pre.change.index = (1:length(df.names))[grepl('change',df.names)][1]-1
-    stats.description = paste0(", ", attr(change.df, 'stat'), 
+    stats.description = paste0(",\n", attr(change.df, 'stat'), 
                                " [", round(100*attr(change.df, 'interval.coverage')), "% interval]")
     
     rv = change.df[,1:pre.change.index]
@@ -1453,7 +1453,7 @@ make.pretty.change.data.frame <- function(change.df, data.type.names=DATA.TYPE.N
                           round(100*change.df[,pre.change.index+3]),
                           ']')
     if (attr(change.df, 'decrease.is.positive'))
-      names(rv)[names(rv)=='change'] = paste0("Reduction ", year1, " to ", year2, 
+        names(rv)[names(rv)=='change'] = paste0("Reduction ", year1, " to ", year2, 
                                                  stats.description)
     else
         names(rv)[names(rv)=='change'] = paste0("Change ", year1, " to ", year2, 
