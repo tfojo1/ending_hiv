@@ -37,8 +37,8 @@ metricBox <- function(
     box(
       width=NULL, 
       title=box.title,
-      collapsible=F,
-      collapsed=F,
+      collapsible=TRUE,
+      collapsed=FALSE,
       status='info', 
       solidHeader=TRUE,
       
@@ -96,26 +96,47 @@ metricBox <- function(
   )))  # </wellPanel /box /column>            
 }
 
-customInterventionBox <- function(i) {
-  conditionalPanel(
-    condition=paste0(
-      '(', as.character(i), ' == 1)',
-      ' || ',
-      '(input.group_addition_checkbox_', 
-      as.character(as.numeric(i) - 1), 
-      '== true)'), 
+customInterventionBox <- function(i, state) {
+  collapse = TRUE
+  if (i == 1)
+    collapse = FALSE
+  
+  # conditionalPanel(
+  #   condition=paste0(
+  #     '(', as.character(i), ' == 1)',
+  #     ' || ',
+  #     '(input.group_addition_checkbox_', 
+  #     as.character(as.numeric(i) - 1), 
+  #     '== true)'), 
     fluidRow(
       column(
         width=page.width,
         box(
           title=paste0("Custom intervention ", i),
-          collapsible=T,
-          collapsed=F,
+          collapsible=TRUE,
+          collapsed=collapse,
           status="primary",
           width=NULL,
           solidHeader=TRUE,
           
-          # Row 1/3: Demog & 1 widget
+          # Row 0.1/3: Activate 
+          tableRow(
+            inner.padding='25px',
+            materialSwitch(
+              inputId=paste0(
+                'customIntervention_box_switch', i), 
+              label=paste0('Use custom intervention ', i, ' ?'), 
+              value=F,
+              right=F,
+              status='primary')
+          ),
+          
+          conditionalPanel(
+            # condition=state()[[paste0(
+            #   'customIntervention_box_switch', i)]] == TRUE,
+            condition=paste0(
+              '(input.customIntervention_box_switch', i, ' == true)'),
+          # Row 1/3: Demog & 1 widget ####
           fluidRow(
             # Col 1/4: Demog ####
             column(
@@ -129,7 +150,8 @@ customInterventionBox <- function(i) {
                 solidHeader=TRUE,
                 
                 # wellPanel(
-                  fluidRow(
+                  tableRow(
+                    inner.padding='12px',
                     map(
                       get.dimension.value.options(
                         version=version,
@@ -143,18 +165,36 @@ customInterventionBox <- function(i) {
                               location=input[['geographic_location']],
                               msm_idu_mode=TRUE)),
                           fluidRow(
-                          # tableRow(  # <-- too much padding
+                            HTML(paste0('<b>', dim[['label']], '</b>'))
+                          ),  # </fluidRow>
+                          fluidRow(
+                          # tableRow(
                           #   vertical.align='top',
                           #   inner.padding='25px',
-                            materialSwitch(
-                              inputId=paste0(dim[['name']], '_switch', i), 
-                              label='Select all', 
-                              value=F,
-                              right=F,
-                              status='primary'),
+                            
+                            # materialSwitch(
+                            #   inputId=paste0(
+                            #     dim[['name']], '_switch', i),
+                            #   label='Select all',
+                            #   value=FALSE,
+                            #   right=TRUE,
+                            #   status='primary'),
+                            checkboxInput(
+                              inputId=paste0(
+                                dim[['name']], '_switch', i),
+                              label='Select all',
+                              value=FALSE),
+                            
+                            # TODO: too much spacing in between these
+                            
+                          # ),  # </fluidRow>
+                          # fluidRow(
                             checkboxGroupInput(
                               inputId=paste0(dim[['name']], i),
-                              label=dim[['label']],
+                              # label=dim[['label']],
+                              label='',
+                              selected=state()[[
+                                paste0(dim[['name']], i)]],
                               # selected=names(dim[['choices']]),
                               choiceNames=unname(dim[['choices']]),
                               choiceValues=names(dim[['choices']]) )
@@ -228,25 +268,46 @@ customInterventionBox <- function(i) {
             
           ),  # </row 2/3>
           # Row 3/3: Add more ####
-          fluidRow(
+          # fluidRow(
+          #   column(
+          #     width=page.width,
+          #     conditionalPanel(
+          #       # to-do: replace w/ val from config
+          #       condition=paste0(as.character(i), ' != 5'),
+          #       tableRow(
+          #         vertical.align='top',
+          #         inner.padding='25px',
+          #         checkboxInput(
+          #           inputId=paste0('group_addition_checkbox_', i), 
+          #           label=paste0(
+          #             'Add "Custom intervention ', 
+          #             as.character(as.numeric(i) + 1), '"'), 
+          #           value=FALSE)                  
+          #   )))  # </tableRow/conditionalPanel/column>
+          # )  # </row 3/3>
+          # Row 4.1 / 3 ####
+          tableRow(
+            vertical.align='top',
+            inner.padding='25px',
             column(
               width=page.width,
-              conditionalPanel(
-                # to-do: replace w/ val from config
-                condition=paste0(as.character(i), ' != 5'),
-                tableRow(
-                  vertical.align='top',
-                  inner.padding='25px',
-                  checkboxInput(
-                    inputId=paste0('group_addition_checkbox_', i), 
-                    label=paste0(
-                      'Add "Custom intervention ', 
-                      as.character(as.numeric(i) + 1), '"'), 
-                    value=FALSE)                  
-            )))  # </tableRow/conditionalPanel/column>
-          )  # </row 3/3>
-          
-  ))))  # </box/column/row/conditionalPanel>
+              fluidRow(
+                # col; width=page.width.half,
+                textInput(
+                  inputId=paste0('intervention_name', i), 
+                  label='Intervention name', 
+                  # value='My intervention', 
+                  placeholder='My intervention') ),
+              fluidRow(
+                # col; width=page.width.half,
+                actionButton(
+                  inputId=paste0('intervention_save', i),
+                  label='Save intervention' ) )
+            )
+          ),
+        # )  # </conditionalPanel>
+        ),  # </conditionalPanel>
+      )))  # </box/column/row/
 }
 
 # Main functional component ####
@@ -254,7 +315,7 @@ customInterventionBox <- function(i) {
 ##-- THE FUNCTION THAT GENERATES THE UI FOR THE PAGE --##
 ##-----------------------------------------------------##
 server.routes.designInterventions.get <- function(
-  input, session, config
+  input, session, config, state
 ) {
   # Component: PageDef #ui_main[renderUI]
   ui_main = renderUI({
@@ -323,20 +384,10 @@ server.routes.designInterventions.get <- function(
           
       )),  # </tr/table>
       
-      tableRow(
-        vertical.align='top',
-        inner.padding='25px',
-        textInput(
-          inputId='intervention_name', 
-          label='Intervention name', 
-          # value='My intervention', 
-          placeholder='My intervention')
-      ),
-      
       # Custom interventions boxes ####
       map(
           1:config()[['customInterventions.groups.max']],
-          function(i) customInterventionBox(i) )
+          function(i) customInterventionBox(i, state) )
     )  # </list>
     
     # Post-processing ####
