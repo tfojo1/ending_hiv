@@ -37,7 +37,7 @@ metricBox <- function(
     box(
       width=NULL, 
       title=box.title,
-      collapsible=T,
+      collapsible=F,
       collapsed=F,
       status='info', 
       solidHeader=TRUE,
@@ -119,11 +119,11 @@ customInterventionBox <- function(i) {
           fluidRow(
             # Col 1/4: Demog ####
             column(
-              width=page.width * 2/3,
+              width=page.width,
               box(
                 width=NULL, 
                 title="Subgroup selections",
-                collapsible=T,
+                collapsible=F,
                 collapsed=F,
                 status="success", 
                 solidHeader=TRUE,
@@ -162,8 +162,14 @@ customInterventionBox <- function(i) {
                         )  # </column>
                       })  # </function()/map>
             # )))),  # w/ wellPanel
-            ))),
+            )))
+          ),  # </row(1/3)>
             
+            
+          
+          
+          # Row 2/3: 2 widgets ####
+          fluidRow(
             # Col 2/4: Test frequency ####
             metricBox(
               i=i,
@@ -172,22 +178,18 @@ customInterventionBox <- function(i) {
               materialSwitch.label=HTML(
                 '<b>Include testing in intervention</b>'),
               knobInput.label='Frequency of testing 
-              (individuals in targeted subgroups are tested,
-              on average, once every so many months)',
+            (individuals in targeted subgroups are tested,
+            on average, once every so many months)',
               knobInput.min=1,
-              knobInput.max=12,
-              knobInput.value=6,
-              # knobInput.post='mon',
-              knobInput.post='',
+              knobInput.max=24,
+              knobInput.value=12,
+              knobInput.post='mo',
+              # knobInput.post='',
               sliderInput.label='Years from when testing
-              intervention begins to when it is fully
-              implemented',
-              column.width=page.width * 1/3)
+            intervention begins to when it is fully
+            implemented',
+              column.width=page.width * 1/3),
             
-          ),  # </row(1/3)>
-          
-          # Row 2/3: 2 widgets ####
-          fluidRow(
             # Col 3/4: PrEP ####
             metricBox(
               i=i,
@@ -200,10 +202,11 @@ customInterventionBox <- function(i) {
               adherent to PrEP with HIV screening every 3mo)',
               knobInput.min=1,
               knobInput.max=100,
-              knobInput.value=95,
+              knobInput.value=25,
               knobInput.post='%',
               sliderInput.label='Years from when PrEP intervention
-              begins to when it is fully implemented'),
+              begins to when it is fully implemented',
+              column.width=page.width * 1/3),
             
             # Col 4/4: Viral suppression ####
             metricBox(
@@ -217,10 +220,11 @@ customInterventionBox <- function(i) {
               suppressed)',
               knobInput.min=1,
               knobInput.max=100,
-              knobInput.value=95,
+              knobInput.value=80,
               knobInput.post='%',
               sliderInput.label='Years from when suppression intervention
-              begins to when it is fully implemented')
+              begins to when it is fully implemented',
+              column.width=page.width * 1/3)
             
           ),  # </row 2/3>
           # Row 3/3: Add more ####
@@ -318,6 +322,16 @@ server.routes.designInterventions.get <- function(
            </ol>') )
           
       )),  # </tr/table>
+      
+      tableRow(
+        vertical.align='top',
+        inner.padding='25px',
+        textInput(
+          inputId='intervention_name', 
+          label='Intervention name', 
+          # value='My intervention', 
+          placeholder='My intervention')
+      ),
       
       # Custom interventions boxes ####
       map(
