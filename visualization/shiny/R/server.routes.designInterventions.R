@@ -1,9 +1,8 @@
-# # EndingHiv; Page: Custom interventions
-
+# EndingHiv; Page: Custom interventions
+# Libs & source ####
 ##-------------------------------##
 ##-- LIBRARIES and SOURCE CODE --##
 ##-------------------------------##
-
 library('shiny')
 library('shinycssloaders')
 library('shinyWidgets')
@@ -12,20 +11,247 @@ library('purrr')
 # This sourcing will be done by the parent server.R file
 #source("R/plot_shiny_interface.R")  # plot.simulations
 
+# Constants ####
 ##--------------##
 ##- CONSTANTS --##
 ##--------------##
-
 page.width = 12
 page.width.half = round(page.width / 2)
 
+# Auxiliary functional components ####
+metricBox <- function(
+  i,
+  inputId.prefix,
+  box.title,
+  sliderInput.label,
+  knobInput.label,
+  knobInput.min,
+  knobInput.max,
+  knobInput.value,
+  materialSwitch.label,
+  knobInput.post='',
+  column.width=page.width * 1/2
+) {
+  column(
+    width=column.width,
+    box(
+      width=NULL, 
+      title=box.title,
+      collapsible=T,
+      collapsed=F,
+      status='info', 
+      solidHeader=TRUE,
+      
+      wellPanel(
+        fluidRow(
+          materialSwitch(
+            inputId=paste0(inputId.prefix, '_switch', i), 
+            label=materialSwitch.label, 
+            value=T,
+            right=T,
+            status='primary')),  # </rowInner1/3>
+        fluidRow(conditionalPanel(
+          condition=paste0(
+            'input.', inputId.prefix, '_switch', i, ' == true'),
+          tableRow(
+            vertical.align='top',
+            inner.padding='25px',
+            knobInput(
+              inputId=paste0(inputId.prefix, '_value', i),
+              label=knobInput.label,
+              min=knobInput.min,
+              max=knobInput.max,
+              step=1,
+              value=knobInput.value,
+              pre=NULL,
+              post=knobInput.post,
+              cursor=FALSE,
+              lineCap=c("default", "round")[1],
+              rotation=c("clockwise", "anticlockwise")[1],
+              # px only; doesn't seem to work
+              # width='100px',  
+              # height='100px', 
+              angleOffset=0,
+              angleArc=360,
+              thickness=NULL,
+              displayInput=TRUE,
+              displayPrevious=FALSE,
+              fgColor=NULL,
+              inputColor=NULL,
+              bgColor=NULL,
+              fontSize=NULL,
+              readOnly=FALSE,
+              immediate=TRUE )),  # </rowInner2/3>
+          tableRow(
+            vertical.align='top',
+            inner.padding='25px',
+            sliderInput(
+              inputId=paste0(inputId.prefix, '_years', i),
+              label=sliderInput.label,
+              value=c(2020, 2030),
+              min=2020,
+              max=2030,
+              step=1))  # </rowInner3/3>
+        ))  # </conditionalPanel /fluidRow>
+  )))  # </wellPanel /box /column>            
+}
+
+customInterventionBox <- function(i) {
+  conditionalPanel(
+    condition=paste0(
+      '(', as.character(i), ' == 1)',
+      ' || ',
+      '(input.group_addition_checkbox_', 
+      as.character(as.numeric(i) - 1), 
+      '== true)'), 
+    fluidRow(
+      column(
+        width=page.width,
+        box(
+          title=paste0("Custom intervention ", i),
+          collapsible=T,
+          collapsed=F,
+          status="primary",
+          width=NULL,
+          solidHeader=TRUE,
+          
+          # Row 1/3: Demog & 1 widget
+          fluidRow(
+            # Col 1/4: Demog ####
+            column(
+              width=page.width * 2/3,
+              box(
+                width=NULL, 
+                title="Subgroup selections",
+                collapsible=T,
+                collapsed=F,
+                status="success", 
+                solidHeader=TRUE,
+                
+                # wellPanel(
+                  fluidRow(
+                    map(
+                      get.dimension.value.options(
+                        version=version,
+                        location=input[['geographic_location']],
+                        msm_idu_mode=TRUE),
+                      function(dim) {
+                        column(
+                          width=page.width / length(
+                            get.dimension.value.options(
+                              version=version,
+                              location=input[['geographic_location']],
+                              msm_idu_mode=TRUE)),
+                          fluidRow(
+                          # tableRow(  # <-- too much padding
+                          #   vertical.align='top',
+                          #   inner.padding='25px',
+                            materialSwitch(
+                              inputId=paste0(dim[['name']], '_switch', i), 
+                              label='Select all', 
+                              value=F,
+                              right=F,
+                              status='primary'),
+                            checkboxGroupInput(
+                              inputId=paste0(dim[['name']], i),
+                              label=dim[['label']],
+                              # selected=names(dim[['choices']]),
+                              choiceNames=unname(dim[['choices']]),
+                              choiceValues=names(dim[['choices']]) )
+                          )  # </fluidRow>
+                        )  # </column>
+                      })  # </function()/map>
+            # )))),  # w/ wellPanel
+            ))),
+            
+            # Col 2/4: Test frequency ####
+            metricBox(
+              i=i,
+              inputId.prefix='test_freq_months',
+              box.title='Testing',
+              materialSwitch.label=HTML(
+                '<b>Include testing in intervention</b>'),
+              knobInput.label='Frequency of testing 
+              (individuals in targeted subgroups are tested,
+              on average, once every so many months)',
+              knobInput.min=1,
+              knobInput.max=12,
+              knobInput.value=6,
+              # knobInput.post='mon',
+              knobInput.post='',
+              sliderInput.label='Years from when testing
+              intervention begins to when it is fully
+              implemented',
+              column.width=page.width * 1/3)
+            
+          ),  # </row(1/3)>
+          
+          # Row 2/3: 2 widgets ####
+          fluidRow(
+            # Col 3/4: PrEP ####
+            metricBox(
+              i=i,
+              inputId.prefix='prep',
+              box.title='Pre-Exposure Prophylaxis (PrEP)',
+              materialSwitch.label=HTML(
+                '<b>Include PrEP in Intervention</b>'),
+              knobInput.label='Proportion on PrEP: (this percentage of
+              individuals in targeted subgroups are prescribed and 
+              adherent to PrEP with HIV screening every 3mo)',
+              knobInput.min=1,
+              knobInput.max=100,
+              knobInput.value=95,
+              knobInput.post='%',
+              sliderInput.label='Years from when PrEP intervention
+              begins to when it is fully implemented'),
+            
+            # Col 4/4: Viral suppression ####
+            metricBox(
+              i=i,
+              inputId.prefix='viral_suppression',
+              box.title='Viral Suppression',
+              materialSwitch.label=HTML(
+                '<b>Include viral suppression in Intervention</b>'),
+              knobInput.label='Suppressed Proportion: (this percentage of 
+              PWH with diagnosed HIV in the targeted subgroups are virally 
+              suppressed)',
+              knobInput.min=1,
+              knobInput.max=100,
+              knobInput.value=95,
+              knobInput.post='%',
+              sliderInput.label='Years from when suppression intervention
+              begins to when it is fully implemented')
+            
+          ),  # </row 2/3>
+          # Row 3/3: Add more ####
+          fluidRow(
+            column(
+              width=page.width,
+              conditionalPanel(
+                # to-do: replace w/ val from config
+                condition=paste0(as.character(i), ' != 5'),
+                tableRow(
+                  vertical.align='top',
+                  inner.padding='25px',
+                  checkboxInput(
+                    inputId=paste0('group_addition_checkbox_', i), 
+                    label=paste0(
+                      'Add "Custom intervention ', 
+                      as.character(as.numeric(i) + 1), '"'), 
+                    value=FALSE)                  
+            )))  # </tableRow/conditionalPanel/column>
+          )  # </row 3/3>
+          
+  ))))  # </box/column/row/conditionalPanel>
+}
+
+# Main functional component ####
 ##-----------------------------------------------------##
 ##-- THE FUNCTION THAT GENERATES THE UI FOR THE PAGE --##
 ##-----------------------------------------------------##
-
-#returns
-server.routes.designInterventions.get <- function(input, session, state)
-{
+server.routes.designInterventions.get <- function(
+  input, session, config
+) {
   # Component: PageDef #ui_main[renderUI]
   ui_main = renderUI({
     # Pre-processing: n/a ####
@@ -71,201 +297,38 @@ server.routes.designInterventions.get <- function(input, session, state)
       
       verticalSpacer(40),
 
-      fluidRow(
-        column(
-          width=page.width,
-          box(
-            title="Number of custom interventions",
-            collapsible=T,
-            collapsed=F,
-            status="info",
-            width=NULL,
-            solidHeader=TRUE,
-            
-            # numericInput(
-            fluidRow(
-              column(
-                width=page.width,
-                sliderInput(
-                  inputId='n-custom-interventions',
-                  label='',
-                  # label=paste(
-                  #   input[['n-custom-interventions']], ' interventions'),
-                  # value=1,
-                  value=state()[['n-custom-interventions']],
-                  min=1,
-                  max=5,
-                  # step=1
-            ))),
-            fluidRow(
-              column(
-                width=page.width,
-                actionButton(
-                  inputId='n-custom-interventions-btn', 
-                  label='Update')
-            ))
-            
-      ))),
+      # Run Interventions button ####
+      tags$table(
+        tags$tr(
+          
+          tags$td(style='padding-right: 20px',
+            actionButton(
+              style="background: #204C73; color: white; font-size:150%;
+              margin: 0 auto;",
+              'run_custom_interventions', 
+              HTML("Run<BR>Interventions")) ),
+          
+          tags$td(
+            tipBox(
+              width=12,
+              'To make custom interventions:<ol>
+           <li> First, tap your feet </li>
+           <li> Then, wave your hands around </li>
+           <li> Click "Run Interventions" </li>
+           </ol>') )
+          
+      )),  # </tr/table>
       
-      # Map ####
+      # Custom interventions boxes ####
       map(
-          1:state()[['n-custom-interventions']],
-          # c(1:input[['n-custom-interventions']])  # got a 'length 0' error
-        function(i) {
-
-          # Row
-          fluidRow(
-            column(
-              width=page.width,
-              box(
-                title=paste("Custom intervention groups", i, sep=' '),
-                collapsible=T,
-                collapsed=T,
-                status="primary",
-                width=NULL,
-                solidHeader=TRUE,
-
-                column(
-                  width=page.width * 2/3,
-                  wellPanel(
-                    fluidRow(
-                      map(
-                        get.dimension.value.options(
-                          version=version,
-                          location=input[['geographic_location']],
-                          msm_idu_mode=TRUE),
-                        function(dim) {
-                          column(
-                            width=page.width / length(
-                              get.dimension.value.options(
-                                version=version,
-                                location=input[['geographic_location']],
-                                msm_idu_mode=TRUE)),
-                            checkboxGroupInput(
-                              inputId=paste(
-                                dim[['name']], i, sep=' '),
-                              # inputId=dim[['name']],
-                              label=dim[['label']],
-                              choiceNames=unname(dim[['choices']]),
-                              choiceValues=names(dim[['choices']]),
-                              selected=names(dim[['choices']])
-                            ))
-                        })
-                    ))),
-
-                column(
-                  width=page.width * 1/3,
-                  wellPanel(
-                    fluidRow(
-                      # numericInput(
-                      sliderInput(
-                        inputId=paste(
-                          "test-freq-months", i, sep=' '),
-                        # inputId='test-freq-months',
-                        label='Test frequency (in months)',
-                        value=6,
-                        min=0,
-                        max=12,
-                        step=1),
-                      sliderInput(
-                        inputId=paste(
-                          "prep-pct", i, sep=' '),
-                        # inputId='prep-pct',
-                        label='% individuals on PrEP',
-                        value=50,
-                        min=0,
-                        max=100,
-                        step=1),
-                      sliderInput(
-                        inputId=paste(
-                          "virally-suppresssed-pct", i, sep=' '),
-                        # inputId='virally-suppresssed-pct',
-                        label='% HIV positive individuals virally suppressed',
-                        value=50,
-                        min=0,
-                        max=100,
-                        step=1)
-                    )))
-              )))
-        })
-    
-    )
-    
-    #   # Row ####
-    #   fluidRow(
-    #     column(
-    #       width=page.width,
-    #       box(
-    #         title="Custom intervention groups",
-    #         collapsible=T,
-    #         collapsed=F,
-    #         status="primary",
-    #         width=NULL, 
-    #         solidHeader=TRUE,
-    #         
-    #         column(
-    #           width=page.width * 2/3, 
-    #           wellPanel(
-    #             fluidRow(
-    #               map(
-    #                 get.dimension.value.options(
-    #                   version=version,
-    #                   location=input[['geographic_location']],
-    #                   msm_idu_mode=TRUE), 
-    #                 function(dim) {
-    #                   column(
-    #                     width=page.width / length(
-    #                       get.dimension.value.options(
-    #                         version=version, 
-    #                         location=input[['geographic_location']],
-    #                         msm_idu_mode=TRUE)),
-    #                     checkboxGroupInput(
-    #                       inputId=dim[['name']],
-    #                       label=dim[['label']],
-    #                       choiceNames=unname(dim[['choices']]),
-    #                       choiceValues=names(dim[['choices']]),
-    #                       selected=names(dim[['choices']])
-    #                     ))
-    #                 })
-    #         ))),
-    #         
-    #         column(
-    #             width=page.width * 1/3,
-    #             wellPanel(
-    #               fluidRow(
-    #                 # numericInput(
-    #                 sliderInput(
-    #                   inputId='test-freq-months',
-    #                   label='Test frequency (in months)',
-    #                   value=6,
-    #                   min=0,
-    #                   max=12,
-    #                   step=1),
-    #                 sliderInput(
-    #                   inputId='prep-pct',
-    #                   label='% individuals on PrEP',
-    #                   value=50,
-    #                   min=0,
-    #                   max=100,
-    #                   step=1),
-    #                 sliderInput(
-    #                   inputId='virally-suppresssed-pct',
-    #                   label='% HIV positive individuals virally suppressed',
-    #                   value=50,
-    #                   min=0,
-    #                   max=100,
-    #                   step=1)
-    #         )))
-    #   
-    # ))))  # </list>
-    # 
-    # 
+          1:config()[['customInterventions.groups.max']],
+          function(i) customInterventionBox(i) )
+    )  # </list>
     
     # Post-processing ####
     # shinyjs::enable('reset_main_sidebar')
     rv
   })  #returns
-  
   
   ui_main
 }

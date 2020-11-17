@@ -568,5 +568,3 @@ server.routes.runModel.get <- function(input, session)
   
   ui_main
 }
-
-# Scratch ####
