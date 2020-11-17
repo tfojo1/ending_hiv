@@ -74,10 +74,29 @@ DATA.TYPES = c(
     suppression='Viral HIV Suppression',
     diagnosed="Awareness of HIV Diagnosis")
 
+customInterventions.demog.defaults <- function() {
+  defaults = list()
+  for (dimension in names(DIMENSION.VALUES2)) {
+    choices = DIMENSION.VALUES2[[dimension]][['choices']] 
+    # defaults[[diminsion]] = lapply(choices, function(choice) {
+    #   FALSE
+    # })
+    # for (choice in choices) {
+    #   defaults[[diminsion]][[choice]] = FALSE
+    # }
+    defaults[[dimension]] = rep('', length(choices))
+  }
+  # Not sure why this needed to be repeated: 
+  for (dimension in names(DIMENSION.VALUES2)) {
+    choices = DIMENSION.VALUES2[[dimension]][['choices']] 
+    defaults[[dimension]] = rep('', length(choices))
+  }
+  defaults
+}
 
 # Support functions 1: FUNCTIONS TO GET THE OPTIONS FOR ARGUMENTS ####
 
-#'@description Get the versions of the model which are available for simulations to come from
+#'@description Get the versions of the model which are available for simulations to come fromrep
 #'@param version The indicator for the version of the model (corresponds to one of the values of names(get.version.options))
 #'@return A named character vector. The values of the vector are 'displayable' names of places; the names of the vector are the location codes to be passed to plot.simulations
 get.version.options <- function()
