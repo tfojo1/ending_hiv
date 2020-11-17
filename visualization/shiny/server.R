@@ -43,10 +43,24 @@ CACHE = diskCache(max_size = 20e6)
 ##-- THE MAIN SERVER FUNCTION --##
 ##------------------------------##
 server <- function(input, output, session) {
-  # state <- reactiveVal(list())
-  config <- reactiveVal(
-    list(
-    'customInterventions.groups.max'=5))
+  config.contents <- list(
+    'customInterventions.groups.max'=5)
+  # to-do: turn this into a function:
+  # to-do: dynamically create:
+  state.contents <- list(
+    'customIntervention_box_switch1'=TRUE,
+    'customIntervention_box_switch2'=TRUE,
+    'customIntervention_box_switch3'=TRUE,
+    'customIntervention_box_switch4'=TRUE,
+    'customIntervention_box_switch5'=TRUE
+  )
+  ci.defaults = customInterventions.demog.defaults()
+  for (i in config.contents[['customInterventions.groups.max']])
+    for (dim in names(ci.defaults))
+      state.contents[[paste0(dim, i)]] = ci.defaults[[dim]]
+  
+  state <- reactiveVal(state.contents)
+  config <- reactiveVal(config.contents)
   data.table <- reactiveVal()
   data.plot <- reactiveVal()
   plot.and.cache = NULL
@@ -67,8 +81,9 @@ server <- function(input, output, session) {
   # Page: Docs (#page-docs): output$introductionText ####
   output$introductionText = server.routes.docs
   output[['design-interventions']] = 
-    server.routes.designInterventions.get(input, session, config)
-  output[['help-and-feedback']] = server.routes.helpAndFeedback
+    server.routes.designInterventions.get(input, session, config, state)
+  output[['help-and-feedback']] = 
+    server.routes.helpAndFeedback.get(input)
 
   # Events: Simulate & plot ####
   # Plot: Pass to plot event handler function
@@ -233,7 +248,48 @@ server <- function(input, output, session) {
       input[['n-custom-interventions']]
     state(state.temp)
   })
+
+  observeEvent(input[['createPresetId']], {
+    queryStr = presets.urlQueryParamString.create(input)
+    presetId = db.write.queryString(queryStr)
+    msg = paste0('Preset ID created: ', as.character(presetId))
+    output[['createPresetId_msg']] = renderText(msg)
+  })
   
+  observeEvent(input[['feedback_submit']], {
+    name = input[['feedback_name']]
+    email = input[['feedback_email']]
+    contents = input[['feedback_contents']]
+    # TODO: @Joe: send email (currently in server.utils)
+  })
+  
+  # @tf/todd: didnt work: 
+  # for (i in 1:5) {
+  #   key = paste0('intervention_save', i)
+  #   observeEvent(input[[key]], {
+  # TODO: @Joe
+  observeEvent(input[['intervention_save1']], {
+      
+  })
+  observeEvent(input[['intervention_save2']], {
+    
+  })
+  observeEvent(input[['intervention_save3']], {
+    
+  })
+  observeEvent(input[['intervention_save4']], {
+    
+  })
+  observeEvent(input[['intervention_save5']], {
+    
+  })
+  
+  # TODO: @Todd/Joe: 
+  # Need 4x5=20 blocks for: dim[['name']], '_switch', i)
+  observeEvent(input[['age_switch1']], {
+    
+  })
+  #... and so on
   
   
   # for now

@@ -45,8 +45,37 @@ server.routes.runModel.get <- function(input, session)
 {
   # Component: PageDef #ui_main[renderUI]
   ui_main = renderUI({
-    # Pre-processing: URL params & location ####
+    urlParams = parseQueryString(
+      session$clientData$url_search)
+    # Pre-processing: URL Params: presetId ####
+    presetKeyUsed = NULL
+    presetPermutations = c(
+      'preset', 'presetId', 'presetID', 'presetID', 'presetid', 
+      'PRESETID', 'preset_id', 'preset_ID', 'PRESET_ID')
+    for (permu in presetPermutations)
+      if (permu %in% names(urlParams)) {
+        presetKeyUsed = permu
+        break }
     
+    # TODO: @Joe: continue from here
+    if (!(is.null(presetKeyUsed))) {
+      presetId = parseQueryString(
+        session$clientData$url_search)[[presetKeyUsed]]
+      # 1. fetch query string from db
+      presetStr = db.presets.read.all()
+      
+      # 1.5 filter by id==presetId
+      # to-do
+      
+      # 2. parse it into a list
+      presets = presets.urlQueryParamString.parse(presetStr)
+      
+      # 3. for each key in list set input[[key]]=val
+      # #to-do
+    }
+    
+    
+    # Pre-processing: URL params: location ####
     # Location.choice
     # TODO: @Todd: From our meeting on Fri 10/30/2020:
     #   I think I've added what I need here. - Joe
@@ -163,6 +192,20 @@ server.routes.runModel.get <- function(input, session)
               )
             )
           ),
+          
+          # TODO: @TF/@Todd: I did not think much about placement of this.
+          fluidRow(
+            column(
+              width=page.width.half,
+              actionButton(
+                inputId='createPresetId',
+                label='Create unique preset based on selections') ),
+            column(
+              width=page.width.half,
+              textOutput(
+                outputId='createPresetId_msg') )
+          ),
+          verticalSpacer(20),
           
           box(
             width=NULL, 
@@ -299,6 +342,7 @@ server.routes.runModel.get <- function(input, session)
             div(style = "font-size: 1.2em; padding: 0px 0px; margin-bottom:0px",
                 HTML("<b>Intervention 1:</b>")),
             create.intervention.selector.panel(1, input),
+<<<<<<< HEAD
             materialSwitch(inputId = 'use_intervention_2',
                           label = "Include a Second Intervention",
                           value=F,
@@ -309,6 +353,19 @@ server.routes.runModel.get <- function(input, session)
                                               HTML("<b>Intervention 2:</b>")),
                              create.intervention.selector.panel(2, input),
                              )
+=======
+            checkboxInput(
+              inputId = 'use_intervention_2',
+              label = "Include a Second Intervention",
+              value=F),
+            conditionalPanel(
+              condition="(input.use_intervention_2)",
+              div(
+                style="font-size: 1.2em; padding: 0px 0px; margin-bottom:0px",
+                HTML("<b>Intervention 2:</b>")),
+              create.intervention.selector.panel(2, input), 
+            )
+>>>>>>> ff424bf93323c30445ca326e428539d7323d9252
             
           ))),  # </fluidRow>
       
