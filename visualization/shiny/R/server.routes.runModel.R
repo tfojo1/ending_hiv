@@ -98,6 +98,7 @@ server.routes.runModel.get <- function(input, session)
     
     shinyjs::disable("reset_main_sidebar")
     
+    
     # UI ####
     rv = list(  # returns-->list
       # Header & styles ####
