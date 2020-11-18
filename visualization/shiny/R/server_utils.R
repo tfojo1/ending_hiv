@@ -8,7 +8,6 @@ library(aws.s3)
 library(stringr)
 library('RPostgreSQL')
 library('RPostgres')
-library('devtools')
 library('remotes')
 library('DBI')
 library('stringr')
@@ -188,7 +187,7 @@ db.write.rows <- function (
 ) {
   # Insert example: https://jarrettmeyer.com/2018/11/08/
   #r-postgresql-insert
-  # Insert 2: dbWriteTable(con, name = c("myschema","fruits"), 
+  # Insert 2: dbWriteTable(co`n, name = c("myschema","fruits"), 
   #value = dt2insert,append=TRUE,row.names=FALSE,overwrite=FALSE)
   # https://www.datacareer.de/blog/connect-to-postgresql-with-r-a-
   # step-by-step-example/

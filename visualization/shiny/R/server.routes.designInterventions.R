@@ -172,18 +172,18 @@ customInterventionBox <- function(i, state) {
                           #   vertical.align='top',
                           #   inner.padding='25px',
                             
-                            # materialSwitch(
-                            #   inputId=paste0(
-                            #     dim[['name']], '_switch', i),
-                            #   label='Select all',
-                            #   value=FALSE,
-                            #   right=TRUE,
-                            #   status='primary'),
-                            checkboxInput(
+                            materialSwitch(
                               inputId=paste0(
                                 dim[['name']], '_switch', i),
                               label='Select all',
-                              value=FALSE),
+                              value=FALSE,
+                              right=TRUE,
+                              status='primary'),
+                            # checkboxInput(
+                            #   inputId=paste0(
+                            #     dim[['name']], '_switch', i),
+                            #   label='Select all',
+                            #   value=FALSE),
                             
                             # TODO: too much spacing in between these
                             
@@ -192,7 +192,7 @@ customInterventionBox <- function(i, state) {
                             checkboxGroupInput(
                               inputId=paste0(dim[['name']], i),
                               # label=dim[['label']],
-                              label='',
+                              label=NULL,
                               selected=state()[[
                                 paste0(dim[['name']], i)]],
                               # selected=names(dim[['choices']]),

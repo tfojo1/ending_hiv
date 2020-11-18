@@ -264,9 +264,12 @@ server <- function(input, output, session) {
   })
   
   # @tf/todd: didnt work: 
-  # for (i in 1:5) {
-  #   key = paste0('intervention_save', i)
-  #   observeEvent(input[[key]], {
+  for (i in 1:5) {
+    key = paste0('intervention_save', i)
+    observeEvent(input[[key]], {
+      browser()
+    })
+  }
   # TODO: @Joe
   observeEvent(input[['intervention_save1']], {
       
