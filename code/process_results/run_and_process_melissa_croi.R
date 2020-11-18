@@ -21,7 +21,7 @@ if (1==2)
 if (1==2)
 {
   location = LA.MSA
-  intervention.code.table = matrix(c('m.p25', 'm.p50', 'm.s80', 'm.p25.s80', 'm.p50.s80', 'm.s90', 'm.p25.s90', 'm.p50.s90'),
+  intervention.code.table = matrix(c('baseline', 'ybhm.p25', 'ybhm.p50', 'ybhm.s80', 'm.p25.s80', 'm.p50.s80', 'ybhm.s90', 'm.p25.s90', 'm.p50.s90'),
                                    ncol=9)
   
   tab = get.estimates.for.interventions(intervention.codes=intervention.code.table,

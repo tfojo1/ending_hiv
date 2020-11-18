@@ -1,7 +1,7 @@
 
 source('code/interventions/intervention_presets.R')
 
-#### New analysis - 11/18/20 ####
+#### New analysis (PrEP vs. suppression) - 11/18/20 ####
 GROUP1 = YOUNG.BLACK.HISPANIC.MSM
 
 P25 = create.intervention.unit(type = "prep", rates = .25, start.year = 2021, years = 2022)
@@ -17,11 +17,11 @@ INT.S90 = create.intervention(GROUP1, S90)
 
 # First three interventions: no suppression 
 # Baseline scenario here
-INTERVENTION.MANAGER.1.0 = register.intervention(INT.P25, code = "m.p25", name = "PrEP coverage at 25%; no suppression intervention")
-INTERVENTION.MANAGER.1.0 = register.intervention(INT.P50, code = "m.p50", name = "PrEP coverage at 50%; no suppression intervention")
+# INTERVENTION.MANAGER.1.0 = register.intervention(INT.P25, code = "m.p25", name = "PrEP coverage at 25%; no suppression intervention")
+# INTERVENTION.MANAGER.1.0 = register.intervention(INT.P50, code = "m.p50", name = "PrEP coverage at 50%; no suppression intervention")
 
 # Second three interventions: 80% suppression 
-INTERVENTION.MANAGER.1.0 = register.intervention(INT.S80, code = "m.s80", name = "No PrEP intervention; suppression at 80%")
+# INTERVENTION.MANAGER.1.0 = register.intervention(INT.S80, code = "m.s80", name = "No PrEP intervention; suppression at 80%")
 
 INT.P25.S80 = join.interventions(INT.P25, INT.S80)
 INTERVENTION.MANAGER.1.0 = register.intervention(INT.P25.S80, code = "m.p25.s80", name = "PrEP coverage at 25%; suppression at 80%")
@@ -31,7 +31,7 @@ INTERVENTION.MANAGER.1.0 = register.intervention(INT.P50.S80, code = "m.p50.s80"
 
 
 # Second three interventions: 90% suppression 
-INTERVENTION.MANAGER.1.0 = register.intervention(INT.S90, code = "m.s90", name = "No PrEP intervention; suppression at 90%")
+# INTERVENTION.MANAGER.1.0 = register.intervention(INT.S90, code = "m.s90", name = "No PrEP intervention; suppression at 90%")
 
 INT.P25.S90 = join.interventions(INT.P25, INT.S90)
 INTERVENTION.MANAGER.1.0 = register.intervention(INT.P25.S90, code = "m.p25.s90", name = "PrEP coverage at 25%; suppression at 90%")
@@ -40,7 +40,7 @@ INT.P50.S90 = join.interventions(INT.P50, INT.S90)
 INTERVENTION.MANAGER.1.0 = register.intervention(INT.P50.S90, code = "m.p50.s90", name = "PrEP coverage at 50%; suppression at 90%")
 
 
-MELISSA.INTERVENTIONS.2 = list(INT.P25, INT.P50, INT.S80, INT.P25.S80, INT.P50.S80, INT.S90, INT.P25.S90, INT.P50.S90)
+MELISSA.INTERVENTIONS.2 = list(YBHM.P25, YBHM.P50, YBHM.S80, INT.P25.S80, INT.P50.S80, YBHM.S90, INT.P25.S90, INT.P50.S90)
 
 
 
