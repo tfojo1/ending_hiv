@@ -342,7 +342,6 @@ server.routes.runModel.get <- function(input, session)
             div(style = "font-size: 1.2em; padding: 0px 0px; margin-bottom:0px",
                 HTML("<b>Intervention 1:</b>")),
             create.intervention.selector.panel(1, input),
-<<<<<<< HEAD
             materialSwitch(inputId = 'use_intervention_2',
                           label = "Include a Second Intervention",
                           value=F,
@@ -353,20 +352,7 @@ server.routes.runModel.get <- function(input, session)
                                               HTML("<b>Intervention 2:</b>")),
                              create.intervention.selector.panel(2, input),
                              )
-=======
-            checkboxInput(
-              inputId = 'use_intervention_2',
-              label = "Include a Second Intervention",
-              value=F),
-            conditionalPanel(
-              condition="(input.use_intervention_2)",
-              div(
-                style="font-size: 1.2em; padding: 0px 0px; margin-bottom:0px",
-                HTML("<b>Intervention 2:</b>")),
-              create.intervention.selector.panel(2, input), 
-            )
->>>>>>> ff424bf93323c30445ca326e428539d7323d9252
-            
+
           ))),  # </fluidRow>
       
       # Epidemiological dimensions ####
