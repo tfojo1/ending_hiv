@@ -30,7 +30,7 @@ generate.plot.and.table <- function(input, cache)
     if (input$use_intervention_2)
         intervention.codes = c(
             intervention.codes,
-            'Intervention 2' = get.intervention.selection(1, input)
+            'Intervention 2' = get.intervention.selection(2, input)
         )
     
     intervention.codes = intervention.codes[intervention.codes != 'none']

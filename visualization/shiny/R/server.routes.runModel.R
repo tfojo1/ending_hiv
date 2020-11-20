@@ -127,6 +127,7 @@ server.routes.runModel.get <- function(input, session)
     
     shinyjs::disable("reset_main_sidebar")
     
+    
     # UI ####
     rv = list(  # returns-->list
       # Header & styles ####
@@ -341,6 +342,18 @@ server.routes.runModel.get <- function(input, session)
             div(style = "font-size: 1.2em; padding: 0px 0px; margin-bottom:0px",
                 HTML("<b>Intervention 1:</b>")),
             create.intervention.selector.panel(1, input),
+<<<<<<< HEAD
+            materialSwitch(inputId = 'use_intervention_2',
+                          label = "Include a Second Intervention",
+                          value=F,
+                          right=T,
+                          status='primary'),
+            conditionalPanel(condition="(input.use_intervention_2)",
+                             div(style = "font-size: 1.2em; padding: 0px 0px; margin-bottom:0px",
+                                              HTML("<b>Intervention 2:</b>")),
+                             create.intervention.selector.panel(2, input),
+                             )
+=======
             checkboxInput(
               inputId = 'use_intervention_2',
               label = "Include a Second Intervention",
@@ -352,6 +365,7 @@ server.routes.runModel.get <- function(input, session)
                 HTML("<b>Intervention 2:</b>")),
               create.intervention.selector.panel(2, input), 
             )
+>>>>>>> ff424bf93323c30445ca326e428539d7323d9252
             
           ))),  # </fluidRow>
       
@@ -492,7 +506,17 @@ server.routes.runModel.get <- function(input, session)
                             choiceValues=names(get.split.by.options(
                                 version=version,
                                 location=input[['geographic_location']])),
-                            selected=NULL)
+                            selected=NULL),
+                        
+                        tableRow(inner.padding = '5px',
+                            materialSwitch(
+                                inputId = 'color_by_split_1',
+                                value=F,
+                                right=T,
+                                status='primary'
+                            ),
+                            HTML('<b>Color Lines by Subgroup</b><BR>(instead of by Intervention)')
+                        )
                     )
                 ))
             )
@@ -514,12 +538,11 @@ server.routes.runModel.get <- function(input, session)
                   
                   fluidRow(
                       column(width=12,
-                             tableRow(wellPanel(
+                             tableRow(nestedWellPanel(title='What to Plot:',
                                  tableRow(inner.padding = '25px',
                                           column(width=12,
                                                  radioGroupButtons(
                                                      inputId='plot_format', 
-                                                     label='What to Plot',
                                                      size='normal',
                                                      direction='vertical',
                                                      status = 'primary',
@@ -548,8 +571,8 @@ server.routes.runModel.get <- function(input, session)
                                  )
                              )),
                              #),
-                      #column(width=6,
-                             tableRow(wellPanel(
+                             verticalSpacer(10),
+                             tableRow(nestedWellPanel(title='Labels:',
                                  tableRow(
                                      flowLayout(tipBox("Indicate whether the figure should include labels indicating the change in the outcome for each intervention. By default, this denotes the change from 2020 to 2030; drag the slider to change the years.",
                                                        right.arrow = T)),
@@ -571,8 +594,24 @@ server.routes.runModel.get <- function(input, session)
                                                 sep = ''
                                             )
                                      )
+                                 ))),
+                             
+                             verticalSpacer(10),
+                             tableRow(nestedWellPanel(
+                                 title='Colors:',
+                                 fluidRow(column(width=12,
+                                        radioGroupButtons(
+                                            inputId='color_by',
+                                            label='Color Lines By',
+                                            choices=c('Intervention','Demographic Subgroup'),
+                                            status='primary'
+                                        ),
+                                        
+                                        flowLayout(tipBox("If 'Interventions' is selected, lines representing the same intervention will have the same color, distinct from other interventions. If 'Demographic Subgroups' is selected, one color will be assigned to each demographic subgroup for which a separate line is plotted",
+                                                          up.arrow = T)),
                                  )
                              )))
+                      )
                   )
                   
                   

@@ -94,16 +94,21 @@ prettyActionButton <- function(inputId, label, icon=NULL, width=NULL, ...)
                  ...)
 }
 
+WELL.COLORS = c('#F7F7F7',
+                '#F0F0F0',
+                '#E0E0E0',
+                '#D3D3D3',
+                '#C4C4C4',
+                '#B3B3B3')
+
+
 nestedWellPanel <- function(...,
                             style=NULL,
-                            level=(1:2)[1])
+                            title=NULL,
+                            level=(1:5)[1],
+                            title.size='120%',
+                            title.decoration=c('bold','italic','normal')[1])
 {
-    WELL.COLORS = c('#F7F7F7',
-                    '#F0F0F0',
-                    '#E0E0E0',
-                    '#D3D3D3',
-                    '#C4C4C4',
-                    '#B3B3B3')
     
     bg.color = WELL.COLORS[level]
     border.color = WELL.COLORS[level+1]
@@ -124,10 +129,26 @@ nestedWellPanel <- function(...,
     if (!z)
         print(style)
     
-    tags$div(
+    panel = tags$div(
         style=style,
         ...
     )
+    
+    if (!is.null(title))
+    {
+        title.style = paste0('font-size: ', title.size, ';')
+        if (any(title.decoration=='bold'))
+            title.style = paste0('font-weight: bold;')
+        if (any(title.decoration=='italic'))
+            title.style = paste0('font-style: italic;')
+            
+        tags$table(
+            tags$tr(tags$div(title, style=title.style)),
+            tags$tr(tags$td(panel))
+        )
+    }
+    else
+        panel
 }
 
 add.style.to.tag <- function(elem, style,

@@ -4,6 +4,39 @@ source('code/process_results/make_systematic_table.R')
 source('code/targets/target_msas.R')
 source('code/interventions/melissa_croi_interventions.R')
 
+#### New set of interventions - 11/18/20 ####
+
+location = LA.MSA
+if (1==2)
+{
+  location = LA.MSA
+  load(file.path('mcmc_runs/quick_simsets', location, get.full.filename(location)))
+  
+  run.systematic.interventions(simset,
+                               dst.dir = 'mcmc_runs/quick_simsets',
+                               interventions = MELISSA.INTERVENTIONS.2,
+                               save.baseline.and.seed = F)
+}
+
+if (1==2)
+{
+  location = LA.MSA
+  intervention.code.table = matrix(c('baseline', 'ybhm.p25', 'ybhm.p50', 'ybhm.s80', 'm.p25.s80', 'm.p50.s80', 'ybhm.s90', 'm.p25.s90', 'm.p50.s90'),
+                                   ncol=9)
+  
+  tab = get.estimates.for.interventions(intervention.codes=intervention.code.table,
+                                        location=location,
+                                        dir='mcmc_runs/quick_simsets')
+  
+}
+
+write.csv(tab, file = "Melissa_CROI_v2.csv")
+
+
+
+
+#### Original analysis - 11/9/2020 ####
+
 location = LA.MSA
 #This code will run your list of interventions
 if (1==2)
