@@ -42,7 +42,7 @@ server.routes.helpAndFeedback.get <- function(input) {
         tableRow(
           inner.padding='25px',
           column(
-            width=page.width.half,
+            width=page.width,
             fluidRow(
               # tableRow(
               # vertical.align='top',
@@ -56,10 +56,15 @@ server.routes.helpAndFeedback.get <- function(input) {
                 label='Your email') )
           ),
           column(
-            width=page.width.half,
+            width=page.width,
             textAreaInput(
               inputId='feedback_contents', 
-              label='Your message')
+              label='Your message',
+              height='250px',
+              width='375px',
+              # cols=80,
+              # rows=6,
+              )
           )
         ),
         tableRow(

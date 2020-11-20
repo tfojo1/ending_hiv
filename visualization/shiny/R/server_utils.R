@@ -8,7 +8,6 @@ library(aws.s3)
 library(stringr)
 library('RPostgreSQL')
 library('RPostgres')
-library('devtools')
 library('remotes')
 library('DBI')
 library('stringr')
@@ -28,8 +27,19 @@ source('env.R')
 CACHE = list()
 BUCKET.NAME.SIMS = 'endinghiv.sims'
 BUCKET.NAME.STATIC = 'endinghiv.static'
-DB_TABLE_NAME = 'option_presets'
-DB_FIELD = 'urlQueryParamString'
+DB_TABLENAME_PRESETS = 'option_presets'
+DB_TABLENAME_CONTACT = 'contact_form'
+DB_FIELD_PRESETS = 'urlQueryParamString'
+# All button inputIds should be added here:
+PRESET_IGNORE_LIST = c(
+  'plotly_relayout-A', 
+  '.clientValue-default-plotlyCrosstalkOpts',
+  'reset_main',
+  'downloadButton.plot',
+  'createPresetId',
+  'createPresetId1',
+  'createPresetId2',
+  'reset_main_sidebar')
 
 # Utils: misc ####
 invert.keyVals <- function(x) {
@@ -177,18 +187,18 @@ db.connect <- function() {
 
 db.presets.read.all <- function (
   connection=db.connect(),
-  table.name=DB_TABLE_NAME
+  table.name=DB_TABLENAME_PRESETS
 ) {
   dbReadTable(conn=connection, name=table.name)
 }
 
 db.write.rows <- function (
   data.df,  # data.frame
-  table.name=DB_TABLE_NAME
+  table.name  # char
 ) {
   # Insert example: https://jarrettmeyer.com/2018/11/08/
   #r-postgresql-insert
-  # Insert 2: dbWriteTable(con, name = c("myschema","fruits"), 
+  # Insert 2: dbWriteTable(co`n, name = c("myschema","fruits"), 
   #value = dt2insert,append=TRUE,row.names=FALSE,overwrite=FALSE)
   # https://www.datacareer.de/blog/connect-to-postgresql-with-r-a-
   # step-by-step-example/
@@ -203,7 +213,28 @@ db.write.rows <- function (
     overwrite=FALSE)
 }
 
-db.write.queryString <- function(queryString) {
+db.write.contactForm <- function(
+  name,
+  email,
+  message,
+  version=as.character(get.version.options()[1]),
+  date=Sys.Date()
+) {
+  data.df = data.frame(
+    'name'=name,
+    'email'=email,
+    'message'=message,
+    'version'=version,
+    'date'=date)
+  db.write.rows(
+    data.df=data.df,
+    table.name=DB_TABLENAME_CONTACT)
+}
+
+db.write.queryString <- function(
+  queryString,
+  version=as.character(get.version.options()[1]),
+  date=Sys.Date()) {
   # to-do(minor): @TF/Todd: I set the database to accept non-UNIQUE entries,
   # so we might get multiple queryStrings written to the db that are
   # redudnant. For now I'm allowing it and just returning the most 
@@ -211,20 +242,15 @@ db.write.queryString <- function(queryString) {
   # I did this lazily for now because I didn't want to handle edge
   # cases where the record exists; didn't want to risk the session
   # crashing.
-  
-  # try1
-  # data.df = as.data.frame(
-  #   matrix(nrow=1, ncol=1))
-  # data.df = rbind(
-  #   c())
-  # names(df) = c(DB_FIELD)
-  
-  # try2
   # Write
   data.df = data.frame(
-    'urlQueryParamString'=queryString)
+    'urlQueryParamString'=queryString,
+    'version'=version,
+    'date'=date)
   
-  db.write.rows(data.df)
+  db.write.rows(
+    data.df=data.df,
+    table.name=DB_TABLENAME_PRESETS)
   
   # Get auto-assigned ID
   table = db.presets.read.all()
@@ -233,13 +259,13 @@ db.write.queryString <- function(queryString) {
   matchId
 }
 
-presets.urlQueryParamString.create <- function(shiny.input) {
+presets.urlQueryParamString.create <- function(
+  shiny.input,
+  ignoreList=PRESET_IGNORE_LIST) {
+  
   queryVec = sapply(names(shiny.input), function(key) {
     val = shiny.input[[key]]
-    ignore = c(
-      'plotly_relayout-A', 
-      '.clientValue-default-plotlyCrosstalkOpts')
-    if (key %in% ignore) {
+    if (key %in% ignoreList) {
     } else if (length(val) > 1) {
       prefix = paste0('&', key, '=')
       csv = paste(val, collapse = ',')
@@ -248,7 +274,12 @@ presets.urlQueryParamString.create <- function(shiny.input) {
     } else
       paramStr = paste0('&', key, '=', shiny.input[[key]])
   })
-  queryStr = paste(queryVec, collapse='')
+  
+  for (ele in ignoreList)
+    if (ele %in% names(queryVec))
+      queryVec[[ele]] = NULL
+  
+    queryStr = paste(queryVec, collapse='')
   queryStr = str_sub(queryStr, start=2)
   queryStr
 }
@@ -257,24 +288,29 @@ presets.urlQueryParamString.parse <- function(
   queryString
 ) {  # --> vec[named]
   presets = list()
-  # if it starts w/ ?, get rid of
-  # - skipped
-  
-  # delimit on &
+  # #to-do: if it starts w/ ?, get rid of
+  # delimit queryParams &
   queryVec = str_split(queryString, '&')[[1]]
-  
-  # delimit on =
+  # delimit keyVals =
   for (keyVals in queryVec) {
       kv = str_split(keyVals, '=')[[1]]
       key = kv[1]
       val = kv[2]
-      # delimit on ,
-      if (grepl(',', val)) {
+      # delimit lists ,
+      if (grepl(',', val))
         val = str_split(val, ',')[[1]]
-      }
+      if (toupper(val) %in% c('TRUE', 'FALSE'))
+        val = as.logical(val)
       presets[[key]] = val
   }
   presets
+}
+
+handleCreatePreset <- function(input) {
+  queryStr = presets.urlQueryParamString.create(input)
+  presetId = db.write.queryString(queryStr)
+  msg = paste0('<p>Preset created! You can instantly reload the state of this app in the future via the url:</p><p>https://dynamic-modeling.shinyapps.io/EndingHIV?preset=', as.character(presetId), '</p>')
+  showMessageModal(message=msg)      
 }
 
 # Test ####
