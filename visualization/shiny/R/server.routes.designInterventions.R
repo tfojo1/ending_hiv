@@ -167,7 +167,7 @@ customInterventionBox <- function(i, state) {
                           fluidRow(
                             HTML(paste0('<b>', dim[['label']], '</b>'))
                           ),  # </fluidRow>
-                          fluidRow(
+                          fluidRow( 
                           # tableRow(
                           #   vertical.align='top',
                           #   inner.padding='25px',
