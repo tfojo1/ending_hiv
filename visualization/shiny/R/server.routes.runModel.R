@@ -185,7 +185,7 @@ server.routes.runModel.get <- function(input, session, state)
                 div(style='padding: 10px',
                   tabsetPanel(
                     id='toggle_main',
-                    selected='Figure',
+                    selected=state()[['toggle_main']],
                     type='tabs',
                     
                     #Figure
@@ -207,11 +207,11 @@ server.routes.runModel.get <- function(input, session, state)
                         #   condition="(input.show_download  !== undefined && input.show_download !== null)",
                         column(
                           width=(page.width / 4),
-                          actionButton("downloadButton.plot",
-                                       label="Download Figure",
-                                       icon=icon('download'),
-                                       disabled=T)
-                             ),
+                          actionButton(
+                            "downloadButton.plot",
+                            label="Download Figure",
+                            icon=icon('download'),
+                            disabled=T) ),
                           column(
                             width=(page.width * 3 / 4),
                             actionButton(
@@ -313,7 +313,7 @@ server.routes.runModel.get <- function(input, session, state)
             #div(HTML("<HR>")),
             div(style = "font-size: 1.2em; padding: 0px 0px; margin-bottom:0px",
                 HTML("<b>Intervention 1:</b>")),
-            create.intervention.selector.panel(1, input),
+            create.intervention.selector.panel(1, input, state),
             materialSwitch(
               inputId='use_intervention_2',
               label="Include a Second Intervention",
@@ -325,7 +325,7 @@ server.routes.runModel.get <- function(input, session, state)
               div(
                 style="font-size: 1.2em; padding: 0px 0px; margin-bottom:0px",
                 HTML("<b>Intervention 2:</b>")),
-              create.intervention.selector.panel(2, input),
+              create.intervention.selector.panel(2, input, state),
                              )
           ))),  # </fluidRow>
       
@@ -356,11 +356,7 @@ server.routes.runModel.get <- function(input, session, state)
                                     version=version, 
                                     location=input[['geographic_location']]),
                                 ~ .x )),
-                            selected=names(map(
-                                get.data.type.options(
-                                    version=version, 
-                                    location=input[['geographic_location']]),
-                                ~ .x ))[1:2] )
+                            selected=state()[['epidemiological-indicators']] )
                     )),
                 tipBox("Select the Epidemiological Indicators to be displayed as outcomes in the plot. Each indicator will be plotted on a separate panel",
                        left.arrow = T, width=6)
@@ -418,7 +414,8 @@ server.routes.runModel.get <- function(input, session, state)
                       label=dim[['label']],
                       choiceNames=unname(dim[['choices']]),
                       choiceValues=names(dim[['choices']]),
-                      selected=names(dim[['choices']])
+                      # selected=names(dim[['choices']])
+                      selected=state()[[dim[['name']]]]
                     ))
                 })
             )
@@ -444,7 +441,7 @@ server.routes.runModel.get <- function(input, session, state)
                             choiceValues=names(get.facet.by.options(
                                 version=version,
                                 location=input[['geographic_location']])),
-                            selected=NULL)
+                            selected=state()[['facet']])
                     )
                 ))),
             
@@ -466,12 +463,12 @@ server.routes.runModel.get <- function(input, session, state)
                             choiceValues=names(get.split.by.options(
                                 version=version,
                                 location=input[['geographic_location']])),
-                            selected=NULL),
+                            selected=state()[['split']]),
                         
                         tableRow(inner.padding = '5px',
                             materialSwitch(
-                                inputId = 'color_by_split_1',
-                                value=F,
+                                inputId='color_by_split_1',
+                                value=state()[['color_by_split_1']],
                                 right=T,
                                 status='primary'
                             ),
@@ -497,82 +494,94 @@ server.routes.runModel.get <- function(input, session, state)
                   solidHeader=TRUE,
                   
                   fluidRow(
-                      column(width=12,
-                             tableRow(nestedWellPanel(title='What to Plot:',
-                                 tableRow(inner.padding = '25px',
-                                          column(width=12,
-                                                 radioGroupButtons(
-                                                     inputId='plot_format', 
-                                                     size='normal',
-                                                     direction='vertical',
-                                                     status = 'primary',
-                                                     choices=invert.keyVals(get.plot.format.options(
-                                                         version=version,
-                                                         location=input[['geographic_location']])),
-                                                     selected=NULL)
-                                          ),
+                    column(
+                      width=12,
+                     tableRow(
+                       nestedWellPanel(title='What to Plot:',
+                       tableRow(
+                         inner.padding = '25px',
+                        
+                         column(width=12,
+                         radioGroupButtons(
+                           inputId='plot_format', 
+                           size='normal',
+                           direction='vertical',
+                           status = 'primary',
+                           choices=invert.keyVals(
+                             get.plot.format.options(
+                               version=version, 
+                               location=input[['geographic_location']])),
+                           selected=state()[['plot_format']])
+                        ),
                                           
-                                          flowLayout(column(width=12,
-                                                            tipBox("If 'Individual Simulations' is chosen, a separate line will be plotted for each individual simulation.",
-                                                                   left.arrow = T),
-                                                            tipBox("Otherwise, set the coverage for the plotted prediction interval",
-                                                                   right.arrow = T)
-                                                            )),
-                                          
-                                          knobInput(
-                                              inputId = 'interval_coverage',
-                                              label = "Prediction Interval Coverage",
-                                              min=0,
-                                              max=100,
-                                              step=5,
-                                              value=95,
-                                              lineCap = 'default',
-                                              post='%')
-                                 )
-                             )),
-                             #),
-                             verticalSpacer(10),
-                             tableRow(nestedWellPanel(title='Labels:',
-                                 tableRow(
-                                     flowLayout(tipBox("Indicate whether the figure should include labels indicating the change in the outcome for each intervention. By default, this denotes the change from 2020 to 2030; drag the slider to change the years.",
-                                                       right.arrow = T)),
-                                     column(width=12,
-                                            materialSwitch(
-                                                inputId='label_change', 
-                                                label=HTML('<b>Show Labels for the Change in Outcome</b>'), 
-                                                value=T,
-                                                right=T,
-                                                status='primary'),
-                                            sliderInput(
-                                                inputId='change_years',
-                                                label="From year to year",
-                                                min=2020,
-                                                max=2030,
-                                                step=1,
-                                                value=state()[['change_years']],
-                                                sep='')
-                                     )
-                                 ))),
-                             
-                             verticalSpacer(10),
-                             tableRow(nestedWellPanel(
-                                 title='Colors:',
-                                 fluidRow(column(width=12,
-                                        radioGroupButtons(
-                                            inputId='color_by',
-                                            label='Color Lines By',
-                                            choices=c('Intervention','Demographic Subgroup'),
-                                            status='primary'
-                                        ),
-                                        
-                                        flowLayout(tipBox("If 'Interventions' is selected, lines representing the same intervention will have the same color, distinct from other interventions. If 'Demographic Subgroups' is selected, one color will be assigned to each demographic subgroup for which a separate line is plotted",
-                                                          up.arrow = T)),
-                                 )
-                             )))
+                        flowLayout(
+                          column(
+                            width=12,
+                              tipBox("If 'Individual Simulations' is chosen, a separate line will be plotted for each individual simulation.",
+                                     left.arrow = T),
+                              tipBox("Otherwise, set the coverage for the plotted prediction interval",
+                                     right.arrow = T)
+                              )),
+                        
+                        knobInput(
+                            inputId='interval_coverage',
+                            label="Prediction Interval Coverage",
+                            min=0,
+                            max=100,
+                            step=5,
+                            value=state()[['interval_coverage']],
+                            lineCap = 'default',
+                            post='%')
                       )
-                  )
-                  
-                  
+                      )),
+                             #),
+                     verticalSpacer(10),
+                     
+                     tableRow(
+                       nestedWellPanel(
+                         title='Labels:',
+                         tableRow(
+                           flowLayout(
+                             tipBox(
+                               "Indicate whether the figure should include labels indicating the change in the outcome for each intervention. By default, this denotes the change from 2020 to 2030; drag the slider to change the years.",
+                               right.arrow = T)),
+                             column(
+                               width=12,
+                               materialSwitch(
+                                 inputId='label_change', 
+                                  label=HTML(
+                                    '<b>Show Labels for the Change in Outcome</b>'), 
+                                  value=state()[['label_change']],
+                                  right=T,
+                                  status='primary'),
+                               sliderInput(
+                                inputId='change_years',
+                                label="From year to year",
+                                min=2020,
+                                max=2030,
+                                step=1,
+                                value=state()[['change_years']],
+                                sep='')
+                             )
+                         ))),
+                     
+                     verticalSpacer(10),
+                     
+                     tableRow(nestedWellPanel(
+                       title='Colors:',
+                       fluidRow(column(width=12,
+                        radioGroupButtons(
+                          inputId='color_by',
+                          label='Color Lines By',
+                          choices=c('Intervention','Demographic Subgroup'),
+                          status='primary',
+                          selected=state()[['color_by']]),
+                        flowLayout(
+                          tipBox(
+                            "If 'Interventions' is selected, lines representing the same intervention will have the same color, distinct from other interventions. If 'Demographic Subgroups' is selected, one color will be assigned to each demographic subgroup for which a separate line is plotted",
+                            up.arrow = T)),
+                        
+                       ))))))
               )))
     )
     
