@@ -67,7 +67,7 @@ server.routes.runModel.get <- function(input, session, state)
       presetRecord = presetTable.df[presetTable.df$id==presetId,]
       presetStr = presetRecord$urlQueryParamString
       # 2. parse it into a list
-      presets = presets.urlQueryParamString.parse(presetStr)
+      presets = presets.urlQueryParamString.parse(presetStr)  # list
       # 3. for each key in list set input[[key]]=val
       for (key in names(presets)) {
         # try1: this by itself doesnt work; just gets overwritten

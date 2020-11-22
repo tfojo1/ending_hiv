@@ -296,5 +296,5 @@ showMessageModal <- function(message) {
       fade=TRUE,
       
       verticalSpacer(40),
-      HTML(paste0('<br/><br/>', message, '<br/><br/>'))))      
+      HTML(paste0('<br/><br/>', message, '<br/><br/>'))))
 }
