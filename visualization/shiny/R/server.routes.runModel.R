@@ -1,7 +1,7 @@
 # # EndingHiv; Page: Run Model (#page-run-model): output$ui_main
 
 ##-------------------------------##
-##-- LIBRARIES and SOURCE CODE --##
+##-- LIBRARIES and SOURCE CODE --####
 ##-------------------------------##
 
 library('shiny')
@@ -12,16 +12,17 @@ library('purrr')
 # This sourcing will be done by the parent server.R file
 #source("R/plot_shiny_interface.R")  # plot.simulations
 
-##--------------##
-##- CONSTANTS --##
+##--------------###
+##- CONSTANTS --####
 ##--------------##
 
 #version = '1.0'
 page.width = 12
 page.width.half = round(page.width / 2)
+createPresetLabel = "Save settings & create 'preset URL'"
 
 ##----------------------------------------------------------##
-##-- SOME HELPERS (that abstract away the 'input' object) --##
+##-- SOME HELPERS (that abstract away the 'input' object) --####
 ##----------------------------------------------------------##
 
 #Here for future-proofing. For now, just one version possible
@@ -37,11 +38,11 @@ get.location <- function(input)
 
 
 ##-----------------------------------------------------##
-##-- THE FUNCTION THAT GENERATES THE UI FOR THE PAGE --##
+##-- THE FUNCTION THAT GENERATES THE UI FOR THE PAGE --####
 ##-----------------------------------------------------##
 
 #returns
-server.routes.runModel.get <- function(input, session)
+server.routes.runModel.get <- function(input, session, state)
 {
   # Component: PageDef #ui_main[renderUI]
   ui_main = renderUI({
@@ -50,85 +51,57 @@ server.routes.runModel.get <- function(input, session)
     # Pre-processing: URL Params: presetId ####
     presetKeyUsed = NULL
     presetPermutations = c(
-      'preset', 'presetId', 'presetID', 'presetID', 'presetid', 
+      'preset', 'presetId', 'presetID', 'presetID', 'presetid',
       'PRESETID', 'preset_id', 'preset_ID', 'PRESET_ID')
+    
     for (permu in presetPermutations)
       if (permu %in% names(urlParams)) {
         presetKeyUsed = permu
         break }
     
-    # TODO: @Joe: continue from here
     if (!(is.null(presetKeyUsed))) {
       presetId = parseQueryString(
         session$clientData$url_search)[[presetKeyUsed]]
       # 1. fetch query string from db
-      presetStr = db.presets.read.all()
-      
-      # 1.5 filter by id==presetId
-      # to-do
-      
+      presetTable.df = db.presets.read.all()
+      presetRecord = presetTable.df[presetTable.df$id==presetId,]
+      presetStr = presetRecord$urlQueryParamString
       # 2. parse it into a list
-      presets = presets.urlQueryParamString.parse(presetStr)
-      
+      presets = presets.urlQueryParamString.parse(presetStr)  # list
       # 3. for each key in list set input[[key]]=val
-      # #to-do
+      for (key in names(presets)) {
+        # try1: this by itself doesnt work; just gets overwritten
+        # input[[key]] = presets[[key]]
+        # try2: skipped; this adds more complexity based on widget used
+        # updateCheckboxGroupInput()
+        # try3: state()
+        tempstate = state()
+        tempstate[key] = presets[key]
+        state(tempstate)
+      }
     }
     
-    
     # Pre-processing: URL params: location ####
-    # Location.choice
-    # TODO: @Todd: From our meeting on Fri 10/30/2020:
-    #   I think I've added what I need here. - Joe
-    # ---
-    # "What we actually want to do is have 2 different options. 
-    # one is 'session=sessionId'. Todd will
-    # add a mapping. And it will return a vector of location codes. And 
-    # then Todd will do some work afterwards
-    # to invert, and check if the location passed is a valid location name.
-    
-    # to-do: @Todd/TF: want me to change 'location' to say 'locationId',
-    # 'locationCode', etc? To be more clear? This will be a lot easier
-    # than parsing special characters (especially any tranasformed 
-    # ones, e.g. from whitespace) from the URL query string. Also,
-    # if we did this we'd probably want it to be case insensitive.
+    # to-do: @Todd/TF: want me to change 'location' to say 'locationId',?
     if ('location' %in% names(
       parseQueryString(session$clientData$url_search))) {
       loc = parseQueryString(
         session$clientData$url_search)[['location']]
       # to-do: validate
-      # @Todd/TF: Right now if what they type is invalid, it will 
-      # thankfully rever to a default selection / first item in the
-      # list, rather than erroring out.
       valid = TRUE  # placeholder
-      
-      # to-do: find out how to get: arrayOfValidLocationIds, and
-      # re-activate this code block:
-      # 
-      # by using this?:
-      # invert.keyVals(get.location.options(
-      # version=version))
-      # 
-      # arrayOfValidLocationIds = c(
-      #   'nothing', 'valid', 'here')  # placeholder
-      # if (!(loc %in% arrayOfValidLocationIds))
-      #   valid = FALSE  
-      
       if (valid == TRUE)
         location.choice = loc
-      
       # to-do: Then update URL bar to fix conflict if user changes?
       # to-do: Show warning message if invalid?
     } else
       location.choice = input[['geographic_location']]
-    
     if (is.null(location.choice))
-      location.choice = invert.keyVals(
-        get.location.options(version))[1]
-    
-    shinyjs::disable("reset_main_sidebar")
-    
+      location.choice = state()[['geographic_location']]
+    # location.choice = invert.keyVals(
+    #   get.location.options(version))[1]
     
     # UI ####
+    shinyjs::disable("reset_main_sidebar")
     rv = list(  # returns-->list
       # Header & styles ####
       #This code sets the position and style for the progress bar when
@@ -193,18 +166,6 @@ server.routes.runModel.get <- function(input, session)
             )
           ),
           
-          # TODO: @TF/@Todd: I did not think much about placement of this.
-          fluidRow(
-            column(
-              width=page.width.half,
-              actionButton(
-                inputId='createPresetId',
-                label='Create unique preset based on selections') ),
-            column(
-              width=page.width.half,
-              textOutput(
-                outputId='createPresetId_msg') )
-          ),
           verticalSpacer(20),
           
           box(
@@ -224,7 +185,7 @@ server.routes.runModel.get <- function(input, session)
                 div(style='padding: 10px',
                   tabsetPanel(
                     id='toggle_main',
-                    selected='Figure',
+                    selected=state()[['toggle_main']],
                     type='tabs',
                     
                     #Figure
@@ -245,13 +206,18 @@ server.routes.runModel.get <- function(input, session)
                         # conditionalPanel(
                         #   condition="(input.show_download  !== undefined && input.show_download !== null)",
                         column(
-                          width=(page.width * 11/12),
-                          actionButton("downloadButton.plot",
-                                       label="Download Figure",
-                                       icon=icon('download'),
-                                       disabled=T)
-                             ))
-                        
+                          width=(page.width / 4),
+                          actionButton(
+                            "downloadButton.plot",
+                            label="Download Figure",
+                            icon=icon('download'),
+                            disabled=T) ),
+                          column(
+                            width=(page.width * 3 / 4),
+                            actionButton(
+                              inputId='createPresetId1',
+                              label=createPresetLabel) )
+                        )
                     ),
                   
                   #Table
@@ -272,12 +238,18 @@ server.routes.runModel.get <- function(input, session)
                       # conditionalPanel(
                       #   condition="(input.show_download  !== undefined && input.show_download !== null)",
                       column(
-                        width=(page.width * 11/12),
+                        width=(page.width / 4),
                         downloadButton(
                           "downloadButton.table", 
                           "Download Table",
                           disabled=T)
-                        ))
+                        ),
+                      column(
+                        width=(page.width * 3 / 4),
+                        actionButton(
+                          inputId='createPresetId2',
+                          label=createPresetLabel) )
+                      )
                     # )
                   )
                 )  # /tabsetPanel
@@ -334,25 +306,27 @@ server.routes.runModel.get <- function(input, session)
                 checkboxInput(
                   inputId='no_intervention_checkbox', 
                   label='Display "No intervention"', 
-                  value=TRUE,  
+                  value=state()[['no_intervention_checkbox']],
                   width='100%' )),
             ),  # </fluidRow>
             
             #div(HTML("<HR>")),
             div(style = "font-size: 1.2em; padding: 0px 0px; margin-bottom:0px",
                 HTML("<b>Intervention 1:</b>")),
-            create.intervention.selector.panel(1, input),
-            materialSwitch(inputId = 'use_intervention_2',
-                          label = "Include a Second Intervention",
-                          value=F,
-                          right=T,
-                          status='primary'),
-            conditionalPanel(condition="(input.use_intervention_2)",
-                             div(style = "font-size: 1.2em; padding: 0px 0px; margin-bottom:0px",
-                                              HTML("<b>Intervention 2:</b>")),
-                             create.intervention.selector.panel(2, input),
+            create.intervention.selector.panel(1, input, state),
+            materialSwitch(
+              inputId='use_intervention_2',
+              label="Include a Second Intervention",
+              value=state()[['use_intervention_2']],
+              right=T,
+              status='primary'),
+            conditionalPanel(
+              condition="(input.use_intervention_2)",
+              div(
+                style="font-size: 1.2em; padding: 0px 0px; margin-bottom:0px",
+                HTML("<b>Intervention 2:</b>")),
+              create.intervention.selector.panel(2, input, state),
                              )
-
           ))),  # </fluidRow>
       
       # Epidemiological dimensions ####
@@ -382,11 +356,7 @@ server.routes.runModel.get <- function(input, session)
                                     version=version, 
                                     location=input[['geographic_location']]),
                                 ~ .x )),
-                            selected=names(map(
-                                get.data.type.options(
-                                    version=version, 
-                                    location=input[['geographic_location']]),
-                                ~ .x ))[1:2] )
+                            selected=state()[['epidemiological-indicators']] )
                     )),
                 tipBox("Select the Epidemiological Indicators to be displayed as outcomes in the plot. Each indicator will be plotted on a separate panel",
                        left.arrow = T, width=6)
@@ -418,7 +388,7 @@ server.routes.runModel.get <- function(input, session)
                         materialSwitch(
                             inputId='demog.selectAll', 
                             label='Select All Subgroups', 
-                            value=F,
+                            value=state()[['demog.selectAll']],
                             right=T,
                             status='primary'
                         )
@@ -444,7 +414,8 @@ server.routes.runModel.get <- function(input, session)
                       label=dim[['label']],
                       choiceNames=unname(dim[['choices']]),
                       choiceValues=names(dim[['choices']]),
-                      selected=names(dim[['choices']])
+                      # selected=names(dim[['choices']])
+                      selected=state()[[dim[['name']]]]
                     ))
                 })
             )
@@ -470,7 +441,7 @@ server.routes.runModel.get <- function(input, session)
                             choiceValues=names(get.facet.by.options(
                                 version=version,
                                 location=input[['geographic_location']])),
-                            selected=NULL)
+                            selected=state()[['facet']])
                     )
                 ))),
             
@@ -492,12 +463,12 @@ server.routes.runModel.get <- function(input, session)
                             choiceValues=names(get.split.by.options(
                                 version=version,
                                 location=input[['geographic_location']])),
-                            selected=NULL),
+                            selected=state()[['split']]),
                         
                         tableRow(inner.padding = '5px',
                             materialSwitch(
-                                inputId = 'color_by_split_1',
-                                value=F,
+                                inputId='color_by_split_1',
+                                value=state()[['color_by_split_1']],
                                 right=T,
                                 status='primary'
                             ),
@@ -523,84 +494,94 @@ server.routes.runModel.get <- function(input, session)
                   solidHeader=TRUE,
                   
                   fluidRow(
-                      column(width=12,
-                             tableRow(nestedWellPanel(title='What to Plot:',
-                                 tableRow(inner.padding = '25px',
-                                          column(width=12,
-                                                 radioGroupButtons(
-                                                     inputId='plot_format', 
-                                                     size='normal',
-                                                     direction='vertical',
-                                                     status = 'primary',
-                                                     choices=invert.keyVals(get.plot.format.options(
-                                                         version=version,
-                                                         location=input[['geographic_location']])),
-                                                     selected=NULL)
-                                          ),
+                    column(
+                      width=12,
+                     tableRow(
+                       nestedWellPanel(title='What to Plot:',
+                       tableRow(
+                         inner.padding = '25px',
+                        
+                         column(width=12,
+                         radioGroupButtons(
+                           inputId='plot_format', 
+                           size='normal',
+                           direction='vertical',
+                           status = 'primary',
+                           choices=invert.keyVals(
+                             get.plot.format.options(
+                               version=version, 
+                               location=input[['geographic_location']])),
+                           selected=state()[['plot_format']])
+                        ),
                                           
-                                          flowLayout(column(width=12,
-                                                            tipBox("If 'Individual Simulations' is chosen, a separate line will be plotted for each individual simulation.",
-                                                                   left.arrow = T),
-                                                            tipBox("Otherwise, set the coverage for the plotted prediction interval",
-                                                                   right.arrow = T)
-                                                            )),
-                                          
-                                          knobInput(
-                                              inputId = 'interval_coverage',
-                                              label = "Prediction Interval Coverage",
-                                              min=0,
-                                              max=100,
-                                              step=5,
-                                              value=95,
-                                              lineCap = 'default',
-                                              post='%')
-                                 )
-                             )),
-                             #),
-                             verticalSpacer(10),
-                             tableRow(nestedWellPanel(title='Labels:',
-                                 tableRow(
-                                     flowLayout(tipBox("Indicate whether the figure should include labels indicating the change in the outcome for each intervention. By default, this denotes the change from 2020 to 2030; drag the slider to change the years.",
-                                                       right.arrow = T)),
-                                     column(width=12,
-                                            materialSwitch(
-                                                inputId='label_change', 
-                                                label=HTML('<b>Show Labels for the Change in Outcome</b>'), 
-                                                value=T,
-                                                right=T,
-                                                status='primary'
-                                            ),
-                                            sliderInput(
-                                                inputId='change_years',
-                                                label="From year to year",
-                                                min=2020,
-                                                max=2030,
-                                                step = 1,
-                                                value=c(2020,2030),
-                                                sep = ''
-                                            )
-                                     )
-                                 ))),
-                             
-                             verticalSpacer(10),
-                             tableRow(nestedWellPanel(
-                                 title='Colors:',
-                                 fluidRow(column(width=12,
-                                        radioGroupButtons(
-                                            inputId='color_by',
-                                            label='Color Lines By',
-                                            choices=c('Intervention','Demographic Subgroup'),
-                                            status='primary'
-                                        ),
-                                        
-                                        flowLayout(tipBox("If 'Interventions' is selected, lines representing the same intervention will have the same color, distinct from other interventions. If 'Demographic Subgroups' is selected, one color will be assigned to each demographic subgroup for which a separate line is plotted",
-                                                          up.arrow = T)),
-                                 )
-                             )))
+                        flowLayout(
+                          column(
+                            width=12,
+                              tipBox("If 'Individual Simulations' is chosen, a separate line will be plotted for each individual simulation.",
+                                     left.arrow = T),
+                              tipBox("Otherwise, set the coverage for the plotted prediction interval",
+                                     right.arrow = T)
+                              )),
+                        
+                        knobInput(
+                            inputId='interval_coverage',
+                            label="Prediction Interval Coverage",
+                            min=0,
+                            max=100,
+                            step=5,
+                            value=state()[['interval_coverage']],
+                            lineCap = 'default',
+                            post='%')
                       )
-                  )
-                  
-                  
+                      )),
+                             #),
+                     verticalSpacer(10),
+                     
+                     tableRow(
+                       nestedWellPanel(
+                         title='Labels:',
+                         tableRow(
+                           flowLayout(
+                             tipBox(
+                               "Indicate whether the figure should include labels indicating the change in the outcome for each intervention. By default, this denotes the change from 2020 to 2030; drag the slider to change the years.",
+                               right.arrow = T)),
+                             column(
+                               width=12,
+                               materialSwitch(
+                                 inputId='label_change', 
+                                  label=HTML(
+                                    '<b>Show Labels for the Change in Outcome</b>'), 
+                                  value=state()[['label_change']],
+                                  right=T,
+                                  status='primary'),
+                               sliderInput(
+                                inputId='change_years',
+                                label="From year to year",
+                                min=2020,
+                                max=2030,
+                                step=1,
+                                value=state()[['change_years']],
+                                sep='')
+                             )
+                         ))),
+                     
+                     verticalSpacer(10),
+                     
+                     tableRow(nestedWellPanel(
+                       title='Colors:',
+                       fluidRow(column(width=12,
+                        radioGroupButtons(
+                          inputId='color_by',
+                          label='Color Lines By',
+                          choices=c('Intervention','Demographic Subgroup'),
+                          status='primary',
+                          selected=state()[['color_by']]),
+                        flowLayout(
+                          tipBox(
+                            "If 'Interventions' is selected, lines representing the same intervention will have the same color, distinct from other interventions. If 'Demographic Subgroups' is selected, one color will be assigned to each demographic subgroup for which a separate line is plotted",
+                            up.arrow = T)),
+                        
+                       ))))))
               )))
     )
     
