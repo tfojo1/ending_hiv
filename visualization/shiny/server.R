@@ -48,64 +48,90 @@ server <- function(input, output, session) {
   # to-do: turn this into a function:
   # to-do: dynamically create:
   state.contents <- list(
-    # Page: run model
-    'int1_tpop3_unit4'='het.1.10.80.mi.high.x',
-    'int1_tpop3'='int1_tpop3_unit1',
-    'int1_tpop3_unit1'='het.tq2.mi.tq1.x',
-    'int1_tpop2_unit2'='mi.p25.ybh.p50.x',
-    'int1_tpop2'='int1_tpop2_unit1',
-    'color_by'='Intervention',
-    'plot_format'='individual.simulations',
-    'no_intervention_checkbox'=TRUE,
-    'int1_tpop2_unit4'='mi.1.25.80.ybh.high.x',
-    'preset_tpop_1'='none',
-    'intervention_2_selector'='prerun',
-    'int2_tpop3_unit1'='het.tq2.mi.tq1.x',
-    'int1_tpop3_unit2'='het.p10.mi.p50.x',
-    'facet'='',
-    'sex'=c('male', 'female'),
-    'int1_tpop1_unit2'='ybhm.p25',
-    'racial-groups'=c('black', 'hispanic', 'other'),
+    # Unused
     'sidebarItemExpanded'='',
-    'interval_coverage'=95,
-    'int2_tpop3'='int2_tpop3_unit1',
-    'age-groups'=c('age1', 'age2', 'age3', 'age4', 'age5'),
-    'int1_tpop1_unit3'='ybhm.s80',
-    'int2_tpop1_unit2'='ybhm.p25',
-    'int1_tpop1'='int1_tpop1_unit1',
+    'sidebarCollapsed'=FALSE,
+    'side_menu'='main',    
+    'plotly_afterplot-A'='"mainPlot"',
+    
+    # Page: run model
+    # Runmodel 1/6: Projections
+    'toggle_main'='Figure',
+    
+    # Runmodel 2/6: Location
     'geographic_location'=invert.keyVals(
       get.location.options(version))[1],
-    'toggle_main'='Figure',
-    'side_menu'='main',
-    'label_change'=TRUE,
-    'int2_tpop2'='int2_tpop2_unit1',
-    'plotly_afterplot-A'='"mainPlot"',
-    'use_intervention_2'=FALSE,
-    'int1_tpop2_unit1'='mi.tq2.ybh.tq1.x',
-    'color_by_split_1'=FALSE,
-    'int1_tpop1_unit1'='ybhm.tq2',
-    'int2_tpop3_unit4'='het.1.10.80.mi.high.x',
-    'change_years'=c(2020, 2030),
-    'demog.selectAll'=FALSE,
-    'sidebarCollapsed'=FALSE,
-    'int1_tpop1_unit4'='ybhm.1.25.80',
+    
+    # Runmodel 3/6: Potential Interventions
+    'no_intervention_checkbox'=TRUE,
+    
+    'preset_tpop_1'='none',
     'intervention_1_selector'='prerun',
-    'preset_tpop_2'='none',
-    'int2_tpop2_unit3'='mi.s80.ybhm.s90.x',
-    'int2_tpop2_unit1'='mi.tq2.ybh.tq1.x',
-    'int2_tpop2_unit4'='mi.1.25.80.ybh.high.x',
-    'int2_tpop3_unit3'='het.s80.mi.s90.x',
-    'int1_tpop3_unit3'='het.s80.mi.s90.x',
-    'risk-groups'=c('msm', 'idu', 'msm_idu', 'heterosexual'),
-    'int2_tpop1_unit3'='ybhm.s80',
-    'epidemiological-indicators'=c('incidence', 'new'),
-    'int2_tpop1_unit1'='ybhm.tq2',
-    'split'='',
+    
+    'int1_tpop1'='int1_tpop1_unit1',
+    'int1_tpop1_unit1'='ybhm.tq2',
+    'int1_tpop1_unit2'='ybhm.p25',
+    'int1_tpop1_unit3'='ybhm.s80',
+    'int1_tpop1_unit4'='ybhm.1.25.80',
+    # 
+    'int1_tpop2'='int1_tpop2_unit1',
+    'int1_tpop2_unit1'='mi.tq2.ybh.tq1.x',
+    'int1_tpop2_unit2'='mi.p25.ybh.p50.x',
     'int1_tpop2_unit3'='mi.s80.ybhm.s90.x',
+    'int1_tpop2_unit4'='mi.1.25.80.ybh.high.x',
+    # 
+    'int1_tpop3'='int1_tpop3_unit1',
+    'int1_tpop3_unit1'='het.tq2.mi.tq1.x',
+    'int1_tpop3_unit2'='het.p10.mi.p50.x',
+    'int1_tpop3_unit3'='het.s80.mi.s90.x',
+    'int1_tpop3_unit4'='het.1.10.80.mi.high.x',
+    #
+    'use_intervention_2'=FALSE,
+    'preset_tpop_2'='none',
+    'intervention_2_selector'='prerun',
+    # 
     'int2_tpop1'='int2_tpop1_unit1',
-    'int2_tpop2_unit2'='mi.p25.ybh.p50.x',
+    'int2_tpop1_unit1'='ybhm.tq2',
+    'int2_tpop1_unit2'='ybhm.p25',
+    'int2_tpop1_unit3'='ybhm.s80',
     'int2_tpop1_unit4'='ybhm.1.25.80',
+    # 
+    'int2_tpop2'='int2_tpop2_unit1',
+    'int2_tpop2_unit1'='mi.tq2.ybh.tq1.x',
+    'int2_tpop2_unit2'='mi.p25.ybh.p50.x',
+    'int2_tpop2_unit3'='mi.s80.ybhm.s90.x',
+    'int2_tpop2_unit4'='mi.1.25.80.ybh.high.x',
+    # 
+    'int2_tpop3'='int2_tpop3_unit1',
+    'int2_tpop3_unit1'='het.tq2.mi.tq1.x',
     'int2_tpop3_unit2'='het.p10.mi.p50.x',
+    'int2_tpop3_unit3'='het.s80.mi.s90.x',
+    'int2_tpop3_unit4'='het.1.10.80.mi.high.x',
+    
+    # Runmodel 4/6: Epidemiological Indicators
+    'epidemiological-indicators'=c('incidence', 'new'),
+    
+    # Runmodel 5/6: Demographic Subgroups
+    'demog.selectAll'=FALSE,
+    # 'sex'=c('male', 'female'),
+    # 'racial-groups'=c('black', 'hispanic', 'other'),
+    # 'age-groups'=c('age1', 'age2', 'age3', 'age4', 'age5'),
+    # 'risk-groups'=c('msm', 'idu', 'msm_idu', 'heterosexual'),
+    'sex'=names(DIMENSION.VALUES[['sex']][['choices']]),
+    'racial-groups'=names(DIMENSION.VALUES[['race']][['choices']]),
+    'age-groups'=names(DIMENSION.VALUES[['age']][['choices']]),
+    'risk-groups'=names(DIMENSION.VALUES[['risk']][['choices']]),    
+    'split'='',
+    'facet'='',
+    'color_by_split_1'=FALSE,    
+    
+    # Runmodel 6/6: Figure Options
+    'plot_format'='individual.simulations',
+    'interval_coverage'=95,
+    'label_change'=TRUE,
+    'change_years'=c(2020, 2030),
+    'color_by'='Intervention',
+    
     # Page: custom interventions
     'customIntervention_box_switch1'=TRUE,
     'customIntervention_box_switch2'=TRUE,
