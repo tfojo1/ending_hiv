@@ -43,6 +43,7 @@ metricBox <- function(
       solidHeader=TRUE,
       
       wellPanel(
+        
         fluidRow(
           materialSwitch(
             inputId=paste0(inputId.prefix, '_switch', i), 
@@ -50,38 +51,44 @@ metricBox <- function(
             value=T,
             right=T,
             status='primary')),  # </rowInner1/3>
+        
         fluidRow(conditionalPanel(
           condition=paste0(
             'input.', inputId.prefix, '_switch', i, ' == true'),
           tableRow(
             vertical.align='top',
             inner.padding='25px',
-            knobInput(
-              inputId=paste0(inputId.prefix, '_value', i),
-              label=knobInput.label,
-              min=knobInput.min,
-              max=knobInput.max,
-              step=1,
-              value=knobInput.value,
-              pre=NULL,
-              post=knobInput.post,
-              cursor=FALSE,
-              lineCap=c("default", "round")[1],
-              rotation=c("clockwise", "anticlockwise")[1],
-              # px only; doesn't seem to work
-              # width='100px',  
-              # height='100px', 
-              angleOffset=0,
-              angleArc=360,
-              thickness=NULL,
-              displayInput=TRUE,
-              displayPrevious=FALSE,
-              fgColor=NULL,
-              inputColor=NULL,
-              bgColor=NULL,
-              fontSize=NULL,
-              readOnly=FALSE,
-              immediate=TRUE )),  # </rowInner2/3>
+            column(
+              width=12,
+              align='center',
+              tags$style(type="text/css", "#string { height: 50px; width: 100%; text-align:center; font-size: 30px; display: block;}"),
+              knobInput(
+                inputId=paste0(inputId.prefix, '_value', i),
+                label=knobInput.label,
+                min=knobInput.min,
+                max=knobInput.max,
+                step=1,
+                value=knobInput.value,
+                pre=NULL,
+                post=knobInput.post,
+                cursor=FALSE,
+                lineCap=c("default", "round")[1],
+                rotation=c("clockwise", "anticlockwise")[1],
+                # px only; doesn't seem to work
+                # width='100px',  
+                # height='100px', 
+                angleOffset=0,
+                angleArc=360,
+                thickness=NULL,
+                displayInput=TRUE,
+                displayPrevious=FALSE,
+                fgColor=NULL,
+                inputColor=NULL,
+                bgColor=NULL,
+                fontSize=NULL,
+                readOnly=FALSE,
+                immediate=TRUE )) ),  # </rowInner2/3>
+          
           tableRow(
             vertical.align='top',
             inner.padding='25px',
@@ -98,9 +105,12 @@ metricBox <- function(
 
 customInterventionBox <- function(i, state) {
   collapse = TRUE
-  if (i == 1)
+  customIntervention_box_switch.value = TRUE
+  if (i == 1) {
     collapse = FALSE
-  
+    customIntervention_box_switch.value = TRUE
+  }
+    
   # conditionalPanel(
   #   condition=paste0(
   #     '(', as.character(i), ' == 1)',
@@ -119,14 +129,14 @@ customInterventionBox <- function(i, state) {
           width=NULL,
           solidHeader=TRUE,
           
-          # Row 0.1/3: Activate 
+          # Row 0.1/2: Activate 
           tableRow(
             inner.padding='25px',
             materialSwitch(
               inputId=paste0(
                 'customIntervention_box_switch', i), 
               label=paste0('Use custom intervention ', i, ' ?'), 
-              value=F,
+              value=customIntervention_box_switch.value,
               right=F,
               status='primary')
           ),
@@ -136,7 +146,7 @@ customInterventionBox <- function(i, state) {
             #   'customIntervention_box_switch', i)]] == TRUE,
             condition=paste0(
               '(input.customIntervention_box_switch', i, ' == true)'),
-          # Row 1/3: Demog & 1 widget ####
+          # Row 1/2: Demog & 1 widget ####
           fluidRow(
             # Col 1/4: Demog ####
             column(
@@ -150,8 +160,9 @@ customInterventionBox <- function(i, state) {
                 solidHeader=TRUE,
                 
                 # wellPanel(
-                  tableRow(
-                    inner.padding='12px',
+                  fluidRow(
+                  # tableRow(
+                  #   inner.padding='6px',
                     map(
                       get.dimension.value.options(
                         version=version,
@@ -159,6 +170,9 @@ customInterventionBox <- function(i, state) {
                         msm_idu_mode=TRUE),
                       function(dim) {
                         column(
+                          # align='center',
+                          # tags$style(type="text/css", "#string { height: 50px; width: 100%; text-align:center; font-size: 30px; display: block;}"),  
+                          tags$style(type="text/css", "#string { height: 50px; width: 100%; display: block; padding-left: 20px; }"),
                           width=page.width / length(
                             get.dimension.value.options(
                               version=version,
@@ -185,8 +199,6 @@ customInterventionBox <- function(i, state) {
                             #   label='Select all',
                             #   value=FALSE),
                             
-                            # TODO: too much spacing in between these
-                            
                           # ),  # </fluidRow>
                           # fluidRow(
                             checkboxGroupInput(
@@ -203,12 +215,12 @@ customInterventionBox <- function(i, state) {
                       })  # </function()/map>
             # )))),  # w/ wellPanel
             )))
-          ),  # </row(1/3)>
+          ),  # </row(1/2)>
             
             
           
           
-          # Row 2/3: 2 widgets ####
+          # Row 2/2: 2 widgets ####
           fluidRow(
             # Col 2/4: Test frequency ####
             metricBox(
@@ -266,45 +278,7 @@ customInterventionBox <- function(i, state) {
               begins to when it is fully implemented',
               column.width=page.width * 1/3)
             
-          ),  # </row 2/3>
-          # Row 3/3: Add more ####
-          # fluidRow(
-          #   column(
-          #     width=page.width,
-          #     conditionalPanel(
-          #       # to-do: replace w/ val from config
-          #       condition=paste0(as.character(i), ' != 5'),
-          #       tableRow(
-          #         vertical.align='top',
-          #         inner.padding='25px',
-          #         checkboxInput(
-          #           inputId=paste0('group_addition_checkbox_', i), 
-          #           label=paste0(
-          #             'Add "Custom intervention ', 
-          #             as.character(as.numeric(i) + 1), '"'), 
-          #           value=FALSE)                  
-          #   )))  # </tableRow/conditionalPanel/column>
-          # )  # </row 3/3>
-          # Row 4.1 / 3 ####
-          tableRow(
-            vertical.align='top',
-            inner.padding='25px',
-            column(
-              width=page.width,
-              fluidRow(
-                # col; width=page.width.half,
-                textInput(
-                  inputId=paste0('intervention_name', i), 
-                  label='Intervention name', 
-                  # value='My intervention', 
-                  placeholder='My intervention') ),
-              fluidRow(
-                # col; width=page.width.half,
-                actionButton(
-                  inputId=paste0('intervention_save', i),
-                  label='Save intervention' ) )
-            )
-          ),
+          )  # </row 2/2>
         # )  # </conditionalPanel>
         ),  # </conditionalPanel>
       )))  # </box/column/row/
@@ -383,6 +357,20 @@ server.routes.designInterventions.get <- function(
            </ol>') )
           
       )),  # </tr/table>
+      
+      verticalSpacer(10),
+      
+      fluidRow(
+      # tableRow(
+      #   vertical.align='top',
+      #   inner.padding='25px',
+        column(
+          width=page.width,
+            textInput(
+              inputId='intervention_name', 
+              label='Intervention name', 
+              # value='My intervention', 
+              placeholder='My intervention') )),
       
       # Custom interventions boxes ####
       map(
