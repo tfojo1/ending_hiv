@@ -19,7 +19,7 @@ library('purrr')
 #version = '1.0'
 page.width = 12
 page.width.half = round(page.width / 2)
-createPresetLabel = "Save settings & create 'preset URL'"
+createPresetLabel = "Create a URL for these Projections"
 
 ##----------------------------------------------------------##
 ##-- SOME HELPERS (that abstract away the 'input' object) --####
@@ -216,7 +216,8 @@ server.routes.runModel.get <- function(input, session, state)
                             width=(page.width * 3 / 4),
                             actionButton(
                               inputId='createPresetId1',
-                              label=createPresetLabel) )
+                              label=createPresetLabel,
+                              icon = icon("globe", lib='font-awesome')) )
                         )
                     ),
                   

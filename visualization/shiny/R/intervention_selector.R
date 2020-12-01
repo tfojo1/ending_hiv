@@ -7,12 +7,13 @@ TAB1.TITLE.FONT.SIZE = '0.85em'
 TAB2.TITLE.COLOR = '#3c8dbc' # '#737CA1' # '#98AFC7'
 TAB2.TITLE.FONT.SIZE = '0.85em'
 
-create.intervention.selector.panel <- function(num, input,
-                                               lump.idu=T,
-                                               title=paste0("Intervention ", num))
-{
+TPOP.SELECTOR.WIDTH = 3#4
+UNIT.SELECTOR.WIDTH = 3#6
+
+create.intervention.selector.panel <- function(
+  num, input, state, lump.idu=T, title=paste0("Intervention ", num)
+) {
     #-- Set up the Pre-Run Panel -_#
-    
     interventions = get.intervention.options(version=get.version(input),
                                              location=get.location(input),
                                              return.intervention.objects = T)
@@ -26,6 +27,7 @@ create.intervention.selector.panel <- function(num, input,
     
     prerun.panel = make.interventions.by.tpop.panel(num=num,
                                                     interventions=interventions,
+                                                    state=state,
                                                     lump.idu=lump.idu)
    
     #-- Make the Custom Intervention Panel --#
@@ -51,11 +53,13 @@ create.intervention.selector.panel <- function(num, input,
         column(width=12,
                tipBox('First, choose from either Pre-Specified or Custom Interventions you have defined',
                       left.arrow = T, left.arrow.align='middle', left.arrow.direction='down'),
-               tabsetPanel(id=paste0("intervention_",num,"_selector"),
-                           selected='prerun',
-                           #color=TAB.TITLE.COLOR,
-                           prerun.wrapper,
-                           custom.wrapper)
+               tabsetPanel(
+                 id=paste0("intervention_",num,"_selector"),
+                 # selected='prerun',
+                 selected=state()[[paste0("intervention_",num,"_selector")]],
+                 #color=TAB.TITLE.COLOR,
+                 prerun.wrapper,
+                 custom.wrapper)
         ))
 }
 
@@ -87,9 +91,19 @@ get.intervention.selection <- function(num, input)
     }
 }
 
-make.interventions.by.tpop.panel <- function(num,
-                                            interventions,
-                                            lump.idu=T)
+
+
+
+
+
+
+
+
+
+
+
+make.interventions.by.tpop.panel <- function(
+  num, interventions, state, lump.idu=T)
 {
     #-- Create a mapping for interventions to target populations and target populations to interventions --#
     
@@ -98,19 +112,23 @@ make.interventions.by.tpop.panel <- function(num,
     else
         interventions.lumped.idu = interventions
     
-    target.population.codes.for.intervention = lapply(interventions.lumped.idu, function(int){
-        sapply(get.target.populations.for.intervention(int), target.population.to.code)
+    target.population.codes.for.intervention = lapply(
+      interventions.lumped.idu, function(int) {
+        sapply(
+          get.target.populations.for.intervention(int), 
+          target.population.to.code)
     })
-    
     
     unique.tpop.codes = unique(target.population.codes.for.intervention)
     
-    interventions.for.unique.tpop.codes = lapply(unique.tpop.codes, function(tpop.codes){
+    interventions.for.unique.tpop.codes = lapply(
+      unique.tpop.codes, function(tpop.codes){
         mask = sapply(target.population.codes.for.intervention, setequal, tpop.codes)
         interventions[mask]
     })
     
-    lumped.idu.interventions.for.unique.tpop.codes = lapply(unique.tpop.codes, function(tpop.codes){
+    lumped.idu.interventions.for.unique.tpop.codes = lapply(
+      unique.tpop.codes, function(tpop.codes){
         mask = sapply(target.population.codes.for.intervention, setequal, tpop.codes)
         interventions.lumped.idu[mask]
     })
@@ -125,7 +143,7 @@ make.interventions.by.tpop.panel <- function(num,
         target.population.codes.to.pretty.name(name, font.size = TAB1.TITLE.FONT.SIZE)
     })
     tpop.choice.values = c(list('none'), lapply(1:length(unique.tpop.codes), function(i){
-        paste0("int",num, "_tpop",i)
+        paste0("int", num, "_tpop", i)
     }))
     names(tpop.choice.names) = names(tpop.choice.values) = NULL
     
@@ -134,7 +152,8 @@ make.interventions.by.tpop.panel <- function(num,
     tpop.selector = radioGroupButtons(tpop.selector.id,
                                       choiceNames=tpop.choice.names,
                                       choiceValues=tpop.choice.values,
-                                      selected=tpop.choice.values[1],
+                                      # selected=tpop.choice.values[1],
+                                      selected=state()[[paste0("preset_tpop_",num)]],
                                       direction = 'vertical',
                                       justified=T,
                                       individual=F,
@@ -159,10 +178,12 @@ make.interventions.by.tpop.panel <- function(num,
             interventions.for.tpop = interventions.for.unique.tpop.codes[[i-1]]
             lumped.interventions.for.tpop = lumped.idu.interventions.for.unique.tpop.codes[[i-1]]
             
-            inner.tabset = make.interventions.by.unit.panel(num=num,
-                                                            interventions = interventions.for.tpop,
-                                                            lumped.interventions = lumped.interventions.for.tpop,
-                                                            selector.id = paste0(tab.id))
+            inner.tabset = make.interventions.by.unit.panel(
+              num=num,
+              interventions = interventions.for.tpop,
+              state=state,
+              lumped.interventions = lumped.interventions.for.tpop,
+              selector.id = paste0(tab.id))
         }
         
         conditionalPanel(
@@ -174,18 +195,35 @@ make.interventions.by.tpop.panel <- function(num,
     
     #-- Make the Panel --#
     nestedWellPanel(fluidRow(
-        column(width=3,
+        column(width=TPOP.SELECTOR.WIDTH,
                tpop.selector),
-        column(width=9,
+        column(width=12-TPOP.SELECTOR.WIDTH,
                style="height: 100%;",
                conditional.panels)
     ))
 }
 
-make.interventions.by.unit.panel <- function(num,
-                                            interventions,
-                                            lumped.interventions,
-                                            selector.id)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+make.interventions.by.unit.panel <- function(
+  num, interventions, state, lumped.interventions, selector.id)
 {
     #-- Sort interventions (and lumped interventions) by unit type --#
     unit.types.for.interventions = lapply(interventions, function(int){
@@ -220,7 +258,8 @@ make.interventions.by.unit.panel <- function(num,
                    #  up.arrow = T, up.arrow.align='center')
     
     # The Unit Selector
-    unit.choice.values = paste0(selector.id, "_unit", 1:length(unique.unit.types.for.interventions))
+    unit.choice.values = paste0(selector.id, "_unit", 
+                                1:length(unique.unit.types.for.interventions))
     unit.choice.names = lapply(unique.unit.types.for.interventions, function(unit.types){
         unit.types.to.pretty.name(unit.types, font.size = TAB2.TITLE.FONT.SIZE)
     })
@@ -229,7 +268,8 @@ make.interventions.by.unit.panel <- function(num,
     unit.selector = radioGroupButtons(selector.id,
                                       choiceNames=unit.choice.names,
                                       choiceValues=unit.choice.values,
-                                      selected=unit.choice.values[1],
+                                      # selected=unit.choice.values[1],
+                                      selected=state()[[selector.id]],
                                       direction = 'vertical',
                                       justified=T,
                                       individual=F,
@@ -251,10 +291,12 @@ make.interventions.by.unit.panel <- function(num,
         choice.names = lapply(choice.names, function(name){div(lump.idu.in.name(name))})
         names(choice.names) = names(choice.values) = NULL
         
-        buttons = radioButtons(inputId = tab.id,
-                     label=NULL,
-                     choiceValues = choice.values,
-                     choiceNames = choice.names)
+        buttons = radioButtons(
+          inputId=tab.id,
+          label=NULL,
+          choiceValues=choice.values,
+          choiceNames=choice.names,
+          selected=state()[[tab.id]])
         
         conditionalPanel(
             condition=paste0("input.", selector.id, "=='", tab.id,"'"),
@@ -268,14 +310,36 @@ make.interventions.by.unit.panel <- function(num,
     nestedWellPanel(level=2,
                     fluidRow(
         style='height: 100%',
-        column(width=3,
+        column(width=UNIT.SELECTOR.WIDTH,
                unit.selector,
                unit.tip.box),
-        column(width=9,
+        column(width=12-UNIT.SELECTOR.WIDTH,
                conditional.panels)
     ))
     
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ##-------------##
 ##-- HELPERS --##

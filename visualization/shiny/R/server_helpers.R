@@ -6,6 +6,7 @@
 ##   main server.R file                 ##
 ##--------------------------------------##
 
+# Plot functionality ####
 ##---------------------------------------------##
 ##-- THE MAIN PLOT/TABLE GENERATING FUNCTION --##
 ##---------------------------------------------##
@@ -166,12 +167,10 @@ make.plotly.message <- function(message=BLANK.MESSAGE)
     plot
 }
 
-
+# Location names ####
 ##--------------------##
 ##-- LOCATION NAMES --##
 ##--------------------##
-
-
 get.location.long.name <- function(location)
 {
     unlist(msa.names(location))
@@ -284,4 +283,18 @@ get.default.download.filename <- function(input,
            paste0(DATA.TYPE.NAMES[data.types], collapse=", "),
            by.suffix,
            ext)
+}
+
+# Modal dialogue boxes ####
+showMessageModal <- function(message) {
+  showModal(
+    modalDialog(
+      title=NULL,
+      footer=modalButton("Dismiss"),
+      size=c("m", "s", "l"),
+      easyClose=FALSE,
+      fade=TRUE,
+      
+      verticalSpacer(40),
+      HTML(paste0('<br/><br/>', message, '<br/><br/>'))))
 }
