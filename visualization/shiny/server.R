@@ -48,91 +48,6 @@ server <- function(input, output, session) {
   # to-do: turn this into a function:
   # to-do: dynamically create:
   state.contents <- list(
-    # Unused
-    'sidebarItemExpanded'='',
-    'sidebarCollapsed'=FALSE,
-    'side_menu'='main',    
-    'plotly_afterplot-A'='"mainPlot"',
-    
-    # Page: run model
-    # Runmodel 1/6: Projections
-    'toggle_main'='Figure',
-    
-    # Runmodel 2/6: Location
-    'geographic_location'=invert.keyVals(
-      get.location.options(version))[1],
-    
-    # Runmodel 3/6: Potential Interventions
-    'no_intervention_checkbox'=TRUE,
-    
-    'preset_tpop_1'='none',
-    'intervention_1_selector'='prerun',
-    
-    'int1_tpop1'='int1_tpop1_unit1',
-    'int1_tpop1_unit1'='ybhm.tq2',
-    'int1_tpop1_unit2'='ybhm.p25',
-    'int1_tpop1_unit3'='ybhm.s80',
-    'int1_tpop1_unit4'='ybhm.1.25.80',
-    # 
-    'int1_tpop2'='int1_tpop2_unit1',
-    'int1_tpop2_unit1'='mi.tq2.ybh.tq1.x',
-    'int1_tpop2_unit2'='mi.p25.ybh.p50.x',
-    'int1_tpop2_unit3'='mi.s80.ybhm.s90.x',
-    'int1_tpop2_unit4'='mi.1.25.80.ybh.high.x',
-    # 
-    'int1_tpop3'='int1_tpop3_unit1',
-    'int1_tpop3_unit1'='het.tq2.mi.tq1.x',
-    'int1_tpop3_unit2'='het.p10.mi.p50.x',
-    'int1_tpop3_unit3'='het.s80.mi.s90.x',
-    'int1_tpop3_unit4'='het.1.10.80.mi.high.x',
-    #
-    'use_intervention_2'=FALSE,
-    'preset_tpop_2'='none',
-    'intervention_2_selector'='prerun',
-    # 
-    'int2_tpop1'='int2_tpop1_unit1',
-    'int2_tpop1_unit1'='ybhm.tq2',
-    'int2_tpop1_unit2'='ybhm.p25',
-    'int2_tpop1_unit3'='ybhm.s80',
-    'int2_tpop1_unit4'='ybhm.1.25.80',
-    # 
-    'int2_tpop2'='int2_tpop2_unit1',
-    'int2_tpop2_unit1'='mi.tq2.ybh.tq1.x',
-    'int2_tpop2_unit2'='mi.p25.ybh.p50.x',
-    'int2_tpop2_unit3'='mi.s80.ybhm.s90.x',
-    'int2_tpop2_unit4'='mi.1.25.80.ybh.high.x',
-    # 
-    'int2_tpop3'='int2_tpop3_unit1',
-    'int2_tpop3_unit1'='het.tq2.mi.tq1.x',
-    'int2_tpop3_unit2'='het.p10.mi.p50.x',
-    'int2_tpop3_unit3'='het.s80.mi.s90.x',
-    'int2_tpop3_unit4'='het.1.10.80.mi.high.x',
-    
-    # Runmodel 4/6: Epidemiological Indicators
-    'epidemiological-indicators'=c('incidence', 'new'),
-    
-    # Runmodel 5/6: Demographic Subgroups
-    'demog.selectAll'=FALSE,
-    # 'sex'=c('male', 'female'),
-    # 'racial-groups'=c('black', 'hispanic', 'other'),
-    # 'age-groups'=c('age1', 'age2', 'age3', 'age4', 'age5'),
-    # 'risk-groups'=c('msm', 'idu', 'msm_idu', 'heterosexual'),
-    'sex'=names(DIMENSION.VALUES[['sex']][['choices']]),
-    'racial-groups'=names(DIMENSION.VALUES[['race']][['choices']]),
-    'age-groups'=names(DIMENSION.VALUES[['age']][['choices']]),
-    'risk-groups'=names(DIMENSION.VALUES[['risk']][['choices']]),    
-    'split'='',
-    'facet'='',
-    'color_by_split_1'=FALSE,    
-    
-    # Runmodel 6/6: Figure Options
-    'plot_format'='individual.simulations',
-    'interval_coverage'=95,
-    'label_change'=TRUE,
-    'change_years'=c(2020, 2030),
-    'color_by'='Intervention',
-    
-    # Page: custom interventions
     'customIntervention_box_switch1'=TRUE,
     'customIntervention_box_switch2'=TRUE,
     'customIntervention_box_switch3'=TRUE,
@@ -156,8 +71,14 @@ server <- function(input, output, session) {
   # Make our session cache the cache available to all sessions
   cache = CACHE
 
-  # Page definitions ####  
-  output$ui_main = server.routes.runModel.get(input, session, state)
+  # Page: RunModel - Def ####  
+  #server.routes.runModel = server.routes.runModel.get(
+  #  input, control, init, param)
+  #output$ui_main = server.routes.runModel[['ui_main']]
+
+  output$ui_main = server.routes.runModel.get(input, session)
+  
+  # Page: Docs (#page-docs): output$introductionText ####
   output$introductionText = server.routes.docs
   output[['design-interventions']] = 
     server.routes.designInterventions.get(input, session, config, state)
@@ -345,21 +266,19 @@ server <- function(input, output, session) {
       input[['n-custom-interventions']]
     state(state.temp)
   })
-  
-  observeEvent(input[['createPresetId1']], {
-    handleCreatePreset(input)
-  })
-  observeEvent(input[['createPresetId2']], {
-    handleCreatePreset(input)
+
+  observeEvent(input[['createPresetId']], {
+    queryStr = presets.urlQueryParamString.create(input)
+    presetId = db.write.queryString(queryStr)
+    msg = paste0('Preset ID created: ', as.character(presetId))
+    output[['createPresetId_msg']] = renderText(msg)
   })
   
   observeEvent(input[['feedback_submit']], {
     name = input[['feedback_name']]
     email = input[['feedback_email']]
     contents = input[['feedback_contents']]
-    db.write.contactForm(
-      name=name, email=email, message=contents)
-    showMessageModal('Your message has been received.')
+    # TODO: @Joe: send email (currently in server.utils)
   })
   
   # for now

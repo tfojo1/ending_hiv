@@ -7,6 +7,9 @@ TAB1.TITLE.FONT.SIZE = '0.85em'
 TAB2.TITLE.COLOR = '#3c8dbc' # '#737CA1' # '#98AFC7'
 TAB2.TITLE.FONT.SIZE = '0.85em'
 
+TPOP.SELECTOR.WIDTH = 3#4
+UNIT.SELECTOR.WIDTH = 3#6
+
 create.intervention.selector.panel <- function(
   num, input, state, lump.idu=T, title=paste0("Intervention ", num)
 ) {
@@ -192,9 +195,9 @@ make.interventions.by.tpop.panel <- function(
     
     #-- Make the Panel --#
     nestedWellPanel(fluidRow(
-        column(width=3,
+        column(width=TPOP.SELECTOR.WIDTH,
                tpop.selector),
-        column(width=9,
+        column(width=12-TPOP.SELECTOR.WIDTH,
                style="height: 100%;",
                conditional.panels)
     ))
@@ -307,10 +310,10 @@ make.interventions.by.unit.panel <- function(
     nestedWellPanel(level=2,
                     fluidRow(
         style='height: 100%',
-        column(width=3,
+        column(width=UNIT.SELECTOR.WIDTH,
                unit.selector,
                unit.tip.box),
-        column(width=9,
+        column(width=12-UNIT.SELECTOR.WIDTH,
                conditional.panels)
     ))
     
