@@ -5,6 +5,7 @@
 # Constants (TEMPORARY) ####
 AGES = list(
   name='age-groups',
+  shortName='age',
   label='Age',
   choices=c(
     age1='13-24 years',
@@ -15,6 +16,7 @@ AGES = list(
 
 RACES = list(
   name='racial-groups',
+  shortName='race',
   label='Race',
   choices=c(
     black="Black",
@@ -23,6 +25,7 @@ RACES = list(
 
 SEXES = list(
   name='sex',
+  shortName='sex',
   label='Sex',
   choices=c(
     male='Male',
@@ -30,6 +33,7 @@ SEXES = list(
 
 RISKS = list(
   name='risk-groups',
+  shortName='risk',
   label='Risk Factor',
   choices=c(
     msm="MSM",
@@ -39,6 +43,7 @@ RISKS = list(
 
 RISKS2 = list(
   name='risk-groups',
+  shortName='risk',
   label='Risk Factor',
   choices=c(
     msm="MSM",
