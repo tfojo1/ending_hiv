@@ -26,7 +26,10 @@ ui <- dashboardPage(
   dashboardSidebar(
     sidebarMenu(#style='position: fixed',
                 id = 'side_menu',
-      menuItem("Visualize Projections", tabName="main", icon=icon("chart-line")),
+      menuItem("Visualize Projections",  
+               
+               tabName="main", icon=icon("chart-line")),
+     
       # menuItem("Parameters", tabName="raw_params", icon=icon("th")),
       menuItem("Custom Interventions", tabName="design-interventions", 
                icon=icon("wrench")),
@@ -46,11 +49,9 @@ ui <- dashboardPage(
         HTML("Generate<BR>Projections"),
         disabled=T),
       href="#top"
-      
-      # menuItem(
-      #   "Sensitivity Analysis", tabName="sens_ana", 
-      #   icon=icon("bar-chart"))
-  ))),
+  )
+
+)),
   
   # Body
   dashboardBody(
