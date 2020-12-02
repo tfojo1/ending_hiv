@@ -48,6 +48,52 @@ server <- function(input, output, session) {
   # to-do: turn this into a function:
   # to-do: dynamically create:
   state.contents <- list(
+    # Unused
+    'sidebarItemExpanded'='',
+    'sidebarCollapsed'=FALSE,
+    'side_menu'='main',    
+    'plotly_afterplot-A'='"mainPlot"',
+    
+    # Page: run model
+    # Runmodel 1/6: Projections
+    'toggle_main'='Figure',
+    
+    # Runmodel 2/6: Location
+    'geographic_location'=invert.keyVals(
+      get.location.options(version))[1],
+    
+    # Runmodel 3/6: Potential Interventions
+    'no_intervention_checkbox'=TRUE,
+    
+    'preset_tpop_1'='none',
+    'intervention_1_selector'='prerun',
+    
+    
+    # Runmodel 4/6: Epidemiological Indicators
+    'epidemiological-indicators'=c('incidence', 'new'),
+    
+    # Runmodel 5/6: Demographic Subgroups
+    'demog.selectAll'=FALSE,
+    # 'sex'=c('male', 'female'),
+    # 'racial-groups'=c('black', 'hispanic', 'other'),
+    # 'age-groups'=c('age1', 'age2', 'age3', 'age4', 'age5'),
+    # 'risk-groups'=c('msm', 'idu', 'msm_idu', 'heterosexual'),
+    'sex'=names(DIMENSION.VALUES[['sex']][['choices']]),
+    'racial-groups'=names(DIMENSION.VALUES[['race']][['choices']]),
+    'age-groups'=names(DIMENSION.VALUES[['age']][['choices']]),
+    'risk-groups'=names(DIMENSION.VALUES[['risk']][['choices']]),    
+    'split'='',
+    'facet'='',
+    'color_by_split_1'=FALSE,    
+    
+    # Runmodel 6/6: Figure Options
+    'plot_format'='individual.simulations',
+    'interval_coverage'=95,
+    'label_change'=TRUE,
+    'change_years'=c(2020, 2030),
+    'color_by'='Intervention',
+    
+    # Page: custom interventions
     'customIntervention_box_switch1'=TRUE,
     'customIntervention_box_switch2'=TRUE,
     'customIntervention_box_switch3'=TRUE,
@@ -71,14 +117,8 @@ server <- function(input, output, session) {
   # Make our session cache the cache available to all sessions
   cache = CACHE
 
-  # Page: RunModel - Def ####  
-  #server.routes.runModel = server.routes.runModel.get(
-  #  input, control, init, param)
-  #output$ui_main = server.routes.runModel[['ui_main']]
-
-  output$ui_main = server.routes.runModel.get(input, session)
-  
-  # Page: Docs (#page-docs): output$introductionText ####
+  # Page definitions ####  
+  output$ui_main = server.routes.runModel.get(input, session, state)
   output$introductionText = server.routes.docs
   output[['design-interventions']] = 
     server.routes.designInterventions.get(input, session, config, state)
@@ -248,25 +288,30 @@ server <- function(input, output, session) {
       input[['n-custom-interventions']]
     state(state.temp)
   })
-
-  observeEvent(input[['createPresetId']], {
-    queryStr = presets.urlQueryParamString.create(input)
-    presetId = db.write.queryString(queryStr)
-    msg = paste0('Preset ID created: ', as.character(presetId))
-    output[['createPresetId_msg']] = renderText(msg)
+  
+  observeEvent(input[['createPresetId1']], {
+    handleCreatePreset(input)
+  })
+  observeEvent(input[['createPresetId2']], {
+    handleCreatePreset(input)
   })
   
   observeEvent(input[['feedback_submit']], {
     name = input[['feedback_name']]
     email = input[['feedback_email']]
     contents = input[['feedback_contents']]
-    # TODO: @Joe: send email (currently in server.utils)
+    db.write.contactForm(
+      name=name, email=email, message=contents)
+    showMessageModal('Your message has been received.')
   })
   
   # @tf/todd: didnt work: 
-  # for (i in 1:5) {
-  #   key = paste0('intervention_save', i)
-  #   observeEvent(input[[key]], {
+  for (i in 1:5) {
+    key = paste0('intervention_save', i)
+    observeEvent(input[[key]], {
+      browser()
+    })
+  }
   # TODO: @Joe
   observeEvent(input[['intervention_save1']], {
       
