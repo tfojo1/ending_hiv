@@ -157,10 +157,13 @@ server.routes.runModel.get <- function(input, session, state)
               tags$td(
                 tipBox(
                   width=12,
-                  'To make projections:<ol>
-           <li> Select a location from the "Locations" tab </li>
-           <li> Select interventions from the "Potential Interventions" tab </li>
-           <li> Click "Generate Projections" </li>
+                  'Welcome to the Johns Hopkins HIV Epidemiological and Economic Model (JHEEM) Web Tool. This tool allows you to make projections of HIV Incidence, Prevalence, Diagnoses, and other HIV outcomes for local epidemics in 32 Metropolitan Statistical Areas (MSAs).
+                  In particular, you can make projections for specific intervention that combine increases in HIV Testing, Pre-Exposure Prophylaxis (PrEP), and/or Viral Suppression among PWH.<BR>
+                  To get started: <ol>
+           <li> Select a Metropolitan Statistical Area from the "Location" box below </li>
+           <li> Select interventions from the "Potential Interventions" box </li>
+           <li> Click "Generate Projections" and look at the resulting Figure and Table</li>
+           <li> (You can also select more HIV Outcomes to visualize, split up demographic subgroups, or customize the figures)
            </ol>')
               )
             )
@@ -217,6 +220,7 @@ server.routes.runModel.get <- function(input, session, state)
                             actionButton(
                               inputId='createPresetId1',
                               label=createPresetLabel,
+                              disabled=T,
                               icon = icon("globe", lib='font-awesome')) )
                         )
                     ),
@@ -335,7 +339,7 @@ server.routes.runModel.get <- function(input, session, state)
         column(
           width=page.width,
           box(
-            width=NULL, title="Epidemiological Indicators",
+            width=NULL, title="HIV Outcomes (Incidence, Prevalence, etc)",
             collapsible=T,
             collapsed=T,
             status="primary", solidHeader=TRUE,

@@ -51,7 +51,9 @@ create.intervention.selector.panel <- function(
     
     fluidRow(
         column(width=12,
-               tipBox('First, choose from either Pre-Specified or Custom Interventions you have defined',
+               tipBox('First, choose from either Pre-Specified or Custom Interventions
+                      <ul><li><b>Pre-Specified Interventions</b> are interventions that have already been designed and run across simulations. You can choose from the list below.</li>
+                      <li><b>Custom Interventions</b> are interventions that you can design using the "Custom Interventions" tab at the left. This allows you to choose any target subgroups and levels of testing, PrEP, and suppression, but will take 5-10 minutes to run.</li></ul>',
                       left.arrow = T, left.arrow.align='middle', left.arrow.direction='down'),
                tabsetPanel(
                  id=paste0("intervention_",num,"_selector"),

@@ -121,7 +121,10 @@ server <- function(input, output, session) {
   output$ui_main = server.routes.runModel.get(input, session, state)
   output$introductionText = server.routes.docs
   output[['design-interventions']] = 
-    server.routes.designInterventions.get(input, session, config, state)
+    renderUI({includeHTML(
+      'tempCustomHolder.html'
+    )}) #temporary placeholder
+#    server.routes.designInterventions.get(input, session, config, state)
   output[['help-and-feedback']] = 
     server.routes.helpAndFeedback.get(input)
 
@@ -156,6 +159,7 @@ server <- function(input, output, session) {
       
       shinyjs::enable('downloadButton.table')
       shinyjs::enable('downloadButton.plot')
+      shinyjs::enable('createPresetId1')
   }
   
   observeEvent(input$run_custom_interventions, {
@@ -323,41 +327,7 @@ server <- function(input, output, session) {
     showMessageModal('Your message has been received.')
   })
   
-<<<<<<< HEAD
-  # @tf/todd: didnt work: 
-  for (i in 1:5) {
-    key = paste0('intervention_save', i)
-    observeEvent(input[[key]], {
-      browser()
-    })
-  }
-  # TODO: @Joe
-  observeEvent(input[['intervention_save1']], {
-      
-  })
-  observeEvent(input[['intervention_save2']], {
-    
-  })
-  observeEvent(input[['intervention_save3']], {
-    
-  })
-  observeEvent(input[['intervention_save4']], {
-    
-  })
-  observeEvent(input[['intervention_save5']], {
-    
-  })
-  
-  # TODO: @Todd/Joe: 
-  # Need 4x5=20 blocks for: dim[['name']], '_switch', i)
-  observeEvent(input[['age_switch1']], {
-    
-  })
-  #... and so on
-  
-  
-=======
->>>>>>> e78797ecf36b9b5d503377a62e8900d2c126393a
+
   # for now
   output$custom_int_msg_1 = renderText(NO.CUSTOM.INTERVENTIONS.MESSAGE)
   

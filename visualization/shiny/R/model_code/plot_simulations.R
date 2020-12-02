@@ -85,7 +85,7 @@ do.plot.simulations <- function(
     simulation.line.size= (if (plot.format=='individual.simulations') 2 else 5) / (10^(!use.plotly)),
     truth.point.size=3*4^use.plotly,
     truth.shapes= if (use.plotly) TRUTH.SHAPES.PLOTLY else TRUTH.SHAPES.GGPLOT,
-    truth.name='Epidemiological Target',
+    truth.name='Observed Outcome',
     truth.color=NULL,
     ribbon.alpha = 0.25,
     
