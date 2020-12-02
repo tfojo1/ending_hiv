@@ -173,7 +173,7 @@ server.routes.runModel.get <- function(input, session, state)
           
           box(
             width=NULL, 
-            title="Projections",
+            title=tags$div(icon("chart-line"), "Projections"),
             collapsible=T,
             collapsed=F,
             status="primary", 
@@ -270,7 +270,7 @@ server.routes.runModel.get <- function(input, session, state)
         column(
           width=page.width,
           box(
-            title="Location",
+            title=tags$div(icon('map-marked-alt'), "Location"),
             collapsible=T,
             collapsed=F,
             status="primary",
@@ -299,7 +299,7 @@ server.routes.runModel.get <- function(input, session, state)
           width=page.width,
           box(
             width=NULL, 
-            title="Potential Interventions",
+            title=tags$div(icon('toolbox'), "Potential Interventions"),
             collapsible=T,
             collapsed=F,
             status="primary", 
@@ -339,7 +339,8 @@ server.routes.runModel.get <- function(input, session, state)
         column(
           width=page.width,
           box(
-            width=NULL, title="HIV Outcomes (Incidence, Prevalence, etc)",
+            width=NULL, 
+            title=tags$div(icon('table'), "HIV Outcomes (Incidence, Prevalence, etc)"),
             collapsible=T,
             collapsed=T,
             status="primary", solidHeader=TRUE,
@@ -379,7 +380,7 @@ server.routes.runModel.get <- function(input, session, state)
         column(
           width=page.width,
           box(
-            title="Demographic Subgroups",
+            title=tags$div(icon('user-friends'), "Demographic Subgroups"),
             collapsible=T,
             collapsed=T,
             status="primary",
@@ -492,7 +493,7 @@ server.routes.runModel.get <- function(input, session, state)
               width=page.width,
               box(
                   width=NULL, 
-                  title="Figure Options",
+                  title=tags$div(icon('palette'), "Figure Options"),
                   collapsible=T,
                   collapsed=T,
                   status="primary", 

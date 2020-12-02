@@ -33,7 +33,7 @@ server.routes.helpAndFeedback.get <- function(input) {
       
       box(
         width=NULL, 
-        title="Feedback",
+        title=tags$div(icon('envelope'), "Contact Form"),
         collapsible=F,
         collapsed=F,
         status="primary", 
