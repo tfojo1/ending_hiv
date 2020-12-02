@@ -173,6 +173,11 @@ verticalSpacer <- function(height, unit='px')
     div(style=paste0("height: ", height, unit))
 }
 
+horizontalSpacer <- function(width, unit='px')
+{
+    div(style=paste0("width: ", width, unit))
+}
+
 make.radioButtonGroup.wrappable <- function(button.group)
 {
     button.group$children[[3]]$children[[1]]$children[[1]] = lapply(button.group$children[[3]]$children[[1]]$children[[1]], function(elem){
@@ -183,6 +188,7 @@ make.radioButtonGroup.wrappable <- function(button.group)
 }
 
 tableRow <- function(...,
+                     fill.width=T,
                      vertical.align='top',
                      inner.padding='25px')
 {
@@ -198,7 +204,13 @@ tableRow <- function(...,
                 style=style)
     })
     
-    tags$table(
-        do.call(tags$tr, tds)
-    )
+    if (fill.width)
+        tags$table(
+            style='width: 100%',
+            do.call(tags$tr, tds)
+        )
+    else
+        tags$table(
+            do.call(tags$tr, tds)
+        )
 }

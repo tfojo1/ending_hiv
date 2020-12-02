@@ -110,6 +110,12 @@ customInterventionBox <- function(i, state) {
     collapse = FALSE
     customIntervention_box_switch.value = TRUE
   }
+  
+  dimension.value.options = get.dimension.value.options(
+    version=version,
+    location=input[['geographic_location']],
+    msm_idu_mode=TRUE)
+  dimension.value.col.width = 12 / length(dimension.value.options)
     
   # conditionalPanel(
   #   condition=paste0(
@@ -153,71 +159,60 @@ customInterventionBox <- function(i, state) {
               width=page.width,
               box(
                 width=NULL, 
-                title="Subgroup selections",
+                title=tags$div(icon('user-friends'), "Targeted Subgroup(s)"),
                 collapsible=F,
                 collapsed=F,
                 status="success", 
                 solidHeader=TRUE,
                 
-                # wellPanel(
-                  fluidRow(
-                  # tableRow(
-                  #   inner.padding='6px',
-                    map(
-                      get.dimension.value.options(
-                        version=version,
-                        location=input[['geographic_location']],
-                        msm_idu_mode=TRUE),
-                      function(dim) {
-                        column(
-                          # align='center',
-                          # tags$style(type="text/css", "#string { height: 50px; width: 100%; text-align:center; font-size: 30px; display: block;}"),  
-                          tags$style(type="text/css", "#string { height: 50px; width: 100%; display: block; padding-left: 20px; }"),
-                          width=page.width / length(
-                            get.dimension.value.options(
-                              version=version,
-                              location=input[['geographic_location']],
-                              msm_idu_mode=TRUE)),
-                          fluidRow(
-                            HTML(paste0('<b>', dim[['label']], '</b>'))
-                          ),  # </fluidRow>
-                          fluidRow( 
-                          # tableRow(
-                          #   vertical.align='top',
-                          #   inner.padding='25px',
-                            
-                            materialSwitch(
-                              inputId=paste0(
-                                dim[['name']], '_switch', i),
-                              label='Select all',
-                              value=FALSE,
-                              right=TRUE,
-                              status='primary'),
-                            # checkboxInput(
-                            #   inputId=paste0(
-                            #     dim[['name']], '_switch', i),
-                            #   label='Select all',
-                            #   value=FALSE),
-                            
-                          # ),  # </fluidRow>
-                          # fluidRow(
-                            checkboxGroupInput(
-                              inputId=paste0(dim[['name']], i),
-                              # label=dim[['label']],
-                              label=NULL,
-                              selected=state()[[
-                                paste0(dim[['name']], i)]],
-                              # selected=names(dim[['choices']]),
-                              choiceNames=unname(dim[['choices']]),
-                              choiceValues=names(dim[['choices']]) )
-                          )  # </fluidRow>
-                        )  # </column>
-                      })  # </function()/map>
-            # )))),  # w/ wellPanel
-            )))
+                tableRow(
+                  lapply(dimension.value.options,
+                         function(dim) {
+                           column(
+                             # align='center',
+                             # tags$style(type="text/css", "#string { height: 50px; width: 100%; text-align:center; font-size: 30px; display: block;}"),  
+                             tags$style(type="text/css", "#string { height: 50px; width: 100%; display: block; padding-left: 20px; }"),
+                             width=dimension.value.col.width,
+                             fluidRow(
+                               HTML(paste0('<b>', dim[['label']], '</b>'))
+                             ),  # </fluidRow>
+                             fluidRow( 
+                               # tableRow(
+                               #   vertical.align='top',
+                               #   inner.padding='25px',
+                               
+                               materialSwitch(
+                                 inputId=paste0(
+                                   dim[['name']], '_switch', i),
+                                 label='Select all',
+                                 value=FALSE,
+                                 right=TRUE,
+                                 status='primary'),
+                               # checkboxInput(
+                               #   inputId=paste0(
+                               #     dim[['name']], '_switch', i),
+                               #   label='Select all',
+                               #   value=FALSE),
+                               
+                               # ),  # </fluidRow>
+                               # fluidRow(
+                               checkboxGroupInput(
+                                 inputId=paste0(dim[['name']], i),
+                                 # label=dim[['label']],
+                                 label=NULL,
+                                 selected=state()[[
+                                   paste0(dim[['name']], i)]],
+                                 # selected=names(dim[['choices']]),
+                                 choiceNames=unname(dim[['choices']]),
+                                 choiceValues=names(dim[['choices']]) )
+                             )  # </fluidRow>
+                           )  # </column>
+                         })
+                )
+              ))
           ),  # </row(1/2)>
-            
-            
+          
+          
           
           
           # Row 2/2: 2 widgets ####
@@ -226,7 +221,7 @@ customInterventionBox <- function(i, state) {
             metricBox(
               i=i,
               inputId.prefix='test_freq_months',
-              box.title='Testing',
+              box.title=div(icon('vial'), "HIV Testing"),
               materialSwitch.label=HTML(
                 '<b>Include testing in intervention</b>'),
               knobInput.label='Frequency of testing 
@@ -246,7 +241,7 @@ customInterventionBox <- function(i, state) {
             metricBox(
               i=i,
               inputId.prefix='prep',
-              box.title='Pre-Exposure Prophylaxis (PrEP)',
+              box.title=div(icon('pills'), 'Pre-Exposure Prophylaxis (PrEP)'), #alt icon: prescription-bottle-alt
               materialSwitch.label=HTML(
                 '<b>Include PrEP in Intervention</b>'),
               knobInput.label='Proportion on PrEP: (this percentage of
@@ -264,7 +259,7 @@ customInterventionBox <- function(i, state) {
             metricBox(
               i=i,
               inputId.prefix='viral_suppression',
-              box.title='Viral Suppression',
+              box.title=div(icon('virus'), 'Viral Suppression'),
               materialSwitch.label=HTML(
                 '<b>Include viral suppression in Intervention</b>'),
               knobInput.label='Suppressed Proportion: (this percentage of 

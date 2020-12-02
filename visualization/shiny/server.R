@@ -121,11 +121,8 @@ server <- function(input, output, session) {
   output$ui_main = server.routes.runModel.get(input, session, state)
   output$introductionText = server.routes.docs
   output[['design-interventions']] = 
-#    renderUI({includeHTML(
-#      'tempCustomHolder.html'
-#    )}) #temporary placeholder
-    renderUI({includeMarkdown('tempCustomHolder.Rmd')})
-#    server.routes.designInterventions.get(input, session, config, state)
+#    renderUI({includeMarkdown('tempCustomHolder.Rmd')}) #This generates a temporary placeholder saying 'coming soon'
+    server.routes.designInterventions.get(input, session, config, state)
   output[['help-and-feedback']] = 
     server.routes.helpAndFeedback.get(input)
 
