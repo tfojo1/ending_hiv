@@ -309,7 +309,9 @@ presets.urlQueryParamString.parse <- function(
 handleCreatePreset <- function(input) {
   queryStr = presets.urlQueryParamString.create(input)
   presetId = db.write.queryString(queryStr)
-  msg = paste0('<p>Preset created! You can instantly reload the state of this app in the future via the url:</p><p>https://dynamic-modeling.shinyapps.io/EndingHIV?preset=', as.character(presetId), '</p>')
+  url = paste0('https://dynamic-modeling.shinyapps.io/EndingHIV?preset=', 
+               as.character(presetId))
+  msg = paste0('<p>Preset created! You can instantly reload the state of this app in the future via the url:</p><p><a href="', url, '">', url, '</a></p>')
   showMessageModal(message=msg)      
 }
 

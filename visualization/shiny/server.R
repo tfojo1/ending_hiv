@@ -174,8 +174,17 @@ server <- function(input, output, session) {
 ##-- INTERVENTION SELECTOR HANDLERS --##
 ##------------------------------------##
   
-  # Demographic dimensions: select all
-  # - Visualize projections
+  ##-- LOCATION HANDLER --##
+  observeEvent(input$geographic_location, {
+    output$mainPlot = renderPlotly(make.plotly.message(BLANK.MESSAGE))
+    message.df = data.frame(BLANK.MESSAGE)
+    names(message.df) = NULL
+    # matrix(BLANK.MESSAGE,nrow=1,ncol=1))
+    output$mainTable = renderDataTable(message.df)  
+    output$mainTable_message = renderText(BLANK.MESSAGE)
+  })
+  
+  # Select All Subgroups: RunModel: selections #
   observeEvent(input$demog.selectAll, {
     if (input$demog.selectAll == 'TRUE') {
       dims.namesAndChoices = map(
@@ -196,68 +205,77 @@ server <- function(input, output, session) {
     }
   })
   
-  # Demographic dimensions: select all
-  # - Custom interventions
-  # TODO: How to implement?
-  # a. static: 5 blocks of these, w/ id suffixes 1-5
-  # b. for loop? for (i in 1:5) input[[paste0('custom...', i)]]
-  # c. reactiveVal? of some sort w/ all the logic inside the UI? if poss?
-  
-  # observeEvent(input$customInterventions.demog.selectAll, {
-  #   if (input$customInterventions.demog.selectAll == 'TRUE') {
-  
-  # to-do: Haven't updated this w/ correct id's, etc yet:
-  #     dims.namesAndChoices = map(
-  #       get.dimension.value.options(
-  #         version=version,
-  #         location=input[['geographic_location']]), 
-  #       function(dim) {
-  #         list(
-  #           'choices'=names(dim[['choices']]),
-  #           'name'=dim[['name']] )
-  #       })
-  #     for (dim in dims.namesAndChoices) {
-  #       updateCheckboxGroupInput(
-  #         session, 
-  #         inputId=dim[['name']], 
-  #         selected=dim[['choices']])
-  #     }
-  #   }
-  # })
-  
-  ##-- LOCATION HANDLER --##
-  observeEvent(input$geographic_location, {
-    output$mainPlot = renderPlotly(make.plotly.message(BLANK.MESSAGE))
-    message.df = data.frame(BLANK.MESSAGE)
-    names(message.df) = NULL
-    # matrix(BLANK.MESSAGE,nrow=1,ncol=1))
-    output$mainTable = renderDataTable(message.df)  
-    output$mainTable_message = renderText(BLANK.MESSAGE)
+  # Select All Subgroups: RunModel: enable/disable #
+  observeEvent(input$demog.selectAll, {
+      checked = input$demog.selectAll
+      dim.value.options = get.dimension.value.options()
+      subgroup.checkbox.ids = unname(
+        sapply(dim.value.options, function(elem){elem$name}))
+      
+      if (checked) {
+        for (i in 1:length(dim.value.options)) {
+            id = subgroup.checkbox.ids[i]
+            shinyjs::disable(id)
+           # updateCheckboxGroupInput(session, inputId=id,
+           #                         selected=dim.value.options[[i]]$choices)
+        }
+      } else
+        for (id in subgroup.checkbox.ids)
+            shinyjs::enable(id)
   })
   
-  # Select All Subgroups #
-  observeEvent(input$demog.selectAll, {
-      
-      checked = input$demog.selectAll
-      
-      dim.value.options = get.dimension.value.options()
-      subgroup.checkbox.ids = unname(sapply(dim.value.options, function(elem){elem$name}))
-      
-      if (checked)
-      {
-          for (i in 1:length(dim.value.options))
-          {
-              id = subgroup.checkbox.ids[i]
-              shinyjs::disable(id)
-        #      updateCheckboxGroupInput(session, inputId=id,
-         #                              selected=dim.value.options[[i]]$choices)
-          }
-      }
-      else
-      {
-          for (id in subgroup.checkbox.ids)
-              shinyjs::enable(id)
-      }
+  # Select All Subgroups: Custom interventions #
+  # get dims
+  customInts.namesAndChoices = map(
+    get.dimension.value.options(
+      version=version,
+      location=input[['geographic_location']],
+      msm_idu_mode=TRUE), 
+    function(dim) {
+      list(
+        'choices'=names(dim[['choices']]),
+        'name'=dim[['name']],
+        'shortName'=dim[['shortName']] )
+    })
+  
+  customInts.checkboxIds = c()
+  customInts.switchIds = c()
+  customInts.dimNames = c()
+  for (i in 1:5) {
+    for (dim in customInts.namesAndChoices) {
+      customInts.switchIds <- c(
+        customInts.switchIds, 
+        paste0(dim[['name']], '_switch', i))
+      customInts.checkboxIds <- c(
+        customInts.checkboxIds, 
+        paste0(dim[['name']], i))
+      customInts.dimNames <- c(
+        customInts.dimNames, 
+        dim[['shortName']])
+    }
+  }
+  
+  observe({
+    lapply(1:length(customInts.switchIds), function(i) {
+      shortName = customInts.dimNames[i]
+      switchId = customInts.switchIds[i]
+      checkboxGroupId = customInts.checkboxIds[i]
+        
+      observeEvent(input[[switchId]], {
+          checked = input[[switchId]]
+          # Update checkboxes
+          if (checked)
+            updateCheckboxGroupInput(
+              session, 
+              inputId=checkboxGroupId, 
+              selected=customInts.namesAndChoices[[shortName]][['choices']])
+          # Enable / disable
+          if (checked)
+            shinyjs::disable(checkboxGroupId)
+          else
+            shinyjs::enable(checkboxGroupId)
+        })
+    })
   })
   
   #This does not seem to be working - take it out?
@@ -305,6 +323,7 @@ server <- function(input, output, session) {
     showMessageModal('Your message has been received.')
   })
   
+<<<<<<< HEAD
   # @tf/todd: didnt work: 
   for (i in 1:5) {
     key = paste0('intervention_save', i)
@@ -337,6 +356,8 @@ server <- function(input, output, session) {
   #... and so on
   
   
+=======
+>>>>>>> e78797ecf36b9b5d503377a62e8900d2c126393a
   # for now
   output$custom_int_msg_1 = renderText(NO.CUSTOM.INTERVENTIONS.MESSAGE)
   
