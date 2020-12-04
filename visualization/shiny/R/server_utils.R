@@ -13,6 +13,7 @@ library('DBI')
 library('stringr')
 
 source('env.R')
+
 # - env.R has to be created manually. It is ignored from the repository 
 # for security reasons. Please create env.R at the location of the 
 # working directory, copy/paste the following placeholder text, and
@@ -309,10 +310,32 @@ presets.urlQueryParamString.parse <- function(
 handleCreatePreset <- function(input) {
   queryStr = presets.urlQueryParamString.create(input)
   presetId = db.write.queryString(queryStr)
-  url = paste0('https://dynamic-modeling.shinyapps.io/EndingHIV?preset=', 
+  url = paste0('https://jheem.shinyapps.io/EndingHIV?preset=', 
                as.character(presetId))
   msg = paste0('<p>Preset created! You can instantly reload the state of this app in the future via the url:</p><p><a href="', url, '">', url, '</a></p>')
   showMessageModal(message=msg)      
+}
+
+reset.handler = function(input, cache) {
+  # Plot & cache
+  plot.and.cache <<- generate.plot.and.table(input, cache)
+  # This is not needed for diskCache; only mem cache:
+  # cache = plot.and.cache$cache
+  
+  # Update the plot
+  data.plot(plot.and.cache$plot)
+  output$mainPlot = renderPlotly(plot.and.cache$plot)
+  
+  # Update the table
+  pretty.table = make.pretty.change.data.frame(
+    plot.and.cache$change.df, data.type.names=DATA.TYPES)
+  data.table(pretty.table)
+  output$mainTable = renderDataTable(pretty.table)
+  output$mainTable_message = NULL
+  
+  shinyjs::enable('downloadButton.table')
+  shinyjs::enable('downloadButton.plot')
+  shinyjs::enable('createPresetId1')
 }
 
 # Test ####

@@ -8,6 +8,7 @@ library('shiny')
 library('shinycssloaders')
 library('shinyWidgets')
 library('purrr')
+source('R/server_utils.R')
 
 # This sourcing will be done by the parent server.R file
 #source("R/plot_shiny_interface.R")  # plot.simulations
@@ -46,22 +47,9 @@ server.routes.runModel.get <- function(input, session, state)
 {
   # Component: PageDef #ui_main[renderUI]
   ui_main = renderUI({
-    urlParams = parseQueryString(
-      session$clientData$url_search)
-    # Pre-processing: URL Params: presetId ####
-    presetKeyUsed = NULL
-    presetPermutations = c(
-      'preset', 'presetId', 'presetID', 'presetID', 'presetid',
-      'PRESETID', 'preset_id', 'preset_ID', 'PRESET_ID')
+    presetId = getPresetIdFromUrl(session)
     
-    for (permu in presetPermutations)
-      if (permu %in% names(urlParams)) {
-        presetKeyUsed = permu
-        break }
-    
-    if (!(is.null(presetKeyUsed))) {
-      presetId = parseQueryString(
-        session$clientData$url_search)[[presetKeyUsed]]
+    if (!(is.null(presetId))) {
       # 1. fetch query string from db
       presetTable.df = db.presets.read.all()
       presetRecord = presetTable.df[presetTable.df$id==presetId,]
@@ -79,6 +67,15 @@ server.routes.runModel.get <- function(input, session, state)
         tempstate[key] = presets[key]
         state(tempstate)
       }
+      
+      # TODO: plot when preset is present
+      # Didn't work; because of this line, I believe: 
+      # plot.and.cache <<- generate.plot.and.table(input, cache)
+      # reset.handler(input, session, state, cache)
+      
+      # Didn't work because: 
+      # Warning: Error in $<-.reactivevalues: Attempted to assign value to a read-only reactivevalues object
+      # input$presetPresent = reactiveVal(TRUE)
     }
     
     # Pre-processing: URL params: location ####

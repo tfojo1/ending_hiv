@@ -26,7 +26,7 @@ source("R/server.routes.docs.R")
 source("R/server.routes.runModel.R")
 source("R/model_code/plot_simulations.R")
 
-# Cache ####
+# Cache setup ####
 ##----------------------##
 ##-- SET UP THE CACHE --##
 ##----------------------##
@@ -43,6 +43,7 @@ CACHE = diskCache(max_size = 20e6)
 ##-- THE MAIN SERVER FUNCTION --##
 ##------------------------------##
 server <- function(input, output, session) {
+  # State, config, cache ####
   config.contents <- list(
     'customInterventions.groups.max'=5)
   # to-do: turn this into a function:
@@ -57,6 +58,7 @@ server <- function(input, output, session) {
     # Page: run model
     # Runmodel 1/6: Projections
     'toggle_main'='Figure',
+    'presetId'=NULL,
     
     # Runmodel 2/6: Location
     'geographic_location'=invert.keyVals(
@@ -127,18 +129,7 @@ server <- function(input, output, session) {
     server.routes.helpAndFeedback.get(input)
 
   # Events: Simulate & plot ####
-  # Plot: Pass to plot event handler function
-  # - Alternative method: ggplotly
-  # `# output$mainPlot = renderPlotly({ p = ggplot(); ggplotly(p) })``
-  
-  # Plot at start:
-  
- # plot.and.cache = plotAndCache(input, cache)
- # cache = plot.and.cache$cache
- # output$mainPlot = plot.and.cache$plot
-  
-  # Plot when clicking 'Run':
-  reset.handler = function(input) {
+  reset.handler = function(input, cache, data.plot) {
       # Plot & cache
       plot.and.cache <<- generate.plot.and.table(input, cache)
       # This is not needed for diskCache; only mem cache:
@@ -160,20 +151,30 @@ server <- function(input, output, session) {
       shinyjs::enable('createPresetId1')
   }
   
+  observeEvent(input$reset_main, {reset.handler(input, cache, data.plot)})
+  observeEvent(input$reset_main_sidebar, {
+      # shinyjs::runjs("window.scrollTo(0, 0)")
+      shinyjs::runjs("window.scrollTo({ top: 0, behavior: 'smooth' })")
+      reset.handler(input, cache, data.plot)
+  })
+  
+  # TODO: plot when preset is present
+  # Warning: Error in $<-.reactivevalues: Attempted to assign value to a read-only reactivevalues object:
+  # observeEvent(input$presetPresent, {
+  #   browser()
+  # })
+  
+  # Didn't work: 
+  # presetId = getPresetIdFromUrl(session)
+  # if (!(is.null(presetId)))
+  #   reset.handler(input, cache, data.plot, output)
+  
+  # Event: Custom interventions ####
   observeEvent(input$run_custom_interventions, {
     # TODO: @tf
   })
-  
-  observeEvent(input$reset_main, {reset.handler(input)})
-  observeEvent(input$reset_main_sidebar, {
-#      shinyjs::runjs("window.scrollTo(0, 0)")
-      shinyjs::runjs("window.scrollTo({ top: 0, behavior: 'smooth' })")
-      reset.handler(input)
-      })
-  
-
-##------------------------------------##  
-##-- INTERVENTION SELECTOR HANDLERS --##
+##------------------------------------##
+  ##-- INTERVENTION SELECTOR HANDLERS --####
 ##------------------------------------##
   
   ##-- LOCATION HANDLER --##
@@ -226,7 +227,7 @@ server <- function(input, output, session) {
             shinyjs::enable(id)
   })
   
-  # Select All Subgroups: Custom interventions #
+  # Select All Subgroups: Custom interventions ####
   # get dims
   customInts.namesAndChoices = map(
     get.dimension.value.options(
@@ -280,14 +281,14 @@ server <- function(input, output, session) {
     })
   })
   
-  #This does not seem to be working - take it out?
+  # This does not seem to be working - take it out? ####
   observeEvent(input$plot_format, {
       updateKnobInput(session, 
                       inputId='interval_coverage',
                       options = list(readOnly = input$plot_format=='individual.simulations'))
   })
   
-  # Download buttons ##
+  # Download buttons ####
   output$downloadButton.table <- downloadHandler(
     filename=function() {get.default.download.filename(input, ext='csv')},
     content=function(filepath) {
@@ -302,6 +303,10 @@ server <- function(input, output, session) {
                             filename: '", get.default.download.filename(input),"'})"))
    })
   
+  # Custom interventions button ####
+  # for now
+  output$custom_int_msg_1 = renderText(NO.CUSTOM.INTERVENTIONS.MESSAGE)
+  
   observeEvent(input[['n-custom-interventions-btn']], {
     state.temp = state()
     state.temp[['n-custom-interventions']] = 
@@ -309,6 +314,7 @@ server <- function(input, output, session) {
     state(state.temp)
   })
   
+  # Preset ID ####
   observeEvent(input[['createPresetId1']], {
     handleCreatePreset(input)
   })
@@ -316,6 +322,7 @@ server <- function(input, output, session) {
     handleCreatePreset(input)
   })
   
+  # Contact form ####
   observeEvent(input[['feedback_submit']], {
     name = input[['feedback_name']]
     email = input[['feedback_email']]
@@ -324,9 +331,5 @@ server <- function(input, output, session) {
       name=name, email=email, message=contents)
     showMessageModal('Your message has been received.')
   })
-  
-
-  # for now
-  output$custom_int_msg_1 = renderText(NO.CUSTOM.INTERVENTIONS.MESSAGE)
   
 }
