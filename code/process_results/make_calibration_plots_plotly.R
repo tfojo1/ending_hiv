@@ -203,7 +203,7 @@ if (1==2)
                           align='left',
                           pad=5,
                           text=paste0('No Intervention:\n<b>&#129094;', 
-                                      round(100*x$change.df$change_2020_to_2030[1]), "%",
+                                      round(100*x$change.df$change_2020_to_2030_mean[1]), "%",
                                       " [", round(100*x$change.df$change_2020_to_2030_interval_lower[1]),
                                       "-",  round(100*x$change.df$change_2020_to_2030_interval_upper[1]),
                                       '%] reduction</b>')
@@ -221,7 +221,7 @@ if (1==2)
                                        ' &#8226; 25% on PrEP\n',
                                        ' &#8226; 90% Suppressed\n',
                                        '<b>&#129094;', 
-                                       round(100*x$change.df$change_2020_to_2030[2]), "%",
+                                       round(100*x$change.df$change_2020_to_2030_mean[2]), "%",
                                        " [", round(100*x$change.df$change_2020_to_2030_interval_lower[2]),
                                        "-",  round(100*x$change.df$change_2020_to_2030_interval_upper[2]),
                                        '%] reduction</b>')

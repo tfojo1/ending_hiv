@@ -62,7 +62,11 @@ create.likelihood.function <- function(data.type=c('new','prevalence','mortality
                                        numerator.chunk.years=numeric(),
                                        numerator.sd = function(...){0},
                                        bias.fn = function(...){0},
-                                       bias.sd = function(...){0})
+                                       bias.sd = function(...){0},
+                                       adjust.likelihood.elements.fn=NULL,
+                                       corr.mat.fn=NULL,
+                                       make.variance.fn=NULL,
+                                       make.cov.mat.fn=NULL)
 {
 #    print(denominator.dimensions)
 
@@ -119,6 +123,9 @@ create.likelihood.function <- function(data.type=c('new','prevalence','mortality
                                                                    numerator.year.to.year.off.correlation=numerator.year.to.year.off.correlation,
                                                                    numerator.chunk.years=numerator.chunk.years
     )
+    
+    if (!is.null(adjust.likelihood.elements.fn))
+        likelihood.elements = adjust.likelihood.elements.fn(likelihood.elements)
 
     if (is.null(likelihood.elements$numerator.covar.mat))
         numerator.covar.mat = NULL
@@ -126,11 +133,14 @@ create.likelihood.function <- function(data.type=c('new','prevalence','mortality
         numerator.covar.mat = likelihood.elements$numerator.covar.mat * sd.inflation.for.observations^2
 
     # Set up the correlation matrix, if needed
-    if (year.to.year.correlation == 0)
+    if (year.to.year.correlation == 0 && is.null(corr.mat.fn))
         corr.mat = NULL
+    else if (!is.null(corr.mat.fn))
+        corr.mat = corr.mat.fn(likelihood.elements, fixed.denominator.elements)
     else
         corr.mat = make.compound.symmetry.by.year.matrix(access(population, year=as.character(years)), correlation=year.to.year.correlation)
 
+    
     ##----------------------------------------------------------------##
     ##-- Set up SD Inflation (if dependent on a data.type or n.obs) --##
     ##----------------------------------------------------------------##
@@ -200,6 +210,11 @@ create.likelihood.function <- function(data.type=c('new','prevalence','mortality
     else
         transformation.mapping = NULL
     
+    if (data.type=='prep')
+        prep.multiplier = get.prep.indications.estimate(ALL.DATA.MANAGERS$prep, location)
+    else
+        prep.multiplier = NULL
+    
     ##----------------------------------------------------##
     ##-- Make and return the actual likelihood function --##
     ##----------------------------------------------------##
@@ -243,7 +258,8 @@ create.likelihood.function <- function(data.type=c('new','prevalence','mortality
                                        data.type=data.type,
                                        years=years,
                                        denominator.dimensions=denominator.dimensions,
-                                       aggregate.denominator.males=aggregate.denominator.males)
+                                       aggregate.denominator.males=aggregate.denominator.males,
+                                       prep.multiplier=prep.multiplier)
         
         # Pass it all to the sub-function to crunch
         likelihood.sub(rates,
@@ -257,7 +273,9 @@ create.likelihood.function <- function(data.type=c('new','prevalence','mortality
                        log=log,
                        sim=jheem.results,
                        transformation.mapping=transformation.mapping,
-                       description= likelihood.elements$descriptions)
+                       description = likelihood.elements$descriptions,
+                       make.variance.fn = make.variance.fn,
+                       make.cov.mat.fn = make.cov.mat.fn)
     }
 }
 
@@ -475,6 +493,136 @@ get.states.for.msa.suppression <- function(msa)
     
     states
 }
+
+
+##---------------------##
+##-- PREP LIKELIHOOD --##
+##---------------------##
+
+# For this likelihood we assume
+# - y = The number of Truvada prescriptions * persistence / fraction scripts captured
+#   (rolling in error for the persistence)
+# - y ~ binomial(n, p_prep * p_indicated)
+# where
+# - (p_prep * p_indicated) ~ Beta with mean p_prep
+
+
+create.prep.likelihood <- function(location,
+                                   years=2012:2018,
+                                   surv=msa.surveillance,
+                                   population,
+                                   numerator.year.to.year.chunk.correlation=0,
+                                   numerator.year.to.year.off.correlation=0,
+                                   numerator.chunk.years=numeric(),
+                                   numerator.sd = function(...){0},
+                                   sd.inflation=1,
+                                   inflate.sd.by.n.obs.per.year=F,
+                                   upweight.by.n.obs.per.year=T,
+                                   by.total=T,
+                                   by.age=T,
+                                   by.sex=T,
+                                   p.indicated.cv=0.25,
+                                   p.indicated.rho=0.9)
+{
+    
+    # Adjust the measurement errors
+    adjust.fn <- function(likelihood.elements)
+    {
+        # Running through a log-normal distribution approximating the log.sd by the cv
+        
+        # Set up cvs for frac recorded and persistence
+        cv.frac.recorded = FRACTION.PREP.STARTS.RECORDED.SD / FRACTION.PREP.STARTS.RECORDED
+        cv.gt.1mo = FRACTION.PREP.GT.1MO.SD / FRACTION.PREP.GT.1MO
+        cv.3mo.to.12mo = PREP.RX.3MO.To.1Y.SD['total'] / PREP.RX.3MO.To.1Y['total']
+        cv.ret.3mo = PREP.RETENTION.3MO.SD / PREP.RETENTION.3MO
+        
+      
+        # x
+        numerator.variances = diag(likelihood.elements$numerator.covar.mat)
+        corr.mat = cov2cor(likelihood.elements$numerator.covar.mat)
+        
+        
+        numerator.cvs.sq = numerator.variances / likelihood.elements$response.vector^2
+        new.cvs.sq = numerator.cvs.sq + 
+            cv.frac.recorded^2 + 
+            cv.gt.1mo^2 +
+            cv.3mo.to.12mo^2 +
+            cv.ret.3mo^2
+        
+        new.means = likelihood.elements$response.vector / FRACTION.PREP.STARTS.RECORDED * 
+            FRACTION.PREP.GT.1MO * PREP.RX.3MO.To.1Y['total'] * PREP.RETENTION.3MO
+        
+        new.sds = sqrt(new.cvs.sq) * new.means
+        new.cov.mat = new.sds %*% t(new.sds) * corr.mat
+        
+        likelihood.elements$response.vector = new.means
+        likelihood.elements$numerator.covar.mat = new.cov.mat
+        
+        likelihood.elements
+    }
+    
+    if (p.indicated.rho==0)
+    {
+        corr.mat.fn = NULL
+        make.cov.mat.fn = NULL
+        
+        make.variance.fn = function(p, n)
+        {
+            n*p*(1-p)+n*(n-1)*p^2*p.indicated.cv^2
+        }
+    }
+    else
+    {
+        corr.mat.fn = function(likelihood.elements, denominator.elements)
+        {
+            match.on = c('age','race','sex','risk')
+            catg = apply(likelihood.elements$from.categories[,match.on], 1, paste0, collapse="_")
+            
+            corr.mat = sapply(1:length(catg), function(i){
+                sapply(1:length(catg), function(j){
+                    p.indicated.rho^(abs(likelihood.elements$from.categories$year[i]-likelihood.elements$from.categories$year[j])) *
+                        as.numeric(catg[i]==catg[j])
+                })
+            })
+            
+            corr.mat
+        }
+
+        make.cov.mat.fn <- function(p, n, corr.mat)
+        {
+            n.p = n*p
+            cov.mat = (n.p * p.indicated.cv) %*% t(n.p * p.indicated.cv) * corr.mat
+            diag(cov.mat) = n.p * (1-p) + n.p*(n-1)*p*p.indicated.cv^2
+            
+            cov.mat
+        }
+        
+        make.variance.fn = NULL
+    }
+    
+    create.likelihood.function(data.type='prep',
+                               years = years,
+                               surv=surv,
+                               location=location,
+                               by.total = by.total,
+                               by.sex=by.sex,
+                               by.age=by.age,
+                               population=population,
+                               denominator.dimensions='year',
+                               msm.cv=0,
+                               idu.cv=0,
+                               sd.inflation=sd.inflation,
+                               year.to.year.correlation = 0,
+                               numerator.year.to.year.chunk.correlation=numerator.year.to.year.chunk.correlation,
+                               numerator.year.to.year.off.correlation=numerator.year.to.year.off.correlation,
+                               numerator.chunk.years=numerator.chunk.years,
+                               numerator.sd = numerator.sd,
+                               adjust.likelihood.elements.fn = adjust.fn,
+                               corr.mat.fn = corr.mat.fn,
+                               make.variance.fn = make.variance.fn,
+                               make.cov.mat.fn = make.cov.mat.fn)
+}
+
 
 ##----------------------------##
 ##-- AWARENESS OF DIAGNOSIS --##
@@ -990,7 +1138,7 @@ create.testing.likelihood <- function(location,
         
         mean.p.ever.by.stratum = 1 - exp(log.mean.1.minus.p.ever.by.stratum + log.var.1.minus.p.ever.by.stratum/2)
         mean.p.ever.by.stratum[mean.p.ever.by.stratum<0] = 0
-            #we can get a <0 probability because of the normal approximation of lognormal
+        #we can get a <0 probability because of the normal approximation of lognormal
         var.p.ever.by.stratum = (exp(log.var.1.minus.p.ever.by.stratum)-1) * exp(2*log.mean.1.minus.p.ever.by.stratum + log.var.1.minus.p.ever.by.stratum)
         
         if (is.na(sd.inflation.total))
@@ -1056,12 +1204,12 @@ create.testing.likelihood <- function(location,
             #by age
             
             lik.age1 = calculate.log.or.likelihood(mean.p.1.by.stratum = mean.p.ever.by.stratum[stratified.years,1,,,,],
-                                                    mean.p.0.by.stratum = mean.p.ever.by.stratum[stratified.years,1,,,,],
-                                                    pop.1 = weights[stratified.years,1,,,,] * total.populations[stratified.years],
-                                                    pop.0 = weights[stratified.years,1,,,,] * total.populations[stratified.years],
-                                                    obs.log.or = obs.log.or.age1,
-                                                    obs.log.or.cov.mat = obs.log.cov.mat.age1,
-                                                    log=log,
+                                                   mean.p.0.by.stratum = mean.p.ever.by.stratum[stratified.years,1,,,,],
+                                                   pop.1 = weights[stratified.years,1,,,,] * total.populations[stratified.years],
+                                                   pop.0 = weights[stratified.years,1,,,,] * total.populations[stratified.years],
+                                                   obs.log.or = obs.log.or.age1,
+                                                   obs.log.or.cov.mat = obs.log.cov.mat.age1,
+                                                   log=log,
                                                    sd.inflation = sd.inflation.stratified)
             
             lik.age2 = calculate.log.or.likelihood(mean.p.1.by.stratum = mean.p.ever.by.stratum[stratified.years,2,,,,],
@@ -1090,20 +1238,20 @@ create.testing.likelihood <- function(location,
                                                    obs.log.or.cov.mat = obs.log.cov.mat.age5,
                                                    log=log,
                                                    sd.inflation = sd.inflation.stratified)
-
+            
             #by sex
             
             weights.male = (weights[stratified.years,,,,'heterosexual_male',] + weights[stratified.years,,,,'msm',])
             lik.female = calculate.log.or.likelihood(mean.p.1.by.stratum = mean.p.ever.by.stratum[stratified.years,,,,'female',],
-                                                    mean.p.0.by.stratum = (mean.p.ever.by.stratum[stratified.years,,,,'heterosexual_male',] * weights[stratified.years,,,,'heterosexual_male',] +
-                                                                    mean.p.ever.by.stratum[stratified.years,,,,'msm',] * weights[stratified.years,,,,'msm',])/
-                                                        weights.male,
-                                                    pop.1 = weights[stratified.years,,,,'female',] * total.populations[stratified.years],
-                                                    pop.0 = weights.male * total.populations[stratified.years],
-                                                    obs.log.or = obs.log.or.female,
-                                                    obs.log.or.cov.mat = obs.log.cov.mat.female,
-                                                    log=log,
-                                                    sd.inflation = sd.inflation.stratified)
+                                                     mean.p.0.by.stratum = (mean.p.ever.by.stratum[stratified.years,,,,'heterosexual_male',] * weights[stratified.years,,,,'heterosexual_male',] +
+                                                                                mean.p.ever.by.stratum[stratified.years,,,,'msm',] * weights[stratified.years,,,,'msm',])/
+                                                         weights.male,
+                                                     pop.1 = weights[stratified.years,,,,'female',] * total.populations[stratified.years],
+                                                     pop.0 = weights.male * total.populations[stratified.years],
+                                                     obs.log.or = obs.log.or.female,
+                                                     obs.log.or.cov.mat = obs.log.cov.mat.female,
+                                                     log=log,
+                                                     sd.inflation = sd.inflation.stratified)
         }
         
         # Decreasing slope
@@ -1175,7 +1323,7 @@ calculate.log.or.likelihood <- function(mean.p.1.by.stratum,
     binomial.var.0 = rowSums(pop.0 * mean.p.0.by.stratum * (1-mean.p.0.by.stratum)) / total.pop.0^2
     log.binomial.var = binomial.var.1 * (1/mean.p.1 - 1/(1-mean.p.1))^2 +
         binomial.var.0 * (1/mean.p.0 - 1/(1-mean.p.0))^2
-   
+    
     cov.mat = obs.log.or.cov.mat + diag(log.binomial.var * sd.inflation^2)
     
     dmvnorm(x=obs.log.or,
@@ -1196,14 +1344,14 @@ create.aids.diagnoses.likelihood <- function(surv=msa.surveillance,
                                              population=get.census.totals(ALL.DATA.MANAGERS$census.totals,
                                                                           location, years=years, flatten.single.dim.array = T),
                                              hiv.to.aids.diagnoses.ratio=mean(c('1999'=1.45,
-                                                                           '2000'=1.56,
-                                                                           '2001'=1.51,
-                                                                           '2002'=1.39,
-                                                                           '2003'=1.35,
-                                                                           '2004'=1.25)[as.character(years)]),
+                                                                                '2000'=1.56,
+                                                                                '2001'=1.51,
+                                                                                '2002'=1.39,
+                                                                                '2003'=1.35,
+                                                                                '2004'=1.25)[as.character(years)]),
                                              hiv.to.aids.diagnoses.ratio.log.sd=0.5*log(1.1),
                                              rho=0.5
-                                             )
+)
 {
     observed.aids = get.surveillance.data(location.codes = location, data.type='aids.diagnoses', years=years)
     obs.sds = numerator.sd(years, observed.aids)
@@ -1212,12 +1360,12 @@ create.aids.diagnoses.likelihood <- function(surv=msa.surveillance,
     cv = obs.sds / observed.aids
     log.var = log(1 + cv^2)
     log.mean = log(observed.aids) - log.var/2
-  
+    
     #add log ratio
     log.ratios = log(hiv.to.aids.diagnoses.ratio) - hiv.to.aids.diagnoses.ratio.log.sd^2/2
     log.mean = log.mean + log.ratios
     log.var = log.var + hiv.to.aids.diagnoses.ratio.log.sd^2
-
+    
     #put back on exp scale
     obs = exp(log.mean + log.var/2)
     obs.var = (exp(log.var)-1) * exp(2*log.mean + log.var)
@@ -1226,12 +1374,12 @@ create.aids.diagnoses.likelihood <- function(surv=msa.surveillance,
     {
         numerators = extract.new.diagnoses(sim, years=years, keep.dimensions = 'year', per.population = NA)
         denominators = extract.population.subset(sim, years=years, keep.dimensions = 'year',
-                                                per.population = NA)
+                                                 per.population = NA)
         
         rates = numerators / denominators
         
-      #  sds = sqrt(population * rates * (1-rates) * sd.inflation^2 + obs.var)
-
+        #  sds = sqrt(population * rates * (1-rates) * sd.inflation^2 + obs.var)
+        
         
         cov.mat = make.compound.symmetry.matrix(sqrt(obs.var), rho) + 
             diag(population * rates * (1-rates) * sd.inflation^2)
@@ -1274,45 +1422,45 @@ create.cumulative.mortality.likelihood <- function(years=1981:2000,
     function(sim, log=T)
     {
         numerators = do.extract.overall.hiv.mortality(sim, years=years, keep.dimensions = c('race','sex','risk'),
-                                                   continuum = 'diagnosed',
-                                                   use.cdc.categorizations = T, per.population = NA)
+                                                      continuum = 'diagnosed',
+                                                      use.cdc.categorizations = T, per.population = NA)
         
         denominator = do.extract.population.subset(sim, years=years, keep.dimensions = character(),
-                                                 use.cdc.categorizations = T, per.population = NA)
+                                                   use.cdc.categorizations = T, per.population = NA)
         
         rates = numerators[mask] / denominator * fraction.captured
         
         sds = sqrt(population * rates * (1-rates) * sd.inflation^2 + numerator.sds^2)
         
- 
-#        cov.mat = make.compound.symmetry.matrix(numerator.sds, rho) +
- #           diag( population * rates * (1-rates) * sd.inflation^2 )
         
-#        cov.mat = make.compound.symmetry.matrix(sqrt(population * rates * (1-rates) * sd.inflation^2), rho) +
+        #        cov.mat = make.compound.symmetry.matrix(numerator.sds, rho) +
+        #           diag( population * rates * (1-rates) * sd.inflation^2 )
+        
+        #        cov.mat = make.compound.symmetry.matrix(sqrt(population * rates * (1-rates) * sd.inflation^2), rho) +
         #   diag(numerator.sds^2)   
-     #   cbind(observed, sim=rates*population, sd=sqrt(diag(cov.mat)), model=sqrt(population*rates*(1-rates)*sd.inflation^2),
-      #        obs=numerator.sds)
-      
+        #   cbind(observed, sim=rates*population, sd=sqrt(diag(cov.mat)), model=sqrt(population*rates*(1-rates)*sd.inflation^2),
+        #        obs=numerator.sds)
+        
         piecewise = dnorm(x = observed,
                           mean = rates * population, 
                           sd = sds,
                           log = log)
-
-    if (verbose)
-    {
-        print(cbind(melt(numerators/denominator*population)[mask,], observed, d=piecewise))
-        print(c(sim=sum(rates*population), obs=sum(observed)))
-    }
-
+        
+        if (verbose)
+        {
+            print(cbind(melt(numerators/denominator*population)[mask,], observed, d=piecewise))
+            print(c(sim=sum(rates*population), obs=sum(observed)))
+        }
+        
         if (log)
             sum(piecewise)
         else
             prod(piecewise)
         
-    #    dmvnorm(x = observed,
-    #            mean = rates * population,
-    #            sigma = cov.mat,
-    #            log=log)
+        #    dmvnorm(x = observed,
+        #            mean = rates * population,
+        #            sigma = cov.mat,
+        #            log=log)
     }
 }
 
@@ -1335,44 +1483,44 @@ create.idu.likelihood <- function(idu.manager=ALL.DATA.MANAGERS$idu,
         fips = location
     if (any(is.na(county.names(fips))))
         stop("Invalid location - does not match a state, MSA, or county")
-
+    
     idu.abs.proportions = get.aggregate.idu.proportions(idu.manager=idu.manager,
-                                                    census=census,
-                                                    fips=fips,
-                                                    years=years)
-
+                                                        census=census,
+                                                        fips=fips,
+                                                        years=years)
+    
     idu.relative.proportions = get.relative.idu.proportions(idu.manager=idu.manager,
-                                                           census=census,
-                                                           fips=fips,
-                                                           years=years)
-
+                                                            census=census,
+                                                            fips=fips,
+                                                            years=years)
+    
     names(idu.relative.proportions$idu.30d.by.age) = paste0('active_', names(idu.relative.proportions$idu.30d.by.age))
     names(idu.relative.proportions$idu.prior.by.age) = paste0('remission_', names(idu.relative.proportions$idu.30d.by.age))
-
+    
     names(idu.relative.proportions$idu.30d.by.race) = paste0('active_', names(idu.relative.proportions$idu.30d.by.race))
     names(idu.relative.proportions$idu.prior.by.race) = paste0('remission_', names(idu.relative.proportions$idu.prior.by.race))
-
+    
     names(idu.relative.proportions$idu.30d.by.sex) = paste0('active_', names(idu.relative.proportions$idu.30d.by.sex))
     names(idu.relative.proportions$idu.prior.by.sex) = paste0('remission_', names(idu.relative.proportions$idu.prior.by.sex))
-
+    
     function(sim, log=T)
     {
         MIN = 0.000000001
         #-- Total Prevalence --#
         sim.active.idu.prevalence = max(MIN,extract.population.subset(sim, years=years, risk='active_IDU', keep.dimensions=character()) /
-            extract.population.subset(sim, years=years, keep.dimensions=character()))
+                                            extract.population.subset(sim, years=years, keep.dimensions=character()))
         sim.idu.in.remission.prevalence = max(MIN, extract.population.subset(sim, years=years, risk='IDU_in_remission', keep.dimensions=character()) /
-            extract.population.subset(sim, years=years, keep.dimensions=character()))
-
+                                                  extract.population.subset(sim, years=years, keep.dimensions=character()))
+        
         likelihood.components = c(active_prevalence=dnorm(log(idu.abs.proportions$idu.30d), mean=log(sim.active.idu.prevalence), sd=log.sd, log=log),
                                   remission_prevalence=dnorm(log(idu.abs.proportions$idu.prior), mean=log(sim.idu.in.remission.prevalence), sd=log.sd, log=log))
-
+        
         #-- Age Ratios --#
         sim.active.idu.by.age = pmax(MIN,extract.population.subset(sim, years=years, risk='active_IDU', keep.dimensions='age') /
-            extract.population.subset(sim, years=years, keep.dimensions='age'))
+                                         extract.population.subset(sim, years=years, keep.dimensions='age'))
         sim.idu.in.remission.by.age = pmax(MIN, extract.population.subset(sim, years=years, risk='IDU_in_remission', keep.dimensions='age') /
-            extract.population.subset(sim, years=years, keep.dimensions='age'))
-
+                                               extract.population.subset(sim, years=years, keep.dimensions='age'))
+        
         mask = idu.relative.proportions$idu.30d.by.age != 1
         likelihood.components = c(likelihood.components, dnorm(log(idu.relative.proportions$idu.30d.by.age[mask]),
                                                                mean=log(sim.active.idu.by.age[mask]) - log(sim.active.idu.by.age[!mask]),
@@ -1380,13 +1528,13 @@ create.idu.likelihood <- function(idu.manager=ALL.DATA.MANAGERS$idu,
         likelihood.components = c(likelihood.components, dnorm(log(idu.relative.proportions$idu.prior.by.age[mask]),
                                                                mean=log(sim.idu.in.remission.by.age[mask]) - log(sim.idu.in.remission.by.age[!mask]),
                                                                sd = log.sd, log=log))
-
+        
         #-- Sex Ratios --#
         sim.active.idu.by.sex = pmax(MIN,extract.population.subset(sim, years=years, risk='active_IDU', keep.dimensions='sex') /
-            extract.population.subset(sim, years=years, keep.dimensions='sex'))
+                                         extract.population.subset(sim, years=years, keep.dimensions='sex'))
         sim.idu.in.remission.by.sex = pmax(MIN,extract.population.subset(sim, years=years, risk='IDU_in_remission', keep.dimensions='sex') /
-            extract.population.subset(sim, years=years, keep.dimensions='sex'))
-
+                                               extract.population.subset(sim, years=years, keep.dimensions='sex'))
+        
         mask = idu.relative.proportions$idu.30d.by.sex != 1
         likelihood.components = c(likelihood.components, dnorm(log(idu.relative.proportions$idu.30d.by.sex[mask]),
                                                                mean=log(sim.active.idu.by.sex[mask]) - log(sim.active.idu.by.sex[!mask]),
@@ -1394,13 +1542,13 @@ create.idu.likelihood <- function(idu.manager=ALL.DATA.MANAGERS$idu,
         likelihood.components = c(likelihood.components, dnorm(log(idu.relative.proportions$idu.prior.by.sex[mask]),
                                                                mean=log(sim.idu.in.remission.by.sex[mask] - log(sim.idu.in.remission.by.sex[!mask])),
                                                                sd = log.sd, log=log))
-
+        
         #-- Race Ratios --#
         sim.active.idu.by.race = pmax(MIN,extract.population.subset(sim, years=years, risk='active_IDU', keep.dimensions='race') /
-            extract.population.subset(sim, years=years, keep.dimensions='race'))
+                                          extract.population.subset(sim, years=years, keep.dimensions='race'))
         sim.idu.in.remission.by.race = pmax(MIN,extract.population.subset(sim, years=years, risk='IDU_in_remission', keep.dimensions='race') /
-            extract.population.subset(sim, years=years, keep.dimensions='race'))
-
+                                                extract.population.subset(sim, years=years, keep.dimensions='race'))
+        
         mask = idu.relative.proportions$idu.30d.by.race != 1
         likelihood.components = c(likelihood.components, dnorm(log(idu.relative.proportions$idu.30d.by.race[mask]),
                                                                mean=log(sim.active.idu.by.race[mask]) - log(sim.active.idu.by.race[!mask]),
@@ -1408,10 +1556,10 @@ create.idu.likelihood <- function(idu.manager=ALL.DATA.MANAGERS$idu,
         likelihood.components = c(likelihood.components, dnorm(log(idu.relative.proportions$idu.prior.by.race[mask]),
                                                                mean=log(sim.idu.in.remission.by.race[mask]) - log(sim.idu.in.remission.by.race[!mask]),
                                                                sd = log.sd, log=log))
-
+        
         if (verbose)
             print(likelihood.components)
-
+        
         if (log)
             sum(likelihood.components)
         else
@@ -1438,7 +1586,7 @@ create.joint.likelihood.function <- function(...)
         else
             sub.likelihoods = c(sub.likelihoods, args[i])
     }
-
+    
     function(jheem.results, log=T, verbose=F){
         if (jheem.results$terminated)
         {
@@ -1447,19 +1595,19 @@ create.joint.likelihood.function <- function(...)
             else
                 return (0)
         }
-
-
+        
+        
         sub.values = sapply(sub.likelihoods, function(lik){
             lik(jheem.results, log=log)
         })
-
+        
         if (verbose)
             print(paste0("Likelihood components: ",
                          paste0(names(sub.likelihoods), '=', sub.values, collapse = ', ')))
-
+        
         if (any(is.na(sub.values)))
         {
-           # browser()
+            # browser()
             if (log)
                 return (-Inf)
             else
@@ -1487,24 +1635,24 @@ make.transformation.mapping <- function(transformation.matrix)
     col.signatures = apply(transformation.matrix, 2, paste0, collapse=',')#paste0(denominators, '-', apply(transformation.matrix, 2, paste0, collapse=','))
     unique.col.signatures = unique(col.signatures)
     n.signatures = length(unique.col.signatures)
-
+    
     rv = list()
     rv$index.to.signature = sapply(col.signatures, function(signature){
         (1:n.signatures)[signature==unique.col.signatures]
     })
-
+    
     rv$signature.to.index = lapply(1:n.signatures, function(i){
         (1:n.col)[rv$index.to.signature==i]
     })
-
+    
     rv$collapsing.matrix = sapply(1:n.signatures, function(i){
         row = rep(0, n.col)
         row[rv$signature.to.index[[i]]] = 1
         row
     })
-
+    
     rv$first.in.signature = sapply(rv$signature.to.index, function(s2i){s2i[1]})
-
+    
     rv
 }
 
@@ -1534,55 +1682,62 @@ pull.simulations.rates <- function(jheem.results,
                                    data.type=c('new','prevalence','mortality','aware'),
                                    years,
                                    denominator.dimensions,
-                                   aggregate.denominator.males=T)
+                                   aggregate.denominator.males=T,
+                                   multiply.prep.by.p.indicated=T,
+                                   prep.multiplier=NULL)
 {
     if (data.type=='new')
         numerators = extract.new.diagnoses(jheem.results,
-                                      years=years,
-                                      keep.dimensions = c('year', 'age','race','sex','risk'),
-                                      per.population = NA)
+                                           years=years,
+                                           keep.dimensions = c('year', 'age','race','sex','risk'),
+                                           per.population = NA)
     else if (data.type=='prevalence')
         numerators = extract.prevalence(jheem.results, continuum='diagnosed',
-                                   years=years,
-                                   keep.dimensions = c('year', 'age','race','sex','risk'),
-                                   per.population = NA)
+                                        years=years,
+                                        keep.dimensions = c('year', 'age','race','sex','risk'),
+                                        per.population = NA)
     else if (data.type=='mortality')
         numerators = extract.overall.hiv.mortality(jheem.results,
-                                              years=years,
-                                              keep.dimensions = c('year', 'age','race','sex','risk'),
-                                              per.population = NA)
+                                                   years=years,
+                                                   keep.dimensions = c('year', 'age','race','sex','risk'),
+                                                   per.population = NA)
     else if (data.type=='aware')
         numerators = extract.prevalence(jheem.results, years=years,
                                         continuum = 'diagnosed',
                                         keep.dimensions = c('year', 'age','race','sex','risk'),
                                         per.population = NA)
+    else if (data.type=='prep')
+        numerators = extract.prep.coverage(jheem.results, years=years,
+                                           keep.dimensions = c('year','age','race','sex','risk'),
+                                           per.population = NA,
+                                           multiplier = prep.multiplier)
     else
-        stop("data.type must be one of 'new', 'prevalence', 'mortality', or 'aware'")
-
+        stop("data.type must be one of 'new', 'prevalence', 'mortality', 'aware', or 'prep")
+    
     if (data.type=='aware')
         denominators = extract.prevalence(jheem.results, years=years,
                                           keep.dimensions=denominator.dimensions,
                                           per.population = NA)    
     else
         denominators = extract.population.subset(jheem.results, years=years,
-                                             keep.dimensions = denominator.dimensions)
-
+                                                 keep.dimensions = denominator.dimensions)
+    
     denominators = expand.population(denominators, target.dim.names = dimnames(numerators))
-
+    
     if (aggregate.denominator.males && any(denominator.dimensions=='sex'))
     {
         males = denominators[,,,'msm',] + denominators[,,,'heterosexual_male',]
         denominators[,,,'msm',] = males
         denominators[,,,'heterosexual_male',] = males
     }
-
+    
     numerators / denominators
 }
 
 pull.simulations.rates.per.total.population <- function(jheem.results,
-                                   data.type=c('new','prevalence','mortality'),
-                                   mapping=NULL,
-                                   years)
+                                                        data.type=c('new','prevalence','mortality'),
+                                                        mapping=NULL,
+                                                        years)
 {
     if (data.type=='new')
         numerators = extract.new.diagnoses(jheem.results,
@@ -1601,10 +1756,10 @@ pull.simulations.rates.per.total.population <- function(jheem.results,
                                                    per.population = NA)
     else
         stop("data.type must be one of 'new', 'prevalence', or 'mortality")
-
+    
     denominators = extract.population.subset(jheem.results, years=years,
                                              keep.dimensions = 'year')
-
+    
     sum.for.matrix.mapping(numerators / denominators, mapping)
 }
 
@@ -1620,34 +1775,47 @@ likelihood.sub <- function(pre.transformation.rates,
                            sd.inflation=1,
                            log=T,
                            sim=NULL, #these last two arguments are for debugging purposes
-                           description=NULL)
+                           description=NULL,
+                           make.variance.fn=NULL,
+                           make.cov.mat.fn=NULL)
 {
     pre.transformation.rates = as.numeric(pre.transformation.rates)
-
-    pre.transformation.rates = pmin(1,pmax(0, pre.transformation.rates))
-
-    if (is.null(transformation.mapping))
-    {
-        n.p = pre.transformation.rates * denominator.vector
-        n.p.1mp = pre.transformation.rates * (1 - pre.transformation.rates) * denominator.vector
-    }
-    else
-    {
-        n.p = sum.for.matrix.mapping(pre.transformation.rates* denominator.vector, transformation.mapping)
-        n.p.1mp = sum.for.matrix.mapping(pre.transformation.rates * (1 - pre.transformation.rates)* denominator.vector,
-                                       transformation.mapping)
-    }
     
-    if (is.null(corr.mat))
-        binomial.variance.component = diag(n.p.1mp)
+    pre.transformation.rates = pmin(1,pmax(0, pre.transformation.rates))
+    
+    n.p = pre.transformation.rates * denominator.vector
+    if (is.null(make.cov.mat.fn))
+    {
+        if (is.null(make.variance.fn))
+            variance.terms = pre.transformation.rates * (1 - pre.transformation.rates) * denominator.vector
+        else
+            variance.terms = make.variance.fn(p=pre.transformation.rates,
+                                              n=denominator.vector)
+        
+        if (!is.null(transformation.mapping))
+            variance.terms = sum.for.matrix.mapping(variance.terms, transformation.mapping)
+        
+        
+        if (is.null(corr.mat))
+            binomial.variance.component = diag(variance.terms)
+        else
+        {
+            sds = sqrt(variance.terms)
+            binomial.variance.component = sds %*% t(sds) * corr.mat
+        }
+    }
     else
     {
-        sds = sqrt(n.p.1mp)
-        binomial.variance.component = sds %*% t(sds) * corr.mat
+        binomial.variance.component = make.cov.mat.fn(p=pre.transformation.rates,
+                                                      n=denominator.vector,
+                                                      corr.mat=corr.mat)    
     }
+
+    if (!is.null(transformation.mapping))
+        n.p = sum.for.matrix.mapping(n.p, transformation.mapping)
 
     mean.vector = transformation.matrix %*% n.p
-
+    
     if (is.null(denominator.covar.mat))
     {
         covar.mat = transformation.matrix %*%
@@ -1658,23 +1826,23 @@ likelihood.sub <- function(pre.transformation.rates,
     {
         denominator.variance.component = denominator.covar.mat *
             pre.transformation.rates %*% t(pre.transformation.rates)
-
+        
         covar.mat = transformation.matrix %*%
             (binomial.variance.component + denominator.variance.component) %*%
             t(transformation.matrix)
     }
-
+    
     if (is(sd.inflation, 'function'))
         sd.inflation = sd.inflation(description)
-
+    
     if (length(sd.inflation)==1)
         covar.mat = covar.mat * sd.inflation^2
     else
         covar.mat = covar.mat * (sd.inflation %*% t(sd.inflation))
-
+    
     if (!is.null(numerator.covar.mat))
         covar.mat = covar.mat + numerator.covar.mat
-
+    
     #for debugging
     if (1==2)
     {
@@ -1692,7 +1860,7 @@ likelihood.sub <- function(pre.transformation.rates,
             mask = grepl(regex, description)
             mean(mean.vector[mask])
         })
-
+        
         cbind(mean=sapply(catg.minus.year, function(catg){
             regex = gsub('\\+', '\\\\+', catg)
             mask = grepl(regex, description)
@@ -1707,7 +1875,7 @@ likelihood.sub <- function(pre.transformation.rates,
                     log=log)
         }))
     }
-
+    
     if (1==2)
     {
         mask = grepl('idu', description) & !grepl('msm', description)
@@ -1722,9 +1890,9 @@ likelihood.sub <- function(pre.transformation.rates,
                                       log=log)))
         mask = grepl('idu', description) & grepl('msm', description)
         print(paste0('msm+idu: ', dmvnorm(x=response.vector[mask],
-                                      mean=mean.vector[mask],
-                                      sigma=covar.mat[mask,mask],
-                                      log=log)))
+                                          mean=mean.vector[mask],
+                                          sigma=covar.mat[mask,mask],
+                                          log=log)))
         mask = grepl('het', description)
         print(paste0('het: ', dmvnorm(x=response.vector[mask],
                                       mean=mean.vector[mask],
@@ -1740,16 +1908,16 @@ likelihood.sub <- function(pre.transformation.rates,
                                             log=log)))
         mask = grepl('idu', description) & !grepl('msm', description) & grepl('hispanic', description)
         print(paste0('hispanic idu: ', dmvnorm(x=response.vector[mask],
-                                            mean=mean.vector[mask],
-                                            sigma=covar.mat[mask,mask],
-                                            log=log)))
+                                               mean=mean.vector[mask],
+                                               sigma=covar.mat[mask,mask],
+                                               log=log)))
         mask = grepl('idu', description) & !grepl('msm', description) & grepl('other', description)
         print(paste0('other idu: ', dmvnorm(x=response.vector[mask],
                                             mean=mean.vector[mask],
                                             sigma=covar.mat[mask,mask],
                                             log=log)))
     }
-
+    
     dmvnorm(x=as.numeric(response.vector),
             mean=as.numeric(mean.vector),
             sigma=covar.mat,
@@ -1784,7 +1952,8 @@ create.likelihood.elements.for.data.type <- function(data.type=c('new','prevalen
                                                      ages=c('13-24 years', '25-34 years', '35-44 years', '45-54 years', '55+ years'),
                                                      races=c('black','hispanic','other'),
                                                      sexes=c('heterosexual_male','msm','female'),
-                                                     risks=c('never_IDU','active_IDU','IDU_in_remission')
+                                                     risks=c('never_IDU','active_IDU','IDU_in_remission'),
+                                                     na.rm=F
 )
 {
     #-- Set Up Indexing --#
@@ -1792,21 +1961,21 @@ create.likelihood.elements.for.data.type <- function(data.type=c('new','prevalen
     jheem.skeleton = array(0,
                            dim=sapply(dim.names, length),
                            dimnames = dim.names)
-
+    
     #-- Set Up Full Response Vector and Transformation Matrix --#
-
+    
     response.vector = numeric()
     transformation.matrix = NULL
     numerator.covar.mat = NULL
     descriptions = character()
-
+    
     if (by.total)
     {
-        cdc.arr = get.surveillance.data(surv, location, data.type=data.type, years=years, throw.error.if.missing.data = F)
+        cdc.arr = get.surveillance.data(surv, location, data.type=data.type, years=years, throw.error.if.missing.data = F, na.rm=na.rm)
         if (!is.null(cdc.arr))
         {
             tmrv = make.transformation.matrix.and.response.vector(cdc.arr=cdc.arr, jheem.skeleton=jheem.skeleton)
-    
+            
             sds = numerator.sd(years=tmrv$year, num=tmrv$response.vector)
             if (length(sds)==1)
                 sds = rep(sds, length(tmrv$response.vector))
@@ -1827,18 +1996,18 @@ create.likelihood.elements.for.data.type <- function(data.type=c('new','prevalen
                                                                             years=tmrv$year,
                                                                             categories=tmrv$non.year.descriptions,
                                                                             chunk.years=numerator.chunk.years)
-    #        one.numerator.covar.mat = make.compound.symmetry.matrix(sds=sds,
-    #                                                                rho=numerator.year.to.year.correlation)
-    
+            #        one.numerator.covar.mat = make.compound.symmetry.matrix(sds=sds,
+            #                                                                rho=numerator.year.to.year.correlation)
+            
             numerator.covar.mat = join.independent.covariance.matrices(numerator.covar.mat,
                                                                        one.numerator.covar.mat)
             descriptions = c(descriptions, tmrv$descriptions)
         }
     }
-
+    
     if (by.sex)
     {
-        cdc.arr = get.surveillance.data(surv, location, data.type=data.type, years=years, sex=T, throw.error.if.missing.data = F)
+        cdc.arr = get.surveillance.data(surv, location, data.type=data.type, years=years, sex=T, throw.error.if.missing.data = F, na.rm=na.rm)
         if (!is.null(cdc.arr))
         {
             tmrv = make.transformation.matrix.and.response.vector(cdc.arr=cdc.arr, jheem.skeleton=jheem.skeleton)
@@ -1863,18 +2032,18 @@ create.likelihood.elements.for.data.type <- function(data.type=c('new','prevalen
                                                                             years=tmrv$year,
                                                                             categories=tmrv$non.year.descriptions,
                                                                             chunk.years=numerator.chunk.years)
-    #        one.numerator.covar.mat = make.compound.symmetry.matrix(sds=sds,
-    #                                                                rho=numerator.year.to.year.correlation)
-    
+            #        one.numerator.covar.mat = make.compound.symmetry.matrix(sds=sds,
+            #                                                                rho=numerator.year.to.year.correlation)
+            
             numerator.covar.mat = join.independent.covariance.matrices(numerator.covar.mat,
                                                                        one.numerator.covar.mat)
             descriptions = c(descriptions, tmrv$descriptions)
         }
     }
-
+    
     if (by.race)
     {
-        cdc.arr = get.surveillance.data(surv, location, data.type=data.type, years=years, race=T, throw.error.if.missing.data = F)
+        cdc.arr = get.surveillance.data(surv, location, data.type=data.type, years=years, race=T, throw.error.if.missing.data = F, na.rm=na.rm)
         if (!is.null(cdc.arr))
         {
             tmrv = make.transformation.matrix.and.response.vector(cdc.arr=cdc.arr, jheem.skeleton=jheem.skeleton)
@@ -1899,18 +2068,18 @@ create.likelihood.elements.for.data.type <- function(data.type=c('new','prevalen
                                                                             years=tmrv$year,
                                                                             categories=tmrv$non.year.descriptions,
                                                                             chunk.years=numerator.chunk.years)
-    #        one.numerator.covar.mat = make.compound.symmetry.matrix(sds=sds,
-    #                                                                rho=numerator.year.to.year.correlation)
-    
+            #        one.numerator.covar.mat = make.compound.symmetry.matrix(sds=sds,
+            #                                                                rho=numerator.year.to.year.correlation)
+            
             numerator.covar.mat = join.independent.covariance.matrices(numerator.covar.mat,
                                                                        one.numerator.covar.mat)
             descriptions = c(descriptions, tmrv$descriptions)
         }
     }
-
+    
     if (by.age)
     {
-        cdc.arr = get.surveillance.data(surv, location, data.type=data.type, years=years, age=T, throw.error.if.missing.data = F)
+        cdc.arr = get.surveillance.data(surv, location, data.type=data.type, years=years, age=T, throw.error.if.missing.data = F, na.rm=na.rm)
         if (!is.null(cdc.arr))
         {
             tmrv = make.transformation.matrix.and.response.vector(cdc.arr=cdc.arr, jheem.skeleton=jheem.skeleton)
@@ -1935,18 +2104,18 @@ create.likelihood.elements.for.data.type <- function(data.type=c('new','prevalen
                                                                             years=tmrv$year,
                                                                             categories=tmrv$non.year.descriptions,
                                                                             chunk.years=numerator.chunk.years)
-    #        one.numerator.covar.mat = make.compound.symmetry.matrix(sds=sds,
-    #                                                                rho=numerator.year.to.year.correlation)
-    
+            #        one.numerator.covar.mat = make.compound.symmetry.matrix(sds=sds,
+            #                                                                rho=numerator.year.to.year.correlation)
+            
             numerator.covar.mat = join.independent.covariance.matrices(numerator.covar.mat,
                                                                        one.numerator.covar.mat)
             descriptions = c(descriptions, tmrv$descriptions)
         }
     }
-
+    
     if (by.risk)
     {
-        cdc.arr = get.surveillance.data(surv, location, data.type=data.type, years=years, risk=T, throw.error.if.missing.data = F)
+        cdc.arr = get.surveillance.data(surv, location, data.type=data.type, years=years, risk=T, throw.error.if.missing.data = F, na.rm=na.rm)
         if (!is.null(cdc.arr))
         {
             tmrv = make.transformation.matrix.and.response.vector(cdc.arr=cdc.arr, jheem.skeleton=jheem.skeleton)
@@ -1971,18 +2140,18 @@ create.likelihood.elements.for.data.type <- function(data.type=c('new','prevalen
                                                                             years=tmrv$year,
                                                                             categories=tmrv$non.year.descriptions,
                                                                             chunk.years=numerator.chunk.years)
-    #        one.numerator.covar.mat = make.compound.symmetry.matrix(sds=sds,
-    #                                                                rho=numerator.year.to.year.correlation)
-    
+            #        one.numerator.covar.mat = make.compound.symmetry.matrix(sds=sds,
+            #                                                                rho=numerator.year.to.year.correlation)
+            
             numerator.covar.mat = join.independent.covariance.matrices(numerator.covar.mat,
                                                                        one.numerator.covar.mat)
             descriptions = c(descriptions, tmrv$descriptions)
         }
     }
-
+    
     if (by.sex.age)
     {
-        cdc.arr = get.surveillance.data(surv, location, data.type=data.type, years=years, sex=T, age=T, throw.error.if.missing.data = F)
+        cdc.arr = get.surveillance.data(surv, location, data.type=data.type, years=years, sex=T, age=T, throw.error.if.missing.data = F, na.rm=na.rm)
         if (!is.null(cdc.arr))
         {
             tmrv = make.transformation.matrix.and.response.vector(cdc.arr=cdc.arr, jheem.skeleton=jheem.skeleton)
@@ -2007,18 +2176,18 @@ create.likelihood.elements.for.data.type <- function(data.type=c('new','prevalen
                                                                             years=tmrv$year,
                                                                             categories=tmrv$non.year.descriptions,
                                                                             chunk.years=numerator.chunk.years)
-    #        one.numerator.covar.mat = make.compound.symmetry.matrix(sds=sds,
-    #                                                                rho=numerator.year.to.year.correlation)
-    
+            #        one.numerator.covar.mat = make.compound.symmetry.matrix(sds=sds,
+            #                                                                rho=numerator.year.to.year.correlation)
+            
             numerator.covar.mat = join.independent.covariance.matrices(numerator.covar.mat,
                                                                        one.numerator.covar.mat)
             descriptions = c(descriptions, tmrv$descriptions)
         }
     }
-
+    
     if (by.sex.race)
     {
-        cdc.arr = get.surveillance.data(surv, location, data.type=data.type, years=years, sex=T, race=T, throw.error.if.missing.data = F)
+        cdc.arr = get.surveillance.data(surv, location, data.type=data.type, years=years, sex=T, race=T, throw.error.if.missing.data = F, na.rm=na.rm)
         if (!is.null(cdc.arr))
         {
             tmrv = make.transformation.matrix.and.response.vector(cdc.arr=cdc.arr, jheem.skeleton=jheem.skeleton)
@@ -2043,18 +2212,18 @@ create.likelihood.elements.for.data.type <- function(data.type=c('new','prevalen
                                                                             years=tmrv$year,
                                                                             categories=tmrv$non.year.descriptions,
                                                                             chunk.years=numerator.chunk.years)
-    #        one.numerator.covar.mat = make.compound.symmetry.matrix(sds=sds,
-    #                                                                rho=numerator.year.to.year.correlation)
-    
+            #        one.numerator.covar.mat = make.compound.symmetry.matrix(sds=sds,
+            #                                                                rho=numerator.year.to.year.correlation)
+            
             numerator.covar.mat = join.independent.covariance.matrices(numerator.covar.mat,
                                                                        one.numerator.covar.mat)
             descriptions = c(descriptions, tmrv$descriptions)
         }
     }
-
+    
     if (by.sex.risk)
     {
-        cdc.arr = get.surveillance.data(surv, location, data.type=data.type, years=years, sex=T, risk=T, throw.error.if.missing.data = F)
+        cdc.arr = get.surveillance.data(surv, location, data.type=data.type, years=years, sex=T, risk=T, throw.error.if.missing.data = F, na.rm=na.rm)
         if (!is.null(cdc.arr))
         {
             tmrv = make.transformation.matrix.and.response.vector(cdc.arr=cdc.arr, jheem.skeleton=jheem.skeleton)
@@ -2079,18 +2248,18 @@ create.likelihood.elements.for.data.type <- function(data.type=c('new','prevalen
                                                                             years=tmrv$year,
                                                                             categories=tmrv$non.year.descriptions,
                                                                             chunk.years=numerator.chunk.years)
-    #        one.numerator.covar.mat = make.compound.symmetry.matrix(sds=sds,
-    #                                                                rho=numerator.year.to.year.correlation)
-    
+            #        one.numerator.covar.mat = make.compound.symmetry.matrix(sds=sds,
+            #                                                                rho=numerator.year.to.year.correlation)
+            
             numerator.covar.mat = join.independent.covariance.matrices(numerator.covar.mat,
                                                                        one.numerator.covar.mat)
             descriptions = c(descriptions, tmrv$descriptions)
         }
     }
-
+    
     if (by.race.risk)
     {
-        cdc.arr = get.surveillance.data(surv, location, data.type=data.type, years=years, race=T, risk=T, throw.error.if.missing.data = F)
+        cdc.arr = get.surveillance.data(surv, location, data.type=data.type, years=years, race=T, risk=T, throw.error.if.missing.data = F, na.rm=na.rm)
         if (!is.null(cdc.arr))
         {
             tmrv = make.transformation.matrix.and.response.vector(cdc.arr=cdc.arr, jheem.skeleton=jheem.skeleton)
@@ -2115,28 +2284,29 @@ create.likelihood.elements.for.data.type <- function(data.type=c('new','prevalen
                                                                             years=tmrv$year,
                                                                             categories=tmrv$non.year.descriptions,
                                                                             chunk.years=numerator.chunk.years)
-    #        one.numerator.covar.mat = make.compound.symmetry.matrix(sds=sds,
-    #                                                                rho=numerator.year.to.year.correlation)
-    
+            #        one.numerator.covar.mat = make.compound.symmetry.matrix(sds=sds,
+            #                                                                rho=numerator.year.to.year.correlation)
+            
             numerator.covar.mat = join.independent.covariance.matrices(numerator.covar.mat,
                                                                        one.numerator.covar.mat)
             descriptions = c(descriptions, tmrv$descriptions)
         }
     }
-
+    
     missing.response = is.na(response.vector)
     response.vector = response.vector[!missing.response]
     transformation.matrix = transformation.matrix[!missing.response,]
     descriptions = descriptions[!missing.response]
     numerator.covar.mat = numerator.covar.mat[!missing.response,!missing.response]
-
+    
     if (all(numerator.covar.mat==0))
         numerator.covar.mat = NULL
-
+    
     list(transformation.matrix = transformation.matrix,
          response.vector = response.vector,
          numerator.covar.mat = numerator.covar.mat,
-         descriptions = descriptions)
+         descriptions = descriptions,
+         from.categories = reshape2::melt(jheem.skeleton)[,1:length(dim(jheem.skeleton))])
 }
 
 ##---------------------------##
@@ -2169,7 +2339,7 @@ make.transformation.matrix.and.response.vector <- function(cdc.arr, jheem.skelet
                                                            sexes=NULL, risks=NULL)
 {
     melted = melt(cdc.arr, as.is=T)
-
+    
     if (!is.null(ages) && !is.null(melted$age))
         melted = melted[sapply(melted$age, function(age){any(age==ages)}),]
     if (!is.null(races) && !is.null(melted$race))
@@ -2178,26 +2348,26 @@ make.transformation.matrix.and.response.vector <- function(cdc.arr, jheem.skelet
         melted = melted[sapply(melted$sex, function(sex){any(sex==sexes)}),]
     if (!is.null(risks) && !is.null(melted$risk))
         melted = melted[sapply(melted$risk, function(risk){any(risk==risks)}),]
-
+    
     transformation.matrix = NULL
-
+    
     if (!is.null(melted$sex) && !is.null(melted$risk))
         melted = melted[melted$sex != 'female' | (melted$risk != 'msm' & melted$risk != 'msm_idu'),]
-
+    
     for (row in 1:dim(melted)[1])
     {
         one.transformation = jheem.skeleton
-
+        
         access(one.transformation,
                year=melted$year[row],
                age=melted$age[row],
                race=melted$race[row],
                sex=map.cdc.to.jheem.sex(melted$sex[row], melted$risk[row]),
                risk=map.cdc.to.jheem.risk(melted$risk[row])) = 1
-
+        
         transformation.matrix = rbind(transformation.matrix, as.numeric(one.transformation))
     }
-
+    
     if (dim(melted)[2]==1)
         descriptions = rep('all', dim(melted)[1])
     else if (dim(melted)[2]==2)
@@ -2215,7 +2385,7 @@ make.transformation.matrix.and.response.vector <- function(cdc.arr, jheem.skelet
         non.year.descriptions = apply(melted[,dimnames(melted)[[2]]!='value' & dimnames(melted)[[2]]!='year'], 1, function(row){
             paste0(row, collapse=', ')
         })
-
+    
     list(transformation.matrix = transformation.matrix,
          response.vector = as.matrix(melted$value, ncol=1),
          descriptions=descriptions,
@@ -2226,24 +2396,24 @@ make.transformation.matrix.and.response.vector <- function(cdc.arr, jheem.skelet
 create.simple.denominator.elements <- function(population, msm.cv = msm.cv, idu.cv = idu.cv)
 {
     diagonal = array(0, dim=dim(population), dimnames=dimnames(population))
-
+    
     if (msm.cv!=0)
         access(diagonal, sex='msm') = access(diagonal, sex='msm') +
             access(population, sex='msm') * msm.cv
-
+    
     if (idu.cv!=0)
     {
         access(diagonal, risk='active_IDU') = access(diagonal, risk='active_IDU') +
             access(population, risk='active_IDU') * idu.cv
-
+        
         access(diagonal, risk='IDU_in_remission') = access(diagonal, risk='IDU_in_remission') +
             access(population, risk='IDU_in_remission') * idu.cv
     }
-
+    
     denominator.covar.mat = diag(as.numeric(diagonal))
     if (all(denominator.covar.mat==0))
         denominator.covar.mat = NULL
-
+    
     list(denominator.vector = as.numeric(population),
          denominator.covar.mat = denominator.covar.mat)
 }
@@ -2251,29 +2421,29 @@ create.simple.denominator.elements <- function(population, msm.cv = msm.cv, idu.
 create.simple.denominator.elements.from.msm.proportions <- function(pre.msm.population, msm.proportions, idu.cv = 0.25)
 {
     diagonal = array(0, dim=dim(pre.msm.population), dimnames=dimnames(pre.msm.population))
-
+    
     for (race in names(msm.proportions))
     {
         pre.msm.population[,,race,'msm',] = msm.proportions[race] *
             pre.msm.population[,,race,'msm',]
-
+        
         pre.msm.population[,,race,'heterosexual_male',] = msm.proportions[race] *
             pre.msm.population[,,race,'heterosexual_male',]
     }
-
+    
     if (idu.cv!=0)
     {
         diagonal[,,,,'active_IDU'] = diagonal[,,,,'active_IDU'] +
             pre.msm.population[,,,,'active_IDU'] * idu.cv
-
+        
         diagonal[,,,,'IDU_in_remission'] = diagonal[,,,,'IDU_in_remission'] +
             pre.msm.population[,,,,'IDU_in_remission'] * idu.cv
     }
-
+    
     denominator.covar.mat = diag(as.numeric(diagonal))
     if (all(denominator.covar.mat==0))
         denominator.covar.mat = NULL
-
+    
     list(denominator.vector = as.numeric(population),
          denominator.covar.mat = denominator.covar.mat)
 }
@@ -2285,14 +2455,14 @@ make.compound.symmetry.by.year.matrix <- function(population,
     N = prod(dim(population))
     N.year = dim(population)['year']
     N.other = N/N.year
-
+    
     rv = array(0, dim=c(N.year, N.other, N.year, N.other))
     for (i in 1:N.other)
         rv[,i,,i] = correlation
-
+    
     dim(rv) = c(N,N)
     diag(rv) = 1
-
+    
     rv
 }
 
@@ -2308,31 +2478,31 @@ make.denominator.elements <- function(base.population,
     #-- Check arguments --#
     if (any(active.idu.prevalence<0) || any(active.idu.prevalence>1))
         stop('All values of active.idu.prevalence must be between 0 and 1')
-
+    
     if (any(idu.ever.prevalence<0) || any(idu.ever.prevalence>1))
         stop('All values of idu.ever.prevalence must be between 0 and 1')
-
+    
     if (any(active.idu.prevalence > idu.ever.prevalence))
         stop('All values of active.idu.prevalence must be less than or equal to the corresponding values in idu.ever.prevalence')
-
+    
     if (any(components$proportions.msm.of.male>1) || any(components$proportions.msm.of.male<0))
         stop("MSM proportions must be between 0 and 1")
-
+    
     if (any(components$proportions.msm.of.male>0.1))
         warning("Some MSM proportions have been set to be greater than 10% - is this intended?")
-
-
+    
+    
     prior.idu.prevalence = idu.ever.prevalence - prior.idu.prevalence
-
+    
     #-- Set Up Hydrated Arrays --#
     target.from.dim.names = target.to.dim.names = target.population.dim.names
     names(target.from.dim.names) = paste0(names(target.from.dim.names), '.from')
     names(target.to.dim.names) = paste0(names(target.to.dim.names), '.to')
     hydrated.matrix.dim.names = c(target.from.dim.names, target.to.dim.names)
-
+    
     hydrated.vector = array(0, dim=sapply(target.population.dim.names, length), dimnames=target.population.dim.names)
     hydrated.matrix = array(0, dim=sapply(hydrated.matrix.dim.names, length), dimnames=hydrated.matrix.dim.names)
-
+    
     for (age in target.population.dim.names[['age']])
     {
         for (race in target.population.dim.names[['race']])
@@ -2341,11 +2511,11 @@ make.denominator.elements <- function(base.population,
             p.active = access(active.idu.prevalence, age=age, race=race, sex='female')
             p.prior = access(prior.idu.prevalence, age=age, race=race, sex='female')
             base = base.population[age, race, 'female']
-
+            
             hydrated.vector[age,race,'female','never_IDU'] = base * (1 - p.active - p.prior)
             hydrated.vector[age,race,'female','active_IDU'] = base * p.active
             hydrated.vector[age,race,'female','IDU_in_remission'] = base * p.prior
-
+            
             hydrated.matrix[age,race,'female','never_IDU',age,race,'female','never_IDU'] = (base * idu.cv)^2 * (p.active^2 + p.prior^2)
             hydrated.matrix[age,race,'female','active_IDU',age,race,'female','active_IDU'] = (base * idu.cv)^2 * p.active^2
             hydrated.matrix[age,race,'female','IDU_in_remission',age,race,'female','IDU_in_remission'] = (base * idu.cv)^2 * p.prior^2
@@ -2353,7 +2523,7 @@ make.denominator.elements <- function(base.population,
                 hydrated.matrix[age,race,'female','active_IDU',age,race,'female','never_IDU'] = -(base * idu.cv)^2 * p.active^2
             hydrated.matrix[age,race,'female','never_IDU',age,race,'female','IDU_in_remission'] =
                 hydrated.matrix[age,race,'female','IDU_in_remission',age,race,'female','never_IDU'] = -(base * idu.cv)^2 * p.prior^2
-
+            
             #-- Male --#
             p.msm = msm.proportions.by.race[race]
             base = base.population[age, race, 'male']
@@ -2361,15 +2531,15 @@ make.denominator.elements <- function(base.population,
             p.prior.het = access(prior.idu.prevalence, age=age, race=race, sex='heterosexual_male')
             p.active.msm = access(active.idu.prevalence, age=age, race=race, sex='msm')
             p.prior.msm = access(prior.idu.prevalence, age=age, race=race, sex='msm')
-
+            
             hydrated.vector[age,race,'heterosexual_male','never_IDU'] = base * (1 - p.msm) * (1 - p.active.het - p.prior.het)
             hydrated.vector[age,race,'heterosexual_male','active_IDU'] = base * (1 - p.msm) * p.active.het
             hydrated.vector[age,race,'heterosexual_male','IDU_in_remission'] = base * (1 - p.msm) * p.prior.het
-
+            
             hydrated.vector[age,race,'msm','never_IDU'] = base * p.msm * (1 - p.active.msm - p.prior.msm)
             hydrated.vector[age,race,'msm','active_IDU'] = base * p.msm * p.active.msm
             hydrated.vector[age,race,'msm','IDU_in_remission'] = base * p.msm * p.prior.msm
-
+            
             #- The diagonals (variances) -#
             hydrated.matrix[age,race,'heterosexual_male','never_IDU',age,race,'female','never_IDU'] =
                 base^2 * ( (p.msm * msm.cv)^2 + (1-p.msm)^2 * idu.cv^2 * (p.active.het^2 + p.prior.het^2) )
@@ -2377,18 +2547,18 @@ make.denominator.elements <- function(base.population,
                 base^2 * ( (p.msm * msm.cv)^2 + (1-p.msm)^2 * idu.cv^2 * p.active.het^2 )
             hydrated.matrix[age,race,'heterosexual_male','IDU_in_remission',age,race,'female','IDU_in_remission'] =
                 base^2 * ( (p.msm * msm.cv)^2 + (1-p.msm)^2 * idu.cv^2 * p.prior.het^2 )
-
+            
             hydrated.matrix[age,race,'msm','never_IDU',age,race,'female','never_IDU'] =
                 base^2 * ( (p.msm * msm.cv)^2 + p.msm^2 * idu.cv^2 * (p.active.msm^2 + p.prior.msm^2) )
             hydrated.matrix[age,race,'msm','active_IDU',age,race,'female','active_IDU'] =
                 base^2 * ( (p.msm * msm.cv)^2 + p.msm^2 * idu.cv^2 * p.active.msm^2 )
             hydrated.matrix[age,race,'msm','IDU_in_remission',age,race,'female','IDU_in_remission'] =
                 base^2 * ( (p.msm * msm.cv)^2 + p.msm^2 * idu.cv^2 * p.prior.msm^2 )
-
+            
             #- Covariances by MSM -#
-
+            
             #het with msm
-                #never with x
+            #never with x
             hydrated.matrix[age,race,'heterosexual_male','never_IDU',age,race,'msm','never_IDU'] =
                 hydrated.matrix[age,race,'heterosexual_male','never_IDU',age,race,'msm','active_IDU'] =
                 hydrated.matrix[age,race,'heterosexual_male','never_IDU',age,race,'msm','IDU_in_remission'] =
@@ -2400,7 +2570,7 @@ make.denominator.elements <- function(base.population,
                 hydrated.matrix[age,race,'msm','IDU_in_remission',age,race,'msm','never_IDU'] =
                 hydrated.matrix[age,race,'msm','IDU_in_remission',age,race,'msm','active_IDU'] =
                 hydrated.matrix[age,race,'msm','IDU_in_remission',age,race,'msm','IDU_in_remission'] =
-            #msm with het
+                #msm with het
                 hydrated.matrix[age,race,'msm','never_IDU',age,race,'heterosexual_male','never_IDU'] =
                 hydrated.matrix[age,race,'msm','never_IDU',age,race,'heterosexual_male','active_IDU'] =
                 hydrated.matrix[age,race,'msm','never_IDU',age,race,'heterosexual_male','IDU_in_remission'] =
@@ -2412,36 +2582,36 @@ make.denominator.elements <- function(base.population,
                 hydrated.matrix[age,race,'msm','IDU_in_remission',age,race,'heterosexual_male','never_IDU'] =
                 hydrated.matrix[age,race,'msm','IDU_in_remission',age,race,'heterosexual_male','active_IDU'] =
                 hydrated.matrix[age,race,'msm','IDU_in_remission',age,race,'heterosexual_male','IDU_in_remission'] =
-            #the actual value
+                #the actual value
                 -(base * p.msm * msm.cv)^2
-
+            
             #- Covariances by IDU -#
-
+            
             hydrated.matrix[age,race,'heterosexual_male','never_IDU',age,race,'heterosexual_male','active_IDU'] =
                 hydrated.matrix[age,race,'heterosexual_male','active_IDU',age,race,'heterosexual_male','never_IDU'] =
                 (base * p.msm * msm.cv)^2 - (base * (1-p.msm) * idu.cv * p.active.het)^2
-
+            
             hydrated.matrix[age,race,'heterosexual_male','never_IDU',age,race,'heterosexual_male','IDU_in_remission'] =
                 hydrated.matrix[age,race,'heterosexual_male','IDU_in_remission',age,race,'heterosexual_male','never_IDU'] =
                 (base * p.msm * msm.cv)^2 - (base * (1-p.msm) * idu.cv * p.prior.het)^2
-
+            
             hydrated.matrix[age,race,'heterosexual_male','active_IDU',age,race,'heterosexual_male','IDU_in_remission'] =
                 hydrated.matrix[age,race,'heterosexual_male','IDU_in_remission',age,race,'heterosexual_male','active_IDU'] =
                 (base * p.msm * msm.cv)^2
-
-
+            
+            
             hydrated.matrix[age,race,'msm','never_IDU',age,race,'msm','active_IDU'] =
                 hydrated.matrix[age,race,'msm','active_IDU',age,race,'msm','never_IDU'] =
                 (base * p.msm * msm.cv)^2 - (base * p.msm * idu.cv * p.active.msm)^2
-
+            
             hydrated.matrix[age,race,'msm','never_IDU',age,race,'msm','IDU_in_remission'] =
                 hydrated.matrix[age,race,'msm','IDU_in_remission',age,race,'msm','never_IDU'] =
                 (base * p.msm * msm.cv)^2 - (base * p.msm * idu.cv * p.prior.msm)^2
-
+            
             hydrated.matrix[age,race,'msm','active_IDU',age,race,'msm','IDU_in_remission'] =
                 hydrated.matrix[age,race,'msm','IDU_in_remission',age,race,'msm','active_IDU'] =
                 (base * p.msm * msm.cv)^2
-
+            
         }
     }
 }
@@ -2454,31 +2624,31 @@ get.sd.inflation <- function(match.to.response = likelihood.elements$response.ve
     stop('we are not using this')
     match.to.year = as.numeric(substr(match.to.descriptions, 1,4))
     year.2 = as.numeric(substr(descriptions.2, 1,4))
-
+    
     match.to.catg = substr(match.to.descriptions, 7,1000)
     catg.2 = substr(descriptions.2, 7,1000)
-
+    
     match.to.cv = sqrt(match.to.response)
     cv.2 = sqrt(response.2)
-
+    
     exact.match.indices = sapply(match.to.descriptions, function(match.to){
         (1:length(descriptions.2))[descriptions.2==match.to][1]
     })
     sd.inflation = cv.2[exact.match.indices] / match.to.cv
-
+    
     no.exact.match = is.na(exact.match.indices)
     match.catg = lapply(match.to.catg[no.exact.match], function(match.to){
-
+        
     })
-
+    
     inexact.sd.inflation = sapply((1:length(match.to.descriptions))[no.exact.match], function(i){
         match.catg.indices = (1:length(catg.2))[catg.2==match.to.catg[i]]
         match.catg.years = year.2[match.catg.indices]
         year = match.to.year[i]
-
+        
         min.year.dist = min(abs(year-match.catg.years))
         min.year.mask = abs(year-match.catg.years)==min.year.dist
-
+        
         matched.cvs = cv.2[match.catg.indices][]
     })
     
@@ -2556,7 +2726,7 @@ make.chunked.compound.symmetry.matrix <- function(sds,
                                                   chunk.years)
 {
     rho.mat = matrix(non.chunk.rho, nrow=length(years), ncol=length(years))
-
+    
     for (chunk in chunk.years)
     {
         mask = sapply(years, function(year){any(year==chunk)})
@@ -2568,7 +2738,7 @@ make.chunked.compound.symmetry.matrix <- function(sds,
         categories==c1
     })
     rho.mat[!equal.category.mask] = 0
-
+    
     diag(rho.mat) = 1
     sds %*% t(sds) * rho.mat
 }
@@ -2579,13 +2749,13 @@ join.independent.covariance.matrices <- function(m1, m2)
         return (m2)
     if (is.null(m2))
         return (m1)
-
+    
     n1 = dim(m1)[1]
     n2 = dim(m2)[1]
     rv = matrix(0, nrow=n1+n2, ncol=n1+n2)
-
+    
     rv[1:n1,1:n1] = m1
     rv[n1+1:n2,n1+1:n2] = m2
-
+    
     rv
 }

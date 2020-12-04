@@ -17,6 +17,7 @@ create.msa.likelihood <- function(msa,
                                   STRATIFIED.DX.WEIGHT=1/128/4,
                                   use.stratified.dx = F,
                                   SUPPRESSION.WEIGHT = 1/16,#1/4,
+                                  PREP.WEIGHT = 1,
                                   TOTAL.TESTING.WEIGHT = 1/32,#1/8,
                                   STRATIFIED.TESTING.WEIGHT = 1/16,#1/4,
                                   TOTAL.TESTING.LOG.SD.EVER.TO.12MO = log(2),
@@ -26,6 +27,9 @@ create.msa.likelihood <- function(msa,
                                   TESTING.DECREASE.THRESHOLD = -0.1,
                                   
                                   SUPPRESSION.SD = 0.01,
+                                  prep.exp = 0.5,
+                                  prep.indicated.cv = 0.25,#0.5,
+                                  prep.indicated.rho = 0.9,
                                   
                                   use.prev.to.new.cv.ratio=T,#F,
                                   FOCUS.WEIGHT=1,#4,
@@ -37,6 +41,7 @@ create.msa.likelihood <- function(msa,
                                   idu.years=2014:2016,
                                   diagnosed.years = 2010:2018,
                                   suppression.years = 2010:2018,
+                                  prep.years = 2012:2018,
                                   
                                   year.to.year.chunk.correlation=0.65,
                                   year.to.year.off.correlation=0.25,
@@ -129,6 +134,10 @@ create.msa.likelihood <- function(msa,
     PROBABILITY.SUPPRESSION.DECREASING = 0.05
     CONSIDER.DECREASING.ON.MARGINALS = F
     
+    #-- Elements for PrEP --#
+    PREP.SD = function(years, num){num^prep.exp}
+    PREP.SD.INFLATION = 1/sqrt(PREP.WEIGHT)/sqrt(EVERYTHING.WEIGHT)
+    
     #-- Elements for Testing --#
     #none
     
@@ -198,7 +207,7 @@ create.msa.likelihood <- function(msa,
                                           numerator.year.to.year.off.correlation=year.to.year.off.correlation,
                                           numerator.chunk.years=prevalence.correlated.year.chunks,
                                           numerator.sd = PREV.SD)
-    
+
     mort.lik = create.likelihood.function(data.type='mortality',
                                           years=sort(unlist(mortality.correlated.year.chunks)),
                                           surv=msa.surveillance,
@@ -231,6 +240,24 @@ create.msa.likelihood <- function(msa,
                                                   numerator.sd.inflation.if.backup=SUPPRESSED.STATE.SD.INFLATION,
                                                   probability.decreasing.slope=PROBABILITY.SUPPRESSION.DECREASING,
                                                   consider.decreasing.on.marginals=CONSIDER.DECREASING.ON.MARGINALS)
+    
+  
+    prep.lik = create.prep.likelihood(location=msa,
+                                   years=prep.years,
+                                   surv=msa.surveillance,
+                                   population=POPULATION.TOTALS,
+                                   numerator.year.to.year.chunk.correlation=0.5,
+                                   numerator.year.to.year.off.correlation=0,
+                                   numerator.chunk.years=list(prep.years),
+                                   numerator.sd = PREP.SD,
+                                   sd.inflation = PREP.SD.INFLATION,
+                                   inflate.sd.by.n.obs.per.year=F,
+                                   upweight.by.n.obs.per.year=T,
+                                   by.total=T,
+                                   by.age=T,
+                                   by.sex=T,
+                                   p.indicated.cv=prep.indicated.cv,
+                                   p.indicated.rho=prep.indicated.rho)
     
     dx.lik = create.knowledge.of.status.likelihood(location=msa,
                                                    surv=msa.surveillance,
@@ -284,6 +311,7 @@ create.msa.likelihood <- function(msa,
                                                        mort=mort.lik,
                                                        dx=dx.lik,
                                                        supp=suppressed.lik,
+                                                       prep=prep.lik,
                                                        testing=testing.lik,
                                                        idu=idu.lik,
                                                        cum.mort=cum.mort.lik, 
@@ -320,6 +348,7 @@ create.msa.likelihood <- function(msa,
                                                mort=mort.lik,
                                                dx=dx.lik,
                                                supp=suppressed.lik,
+                                               prep=prep.lik,
                                                testing=testing.lik,
                                                idu=idu.lik,
                                                cum.mort=cum.mort.lik, 
@@ -360,7 +389,7 @@ setup.initial.mcmc.for.msa <- function(msa,
                                        run=T,
                                        verbose=T,
                                        step.size.multiplier=1,
-                                       derive.step.size.from.prior.mcmc=T)
+                                       derive.step.size.from.prior.mcmc=F)
 {
     
     # Likelihood
@@ -629,7 +658,8 @@ setup.mcmc.for.msa <- function(msa,
         if (verbose)
             print("Running initial simulation to plot")
         init.sim = run.simulation(first.start.values)
-        print(plot.calibration.risk(init.sim) + ggtitle(paste0("Initial Sim: ", msa.names(msa))))
+#        print(plot.calibration.risk(init.sim) + ggtitle(paste0("Initial Sim: ", msa.names(msa))))
+        print(plot.calibration.sex(init.sim, data.types='prep') + ggtitle(paste0("Initial Sim: ", msa.names(msa))))
     }
     
     #-- MCMC Control --#
@@ -677,6 +707,9 @@ setup.mcmc.for.msa <- function(msa,
         names(initial.scaling.parameters) = names(parameter.var.blocks)
     }
     transformations = sapply(prior@var.names, function(v){'log'})
+    logit.transform.mask = grepl('max.proportion', names(transformations)) &
+        !grepl('\\.or', names(transformations))
+    transformations[logit.transform.mask] = 'logit'
     
     ctrl = create.adaptive.blockwise.metropolis.control(var.names=prior@var.names,
                                                         simulation.function=run.simulation,

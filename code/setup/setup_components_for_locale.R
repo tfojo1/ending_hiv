@@ -18,6 +18,7 @@ setup.components.for.msa <- function(msa,
                                      idu.transitions=NULL,
                                      seed.prevalence=T,
                                      zero.suppression.year=1996,
+                                     zero.prep.year=2010,
                                      suppression.smooth.from.year=2010,
                                      suppression.z.scores=DEFAULT.SUPPRESSION.Z.SCORES,
                                      max.smoothed.suppressed.proportion=0.9,
@@ -251,17 +252,27 @@ setup.components.for.msa <- function(msa,
                                            age4.or.slope=1,
                                            age5.or.slope=1)
     
-    comps = set.future.background.suppression(comps,
-                                              future.slope.or=1)
+    comps = set.future.background.slopes(comps,
+                                         future.supression.slope.or=1,
+                                         future.testing.slope.or=1,
+                                         future.prep.slope.or=1,
+                                         after.year=2020)
     
     #-- PrEP --#
     if (verbose)
         print('**Setting up PrEP')
-    comps = set.background.prep.coverage(comps,
-                                         data.managers=data.managers,
-                                         smoothing.years=min(data.managers$prep$years):smooth.to.year,
-                                         prep.persistence = parameters['prep.persistence'])
-
+    prep.model = get.prep.model(ALL.DATA.MANAGERS$prep)
+    if (prep.model$mixed.linear)
+        comps = setup.background.prep(comps,
+                                      prep.manager=ALL.DATA.MANAGERS$prep,
+                                      years = max(prep.model$anchor.year, smooth.from.year):smooth.to.year,
+                                      zero.prep.year=zero.prep.year)
+    else
+        comps = setup.background.prep(comps,
+                                      prep.manager=ALL.DATA.MANAGERS$prep,
+                                      years = max(zero.prep.year+1, smooth.from.year):smooth.to.year,
+                                      zero.prep.year=zero.prep.year)
+    
     comps = set.background.change.to.years(comps,
                                            testing.change.to.year=smooth.to.year,
                                            suppression.change.to.year=smooth.to.year,
@@ -270,56 +281,57 @@ setup.components.for.msa <- function(msa,
     #-- Transmission --#
     if (verbose)
         print('**Setting up Transmission')
-
-
+    
+    
     comps = setup.prep.susceptibility(comps,
-                                 prep.rr.heterosexual = parameters['prep.rr.heterosexual'],
-                                 prep.rr.msm = parameters['prep.rr.msm'],
-                                 prep.rr.idu = parameters['prep.rr.idu'])
+                                      prep.rr.heterosexual = parameters['prep.rr.heterosexual'],
+                                      prep.rr.msm = parameters['prep.rr.msm'],
+                                      prep.rr.idu = parameters['prep.rr.idu'],
+                                      prep.persistence = parameters['prep.persistence'])
     comps = setup.sexual.susceptibility(comps)
-
+    
     comps = setup.transmissibility(comps,
                                    acute.transmissibility.rr=parameters['acute.transmissibility.rr'],
                                    diagnosed.needle.sharing.rr=parameters['diagnosed.needle.sharing.rr'],
                                    diagnosed.het.male.condomless.rr=parameters['diagnosed.het.male.condomless.rr'],
                                    diagnosed.female.condomless.rr=parameters['diagnosed.female.condomless.rr'],
                                    diagnosed.msm.condomless.rr=parameters['diagnosed.msm.condomless.rr'])
-
+    
     comps = setup.sex.by.age(comps,
                              heterosexual.male.age.model = data.managers$pairing$sex.age.models[['heterosexual_male']],
                              female.age.model = data.managers$pairing$sex.age.models[['female']],
                              msm.age.model = data.managers$pairing$sex.age.models[['msm']],
                              overwrite.base.models=T)
-
+    
     sex.by.race.oes = c(data.managers$pairing$msm.sex.by.race.oe, data.managers$pairing$het.sex.by.race.oe)
     mean.oe = sex.by.race.oes[[1]]
     for (i in 1:length(sex.by.race.oes))
         mean.oe = mean.oe + sex.by.race.oes[[i]]
     mean.oe = mean.oe / length(sex.by.race.oes)
-
+    
     comps = setup.sex.by.race(comps,
                               black.black.oe=mean.oe['black','black'],
                               hispanic.hispanic.oe = mean.oe['hispanic','hispanic'],
                               other.other.oe = mean.oe['other','other'])
-#                              race.oes = mean.oe)
+    #                              race.oes = mean.oe)
     comps = setup.sex.by.sex(comps,
                              fraction.msm.pairings.with.female = mean(data.managers$pairing$msm.sex.with.female.estimates),
                              oe.female.pairings.with.msm = parameters['proportion.msm.sex.with.female'],
                              fraction.heterosexual.male.pairings.with.male = 0.004)
-
+    
     comps = setup.sex.by.idu(comps,
                              never.idu.sexual.oe=1,
                              idu.sexual.oe=1)
-
+    
     comps = setup.idu.by.age(comps, age.model = data.managers$pairing$idu.age.model)
     comps = setup.idu.by.race(comps,
                               black.black.oe = data.managers$pairing$idu.oe.race['black','black'],
                               hispanic.hispanic.oe = data.managers$pairing$idu.oe.race['hispanic','hispanic'],
                               other.other.oe = data.managers$pairing$idu.oe.race['other','other'])
     comps = setup.idu.by.sex(comps, sex.oes = data.managers$pairing$idu.oe.sex)
-
+    
     #-- Sexual availability --#
-
+    
     #From Abma 2017
     comps = setup.sexual.availability.by.age(comps,
                                              age.index=1,
@@ -330,7 +342,7 @@ setup.components.for.msa <- function(msa,
                                                                      '17'=.41,
                                                                      '18'=.55,
                                                                      '19'=.68) / .75)
-
+    
     #from Tessler 2008
     # https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2426743/
     older.sexual.availability = c(sapply(as.character(65:74), function(i){mean(c(67.0/83.7,39.5/61.6))}),
@@ -338,36 +350,36 @@ setup.components.for.msa <- function(msa,
     comps = setup.sexual.availability.by.age(comps,
                                              age.index=5,
                                              availability.by.age = older.sexual.availability)
-
+    
     #from NSDUH 2015-2018
     #get.idu.availability.13.24()
     comps = setup.idu.availability.by.age(comps,
-                                             age.index=1,
-                                             availability.by.age = c('13'=.02,
-                                                                     '14'=.02,
-                                                                     '15'=.18,
-                                                                     '16'=.18,
-                                                                     '17'=.18,
-                                                                     '18'=.18))
-
+                                          age.index=1,
+                                          availability.by.age = c('13'=.02,
+                                                                  '14'=.02,
+                                                                  '15'=.18,
+                                                                  '16'=.18,
+                                                                  '17'=.18,
+                                                                  '18'=.18))
+    
     #NSDUH 2015 and 2016 - 
     # https://www.samhsa.gov/data/report/results-2016-national-survey-drug-use-and-health-detailed-tables
     older.idu.availability = sapply(as.character(65:85), function(i){
         (4.2 + 5.3) / (14.1+10.1  + 10.0+15.0)
     })
     comps = setup.idu.availability.by.age(comps,
-                                             age.index=5,
-                                             availability.by.age = older.idu.availability)
-
+                                          age.index=5,
+                                          availability.by.age = older.idu.availability)
+    
     #-- Fix Pop Size --#
     if (fix.strata.sizes)
         comps = setup.fix.strata.sizes(comps,
                                        fix.strata.sizes = c(T,F),
                                        times=c(-Inf, population.year))
-
-
+    
+    
     attr(comps, 'location') = msa
-
+    
     #-- Return --#
     comps
 }

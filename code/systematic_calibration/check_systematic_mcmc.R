@@ -7,7 +7,7 @@ source('code/source_code.R')
 source('code/plots.R')
 
 mcmc = assemble.mcmc.from.cache('mcmc_runs/systematic_caches/29820_4x100K_v2_2020-11-03/',T)
-mcmc = assemble.mcmc.from.cache('mcmc_runs/systematic_caches/35620_4x100K_v2_2020-11-03/',T)
+mcmc = assemble.mcmc.from.cache('mcmc_runs/systematic_caches/35620_4x100K_2020-11-07/',T)
 
 
 simset = extract.simset(mcmc, additional.burn=mcmc@n.iter/2, 

@@ -14,7 +14,8 @@ get.surveillance.data <- function(surv=msa.surveillance,
                                   aggregate.locations=T,
                                   aggregate.years=F,
                                   throw.error.if.missing.years=F,
-                                  throw.error.if.missing.data=T)
+                                  throw.error.if.missing.data=T,
+                                  na.rm=F)
 {
     #Check the data.type argument
     ALLOWED.DATA.TYPES = c('prevalence','new','mortality',
@@ -22,7 +23,7 @@ get.surveillance.data <- function(surv=msa.surveillance,
                            'suppression','suppression.ci.lower','suppression.ci.upper', 'prevalence.for.continuum',
                            'estimated.prevalence', 'estimated.prevalence.ci.lower','estimated.prevalence.ci.upper', 'estimated.prevalence.rse',
                            'cumulative.aids.mortality', 'aids.diagnoses',
-                           'linkage','new.for.continuum')
+                           'linkage','new.for.continuum', 'prep')
     if (all(data.type!=ALLOWED.DATA.TYPES))
         stop(paste0("data.type must be one of: ",
                     paste0(paste0("'", ALLOWED.DATA.TYPES, "'"), collapse=", ")))
@@ -141,7 +142,7 @@ get.surveillance.data <- function(surv=msa.surveillance,
     
     keep.dimnames = keep.dimnames[keep.dimnames.names]
     
-    data = apply(data, keep.dimnames.names, sum)
+    data = apply(data, keep.dimnames.names, sum, na.rm=na.rm)
     dim(data) = sapply(keep.dimnames, length)
     dimnames(data) = keep.dimnames
     
@@ -962,6 +963,31 @@ add.local.data.one.location <- function(surv,
                                          years=df[,1],
                                          values=df$new)
     }
+    
+    surv
+}
+
+add.prep.data <- function(surv,
+                          prep.manager,
+                          locations = dimnames(surv$new.all)[['location']])
+{
+    all.dim.names = list(year=prep.manager$years,
+                         location=locations,
+                         sex=dimnames(prep.manager$prep.sex)[['sex']],
+                         age=dimnames(prep.manager$prep.age)[['age']])
+    surv$prep.all = sapply(locations, get.prep.data, prep.manager=prep.manager, na.rm=T)
+    dim(surv$prep.all) = sapply(all.dim.names[c('year','location')], length)
+    dimnames(surv$prep.all) = all.dim.names[c('year','location')]
+    
+    surv$prep.sex = sapply(locations, get.prep.data, prep.manager=prep.manager, sex=T, na.rm=T)
+    dim(surv$prep.sex) = sapply(all.dim.names[c('year','sex','location')], length)
+    dimnames(surv$prep.sex) = all.dim.names[c('year','sex','location')]
+    surv$prep.sex = apply(surv$prep.sex, c('year','location','sex'), function(x){x})
+    
+    surv$prep.age = sapply(locations, get.prep.data, prep.manager=prep.manager, age=T, na.rm=T)
+    dim(surv$prep.age) = sapply(all.dim.names[c('year','age','location')], length)
+    dimnames(surv$prep.age) = all.dim.names[c('year','age','location')]
+    surv$prep.age = apply(surv$prep.age, c('year','location','age'), function(x){x})
     
     surv
 }

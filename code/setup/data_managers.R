@@ -4,14 +4,14 @@
 ##-----------------##
 
 library(jheem)
-source('../code/data_managers/census_manager.R')
-source('../code/data_managers/mortality_manager.R')
-source('../code/data_managers/natality_manager.R')
-source('../code/data_managers/idu_manager.R')
-source('../code/data_managers/pairing_manager.R')
-source('../code/data_managers/prep_manager.R')
-source('../code/data_managers/continuum_manager.R')
-source('../code/data_managers/hiv_surveillance_manager.R')
+source('code/data_managers/census_manager.R')
+source('code/data_managers/mortality_manager.R')
+source('code/data_managers/natality_manager.R')
+source('code/data_managers/idu_manager.R')
+source('code/data_managers/pairing_manager.R')
+source('code/data_managers/prep_manager_2.R')
+source('code/data_managers/continuum_manager_2.R')
+source('code/data_managers/hiv_surveillance_manager.R')
 
 ##---------------------------##
 ##-- LOAD UP DATA MANAGERS --##
@@ -60,7 +60,7 @@ if (!exists('ALL.DATA.MANAGERS'))
 
     #PrEP
     print('Reading PrEP Manager...')
-    ALL.DATA.MANAGERS$prep = read.prep.manager(dir='../data2/PrEP/Zip3 PrEP/', census=ALL.DATA.MANAGERS$census.collapsed.msm)
+    ALL.DATA.MANAGERS$prep = read.prep.manager()
 
     #Continuum
     print('Reading Continuum Manager...')

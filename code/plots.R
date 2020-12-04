@@ -588,6 +588,7 @@ plot.calibration <- function(sims,
                              population.name = 'Population (%)',
                              suppression.name = 'Suppression (%)', 
                              testing.name = 'Testing',
+                             prep.name = 'PrEP Coverage (%)',
                              incidence.name = if (show.rates) 'Incidence (per 100,000)' else 'Incidence (number of cases)',
                              cumulative.mortality.name = if (show.rates) 'Cumulative HIV Mortality (per 100,000 PWH)' else if (normalize.within.facet) 'HIV Mortality (%)' else 'Cumulative HIV Mortality (number of cases)',
                              cdc.label = 'CDC',
@@ -655,11 +656,12 @@ plot.calibration <- function(sims,
                         incidence=incidence.name,
                         cumulative.mortality=cumulative.mortality.name,
                         suppression=suppression.name,
-                        testing=testing.name)
+                        testing=testing.name,
+                        prep=prep.name)
     if (show.rates)
-        data.type.denominators = c(new=100000, prevalence=100000, mortality=100000, population=100, diagnosed=100, suppression=100, incidence=100000, cumulative.mortality=100000, testing=1)
+        data.type.denominators = c(new=100000, prevalence=100000, mortality=100000, population=100, diagnosed=100, suppression=100, incidence=100000, cumulative.mortality=100000, testing=1, prep=100)
     else
-        data.type.denominators = c(new=1, prevalence=1, mortality=1, population=100, diagnosed=100, suppression=100, incidence=1, cumulative.mortality=1, testing=1)
+        data.type.denominators = c(new=1, prevalence=1, mortality=1, population=100, diagnosed=100, suppression=100, incidence=1, cumulative.mortality=1, testing=1, prep=1)
 
     race.names = c(black='Black',hispanic="Hispanic", other='Other')
     risk.names = c(msm='MSM', idu='IDU', msm_idu='MSM+IDU', heterosexual='Heterosexual',
@@ -761,6 +763,8 @@ plot.calibration <- function(sims,
                             dim(truth.numerators) = c(year=length(years))
                             dimnames(truth.numerators) = list(year = as.character(years))
                         }
+                    #    else if (data.type=='prep' && !is.null(truth.numerators))
+                     #       truth.numerators = convert.prep.rx.to.true.prep(truth.numerators)
                         else if (data.type=='suppression' && is.null(truth.numerators) &&
                                  is.null(get.surveillance.data(surv, location.codes=location, data.type='suppression', throw.error.if.missing.data=F)))
                         {
@@ -836,8 +840,8 @@ plot.calibration <- function(sims,
                     }
                     else
                         values = truth.numerators /
-                                    expand.population(access(denominators, year=dimnames(numerators)[['year']], collapse.length.one.dimensions = F),
-                                                      dimnames(numerators))
+                                    expand.population(access(denominators, year=dimnames(truth.numerators)[['year']], collapse.length.one.dimensions = F),
+                                                      dimnames(truth.numerators))
 
                     #if (!any(all.dimensions=='year'))
                     #{
@@ -1243,6 +1247,9 @@ get.sim.values <- function(sim,
     else if (data.type=='testing')
         model.rates = extract.testing.rates(sim, years=years, keep.dimensions=all.dimensions,
                                           use.cdc.categorizations = use.cdc)
+#    else if (data.type=='prep')
+#        model.rates = extract.prep.coverage(sim, years=years, keep.dimensions=all.dimensions,
+#                                            use.cdc.categorizations = use.cdc)
     else
         model.rates = get.sim.projections(jheem.results=sim,
                                           data.type=data.type,
@@ -1256,6 +1263,14 @@ get.sim.values <- function(sim,
         values = model.rates
     else
     {
+        if (is.null(dim(model.rates)))
+        {
+            dim.names = list(names(model.rates))
+            names(dim.names) = all.dimensions
+            dim(model.rates) = sapply(dim.names, length)
+            dimnames(model.rates) = dim.names
+        }
+        
         if(any(names(dimnames(model.rates))=='year'))
             values = model.rates *
                 expand.population(access(denominators, year=dimnames(model.rates)[['year']], collapse.length.one.dimensions = F),
@@ -1316,6 +1331,7 @@ get.sim.projections <- function(jheem.results, data.type, years, keep.dimensions
                                 aggregate.denominator.males=T,
                                 use.sim.msm.proportions)
 {
+    location = attr(jheem.results, 'location')
     if (length(setdiff(years, jheem.results$years))>0)
     {
         years = intersect(years, jheem.results$years)
@@ -1350,6 +1366,10 @@ get.sim.projections <- function(jheem.results, data.type, years, keep.dimensions
         else if (data.type=='mortality' || data.type=='cumulative.mortality')
             numerators = do.extract.overall.hiv.mortality(jheem.results, continuum='diagnosed', years=years, keep.dimensions = keep.dimensions,
                                                        per.population = NA, use.cdc.categorizations = use.cdc)
+        else if (data.type=='prep')
+            numerators = extract.prep.coverage(jheem.results, years=years, keep.dimensions=keep.dimensions,
+                                                per.population = NA, use.cdc.categorizations = use.cdc,
+                                               multiplier = get.prep.indications.estimate(location=location))
         else
             stop("data.type must be either 'new', 'prevalence', 'mortality', 'diagnosed', 'incidence', or 'population'")
 
@@ -1386,8 +1406,12 @@ get.sim.projections <- function(jheem.results, data.type, years, keep.dimensions
             true.denominators = sum(true.denominators)
         else
             true.denominators = apply(true.denominators, intersect(names(dimnames(true.denominators)), names(dimnames(numerators))), sum)
-        
-        numerators / denominators * as.numeric(true.denominators) #expand.population(true.denominators, target.dim.names = dimnames(numerators))
+  
+        rv = numerators / denominators * as.numeric(true.denominators) #expand.population(true.denominators, target.dim.names = dimnames(numerators))
+
+        if (data.type=='prep')
+          rv = convert.true.prep.to.rx(rv)
+        rv
     }
 
 

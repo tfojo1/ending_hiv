@@ -1,11 +1,40 @@
 
-CURRENT.GAINS.END.BY.YEAR = Uniform.Distribution(2018,2023)
-TOTAL.FUTURE.SUPPRESSED.SLOPE.OR.DIST = Lognormal.Distribution(0, log(1.05))
+CURRENT.GAINS.END.BY.YEAR = Uniform.Distribution(2020,20215)
+TOTAL.FUTURE.SLOPE.OR.DIST = Lognormal.Distribution(0, log(1.05))
 
 prepare.simset.for.interventions <- function(simset,
-                                             current.gains.end.by.year.dist = CURRENT.GAINS.END.BY.YEAR,
-                                             total.future.suppressed.slope.or.dist = TOTAL.FUTURE.SUPPRESSED.SLOPE.OR.DIST)
+                                             testing.gains.end.by.year.dist = CURRENT.GAINS.END.BY.YEAR,
+                                             prep.gains.end.by.year.dist = CURRENT.GAINS.END.BY.YEAR,
+                                             suppression.gains.end.by.year.dist = CURRENT.GAINS.END.BY.YEAR,
+                                             total.future.testing.slope.or.dist = TOTAL.FUTURE.SLOPE.OR.DIST,
+                                             total.future.prep.slope.or.dist = TOTAL.FUTURE.SLOPE.OR.DIST,
+                                             total.future.suppressed.slope.or.dist = TOTAL.FUTURE.SLOPE.OR.DIST,
+                                             future.slope.after.year=2020)
 {
+    #-- Future Slopes --#
+    
+    simset = add.parameters(simset,
+                            future.slope.after.year,
+                            parameter.names='future.slope.after.year',
+                            parameter.lower.bounds = future.slope.after.year,
+                            parameter.upper.bounds = future.slope.after.year)
+    
+    total.future.testing.slope.bounds = get.support.bounds(total.future.testing.slope.or.dist@support)
+    simset = add.parameters(simset,
+                            generate.random.samples(total.future.testing.slope.or.dist, simset@n.sim),
+                            parameter.names = 'total.future.testing.slope.or',
+                            parameter.lower.bounds = total.future.testing.slope.bounds[1],
+                            parameter.upper.bounds = total.future.testing.slope.bounds[2],
+                            parameter.transformations = 'log')
+
+    total.future.prep.slope.bounds = get.support.bounds(total.future.prep.slope.or.dist@support)
+    simset = add.parameters(simset,
+                            generate.random.samples(total.future.prep.slope.or.dist, simset@n.sim),
+                            parameter.names = 'total.future.prep.slope.or',
+                            parameter.lower.bounds = total.future.prep.slope.bounds[1],
+                            parameter.upper.bounds = total.future.prep.slope.bounds[2],
+                            parameter.transformations = 'log')
+
     total.future.suppressed.slope.bounds = get.support.bounds(total.future.suppressed.slope.or.dist@support)
     simset = add.parameters(simset,
                             generate.random.samples(total.future.suppressed.slope.or.dist, simset@n.sim),
@@ -14,13 +43,31 @@ prepare.simset.for.interventions <- function(simset,
                             parameter.upper.bounds = total.future.suppressed.slope.bounds[2],
                             parameter.transformations = 'log')
 
-    current.gains.end.by.bounds = get.support.bounds(current.gains.end.by.year.dist@support)
+    #-- Gains End By Year --#
+    
+    testing.gains.end.by.bounds = get.support.bounds(testing.gains.end.by.year.dist@support)
     simset = add.parameters(simset, 
-                            parameters = generate.random.samples(current.gains.end.by.year.dist, simset@n.sim),
-                            parameter.names = 'current.gains.end.by.year',
-                            parameter.lower.bounds = current.gains.end.by.bounds[1],
-                            parameter.upper.bounds = current.gains.end.by.bounds[2])
+                            parameters = generate.random.samples(testing.gains.end.by.year.dist, simset@n.sim),
+                            parameter.names = 'testing.gains.end.by.year',
+                            parameter.lower.bounds = testing.gains.end.by.bounds[1],
+                            parameter.upper.bounds = testing.gains.end.by.bounds[2])
+    
+    prep.gains.end.by.bounds = get.support.bounds(prep.gains.end.by.year.dist@support)
+    simset = add.parameters(simset, 
+                            parameters = generate.random.samples(prep.gains.end.by.year.dist, simset@n.sim),
+                            parameter.names = 'prep.gains.end.by.year',
+                            parameter.lower.bounds = prep.gains.end.by.bounds[1],
+                            parameter.upper.bounds = prep.gains.end.by.bounds[2])
+    
+    suppression.gains.end.by.bounds = get.support.bounds(suppression.gains.end.by.year.dist@support)
+    simset = add.parameters(simset, 
+                            parameters = generate.random.samples(suppression.gains.end.by.year.dist, simset@n.sim),
+                            parameter.names = 'suppression.gains.end.by.year',
+                            parameter.lower.bounds = suppression.gains.end.by.bounds[1],
+                            parameter.upper.bounds = suppression.gains.end.by.bounds[2])
 
+    #-- Re-render the simset (components for each sim) --#
+    
     simset = extend.simulations(simset, function(sim, parameters){
         components = attr(sim, 'components')
         
@@ -34,7 +81,10 @@ prepare.simset.for.interventions <- function(simset,
     })
     
     attr(simset, 'run.from.year') = min(max(simset@simulations[[1]]$years),
-                                        current.gains.end.by.bounds[1])
+                                        future.slope.after.year,
+                                        testing.gains.end.by.bounds[1],
+                                        prep.gains.end.by.bounds[1],
+                                        suppression.gains.end.by.bounds[1])
 
     simset
 }

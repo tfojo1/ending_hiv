@@ -238,7 +238,7 @@ write.shaded.table <- function(x,
         if (is.na(val))
             NA
         else
-            paste0(mult*floor(val * 10^digits)/10^digits, suffix)
+            paste0(mult*floor(as.numeric(val) * 10^digits)/10^digits, suffix)
     })
     
     below.threshold.color = colorRamp(c(below.threshold.min.color, below.threshold.max.color))
@@ -254,7 +254,7 @@ write.shaded.table <- function(x,
         }
         else
         {
-            scaled.val = max(0,val)/threshold
+            scaled.val = max(0,as.numeric(val))/threshold
             rgb.to.hex(below.threshold.color(scaled.val), prepend='#')
         }
     })

@@ -548,6 +548,34 @@ extract.suppression <- function(sim,
                      include.hiv.negative = F)
 }
 
+extract.prep.coverage <- function(sim,
+                                  years=sim$years,
+                                  keep.dimensions='year',
+                                  per.population=1,
+                                  ages=NULL,
+                                  races=NULL,
+                                  subpopulations=NULL,
+                                  sexes=NULL,
+                                  risks=NULL,
+                                  use.cdc.categorizations=F,
+                                  multiplier=NULL)
+{
+    raw.prep.coverage = calculate.prep.coverage(attr(sim, 'components'))
+    do.extract.rates(raw.rates = raw.prep.coverage,
+                     sim=sim,
+                     years=years,
+                     keep.dimensions=keep.dimensions,
+                     per.population=per.population,
+                     ages=ages,
+                     races=races,
+                     subpopulations=subpopulations,
+                     sexes=sexes,
+                     risks=risks,
+                     use.cdc.categorizations=use.cdc.categorizations,
+                     include.hiv.negative = T,
+                     multiplier=multiplier)
+}
+
 
 extract.testing.rates <- function(sim,
                                   years=sim$years,
@@ -596,11 +624,18 @@ do.extract.rates <- function(raw.rates,
                              cd4=NULL,
                              hiv.subsets=NULL,
                              use.cdc.categorizations=F,
-                             include.hiv.negative=F)
+                             include.hiv.negative=F,
+                             multiplier=NULL)
 {
     interpolated.rates = interpolate.parameters(values=raw.rates$rates,
                                                 value.times=raw.rates$times,
                                                 desired.times = years)
+    
+    if (!is.null(multiplier))
+    {
+        multiplier = expand.population(multiplier, dimnames(interpolated.rates[[1]]))
+        interpolated.rates = lapply(interpolated.rates, function(r){r*multiplier})
+    }
     
     stratified.dim.names = c(list(year=as.character(years)), dimnames(interpolated.rates[[1]]))
     
@@ -612,10 +647,11 @@ do.extract.rates <- function(raw.rates,
     #    dimensions.length.geq.1.names = all.dimension.names[sapply(stratified.dim.names, length)>1]
     #    if (setequal()
     
+    all.dimension.names = setdiff(all.dimension.names, 'non.hiv.subset')
     if (include.hiv.negative)
         prevalence = extract.population.subset(sim, years=years, keep.dimensions = all.dimension.names,
                                                ages=ages, races=races, subpopulations=subpopulations,
-                                               sexes=NULL, risks=NULL,
+                                               sexes=NULL, risks=NULL, 
                                                include.hiv.negative = T)
     else    
         prevalence = extract.population.subset(sim, years=years, keep.dimensions = all.dimension.names,
@@ -624,7 +660,10 @@ do.extract.rates <- function(raw.rates,
                                                continuum=continuum, cd4=cd4, hiv.subsets=hiv.subsets,
                                                include.hiv.negative = F)
     
-    not.subset.dimension.mask = sapply(1:length(dim(stratified.arr)), function(d){
+    n.dim = length(dim(stratified.arr))
+    if (include.hiv.negative)
+        n.dim = n.dim-1
+    not.subset.dimension.mask = sapply(1:n.dim, function(d){
         length(setdiff(dimnames(prevalence)[[d]], dimnames(stratified.arr)[[d]]))>0
     })
     
@@ -657,10 +696,18 @@ do.extract.rates <- function(raw.rates,
     }
     
     if (include.hiv.negative)
-        numerators = as.numeric(prevalence) *
-        as.numeric(stratified.arr[,dimnames(prevalence)[['age']],dimnames(prevalence)[['race']],
-                                  dimnames(prevalence)[['subpopulation']],dimnames(prevalence)[['sex']],
-                                  dimnames(prevalence)[['risk']]])
+    {
+        if (length(dim(stratified.arr))==6)
+            numerators = as.numeric(prevalence) *
+                as.numeric(stratified.arr[,dimnames(prevalence)[['age']],dimnames(prevalence)[['race']],
+                                          dimnames(prevalence)[['subpopulation']],dimnames(prevalence)[['sex']],
+                                          dimnames(prevalence)[['risk']] ])
+        else
+            numerators = as.numeric(prevalence) *
+                as.numeric(stratified.arr[,dimnames(prevalence)[['age']],dimnames(prevalence)[['race']],
+                                          dimnames(prevalence)[['subpopulation']],dimnames(prevalence)[['sex']],
+                                          dimnames(prevalence)[['risk']], ])
+    }
     else
         numerators = as.numeric(prevalence) *
         as.numeric(stratified.arr[,dimnames(prevalence)[['age']],dimnames(prevalence)[['race']],
@@ -749,11 +796,17 @@ do.extract.rates <- function(raw.rates,
     }
     
     numerators = apply(numerators, keep.dimensions, sum)
-    prevalence = apply(prevalence, keep.dimensions, sum)
-    rv = numerators / prevalence
-    rv[numerators==0 & prevalence==0] = 0
     
-    rv
+    if (is.na(per.population))
+        numerators
+    else
+    {
+        prevalence = apply(prevalence, keep.dimensions, sum)
+        rv = numerators / prevalence * per.population
+        rv[numerators==0 & prevalence==0] = 0
+    
+        rv
+    }
 }
 
 OLD.extract.suppression <- function(sim,

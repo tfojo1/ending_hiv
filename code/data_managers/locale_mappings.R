@@ -661,6 +661,95 @@ robust.match.state.name <- function(state.names, return.na.if.no.match = F,
     rv
 }
 
+state.to.region <- function(states)
+{
+    mapping = c(
+        'Pacific'= 'West',
+        'Mountain'= 'West',
+        'West North Central'= 'Midwest',
+        'East North Central'= 'Midwest',
+        'West South Central'= 'South',
+        'East South Central'= 'South',
+        'South Atlantic'= 'South',
+        'Mid-Atlantic'= 'Northeast',
+        'New England'= 'Northeast'
+    )
+    
+    rv = state.to.region.division(states)
+    if (any(is.na(rv)))
+      rv[!is.na(rv)] = mapping[rv[!is.na(rv)]]
+    rv
+}
+
+state.to.region.division <- function(states)
+{
+    mapping = c(WA='Pacific',
+      OR='Pacific',
+      CA='Pacific',
+      AK='Pacific',
+      HI='Pacific',
+      
+      MT='Mountain',
+      ID='Mountain',
+      WY='Mountain',
+      NV='Mountain',
+      UT='Mountain',
+      CO='Mountain',
+      AZ='Mountain',
+      NM='Mountain',
+      
+      ND='West North Central',
+      MN='West North Central',
+      SD='West North Central',
+      IA='West North Central',
+      NE='West North Central',
+      KS='West North Central',
+      MO='West North Central',
+      
+      WI='East North Central',
+      MI='East North Central',
+      IL='East North Central',
+      IN='East North Central',
+      OH='East North Central',
+      
+      OK='West South Central',
+      TX='West South Central',
+      AR='West South Central',
+      LA='West South Central',
+      
+      KY='East South Central',
+      TN='East South Central',
+      MS='East South Central',
+      AL='East South Central',
+      
+      WV='South Atlantic',
+      MD='South Atlantic',
+      DE='South Atlantic',
+      DC='South Atlantic',
+      VA='South Atlantic',
+      NC='South Atlantic',
+      SC='South Atlantic',
+      GA='South Atlantic',
+      FL='South Atlantic',
+      
+      NY='Mid-Atlantic',
+      PA='Mid-Atlantic',
+      NJ='Mid-Atlantic',
+      
+      ME='New England',
+      NH='New England',
+      VT='New England',
+      MA='New England',
+      CT='New England',
+      RI='New England'
+    )
+    
+    rv = mapping[as.character(states)]
+    if (any(is.na(rv)))
+      rv[is.na(rv)] = mapping[state.name.to.abbreviation(states[is.na(rv)])]
+    
+    rv
+}
 
 ##------------------------------##
 ##-- READ IN DEFAULT MAPPINGS --##

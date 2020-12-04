@@ -18,7 +18,7 @@ source('code/data_managers/mortality_manager.R')
 source('code/data_managers/natality_manager.R')
 source('code/data_managers/idu_manager.R')
 source('code/data_managers/pairing_manager.R')
-source('code/data_managers/prep_manager.R')
+source('code/data_managers/prep_manager_2.R')
 source('code/data_managers/continuum_manager_2.R')
 source('code/data_managers/hiv_surveillance_manager.R')
 
@@ -42,7 +42,7 @@ source('code/setup/setup_initial_components.R')
 
 #-- Calibration --#
 source('code/calibration/calibrated_parameters_113_helpers.R')
-source('code/calibration/calibrated_parameters_113e.R')
+source('code/calibration/calibrated_parameters_117d.R')
 source('code/estimate_cdc_errors.R')
 source('code/calibration/likelihoods_2.R')
 
