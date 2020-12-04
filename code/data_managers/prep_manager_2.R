@@ -105,6 +105,12 @@ FRACTION.PREP.STARTS.RECORDED.SD = 0.05
 FRACTION.PREP.GT.1MO = 75839/95683
 FRACTION.PREP.GT.1MO.SD = 0.05
 
+# MacCannell T, Verma S, Shvachko V, Rawlings K, Mera R. Validation of a Truvada for PrEP Algorithm using an Electronic Medical Record. 8th IAS Conference on HIV Pathogenesis, Treatment & Prevention. Vancouver Canada July 2015.
+# http://205.186.56.104/largeDatabase/sample_details.php?id=75332
+FRACTION.PREP.MISCLASSIFIED = 1-.04 - .099 #not using this - sd would be
+FRACTION.PREP.CORRECTLY.CLASSIFIED = 0.724 #The ppv
+FRACTION.PREP.CORRECTLY.CLASSIFIED.SD = (75.8 - 68.9)/100 / 1.96 * 3#multiply by 3 to inflate
+
 # the 3mo numbers from:
 # https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6286209/
 # the year numbers are the sum of the AIDSVu Data in 2017
@@ -116,13 +122,14 @@ PREP.RX.3MO.To.1Y = c(
 PREP.RX.3MO.To.1Y.SD = c(total=0.03823962) #sd(prep.3mo.to.1y.ratios.by.region())
 
 INDIV.PREP.RETENTION = c(
-    (88/116), #6mo - https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6535209/
-    (1-65/197), #6mo - https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6204096/
+    (88/116)^.5, #6mo - https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6535209/
+    (1-65/197)^.5, #6mo - https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6204096/
     #   1- .69/2, #The median time to disc among 69% who did was 159d ~ 5.3mo - 
     # https://pubmed.ncbi.nlm.nih.gov/31499518/
-    0.42, #6mo - https://pubmed.ncbi.nlm.nih.gov/30341556/
-    0.57, #6mo - https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4908080/
-    0.48 #60-165d - https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6594905/
+    0.42^.5, #6mo - https://pubmed.ncbi.nlm.nih.gov/30341556/
+    0.57^.5, #6mo - https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4908080/
+    0.48^.8 #60-165d - https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6594905/
+            #0.8 = 90/(mean(c(60,165)))
 )
 INDIV.PREP.RET.N = c(
     116,
@@ -160,7 +167,7 @@ PREP.PERSISTENCE.SD = sqrt(PREP.PERSISTENCE * (1-PREP.PERSISTENCE) /
 
 convert.true.prep.to.rx <- function(x)
 {
-    x / FRACTION.PREP.GT.1MO / PREP.RX.3MO.To.1Y['total'] / PREP.RETENTION.3MO * FRACTION.PREP.STARTS.RECORDED
+    x / FRACTION.PREP.CORRECTLY.CLASSIFIED / PREP.RX.3MO.To.1Y['total'] / PREP.RETENTION.3MO * FRACTION.PREP.STARTS.RECORDED
    # x * FRACTION.PREP.STARTS.RECORDED / PREP.RX.3MO.To.1Y['total'] / PREP.PERSISTENCE['total']
 }
 
@@ -195,7 +202,7 @@ prep.3mo.to.1y.ratios.by.region <- function(prep.manager = ALL.DATA.MANAGERS$pre
 convert.prep.rx.to.true.prep <- function(x,
                                          description=NULL)
 {
-    return (x * FRACTION.PREP.GT.1MO * PREP.RX.3MO.To.1Y['total'] * PREP.RETENTION.3MO / FRACTION.PREP.STARTS.RECORDED )
+    return (x * FRACTION.PREP.CORRECTLY.CLASSIFIED * PREP.RX.3MO.To.1Y['total'] * PREP.RETENTION.3MO / FRACTION.PREP.STARTS.RECORDED )
     
     #Older
     if (is.null(description))
