@@ -4,8 +4,8 @@ library(htmltools)
 ##-- CONSTANTS --##
 ##---------------##
 
-DATA.TYPE.NAMES = c(new='Reported Diagnoses',
-                    prevalence='PWH',
+DATA.TYPE.NAMES = c(new='Reported Cases (n)',
+                    prevalence='Prevalent Cases (n)',
                     diagnosed='Knowledge of Status',
                     suppression='Viral Suppression',
                     mortality='Mortality Among PWH',
@@ -316,6 +316,8 @@ do.plot.simulations <- function(
             attr(df.change, 'interval.coverage') = plot.interval.coverage
             attr(df.change, 'decrease.is.positive') = change.decrease.is.positive
         }
+        else
+          df.change = NULL
             
     }
     

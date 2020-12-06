@@ -53,7 +53,7 @@ invert.keyVals <- function(x) {
 s3.list <- function(
   bucket.name
 ) {
-    items.list = get_bucket(bucket=bucket.name)
+    items.list = get_bucket(bucket=bucket.name, max=Inf)
     items.names = sapply(items.list, function(x) x$Key )
     return(items.names)
 }

@@ -532,7 +532,8 @@ create.prep.likelihood <- function(location,
         
         # Set up cvs for frac recorded and persistence
         cv.frac.recorded = FRACTION.PREP.STARTS.RECORDED.SD / FRACTION.PREP.STARTS.RECORDED
-        cv.gt.1mo = FRACTION.PREP.GT.1MO.SD / FRACTION.PREP.GT.1MO
+        cv.correctly.classified = FRACTION.PREP.CORRECTLY.CLASSIFIED.SD / FRACTION.PREP.CORRECTLY.CLASSIFIED
+#        cv.gt.1mo = FRACTION.PREP.GT.1MO.SD / FRACTION.PREP.GT.1MO
         cv.3mo.to.12mo = PREP.RX.3MO.To.1Y.SD['total'] / PREP.RX.3MO.To.1Y['total']
         cv.ret.3mo = PREP.RETENTION.3MO.SD / PREP.RETENTION.3MO
         
@@ -545,12 +546,15 @@ create.prep.likelihood <- function(location,
         numerator.cvs.sq = numerator.variances / likelihood.elements$response.vector^2
         new.cvs.sq = numerator.cvs.sq + 
             cv.frac.recorded^2 + 
-            cv.gt.1mo^2 +
+            cv.correctly.classified +
+#            cv.gt.1mo^2 +
             cv.3mo.to.12mo^2 +
             cv.ret.3mo^2
         
         new.means = likelihood.elements$response.vector / FRACTION.PREP.STARTS.RECORDED * 
-            FRACTION.PREP.GT.1MO * PREP.RX.3MO.To.1Y['total'] * PREP.RETENTION.3MO
+            FRACTION.PREP.CORRECTLY.CLASSIFIED *
+#            FRACTION.PREP.GT.1MO *
+            PREP.RX.3MO.To.1Y['total'] * PREP.RETENTION.3MO
         
         new.sds = sqrt(new.cvs.sq) * new.means
         new.cov.mat = new.sds %*% t(new.sds) * corr.mat
