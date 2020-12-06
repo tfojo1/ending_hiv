@@ -70,7 +70,6 @@ server <- function(input, output, session) {
     'preset_tpop_1'='none',
     'intervention_1_selector'='prerun',
     
-    
     # Runmodel 4/6: Epidemiological Indicators
     'epidemiological-indicators'=c('incidence', 'new'),
     
@@ -120,7 +119,8 @@ server <- function(input, output, session) {
   cache = CACHE
 
   # Page definitions ####  
-  output$ui_main = server.routes.runModel.get(input, session, state)
+  ui_main = server.routes.runModel.get(input, session, state)
+  output$ui_main = ui_main
   output$introductionText = server.routes.docs
   output[['design-interventions']] = 
 #    renderUI({includeMarkdown('tempCustomHolder.Rmd')}) #This generates a temporary placeholder saying 'coming soon'
@@ -130,6 +130,28 @@ server <- function(input, output, session) {
 
   # Events: Simulate & plot ####
   reset.handler = function(input, cache, data.plot) {
+    # Validate
+    valid = TRUE
+    dims = get.dimension.value.options(
+      version=version,
+      location=input[['geographic_location']])
+    invalidInputs = c()
+    for (dim in dims)
+      if (length(input[[dim$name]]) < 1)
+        invalidInputs = c(invalidInputs, dim$label)
+    if (length(invalidInputs) > 0)
+      valid = FALSE
+    
+    if (!valid) {
+      msg = '<h2>Error: Invalid selections</h2>
+      <p>At least one option must be selected in each demographic category. The
+      following demographic categories did not have any selections:</p><ul>'
+      for (category in invalidInputs)
+        msg = paste0(msg, '<li>', category, '</li>')
+      msg = paste0(msg, '</ul>')
+      showMessageModal(msg)      
+    
+    } else {
       # Plot & cache
       plot.and.cache <<- generate.plot.and.table(input, cache)
       # This is not needed for diskCache; only mem cache:
@@ -141,14 +163,15 @@ server <- function(input, output, session) {
       
       # Update the table
       pretty.table = make.pretty.change.data.frame(
-          plot.and.cache$change.df, data.type.names=DATA.TYPES)
+        plot.and.cache$change.df, data.type.names=DATA.TYPES)
       data.table(pretty.table)
       output$mainTable = renderDataTable(pretty.table)
       output$mainTable_message = NULL
       
       shinyjs::enable('downloadButton.table')
       shinyjs::enable('downloadButton.plot')
-      shinyjs::enable('createPresetId1')
+      shinyjs::enable('createPresetId1')      
+    }
   }
   
   observeEvent(input$reset_main, {reset.handler(input, cache, data.plot)})
@@ -158,24 +181,84 @@ server <- function(input, output, session) {
       reset.handler(input, cache, data.plot)
   })
   
-  # TODO: plot when preset is present
-  # Warning: Error in $<-.reactivevalues: Attempted to assign value to a read-only reactivevalues object:
+  # Task: Plot should auto-load when preset prasent
+  # to-do: input is empty; need to somehow set presetId only after page fully loads
+  # Try1
+  # Didn't work: "reactive context" error
+  # TODO: Todd thinks this is the right way to go; don't get it from session; get it
+  #  from state().
+  # - Another thing to be wary of. The following code might end up resetting:
+  #   observeEvent(input$geographic_location, {
+  # output$mainPlot = renderPlotly(make.plotly.message(BLANK.MESSAGE))
+  # My code:
+  # TODO: #now
+  # presetId = getPresetIdFromUrl(session)
+  # if (!(is.null(presetId)))
+  #   reset.handler(input, cache, data.plot)
+  # 
+  # TODO: also, todd's psuedo code for runmodel page:
+  # if (this.is.a.preset)
+  #   state = get.preset()
+  # else
+  #   state = input
+  # for (def.name in names(DEFAULTS)) {
+  #   if (!any(names(state)==def.name))
+  #     state[[def.name]] = DEFAULTS[[def.name]]
+  # }
+  
+  # Try2
+  # Warning: Error in $<-.reactivevalues: Attempted to assign value to a
+  # read-only reactivevalues object:
   # observeEvent(input$presetPresent, {
   #   browser()
   # })
   
-  # Didn't work: 
-  # presetId = getPresetIdFromUrl(session)
-  # if (!(is.null(presetId)))
-  #   reset.handler(input, cache, data.plot, output)
+  # Try 2.1
+  # The issue with this one is it only loaded once at begining, before UI loaded
+  # observeEvent(input, { })
+  
+  # Try 2.2
+  # Warning: Error in $.shinyoutput: Reading from shinyoutput object is not allowed.
+  # observeEvent(output$ui_main, { })
+  
+  # Try 2.3
+  # Didn't work: as with 2.1, only loaded once before the UI loaded
+  # observeEvent(ui_main, { })
+  
+  # Try3:
+  # - The issue with this one is that it rusn before page has fully loaded.
+  # - How to get it to run when has loaded only?
+  # observeEvent(state(), {
+  #   if (!is.null(state()[['presetId']])) {
+  #     if (length(names(input)) > 4) {
+  #       browser()
+  #       reset.handler(input, cache, data.plot)
+  #     }
+  #   }
+  # })
+  
+  # Try 4:
+  # observeEvent(state(), {
+  #   req(input$no_intervention_checkbox)
+  # })
+  
+  # Try 5:
+  observe({
+    # Require that page be loaded first. We ascertain that by requiring inputs.
+    # req(input$no_intervention_checkbox)  # doesn't work; arbitrary input won't do
+    req(input$intervention_1_selector)  # works; because has nested UI?
+    if (!is.null(state()[['presetId']]))
+      reset.handler(input, cache, data.plot)
+  })
+  
   
   # Event: Custom interventions ####
   observeEvent(input$run_custom_interventions, {
     # TODO: @tf
   })
-##------------------------------------##
+  ##------------------------------------##
   ##-- INTERVENTION SELECTOR HANDLERS --####
-##------------------------------------##
+  ##------------------------------------##
   
   ##-- LOCATION HANDLER --##
   observeEvent(input$geographic_location, {
@@ -185,6 +268,14 @@ server <- function(input, output, session) {
     # matrix(BLANK.MESSAGE,nrow=1,ncol=1))
     output$mainTable = renderDataTable(message.df)  
     output$mainTable_message = renderText(BLANK.MESSAGE)
+    
+    # TODO: why does it reset?
+    # TODO: where else does changing location have an effect?
+    # maybe i can update the state based on inputs?
+    # it shows 'F' in UI, but not in input or state
+    # xxx = input$no_intervention_checkbox
+    # xxx2 = state()[['no_intervention_checkbox']]
+    # browser()
   })
   
   # Select All Subgroups: RunModel: selections #
@@ -283,9 +374,10 @@ server <- function(input, output, session) {
   
   # This does not seem to be working - take it out? ####
   observeEvent(input$plot_format, {
-      updateKnobInput(session, 
-                      inputId='interval_coverage',
-                      options = list(readOnly = input$plot_format=='individual.simulations'))
+      updateKnobInput(
+        session, 
+        inputId='interval_coverage',
+        options = list(readOnly = input$plot_format=='individual.simulations'))
   })
   
   # Download buttons ####

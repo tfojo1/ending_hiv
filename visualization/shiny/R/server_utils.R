@@ -313,29 +313,29 @@ handleCreatePreset <- function(input) {
   url = paste0('https://jheem.shinyapps.io/EndingHIV?preset=', 
                as.character(presetId))
   msg = paste0('<p>Preset created! You can instantly reload the state of this app in the future via the url:</p><p><a href="', url, '">', url, '</a></p>')
-  showMessageModal(message=msg)      
+  showMessageModal(message=msg)    
 }
 
-reset.handler = function(input, cache) {
-  # Plot & cache
-  plot.and.cache <<- generate.plot.and.table(input, cache)
-  # This is not needed for diskCache; only mem cache:
-  # cache = plot.and.cache$cache
+getPresetIdFromUrl <- function(session) {
+  presetId = NULL
+  presetKeyUsed = NULL
+  presetPermutations = c(
+    'preset', 'presetId', 'presetID', 'presetID', 'presetid',
+    'PRESETID', 'preset_id', 'preset_ID', 'PRESET_ID')
   
-  # Update the plot
-  data.plot(plot.and.cache$plot)
-  output$mainPlot = renderPlotly(plot.and.cache$plot)
+  urlParams = parseQueryString(
+    session$clientData$url_search)
+  for (permu in presetPermutations)
+    if (permu %in% names(urlParams)) {
+      presetKeyUsed = permu
+      break
+  }
+  # presetId = parseQueryString(
+  #   session$clientData$url_search)[[presetKeyUsed]]
+  if (!(is.null(presetKeyUsed)))
+    presetId = urlParams[[presetKeyUsed]]
   
-  # Update the table
-  pretty.table = make.pretty.change.data.frame(
-    plot.and.cache$change.df, data.type.names=DATA.TYPES)
-  data.table(pretty.table)
-  output$mainTable = renderDataTable(pretty.table)
-  output$mainTable_message = NULL
-  
-  shinyjs::enable('downloadButton.table')
-  shinyjs::enable('downloadButton.plot')
-  shinyjs::enable('createPresetId1')
+  presetId
 }
 
 # Test ####

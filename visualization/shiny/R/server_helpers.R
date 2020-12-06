@@ -267,10 +267,10 @@ get.default.download.filename <- function(input,
         ext = paste0(".", ext)
     
     location = input[['geographic_location']]
-    data.types=input[['epidemiological-indicators']]
+    data.types = input[['epidemiological-indicators']]
     
-    facet.by=input[['facet']]
-    split.by=input[['split']]
+    facet.by = input[['facet']]
+    split.by = input[['split']]
     
     if (length(facet.by)==0 && length(split.by)==0)
         by.suffix = ''
