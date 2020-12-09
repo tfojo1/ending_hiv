@@ -174,75 +174,14 @@ server <- function(input, output, session) {
     }
   }
   
+  # Plot in response to action buttons:
   observeEvent(input$reset_main, {reset.handler(input, cache, data.plot)})
   observeEvent(input$reset_main_sidebar, {
       # shinyjs::runjs("window.scrollTo(0, 0)")
       shinyjs::runjs("window.scrollTo({ top: 0, behavior: 'smooth' })")
       reset.handler(input, cache, data.plot)
   })
-  
-  # Task: Plot should auto-load when preset prasent
-  # to-do: input is empty; need to somehow set presetId only after page fully loads
-  # Try1
-  # Didn't work: "reactive context" error
-  # TODO: Todd thinks this is the right way to go; don't get it from session; get it
-  #  from state().
-  # - Another thing to be wary of. The following code might end up resetting:
-  #   observeEvent(input$geographic_location, {
-  # output$mainPlot = renderPlotly(make.plotly.message(BLANK.MESSAGE))
-  # My code:
-  # TODO: #now
-  # presetId = getPresetIdFromUrl(session)
-  # if (!(is.null(presetId)))
-  #   reset.handler(input, cache, data.plot)
-  # 
-  # TODO: also, todd's psuedo code for runmodel page:
-  # if (this.is.a.preset)
-  #   state = get.preset()
-  # else
-  #   state = input
-  # for (def.name in names(DEFAULTS)) {
-  #   if (!any(names(state)==def.name))
-  #     state[[def.name]] = DEFAULTS[[def.name]]
-  # }
-  
-  # Try2
-  # Warning: Error in $<-.reactivevalues: Attempted to assign value to a
-  # read-only reactivevalues object:
-  # observeEvent(input$presetPresent, {
-  #   browser()
-  # })
-  
-  # Try 2.1
-  # The issue with this one is it only loaded once at begining, before UI loaded
-  # observeEvent(input, { })
-  
-  # Try 2.2
-  # Warning: Error in $.shinyoutput: Reading from shinyoutput object is not allowed.
-  # observeEvent(output$ui_main, { })
-  
-  # Try 2.3
-  # Didn't work: as with 2.1, only loaded once before the UI loaded
-  # observeEvent(ui_main, { })
-  
-  # Try3:
-  # - The issue with this one is that it rusn before page has fully loaded.
-  # - How to get it to run when has loaded only?
-  # observeEvent(state(), {
-  #   if (!is.null(state()[['presetId']])) {
-  #     if (length(names(input)) > 4) {
-  #       browser()
-  #       reset.handler(input, cache, data.plot)
-  #     }
-  #   }
-  # })
-  
-  # Try 4:
-  # observeEvent(state(), {
-  #   req(input$no_intervention_checkbox)
-  # })
-  
-  # Try 5:
+  # Plot when 'preset' is in the URL:
   observe({
     # Require that page be loaded first. We ascertain that by requiring inputs.
     # req(input$no_intervention_checkbox)  # doesn't work; arbitrary input won't do

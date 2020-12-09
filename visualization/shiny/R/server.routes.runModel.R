@@ -61,31 +61,8 @@ server.routes.runModel.get <- function(input, session, state)
       tempstate['presetId'] = presetId
       for (key in names(presets))
         tempstate[key] = presets[key]
-      # Task: Set keys (done)
-      # try1: this by itself doesnt work; just gets overwritten
-      # input[[key]] = presets[[key]]
-      # try2: skipped; this adds more complexity based on widget used
-      # updateCheckboxGroupInput()
-      # try3: state():
       state(tempstate)  # <-- works
-      
-      # Task: Plot should auto-load when preset prasent
-      # TODO: 
-      # Try1
-      # Didn't work; because of this line, I believe: 
-      # plot.and.cache <<- generate.plot.and.table(input, cache)
-      # reset.handler(input, session, state, cache)
-      # Try2
-      # Didn't work because: 
-      # Warning: Error in $<-.reactivevalues: Attempted to assign value to a 
-      # read-only reactivevalues object
-      # input$presetPresent = reactiveVal(TRUE)
     }
-    # TODO: 
-    # temp: trying to debug the non-browser version
-    tempstate = state()
-    tempstate['presetId'] = 123
-    state(tempstate)
     
     # Pre-processing: URL params: location ####
     if ('location' %in% names(
