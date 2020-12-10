@@ -190,7 +190,6 @@ server <- function(input, output, session) {
       reset.handler(input, cache, data.plot)
   })
   
-  
   # Event: Custom interventions ####
   observeEvent(input$run_custom_interventions, {
     # TODO: @tf
@@ -207,14 +206,6 @@ server <- function(input, output, session) {
     # matrix(BLANK.MESSAGE,nrow=1,ncol=1))
     output$mainTable = renderDataTable(message.df)  
     output$mainTable_message = renderText(BLANK.MESSAGE)
-    
-    # TODO: why does it reset?
-    # TODO: where else does changing location have an effect?
-    # maybe i can update the state based on inputs?
-    # it shows 'F' in UI, but not in input or state
-    # xxx = input$no_intervention_checkbox
-    # xxx2 = state()[['no_intervention_checkbox']]
-    # browser()
   })
   
   # Select All Subgroups: RunModel: selections #
@@ -258,11 +249,10 @@ server <- function(input, output, session) {
   })
   
   # Select All Subgroups: Custom interventions ####
-  # get dims
   customInts.namesAndChoices = map(
     get.dimension.value.options(
       version=version,
-      location=input[['geographic_location']],
+      location=NULL,
       msm_idu_mode=TRUE), 
     function(dim) {
       list(

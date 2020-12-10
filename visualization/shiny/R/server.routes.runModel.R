@@ -32,11 +32,6 @@ get.version <- function(input)
   '1.0' 
 }
 
-get.location <- function(input)
-{
-  input$geographic_location
-}
-
 
 ##-----------------------------------------------------##
 ##-- THE FUNCTION THAT GENERATES THE UI FOR THE PAGE --####
@@ -76,11 +71,11 @@ server.routes.runModel.get <- function(input, session, state)
       # to-do: Then update URL bar to fix conflict if user changes?
       # to-do: Show warning message if invalid?
     } else
-      location.choice = input[['geographic_location']]
-    if (is.null(location.choice))
-      location.choice = state()[['geographic_location']]
-    # location.choice = invert.keyVals(
-    #   get.location.options(version))[1]
+      location.choice = invert.keyVals(
+        get.location.options(version))[1]
+    #   location.choice = input[['geographic_location']]
+    # if (is.null(location.choice))
+    #   location.choice = state()[['geographic_location']]
     
     # UI ####
     shinyjs::disable("reset_main_sidebar")
@@ -300,7 +295,8 @@ server.routes.runModel.get <- function(input, session, state)
             #div(HTML("<HR>")),
             div(style = "font-size: 1.2em; padding: 0px 0px; margin-bottom:0px",
                 HTML("<b>Intervention 1:</b>")),
-            create.intervention.selector.panel(1, input, state),
+            create.intervention.selector.panel(
+              1, input, state, input$geographic_location),
             materialSwitch(
               inputId='use_intervention_2',
               label="Include a Second Intervention",
@@ -312,7 +308,8 @@ server.routes.runModel.get <- function(input, session, state)
               div(
                 style="font-size: 1.2em; padding: 0px 0px; margin-bottom:0px",
                 HTML("<b>Intervention 2:</b>")),
-              create.intervention.selector.panel(2, input, state),
+              create.intervention.selector.panel(
+                2, input, state, input$geographic_location),
                              )
           ))),  # </fluidRow>
       
@@ -337,12 +334,12 @@ server.routes.runModel.get <- function(input, session, state)
                             choiceNames=unname(map(
                                 get.data.type.options(
                                     version=version, 
-                                    location=input[['geographic_location']]),
+                                    location=input$geographic_location),
                                 ~ .x )),
                             choiceValues=names(map(
                                 get.data.type.options(
                                     version=version, 
-                                    location=input[['geographic_location']]),
+                                    location=input$geographic_location),
                                 ~ .x )),
                             selected=state()[['epidemiological-indicators']] )
                     )),
@@ -390,13 +387,13 @@ server.routes.runModel.get <- function(input, session, state)
               map(
                 get.dimension.value.options(
                   version=version,
-                  location=input[['geographic_location']]), 
+                  location=input$geographic_location), 
                 function(dim) {
                   column(
                     width=page.width / length(
                       get.dimension.value.options(
                         version=version, 
-                        location=input[['geographic_location']])),
+                        location=input$geographic_location)),
                     checkboxGroupInput(
                       inputId=dim[['name']],
                       label=dim[['label']],
@@ -425,10 +422,10 @@ server.routes.runModel.get <- function(input, session, state)
                             label='Make Separate Panels for Each:', 
                             choiceNames=unname(get.facet.by.options(
                                 version=version,
-                                location=input[['geographic_location']])),
+                                location=input$geographic_location)),
                             choiceValues=names(get.facet.by.options(
                                 version=version,
-                                location=input[['geographic_location']])),
+                                location=input$geographic_location)),
                             selected=state()[['facet']])
                     )
                 ))),
@@ -447,10 +444,10 @@ server.routes.runModel.get <- function(input, session, state)
                             label='Within a Panel, Plot Separate Lines for Each:', 
                             choiceNames=unname(get.split.by.options(
                                 version=version,
-                                location=input[['geographic_location']])),
+                                location=input$geographic_location)),
                             choiceValues=names(get.split.by.options(
                                 version=version,
-                                location=input[['geographic_location']])),
+                                location=input$geographic_location)),
                             selected=state()[['split']]),
                         
                         tableRow(inner.padding = '5px',
@@ -498,7 +495,7 @@ server.routes.runModel.get <- function(input, session, state)
                            choices=invert.keyVals(
                              get.plot.format.options(
                                version=version, 
-                               location=input[['geographic_location']])),
+                               location=input$geographic_location)),
                            selected=state()[['plot_format']])
                         ),
                                           

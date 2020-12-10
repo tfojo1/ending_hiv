@@ -39,7 +39,7 @@ generate.plot.and.table <- function(input, cache)
     #-- Get the filenames to pre-cache --#
     filenames = get.sim.filenames.to.load(
         version,
-        location=input[['geographic_location']],
+        location=input$geographic_location,
         intervention.codes=intervention.codes)
     filenames = filenames[!is.sim.cached(filenames, cache=cache)]
     
@@ -76,7 +76,7 @@ generate.plot.and.table <- function(input, cache)
     plot.results = make.simulations.plot.and.table(
         cache=cache,
         version=version,
-        location=input[['geographic_location']],
+        location=input$geographic_location,
         intervention.codes=intervention.codes,
         # years=input[['years']][1]:input[['years']][2],
         years=get.year.options(
@@ -266,7 +266,7 @@ get.default.download.filename <- function(input,
     if (ext != '' && !grepl("^\\.", ext))
         ext = paste0(".", ext)
     
-    location = input[['geographic_location']]
+    location = NULL
     data.types = input[['epidemiological-indicators']]
     
     facet.by = input[['facet']]
