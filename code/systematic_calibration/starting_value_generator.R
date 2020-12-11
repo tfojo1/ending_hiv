@@ -1,4 +1,5 @@
 library(matrixcalc)
+library(tmvtnorm)
 
 if (1==2)
 {
@@ -34,12 +35,27 @@ create.starting.sampling.distribution <- function(simset,
     means = colMeans(parameters)
     naive.cov.mat = cov(parameters)
     
-    mult = 1
+    mult = 0
     cov.mat = naive.cov.mat * correlated.sd.inflation + 
-      diag(diag(naive.cov.mat) + .01^2) * uncorrelated.sd.inflation 
+      diag(diag(naive.cov.mat) + (mult*.01)^2) * uncorrelated.sd.inflation 
+    
+    check.pos.def = function(sigma){
+        tryCatch({
+            dtmvnorm(x=means,
+                        mean = means,
+                        sigma = sigma)
+        },
+        error = function(e)
+        {
+            F
+        },
+        finally = T
+            )
+    }
     
     counter = 1
-    while (!is.positive.definite(cov.mat) && counter <= 1000)
+    
+    while (!check.pos.def(cov.mat) && counter <= 1000)
     {
         mult = mult + 1
         counter = counter + 1
@@ -49,9 +65,8 @@ create.starting.sampling.distribution <- function(simset,
         
     }
     
-    if (!is.positive.definite(cov.mat))
+    if (!check.pos.def(cov.mat))
         stop("Unable to generate positive definite covariance matrix")
-    
     
     bounds = get.support.bounds(prior@support)
     dimnames(bounds)[[2]] = prior@var.names
