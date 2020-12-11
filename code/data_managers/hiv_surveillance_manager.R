@@ -989,6 +989,17 @@ add.prep.data <- function(surv,
     dimnames(surv$prep.age) = all.dim.names[c('year','age','location')]
     surv$prep.age = apply(surv$prep.age, c('year','location','age'), function(x){x})
     
+    #Normalize to total (in case missing data)
+#    total.by.location = pmax(surv$prep.all,
+#                             pmax(rowSums(surv$prep.sex, dims=2),
+#                                  rowSums(surv$prep.age, dims=2),
+#                                  na.rm=T),
+#                             na.rm=T)
+    
+#    surv$prep.all = total.by.location
+    
+    
+    # Return
     surv
 }
 

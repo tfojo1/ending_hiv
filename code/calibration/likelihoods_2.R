@@ -260,7 +260,7 @@ create.likelihood.function <- function(data.type=c('new','prevalence','mortality
                                        denominator.dimensions=denominator.dimensions,
                                        aggregate.denominator.males=aggregate.denominator.males,
                                        prep.multiplier=prep.multiplier)
-        
+
         # Pass it all to the sub-function to crunch
         likelihood.sub(rates,
                        transformation.matrix = likelihood.elements$transformation.matrix,
@@ -546,7 +546,7 @@ create.prep.likelihood <- function(location,
         numerator.cvs.sq = numerator.variances / likelihood.elements$response.vector^2
         new.cvs.sq = numerator.cvs.sq + 
             cv.frac.recorded^2 + 
-            cv.correctly.classified +
+            cv.correctly.classified^2 +
 #            cv.gt.1mo^2 +
             cv.3mo.to.12mo^2 +
             cv.ret.3mo^2

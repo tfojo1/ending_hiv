@@ -2,40 +2,47 @@
 
 
 A1.INTERVENTION.SET = list(NO.INTERVENTION,
-                             YBHM.1.25.80,
-                             YBHM.1.25.90,
-                             YBHM.1.50.80,
-                             YBHM.1.50.90,
-                             MSM.IDU.1.25.80.YBH.HIGH.X,
-                             MSM.IDU.1.25.90.YBH.HIGH.X,
-                             MSM.IDU.1.50.80.YBH.HIGH.X,
-                             MSM.IDU.1.50.90.YBH.HIGH.X,
-                             HET.1.10.80.MI.HIGH.X,
-                             HET.1.10.90.MI.HIGH.X,
-                             HET.1.25.80.MI.HIGH.X,
-                             HET.1.25.90.MI.HIGH.X)
+                           
+                           HET.TQ1.MI.TQ6M,
+                           HET.S90.MI.S90.X,
+                           HET.P25.MI.P50.X,
+                           
+                           YBHM.6M.25.80,
+                           YBHM.6M.25.90,
+                           YBHM.6M.50.80,
+                           YBHM.6M.50.90,
+                           
+                           MSM.IDU.6M.25.80.YBH.HIGH6,
+                           MSM.IDU.6M.25.90.YBH.HIGH6,
+                           MSM.IDU.6M.50.80.YBH.HIGH6,
+                           MSM.IDU.6M.50.90.YBH.HIGH6,
+                           
+                           HET.1.10.80.MI.HIGH6,
+                           HET.1.10.90.MI.HIGH6,
+                           HET.1.25.80.MI.HIGH6,
+                           HET.1.25.90.MI.HIGH6)
 
-A2.INTERVENTION.SET = list(YBHM.TQ2,
-                           YBHM.TQ1,
+A2.INTERVENTION.SET = list(YBHM.TQ1,
+                           YBHM.TQ6M,
                            YBHM.S80,
                            YBHM.S90,
                            YBHM.P25,
                            YBHM.P50,
-                           MSM.IDU.TQ2.YBH.TQ1.X,
-                           MSM.IDU.TQ1.YBH.TQ1.X,
+                           MSM.IDU.TQ1.YBH.TQ6M,
+                           MSM.IDU.TQ6M.YBH.TQ6M,
                            MSM.IDU.S80.YBH.S90.X,
                            MSM.IDU.S90.YBH.S90.X,
                            MSM.IDU.P25.YBH.P50.X,
                            MSM.IDU.P50.YBH.P50.X,
-                           HET.TQ2.MI.TQ1.X,
-                           HET.TQ1.MI.TQ1.X,
+                           HET.TQ2.MI.TQ6M,
+                           HET.TQ1.MI.TQ6M,
                            HET.S80.MI.S90.X,
                            HET.S90.MI.S90.X,
                            HET.P10.MI.P50.X,
                            HET.P25.MI.P50.X)
 
-ALL.INTERVENTIONS = c(A1.INTERVENTION.SET,
-                      A2.INTERVENTION.SET)
+ALL.INTERVENTIONS = union.intervention.lists(A1.INTERVENTION.SET,
+                                             A2.INTERVENTION.SET)
 
 ORIG.INTERVENTION.SET = list(NO.INTERVENTION,
                      YBHM.1.25.80,

@@ -107,9 +107,12 @@ FRACTION.PREP.GT.1MO.SD = 0.05
 
 # MacCannell T, Verma S, Shvachko V, Rawlings K, Mera R. Validation of a Truvada for PrEP Algorithm using an Electronic Medical Record. 8th IAS Conference on HIV Pathogenesis, Treatment & Prevention. Vancouver Canada July 2015.
 # http://205.186.56.104/largeDatabase/sample_details.php?id=75332
-FRACTION.PREP.MISCLASSIFIED = 1-.04 - .099 #not using this - sd would be
+FRACTION.PREP.MISCLASSIFIED = .04 + .099 #not using this - sd would be
+FRACTION.PREP.MISCLASSIFIED.SD = ((.125-.079) + (.058-.028)) / 2 / 1.96
 FRACTION.PREP.CORRECTLY.CLASSIFIED = 0.724 #The ppv
-FRACTION.PREP.CORRECTLY.CLASSIFIED.SD = (75.8 - 68.9)/100 / 1.96 * 3#multiply by 3 to inflate
+FRACTION.PREP.CORRECTLY.CLASSIFIED.SD = (75.8 - 68.9)/100 / 2 / 1.96# * 3 #inflate by 3 to allow for location specific differences
+#FRACTION.PREP.CORRECTLY.CLASSIFIED = 1-FRACTION.PREP.MISCLASSIFIED
+#FRACTION.PREP.CORRECTLY.CLASSIFIED.SD = FRACTION.PREP.MISCLASSIFIED.SD * 3 #inflate by 3 to allow for location specific differences
 
 # the 3mo numbers from:
 # https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6286209/
@@ -122,15 +125,15 @@ PREP.RX.3MO.To.1Y = c(
 PREP.RX.3MO.To.1Y.SD = c(total=0.03823962) #sd(prep.3mo.to.1y.ratios.by.region())
 
 INDIV.PREP.RETENTION = c(
-    (88/116)^.5, #6mo - https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6535209/
-    (1-65/197)^.5, #6mo - https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6204096/
+    (88/116),#^.5, #6mo - https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6535209/
+    (1-65/197),#^.5, #6mo - https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6204096/
     #   1- .69/2, #The median time to disc among 69% who did was 159d ~ 5.3mo - 
     # https://pubmed.ncbi.nlm.nih.gov/31499518/
-    0.42^.5, #6mo - https://pubmed.ncbi.nlm.nih.gov/30341556/
-    0.57^.5, #6mo - https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4908080/
-    0.48^.8 #60-165d - https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6594905/
+    0.42,#^.5, #6mo - https://pubmed.ncbi.nlm.nih.gov/30341556/
+    0.57,#^.5, #6mo - https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4908080/
+    0.48 #^.8 #60-165d - https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6594905/
             #0.8 = 90/(mean(c(60,165)))
-)
+)^c(.5, .5, .5, .5, 0.8)
 INDIV.PREP.RET.N = c(
     116,
     197,
@@ -168,7 +171,8 @@ PREP.PERSISTENCE.SD = sqrt(PREP.PERSISTENCE * (1-PREP.PERSISTENCE) /
 convert.true.prep.to.rx <- function(x)
 {
     x / FRACTION.PREP.CORRECTLY.CLASSIFIED / PREP.RX.3MO.To.1Y['total'] / PREP.RETENTION.3MO * FRACTION.PREP.STARTS.RECORDED
-   # x * FRACTION.PREP.STARTS.RECORDED / PREP.RX.3MO.To.1Y['total'] / PREP.PERSISTENCE['total']
+    #x / FRACTION.PREP.GT.1MO / PREP.RX.3MO.To.1Y['total'] / PREP.RETENTION.3MO * FRACTION.PREP.STARTS.RECORDED
+    # x * FRACTION.PREP.STARTS.RECORDED / PREP.RX.3MO.To.1Y['total'] / PREP.PERSISTENCE['total']
 }
 
 # A helper to get an estimate of the sds
@@ -740,9 +744,16 @@ make.prep.model.mixed.linear <- function(settings=SETTINGS,
                                          max.proportion=0.5,
                                          use.logistic.tail=T,
                                          logistic.after.frac.of.max.p=0.5,
-                                         msm.correction.rr = 0.158, #from calling calculate.msm.prep.correction.rr
-                                         idu.correction.rr = .070,
-                                         het.correction.rr = 0.070)
+                                         msm.correction.rr = 0.0691,#0.158, #from calling calculate.msm.prep.correction.rr
+                                         idu.correction.rr = 0.0525,#.070,
+                                         het.correction.rr = 0.0525,#0.070)
+                                         age1.correction.rr = 0.612,#0.538,
+                                         age2.correction.rr = 1.138,#1,
+                                         age3.correction.rr = 1.312,#1.153,
+                                         age4.correction.rr = 1.240,#1.090,
+                                         age5.correction.rr = 0.697#0.613
+                                         #x=calculate.age.prep.correction.rr(relative.to=NULL);x/mean(x)
+)
 {
     anchor.year=2014
     data = get.prep.lit.data(as.proportion.of.indicated=as.proportion.of.indicated)
@@ -830,11 +841,16 @@ make.prep.model.mixed.linear <- function(settings=SETTINGS,
     
     
     ages = paste0('age', 1:5)
+    age.correction.rrs = c(age1=age1.correction.rr,
+                           age2=age2.correction.rr,
+                           age3=age3.correction.rr,
+                           age4=age4.correction.rr,
+                           age5=age5.correction.rr)
     p.total = (data$nhbs$msm.2017$p['total']*msm.correction.rr * data$nhbs$msm.2017$n['total'] +
                    data$nhbs$idu.2018$p['total']*idu.correction.rr * data$nhbs$idu.2018$n['total']) /
         (data$nhbs$msm.2017$n['total'] + data$nhbs$idu.2018$n['total'])
-    p.age = (data$nhbs$msm.2017$p[ages]*msm.correction.rr * data$nhbs$msm.2017$n[ages] +
-                 data$nhbs$idu.2018$p[ages]*idu.correction.rr * data$nhbs$idu.2018$n[ages]) /
+    p.age = (data$nhbs$msm.2017$p[ages]*msm.correction.rr*age.correction.rrs * data$nhbs$msm.2017$n[ages] +
+                 data$nhbs$idu.2018$p[ages]*idu.correction.rr*age.correction.rrs * data$nhbs$idu.2018$n[ages]) /
         (data$nhbs$msm.2017$n[ages] + data$nhbs$idu.2018$n[ages])
     
     age.lors = model$log.or.vector[ages] = logit(p.age) - logit(p.total)
@@ -1173,7 +1189,9 @@ get.prep.lit.data <- function(as.proportion.of.indicated=T)
 calculate.msm.prep.correction.rr <- function(prep.manager = ALL.DATA.MANAGERS$prep,
                                              census = ALL.DATA.MANAGERS$census.collapsed.msm)
 {
-    fips = intersect(prep.manager$locations, census$combined.fips)
+    msa.fips = counties.for.msa(dimnames(msa.surveillance$new.all)[['location']])
+#    msa.fips = counties.for.msa(TARGET.MSAS)
+    fips = intersect(msa.fips, intersect(prep.manager$locations, census$combined.fips))
     
     rx = get.prep.data(prep.manager,
                        locations=fips,
@@ -1184,11 +1202,11 @@ calculate.msm.prep.correction.rr <- function(prep.manager = ALL.DATA.MANAGERS$pr
     pop = get.census.data(census,
                           fips=fips,
                           years=2017,
-                          sexes='msm',
+                          sexes=c('msm','heterosexual_male'),
                           aggregate.years=T,
                           aggregate.counties = F,
                           aggregate.age=F,
-                          aggregate.race=F)[,,,1]
+                          aggregate.race=F)
     
     mask = !is.na(rx) & !apply(is.na(pop), 1, any)
     
@@ -1197,12 +1215,12 @@ calculate.msm.prep.correction.rr <- function(prep.manager = ALL.DATA.MANAGERS$pr
     rx = convert.prep.rx.to.true.prep(rx, description='male')
     
     # Sum up the population
-    pop = colSums(pop[mask,,])
+    pop = colSums(pop[mask,,,], dims=1)
     pop = collapse.races(pop)
     
     # Multiply pop by p indicated
-    p.indicated = get.prep.indications.estimate()[,,'msm','never_IDU']
-    denominator = sum(pop * p.indicated)
+    p.indicated = get.prep.indications.estimate()[,,c('msm','heterosexual_male'),'never_IDU']
+    denominator = sum(pop[,,'msm'] * p.indicated[,,'msm'])
     
     # Compare
     rx.proportion = rx/denominator
@@ -1216,7 +1234,8 @@ calculate.msm.prep.correction.rr <- function(prep.manager = ALL.DATA.MANAGERS$pr
 calculate.female.prep.correction.rr <- function(prep.manager = ALL.DATA.MANAGERS$prep,
                                              census = ALL.DATA.MANAGERS$census.collapsed.msm)
 {
-    fips = intersect(prep.manager$locations, census$combined.fips)
+    msa.fips = counties.for.msa(dimnames(msa.surveillance$new.all)[['location']])
+    fips = intersect(msa.fips, intersect(prep.manager$locations, census$combined.fips))
     
     rx = get.prep.data(prep.manager,
                        locations=fips,
@@ -1252,6 +1271,55 @@ calculate.female.prep.correction.rr <- function(prep.manager = ALL.DATA.MANAGERS
     nhbs.proportion = get.prep.lit.data()$nhbs$het.2016$p['female']
     
     rr = rx.proportion / nhbs.proportion
+    rr
+}
+
+
+calculate.age.prep.correction.rr <- function(prep.manager = ALL.DATA.MANAGERS$prep,
+                                                census = ALL.DATA.MANAGERS$census.collapsed.msm,
+                                             relative.to.age = 3)
+{
+    msa.fips = counties.for.msa(dimnames(msa.surveillance$new.all)[['location']])
+    fips = intersect(msa.fips, intersect(prep.manager$locations, census$combined.fips))
+    
+    rx = get.prep.data(prep.manager,
+                       locations=fips,
+                       years = 2017,
+                       age=T,
+                       collapse.locations = F)[1,,]
+    mask = !apply(is.na(rx), 1, any)
+    fips = fips[mask]
+    rx = rx[mask,]
+    
+    pop = get.census.data(census,
+                          fips=fips,
+                          years=2017,
+                          #sexes='msm',
+                          aggregate.years=T,
+                          aggregate.counties = F,
+                          aggregate.age=F,
+                          aggregate.race=F)[,,,]
+    
+    
+    # Convert the rx
+    rx = convert.prep.rx.to.true.prep(rx)
+    rx = colSums(rx)
+    
+    # Sum up the population
+    pop = colSums(pop)
+    pop = collapse.races(pop)
+    
+    # Multiply pop by p indicated
+    p.indicated = get.prep.indications.estimate()[,,,'never_IDU']
+    denominator = rowSums(pop * p.indicated)
+    
+    # Compare
+    rx.proportion = rx/denominator
+    nhbs.proportion = get.prep.lit.data()$nhbs$msm$p.indicated[paste0('age',1:5)]
+    
+    rr = rx.proportion / nhbs.proportion
+    if (!is.null(relative.to.age))
+        rr = rr/rr[relative.to.age]
     rr
 }
 

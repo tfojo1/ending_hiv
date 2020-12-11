@@ -42,7 +42,7 @@ source('code/setup/setup_initial_components.R')
 
 #-- Calibration --#
 source('code/calibration/calibrated_parameters_113_helpers.R')
-source('code/calibration/calibrated_parameters_117d.R')
+source('code/calibration/calibrated_parameters_117g.R')
 source('code/estimate_cdc_errors.R')
 source('code/calibration/likelihoods_2.R')
 

@@ -512,6 +512,16 @@ get.target.populations.for.intervention <- function(int)
     }
 }
 
+union.intervention.lists <- function(int.list.1, int.list.2,
+                                     intervention.manager = INTERVENTION.MANAGER.1.0)
+{
+    codes1 = sapply(int.list.1, get.intervention.code, intervention.manager = intervention.manager)
+    codes2 = sapply(int.list.1, get.intervention.code, intervention.manager = intervention.manager)
+    
+    codes.all = union(codes1, codes2)
+    lapply(codes.all, intervention.from.code, intervention.manager = intervention.manager)
+}
+
 ##------------------------------------##
 ##-- PROCESS AN INTERVENTION OBJECT --##
 ##------------------------------------##
