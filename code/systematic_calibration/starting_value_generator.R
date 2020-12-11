@@ -1,4 +1,4 @@
-
+library(matrixcalc)
 
 if (1==2)
 {
@@ -34,8 +34,24 @@ create.starting.sampling.distribution <- function(simset,
     means = colMeans(parameters)
     naive.cov.mat = cov(parameters)
     
+    mult = 1
     cov.mat = naive.cov.mat * correlated.sd.inflation + 
       diag(diag(naive.cov.mat) + .01^2) * uncorrelated.sd.inflation 
+    
+    counter = 1
+    while (!is.positive.definite(cov.mat) && counter <= 1000)
+    {
+        mult = mult + 1
+        counter = counter + 1
+        
+        cov.mat = naive.cov.mat * correlated.sd.inflation + 
+            diag(diag(naive.cov.mat) + (mult*.01)^2) * uncorrelated.sd.inflation 
+        
+    }
+    
+    if (!is.positive.definite(cov.mat))
+        stop("Unable to generate positive definite covariance matrix")
+    
     
     bounds = get.support.bounds(prior@support)
     dimnames(bounds)[[2]] = prior@var.names
