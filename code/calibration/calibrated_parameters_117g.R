@@ -224,7 +224,7 @@ parameters.prior = join.distributions(
     #-- PrEP --#
     
     msm.prep.intercept.or = Lognormal.Distribution(0, log(8)),
-    non.msm.prep.intercept.or = Lognormal.Distribution(0, log(8)),
+    non.msm.prep.intercept.or = Lognormal.Distribution(0, log(4)),
     
     # NB: These slope ORs are NOT exponentiated logistic slopes
     # They are an OR that is applied to the linear (ie probability scale) slope
@@ -232,7 +232,7 @@ parameters.prior = join.distributions(
     non.msm.prep.slope.or = Compound.Symmetry.Multivariate.Normal.Distribution(rho=0.8,
                                                                                 n=2,
                                                                                 mu=0,
-                                                                                sds = log(8),
+                                                                                sds = log(4),
                                                                                 transformations = 'log',
                                                                                 lower=0,
                                                                                 var.names=c('idu.prep.slope.or',
