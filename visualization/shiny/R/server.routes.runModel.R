@@ -40,8 +40,18 @@ get.version <- function(input)
 #returns
 server.routes.runModel.get <- function(input, session, state)
 {
+  #ON THE FIRST CALL (done once)
+  # set state() to defaults
+  # if a preset
+  #   overwrite state() values with preset values
+  
   # Component: PageDef #ui_main[renderUI]
   ui_main = renderUI({
+    
+    #ON EVERY RENDER
+    # set state to what's in input
+    # EXCEPT for the location
+    
     presetId = getPresetIdFromUrl(session)
     
     if (!(is.null(presetId))) {
@@ -79,6 +89,7 @@ server.routes.runModel.get <- function(input, session, state)
     
     # UI ####
     shinyjs::disable("reset_main_sidebar")
+    browser()
     rv = list(  # returns-->list
       # Header & styles ####
       #This code sets the position and style for the progress bar when
