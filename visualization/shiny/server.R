@@ -26,7 +26,7 @@ source("R/server.routes.docs.R")
 source("R/server.routes.runModel.R")
 source("R/model_code/plot_simulations.R")
 
-# Cache ####
+# Cache setup ####
 ##----------------------##
 ##-- SET UP THE CACHE --##
 ##----------------------##
@@ -43,6 +43,7 @@ CACHE = diskCache(max_size = 20e6)
 ##-- THE MAIN SERVER FUNCTION --##
 ##------------------------------##
 server <- function(input, output, session) {
+  # State, config, cache ####
   config.contents <- list(
     'customInterventions.groups.max'=5)
   # to-do: turn this into a function:
@@ -57,6 +58,7 @@ server <- function(input, output, session) {
     # Page: run model
     # Runmodel 1/6: Projections
     'toggle_main'='Figure',
+    'presetId'=NULL,
     
     # Runmodel 2/6: Location
     'geographic_location'=invert.keyVals(
@@ -67,7 +69,6 @@ server <- function(input, output, session) {
     
     'preset_tpop_1'='none',
     'intervention_1_selector'='prerun',
-    
     
     # Runmodel 4/6: Epidemiological Indicators
     'epidemiological-indicators'=c('incidence', 'new'),
@@ -118,7 +119,8 @@ server <- function(input, output, session) {
   cache = CACHE
 
   # Page definitions ####  
-  output$ui_main = server.routes.runModel.get(input, session, state)
+  ui_main = server.routes.runModel.get(input, session, state)
+  output$ui_main = ui_main
   output$introductionText = server.routes.docs
   output[['design-interventions']] = 
 #    renderUI({includeMarkdown('tempCustomHolder.Rmd')}) #This generates a temporary placeholder saying 'coming soon'
@@ -127,18 +129,29 @@ server <- function(input, output, session) {
     server.routes.helpAndFeedback.get(input)
 
   # Events: Simulate & plot ####
-  # Plot: Pass to plot event handler function
-  # - Alternative method: ggplotly
-  # `# output$mainPlot = renderPlotly({ p = ggplot(); ggplotly(p) })``
-  
-  # Plot at start:
-  
- # plot.and.cache = plotAndCache(input, cache)
- # cache = plot.and.cache$cache
- # output$mainPlot = plot.and.cache$plot
-  
-  # Plot when clicking 'Run':
-  reset.handler = function(input) {
+  reset.handler = function(input, cache, data.plot) {
+    # Validate
+    valid = TRUE
+    dims = get.dimension.value.options(
+      version=version,
+      location=input[['geographic_location']])
+    invalidInputs = c()
+    for (dim in dims)
+      if (length(input[[dim$name]]) < 1)
+        invalidInputs = c(invalidInputs, dim$label)
+    if (length(invalidInputs) > 0)
+      valid = FALSE
+    
+    if (!valid) {
+      msg = '<h2>Error: Invalid selections</h2>
+      <p>At least one option must be selected in each demographic category. The
+      following demographic categories did not have any selections:</p><ul>'
+      for (category in invalidInputs)
+        msg = paste0(msg, '<li>', category, '</li>')
+      msg = paste0(msg, '</ul>')
+      showMessageModal(msg)      
+    
+    } else {
       # Plot & cache
       plot.and.cache <<- generate.plot.and.table(input, cache)
       # This is not needed for diskCache; only mem cache:
@@ -150,31 +163,40 @@ server <- function(input, output, session) {
       
       # Update the table
       pretty.table = make.pretty.change.data.frame(
-          plot.and.cache$change.df, data.type.names=DATA.TYPES)
+        plot.and.cache$change.df, data.type.names=DATA.TYPES)
       data.table(pretty.table)
       output$mainTable = renderDataTable(pretty.table)
       output$mainTable_message = NULL
       
       shinyjs::enable('downloadButton.table')
       shinyjs::enable('downloadButton.plot')
-      shinyjs::enable('createPresetId1')
+      shinyjs::enable('createPresetId1')      
+    }
   }
   
+  # Plot in response to action buttons:
+  observeEvent(input$reset_main, {reset.handler(input, cache, data.plot)})
+  observeEvent(input$reset_main_sidebar, {
+      # shinyjs::runjs("window.scrollTo(0, 0)")
+      shinyjs::runjs("window.scrollTo({ top: 0, behavior: 'smooth' })")
+      reset.handler(input, cache, data.plot)
+  })
+  # Plot when 'preset' is in the URL:
+  observe({
+    # Require that page be loaded first. We ascertain that by requiring inputs.
+    # req(input$no_intervention_checkbox)  # doesn't work; arbitrary input won't do
+    req(input$intervention_1_selector)  # works; because has nested UI?
+    if (!is.null(state()[['presetId']]))
+      reset.handler(input, cache, data.plot)
+  })
+  
+  # Event: Custom interventions ####
   observeEvent(input$run_custom_interventions, {
     # TODO: @tf
   })
-  
-  observeEvent(input$reset_main, {reset.handler(input)})
-  observeEvent(input$reset_main_sidebar, {
-#      shinyjs::runjs("window.scrollTo(0, 0)")
-      shinyjs::runjs("window.scrollTo({ top: 0, behavior: 'smooth' })")
-      reset.handler(input)
-      })
-  
-
-##------------------------------------##  
-##-- INTERVENTION SELECTOR HANDLERS --##
-##------------------------------------##
+  ##------------------------------------##
+  ##-- INTERVENTION SELECTOR HANDLERS --####
+  ##------------------------------------##
   
   ##-- LOCATION HANDLER --##
   observeEvent(input$geographic_location, {
@@ -226,12 +248,11 @@ server <- function(input, output, session) {
             shinyjs::enable(id)
   })
   
-  # Select All Subgroups: Custom interventions #
-  # get dims
+  # Select All Subgroups: Custom interventions ####
   customInts.namesAndChoices = map(
     get.dimension.value.options(
       version=version,
-      location=input[['geographic_location']],
+      location=NULL,
       msm_idu_mode=TRUE), 
     function(dim) {
       list(
@@ -280,14 +301,15 @@ server <- function(input, output, session) {
     })
   })
   
-  #This does not seem to be working - take it out?
+  # This does not seem to be working - take it out? ####
   observeEvent(input$plot_format, {
-      updateKnobInput(session, 
-                      inputId='interval_coverage',
-                      options = list(readOnly = input$plot_format=='individual.simulations'))
+      updateKnobInput(
+        session, 
+        inputId='interval_coverage',
+        options = list(readOnly = input$plot_format=='individual.simulations'))
   })
   
-  # Download buttons ##
+  # Download buttons ####
   output$downloadButton.table <- downloadHandler(
     filename=function() {get.default.download.filename(input, ext='csv')},
     content=function(filepath) {
@@ -302,6 +324,10 @@ server <- function(input, output, session) {
                             filename: '", get.default.download.filename(input),"'})"))
    })
   
+  # Custom interventions button ####
+  # for now
+  output$custom_int_msg_1 = renderText(NO.CUSTOM.INTERVENTIONS.MESSAGE)
+  
   observeEvent(input[['n-custom-interventions-btn']], {
     state.temp = state()
     state.temp[['n-custom-interventions']] = 
@@ -309,6 +335,7 @@ server <- function(input, output, session) {
     state(state.temp)
   })
   
+  # Preset ID ####
   observeEvent(input[['createPresetId1']], {
     handleCreatePreset(input)
   })
@@ -316,6 +343,7 @@ server <- function(input, output, session) {
     handleCreatePreset(input)
   })
   
+  # Contact form ####
   observeEvent(input[['feedback_submit']], {
     name = input[['feedback_name']]
     email = input[['feedback_email']]
@@ -324,9 +352,5 @@ server <- function(input, output, session) {
       name=name, email=email, message=contents)
     showMessageModal('Your message has been received.')
   })
-  
-
-  # for now
-  output$custom_int_msg_1 = renderText(NO.CUSTOM.INTERVENTIONS.MESSAGE)
   
 }

@@ -113,7 +113,7 @@ customInterventionBox <- function(i, state) {
   
   dimension.value.options = get.dimension.value.options(
     version=version,
-    location=input[['geographic_location']],
+    location=NULL,
     msm_idu_mode=TRUE)
   dimension.value.col.width = 12 / length(dimension.value.options)
     

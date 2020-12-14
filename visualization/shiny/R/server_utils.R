@@ -13,6 +13,7 @@ library('DBI')
 library('stringr')
 
 source('env.R')
+
 # - env.R has to be created manually. It is ignored from the repository 
 # for security reasons. Please create env.R at the location of the 
 # working directory, copy/paste the following placeholder text, and
@@ -309,10 +310,32 @@ presets.urlQueryParamString.parse <- function(
 handleCreatePreset <- function(input) {
   queryStr = presets.urlQueryParamString.create(input)
   presetId = db.write.queryString(queryStr)
-  url = paste0('https://dynamic-modeling.shinyapps.io/EndingHIV?preset=', 
+  url = paste0('https://jheem.shinyapps.io/EndingHIV?preset=', 
                as.character(presetId))
   msg = paste0('<p>Preset created! You can instantly reload the state of this app in the future via the url:</p><p><a href="', url, '">', url, '</a></p>')
-  showMessageModal(message=msg)      
+  showMessageModal(message=msg)    
+}
+
+getPresetIdFromUrl <- function(session) {
+  presetId = NULL
+  presetKeyUsed = NULL
+  presetPermutations = c(
+    'preset', 'presetId', 'presetID', 'presetID', 'presetid',
+    'PRESETID', 'preset_id', 'preset_ID', 'PRESET_ID')
+  
+  urlParams = parseQueryString(
+    session$clientData$url_search)
+  for (permu in presetPermutations)
+    if (permu %in% names(urlParams)) {
+      presetKeyUsed = permu
+      break
+  }
+  # presetId = parseQueryString(
+  #   session$clientData$url_search)[[presetKeyUsed]]
+  if (!(is.null(presetKeyUsed)))
+    presetId = urlParams[[presetKeyUsed]]
+  
+  presetId
 }
 
 # Test ####

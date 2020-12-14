@@ -11,12 +11,15 @@ TPOP.SELECTOR.WIDTH = 3#4
 UNIT.SELECTOR.WIDTH = 3#6
 
 create.intervention.selector.panel <- function(
-  num, input, state, lump.idu=T, title=paste0("Intervention ", num)
+  num, input, state, location, lump.idu=T, title=paste0("Intervention ", num)
 ) {
-    #-- Set up the Pre-Run Panel -_#
-    interventions = get.intervention.options(version=get.version(input),
-                                             location=get.location(input),
-                                             return.intervention.objects = T)
+  print(location)    # TODO: #now: figure out how to utilize w/out re-render
+  #-- Set up the Pre-Run Panel -_#
+    interventions = get.intervention.options(
+      version=get.version(input),
+      # location=input$geographic_location,
+      location=NULL,
+      return.intervention.objects = T)
     
     interventions = interventions[!sapply(interventions, is.null.intervention)]
     
