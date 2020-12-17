@@ -21,6 +21,15 @@ source('R/server_utils.R')
 page.width = 12
 page.width.half = round(page.width / 2)
 createPresetLabel = "Create a URL for these Projections"
+state.ignoreList = c(
+  'reset_main_sidebar',
+  'sidebarItemExpanded',
+  'sidebarCollapsed',
+  'side_menu',
+  'plotly_afterplot-A',
+  '.clientValue-default-plotlyCrosstalkOpts',
+  'plotly_relayout-A'
+)
 
 ##----------------------------------------------------------##
 ##-- SOME HELPERS (that abstract away the 'input' object) --####
@@ -32,7 +41,6 @@ get.version <- function(input)
   '1.0' 
 }
 
-
 ##-----------------------------------------------------##
 ##-- THE FUNCTION THAT GENERATES THE UI FOR THE PAGE --####
 ##-----------------------------------------------------##
@@ -40,33 +48,37 @@ get.version <- function(input)
 #returns
 server.routes.runModel.get <- function(input, session, state)
 {
-  #ON THE FIRST CALL (done once)
-  # set state() to defaults
-  # if a preset
-  #   overwrite state() values with preset values
+  # Todd: ON THE FIRST CALL (done once), set state() to defaults
+  # TODO: @Todd: Wouldn't work here because outside reactive context. I put it
+  # inside observe() in server.R. You can erase this note when you see it. - JEF
   
   # Component: PageDef #ui_main[renderUI]
   ui_main = renderUI({
-    
-    #ON EVERY RENDER
-    # set state to what's in input
-    # EXCEPT for the location
-    
+    # Todd: ON EVERY RENDER:set state to what's in input, EXCEPT for the location
+    # TODO: @Todd: You can erase these notes when you see them: - JEF
+    # 1. Can't do that inside of here because it triggers an endless cycle of 
+    # recursive page re-renders every time state is changed. For some reason, this
+    # was happening even if on my end, even with a lot of debugging, it appeared
+    #  that state was not actually updating. I'm not sure why, but something
+    #  was causing this to happen just by the presence of code that was merely
+    #  just checking to see if anything needed to be updated.
+    # 2. Under the context of presets, I'm not sure i can do what's asked
+    #  for loc, because its in preset and needs to be set. And I don't think this
+    #   is interfering w/ anything else.
     presetId = getPresetIdFromUrl(session)
-    
-    if (!(is.null(presetId))) {
+    if (!(is.null(presetId)) && is.null(state()['presetId'])) {
       # 1. fetch query string from db
       presetTable.df = db.presets.read.all()
       presetRecord = presetTable.df[presetTable.df$id==presetId,]
       presetStr = presetRecord$urlQueryParamString
       # 2. parse it into a list
       presets = presets.urlQueryParamString.parse(presetStr)  # list
-      # 3. for each key in list set input[[key]]=val
+      # 3. set state
       tempstate = state()
       tempstate['presetId'] = presetId
       for (key in names(presets))
         tempstate[key] = presets[key]
-      state(tempstate)  # <-- works
+      state(tempstate)
     }
     
     # Pre-processing: URL params: location ####
@@ -89,7 +101,6 @@ server.routes.runModel.get <- function(input, session, state)
     
     # UI ####
     shinyjs::disable("reset_main_sidebar")
-    browser()
     rv = list(  # returns-->list
       # Header & styles ####
       #This code sets the position and style for the progress bar when
@@ -307,7 +318,7 @@ server.routes.runModel.get <- function(input, session, state)
             div(style = "font-size: 1.2em; padding: 0px 0px; margin-bottom:0px",
                 HTML("<b>Intervention 1:</b>")),
             create.intervention.selector.panel(
-              1, input, state, input$geographic_location),
+              1, input, state),
             materialSwitch(
               inputId='use_intervention_2',
               label="Include a Second Intervention",
@@ -320,7 +331,7 @@ server.routes.runModel.get <- function(input, session, state)
                 style="font-size: 1.2em; padding: 0px 0px; margin-bottom:0px",
                 HTML("<b>Intervention 2:</b>")),
               create.intervention.selector.panel(
-                2, input, state, input$geographic_location),
+                2, input, state),
                              )
           ))),  # </fluidRow>
       
