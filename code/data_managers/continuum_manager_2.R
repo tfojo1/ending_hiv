@@ -366,6 +366,82 @@ run.suppression.regressions <- function(cm,
     cm
 }
 
+##-- SET UP LINKAGE --##
+
+run.linkage.regressions <- function(cm,
+                                    dir='cleaned_data',
+                                    anchor.year=2020,
+                                    max.linked.proportion=0.95,
+                                    settings=SETTINGS
+                                    )
+{
+    df = read.csv(file.path(dir, 'continuum/national/linkage/national_linkage.csv'),
+                  stringsAsFactors = F, header = F)
+    dimnames(df)[[1]] = df[,1]
+    
+    n.mask = df[2,]=='new'
+    p.mask = df[2,]=='linked'
+    
+    
+    # Fit age
+    
+    
+    df.age = rbind(data.frame(value=as.numeric(df['13-24',p.mask]),
+                              n=as.numeric(df['13-24',n.mask]),
+                              year=as.numeric(df['year',p.mask])-anchor.year,
+                              age1=1,
+                              age2=0,
+                              age3=0,
+                              age4=0,
+                              age5=0),
+                   data.frame(value=as.numeric(df['25-34',p.mask]),
+                              n=as.numeric(df['25-34',n.mask]),
+                              year=as.numeric(df['year',p.mask])-anchor.year,
+                              age1=0,
+                              age2=1,
+                              age3=0,
+                              age4=0,
+                              age5=0),
+                   data.frame(value=as.numeric(df['35-44',p.mask]),
+                              n=as.numeric(df['35-44',n.mask]),
+                              year=as.numeric(df['year',p.mask])-anchor.year,
+                              age1=0,
+                              age2=0,
+                              age3=1,
+                              age4=0,
+                              age5=0),
+                   data.frame(value=as.numeric(df['45-54',p.mask]),
+                              n=as.numeric(df['45-54',n.mask]),
+                              year=as.numeric(df['year',p.mask])-anchor.year,
+                              age1=0,
+                              age2=0,
+                              age3=0,
+                              age4=1,
+                              age5=0),
+                   data.frame(value=as.numeric(df['>=55',p.mask]),
+                              n=as.numeric(df['>=55',n.mask]),
+                              year=as.numeric(df['year',p.mask])-anchor.year,
+                              age1=0,
+                              age2=0,
+                              age3=0,
+                              age4=0,
+                              age5=1))
+    
+    fit.age = glm(value ~ age1 + age2 + age4 + age5 +
+                      year + year:age1 + year:age2 + year:age4 + year:age5, 
+                  data=df.age, weights = df.age$n,
+                  family='binomial')
+    
+    
+    
+    
+    age.indices = c('13-24','25-34','35-44','45-54','>=55')
+    race.indices = c('black','hispanic','other')
+    sex.indices
+    riskindices
+    df[age.indices,n.mask]
+}
+
 ##-- SET UP TESTING --##
 
 run.testing.regressions <- function(cm,

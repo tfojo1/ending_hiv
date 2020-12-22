@@ -21,6 +21,6 @@ msa = TARGET.MSAS[index]
 #-- DO THE SET UP--#
 print(paste0("Running interventions for ", msa.names(msa)))
 
-extract.simset.and.run.interventions(location=msa,
-                                     mcmc.dir=file.path(SYSTEMATIC.ROOT.DIR, 'systematic_parallel'),
-                                     dst.dir=file.path(SYSTEMATIC.ROOT.DIR, 'full_simsets'))
+do.run.interventions(location=msa,
+                     simset.dir=file.path(SYSTEMATIC.ROOT.DIR, 'full_simsets'),
+                     dst.dir=file.path(SYSTEMATIC.ROOT.DIR, 'full_simsets'))

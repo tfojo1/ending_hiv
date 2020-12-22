@@ -1154,7 +1154,6 @@ do.calculate.prep.coverage <- function(components)
                               components$background.prep$years)
     background.prep = c(list(0 * background.prep[[1]]), background.prep)
     
-    
     components$prep.rates.and.times = get.rates.from.background.and.foreground(background.rates = background.prep,
                                                                                background.times = background.prep.years,
                                                                                foreground.rates = components$foreground.prep.coverage,
@@ -2088,7 +2087,7 @@ get.rates.from.background.and.foreground <- function(background.rates,
         
         sub.rates = numeric(length(all.times))
         names(sub.rates) = as.character(all.times)
-        
+
         raw.rates = sapply(1:length(foreground.rates[[1]]), function(i){
             bg.rates = sub.rates = sapply(interpolated.background.rates, function(bg){bg[i]}) #start off with the backgroundr rates
             
@@ -2098,17 +2097,22 @@ get.rates.from.background.and.foreground <- function(background.rates,
                 from.foreground.rates = sapply(foreground.rates[from.foreground.times], function(fg){fg[i]})
                 if (any(!is.na(from.foreground.rates)))
                 {
+                    sub.rates[all.times>=min(from.foreground.times)] = NA
                     sub.rates[from.foreground.times] = from.foreground.rates
                     
                     if (any(is.na(sub.rates)))
                     {
                         to.interpolate.times = all.times[is.na(sub.rates)]
-                        bg.time = foreground.start.times[i]
-                        fg.time = min(all.times[!is.na(sub.rates) & all.times>bg.time])
-                        sub.rates[is.na(sub.rates)] = interpolate.parameters(values=sub.rates[as.character(c(bg.time,fg.time))],
-                                                                             value.times=c(bg.time,fg.time),
+                        sub.rates[is.na(sub.rates)] = interpolate.parameters(values=sub.rates[!is.na(sub.rates)],
+                                                                             value.times=all.times[!is.na(sub.rates)],
                                                                              desired.times=to.interpolate.times,
-                                                                             return.list=F)
+                                                                             return.list = F)
+#                        bg.time = foreground.start.times[i]
+#                        fg.time = min(all.times[!is.na(sub.rates) & all.times>bg.time])
+#                        sub.rates[is.na(sub.rates)] = interpolate.parameters(values=sub.rates[as.character(c(bg.time,fg.time))],
+#                                                                             value.times=c(bg.time,fg.time),
+#                                                                             desired.times=to.interpolate.times,
+#                                                                             return.list=F)
                     }
                 }
             }

@@ -11,8 +11,9 @@ source('code/targets/target_msas.R')
 
 set.seed(5557)
  
-msa=CHICAGO.MSA
-save.suffix = ''
+msa=SEATTLE.MSA
+save.suffix = 'final.2011'
+DO.vIS.INTERVENTIONS = T
 
 RESUME=T
 if (RESUME)
@@ -21,7 +22,8 @@ if (RESUME)
     print(paste0("RESUMING initial MCMC on ", msa.names(msa)))
     print(save.suffix)
     print('----------------------------------------------------')
-    mcmc = run.mcmc.for.msa.cache('mcmc_runs/systematic_caches/16980_1x20K_2020-12-03/')
+    print(qplot(1,1) + ggtitle(msa.names(msa)) + theme(plot.title=element_text(hjust=1)))
+    mcmc = run.mcmc.for.msa.cache(paste0('mcmc_runs/systematic_caches/',msa,'_1x20K_final.2011_2020-12-15/'))
 }
 if (!RESUME)
 {
@@ -44,11 +46,11 @@ save(mcmc, file=file.path(SYSTEMATIC.ROOT.DIR, 'systematic_initial', save.name))
 
 
 #to make the visualization simset
-if (1==2)
+if (DO.vIS.INTERVENTIONS)
 {
     source('code/source_code.R')
     source('code/interventions/systematic_interventions.R')
-    load('mcmc_runs/systematic_initial/17460_1x20K_2020-10-08.Rdata')
+ #   load('mcmc_runs/systematic_initial/40900.Rdata')
     
     simset = extract.simset(mcmc, additional.burn=520, additional.thin=6)
     simset@n.sim
@@ -58,9 +60,9 @@ if (1==2)
                                  dst.dir=file.path('mcmc_runs/visualization_simsets', attr(simset@simulations[[1]], 'location')),
                                  overwrite = T)
     
-    #to rerun the test code
-    source('code/source_code.R')
-    source('code/systematic_calibration/systematic_calibration.R')
-    source('code/targets/target_msas.R')
-    load('mcmc_runs/systematic_initial/35620_1x20K_2020-10-01.Rdata')
+    run.systematic.interventions(simset, 
+                                 interventions = ALL.INTERVENTIONS.3Y,
+                                 dst.dir=file.path('mcmc_runs/visualization_simsets', attr(simset@simulations[[1]], 'location')),
+                                 overwrite = T)
+    
 }

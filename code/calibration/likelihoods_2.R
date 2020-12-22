@@ -1922,6 +1922,7 @@ likelihood.sub <- function(pre.transformation.rates,
                                             log=log)))
     }
     
+#    browser()
     dmvnorm(x=as.numeric(response.vector),
             mean=as.numeric(mean.vector),
             sigma=covar.mat,
@@ -2331,6 +2332,30 @@ get.equalizing.cv.multipliers <- function(location, surv=msa.surveillance, years
     cvs = get.data.cvs(location=location, surv=surv, years=years)
     mean.cvs = sapply(cvs, mean, na.rm=T)
     1/(mean.cvs/max(mean.cvs))
+}
+
+compare.sims.likelihood <- function(likelihood, ...,
+                                    round.to=1)
+{
+    sims = list(...)
+    rv=sapply(sims, function(sim){
+        sapply(attr(likelihood, 'components'), function(lik){
+            lik(sim)
+        })
+    })
+    
+    argnames <- sys.call()
+    sim.names = sapply(argnames[-1][-1], as.character)
+
+    dimnames(rv)[[2]] = sim.names
+    
+    if (length(sim.names)==2)
+        rv = cbind(rv, diff=rv[,1]-rv[,2])
+    
+    if (!is.null(round.to) && !is.na(round.to))
+        rv = round(rv, round.to)
+    
+    rv
 }
 
 

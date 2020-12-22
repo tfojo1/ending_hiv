@@ -5,11 +5,12 @@ if (1==2)
 
 source('code/source_code.R')
 source('code/plots.R')
-#mcmc = assemble.mcmc.from.cache('mcmc_runs/systematic_caches/35620_1x20K_2020-10-02/',T)
+mcmc = assemble.mcmc.from.cache('mcmc_runs/systematic_caches/35620_1x20K_117e_2020-12-09/',T)
 
 acceptance.plot(mcmc, window.iterations = 200) + geom_hline(yintercept = c(0.238,0.1))
 simset = extract.simset(mcmc, additional.burn=mcmc@n.iter/2, additional.thin=2^(as.numeric(mcmc@n.iter>100)+as.numeric(mcmc@n.iter>1000)))
 
+#Key visualizations
 plot.calibration.sex.risk(simset)
 plot.calibration.sex.age(simset)
 
@@ -33,6 +34,67 @@ plot.calibration.risk.race(simset, risk='msm_idu')
 plot.calibration.idu.prevalence(simset, facet.by='sex')
 plot.calibration.idu.prevalence(simset, facet.by='race')
 plot.calibration.idu.prevalence(simset, facet.by=c('sex','race'))
+
+#Break out PrEP
+plot.calibration.total(simset, data.types='prep')
+plot.calibration.sex(simset, data.types='prep')
+plot.calibration.age(simset, data.types='prep')
+#plot.calibration.race(simset, data.types='prep')
+#plot.calibration.risk(simset, data.types='prep')
+
+trace.plot(mcmc, '*prep')
+
+sapply(c('2018'=9, '2021'=12, '2025'=16), function(year){
+    dist = extract.simset.distribution(simset, function(sim){
+        c1 = attr(sim, 'components')
+        x=c1$prep.rates.and.times$rates[[year]][,,,'msm','never_IDU',]
+        df = reshape2::melt(x)
+        rv = df$value
+        names(rv) = paste0(df$race, '_', df$age)
+        rv
+    })
+    round(100*get.means(dist),1)
+})
+
+dist = extract.simset.distribution(simset, function(sim){
+    year = c('2025'=16, '2018'=9, '2021'=12)[3]
+    c1 = attr(sim, 'components')
+    x=c1$prep.rates.and.times$rates[[year]][,,,'msm','never_IDU',]
+    df = reshape2::melt(x)
+    rv = df$value
+    names(rv) = paste0(df$race, '_', df$age)
+    rv
+})
+cbind(get.means(dist) * 100, t(get.intervals(dist)*100))
+
+
+dist = extract.simset.distribution(simset, function(sim){
+    c1 = attr(sim, 'components')
+    race='other'#'other'
+    x=sapply(c1$prep.rates.and.times$rates, function(r){
+        r[2,race,1,'msm','never_IDU',1]
+    })
+    names(x) = c1$prep.rates.and.times$times
+    x
+})
+df=data.frame(cbind(get.means(dist) * 100, t(get.intervals(dist)*100))); df$year = dimnames(df)[[1]]
+ggplot(df, aes(x=year)) + geom_ribbon(aes(ymin=lower, ymax=upper), group=1, alpha=0.2) + geom_line(aes(y=V1), group=1) +
+    geom_vline(xintercept = 2021)
+
+
+#Plot by indication
+dist = extract.simset.distribution(simset, extract.prep.coverage, years=2010:2020, risk='msm', use.cdc.categorizations=T)
+df=data.frame(cbind(get.means(dist) * 100, t(get.intervals(dist)*100))); df$year = dimnames(df)[[1]]
+ggplot(df, aes(x=year)) + geom_ribbon(aes(ymin=lower, ymax=upper), group=1, alpha=0.2) + geom_line(aes(y=V1), group=1)
+
+dist = extract.simset.distribution(simset, extract.prep.coverage, years=2010:2020, risk='heterosexual', use.cdc.categorizations=T)
+df=data.frame(cbind(get.means(dist) * 100, t(get.intervals(dist)*100))); df$year = dimnames(df)[[1]]
+ggplot(df, aes(x=year)) + geom_ribbon(aes(ymin=lower, ymax=upper), group=1, alpha=0.2) + geom_line(aes(y=V1), group=1)
+
+dist = extract.simset.distribution(simset, extract.prep.coverage, years=2010:2020, risk='active_IDU', use.cdc.categorizations=F)
+df=data.frame(cbind(get.means(dist) * 100, t(get.intervals(dist)*100))); df$year = dimnames(df)[[1]]
+ggplot(df, aes(x=year)) + geom_ribbon(aes(ymin=lower, ymax=upper), group=1, alpha=0.2) + geom_line(aes(y=V1), group=1)
+
 
 #Break out suppression
 plot.calibration.total(simset, data.types='suppression')

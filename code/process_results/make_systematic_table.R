@@ -10,32 +10,66 @@ if(.Platform$OS.type == 'windows')
     library(xlsx)
 
 #source('code/source_code.R')
-source('code/targets/parse_targets.R')
-#source('code/interventions/systematic_interventions.R')
+source('code/source_code.R')
+#source('code/targets/parse_targets.R')
+source('code/targets/target_msas.R')
+source('code/interventions/systematic_interventions.R')
 source('code/interventions/synthesize_interventions.R')
 
 ##--------------------------------------------##
 ##-- CODE TO RUN OUR MAIN ANALYSIS - BY MSA --##
 ##--------------------------------------------##
 
+SAVE.DIR = '../Manuscripts/manuscript_1/tables'
+
+i.total = 1 + length(TARGET.MSAS)
 if (1==2)
 {
-
+    
     #-- FOR ANALYSIS 1: --#
     
-    est = get.estimates.and.intervals('mcmc_runs/visualization_simsets/', 
-                                    msas=get.hiv.burden()$CBSA,
-                                    interventions=A1.INTERVENTION.SET,
-                                    n.sim=80)
-    save(est, file='results/quick_estimated_a1.Rdata')
-#    load('results/quick_estimated_a1.Rdata')
-    write.systematic.table(est, file='results/table3_raw.xlsx')
+#    est.main.10 = get.estimates.and.intervals('mcmc_runs/visualization_simsets/', 
+#                                    msas=TARGET.MSAS,
+#                                    interventions=A1.INTERVENTION.SET,
+#                                    year1=2020,
+#                                    year2=2030,
+#                                    n.sim=80)
+#    write.systematic.table(est.main.10, file=file.path(SAVE.DIR, 'main_table_10y.xlsx'))
     
+    
+#    est.main.5 = get.estimates.and.intervals('mcmc_runs/visualization_simsets/', 
+#                                              msas=TARGET.MSAS,
+#                                              interventions=A1.INTERVENTION.SET,
+#                                              year1=2020,
+#                                              year2=2025,
+#                                              n.sim=80)
+#    write.systematic.table(est.main.5, file=file.path(SAVE.DIR, 'main_table_5y.xlsx'),
+#                           threshold = 0.75)
+    
+    
+    
+    est.main.10.3y = get.estimates.and.intervals('mcmc_runs/visualization_simsets/', 
+                                              msas=TARGET.MSAS,
+                                              interventions=A1.INTERVENTION.SET.3Y,
+                                              year1=2020,
+                                              year2=2030,
+                                              n.sim=80)
+    write.systematic.table(est.main.10.3y, file=file.path(SAVE.DIR, 'main_table_10y_3y.rollout.xlsx'))
+    
+    
+    est.main.5.3y = get.estimates.and.intervals('mcmc_runs/visualization_simsets/', 
+                                             msas=TARGET.MSAS,
+                                             interventions=A1.INTERVENTION.SET.3Y,
+                                             year1=2020,
+                                             year2=2025,
+                                             n.sim=80)
+    write.systematic.table(est.main.5.3y, file=file.path(SAVE.DIR, 'main_table_5y_3y.rollout.xlsx'),
+                           threshold = 0.75)
 
     #-- FOR ANALYSIS 2: --#
     
     est = get.estimates.and.intervals('mcmc_runs/visualization_simsets/', 
-                                      msas=get.hiv.burden()$CBSA,
+                                      msas=TARGET.MSAS,
                                       interventions=c(list(NO.INTERVENTION), A2.INTERVENTION.SET),
                                       n.sim=80)
     save(est, file='results/quick_estimated_a2.Rdata')
@@ -43,6 +77,53 @@ if (1==2)
     write.systematic.table(est, file='results/table_s1_raw.xlsx')
     
     
+    
+    
+    #-- Summarizing --#
+    est = est10 = est.main.10.3y
+    est5 = est.main.5.3y
+    mask = c(TARGET.MSAS != SEATTLE.MSA,F)
+    
+    # Ranges
+    t(round(100*apply(est$estimates[mask,], 2, range, na.rm=T)))
+    
+    # CI for total
+    round(100*cbind(est$estimates[i.total,],
+                    est$ci.lower[i.total,],
+                    est$ci.upper[i.total,]))
+    
+    # NYC CI
+    round(100*cbind(est$estimates[1,],
+                    est$ci.lower[1,],
+                    est$ci.upper[1,]))
+    
+    
+    # Can you get there in 2030 without getting there in 2025?
+    sum(est10$estimates[-i.total,-1]>.9 & est5$estimates[-i.total,-1]<=.75, na.rm=T)
+    
+    sum(est10$estimates[-i.total,-1]<.9 & est5$estimates[-i.total,-1]>.75, na.rm=T)
+    mean(est10$estimates[-i.total,-1]<.9 & est5$estimates[-i.total,-1]>.75, na.rm=T)
+    
+    apply(est10$estimates<.9 & est5$estimates>.75, 1, any)
+    
+    mean(est5$estimates[-i.total,-1]>=0.75)
+    sum(est5$estimates[-i.total,-1]>=0.75)
+    
+    
+    sum(est10$estimates[-i.total,-1]>=0.9 & est5$estimates[-i.total,-1]>=0.75)
+    sum(est10$estimates[-i.total,-1]>=0.9 & est5$estimates[-i.total,-1]>=0.75)/sum(est5$estimates[-i.total,-1]>=0.75)
+    
+    
+    #YBH MSM
+    sort(round(100*est$estimates[mask,8]))
+    sum(est$estimates[mask,8]>.5, na.rm=T)
+    sum(!est$estimates[mask,8]>.5, na.rm=T)
+    
+    
+    #All MSM and IDU
+    sort(round(100*est$estimates[mask,12]))
+    sum(est$estimates[mask,12]>.9, na.rm=T)
+    sum(!est$estimates[mask,12]>.9, na.rm=T)
 }
 
 ##------------------------------------------------------------##
@@ -114,9 +195,10 @@ get.estimates.and.intervals <- function(dir,
     rel.change = -(all.arr[2,,,] - all.arr[1,,,]) / all.arr[1,,,]
 
     alpha = (1-interval.coverage)/2
-    rv=list(estimates=apply(rel.change, 2:3, summary.stat),
-            ci.lower=apply(rel.change, 2:3, quantile, probs=alpha),
-            ci.upper=apply(rel.change, 2:3, quantile, probs=1-alpha)
+    
+    rv=list(estimates=apply(rel.change, 2:3, summary.stat, na.rm=T),
+            ci.lower=apply(rel.change, 2:3, quantile, probs=alpha, na.rm=T),
+            ci.upper=apply(rel.change, 2:3, quantile, probs=1-alpha, na.rm=T)
             )
     
     attr(rv, 'interventions') = interventions
@@ -402,3 +484,8 @@ make.systematic.legend <- function(below.threshold.min.color='red',
                              name=NULL) + 
         theme(legend.position = 'bottom')
 }
+
+##--------------------##
+##-- Baseline Rates --##
+##--------------------##
+

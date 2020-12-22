@@ -659,7 +659,8 @@ setup.mcmc.for.msa <- function(msa,
             print("Running initial simulation to plot")
         init.sim = run.simulation(first.start.values)
 #        print(plot.calibration.risk(init.sim) + ggtitle(paste0("Initial Sim: ", msa.names(msa))))
-        print(plot.calibration.sex(init.sim, data.types='prep') + ggtitle(paste0("Initial Sim: ", msa.names(msa))))
+        print(plot.calibration.sex(init.sim, data.types='prep') + ggtitle(paste0("Initial Sim: ", msa.names(msa))) +
+            theme(plot.title=element_text(hjust=1)))
     }
     
     #-- MCMC Control --#

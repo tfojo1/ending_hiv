@@ -1544,7 +1544,9 @@ set.foreground.prep.coverage <- function(components,
         if (class(prep.coverage)!='list')
             prep.coverage = list(prep.coverage)
         
-        components$foreground.prep.coverage = prep.coverage
+        components$foreground.prep.coverage = lapply(prep.coverage, function(pc){
+            expand.population.to.hiv.negative(components$jheem, pc)  
+        })
         names(components$foreground.prep.coverage) = as.character(years)
         
         components$foreground.prep.years = years
