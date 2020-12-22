@@ -46,8 +46,8 @@ A1.INTERVENTION.SET.1Y = c(list(NO.INTERVENTION),
 A2.INTERVENTION.SET.1Y = c(list(NO.INTERVENTION),
                         lapply(A2.INTERVENTION.CODES, intervention.from.code))
 
-ALL.INTERVENTIONS.1Y = union.intervention.lists(A1.INTERVENTION.SET,
-                                             A2.INTERVENTION.SET)
+ALL.INTERVENTIONS.1Y = union.intervention.lists(A1.INTERVENTION.SET.1Y,
+                                                A2.INTERVENTION.SET.1Y)
 
 
 
