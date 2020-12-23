@@ -86,7 +86,7 @@ plot.calibration(simset, facet.by=c('sex','age'), split.by='risk', sex='male', s
 
 
 #Difficult mixers
-ADDITIONAL.BURN = mcmc@n.iter/2
+ADDITIONAL.BURN = 0#mcmc@n.iter/2
 get.rhats(mcmc, additional.burn = ADDITIONAL.BURN)[1:24]
 trace.plot(mcmc, names(get.rhats(mcmc, additional.burn = ADDITIONAL.BURN))[1:6], additional.burn = ADDITIONAL.BURN)
 trace.plot(mcmc, names(get.rhats(mcmc, additional.burn = ADDITIONAL.BURN))[6+1:6], additional.burn = ADDITIONAL.BURN)

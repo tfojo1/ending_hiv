@@ -25,10 +25,10 @@ do.run.interventions <- function(location,
                                  save.baseline.and.seed=F)
 }
 
-assemble.and.thin.mcmcs <- function(cache.dir=file.path(SYSTEMATIC.ROOT.DIR, 'systematic_caches'),
+assemble.and.thin.mcmcs <- function(targets = TARGET.MSAS,
+                                    cache.dir=file.path(SYSTEMATIC.ROOT.DIR, 'systematic_caches'),
                                     dst.dir=file.path(SYSTEMATIC.ROOT.DIR, 'systematic_parallel'),
                                     simset.dir=file.path(SYSTEMATIC.ROOT.DIR, 'full_simsets'),
-                                    targets = TARGET.MSAS,
                                     create.simset=T,
                                     redo.done = F,
                                     additional.burn=500,
