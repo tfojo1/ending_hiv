@@ -516,7 +516,7 @@ union.intervention.lists <- function(int.list.1, int.list.2,
                                      manager = INTERVENTION.MANAGER.1.0)
 {
     codes1 = sapply(int.list.1, get.intervention.code, manager = manager)
-    codes2 = sapply(int.list.1, get.intervention.code, manager = manager)
+    codes2 = sapply(int.list.2, get.intervention.code, manager = manager)
     
     codes.all = union(codes1, codes2)
     lapply(codes.all, intervention.from.code, manager = manager)

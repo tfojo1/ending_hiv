@@ -48,7 +48,7 @@ if (1==2)
     
     
     
-    est.main.10.3y = get.estimates.and.intervals('mcmc_runs/visualization_simsets/', 
+    est.main.10.3y = get.estimates.and.intervals('mcmc_runs/full_simsets/', 
                                               msas=TARGET.MSAS,
                                               interventions=A1.INTERVENTION.SET.3Y,
                                               year1=2020,
@@ -149,6 +149,7 @@ get.estimates.and.intervals <- function(dir,
                          ": ", get.intervention.filename(int)))
         sapply(as.character(msas), function(msa){
             filename = file.path(dir, msa, get.simset.filename(location=msa, intervention=int))
+            browser()
             if (file.exists(filename))
             {
                 if (verbose)
@@ -167,6 +168,7 @@ get.estimates.and.intervals <- function(dir,
                 indices = indices[1:n.sim]
                 
                 values = sapply(simset@simulations[unique(indices)], get.sim.absolute.incidence, years=c(year1,year2))
+                browser()
                 values = values[,indices]
                 values
             }

@@ -72,14 +72,19 @@ run.systematic.interventions <- function(simset,
                                          compress=T,
                                          run.to.year=2030,
                                          verbose=T,
-                                         save.baseline.and.seed=T)
+                                         save.baseline.and.seed=T,
+                                         seed=123415)
 {
     if (!dir.exists(dst.dir))
         dir.create(dst.dir)
     
     if (verbose)
         print("Preparing baseline simset...")
+    
+    if (!is.na(seed))
+        set.seed(seed)
     base.simset = prepare.simset.for.interventions(simset)
+    
     location = attr(base.simset@simulations[[1]], 'location')
     run.from.year=attr(base.simset, 'run.from.year')
     keep.years=min(run.from.year, MAX.FIRST.KEEP.YEAR):run.to.year

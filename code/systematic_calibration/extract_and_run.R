@@ -9,7 +9,8 @@ done.mcmc.locations <- function(dir=file.path(SYSTEMATIC.ROOT.DIR, 'systematic_p
 
 do.run.interventions <- function(location,
                                  simset.dir=file.path(SYSTEMATIC.ROOT.DIR, 'full_simsets'),
-                                 dst.dir=file.path(SYSTEMATIC.ROOT.DIR, 'full_simsets'))
+                                 dst.dir=file.path(SYSTEMATIC.ROOT.DIR, 'full_simsets'),
+                                 overwrite=F)
 {
     full.filename = get.full.filename(location=location)
     load(file=file.path(simset.dir, full.filename))
@@ -18,7 +19,7 @@ do.run.interventions <- function(location,
     run.systematic.interventions(simset,
                                  dst.dir=dst.dir,
                                  interventions=ALL.INTERVENTIONS,
-                                 overwrite=F,
+                                 overwrite=overwrite,
                                  compress=T,
                                  run.to.year=2030,
                                  verbose=T,
