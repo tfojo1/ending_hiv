@@ -1,4 +1,18 @@
 
+get.mcmc.done.msas <- function(dir='systematic_parallel')
+{
+    files = list.files(file.path(SYSTEMATIC.ROOT.DIR, dir))
+    msas = substr(files, 1, 5)
+    unique(msas)
+}
+
+get.simset.done.msas <- function(dir='full_simsets')
+{
+    files = list.files(file.path(SYSTEMATIC.ROOT.DIR, dir), include.dirs = F)
+    files = files[!sapply(file.path(SYSTEMATIC.ROOT.DIR, dir, files), dir.exists)]
+    msas = substr(files, 5, 9)
+    unique(msas)
+}
 
 check.cache.status <- function(msas=TARGET.MSAS,
                                print.missing=F)
