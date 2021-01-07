@@ -9,7 +9,7 @@ source('code/source_code.R')
 source('code/systematic_calibration/systematic_calibration.R')
 source('code/targets/target_msas.R')
 
-msa = NEW.ORLEANS.MSA
+msa = BALTIMORE.MSA
 chain = 1
 
 # Get the cache and run it

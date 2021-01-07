@@ -89,13 +89,21 @@ run.systematic.interventions <- function(simset,
     run.from.year=attr(base.simset, 'run.from.year')
     keep.years=min(run.from.year, MAX.FIRST.KEEP.YEAR):run.to.year
     
-    if (save.baseline.and.seed && compress)
+    if (save.baseline.and.seed)
     {
         if (verbose)
             print("Compressing baseline simset...")
-        make.and.save.compressed.baseline.and.seed(simset, dir=dst.dir)
+        
+        save.simset(simset, dir=dst.dir, compress=compress)
+
+        if (verbose)
+            print("Preparing baseline simset...")
+        save.seed.simset(simset, dir=dst.dir)
+        
+        return()
     }
     
+    browser()
     start.time = Sys.time()
     n.total.sim=0
     for (int in interventions)

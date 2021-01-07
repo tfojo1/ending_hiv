@@ -96,7 +96,7 @@ trace.plot(mcmc, '*sexual.oe', additional.burn=ADDITIONAL.BURN)
 
 trace.plot(mcmc, '*mortality', additional.burn=ADDITIONAL.BURN)
 
-trace.plot(mcmc, '*trate.peak', additional.burn=ADDITIONAL.BURN)
+#trace.plot(mcmc, '*trate.peak', additional.burn=ADDITIONAL.BURN)
 trace.plot(mcmc, '*trate.0', additional.burn=ADDITIONAL.BURN)
 trace.plot(mcmc, '*trate.1', additional.burn=ADDITIONAL.BURN)
 trace.plot(mcmc, '*trate.2', additional.burn=ADDITIONAL.BURN)

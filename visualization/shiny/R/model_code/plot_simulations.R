@@ -186,7 +186,14 @@ do.plot.simulations <- function(
         simset.names[is.baseline] = simset.names[is.no.intervention][1]
     
     years.for.simset = lapply(simsets, function(ss){
-        intersect(years, ss@simulations[[1]]$years)
+        
+        simset.years = ss@simulations[[1]]$years
+        
+        simset.run.from.year = attr(simset, 'run.from.year')
+        if (!is.null(simset.run.from.year))
+            simset.years = intersect(simset.run.from.year:max(simset.years), simset.years)
+        
+        intersect(years, simset.years)
     })
     
     if (any(is.baseline) && any(!is.baseline))
@@ -233,9 +240,12 @@ do.plot.simulations <- function(
     
     #-- Get total population --#
     total.population.per.simset = lapply(1:length(simsets), function(i){
-        sapply(simsets[[i]]@simulations, get.total.population, 
-               census.totals=CENSUS.TOTALS, 
-               years=years.for.simset[[i]])
+        rv = sapply(simsets[[i]]@simulations, get.total.population, 
+                    census.totals=CENSUS.TOTALS, 
+                    years=years.for.simset[[i]])
+
+        dim(rv) = c(length(years.for.simset[[i]]), simsets[[i]]@n.sim)
+        rv
     })
       
     #-- Individual Simulations --#
@@ -1538,7 +1548,7 @@ extract.simset.new.diagnoses <- function(simset, years, all.dimensions,
                                               hiv.subsets=NULL,
                                               use.cdc.categorizations=T)
         denominators = do.extract.population.subset(sim, years=years, keep.dimensions = 'year', use.cdc.categorizations = T)
-        
+       
         as.numeric(numerators) / as.numeric(denominators) * total.population[,i]
     })
     

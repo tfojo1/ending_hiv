@@ -56,7 +56,7 @@ sapply(c('2018'=9, '2021'=12, '2025'=16), function(year){
     round(100*get.means(dist),1)
 })
 
-dist = extract.simset.distribution(simset, function(sim){
+adist = extract.simset.distribution(simset, function(sim){
     year = c('2025'=16, '2018'=9, '2021'=12)[3]
     c1 = attr(sim, 'components')
     x=c1$prep.rates.and.times$rates[[year]][,,,'msm','never_IDU',]

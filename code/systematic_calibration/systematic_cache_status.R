@@ -14,6 +14,12 @@ get.simset.done.msas <- function(dir='full_simsets')
     unique(msas)
 }
 
+get.interventions.done.msas <- function(dir='full_simsets')
+{
+    files = list.dirs(file.path(SYSTEMATIC.ROOT.DIR, dir), full.names = F, recursive = F)
+    files
+}
+
 check.cache.status <- function(msas=TARGET.MSAS,
                                print.missing=F)
 {
