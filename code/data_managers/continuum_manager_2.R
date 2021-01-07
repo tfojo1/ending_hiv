@@ -139,9 +139,11 @@ create.continuum.manager <- function(dir='cleaned_data/',
                                      settings = SETTINGS,
                                      national.surveillance = national.surveillance,
                                      suppression.anchor.year = 2020,
-                                     testing.anchor.year = 2020,
+                                     testing.anchor.year = 2010,
+                                     linkage.anchor.year = 2020,
                                      max.tested.proportion = 0.9,
                                      max.suppressed.proportion = 0.9,
+                                     max.linked.proportion = 0.95,
                                      verbose=T)
 {
     cm = list()
@@ -163,6 +165,15 @@ create.continuum.manager <- function(dir='cleaned_data/',
                                  anchor.year = testing.anchor.year,
                                  settings=settings)
     cm$state.testing = read.brfss.state(file = file.path(dir, 'continuum/state/BRFSS_state.csv'))
+    
+    
+    if (verbose)
+        print('Reading Linkage')
+    cm = run.linkage.regressions(cm,
+                                 dir=dir,
+                                 anchor.year = linkage.anchor.year,
+                                 max.linked.proportion = max.linked.proportion,
+                                 settings=settings)
     
     cm
 }
@@ -383,8 +394,7 @@ run.linkage.regressions <- function(cm,
     p.mask = df[2,]=='linked'
     
     
-    # Fit age
-    
+    #-- Fit age --#
     
     df.age = rbind(data.frame(value=as.numeric(df['13-24',p.mask]),
                               n=as.numeric(df['13-24',n.mask]),
@@ -393,7 +403,8 @@ run.linkage.regressions <- function(cm,
                               age2=0,
                               age3=0,
                               age4=0,
-                              age5=0),
+                              age5=0,
+                              total=0),
                    data.frame(value=as.numeric(df['25-34',p.mask]),
                               n=as.numeric(df['25-34',n.mask]),
                               year=as.numeric(df['year',p.mask])-anchor.year,
@@ -401,7 +412,8 @@ run.linkage.regressions <- function(cm,
                               age2=1,
                               age3=0,
                               age4=0,
-                              age5=0),
+                              age5=0,
+                              total=0),
                    data.frame(value=as.numeric(df['35-44',p.mask]),
                               n=as.numeric(df['35-44',n.mask]),
                               year=as.numeric(df['year',p.mask])-anchor.year,
@@ -409,7 +421,8 @@ run.linkage.regressions <- function(cm,
                               age2=0,
                               age3=1,
                               age4=0,
-                              age5=0),
+                              age5=0,
+                              total=0),
                    data.frame(value=as.numeric(df['45-54',p.mask]),
                               n=as.numeric(df['45-54',n.mask]),
                               year=as.numeric(df['year',p.mask])-anchor.year,
@@ -417,7 +430,8 @@ run.linkage.regressions <- function(cm,
                               age2=0,
                               age3=0,
                               age4=1,
-                              age5=0),
+                              age5=0,
+                              total=0),
                    data.frame(value=as.numeric(df['>=55',p.mask]),
                               n=as.numeric(df['>=55',n.mask]),
                               year=as.numeric(df['year',p.mask])-anchor.year,
@@ -425,21 +439,225 @@ run.linkage.regressions <- function(cm,
                               age2=0,
                               age3=0,
                               age4=0,
-                              age5=1))
+                              age5=1,
+                              total=0),
+                   data.frame(value=as.numeric(df['total',p.mask]),
+                              n=as.numeric(df['total',n.mask]),
+                              year=as.numeric(df['year',p.mask])-anchor.year,
+                              age1=0,
+                              age2=0,
+                              age3=0,
+                              age4=0,
+                              age5=0,
+                              total=1))
     
-    fit.age = glm(value ~ age1 + age2 + age4 + age5 +
-                      year + year:age1 + year:age2 + year:age4 + year:age5, 
+    df.age$value = pmin(0.999, df.age$value/max.linked.proportion)
+    
+    fit.age = glm(value ~ age1 + age2 + age3 + age4 + age5 +
+                      year + year:age1 + year:age2 + year:age3 + year:age4 + year:age5, 
                   data=df.age, weights = df.age$n,
                   family='binomial')
     
     
+    #-- Fit Race --#
+    
+    df.race = rbind(data.frame(value=as.numeric(df['black',p.mask]),
+                              n=as.numeric(df['black',n.mask]),
+                              year=as.numeric(df['year',p.mask])-anchor.year,
+                              black=1,
+                              hispanic=0,
+                              other=0,
+                              total=0),
+                    data.frame(value=as.numeric(df['hispanic',p.mask]),
+                               n=as.numeric(df['hispanic',n.mask]),
+                               year=as.numeric(df['year',p.mask])-anchor.year,
+                               black=0,
+                               hispanic=1,
+                               other=0,
+                               total=0),
+                    data.frame(value=as.numeric(df['other',p.mask]),
+                               n=as.numeric(df['other',n.mask]),
+                               year=as.numeric(df['year',p.mask])-anchor.year,
+                               black=0,
+                               hispanic=0,
+                               other=1,
+                               total=0),
+                    data.frame(value=as.numeric(df['total',p.mask]),
+                               n=as.numeric(df['total',n.mask]),
+                               year=as.numeric(df['year',p.mask])-anchor.year,
+                               black=0,
+                               hispanic=0,
+                               other=0,
+                               total=1))
+    
+    df.race$value = pmin(0.999, df.race$value/max.linked.proportion)
+    
+    fit.race = glm(value ~ black + hispanic + other + year + year:black + year:hispanic + year:other,
+                   data=df.race, weights = df.race$n,
+                   family='binomial')
     
     
-    age.indices = c('13-24','25-34','35-44','45-54','>=55')
-    race.indices = c('black','hispanic','other')
-    sex.indices
-    riskindices
-    df[age.indices,n.mask]
+    #-- Fit Sex/Risk Factor --#
+    
+    df.sex.risk = rbind(data.frame(value=as.numeric(df['msm',p.mask]),
+                               n=as.numeric(df['msm',n.mask]),
+                               year=as.numeric(df['year',p.mask])-anchor.year,
+                               msm=1,
+                               msm_idu=0,
+                               het_male=0,
+                               het_female=0,
+                               idu_male=0,
+                               idu_female=0),
+                    data.frame(value=as.numeric(df['msm-idu',p.mask]),
+                               n=as.numeric(df['msm-idu',n.mask]),
+                               year=as.numeric(df['year',p.mask])-anchor.year,
+                               msm=0,
+                               msm_idu=1,
+                               het_male=0,
+                               het_female=0,
+                               idu_male=0,
+                               idu_female=0),
+                    data.frame(value=as.numeric(df['het-male',p.mask]),
+                               n=as.numeric(df['het-male',n.mask]),
+                               year=as.numeric(df['year',p.mask])-anchor.year,
+                               msm=0,
+                               msm_idu=0,
+                               het_male=1,
+                               het_female=0,
+                               idu_male=0,
+                               idu_female=0),
+                    data.frame(value=as.numeric(df['het-female',p.mask]),
+                               n=as.numeric(df['het-female',n.mask]),
+                               year=as.numeric(df['year',p.mask])-anchor.year,
+                               msm=0,
+                               msm_idu=0,
+                               het_male=0,
+                               het_female=1,
+                               idu_male=0,
+                               idu_female=0),
+                    data.frame(value=as.numeric(df['idu-male',p.mask]),
+                               n=as.numeric(df['idu-male',n.mask]),
+                               year=as.numeric(df['year',p.mask])-anchor.year,
+                               msm=0,
+                               msm_idu=0,
+                               het_male=0,
+                               het_female=0,
+                               idu_male=1,
+                               idu_female=0),
+                    data.frame(value=as.numeric(df['idu-female',p.mask]),
+                               n=as.numeric(df['idu-female',n.mask]),
+                               year=as.numeric(df['year',p.mask])-anchor.year,
+                               msm=0,
+                               msm_idu=0,
+                               het_male=0,
+                               het_female=0,
+                               idu_male=0,
+                               idu_female=1))
+    
+    df.sex.risk$value = pmin(0.999, df.sex.risk$value/max.linked.proportion)
+    
+    fit.sex.risk = glm(value ~ msm + msm_idu + het_male + het_female + idu_male + idu_female + 
+                          year:msm + year:msm_idu + year:het_male + year:het_female + year:idu_male + year:idu_female +0,
+                       data=df.sex.risk, weights = df.sex.risk$n,
+                       family='binomial')
+    
+    
+    #-- Put it all together --#
+    
+    cm$linkage = list(anchor.year = anchor.year,
+                      max.proportion = max.linked.proportion,
+                      log.ors = numeric())
+    
+    dim.names = list(age=settings$AGES$labels, race=settings$RACES, sex=settings$SEXES, risks=settings$RISK_STRATA)
+    cm$linkage$stratified.log.odds.slope = cm$linkage$stratified.log.odds.intercept =
+        array(0, dim=sapply(dim.names, length), dimnames=dim.names)
+    
+    # Age
+    for (age in 1:5)
+    {
+        cm$linkage$stratified.log.odds.intercept[age,,,] = cm$linkage$stratified.log.odds.intercept[age,,,] +
+            fit.age$coefficients[paste0('age',age)]
+        cm$linkage$stratified.log.odds.slope[age,,,] = cm$linkage$stratified.log.odds.slope[age,,,] +
+            fit.age$coefficients[paste0('age',age,':year')]
+        
+        cm$linkage$log.ors[paste0('age',age)] = fit.age$coefficients[paste0('age',age)]
+        cm$linkage$log.ors[paste0('age',age,"_slope")] = fit.age$coefficients[paste0('age',age,':year')]
+    }
+    
+    # Race
+    cm$linkage$stratified.log.odds.intercept[,'black',,] = cm$linkage$stratified.log.odds.intercept[,'black',,] +
+        fit.race$coefficients['black']
+    cm$linkage$stratified.log.odds.slope[,'black',,] = cm$linkage$stratified.log.odds.slope[,'black',,] +
+        fit.race$coefficients['black:year']
+    cm$linkage$log.ors['black'] = fit.race$coefficients['black']
+    cm$linkage$log.ors['black_slope'] = fit.race$coefficients['black:year']
+    
+    cm$linkage$stratified.log.odds.intercept[,'hispanic',,] = cm$linkage$stratified.log.odds.intercept[,'hispanic',,] +
+        fit.race$coefficients['hispanic']
+    cm$linkage$stratified.log.odds.slope[,'hispanic',,] = cm$linkage$stratified.log.odds.slope[,'hispanic',,] +
+        fit.race$coefficients['hispanic:year']
+    cm$linkage$log.ors['hispanic'] = fit.race$coefficients['hispanic']
+    cm$linkage$log.ors['hispanic_slope'] = fit.race$coefficients['hispanic:year']
+    
+    cm$linkage$stratified.log.odds.intercept[,'other',,] = cm$linkage$stratified.log.odds.intercept[,'other',,] +
+        fit.race$coefficients['other']
+    cm$linkage$stratified.log.odds.slope[,'other',,] = cm$linkage$stratified.log.odds.slope[,'other',,] +
+        fit.race$coefficients['other:year']
+    cm$linkage$log.ors['other'] = fit.race$coefficients['other']
+    cm$linkage$log.ors['other_slope'] = fit.race$coefficients['other:year']
+    
+    
+    # Sex Risk
+    idu = c('active_IDU','IDU_in_remission')
+    non.idu = 'never_IDU'
+    
+    cm$linkage$stratified.log.odds.intercept[,,'msm',non.idu] = cm$linkage$stratified.log.odds.intercept[,,'msm',non.idu] +
+        fit.sex.risk$coefficients['msm']
+    cm$linkage$stratified.log.odds.slope[,,'msm',non.idu] = cm$linkage$stratified.log.odds.slope[,,'msm',non.idu] +
+        fit.sex.risk$coefficients['msm:year']
+    cm$linkage$log.ors['msm'] = fit.sex.risk$coefficients['msm']
+    cm$linkage$log.ors['msm_slope'] = fit.sex.risk$coefficients['msm:year']
+    
+    cm$linkage$stratified.log.odds.intercept[,,'msm',idu] = cm$linkage$stratified.log.odds.intercept[,,'msm',idu] +
+        fit.sex.risk$coefficients['msm_idu']
+    cm$linkage$stratified.log.odds.slope[,,'msm',idu] = cm$linkage$stratified.log.odds.slope[,,'msm',idu] +
+        fit.sex.risk$coefficients['msm_idu:year']
+    cm$linkage$log.ors['msm_idu'] = fit.sex.risk$coefficients['msm_idu']
+    cm$linkage$log.ors['msm_idu_slope'] = fit.sex.risk$coefficients['msm_idu:year']
+    
+    
+    cm$linkage$stratified.log.odds.intercept[,,'heterosexual_male',non.idu] = cm$linkage$stratified.log.odds.intercept[,,'heterosexual_male',non.idu] +
+        fit.sex.risk$coefficients['het_male']
+    cm$linkage$stratified.log.odds.slope[,,'heterosexual_male',non.idu] = cm$linkage$stratified.log.odds.slope[,,'heterosexual_male',non.idu] +
+        fit.sex.risk$coefficients['het_male:year']
+    cm$linkage$log.ors['het_male'] = fit.sex.risk$coefficients['het_male']
+    cm$linkage$log.ors['het_male_slope'] = fit.sex.risk$coefficients['het_male:year']
+    
+    cm$linkage$stratified.log.odds.intercept[,,'heterosexual_male',idu] = cm$linkage$stratified.log.odds.intercept[,,'heterosexual_male',idu] +
+        fit.sex.risk$coefficients['idu_male']
+    cm$linkage$stratified.log.odds.slope[,,'heterosexual_male',idu] = cm$linkage$stratified.log.odds.slope[,,'heterosexual_male',idu] +
+        fit.sex.risk$coefficients['idu_male:year']
+    cm$linkage$log.ors['idu_male'] = fit.sex.risk$coefficients['idu_male']
+    cm$linkage$log.ors['idu_male_slope'] = fit.sex.risk$coefficients['idu_male:year']
+    
+    
+    cm$linkage$stratified.log.odds.intercept[,,'female',non.idu] = cm$linkage$stratified.log.odds.intercept[,,'female',non.idu] +
+        fit.sex.risk$coefficients['het_female']
+    cm$linkage$stratified.log.odds.slope[,,'female',non.idu] = cm$linkage$stratified.log.odds.slope[,,'female',non.idu] +
+        fit.sex.risk$coefficients['het_female:year']
+    cm$linkage$log.ors['het_female'] = fit.sex.risk$coefficients['het_female']
+    cm$linkage$log.ors['het_female_slope'] = fit.sex.risk$coefficients['het_female:year']
+    
+    cm$linkage$stratified.log.odds.intercept[,,'female',idu] = cm$linkage$stratified.log.odds.intercept[,,'female',idu] +
+        fit.sex.risk$coefficients['idu_female']
+    cm$linkage$stratified.log.odds.slope[,,'female',idu] = cm$linkage$stratified.log.odds.slope[,,'female',idu] +
+        fit.sex.risk$coefficients['idu_female:year']
+    cm$linkage$log.ors['idu_female'] = fit.sex.risk$coefficients['idu_female']
+    cm$linkage$log.ors['idu_female_slope'] = fit.sex.risk$coefficients['idu_female:year']
+    
+    
+    #-- Return it --#
+    cm
 }
 
 ##-- SET UP TESTING --##
