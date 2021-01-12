@@ -5,21 +5,21 @@
 ##---------------------------##
 
 create.msa.likelihood <- function(msa,
-                                  EVERYTHING.WEIGHT=1/2,#1/8,
+                                  EVERYTHING.WEIGHT=1/2,
                                   
-                                  NEW.WEIGHT = 1,#1/2,
-                                  PREV.WEIGHT = 4,#1/8,
+                                  NEW.WEIGHT = 1/2,#1,
+                                  PREV.WEIGHT = 2,#4,
                                   MORT.WEIGHT = 1,
                                   CUM.MORT.WEIGHT = 1,
                                   IDU.WEIGHT = 1,
                                   AIDS.DX.WEIGHT = 1,
-                                  TOTAL.DX.WEIGHT = 1/4,#1,
+                                  TOTAL.DX.WEIGHT = 1/4,
                                   STRATIFIED.DX.WEIGHT=1/128/4,
                                   use.stratified.dx = F,
-                                  SUPPRESSION.WEIGHT = 1/16,#1/4,
+                                  SUPPRESSION.WEIGHT = 1/16,
                                   PREP.WEIGHT = 1,
-                                  TOTAL.TESTING.WEIGHT = 1/32,#1/8,
-                                  STRATIFIED.TESTING.WEIGHT = 1/16,#1/4,
+                                  TOTAL.TESTING.WEIGHT = 1/32,
+                                  STRATIFIED.TESTING.WEIGHT = 1/32,#1/16
                                   TOTAL.TESTING.LOG.SD.EVER.TO.12MO = log(2),
                                   TOTAL.TESTING.RHO = 0.5,
                                   TOTAL.TESTING.ERROR.MULT=2,
@@ -659,7 +659,8 @@ setup.mcmc.for.msa <- function(msa,
             print("Running initial simulation to plot")
         init.sim = run.simulation(first.start.values)
 #        print(plot.calibration.risk(init.sim) + ggtitle(paste0("Initial Sim: ", msa.names(msa))))
-        print(plot.calibration.sex(init.sim, data.types='prep') + ggtitle(paste0("Initial Sim: ", msa.names(msa))))
+        print(plot.calibration.sex(init.sim, data.types='prep') + ggtitle(paste0("Initial Sim: ", msa.names(msa))) +
+            theme(plot.title=element_text(hjust=1)))
     }
     
     #-- MCMC Control --#

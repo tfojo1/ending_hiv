@@ -1,62 +1,69 @@
 
+MAX.FIRST.KEEP.YEAR = 2018 #so that census totals can map
+
+##------------------------------##
+##-- DEFINE INTERVENTION SETS --##
+##------------------------------##
+
+A1.INTERVENTION.CODES = c('het.tq1.mi.tq6m',
+                          'het.s90.mi.s90.x',
+                          'het.p25.mi.p50.x',
+                          'ybhm.6m.25.80',
+                          'ybhm.6m.25.90',
+                          'ybhm.6m.50.80',
+                          'ybhm.6m.50.90',
+                          'mi.6m.25.80.ybh.high6',
+                          'mi.6m.25.90.ybh.high6',
+                          'mi.6m.50.80.ybh.high6',
+                          'mi.6m.50.90.ybh.high6',
+                          'het.1.10.80.mi.high6',
+                          'het.1.10.90.mi.high6',
+                          'het.1.25.80.mi.high6',
+                          'het.1.25.90.mi.high6')
+
+A2.INTERVENTION.CODES = c('ybhm.tq1',
+                          'ybhm.tq6m',
+                          'ybhm.s80',
+                          'ybhm.s90',
+                          'ybhm.p25',
+                          'ybhm.p50',
+                          'mi.tq1.ybh.tq6m',
+                          'mi.tq6m.ybh.tq6m',
+                          'mi.s80.ybhm.s90.x',
+                          'mi.s90.ybhm.s90.x',
+                          'mi.p25.ybh.p50.x',
+                          'mi.p50.ybh.p50.x',
+                          'het.tq2.mi.tq6m',
+                          'het.tq1.mi.tq6m',
+                          'het.s80.mi.s90.x',
+                          'het.s90.mi.s90.x',
+                          'het.p10.mi.p50.x',
+                          'het.p25.mi.p50.x')
+
+A1.INTERVENTION.SET.1Y = c(list(NO.INTERVENTION),
+                        lapply(A1.INTERVENTION.CODES, intervention.from.code))
+
+A2.INTERVENTION.SET.1Y = c(list(NO.INTERVENTION),
+                        lapply(A2.INTERVENTION.CODES, intervention.from.code))
+
+ALL.INTERVENTIONS.1Y = union.intervention.lists(A1.INTERVENTION.SET.1Y,
+                                                A2.INTERVENTION.SET.1Y)
 
 
-A1.INTERVENTION.SET = list(NO.INTERVENTION,
-                           
-                           HET.TQ1.MI.TQ6M,
-                           HET.S90.MI.S90.X,
-                           HET.P25.MI.P50.X,
-                           
-                           YBHM.6M.25.80,
-                           YBHM.6M.25.90,
-                           YBHM.6M.50.80,
-                           YBHM.6M.50.90,
-                           
-                           MSM.IDU.6M.25.80.YBH.HIGH6,
-                           MSM.IDU.6M.25.90.YBH.HIGH6,
-                           MSM.IDU.6M.50.80.YBH.HIGH6,
-                           MSM.IDU.6M.50.90.YBH.HIGH6,
-                           
-                           HET.1.10.80.MI.HIGH6,
-                           HET.1.10.90.MI.HIGH6,
-                           HET.1.25.80.MI.HIGH6,
-                           HET.1.25.90.MI.HIGH6)
 
-A2.INTERVENTION.SET = list(YBHM.TQ1,
-                           YBHM.TQ6M,
-                           YBHM.S80,
-                           YBHM.S90,
-                           YBHM.P25,
-                           YBHM.P50,
-                           MSM.IDU.TQ1.YBH.TQ6M,
-                           MSM.IDU.TQ6M.YBH.TQ6M,
-                           MSM.IDU.S80.YBH.S90.X,
-                           MSM.IDU.S90.YBH.S90.X,
-                           MSM.IDU.P25.YBH.P50.X,
-                           MSM.IDU.P50.YBH.P50.X,
-                           HET.TQ2.MI.TQ6M,
-                           HET.TQ1.MI.TQ6M,
-                           HET.S80.MI.S90.X,
-                           HET.S90.MI.S90.X,
-                           HET.P10.MI.P50.X,
-                           HET.P25.MI.P50.X)
+A1.INTERVENTION.SET.3Y = c(list(NO.INTERVENTION),
+                           lapply(paste0(A1.INTERVENTION.CODES, '.3y'), intervention.from.code))
 
-ALL.INTERVENTIONS = union.intervention.lists(A1.INTERVENTION.SET,
-                                             A2.INTERVENTION.SET)
+A2.INTERVENTION.SET.3Y = c(list(NO.INTERVENTION),
+                           lapply(paste0(A2.INTERVENTION.CODES, '.3y'), intervention.from.code))
 
-ORIG.INTERVENTION.SET = list(NO.INTERVENTION,
-                     YBHM.1.25.80,
-                     YBHM.1.25.90,
-                     YBHM.1.50.80,
-                     YBHM.1.50.90,
-                     MSM.IDU.1.25.80.YBH.HIGH,
-                     MSM.IDU.1.25.90.YBH.HIGH,
-                     MSM.IDU.1.50.80.YBH.HIGH,
-                     MSM.IDU.1.50.90.YBH.HIGH,
-                     HET.1.10.80.MI.HIGH,
-                     HET.1.10.90.MI.HIGH,
-                     HET.1.25.80.MI.HIGH,
-                     HET.1.25.90.MI.HIGH)
+ALL.INTERVENTIONS.3Y = union.intervention.lists(A1.INTERVENTION.SET.3Y,
+                                                A2.INTERVENTION.SET.3Y)
+
+
+A1.INTERVENTION.SET = A1.INTERVENTION.SET.3Y
+A2.INTERVENTION.SET = A2.INTERVENTION.SET.3Y
+ALL.INTERVENTIONS = ALL.INTERVENTIONS.3Y
 
 run.systematic.interventions <- function(simset,
                                          dst.dir,
@@ -65,25 +72,38 @@ run.systematic.interventions <- function(simset,
                                          compress=T,
                                          run.to.year=2030,
                                          verbose=T,
-                                         save.baseline.and.seed=T)
+                                         save.baseline.and.seed=T,
+                                         seed=123415)
 {
     if (!dir.exists(dst.dir))
         dir.create(dst.dir)
     
     if (verbose)
         print("Preparing baseline simset...")
+    
+    if (!is.na(seed))
+        set.seed(seed)
     base.simset = prepare.simset.for.interventions(simset)
+    
     location = attr(base.simset@simulations[[1]], 'location')
     run.from.year=attr(base.simset, 'run.from.year')
-    keep.years=run.from.year:run.to.year
+    keep.years=min(run.from.year, MAX.FIRST.KEEP.YEAR):run.to.year
     
-    if (save.baseline.and.seed && compress)
+    if (save.baseline.and.seed)
     {
         if (verbose)
             print("Compressing baseline simset...")
-        make.and.save.compressed.baseline.and.seed(simset, dir=dst.dir)
+        
+        save.simset(simset, dir=dst.dir, compress=compress)
+
+        if (verbose)
+            print("Preparing baseline simset...")
+        save.seed.simset(simset, dir=dst.dir)
+        
+        return()
     }
     
+    browser()
     start.time = Sys.time()
     n.total.sim=0
     for (int in interventions)
@@ -181,7 +201,7 @@ run.systematic.interventions.from.seed <- function(locations,
         load(file.path(dir, seed.filename))
         seed = simset
         run.from.year=attr(seed, 'run.from.year')
-        keep.years=run.from.year:run.to.year
+        keep.years=min(run.from.year, MAX.FIRST.KEEP.YEAR):run.to.year
         
         for (int in interventions)
         {

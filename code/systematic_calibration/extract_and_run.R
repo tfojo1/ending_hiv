@@ -7,47 +7,30 @@ done.mcmc.locations <- function(dir=file.path(SYSTEMATIC.ROOT.DIR, 'systematic_p
     gsub("^([^_]+)_.*$", "\\1", files)
 }
 
-extract.simset.and.run.interventions <- function(location,
-                                                 mcmc.dir=file.path(SYSTEMATIC.ROOT.DIR, 'systematic_parallel'),
-                                                 dst.dir=file.path(SYSTEMATIC.ROOT.DIR, 'full_simsets'))
+do.run.interventions <- function(location,
+                                 simset.dir=file.path(SYSTEMATIC.ROOT.DIR, 'full_simsets'),
+                                 dst.dir=file.path(SYSTEMATIC.ROOT.DIR, 'full_simsets'),
+                                 overwrite=F)
 {
-    # Load the MCMC File
-    mcmc.files = list.files(mcmc.dir)    
-    locations.for.files = gsub("^([^_]+)_.*$", "\\1", mcmc.files)
-    
-    mask = locations.for.files==as.character(location)
-    if (sum(mask)==0)
-        stop(paste0("No MCMC has been done for location ", location))
-    else if (sum(mask) > 1)
-        stop(paste0("There is more than one MCMC file for location ", location))
-    
-    print(paste0("Loading mcmc from file: '", mcmc.files[mask], "'"))
-    load(file.path(mcmc.dir, mcmc.files[mask]))
-    
-    # Set up the dir for the location
-    dst.dir = file.path(dst.dir, location)
-    if (!dir.exists(dst.dir))
-        dir.create(dst.dir)
-    
-    print("Extracting and saving simset...")
-    simset = extract.simset(mcmc)
     full.filename = get.full.filename(location=location)
-    save(simset, file=file.path(dst.dir, full.filename))
+    load(file=file.path(simset.dir, full.filename))
     
     print("Running Systematic Interventions...")
     run.systematic.interventions(simset,
                                  dst.dir=dst.dir,
                                  interventions=ALL.INTERVENTIONS,
-                                 overwrite=F,
+                                 overwrite=overwrite,
                                  compress=T,
                                  run.to.year=2030,
                                  verbose=T,
                                  save.baseline.and.seed=F)
 }
 
-assemble.and.thin.mcmcs <- function(cache.dir=file.path(SYSTEMATIC.ROOT.DIR, 'systematic_caches'),
+assemble.and.thin.mcmcs <- function(targets = TARGET.MSAS,
+                                    cache.dir=file.path(SYSTEMATIC.ROOT.DIR, 'systematic_caches'),
                                     dst.dir=file.path(SYSTEMATIC.ROOT.DIR, 'systematic_parallel'),
-                                    targets = TARGET.MSAS,
+                                    simset.dir=file.path(SYSTEMATIC.ROOT.DIR, 'full_simsets'),
+                                    create.simset=T,
                                     redo.done = F,
                                     additional.burn=500,
                                     additional.thin=2)
@@ -107,7 +90,14 @@ assemble.and.thin.mcmcs <- function(cache.dir=file.path(SYSTEMATIC.ROOT.DIR, 'sy
         mcmc = subset.mcmc(mcmc, additional.burn=additional.burn, additional.thin=additional.thin)
         
         save(mcmc, file=file.path(dst.dir, paste0(cache, '.Rdata')))
-        
+
+        if (create.simset)
+        {
+            simset = extract.simset(mcmc)
+            full.filename = get.full.filename(location=locations.for.cache[i])
+            save(simset, file=file.path(simset.dir, full.filename))
+        }
+                
         cat(" - DONE\n")
     }
     
