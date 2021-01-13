@@ -121,8 +121,9 @@ server <- function(input, output, session) {
   cache = CACHE
 
   # Page definitions ####  
-  ui_main = server.routes.runModel.get(input, session, state)
-  output$ui_main = ui_main
+  output$ui_main = server.routes.runModel.get(input, session, state)
+  ui_main_old = server.routes.runModel.old.get(input, session, state)
+  output$ui_main_old = ui_main_old
   output$introductionText = server.routes.docs
   output[['design-interventions']] = 
 #    renderUI({includeMarkdown('tempCustomHolder.Rmd')}) #This generates a temporary placeholder saying 'coming soon'
