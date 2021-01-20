@@ -55,15 +55,16 @@ if (1==2)
                                               year1=2020,
                                               year2=2030,
                                               n.sim=N.SIM)
+    save(est.main.10.3y, file='results/est.main.10.3y.Rdata')
     write.systematic.table(est.main.10.3y, file=file.path(SAVE.DIR, 'main_table_10y_3y.rollout.xlsx'))
     
-    
-    est.main.5.3y = get.estimates.and.intervals('mcmc_runs/visualization_simsets/', 
+    est.main.5.3y = get.estimates.and.intervals('mcmc_runs/full_simsets/', 
                                              msas=TARGET.MSAS,
                                              interventions=A1.INTERVENTION.SET.3Y,
                                              year1=2020,
                                              year2=2025,
                                              n.sim=N.SIM)
+    save(est.main.5.3y, file='results/est.main.5.3y.Rdata')
     write.systematic.table(est.main.5.3y, file=file.path(SAVE.DIR, 'main_table_5y_3y.rollout.xlsx'),
                            threshold = 0.75)
 
@@ -81,12 +82,25 @@ if (1==2)
     
     
     #-- Summarizing --#
+    load('results/est.main.10.3y.Rdata')
+    load('results/est.main.5.3y.Rdata')
+    
     est = est10 = est.main.10.3y
     est5 = est.main.5.3y
-    mask = c(TARGET.MSAS != SEATTLE.MSA,F)
+    mask = T#c(TARGET.MSAS != SEATTLE.MSA,F)
     
     # Ranges
     t(round(100*apply(est$estimates[mask,], 2, range, na.rm=T)))
+    
+    # YBH
+    i.high.ybhm = 8
+    sum(est$estimates[-i.total,i.high.ybhm]>0.5)
+    mean(est$estimates[-i.total,i.high.ybhm]>0.5)
+    
+    # All MSM
+    i.high.mi = 12
+    sum(est$estimates[-i.total,i.high.mi]>0.9)
+    mean(est$estimates[-i.total,i.high.mi]>0.9)
     
     # CI for total
     round(100*cbind(est$estimates[i.total,],
@@ -114,17 +128,6 @@ if (1==2)
     sum(est10$estimates[-i.total,-1]>=0.9 & est5$estimates[-i.total,-1]>=0.75)
     sum(est10$estimates[-i.total,-1]>=0.9 & est5$estimates[-i.total,-1]>=0.75)/sum(est5$estimates[-i.total,-1]>=0.75)
     
-    
-    #YBH MSM
-    sort(round(100*est$estimates[mask,8]))
-    sum(est$estimates[mask,8]>.5, na.rm=T)
-    sum(!est$estimates[mask,8]>.5, na.rm=T)
-    
-    
-    #All MSM and IDU
-    sort(round(100*est$estimates[mask,12]))
-    sum(est$estimates[mask,12]>.9, na.rm=T)
-    sum(!est$estimates[mask,12]>.9, na.rm=T)
 }
 
 ##------------------------------------------------------------##

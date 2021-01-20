@@ -660,6 +660,69 @@ run.linkage.regressions <- function(cm,
     cm
 }
 
+##-- SET UP DISENGAGEMENT --##
+
+setup.retention <- function(cm,
+                                anchor.year=2010,
+                                max.retained.proportion=0.95,
+                                settings=SETTINGS)
+{
+    #-- Age --#
+    
+    or.age.yehia = c(age1 = 1,
+                     age2 = mean(c(1,1.17)),
+                     age3 = mean(c(1.17,1.41)),
+                     age4 = mean(c(1.41,1.83)),
+                     age5 = 1.83)
+    or.age.yehia = or.age.yehia / or.age.yehia[3]
+    or.age.rebeiro = 0.61 ^ (2:-2)
+    or.age = (or.age.rebeiro+or.age.yehia)/2
+    
+    or.age.slope = (.8^(2:-2) / .78^(2:-2)) ^ (1/5)
+    print("NEED TO FACTOR IN TOTAL SLOPE TO AGE SLOPES")
+    
+    or.age.slope = c(1,1,1,1,1)
+    
+    
+    #-- Race --#
+    
+    or.black = mean(c(0.91,1/1.17))
+    or.hispanic = 1.12
+    or.other = 1
+    
+    or.slope.black = 1
+    or.slope.hispanic = 1
+    or.slope.other = 1
+    
+    
+    #-- Sex/Risk --#
+    
+    or.msm = 1
+    or.msm.idu = 0.86
+    or.het.male = 0.84 * 0.86
+    or.het.female = 0.84
+    or.idu.male = mean(c(0.73, 1/1.33)) * .86
+    or.idu.female = mean(c(0.73, 1/1.33))
+    
+    stratified.log.odds
+    total.intercept
+    
+    #such that
+    p = expit(total.intercept + stratified.log.odds)
+    
+    #find total.intercept such that
+    # sum(p*n)/n ~= .7465
+    
+    
+    
+    cm$retention = list()
+    
+    dim.names = list(age=settings$AGES$labels, race=settings$RACES, sex=settings$SEXES, risk=settings$RISK_STRATA)
+    cm$retention$stratified.log.odds.intercept = array(0, dim=sapply(dim.names, length), dimnames=dim.names)
+    cm$retention$stratified.log.odds.slope = array(0, dim=sapply(dim.names, length), dimnames=dim.names)
+    
+}
+
 ##-- SET UP TESTING --##
 
 run.testing.regressions <- function(cm,

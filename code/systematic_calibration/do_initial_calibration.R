@@ -15,7 +15,7 @@ msa=SEATTLE.MSA
 save.suffix = 'final.2011'
 DO.vIS.INTERVENTIONS = T
 
-RESUME=T
+RESUME=F
 if (RESUME)
 {
     print('----------------------------------------------------')

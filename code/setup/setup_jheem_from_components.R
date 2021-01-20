@@ -1604,9 +1604,8 @@ do.setup.susceptibility <- function(components)
                 prep.coverage = expand.population.to.hiv.negative(components$jheem, prep.coverage)
                 
                 non.prep.risk = (1-prep.coverage)
-                prep.risk = prep.coverage * components$prep.rr.heterosexual
-                prep.risk[,,,'msm',,] = prep.coverage[,,,'msm',,] * components$prep.rr.msm
-                
+                prep.risk = prep.coverage * components$prep.rr.idu
+
                 susceptibility = non.prep.risk + prep.risk
                 susceptibility * base.idu.susceptibility
             })
@@ -2028,6 +2027,8 @@ do.setup.new.infection.proportions <- function(components)
             
             non.prep.risk = (1-prep.coverage)
             prep.risk = prep.coverage * components$prep.rr.heterosexual
+            prep.risk[,,,'msm',,] = prep.coverage[,,,'msm',,] * components$prep.rr.msm
+            prep.risk[,,,,'active_IDU',] = prep.coverage[,,,,'active_IDU',] * components$prep.rr.idu
             
             new.infection.proportions = get.new.infection.proportions.skeleton(components$jheem)
             
@@ -2089,7 +2090,7 @@ get.rates.from.background.and.foreground <- function(background.rates,
         names(sub.rates) = as.character(all.times)
 
         raw.rates = sapply(1:length(foreground.rates[[1]]), function(i){
-            bg.rates = sub.rates = sapply(interpolated.background.rates, function(bg){bg[i]}) #start off with the backgroundr rates
+            bg.rates = sub.rates = sapply(interpolated.background.rates, function(bg){bg[i]}) #start off with the background rates
             
             from.foreground.times = as.character(foreground.times[foreground.times > foreground.start.times[i]])
             if (length(from.foreground.times)>0)
@@ -2097,7 +2098,8 @@ get.rates.from.background.and.foreground <- function(background.rates,
                 from.foreground.rates = sapply(foreground.rates[from.foreground.times], function(fg){fg[i]})
                 if (any(!is.na(from.foreground.rates)))
                 {
-                    sub.rates[all.times>=min(from.foreground.times)] = NA
+                    #sub.rates[all.times>=min(from.foreground.times)] = NA #this was an error
+                    sub.rates[all.times > foreground.start.times[i]] = NA
                     sub.rates[from.foreground.times] = from.foreground.rates
                     
                     if (any(is.na(sub.rates)))

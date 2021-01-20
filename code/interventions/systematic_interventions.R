@@ -103,7 +103,6 @@ run.systematic.interventions <- function(simset,
         return()
     }
     
-    browser()
     start.time = Sys.time()
     n.total.sim=0
     for (int in interventions)

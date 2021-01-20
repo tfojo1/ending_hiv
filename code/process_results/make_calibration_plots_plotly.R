@@ -27,7 +27,8 @@ LABEL.ALPHA = 0.25
 #INTERVENTIONS
 if (1==2)
 {
-    load('mcmc_runs/full_simsets/35620/1.0_35620_baseline.Rdata')
+   # load('mcmc_runs/full_simsets/35620/1.0_35620_baseline.Rdata')
+    load('mcmc_runs/full_simsets/1.0_35620_full.Rdata')
     base = simset
     load('mcmc_runs/full_simsets/35620/1.0_35620_noint.Rdata')
     noint = simset
@@ -43,7 +44,7 @@ if (1==2)
     
     
     #-- 3A: Int1 x Reported --#
-    x = plot.simulations.flex(list(base, noint, int1), data.type='new', years=2010:2030,
+    x = panel.a = plot.simulations.flex(list(base, noint, int1), data.type='new', years=2010:2030,
                           color.by='intervention', colors=INTERVENTION.COLORS[1:3],
                           title.subplots=F, hide.legend=T,
                           simulation.alpha=ALPHA, truth.point.size=POINT.SIZE,
@@ -53,9 +54,9 @@ if (1==2)
                           y.axis.title.function = function(d){paste0("Total ", DATA.TYPE.AXIS.LABELS[d])}
                           ); x$plot
     
-    plot = add.plot.label(x$plot, 
+    plot = panel.a = add.plot.label(x$plot, 
                           x=2023, 
-                          y=4000,
+                          y=4100,
                           fill=INTERVENTION.COLORS[2],
                           font.size=LABEL.SIZE,
                           alpha=LABEL.ALPHA,
@@ -90,10 +91,9 @@ if (1==2)
                  width=WIDTH, height=HEIGHT, resolution = 300)
     
     
-    
-    #-- 3B: Int1 x Incidence --#
-    x = plot.simulations.flex(list(base, noint, int1), data.type='incidence', years=2010:2030,
-                              color.by='intervention', colors=INTERVENTION.COLORS[1:3],
+    #-- 3C: Int2 x Reported --#
+    x = panel.c = plot.simulations.flex(list(base, noint, int2), data.type='new', years=2010:2030,
+                              color.by='intervention', colors=INTERVENTION.COLORS[c(1,2,4)],
                               title.subplots=F, hide.legend=T,
                               simulation.alpha=ALPHA, truth.point.size=POINT.SIZE,
                               simulation.line.size=LINE.SIZE,
@@ -103,8 +103,8 @@ if (1==2)
     ); x$plot
     
     plot = add.plot.label(x$plot, 
-                          x=2022, 
-                          y=3700,
+                          x=2023, 
+                          y=4100,
                           fill=INTERVENTION.COLORS[2],
                           font.size=LABEL.SIZE,
                           alpha=LABEL.ALPHA,
@@ -120,6 +120,56 @@ if (1==2)
     plot2 = add.plot.label(plot, 
                            x=2015, 
                            y=1000,
+                           fill=INTERVENTION.COLORS[4],
+                           font.size=LABEL.SIZE,
+                           alpha=LABEL.ALPHA,
+                           align='left',
+                           text=paste0('All MSM and All IDU:\n',
+                                       ' &#8226; Yearly Testing\n',
+                                       ' &#8226; 25% on PrEP\n',
+                                       ' &#8226; 90% Suppressed\n',
+                                       '<b>&#129094;', 
+                                       round(100*x$change.df$change_2020_to_2030[2]), "%",
+                                       " [", round(100*x$change.df$change_2020_to_2030_interval_lower[2]),
+                                       "-",  round(100*x$change.df$change_2020_to_2030_interval_upper[2]),
+                                       '%] reduction</b>')
+    );plot2 
+    
+    do.save.plot(plot2, file.path(IMAGE.DIR, 'interventions/Figure 3c.png'),
+                 width=WIDTH, height=HEIGHT, resolution = 300)
+    
+    
+    
+    
+    #-- 3B: Int1 x Incidence --#
+    x = plot.simulations.flex(list(base, noint, int1), data.type='incidence', years=2010:2030,
+                              color.by='intervention', colors=INTERVENTION.COLORS[1:3],
+                              title.subplots=F, hide.legend=T,
+                              simulation.alpha=ALPHA, truth.point.size=POINT.SIZE,
+                              simulation.line.size=LINE.SIZE,
+                              text.size=TEXT.SIZE, legend.text.size = LEGEND.TEXT.SIZE,
+                              return.change.data.frame=T,
+                              y.axis.title.function = function(d){paste0("Total ", DATA.TYPE.AXIS.LABELS[d])}
+    ); x$plot
+    
+    plot = add.plot.label(x$plot, 
+                          x=2023, 
+                          y=3600,
+                          fill=INTERVENTION.COLORS[2],
+                          font.size=LABEL.SIZE,
+                          alpha=LABEL.ALPHA,
+                          align='left',
+                          pad=5,
+                          text=paste0('No Intervention:\n<b>&#129094;', 
+                                      round(100*x$change.df$change_2020_to_2030[1]), "%",
+                                      " [", round(100*x$change.df$change_2020_to_2030_interval_lower[1]),
+                                      "-",  round(100*x$change.df$change_2020_to_2030_interval_upper[1]),
+                                      '%] reduction</b>')
+    );plot
+    
+    plot2 = add.plot.label(plot, 
+                           x=2015, 
+                           y=900,
                            fill=INTERVENTION.COLORS[3],
                            font.size=LABEL.SIZE,
                            alpha=LABEL.ALPHA,
@@ -138,56 +188,8 @@ if (1==2)
     do.save.plot(plot2, file.path(IMAGE.DIR, 'interventions/Figure 3b.png'),
                  width=WIDTH, height=HEIGHT, resolution = 300)
     
-    
-    #-- 3C: Int2 x Reported --#
-    x = plot.simulations.flex(list(base, noint, int2), data.type='new', years=2010:2030,
-                              color.by='intervention', colors=INTERVENTION.COLORS[c(1,2,4)],
-                              title.subplots=F, hide.legend=T,
-                              simulation.alpha=ALPHA, truth.point.size=POINT.SIZE,
-                              simulation.line.size=LINE.SIZE,
-                              text.size=TEXT.SIZE, legend.text.size = LEGEND.TEXT.SIZE,
-                              return.change.data.frame=T,
-                              y.axis.title.function = function(d){paste0("Total ", DATA.TYPE.AXIS.LABELS[d])}
-    ); x$plot
-    
-    plot = add.plot.label(x$plot, 
-                          x=2022, 
-                          y=4500,
-                          fill=INTERVENTION.COLORS[2],
-                          font.size=LABEL.SIZE,
-                          alpha=LABEL.ALPHA,
-                          align='left',
-                          pad=5,
-                          text=paste0('No Intervention:\n<b>&#129094;', 
-                                      round(100*x$change.df$change_2020_to_2030[1]), "%",
-                                      " [", round(100*x$change.df$change_2020_to_2030_interval_lower[1]),
-                                      "-",  round(100*x$change.df$change_2020_to_2030_interval_upper[1]),
-                                      '%] reduction</b>')
-    );plot
-    
-    plot2 = add.plot.label(plot, 
-                           x=2013, 
-                           y=1200,
-                           fill=INTERVENTION.COLORS[4],
-                           font.size=LABEL.SIZE,
-                           alpha=LABEL.ALPHA,
-                           align='left',
-                           text=paste0('All MSM and All IDU:\n',
-                                       ' &#8226; Yearly Testing\n',
-                                       ' &#8226; 25% on PrEP\n',
-                                       ' &#8226; 90% Suppressed\n',
-                                       '<b>&#129094;', 
-                                       round(100*x$change.df$change_2020_to_2030[2]), "%",
-                                       " [", round(100*x$change.df$change_2020_to_2030_interval_lower[2]),
-                                       "-",  round(100*x$change.df$change_2020_to_2030_interval_upper[2]),
-                                       '%] reduction</b>')
-    );plot2 
 
-    do.save.plot(plot2, file.path(IMAGE.DIR, 'interventions/Figure 3c.png'),
-                 width=WIDTH, height=HEIGHT, resolution = 300)
-    
-    
-    
+        
     #-- 3D: Int2 x Incidence --#
     x = plot.simulations.flex(list(base, noint, int2), data.type='incidence', years=2010:2030,
                               color.by='intervention', colors=INTERVENTION.COLORS[c(1,2,4)],
@@ -200,8 +202,8 @@ if (1==2)
     ); x$plot
     
     plot = add.plot.label(x$plot, 
-                          x=2022, 
-                          y=3700,
+                          x=2023, 
+                          y=3600,
                           fill=INTERVENTION.COLORS[2],
                           font.size=LABEL.SIZE,
                           alpha=LABEL.ALPHA,
@@ -215,8 +217,8 @@ if (1==2)
     );plot
     
     plot2 = add.plot.label(plot, 
-                           x=2013, 
-                           y=900,
+                           x=2014, 
+                           y=1100,
                            fill=INTERVENTION.COLORS[4],
                            font.size=LABEL.SIZE,
                            alpha=LABEL.ALPHA,
@@ -229,7 +231,7 @@ if (1==2)
                                        round(100*x$change.df$change_2020_to_2030_mean[2]), "%",
                                        " [", round(100*x$change.df$change_2020_to_2030_interval_lower[2]),
                                        "-",  round(100*x$change.df$change_2020_to_2030_interval_upper[2]),
-                                       '%] reduction</b>')
+                                       '%]\n   reduction</b>')
     );plot2
     
     do.save.plot(plot2, file.path(IMAGE.DIR, 'interventions/Figure 3d.png'),

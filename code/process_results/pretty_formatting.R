@@ -1,30 +1,37 @@
 
 get.pretty.parameter.names <- function(params)
 {
-    PRETTY.PARAMETER.NAMES[as.character(params)]
+    rv = PRETTY.PARAMETER.NAMES[as.character(params)]
+    if (any(is.na(rv) | rv==''))
+    {
+        stop(paste0("Pretty names have not been set for the following parameters: ",
+                    paste0(params[is.na(rv) | rv==''], collapse=', ')))
+    }
+    
+    rv
 }
 
 PRETTY.PARAMETER.NAMES = c(
     global.trate = "Global HIV Transmission Rate",
-    black.msm.trate.0='Change in HIV Transmission Among\nBlack MSM from 2000-2010',
-    black.msm.trate.1='Change in HIV Transmission Among\nBlack MSM from 2000-2010',
-    black.msm.trate.2='Change in HIV Transmission Among\nBlack MSM from 2010-2000',
-    hispanic.msm.trate.0='Change in HIV Transmission Among\nHispanic MSM from 1980-2000',
-    hispanic.msm.trate.1='Change in HIV Transmission Among\nHispanic MSM from 2000-2010',
-    hispanic.msm.trate.2='Change in HIV Transmission Among\nHispanic MSM from 2010-2000',
-    other.msm.trate.0='Change in HIV Transmission Among\nOther Race MSM from 1980-2000',
-    other.msm.trate.1='Change in HIV Transmission Among\nOther Race MSM from 2000-2010',
-    other.msm.trate.2='Change in HIV Transmission Among\nOther Race MSM from 2010-2020',
+    black.msm.trate.0='HIV Transmission Among\nBlack MSM Prior to 2000',
+    black.msm.trate.1='HIV Transmission Among\nBlack MSM by 2010',
+    black.msm.trate.2='HIV Transmission Among\nBlack MSM by 2020',
+    hispanic.msm.trate.0='HIV Transmission Among\nHispanic MSM Prior to 2000',
+    hispanic.msm.trate.1='HIV Transmission Among\nHispanic MSM by 2010',
+    hispanic.msm.trate.2='HIV Transmission Among\nHispanic MSM by 2020',
+    other.msm.trate.0='HIV Transmission Among\nOther Race MSM Prior to 2000',
+    other.msm.trate.1='HIV Transmission Among\nHispanic MSM by 2010',
+    other.msm.trate.2='HIV Transmission Among\nHispanic MSM by 2020',
     msm.peak.trate.multiplier='Chage in Transmission Among\nMSM from ',
     black.heterosexual.trate.0='',
     black.heterosexual.trate.1='',
-    black.heterosexual.trate.2='Change in HIV Transmission Among\nBlack MSM from 2010-2020',
+    black.heterosexual.trate.2='HIV Transmission Among\nBlack Heterosexuals by 2020',
     hispanic.heterosexual.trate.0='',
     hispanic.heterosexual.trate.1='',
-    hispanic.heterosexual.trate.2='',
+    hispanic.heterosexual.trate.2='HIV Transmission Among\nHispanic Heterosexuals by 2020',
     other.heterosexual.trate.0='',
     other.heterosexual.trate.1='',
-    other.heterosexual.trate.2='Change in HIV Transmission Among\nOther Race MSM from 2010-2020',
+    other.heterosexual.trate.2='HIV Transmission Among\nOther Race Heterosexuals by 2020',
     heterosexual.peak.trate.multiplier='',
     black.idu.trate.0='',
     black.idu.trate.1='',
@@ -64,7 +71,7 @@ PRETTY.PARAMETER.NAMES = c(
     idu.age3.aging.1='',
     male.vs.female.heterosexual.rr='Relative Susceptibility to Infection\nof Males vs. Females',
     female.vs.heterosexual.male.idu.susceptibility.rr='',
-    heterosexual.proportion.tested.or='',
+    heterosexual.proportion.tested.or='HIV Testing\nAmong Heterosexuals',
     msm.proportion.tested.or='',
     idu.proportion.tested.or='',
     msm.idu.proportion.tested.or='',
@@ -124,5 +131,7 @@ PRETTY.PARAMETER.NAMES = c(
     diagnosed.transmission.rr= 'x',
     msm.fraction.trate.change.after.t2= 'x',
     heterosexual.fraction.trate.change.after.t2= 'x',
-    idu.fraction.trate.change.after.t2= 'x'
+    idu.fraction.trate.change.after.t2= 'x',
+    suppression.gains.end.by.year='Year When Viral Suppression\nStops Increasing Absent Intervention',
+    total.future.testing.slope.or='Rate of Increasing in All HIV Testing\nAfter 2020 Absent Intervention'
 )

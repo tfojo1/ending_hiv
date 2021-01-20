@@ -12,6 +12,11 @@ mcmc_runs
 results
 env.R
 visualization/test_simset.Rdata
+code/debugging
+
+R_scripts/master_scripts
+R_scripts/setup_scripts
+R_scripts/run_scripts
 
 # User-specific
 ## joeflack4

@@ -2,20 +2,70 @@ library(data.table)
 library(sensitivity)
 library(reshape2)
 library(ggsci)
+library(scales)
 
 source("code/process_results/pretty_formatting.R")
 
 source('code/interventions/synthesize_interventions.R')
+source('code/interventions/systematic_interventions.R')
+source('code/targets/target_msas.R')
 
 
 IMAGE.DIR = 'results/figures'
 
+N.SIM = 1000
+if (1==2)
+{
+    intervention.for.sensitivity = intervention.from.code('mi.6m.50.90.ybh.high6.3y')   
+    sensitivity.dfs = make.sensitivity.dfs('mcmc_runs/full_simsets',
+                                           interventions=list(intervention.for.sensitivity),
+                                           n.sim=N.SIM)
+    
+    
+    merged.sensitvity.df = merge.sensitivity.dfs(sensitivity.dfs)
+    ranked.sensitvity.df = merge.sensitivity.dfs(sensitivity.dfs, rank=T)
+    
+    
+    prccs = get.locationwise.prccs(sensitivity.dfs)
+    mean.prccs = rowMeans(prccs); mean.prccs = mean.prccs[order(abs(mean.prccs), decreasing = T)]
+    
+    vars.to.show = names(mean.prccs)[1:10]
+    
+    ranked.out = order.outcomes.by.ranked.variables(sensitivity.dfs,
+                                                    variables=vars.to.show)
+    
+
+    png(file.path(IMAGE.DIR, 'sensitivity/PRCCs.png'), pointsize=10, width=6, height=3.25, res=300, units='in')
+    plot.locationwise.prccs(prccs, variables=vars.to.show)
+    dev.off()
+    
+    
+    png(file.path(IMAGE.DIR, 'sensitivity/high_v_low v2.png'), pointsize=10, width=6, height=4, res=300, units='in')
+    plot.high.vs.low.outcomes(ranked.out)
+    dev.off()
+    
+    
+    png(file.path(IMAGE.DIR, 'sensitivity/high_v_low v1.png'), pointsize=10, width=6, height=4, res=300, units='in')
+    plot.locationwise.outcome.diff(ranked.out, variables=vars.to.show) + 
+        ylab("Difference in Projected Reduction in Incidence\nfor 200 Simulations with Highest Value of\nEach Parameter vs. 200 Simulations with Lowest")
+    dev.off()
+    
+    #for text
+    get.high.vs.low.outcomes(ranked.out[,1:2,])
+    mean.prccs[1:2]
+    get.locationwise.outcome.diff(ranked.out, vars.to.show[1:2], stat=mean)
+    hl=get.locationwise.outcome.diff(ranked.out, vars.to.show, summarize = F)
+    hl1 = hl[hl$variable==hl$variable[1],]; hl1=hl1[order(hl1$value),]; hl1$location=msa.names(hl1$location);hl1
+    hl2 = hl[hl$variable==hl$variable[2],]; hl2=hl2[order(hl2$value),]; hl2$location=msa.names(hl2$location);hl2
+}
+
+
 if (1==2)
 {
     #test
-    sensitivity.dfs = make.sensitivity.dfs('mcmc_runs/visualization_simsets',
+    sensitivity.dfs = make.sensitivity.dfs('mcmc_runs/full_simsets',
                                          interventions=list(MSM.IDU.1.50.90.YBH.HIGH.X),
-                                         n.sim=80)
+                                         n.sim=N.SIM)
     
     merged.sensitvity.df = merge.sensitivity.dfs(sensitivity.dfs)
     ranked.sensitvity.df = merge.sensitivity.dfs(sensitivity.dfs, rank=T)
@@ -61,11 +111,11 @@ ORANGE = 'darkorange3'
 ##-- HIGH vs LOW (Calculate and Plot) --##
 ##--------------------------------------##
 
-plot.high.vs.low.outcomes <- function(ranked.out,
-                                      frac=0.2)
+get.high.vs.low.outcomes <- function(ranked.out,
+                                     frac=0.2)
 {
     mat = rowMeans(ranked.out, dims=2)
- 
+    
     n.sim = dim(mat)[1]
     low.indices = 1:ceiling(n.sim*frac)
     high.indices = n.sim + 1 - low.indices
@@ -80,21 +130,40 @@ plot.high.vs.low.outcomes <- function(ranked.out,
     df$variable = factor(get.pretty.parameter.names(df$variable),
                          levels=get.pretty.parameter.names(rev(dimnames(mat)[[2]])))
     
+    df.low = summarize.for.boxplot(df[df$quantile=='low',])
+    df.low$quantile = 'low'
+    df.high = summarize.for.boxplot(df[df$quantile=='high',])
+    df.high$quantile = 'high'
+    df = rbind(df.low, df.high)
+    
+    attr(df, 'mean') = mean(mat)
+    df
+}
+
+plot.high.vs.low.outcomes <- function(ranked.out,
+                                      frac=0.2,
+                                      box.width=0.7)
+{
+    df = get.high.vs.low.outcomes(ranked.out=ranked.out, frac=frac)
+    
+    
     palette = pal_jama()(3)
     colors = c(high=palette[3], low=palette[2])
     labels = c(high=paste0("Simulations with highest ", 100*frac, "% of Parameter Values"),
                low=paste0("Simulations with lowest ", 100*frac, "% of Parameter Values"))
     
-    ggplot(df) + geom_boxplot(aes(value, variable, fill=quantile)) +
-        geom_vline(xintercept = mean(mat), linetype='dashed') +
-        ylab(NULL) + xlab("Incidence Reduction 2020 to 2030\n(Averaged Across MSAs)") +
+    ggplot(df) + geom_boxplot(aes(x=variable, middle=stat, lower=quartile.1, upper=quartile.3, ymin=min, ymax=max, fill=quantile),
+                              stat='identity', position=position_dodge(box.width), width=box.width) +
+        coord_flip() + 
+        geom_hline(yintercept = attr(df, 'mean'), linetype='dashed') +
+        xlab(NULL) + ylab("Incidence Reduction 2020 to 2030\n(Averaged Across MSAs)") +
         scale_fill_manual(name=NULL,
                           values=colors,
                           labels=labels) + 
         theme(legend.position = 'bottom',
               legend.direction='vertical',
               panel.background=element_blank()) +
-        scale_x_continuous(labels=percent)
+        scale_y_continuous(labels=percent)
 }
 
 order.outcomes.by.ranked.variables <- function(sensitivy.dfs,
@@ -121,6 +190,51 @@ order.outcomes.by.ranked.variables <- function(sensitivy.dfs,
     dimnames(rv) = dim.names
     
     rv
+}
+
+get.locationwise.outcome.diff <- function(ranked.out,
+                                          variables=rev(dimnames(ranked.out)[['variable']]),
+                                          threshold=0.2,
+                                          stat=median,
+                                          summarize=T)
+{
+    n = floor(threshold * dim(ranked.out)[1])
+    low = apply(ranked.out[1:n,variables,], 2:3, mean)
+    high = apply(ranked.out[dim(ranked.out)[1]-n+1:n,variables,], 2:3, mean)
+    
+    variables = dimnames(ranked.out)[['variable']]
+    var.levels = rev(get.pretty.parameter.names(variables))
+    df = reshape2::melt(high-low)
+    
+    df$variable = factor(get.pretty.parameter.names(df$variable), levels=var.levels)
+    
+    if (summarize)
+        df = summarize.for.boxplot(df, stat=stat)
+    
+    df
+}
+
+plot.locationwise.outcome.diff <- function(ranked.out,
+                                          threshold=0.2,
+                                          variables=rev(dimnames(ranked.out)[['variable']]),
+                                          fill=pal_jama()(5)[5],
+                                          stat=median)
+{
+    n = floor(threshold * dim(ranked.out)[1])
+    
+    df = get.locationwise.outcome.diff(ranked.out, variables=variables, threshold=threshold, stat=stat)
+    
+    ggplot(df) + geom_boxplot(aes(x=variable, middle=stat, lower=quartile.1, upper=quartile.3, ymin=min, ymax=max),
+                              stat='identity', fill=fill) +
+        geom_hline(yintercept = 0, linetype='dashed') +
+        xlab(NULL) + ylab(paste0("Difference Between High vs Low Simulations")) +
+        theme(panel.background=element_blank()) + coord_flip()
+    
+    #    ggplot(df) + geom_boxplot(aes(value, variable), fill=fill) +
+    #        geom_vline(xintercept = 0, linetype='dashed') +
+    #        xlim(-1,1) +
+    #        ylab(NULL) + xlab("Partial Rank Correlation Coefficient (PRCC)") +
+    #        theme(panel.background=element_blank())
 }
 
 ##--------------------------------##
@@ -150,7 +264,10 @@ get.locationwise.prccs <- function(sensitivity.dfs,
     })
     
     prccs = unlist(prccs.list)
+    if (is.null(variables))
+        variables = names(prccs.list[[1]])
     dim.names = list(variable=variables, location=attr(sensitivity.dfs, 'location'))
+
     dim(prccs) = sapply(dim.names, length)
     dimnames(prccs) = dim.names
     
@@ -171,12 +288,37 @@ plot.locationwise.prccs <- function(prccs,
     df = reshape2::melt(prccs)
     
     df$variable = factor(get.pretty.parameter.names(df$variable), levels=var.levels)
-        
-    ggplot(df) + geom_boxplot(aes(value, variable), fill=fill) +
-        geom_vline(xintercept = 0, linetype='dashed') +
-        xlim(-1,1) +
-        ylab(NULL) + xlab("Partial Rank Correlation Coefficient (PRCC)") +
-        theme(panel.background=element_blank())
+
+    df = summarize.for.boxplot(df)
+    
+    ggplot(df) + geom_boxplot(aes(x=variable, middle=stat, lower=quartile.1, upper=quartile.3, ymin=min, ymax=max),
+                              stat='identity', fill=fill) +
+        geom_hline(yintercept = 0, linetype='dashed') +
+        ylim(-1,1) +
+        xlab(NULL) + ylab("Partial Rank Correlation Coefficient (PRCC)") +
+        theme(panel.background=element_blank()) + coord_flip()
+    
+#    ggplot(df) + geom_boxplot(aes(value, variable), fill=fill) +
+#        geom_vline(xintercept = 0, linetype='dashed') +
+#        xlim(-1,1) +
+#        ylab(NULL) + xlab("Partial Rank Correlation Coefficient (PRCC)") +
+#        theme(panel.background=element_blank())
+}
+
+summarize.for.boxplot <- function(df,
+                                  variable.name='variable',
+                                  value.name='value',
+                                  stat=median)
+{
+    variables = unique(df[,variable.name])
+    values.for.variable = lapply(variables, function(v){df[df[,variable.name]==v,value.name]})
+    rv = data.frame(variable=variables,
+                    stat=sapply(values.for.variable, stat),
+                    quartile.1=sapply(values.for.variable, quantile, probs=0.25),
+                    quartile.3=sapply(values.for.variable, quantile, probs=0.75),
+                    min=sapply(values.for.variable, min),
+                    max=sapply(values.for.variable, max))
+    rv
 }
 
 ##----------------------------------##
@@ -202,7 +344,7 @@ get.outcome.parameter.correlations <- function(df,
 make.sensitivity.dfs <- function(dir,
                                 interventions,
                                 n.sim,
-                                msas=get.hiv.burden()$CBSA,
+                                msas=TARGET.MSAS,
                                 year1=c(2020,2020),
                                 year2=c(2025,2030),
                                 verbose=T)

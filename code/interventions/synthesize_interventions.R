@@ -17,6 +17,25 @@ get.simset.incidence.reduction <- function(simset,
       success.probability = as.numeric(means[2]))
 }
 
+get.simset.incidence.dist <- function(simset,
+                                 year=2030,
+                                 per.population=NA,
+                                 ages=NULL,
+                                 races=NULL,
+                                 sexes=NULL,
+                                 risks=NULL,
+                                 include.hiv.positive.in.denominator)
+{
+    extract.simset.distribution(simset, extract.incidence,
+                                years=year,
+                                ages=ages,
+                                races=races,
+                                sexes=sexes,
+                                risks=risks,
+                                per.population=per.population,
+                                include.hiv.positive.in.denominator=include.hiv.positive.in.denominator)
+}
+
 get.incidence.reduction <- function(sim,
                                     year1=2020,
                                     year2=2030,
