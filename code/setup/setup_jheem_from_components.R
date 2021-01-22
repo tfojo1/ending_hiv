@@ -1607,7 +1607,7 @@ do.setup.susceptibility <- function(components)
                 non.prep.risk = (1-prep.coverage)
                 prep.risk = prep.coverage * components$prep.rr.heterosexual
                 prep.risk[,,,'msm',,] = prep.coverage[,,,'msm',,] * components$prep.rr.msm
-                prep.risk[,,,,'active_use',] = prep.coverage[,,,,'active_use',] * components$prep.rr.idu
+                prep.risk[,,,,'active_IDU',] = prep.coverage[,,,,'active_IDU',] * components$prep.rr.idu
 
                 susceptibility = non.prep.risk + prep.risk
                 susceptibility * base.idu.susceptibility
