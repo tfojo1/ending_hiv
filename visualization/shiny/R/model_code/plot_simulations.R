@@ -189,7 +189,7 @@ do.plot.simulations <- function(
         
         simset.years = ss@simulations[[1]]$years
         
-        simset.run.from.year = attr(simset, 'run.from.year')
+        simset.run.from.year = attr(ss, 'run.from.year')
         if (!is.null(simset.run.from.year))
             simset.years = intersect(simset.run.from.year:max(simset.years), simset.years)
         
@@ -243,7 +243,7 @@ do.plot.simulations <- function(
         rv = sapply(simsets[[i]]@simulations, get.total.population, 
                     census.totals=CENSUS.TOTALS, 
                     years=years.for.simset[[i]])
-
+        
         dim(rv) = c(length(years.for.simset[[i]]), simsets[[i]]@n.sim)
         rv
     })
