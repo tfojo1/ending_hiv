@@ -20,6 +20,10 @@ app.title = "JHEEM: Ending HIV in the US"
 ui.navbar = tagList(
   tags$head(
     tags$style(HTML("
+     .navbar-brand {
+       /* Was -15px, but that eliminated centering 'padding' */
+       margin-left: 0 !important;
+     }
      .box {
        margin-bottom: 0 !important;
      }
@@ -30,9 +34,18 @@ ui.navbar = tagList(
      }
      .dropdown-menu {
        /* ideally, customize this to the one in runModel page */
-       left: -83px;
+       left: -83px;   
+     }
+     .container-fluid {
+       padding-left: 0;
+       padding-right: 0;
      }
      body > div.container-fluid {
+       padding-left: 0;
+       padding-right: 0;
+     }
+     .navbar > div.container-fluid {
+       /* This doesn't work, so just did '.container-fluid' */
        padding-left: 0;
        padding-right: 0;
      }
@@ -49,7 +62,19 @@ ui.navbar = tagList(
      .sticky_footer { 
        position:fixed; bottom:0; right:0; left:0;
        background:#3c8dbc; z-index: 1000; opacity: 0.9; 
-     }"))),  # </tags$head>
+     }
+     
+    /* Static scrollbar: Sets only for right side of screen:
+    ::-webkit-scrollbar {
+      -webkit-appearance: none;
+      width: 7px;
+    }
+    ::-webkit-scrollbar-thumb {
+      border-radius: 4px;
+      background-color: rgba(0, 0, 0, .5);
+      box-shadow: 0 0 1px rgba(255, 255, 255, .5);
+    } */
+  "))),  # </tags$head>
   
   navbarPage(
     id='main_nav',

@@ -86,7 +86,7 @@ server.routes.runModel.get <- function(input, session, state)
     
     # Dashboard approach ####
     rv.dashboard <- dashboardPage(
-      # Header
+      # Header ####
       # add.style.to.tag(
       #   #this keeps it pegged to the top/not scrollable:
       #   style='position: fixed; width:100%; z-index:99999',
@@ -96,13 +96,11 @@ server.routes.runModel.get <- function(input, session, state)
         # )
       ),  # </dashboardHeader>
       
-      # Sidebar 
-      #  - Appear in app in order shown below
+      # Sidebar ####
       
       # add.style.to.tag(
         # this keeps it pegged to the top/not scrollable: 
         # style='position: fixed;', 
-        
         dashboardSidebar(
           tags$head(
             # tags$style(HTML(".sidebar .left-side .main-sidebar {
@@ -124,13 +122,77 @@ server.routes.runModel.get <- function(input, session, state)
             .sidebar {
               color: black;
           }"))),
-          ex,
-          ex,
-          ex,
-          ex,
-          ex,
-          ex,
-          ex,
+          
+          # Widgets
+          selectInput(
+            inputId="geographic_location", 
+            # label=NULL,
+            label="Metropolitan Statistical Area (MSA)",
+            choices=invert.keyVals(get.location.options(
+              version=version)),
+            # selected=location.choice,
+            selected=get.location.options(version=version)[1],
+            multiple=FALSE,
+            selectize=TRUE, 
+            width=NULL, 
+            size=NULL ),
+          
+          radioGroupButtons(
+            inputId='Target Populations',
+            label='Target Populations',
+            choices=c(
+              'Black and Hispanic MSM <35yo',
+              'All MSM and All IDU',
+              'All MSM, All IDU, and All Heterosexuals'
+            ),
+            direction = 'vertical',
+            justified=T,
+            individual=F,
+            size='lg',
+            status='primary'),
+          
+          radioGroupButtons(
+            inputId='Intervention Aspects',
+            label='Intervention Aspects',
+            choices=c(
+              'PrEP Only',
+              'Testing Only',
+              'Suppression Only',
+              'PrEP, Testing, and Suppression'
+            ),
+            direction = 'vertical',
+            justified=T,
+            individual=F,
+            size='lg',
+            status='primary'),
+          
+          radioGroupButtons(
+            inputId='Intervention Intensity',
+            label='Intervention Intensity',
+            choices=c(
+              'PrEP 25%',
+              'PrEP 50%'
+            ),
+            direction = 'vertical',
+            justified=T,
+            individual=F,
+            size='lg',
+            status='primary'),
+          
+          radioGroupButtons(
+            inputId='Ramp-up',
+            label='Ramp-up',
+            choices=c(
+              '2021-2022',
+              '2021-2024'
+            ),
+            direction = 'vertical',
+            justified=T,
+            individual=F,
+            size='lg',
+            status='primary'),
+          
+          # 'Run' Button
           verticalSpacer(10),
           useShinyjs(),
           actionButton(
@@ -145,7 +207,7 @@ server.routes.runModel.get <- function(input, session, state)
         ),  # </dashboardSidebar>
         # ),  # </dashboardSidebar/style>
       
-      # Body 
+      # Content area ####
       add.style.to.tag(
         style='
           /* position: fixed; 
@@ -163,19 +225,23 @@ server.routes.runModel.get <- function(input, session, state)
           tags$head(
             # tags$style(HTML("#runmodel_content section.content {
             tags$style(HTML("#runmodel_content {
-              /* position: fixed; 
+              /* 
+              position: fixed; 
               padding: 0;
-              padding-left: 0; */
+              padding-left: 0; 
+              width: 90vw;
+              overscroll-behavior-x: contain;
+              */
               background: white;
+              padding-top: 0;
+              padding-bottom: 0;
+              /* Need or else get x scroll bar: */
+              padding-right: 20px;
               overflow: auto;
               overflow-x: auto;
               overflow-y: auto;
               overscroll-behavior: contain;
-              overscroll-behavior-x: contain;
               overscroll-behavior-y: contain;
-              padding-top: 0;
-              padding-bottom: 0;
-              padding-right: 0;
           }"))),
           # TODO: #now
           # Header & styles ####
@@ -222,7 +288,6 @@ server.routes.runModel.get <- function(input, session, state)
               #   class="sticky_footer", 
               #   p("test footer")),
               
-              # TODO: navbar within navbar ok?
               navbarPage(
                 id='runmodel_nav',
                 title=NULL,
@@ -338,17 +403,17 @@ server.routes.runModel.get <- function(input, session, state)
           
           # Collapsible panel for more Options ####
           fluidRow(
-            column(
-              width=12,
-              box(
-                id='runmodel_more_options_box_body',
-                width=12,
-                title='More options',
-                collapsible=T,
-                collapsed=T,
-                ex
-              )
-            )
+            # column(
+            #   width=12,
+            #   box(
+            #     id='runmodel_more_options_box_body',
+            #     width=12,
+            #     title='More options',
+            #     collapsible=T,
+            #     collapsed=T,
+            #     ex
+            #   )
+            # )
           ),
       ))  # </style/dashboardBody)>
       

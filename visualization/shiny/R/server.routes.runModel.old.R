@@ -265,7 +265,6 @@ server.routes.runModel.old.get <- function(input, session, state)
       # #options
       # Spatiotemporal dimensions ####
       # to-do: expand/collapse feature
-      
       'spatiotemporal-dimensions'=fluidRow(
         column(
           width=page.width,

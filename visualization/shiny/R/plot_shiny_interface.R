@@ -230,8 +230,8 @@ get.split.by.options <- function(version, location)
 #  ramp up
 # $intervention.implemented.year - the year at which the interventions are
 #  fully ramped up
-get.intervention.options <- function(version, location,
-                                     return.intervention.objects = F)
+get.intervention.options <- function(
+  version, location, return.intervention.objects = F)
 {
     
     if (length(location)>0 && location !='')
