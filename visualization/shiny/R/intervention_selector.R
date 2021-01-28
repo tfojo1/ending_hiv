@@ -11,14 +11,21 @@ TPOP.SELECTOR.WIDTH = 3#4
 UNIT.SELECTOR.WIDTH = 3#6
 
 create.intervention.selector.panel <- function(
-  num, input, state, location, lump.idu=T, title=paste0("Intervention ", num)
+  num, input, state, lump.idu=T, title=paste0("Intervention ", num)
 ) {
-  print(location)    # TODO: #now: figure out how to utilize w/out re-render
-  #-- Set up the Pre-Run Panel -_#
-    interventions = get.intervention.options(
+  #-- Set up the Pre-Run Panel --#
+  # to-do?: I tried changing state() to input for geographic location below, but
+  # when i went to plot, got the following error. - jef
+  # Warning: Error in :: NA/NaN argument
+  # 76: [.data.frame
+  #      74: make.pretty.change.data.frame [R/model_code/plot_simulations.R#1441]
+  #                                         73: reset.handler [/Users/joeflack4/projects/ending-hiv/visualization/shiny/server.R#175]
+  #                                                            72: observeEventHandler [/Users/joeflack4/projects/ending-hiv/visualization/shiny/server.R#188]
+  #                                                                                     1: shiny::runApp  
+  interventions = get.intervention.options(
       version=get.version(input),
       # location=input$geographic_location,
-      location=NULL,
+      location=state()[['geographic_location']],
       return.intervention.objects = T)
     
     interventions = interventions[!sapply(interventions, is.null.intervention)]
@@ -95,17 +102,6 @@ get.intervention.selection <- function(num, input)
         }
     }
 }
-
-
-
-
-
-
-
-
-
-
-
 
 make.interventions.by.tpop.panel <- function(
   num, interventions, state, lump.idu=T)
@@ -208,25 +204,6 @@ make.interventions.by.tpop.panel <- function(
     ))
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 make.interventions.by.unit.panel <- function(
   num, interventions, state, lumped.interventions, selector.id)
 {
@@ -323,28 +300,6 @@ make.interventions.by.unit.panel <- function(
     ))
     
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 ##-------------##
 ##-- HELPERS --##

@@ -1165,12 +1165,15 @@ read.msa.file <- function(file, verbose=T, allow.misses=F)
 #    has.total.row = any(grepl('total', df[,1], ignore.case = T))
 #    if ((has.total.row && sum(is.na(df$code))>4) ||
 #        (!has.total.row && sum(is.na(df$code)>0)))
-    if (!allow.misses && any(is.na(df$code) &
-            !(grepl('total', df[,1], ignore.case = T) |
-              grepl('metropolitan', df[,1], ignore.case = T) |
-              grepl('countie', df[,1], ignore.case = T)
-              )))
-        browser()
+    # TODO: @Todd: I removed this because of a publish warning regarding 
+    # browser(). But I left this block of code here for you commented out
+    # in case you need it. - JEF
+    # if (!allow.misses && any(is.na(df$code) &
+    #         !(grepl('total', df[,1], ignore.case = T) |
+    #           grepl('metropolitan', df[,1], ignore.case = T) |
+    #           grepl('countie', df[,1], ignore.case = T)
+    #           )))
+    #     browser()
 
     division.mask = division.mask[!is.na(df$code)]
     df = df[!is.na(df$code),]
