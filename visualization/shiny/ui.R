@@ -1,25 +1,34 @@
-# Imports  ####
+##-------------------##
+##-- LIBRARY CALLS --####
+##-------------------##
 'EndingHIV RShiny web front-end process: UI spec'
 
-##-------------------##
-##-- LIBRARY CALLS --##
-##-------------------##
 
 library('shinydashboard')
-library(shinyjs)
+library('shinyjs')
 
 source('R/styling_helpers.R')
 
-# Variables ####
-app.title = "JHEEM: Ending HIV in the US"
 
 ##------------------##
-##-- DEFINE the UI--##
+##-- DEFINE the UI--####
 ##------------------##
-# Navbar Approach ####
-ui.navbar = tagList(
+# Variables
+app.title = "JHEEM: Ending HIV in the US"
+
+# UI
+ui = tagList(
   tags$head(
     tags$style(HTML("
+     .wrapper {
+       background-color: #f8f8f8 !important;
+     }
+     .content-wrapper {
+       background-color: #f8f8f8 !important;
+     }
+     #runmodel_options_box_body {
+       background-color: #f8f8f8 !important;
+     }
      .navbar-brand {
        /* Was -15px, but that eliminated centering 'padding' */
        margin-left: 0 !important;
@@ -52,7 +61,21 @@ ui.navbar = tagList(
      #runmodel_nav {
        float: none !important;
      }
+     /* Not sure why 'Run' appears 4th, even though listed 5th in the UI. */
      #runmodel_nav > li:nth-child(4) {
+       /* color: white; 
+       background: #1d7cd0; light blue
+       background: #107ad4; vibrant blue
+       background: #337ab7; ui consistent blue
+       background: #204C73; same as other run button but darker; dk why 
+       */
+       float: right;
+       background: #107ad4;
+     }
+     #runmodel_nav > li:nth-child(4) > a {
+       color: white
+     }
+     #runmodel_nav > li:nth-child(5) {
        float: right;
        /* right: 50px; */
      }
@@ -99,94 +122,3 @@ ui.navbar = tagList(
       uiOutput("help-and-feedback"))
   )  # </navbarPage>
 )
-
-# Dashboard approach ####
-ui.dashboard <- dashboardPage(
-  # Header ####
-  add.style.to.tag(
-    #this keeps it pegged to the top/not scrollable:
-    style='position: fixed; width:100%; z-index:99999',
-  dashboardHeader(
-    title=app.title, 
-    disable=F
-    
-    # Custom navbar attempts ####
-    # Temp note: Failed attempt to have a custom navbar:
-    # https://rdrr.io/cran/shinyjs/man/classFuncs.html
-    # useShinyjs(),
-    # tags$li(
-    #   id='test-li',
-    #   addClass("test-li", "dropdown"),
-    #   'hello')
-    
-    # Temp note: This actually works:
-    # tags$li(
-    #   id='test-li',
-    #   'hello') %>% 
-    #   tagAppendAttributes(class='dropdown')
-    
-  )),  # </dashboardHeader>
-  
-  # Sidebar ####
-  #  - Appear in app in order shown below
-  
-  add.style.to.tag(
-    # this keeps it pegged to the top/not scrollable: 
-    style='position: fixed;', 
-  dashboardSidebar(
-    sidebarMenu(
-      id='side_menu',
-      menuItem("Visualize Projections",  
-        tabName="main", icon=icon("chart-line")),
-      menuItem("Custom Interventions", tabName="design-interventions", 
-               icon=icon("wrench")),
-      menuItem("About the Model", tabName="text", icon=icon("info-circle")),
-      menuItem("Contact Us", tabName="help-and-feedback", icon=icon("envelope"))
-    ),
-    conditionalPanel(
-      condition=paste0("input.side_menu == 'main'"),
-      verticalSpacer(10),
-      useShinyjs(),
-      actionButton(
-        style="
-          background: #204C73; 
-          color: white; 
-          font-size:120%; 
-          margin: 0 auto;",
-        "reset_main_sidebar", 
-        HTML("Generate<BR>Projections"),
-        disabled=T),
-      href="#top")  # </conditionalPanel>
-
-  )),  # </dashboardSidebar>
-  
-  # Body ####
-  dashboardBody(
-    tabItems(
-      tabItem(
-        tabName="main",
-        uiOutput("ui_main")),
-      tabItem(
-        tabName="main_old",
-        uiOutput("ui_main_old")),
-      tabItem(
-        tabName="design-interventions",
-        uiOutput("design-interventions")),
-      tabItem(
-        tabName="text",
-        uiOutput("introductionText")),
-      tabItem(
-        tabName="help-and-feedback",
-        uiOutput("help-and-feedback"))
-      
-  ))  # </dashboardBody)>
-
-)  # </UI (dashboardPage)>
-
-
-# Post-processing ####
-# n/a
-
-# Exports ####
-ui = ui.navbar
-ui

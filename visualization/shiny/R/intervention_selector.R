@@ -103,17 +103,6 @@ get.intervention.selection <- function(num, input)
     }
 }
 
-
-
-
-
-
-
-
-
-
-
-
 make.interventions.by.tpop.panel <- function(
   num, interventions, state, lump.idu=T)
 {
@@ -215,25 +204,6 @@ make.interventions.by.tpop.panel <- function(
     ))
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 make.interventions.by.unit.panel <- function(
   num, interventions, state, lumped.interventions, selector.id)
 {
@@ -330,28 +300,6 @@ make.interventions.by.unit.panel <- function(
     ))
     
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 ##-------------##
 ##-- HELPERS --##

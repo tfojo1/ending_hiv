@@ -1,7 +1,5 @@
-# # EndingHiv; Page: Run Model (#page-run-model): output$ui_main
-
 ##-------------------------------##
-##-- LIBRARIES and SOURCE CODE --##
+##-- LIBRARIES and SOURCE CODE --####
 ##-------------------------------##
 
 library('shiny')
@@ -10,82 +8,19 @@ library('shiny')
 # library('purrr')
 source('R/server_utils.R')
 
+# UI ####
 ##-----------------------------------------------------##
 ##-- THE FUNCTION THAT GENERATES THE UI FOR THE PAGE --##
 ##-----------------------------------------------------##
 
-# Temp:
-ex = sliderInput(
-  "myslider",
-  "Slider",
-  min = 0,
-  max = 1000,
-  value = 500)
-
 #returns
-server.routes.runModel.get <- function(input, session, state)
-{
-  
-  # Component: PageDef #ui_main[renderUI]
+server.routes.runModel.get <- function(input, session, state) {
   ui_main = renderUI({
-    
+    # Pre-processing ####
     shinyjs::disable("reset_main_sidebar")
-    # UI ####
     
-    # Navbar approach ####
-    rv.navbar = list(  # returns-->list
-      # Header & styles 
-      #This code sets the position and style for the progress bar when
-      # loading simulations
-      tags$head(
-        tags$style(
-          ".shiny-notification {
-           position: fixed;
-           top: 10%;
-           left: 25%;
-           color: black;
-           font-size: 20px;
-           font-style: normal;
-           padding-left: 50px;
-           padding-right: 50px;
-        }
-        .yellow-box {
-          background: #FFF3CD;
-          color: #856405;
-          margin-top: 10px;
-          margin-bottom: 10px;
-          padding-top: 5px;
-          padding-bottom: 5px;
-          padding-left: 5px;
-          padding-right: 5px;
-        }
-        .modebar-container: {
-          background: 'black';
-          border-style: solid;
-          border-color: black
-        }
-        .modebar: {
-          orientation: 'v';
-          position: 'right'
-      }
-      ")),
-      
-      # Content 
-      navbarPage(
-        "My Application",
-        tabPanel("Component 1"),
-        tabPanel("Component 2"),
-        tabPanel("Component 3")
-      ),
-      '1'=fluidRow(
-        'hello'
-      ),
-      '2'=fluidRow(),
-      '3'=fluidRow()
-    )
-    
-    # Dashboard approach ####
-    rv.dashboard <- dashboardPage(
+    # Declarative UI ####
+    rv <- dashboardPage(
       # Header ####
       # add.style.to.tag(
       #   #this keeps it pegged to the top/not scrollable:
@@ -136,8 +71,9 @@ server.routes.runModel.get <- function(input, session, state)
             selectize=TRUE, 
             width=NULL, 
             size=NULL ),
-          
-          radioGroupButtons(
+                    
+          # radioGroupButtons(
+          radioButtons(
             inputId='Target Populations',
             label='Target Populations',
             choices=c(
@@ -145,13 +81,15 @@ server.routes.runModel.get <- function(input, session, state)
               'All MSM and All IDU',
               'All MSM, All IDU, and All Heterosexuals'
             ),
-            direction = 'vertical',
-            justified=T,
-            individual=F,
-            size='lg',
-            status='primary'),
+            # direction = 'vertical',
+            # justified=T,
+            # individual=F,
+            # size='lg',
+            # status='primary'
+          ),
           
-          radioGroupButtons(
+          # radioGroupButtons(
+          radioButtons(
             inputId='Intervention Aspects',
             label='Intervention Aspects',
             choices=c(
@@ -160,37 +98,42 @@ server.routes.runModel.get <- function(input, session, state)
               'Suppression Only',
               'PrEP, Testing, and Suppression'
             ),
-            direction = 'vertical',
-            justified=T,
-            individual=F,
-            size='lg',
-            status='primary'),
+            # direction = 'vertical',
+            # justified=T,
+            # individual=F,
+            # size='lg',
+            # status='primary'
+          ),
           
-          radioGroupButtons(
+          # radioGroupButtons(
+          radioButtons(
             inputId='Intervention Intensity',
             label='Intervention Intensity',
             choices=c(
               'PrEP 25%',
               'PrEP 50%'
             ),
-            direction = 'vertical',
-            justified=T,
-            individual=F,
-            size='lg',
-            status='primary'),
+            # direction = 'vertical',
+            # justified=T,
+            # individual=F,
+            # size='lg',
+            # status='primary'
+          ),
           
-          radioGroupButtons(
+          # radioGroupButtons(
+          radioButtons(
             inputId='Ramp-up',
             label='Ramp-up',
             choices=c(
               '2021-2022',
               '2021-2024'
             ),
-            direction = 'vertical',
-            justified=T,
-            individual=F,
-            size='lg',
-            status='primary'),
+            # direction = 'vertical',
+            # justified=T,
+            # individual=F,
+            # size='lg',
+            # status='primary'
+          ),
           
           # 'Run' Button
           verticalSpacer(10),
@@ -314,6 +257,10 @@ server.routes.runModel.get <- function(input, session, state)
                   title="(Hide)",
                   ''
                 ),
+                tabPanel(
+                  title="Run",
+                  ''
+                ),
                 navbarMenu(
                   title="Share",
                   # Error when using icon:
@@ -411,7 +358,7 @@ server.routes.runModel.get <- function(input, session, state)
             #     title='More options',
             #     collapsible=T,
             #     collapsed=T,
-            #     ex
+            #     'hello'
             #   )
             # )
           ),
@@ -419,167 +366,10 @@ server.routes.runModel.get <- function(input, session, state)
       
     )  # </UI (dashboardPage)>
     
-    
-    # Sidebar approach ####
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-  
-    
-    rv.sidebar = sidebarLayout(
-      
-      # Sidebar ####
-      #scrollbar
-      # https://stackoverflow.com/questions/43972650/make-sidebarpanel-autoscroll-with-mainpanel-in-shiny
-      sidebarPanel(
-        # style='overflow-y: scroll;',  # <-- no go
-        ex,
-        ex,
-        ex,
-        ex,
-        ex,
-        ex,
-      ),
-      
-      # Main panel ####
-      mainPanel(
-        # Header & styles ####
-        # This code sets the position and style for the progress bar when
-        # loading simulations
-        tags$head(
-          tags$style("
-        .shiny-notification {
-           position: fixed;
-           top: 10%;
-           left: 25%;
-           color: black;
-           font-size: 20px;
-           font-style: normal;
-           padding-left: 50px;
-           padding-right: 50px;
-        }
-        .yellow-box {
-          background: #FFF3CD;
-          color: #856405;
-          margin-top: 10px;
-          margin-bottom: 10px;
-          padding-top: 5px;
-          padding-bottom: 5px;
-          padding-left: 5px;
-          padding-right: 5px;
-        }
-        .modebar-container: {
-          background: 'black';
-          border-style: solid;
-          border-color: black
-        }
-        .modebar: {
-          orientation: 'v';
-          position: 'right'
-        }")),
-        
-        # Output ####
-        fluidRow(
-          column(
-            width=page.width,
-            
-            div(
-              class="sticky_footer", 
-              p("test footer")),
-              
-            # TODO: navbar within navbar ok?
-            navbarPage(
-              id='runmodel_nav',
-              title=NULL,
-              # collapsible=TRUE,
-              
-              # header=tags$div(
-              #   'header'
-              # ),
-              
-              # footer=tags$div(
-              #   'footer'
-              # ),
-              
-              # Menu
-              tabPanel(
-                title="Figure",
-                'This is a figure.'
-              ),
-              tabPanel(
-                title="Table",
-                'This is a table.'
-              ),
-              navbarMenu(
-                title="Share",
-                # Error when using icon:
-                # Warning: Error in : $ operator is invalid for atomic vectors
-                # icon='share-alt',
-                tabPanel(
-                  title="Download figure",
-                  # 'hello figure'
-                ),
-                tabPanel(
-                  title="Download table",
-                  # 'hello table'
-                ),
-                tabPanel(
-                  title="Share link",
-                  # 'hello share link'
-                )
-              )  # </navbarMenu>
-            ),  # </navbarPage>
-        )),
-          
-        # Options ####
-        fluidRow(
-          
-        ),
-      
-        # Collapsible panel for more Options ####
-        fluidRow(
-          
-        )
-        
-      )  # </mainPanel>
-    )  # </sidebarLayout>
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
     # Post-processing ####
     shinyjs::enable('reset_main_sidebar')
     
-    # Exports ####
-    rv = rv.dashboard
+    rv
   })  # </list>  #returns
   
   ui_main
