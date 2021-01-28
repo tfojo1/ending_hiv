@@ -89,7 +89,7 @@ server.routes.runModel.get <- function(input, session, state)
     
     # UI ####
     shinyjs::disable("reset_main_sidebar")
-    browser()
+#    browser()
     rv = list(  # returns-->list
       # Header & styles ####
       #This code sets the position and style for the progress bar when
