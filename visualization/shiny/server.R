@@ -5,6 +5,7 @@
 library(processx)
 library(orca)
 library(shiny)
+library('mailR')
 
 #library('stringr')
 #library('DT')
@@ -16,12 +17,12 @@ library(shiny)
 ##-- SOURCE FILES --##
 ##------------------##
 
+source('env.R')
 source("R/plot_resources.R")
 source("R/plot_shiny_interface.R")
 source('R/server_helpers.R')
 source('R/styling_helpers.R')
 source('R/server_utils.R')
-
 source("R/server.routes.docs.R")
 source("R/server.routes.runModel.R")
 source("R/model_code/plot_simulations.R")
@@ -411,9 +412,50 @@ server <- function(input, output, session) {
     name = input[['feedback_name']]
     email = input[['feedback_email']]
     contents = input[['feedback_contents']]
-    db.write.contactForm(
-      name=name, email=email, message=contents)
-    showMessageModal('Your message has been received.')
+    
+    # https://r-bar.net/mailr-smtp-webmail-starttls-tls-ssl/#majorHosts
+    # https://www.r-bloggers.com/2019/04/mailr-smtp-setup-gmail-outlook-yahoo-starttls/
+    # TODO: Handle validation for email addresses, e.g.:
+    # Warning: Error in .jcall: org.apache.commons.mail.EmailException: 
+    # javax.mail.internet.AddressException: Missing final '@domain' in string
+    #  ``askjdfkljfalmvlkgjlkaj''
+    #  Warning: Error in .jcall: org.apache.commons.mail.EmailException: 
+    #  javax.mail.internet.AddressException: Domain contains illegal character 
+    #  in string ``kfjasklklfjlk@lksdjfkldsjfkl@lkdjfjkljlkj''
+    send.mail(
+      from=email, 
+      to=c(
+        Sys.getenv("EMAIL_USERNAME"),
+        'anthony.fojo@jhmi.edu',
+        'jflack1@jhu.edu'), 
+      subject=paste0('EndingHIV email from: ', name),
+      body=paste0(
+# Keep indented like this for email formatting purposes.
+'Name: ', name, '
+Email: ', email, '
+Contents: 
+', contents),
+      smtp=list(
+        host.name="smtp.gmail.com",
+        port=list(
+          'ssl'=465,
+          'tls'=587
+        )[['tls']],
+        user.name=Sys.getenv("EMAIL_USERNAME"),
+        passwd=Sys.getenv("EMAIL_PASSWORD"),
+        #ssl=T,
+        tls=T),
+      # debug=T
+      authenticate=T, 
+      send=T)
+    
+    # Warning: Error in : FATAL:  no pg_hba.conf entry for host 
+    # "73.135.116.183", user "jklcmyywfuzgrf", database "d7kjdf34erfuu8", 
+    # SSL off
+    # db.write.contactForm(
+    #   name=name, email=email, message=contents)
+    
+    showMessageModal('Your message has been sent')
   })
   
 }
