@@ -157,11 +157,17 @@ server.routes.runModel.get <- function(input, session, state) {
           padding: 0;
           padding-left: 0; */
           background: white;
-          overflow: auto;
-          overscroll-behavior: contain;
+          /* overflow: auto; */
+          /* overscroll-behavior: contain; */
+          overflow-x: auto;
+          overflow-y: auto;
+          overscroll-behavior-x: contain;
+          overscroll-behavior-y: contain;
           padding-top: 0;
           padding-bottom: 0;
           padding-right: 0;
+          min-height: 95vh !important;
+          /* min-height: 95vh; */
         ',
         dashboardBody(
           id='runmodel_content',
@@ -180,11 +186,13 @@ server.routes.runModel.get <- function(input, session, state) {
               padding-bottom: 0;
               /* Need or else get x scroll bar: */
               padding-right: 20px;
-              overflow: auto;
+              / *overflow: auto; */
               overflow-x: auto;
               overflow-y: auto;
-              overscroll-behavior: contain;
+              /* overscroll-behavior: contain; */
+              overscroll-behavior-x: contain;
               overscroll-behavior-y: contain;
+              /* min-height: 95vh !important; */
           }"))),
           # TODO: #now
           # Header & styles ####
