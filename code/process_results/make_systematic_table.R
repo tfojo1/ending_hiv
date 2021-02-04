@@ -291,6 +291,25 @@ get.estimates.for.interventions <- function(intervention.codes,
     rv
 }
 
+#'@param intervention.codes can be an array, table, whatever
+#'@param location can be either a scalar value or an object with the same dimension as intervention.codes 
+#'@param dir the directory holding the simsets
+#'@param prob The quantile to return
+#'@param outcome.fn A function that takes one argument, a simulation, and returns the output desired
+get.quantiles.for.interventions <- function(intervention.codes,
+                                            location,
+                                            dir,
+                                            prob,
+                                            outcome.fn = extract.total.incidence.reduction.20.30)
+{
+    q.fn = function(x){quantile(x, probs=prob)}
+    get.estimates.for.interventions(intervention.codes=intervention.codes,
+                                    location=location,
+                                    dir=dir,
+                                    summary.stat = q.fn,
+                                    outcome.fn=outcome.fn)
+}
+
 ##--------------------------------##
 ##-- MAKING SHADED EXCEL TABLES --##
 ##--------------------------------##

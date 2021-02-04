@@ -34,7 +34,14 @@ if (1==2)
                                         dir='mcmc_runs/quick_simsets')
   
   ## Todd add credible interval code here ## 
-  
+  lower = get.quantiles.for.interventions(intervention.codes=intervention.code.table,
+                                          location=location,
+                                          prob=0.025,
+                                          dir='mcmc_runs/quick_simsets')
+  upper = get.quantiles.for.interventions(intervention.codes=intervention.code.table,
+                                          location=location,
+                                          prob=0.025,
+                                          dir='mcmc_runs/quick_simsets')
   
   
   # intervention.code.table = matrix(c('ymsm.p25.msm.s80', 'ymsm.p25.msm.s85', 'ymsm.p50.msm.s90', 'noint'),
