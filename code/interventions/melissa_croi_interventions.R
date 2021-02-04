@@ -1,48 +1,89 @@
 
 source('code/interventions/intervention_presets.R')
 
-#### New analysis (PrEP vs. suppression) - 11/18/20 ####
-GROUP1 = YOUNG.BLACK.HISPANIC.MSM
+#### New analysis (PrEP vs. suppression) - 11/19/20 ####
+YOUNG.MSM = create.target.population(ages=1:2, sexes = 'msm')
+TARGET.POPULATION.MANAGER.1.0 = add.target.population(YOUNG.MSM, code='ymsm', name='MSM and MSM-IDU <35 years old')
 
+GROUP1 = YOUNG.MSM
+GROUP2 = ALL.MSM
+
+# Intervention units
+P10 = create.intervention.unit(type = "prep", rates = .1, start.year = 2021, years = 2022)
 P25 = create.intervention.unit(type = "prep", rates = .25, start.year = 2021, years = 2022)
 P50 = create.intervention.unit(type = "prep", rates = .5, start.year = 2021, years = 2022)
 S80 = create.intervention.unit(type = "suppression", rates = .8, start.year = 2021, years = 2022)
+S85 = create.intervention.unit(type = "suppression", rates = .85, start.year = 2021, years = 2022)
 S90 = create.intervention.unit(type = "suppression", rates = .9, start.year = 2021, years = 2022)
 
-INT.P25 = create.intervention(GROUP1, P25)
-INT.P50 = create.intervention(GROUP1, P50)
+# Interventions
+# Young MSM
+YMSM.P10 = create.intervention(GROUP1, P10)
+INTERVENTION.MANAGER.1.0 = register.intervention(YMSM.P10, code = "ymsm.p10", 
+                                                 name = 'Young MSM 10% on PrEP')
+YMSM.P25 = create.intervention(GROUP1, P25)
+INTERVENTION.MANAGER.1.0 = register.intervention(YMSM.P25, code = "ymsm.p25", 
+                                                 name = 'Young MSM 25% on PrEP')
+YMSM.P50 = create.intervention(GROUP1, P50)
+INTERVENTION.MANAGER.1.0 = register.intervention(YMSM.P50, code = "ymsm.p50", 
+                                                 name = 'Young MSM 50% on PrEP')
 
-INT.S80 = create.intervention(GROUP1, S80)
-INT.S90 = create.intervention(GROUP1, S90)
+YMSM.S80 = create.intervention(GROUP1, S80)
+INTERVENTION.MANAGER.1.0 = register.intervention(YMSM.S80, code = "ymsm.s80", 
+                                                 name = 'Young MSM 80% suppressed')
+YMSM.S85 = create.intervention(GROUP1, S85)
+INTERVENTION.MANAGER.1.0 = register.intervention(YMSM.S85, code = "ymsm.s85", 
+                                                 name = 'Young MSM 85% suppressed')
+YMSM.S90 = create.intervention(GROUP1, S90)
+INTERVENTION.MANAGER.1.0 = register.intervention(YMSM.S90, code = "ymsm.s90", 
+                                                 name = 'Young MSM 90% suppressed')
 
-# First three interventions: no suppression 
-# Baseline scenario here
-# INTERVENTION.MANAGER.1.0 = register.intervention(INT.P25, code = "m.p25", name = "PrEP coverage at 25%; no suppression intervention")
-# INTERVENTION.MANAGER.1.0 = register.intervention(INT.P50, code = "m.p50", name = "PrEP coverage at 50%; no suppression intervention")
+# All MSM
+MSM.P10 = create.intervention(GROUP2, P10)
+INTERVENTION.MANAGER.1.0 = register.intervention(MSM.P10, code = "msm.p10", 
+                                                 name = 'All MSM 10% on PrEP')
+MSM.P25 = create.intervention(GROUP2, P25)
+INTERVENTION.MANAGER.1.0 = register.intervention(MSM.P25, code = "msm.p25", 
+                                                 name = 'All MSM 25% on PrEP')
+MSM.P50 = create.intervention(GROUP2, P50)
+INTERVENTION.MANAGER.1.0 = register.intervention(MSM.P50, code = "msm.p50", 
+                                                 name = 'All MSM 50% on PrEP')
 
-# Second three interventions: 80% suppression 
-# INTERVENTION.MANAGER.1.0 = register.intervention(INT.S80, code = "m.s80", name = "No PrEP intervention; suppression at 80%")
-
-INT.P25.S80 = join.interventions(INT.P25, INT.S80)
-INTERVENTION.MANAGER.1.0 = register.intervention(INT.P25.S80, code = "m.p25.s80", name = "PrEP coverage at 25%; suppression at 80%")
-
-INT.P50.S80 = join.interventions(INT.P50, INT.S80)
-INTERVENTION.MANAGER.1.0 = register.intervention(INT.P50.S80, code = "m.p50.s80", name = "PrEP coverage at 50%; suppression at 80%")
-
-
-# Second three interventions: 90% suppression 
-# INTERVENTION.MANAGER.1.0 = register.intervention(INT.S90, code = "m.s90", name = "No PrEP intervention; suppression at 90%")
-
-INT.P25.S90 = join.interventions(INT.P25, INT.S90)
-INTERVENTION.MANAGER.1.0 = register.intervention(INT.P25.S90, code = "m.p25.s90", name = "PrEP coverage at 25%; suppression at 90%")
-
-INT.P50.S90 = join.interventions(INT.P50, INT.S90)
-INTERVENTION.MANAGER.1.0 = register.intervention(INT.P50.S90, code = "m.p50.s90", name = "PrEP coverage at 50%; suppression at 90%")
+MSM.S80 = create.intervention(GROUP2, S80)
+INTERVENTION.MANAGER.1.0 = register.intervention(MSM.S80, code = "msm.s80", 
+                                                 name = 'All MSM 80% suppressed')
+MSM.S85 = create.intervention(GROUP2, S85)
+INTERVENTION.MANAGER.1.0 = register.intervention(MSM.S85, code = "msm.s85", 
+                                                 name = 'All MSM 85% suppressed')
+MSM.S90 = create.intervention(GROUP2, S90)
+INTERVENTION.MANAGER.1.0 = register.intervention(MSM.S90, code = "msm.s90", 
+                                                 name = 'All MSM 90% suppressed')
 
 
-MELISSA.INTERVENTIONS.2 = list(YBHM.P25, YBHM.P50, YBHM.S80, INT.P25.S80, INT.P50.S80, YBHM.S90, INT.P25.S90, INT.P50.S90)
+# Combined 
+YMSM.P25.MSM.S90 = join.interventions(YMSM.P25, MSM.S90)
+INTERVENTION.MANAGER.1.0 = register.intervention(YMSM.P25.MSM.S90, code = "ymsm.p25.msm.s90", 
+                                                 name = 'Young MSM 25% on PrEP; All MSM 90% suppressed')
+
+YMSM.P25.MSM.S80 = join.interventions(YMSM.P25, MSM.S80)
+INTERVENTION.MANAGER.1.0 = register.intervention(YMSM.P25.MSM.S80, code = "ymsm.p25.msm.s80", 
+                                                 name = 'Young MSM 25% on PrEP; All MSM 80% suppressed')
+
+YMSM.P25.MSM.S85 = join.interventions(YMSM.P25, MSM.S85)
+INTERVENTION.MANAGER.1.0 = register.intervention(YMSM.P25.MSM.S85, code = "ymsm.p25.msm.s85", 
+                                                 name = 'Young MSM 25% on PrEP; All MSM 85% suppressed')
+
+YMSM.P50.MSM.S90 = join.interventions(YMSM.P50, MSM.S90)
+INTERVENTION.MANAGER.1.0 = register.intervention(YMSM.P50.MSM.S90, code = "ymsm.p50.msm.s90", 
+                                                 name = 'Young MSM 50% on PrEP; All MSM 90% suppressed')
 
 
+MELISSA.INTERVENTIONS.2 = list(YMSM.P10, YMSM.P25, YMSM.P50, YMSM.S80, YMSM.S85, YMSM.S90, 
+                               MSM.P10, MSM.P25, MSM.P50, MSM.S80, MSM.S85, MSM.S90,
+                               YMSM.P25.MSM.S80, YMSM.P25.MSM.S85, YMSM.P50.MSM.S90, NO.INTERVENTION)
+
+
+# MELISSA.INTERVENTIONS.3 = list(YMSM.P25.MSM.S80, YMSM.P25.MSM.S85, YMSM.P50.MSM.S90, NO.INTERVENTION)
 
 #### Original analysis - 11/9/20 ####
 GROUP1.SUPP = YOUNG.BLACK.HISPANIC.MSM

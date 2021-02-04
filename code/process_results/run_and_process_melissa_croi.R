@@ -4,7 +4,7 @@ source('code/process_results/make_systematic_table.R')
 source('code/targets/target_msas.R')
 source('code/interventions/melissa_croi_interventions.R')
 
-#### New set of interventions - 11/18/20 ####
+#### New set of interventions - 11/19/20 ####
 
 location = LA.MSA
 if (1==2)
@@ -16,24 +16,128 @@ if (1==2)
                                dst.dir = 'mcmc_runs/quick_simsets',
                                interventions = MELISSA.INTERVENTIONS.2,
                                save.baseline.and.seed = F)
+  
 }
 
 if (1==2)
 {
+  
   location = LA.MSA
-  intervention.code.table = matrix(c('baseline', 'ybhm.p25', 'ybhm.p50', 'ybhm.s80', 'm.p25.s80', 'm.p50.s80', 'ybhm.s90', 'm.p25.s90', 'm.p50.s90'),
-                                   ncol=9)
+
+  intervention.code.table = matrix(c('noint','ymsm.p10', 'ymsm.p25', 'ymsm.p50', 'ymsm.s80', 'ymsm.s85', 'ymsm.s90',
+                                    'msm.p10', 'msm.p25', 'msm.p50', 'msm.s80', 'msm.s85', 'msm.s90',
+                                    'ymsm.p25.msm.s80', 'ymsm.p25.msm.s85', 'ymsm.p50.msm.s90'),
+                                    ncol=16)
   
   tab = get.estimates.for.interventions(intervention.codes=intervention.code.table,
                                         location=location,
                                         dir='mcmc_runs/quick_simsets')
   
+  ## Todd add credible interval code here ## 
+  
+  
+  
+  # intervention.code.table = matrix(c('ymsm.p25.msm.s80', 'ymsm.p25.msm.s85', 'ymsm.p50.msm.s90', 'noint'),
+  #                                  ncol=4)
+  # intervention.code.table = matrix(c('ymsm.p10', 'ymsm.p25', 'ymsm.p50', 'ymsm.s80', 'ymsm.s85', 'ymsm.s90',
+  #                                    'msm.p10', 'msm.p25', 'msm.p50', 'msm.s80', 'msm.s85', 'msm.s90'),
+  #                                  ncol=12)
+  
 }
 
-write.csv(tab, file = "Melissa_CROI_v2.csv")
+write.csv(tab, file = "Melissa_CROI_v3.csv")
 
 
+croi.locations =  c(LA.MSA, NYC.MSA, ATLANTA.MSA, BALTIMORE.MSA)
+croi.results = matrix(0,4,16, dimnames = list(croi.locations,intervention.code.table))
+for (i in croi.locations) {
+  croi.results[i,] = get.estimates.for.interventions(intervention.codes=intervention.code.table,
+                                    location=i,
+                                    dir='mcmc_runs/quick_simsets')
+}
 
+
+#### croi figures ####
+
+library(RColorBrewer)
+library(ggplot2)
+
+cex.legend=1
+cex.axis=1
+# scenarios=c("no intervention", "young/prep", "all/prep", "young/supp", "all/supp")
+par(mfrow = c(1, 1))
+display.brewer.all()
+
+# Fig 1 - LA 
+
+cols <- c(brewer.pal(9,"Reds")[2], rep(brewer.pal(9,"Greens")[3:5],2), rep(brewer.pal(9, "Blues")[3:5],2))
+int <-barplot(100*croi.results[1,c(1:4,8:10,5:7,11:13)], col = cols, 
+                      axes=F, axisnames = F,
+                      ylim = c(0,100)
+              )
+ylabs <- seq(0, 100, by = 20)
+axis(side = 2, at = ylabs, labels = paste0(ylabs, "%"))
+title(ylab="Percent reduction in incidence", line=2.4, cex.lab=1)
+xlabs <- c("none",rep(c("young MSM","all MSM"),2))
+axis(side=1, at = c(0.7, 3.5, 6.5, 10.5, 14), labels=xlabs, tick = F, cex.axis = 0.75, line = -1)
+axis(side=1, at = c(4.5, 12.5), labels=c("PrEP", "Suppression"), tick = F, cex.axis = 1, line = 0.75)
+legendcols <- c(brewer.pal(9,"Reds")[2], brewer.pal(9,"Greens")[3:5], brewer.pal(9, "Blues")[3:5])
+legend("topright",  legend = c( "no intervention", "10% prep","25% prep","50% prep","80% supp","85% supp","90% supp"), 
+       fill = legendcols,bty = "n", cex=.75)
+
+# Fig 2 - Summary 
+
+cols2 <- c(brewer.pal(9,"YlGnBu")[5], brewer.pal(9,"YlOrRd")[6]) 
+int <-barplot(100*t(croi.results[,c(15:16)]), col = cols2, 
+            ylim = c(0,100),
+            axes=F, 
+            beside=T, 
+            names.arg = c("LA","NYC","Atlanta","Baltimore")
+)
+ylabs <- seq(0, 100, by = 20)
+axis(side = 2, at = ylabs, labels = paste0(ylabs, "%"))
+title(ylab="Percent reduction in incidence", line=2.4, cex.lab=1)
+legend("topright",  legend = c( "Young MSM 25% PrEP; All MSM 85% suppressed", "Young MSM 50% PrEP; All MSM 90% suppressed"), 
+       fill = cols2,bty = "n", cex=.75)
+
+# Fig 3 - Young --> All MSM
+# Relative improvement
+rel.improve <- 100*(croi.results[,8:13]-croi.results[,2:7])/croi.results[,2:7]
+avg.rel.improve <- rel.improve[,c(mean(1:3),mean(4:6))]
+colnames(avg.rel.improve) <- c("prep","suppression")
+
+cols3 <- c(brewer.pal(9,"Greens")[5], brewer.pal(9,"Blues")[5]) 
+int <-barplot(t(avg.rel.improve), col = cols3, 
+              ylim = c(0,100),
+              axes=F, 
+              beside=T, 
+              names.arg = c("LA","NYC","Atlanta","Baltimore")
+)
+ylabs <- seq(0, 100, by = 20)
+axis(side = 2, at = ylabs, labels = paste0(ylabs, "%"))
+title(main="Added benefit from young --> all MSM")
+title(ylab="Relative improvement in incidence reduction", line=2.4, cex.lab=1)
+legend("topright",  legend = c( "PrEP", "Suppression"), 
+       fill = cols3,bty = "n")
+
+# Absolute improvement
+abs.improve <- 100*(croi.results[,8:13]-croi.results[,2:7])
+avg.abs.improve <- abs.improve[,c(mean(1:3),mean(4:6))]
+colnames(avg.abs.improve) <- c("prep","suppression")
+
+cols3 <- c(brewer.pal(9,"Greens")[5], brewer.pal(9,"Blues")[5]) 
+int <-barplot(t(avg.abs.improve), col = cols3, 
+              ylim = c(0,100),
+              axes=F, 
+              beside=T, 
+              names.arg = c("LA","NYC","Atlanta","Baltimore")
+)
+ylabs <- seq(0, 100, by = 20)
+axis(side = 2, at = ylabs, labels = paste0(ylabs, "%"))
+title(main="Added benefit from young --> all MSM")
+title(ylab="Absolute improvement in incidence reduction", line=2.4, cex.lab=1)
+legend("topright",  legend = c( "PrEP", "Suppression"), 
+       fill = cols3,bty = "n")
 
 #### Original analysis - 11/9/2020 ####
 
