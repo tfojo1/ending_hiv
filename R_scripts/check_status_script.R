@@ -7,5 +7,8 @@ to.do = setdiff(TARGET.MSAS, get.mcmc.done.msas())
 print("CHECKING CACHE STATUS")
 print(Sys.Date())
 print(Sys.time())
+print(paste0("Checking ", length(to.do), " MSAs: ",
+             paste0(to.do, collapse=', ')))
 print("------------------------")
+
 check.cache.status(to.do)
