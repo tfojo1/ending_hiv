@@ -14,7 +14,7 @@ library(data.table)
 library(ggsci)
 library(plotly)
 
-source('visualization/shiny/R/model_code/plot_simulations.R')
+source('code/visualization/plot_simulations.R')
 
 if (!exists('msa.surveillance'))
     load('visualization/shiny/resources/msa_surveillance.Rdata')

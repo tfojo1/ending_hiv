@@ -23,6 +23,6 @@ msa = TARGET.MSAS[index]
 #-- DO THE SET UP--#
 print(paste0("Setting up MCMC for ", msa.names(msa)))
 
-set.seed(1234)
+set.seed(12345)
 setup.parallel.mcmc.for.msa(msa)
 

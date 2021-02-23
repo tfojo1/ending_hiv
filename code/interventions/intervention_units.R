@@ -65,8 +65,19 @@ create.intervention.unit <- function(type=c('testing','prep','suppression'),
 get.intervention.unit.name <- function(unit, 
                                        include.start.text=NA,
                                        include.by=F,
-                                       round.digits=1)
+                                       round.digits=1,
+                                       testing.descriptor = 'tested',
+                                       prep.descriptor = 'on PrEP',
+                                       suppression.descriptor = 'suppressed'
+                                       )
 {
+    if (!is.null(testing.descriptor) && !is.na(testing.descriptor) && testing.descriptor!='')
+        testing.descriptor = paste0(trimws(testing.descriptor), ' ')
+    if (!is.null(prep.descriptor) && !is.na(prep.descriptor) && prep.descriptor!='')
+        prep.descriptor = paste0(' ', trimws(prep.descriptor))
+    if (!is.null(suppression.descriptor) && !is.na(suppression.descriptor) && suppression.descriptor!='')
+        suppression.descriptor = paste0(' ', trimws(suppression.descriptor))
+    
     if (unit$type=='testing')
     {
         period = round(1/unit$rates, round.digits)
@@ -78,16 +89,16 @@ get.intervention.unit.name <- function(unit,
         text.values[unit$rates==2] = 'twice a year'
         
         if (include.by || length(text.values)>1)
-            rv = paste0("tested ",
+            rv = paste0(testing.descriptor,
                         paste0(text.values, ' by ', unit$years, collapse=', '))
         else
-            rv = paste0("tested ", text.values)
+            rv = paste0(testing.descriptor, text.values)
     }
     else if (unit$type=='prep')
     {
         text.values = paste0(round(100*unit$rates, round.digits), '%')
         
-        rv = paste0(text.values[1], ' on PrEP')
+        rv = paste0(text.values[1], prep.descriptor)
         if (include.by || length(unit$rates)>1)
             rv = paste0(rv, ' by ', unit$years[1])
         if (length(unit$rates)>1)
@@ -97,7 +108,7 @@ get.intervention.unit.name <- function(unit,
     {
         text.values = paste0(round(100*unit$rates, round.digits), '%')
         
-        rv = paste0(text.values[1], ' suppressed')
+        rv = paste0(text.values[1], suppression.descriptor)
         if (include.by || length(text.values)>1)
             rv = paste0(rv, ' by ', unit$years[1])
         if (length(unit$rates)>1)
@@ -106,7 +117,7 @@ get.intervention.unit.name <- function(unit,
     else
         stop("Only 'testing', 'prep', and 'suppression' are currently supported unit types")
     
-    if (!is.na(include.start.text))
+    if (!is.null(include.start.text) && !is.na(include.start.text))
         rv = paste0(include.start.text," ", unit$start.year, ', ', rv)
     
     rv

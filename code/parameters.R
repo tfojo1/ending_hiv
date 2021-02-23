@@ -96,7 +96,7 @@ BASE_PARAMETERS = add.parameter(BASE_PARAMETERS, 'proportion.msm.sex.with.female
 ##-- ACUTE INFECTION --##
 BASE_PARAMETERS = add.parameter(BASE_PARAMETERS, 'acute.infection.duration',
                        2.9/12, 1/12, 4/12,
-                       citation=26362321
+                       citation='10.1086/590501'
                        )
 
 ##-- TRANSMISSION RATES --##

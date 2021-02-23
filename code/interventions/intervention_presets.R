@@ -1,6 +1,6 @@
 
 #source('code/setup/default_jheem_settings.R')
-source('code/interventions/create_standard_intervention_presets.R')
+#source('code/interventions/create_standard_intervention_presets.R')
 
 ##------------------------##
 ##-- TARGET POPULATIONS --##

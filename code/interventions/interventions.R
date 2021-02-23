@@ -196,6 +196,57 @@ get.intervention.description <- function(int,
     rv
 }
 
+get.intervention.description.table <- function(int,
+                                               empty.value='',
+                                               include.start.text = 'ramping up from',
+                                               include.by=T,
+                                               testing.descriptor = 'tested',
+                                               prep.descriptor = 'on PrEP',
+                                               suppression.descriptor = 'suppressed')
+{
+    types = names(int$raw)
+    all.target.populations = list()
+    for (subset in int$raw)
+        all.target.populations = c(all.target.populations, subset$target.populations)
+    all.target.population.hashes = sapply(all.target.populations, target.population.hash)
+        
+    #unique
+    target.population.hashes = unique(all.target.population.hashes)
+    target.populations = lapply(target.population.hashes, function(hash){
+        all.target.populations[all.target.population.hashes==hash][[1]]
+    })
+    
+    names(target.populations) = NULL
+    
+    rv = sapply(types, function(type){
+        subset = int$raw[[type]]
+        sapply(target.populations, function(tpop){
+            tpop.mask = sapply(subset$target.populations, target.populations.equal, tpop)
+            tpop.index = (1:length(subset$target.populations))[tpop.mask]
+            
+            if (any(tpop.mask))
+                get.intervention.unit.name(subset$intervention.units[[tpop.index]],
+                                          include.start.text = include.start.text,
+                                          include.by = include.by,
+                                          testing.descriptor = testing.descriptor,
+                                          prep.descriptor = prep.descriptor,
+                                          suppression.descriptor = suppression.descriptor)
+            else
+                empty.value
+        })
+    })
+    
+    dim(rv) = c(target.population = length(target.populations), intervention.type=length(types))
+    
+    dimnames(rv) = list(NULL, intervention.type=types)
+    attr(rv, 'unit.types') = INTERVENTION.UNIT.TYPE.PRETTY.NAMES[types]
+    attr(rv, 'target.populations') = target.populations
+#    attr(rv, 'target.population.names') = sapply(target.populations, target.population.name)
+    
+    rv
+    
+}
+
 get.intervention.html.description <- function(int,
                                               delimiter='',
                                               bullet.pre='<li>',
