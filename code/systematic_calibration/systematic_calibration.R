@@ -804,7 +804,7 @@ create.run.simulation.function <- function(msa,
             cat("THERE WAS AN ERROR RUNNING THE SIMULATION:\n")
             cat(e$message, '\n')
             
-            error.file = file.path('mcmc_runs/errors/', paste0('error_', msa, '_', Sys.Date()))
+            error.file = file.path(SYSTEMATIC.ROOT.DIR, 'errors', paste0('error_', msa, '_', Sys.Date()))
             
             save(e,
                  parameters,
