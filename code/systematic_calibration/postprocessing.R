@@ -576,6 +576,28 @@ extract.prep.coverage <- function(sim,
                      multiplier=multiplier)
 }
 
+extract.testing.period <- function(sim,
+                                   years=sim$years,
+                                   keep.dimensions='year',
+                                   per.population=1,
+                                   ages=NULL,
+                                   races=NULL,
+                                   subpopulations=NULL,
+                                   sexes=NULL,
+                                   risks=NULL,
+                                   use.cdc.categorizations=F)
+{
+    1 / extract.testing.rates(sim,
+                              years=years,
+                              keep.dimension=keep.dimensions,
+                              per.population=per.population,
+                              ages=ages,
+                              races=races,
+                              subpopulations=subpopulations,
+                              sexes=sexes,
+                              risks=risks,
+                              use.cdc.categorizations = use.cdc.categorizations)
+}
 
 extract.testing.rates <- function(sim,
                                   years=sim$years,

@@ -181,7 +181,6 @@ register.standard.interventions <- function(start.year=2021,
                                                  manager = INTERVENTION.MANAGER)
     
     
-    
     # PrEP
     MSM.IDU.P25.YBH.P50.X = join.interventions(YBHM.P50,
                                                create.intervention(ALL.MSM.AND.ACTIVE.IDU.MINUS.YOUNG.BH,
@@ -195,6 +194,13 @@ register.standard.interventions <- function(start.year=2021,
                                                                    PREP.50))
     INTERVENTION.MANAGER = register.intervention(MSM.IDU.P50.YBH.P50.X, code=paste0('mi.p50.ybh.p50.x', suffix),
                                                  name='All MSM and all IDU 50% on Prep',
+                                                 manager = INTERVENTION.MANAGER)
+    
+    MSM.IDU.P25.YBH.P25.X = join.interventions(YBHM.P25,
+                                               create.intervention(ALL.MSM.AND.ACTIVE.IDU.MINUS.YOUNG.BH,
+                                                                   PREP.25))
+    INTERVENTION.MANAGER = register.intervention(MSM.IDU.P25.YBH.P25.X, code=paste0('mi.p25.ybh.p25.x', suffix),
+                                                 name='All MSM and all IDU 25% on Prep',
                                                  manager = INTERVENTION.MANAGER)
     
     
@@ -213,6 +219,13 @@ register.standard.interventions <- function(start.year=2021,
                                                  name='All MSM and all IDU 90% suppressed',
                                                  manager = INTERVENTION.MANAGER)
     
+    
+    MSM.IDU.S80.YBH.S80.X = join.interventions(YBHM.S80,
+                                               create.intervention(ALL.MSM.AND.IDU.MINUS.YOUNG.BH,
+                                                                   SUPPRESSION.80))
+    INTERVENTION.MANAGER = register.intervention(MSM.IDU.S80.YBH.S80.X, code=paste0('mi.s80.ybhm.s80.x', suffix),
+                                                 name='All MSM and all IDU 80% suppressed',
+                                                 manager = INTERVENTION.MANAGER)
     
     #-- Multi-Aspect Interventions --#
     #--   with non-overlapping target populations --#
@@ -344,6 +357,7 @@ register.standard.interventions <- function(start.year=2021,
                                                  manager = INTERVENTION.MANAGER)
     
     
+        
     # PrEP
     HET.P10.MI.P50.X = join.interventions(MSM.IDU.P50.YBH.P50.X,
                                           create.intervention(ALL.HETEROSEXUAL.NON.ACTIVE.IDU,
@@ -357,6 +371,13 @@ register.standard.interventions <- function(start.year=2021,
                                                               PREP.25))
     INTERVENTION.MANAGER = register.intervention(HET.P25.MI.P50.X, code=paste0('het.p25.mi.p50.x', suffix),
                                                  name='All MSM and all IDU 50% on PrEP; heterosexuals 25% on Prep',
+                                                 manager = INTERVENTION.MANAGER)
+    
+    HET.P10.MI.P25.X = join.interventions(MSM.IDU.P25.YBH.P25.X,
+                                          create.intervention(ALL.HETEROSEXUAL.NON.ACTIVE.IDU,
+                                                              PREP.10))
+    INTERVENTION.MANAGER = register.intervention(HET.P10.MI.P25.X, code=paste0('het.p10.mi.p25.x', suffix),
+                                                 name='All MSM and all IDU 25% on PrEP; heterosexuals 10% on Prep',
                                                  manager = INTERVENTION.MANAGER)
     
     
@@ -373,6 +394,13 @@ register.standard.interventions <- function(start.year=2021,
                                                               SUPPRESSION.90))
     INTERVENTION.MANAGER = register.intervention(HET.S90.MI.S90.X, code=paste0('het.s90.mi.s90.x', suffix),
                                                  name='All PWH 90% suppressed',
+                                                 manager = INTERVENTION.MANAGER)
+    
+    HET.S80.MI.S80.X = join.interventions(MSM.IDU.S80.YBH.S80.X,
+                                          create.intervention(ALL.HETEROSEXUAL.NON.IDU,
+                                                              SUPPRESSION.80))
+    INTERVENTION.MANAGER = register.intervention(HET.S80.MI.S80.X, code=paste0('het.s80.mi.s80.x', suffix),
+                                                 name='All PWH 80% suppressed',
                                                  manager = INTERVENTION.MANAGER)
     
     

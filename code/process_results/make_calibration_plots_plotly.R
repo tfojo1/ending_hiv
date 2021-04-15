@@ -2,10 +2,10 @@
 library(png)
 library(ggsci)
 source('code/visualization/plot_wrappers.R')
-IMAGE.DIR = 'results/figures'
+IMAGE.DIR = '../Manuscripts/manuscript_1/images/'
 
-ALPHA = 0.12
-LINE.SIZE = 0.3
+ALPHA = 0.2
+LINE.SIZE = 0.3#0.4 for intervention
 COLORS = pal_jama()
 WIDTH = 3
 HEIGHT = 1.75
@@ -24,6 +24,7 @@ LABEL.ALPHA = 0.25
 
 #load('mcmc_runs/visualization_simsets/35620/1.0_35620_baseline.Rdata')
 
+
 #INTERVENTIONS
 if (1==2)
 {
@@ -38,13 +39,15 @@ if (1==2)
     int2 = simset
 }
 
-if (1==2)
+INTERVENTION.COLORS = pal_jama()(4)
+DO.INTERVENTIONS = F
+DO.CALIBRATION = F
+if (DO.INTERVENTIONS)
 {
-    INTERVENTION.COLORS = pal_jama()(4)
     
     
-    #-- 3A: Int1 x Reported --#
-    x = panel.a = plot.simulations.flex(list(base, noint, int1), data.type='new', years=2010:2030,
+    #-- 3B: Int1 x Reported --#
+    x = panel.b = plot.simulations.flex(list(base, noint, int1), data.type='new', years=2010:2030,
                           color.by='intervention', colors=INTERVENTION.COLORS[1:3],
                           title.subplots=F, hide.legend=T,
                           simulation.alpha=ALPHA, truth.point.size=POINT.SIZE,
@@ -54,16 +57,16 @@ if (1==2)
                           y.axis.title.function = function(d){paste0("Total ", DATA.TYPE.AXIS.LABELS[d])}
                           ); x$plot
     
-    plot = panel.a = add.plot.label(x$plot, 
+    plot = panel.b = add.plot.label(x$plot, 
                           x=2023, 
-                          y=4100,
+                          y=4350,
                           fill=INTERVENTION.COLORS[2],
                           font.size=LABEL.SIZE,
                           alpha=LABEL.ALPHA,
                           align='left',
                           pad=5,
                           text=paste0('No Intervention:\n<b>&#129094;', 
-                                      round(100*x$change.df$change_2020_to_2030[1]), "%",
+                                      round(100*x$change.df$change_2020_to_2030_mean[1]), "%",
                                       " [", round(100*x$change.df$change_2020_to_2030_interval_lower[1]),
                                       "-",  round(100*x$change.df$change_2020_to_2030_interval_upper[1]),
                                       '%] reduction</b>')
@@ -77,22 +80,22 @@ if (1==2)
                           alpha=LABEL.ALPHA,
                           align='left',
                           text=paste0('Black/Hispanic MSM <35yo:\n',
-                                        ' &#8226; Yearly Testing\n',
+                                        ' &#8226; Twice-Yearly Testing\n',
                                         ' &#8226; 25% on PrEP\n',
-                                        ' &#8226; 90% Suppressed\n',
+                                        ' &#8226; 80% Suppressed\n',
                                         '<b>&#129094;', 
-                                      round(100*x$change.df$change_2020_to_2030[2]), "%",
+                                      round(100*x$change.df$change_2020_to_2030_mean[2]), "%",
                                       " [", round(100*x$change.df$change_2020_to_2030_interval_lower[2]),
                                       "-",  round(100*x$change.df$change_2020_to_2030_interval_upper[2]),
                                       '%] reduction</b>')
     );plot2
     
-    do.save.plot(plot2, file.path(IMAGE.DIR, 'interventions/Figure 3a.png'),
+    do.save.plot(plot2, file.path(IMAGE.DIR, 'interventions/Figure 3b.png'),
                  width=WIDTH, height=HEIGHT, resolution = 300)
     
     
-    #-- 3C: Int2 x Reported --#
-    x = panel.c = plot.simulations.flex(list(base, noint, int2), data.type='new', years=2010:2030,
+    #-- 3D: Int2 x Reported --#
+    x = panel.d = plot.simulations.flex(list(base, noint, int2), data.type='new', years=2010:2030,
                               color.by='intervention', colors=INTERVENTION.COLORS[c(1,2,4)],
                               title.subplots=F, hide.legend=T,
                               simulation.alpha=ALPHA, truth.point.size=POINT.SIZE,
@@ -104,14 +107,14 @@ if (1==2)
     
     plot = add.plot.label(x$plot, 
                           x=2023, 
-                          y=4100,
+                          y=4350,
                           fill=INTERVENTION.COLORS[2],
                           font.size=LABEL.SIZE,
                           alpha=LABEL.ALPHA,
                           align='left',
                           pad=5,
                           text=paste0('No Intervention:\n<b>&#129094;', 
-                                      round(100*x$change.df$change_2020_to_2030[1]), "%",
+                                      round(100*x$change.df$change_2020_to_2030_mean[1]), "%",
                                       " [", round(100*x$change.df$change_2020_to_2030_interval_lower[1]),
                                       "-",  round(100*x$change.df$change_2020_to_2030_interval_upper[1]),
                                       '%] reduction</b>')
@@ -124,24 +127,24 @@ if (1==2)
                            font.size=LABEL.SIZE,
                            alpha=LABEL.ALPHA,
                            align='left',
-                           text=paste0('All MSM and All IDU:\n',
-                                       ' &#8226; Yearly Testing\n',
-                                       ' &#8226; 25% on PrEP\n',
+                           text=paste0('All MSM and All PWID:\n',
+                                       ' &#8226; Twice-Yearly Testing\n',
+                                       ' &#8226; 50% on PrEP\n',
                                        ' &#8226; 90% Suppressed\n',
                                        '<b>&#129094;', 
-                                       round(100*x$change.df$change_2020_to_2030[2]), "%",
+                                       round(100*x$change.df$change_2020_to_2030_mean[2]), "%",
                                        " [", round(100*x$change.df$change_2020_to_2030_interval_lower[2]),
                                        "-",  round(100*x$change.df$change_2020_to_2030_interval_upper[2]),
                                        '%] reduction</b>')
     );plot2 
     
-    do.save.plot(plot2, file.path(IMAGE.DIR, 'interventions/Figure 3c.png'),
+    do.save.plot(plot2, file.path(IMAGE.DIR, 'interventions/Figure 3d.png'),
                  width=WIDTH, height=HEIGHT, resolution = 300)
     
     
     
     
-    #-- 3B: Int1 x Incidence --#
+    #-- 3A: Int1 x Incidence --#
     x = plot.simulations.flex(list(base, noint, int1), data.type='incidence', years=2010:2030,
                               color.by='intervention', colors=INTERVENTION.COLORS[1:3],
                               title.subplots=F, hide.legend=T,
@@ -161,7 +164,7 @@ if (1==2)
                           align='left',
                           pad=5,
                           text=paste0('No Intervention:\n<b>&#129094;', 
-                                      round(100*x$change.df$change_2020_to_2030[1]), "%",
+                                      round(100*x$change.df$change_2020_to_2030_mean[1]), "%",
                                       " [", round(100*x$change.df$change_2020_to_2030_interval_lower[1]),
                                       "-",  round(100*x$change.df$change_2020_to_2030_interval_upper[1]),
                                       '%] reduction</b>')
@@ -175,22 +178,22 @@ if (1==2)
                            alpha=LABEL.ALPHA,
                            align='left',
                            text=paste0('Black/Hispanic MSM <35yo:\n',
-                                       ' &#8226; Yearly Testing\n',
+                                       ' &#8226; Twice-Yearly Testing\n',
                                        ' &#8226; 25% on PrEP\n',
-                                       ' &#8226; 90% Suppressed\n',
+                                       ' &#8226; 80% Suppressed\n',
                                        '<b>&#129094;', 
-                                       round(100*x$change.df$change_2020_to_2030[2]), "%",
+                                       round(100*x$change.df$change_2020_to_2030_mean[2]), "%",
                                        " [", round(100*x$change.df$change_2020_to_2030_interval_lower[2]),
                                        "-",  round(100*x$change.df$change_2020_to_2030_interval_upper[2]),
                                        '%] reduction</b>')
     );plot2
 
-    do.save.plot(plot2, file.path(IMAGE.DIR, 'interventions/Figure 3b.png'),
+    do.save.plot(plot2, file.path(IMAGE.DIR, 'interventions/Figure 3a.png'),
                  width=WIDTH, height=HEIGHT, resolution = 300)
     
 
         
-    #-- 3D: Int2 x Incidence --#
+    #-- 3C: Int2 x Incidence --#
     x = plot.simulations.flex(list(base, noint, int2), data.type='incidence', years=2010:2030,
                               color.by='intervention', colors=INTERVENTION.COLORS[c(1,2,4)],
                               title.subplots=F, hide.legend=T,
@@ -223,9 +226,9 @@ if (1==2)
                            font.size=LABEL.SIZE,
                            alpha=LABEL.ALPHA,
                            align='left',
-                           text=paste0('All MSM and All IDU:\n',
-                                       ' &#8226; Yearly Testing\n',
-                                       ' &#8226; 25% on PrEP\n',
+                           text=paste0('All MSM and All PWID:\n',
+                                       ' &#8226; Twice-Yearly Testing\n',
+                                       ' &#8226; 50% on PrEP\n',
                                        ' &#8226; 90% Suppressed\n',
                                        '<b>&#129094;', 
                                        round(100*x$change.df$change_2020_to_2030_mean[2]), "%",
@@ -234,13 +237,13 @@ if (1==2)
                                        '%]\n   reduction</b>')
     );plot2
     
-    do.save.plot(plot2, file.path(IMAGE.DIR, 'interventions/Figure 3d.png'),
+    do.save.plot(plot2, file.path(IMAGE.DIR, 'interventions/Figure 3c.png'),
                  width=WIDTH, height=HEIGHT, resolution = 300)
     
 }
 
 #CALIBRATION 
-if (1==2)
+if (DO.CALIBRATION)
 {
     # MARGINALS of RACE, RISK, AGE
     
@@ -322,7 +325,7 @@ do.save.plot <- function(plot,
     img<-readPNG(file)
     
     
-    png(file, width=WIDTH, height=HEIGHT, res=resolution, units='in')
+    png(file, width=width, height=height, res=resolution, units='in')
     par(mar=c(0,0,0,0), xpd=NA, mgp=c(0,0,0), oma=c(0,0,0,0), ann=F)
     plot.new()
     plot.window(0:1, 0:1)

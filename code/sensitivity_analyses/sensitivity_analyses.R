@@ -11,7 +11,8 @@ source('code/interventions/systematic_interventions.R')
 source('code/targets/target_msas.R')
 
 
-IMAGE.DIR = 'results/figures'
+IMAGE.DIR = '../Manuscripts/manuscript_1/images'
+THEME = theme(text = element_text(size=11))
 
 N.SIM = 1000
 if (1==2)
@@ -20,6 +21,7 @@ if (1==2)
     sensitivity.dfs = make.sensitivity.dfs('mcmc_runs/full_simsets',
                                            interventions=list(intervention.for.sensitivity),
                                            n.sim=N.SIM)
+    save(sensitivity.dfs, file='results/sensitivity.dfs.Rdata')
     
     
     merged.sensitvity.df = merge.sensitivity.dfs(sensitivity.dfs)
@@ -27,6 +29,8 @@ if (1==2)
     
     
     prccs = get.locationwise.prccs(sensitivity.dfs)
+    save(prccs, file='results/prccs.Rdata')
+    
     mean.prccs = rowMeans(prccs); mean.prccs = mean.prccs[order(abs(mean.prccs), decreasing = T)]
     
     vars.to.show = names(mean.prccs)[1:10]
@@ -34,14 +38,16 @@ if (1==2)
     ranked.out = order.outcomes.by.ranked.variables(sensitivity.dfs,
                                                     variables=vars.to.show)
     
+    ranked.aggregate.change = order.aggregate.change.outcome.by.ranked.variables(sensitivity.dfs,
+                                                                                 variables=vars.to.show)
 
-    png(file.path(IMAGE.DIR, 'sensitivity/PRCCs.png'), pointsize=10, width=6, height=3.25, res=300, units='in')
-    plot.locationwise.prccs(prccs, variables=vars.to.show)
+    png(file.path(IMAGE.DIR, 'sensitivity/PRCCs.png'), pointsize=10, width=6.5, height=3.25, res=300, units='in')
+    plot.locationwise.prccs(prccs, variables=vars.to.show) + THEME
     dev.off()
     
-    
-    png(file.path(IMAGE.DIR, 'sensitivity/high_v_low v2.png'), pointsize=10, width=6, height=4, res=300, units='in')
-    plot.high.vs.low.outcomes(ranked.out)
+        png(file.path(IMAGE.DIR, 'sensitivity/high_v_low.png'), pointsize=10, width=6.5, height=4, res=300, units='in')
+#    plot.high.vs.low.outcomes(ranked.out)
+    plot.high.vs.low.outcomes(ranked.aggregate.change) + THEME
     dev.off()
     
     
@@ -53,10 +59,23 @@ if (1==2)
     #for text
     get.high.vs.low.outcomes(ranked.out[,1:2,])
     mean.prccs[1:2]
-    get.locationwise.outcome.diff(ranked.out, vars.to.show[1:2], stat=mean)
-    hl=get.locationwise.outcome.diff(ranked.out, vars.to.show, summarize = F)
-    hl1 = hl[hl$variable==hl$variable[1],]; hl1=hl1[order(hl1$value),]; hl1$location=msa.names(hl1$location);hl1
-    hl2 = hl[hl$variable==hl$variable[2],]; hl2=hl2[order(hl2$value),]; hl2$location=msa.names(hl2$location);hl2
+#    get.locationwise.outcome.diff(ranked.out, vars.to.show[1:2], stat=mean)
+ #   hl=get.locationwise.outcome.diff(ranked.out, vars.to.show, summarize = F)
+  #  hl1 = hl[hl$variable==hl$variable[1],]; hl1=hl1[order(hl1$value),]; hl1$location=msa.names(hl1$location);hl1[1:2,]
+   # hl2 = hl[hl$variable==hl$variable[2],]; hl2=hl2[order(hl2$value),]; hl2$location=msa.names(hl2$location);hl2[1:2,]
+    
+    # for text of high vs low
+    hl = get.locationwise.high.low(ranked.out, variables=vars.to.show[1:2])
+    hl = hl[hl$variable==hl$variable[1],]
+    greatest.diff.index = (1:dim(hl)[1])[abs(hl$diff)==max(abs(hl$diff))][1]
+    
+    hl[greatest.diff.index,]
+    msa.names(hl$location[greatest.diff.index])
+    
+    x=prccs[vars.to.show[1],]
+    max.prcc.loc = names(x)[abs(x)==max(abs(x))][1]
+    msa.names(max.prcc.loc)
+    hl[hl$location==max.prcc.loc,]
 }
 
 
@@ -114,7 +133,10 @@ ORANGE = 'darkorange3'
 get.high.vs.low.outcomes <- function(ranked.out,
                                      frac=0.2)
 {
-    mat = rowMeans(ranked.out, dims=2)
+    if (length(dim(ranked.out))==2)
+        mat = ranked.out
+    else
+        mat = rowMeans(ranked.out, dims=2)
     
     n.sim = dim(mat)[1]
     low.indices = 1:ceiling(n.sim*frac)
@@ -142,7 +164,7 @@ get.high.vs.low.outcomes <- function(ranked.out,
 
 plot.high.vs.low.outcomes <- function(ranked.out,
                                       frac=0.2,
-                                      box.width=0.7)
+                                      box.width=0.6)
 {
     df = get.high.vs.low.outcomes(ranked.out=ranked.out, frac=frac)
     
@@ -165,6 +187,46 @@ plot.high.vs.low.outcomes <- function(ranked.out,
               panel.background=element_blank()) +
         scale_y_continuous(labels=percent)
 }
+
+
+order.aggregate.change.outcome.by.ranked.variables <- function(sensitivity.dfs,
+                                                               outcome1='incidence_2020',
+                                                               outcome2='incidence_2030',
+                                                               variables=NULL)
+{
+    if (is.null(variables))
+        variables = names(sensitivity.dfs)[1][attr(sensitivity.dfs[[1]])]
+    
+    
+    dim.names = list(sim=1:(dim(sensitivity.dfs[[1]])[1]),
+                     variable=variables,
+                     location=attr(sensitivity.dfs, 'location')
+    )
+    df1 = sapply(sensitivity.dfs, function(df){
+        one.loc = sapply(variables, function(var){
+            o = order(df[,var])
+            df[o,outcome1]
+        })
+        one.loc
+    })
+    dim(df1) = sapply(dim.names, length)
+    dimnames(df1) = dim.names
+    df1 = rowSums(df1, dims=2)
+    
+    df2 = sapply(sensitivity.dfs, function(df){
+        one.loc = sapply(variables, function(var){
+            o = order(df[,var])
+            df[o,outcome2]
+        })
+        one.loc
+    })
+    
+    dim(df2) = sapply(dim.names, length)
+    df2 = rowSums(df2, dims=2)
+    
+    rv = (df1-df2)/df1
+}
+
 
 order.outcomes.by.ranked.variables <- function(sensitivy.dfs,
                                                outcome='delta_2020_2030',
@@ -199,8 +261,8 @@ get.locationwise.outcome.diff <- function(ranked.out,
                                           summarize=T)
 {
     n = floor(threshold * dim(ranked.out)[1])
-    low = apply(ranked.out[1:n,variables,], 2:3, mean)
-    high = apply(ranked.out[dim(ranked.out)[1]-n+1:n,variables,], 2:3, mean)
+    low = apply(ranked.out[1:n,variables,], 2:3, stat)
+    high = apply(ranked.out[dim(ranked.out)[1]-n+1:n,variables,], 2:3, stat)
     
     variables = dimnames(ranked.out)[['variable']]
     var.levels = rev(get.pretty.parameter.names(variables))
@@ -213,6 +275,45 @@ get.locationwise.outcome.diff <- function(ranked.out,
     
     df
 }
+
+get.locationwise.high.low <- function(ranked.out,
+                                      variables=rev(dimnames(ranked.out)[['variable']]),
+                                      threshold=0.2,
+                                      stat=mean,
+                                      interval.coverage=0.95)
+{
+    n = floor(threshold * dim(ranked.out)[1])
+    alpha = (1-interval.coverage)/2
+    
+    low.indices = 1:n
+    high.indices = dim(ranked.out)[1]-n+1:n
+    
+    low = apply(ranked.out[low.indices,variables,], 2:3, stat)
+    high = apply(ranked.out[high.indices,variables,], 2:3, stat)
+    
+    low.lower = apply(ranked.out[low.indices,variables,], 2:3, quantile, alpha)
+    low.upper = apply(ranked.out[low.indices,variables,], 2:3, quantile, 1-alpha)
+    
+    high.lower = apply(ranked.out[high.indices,variables,], 2:3, quantile, alpha)
+    high.upper = apply(ranked.out[high.indices,variables,], 2:3, quantile, 1-alpha)
+    
+    variables = dimnames(ranked.out)[['variable']]
+    var.levels = rev(get.pretty.parameter.names(variables))
+    df = reshape2::melt(low, value.name='low')
+    
+    df$variable = factor(get.pretty.parameter.names(df$variable), levels=var.levels)
+    
+    df$low.lower = as.numeric(low.lower)
+    df$low.upper = as.numeric(low.upper)
+    df$high = as.numeric(high)
+    df$high.lower = as.numeric(high.lower)
+    df$high.upper = as.numeric(high.upper)
+    df$diff = df$high - df$low
+    
+    df
+}
+    
+
 
 plot.locationwise.outcome.diff <- function(ranked.out,
                                           threshold=0.2,
@@ -277,7 +378,8 @@ get.locationwise.prccs <- function(sensitivity.dfs,
 
 plot.locationwise.prccs <- function(prccs,
                                     variables=NULL,
-                                    fill=pal_jama()(5)[5])
+                                    fill=pal_jama()(5)[5],
+                                    box.width=0.6)
 {
     if (!is.null(prccs))
         prccs = prccs[variables,]
@@ -292,7 +394,7 @@ plot.locationwise.prccs <- function(prccs,
     df = summarize.for.boxplot(df)
     
     ggplot(df) + geom_boxplot(aes(x=variable, middle=stat, lower=quartile.1, upper=quartile.3, ymin=min, ymax=max),
-                              stat='identity', fill=fill) +
+                              stat='identity', fill=fill, width=box.width) +
         geom_hline(yintercept = 0, linetype='dashed') +
         ylim(-1,1) +
         xlab(NULL) + ylab("Partial Rank Correlation Coefficient (PRCC)") +
@@ -385,13 +487,22 @@ make.sensitivity.dfs <- function(dir,
             for (j in 1:length(year1))
             {
                 values = sapply(simset@simulations[1:max(indices)], function(sim){
-                    red = get.incidence.reduction(sim, year1=year1[j], year2=year2[j])[1]
+                    get.incidence.reduction(sim, year1=year1[j], year2=year2[j])[1]
                 })
                 
                 sub.df[[paste0('delta_',year1[j],'_',year2[j])]] = values[indices]
             }
             
-            
+            unique.years = unique(c(year1, year2))
+            for (year in unique.years)
+            {
+                values = sapply(simset@simulations[1:max(indices)], function(sim){
+                    extract.incidence(sim, years=year, keep.dimensions = 'year', per.population = NA)
+                })
+                
+                sub.df[[paste0('incidence_', year)]] = values[indices]
+            }
+
             attr(sub.df, 'parameter.columns') = 1:simset@n.parameters
             sub.df
         }

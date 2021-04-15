@@ -6,7 +6,8 @@
 
 library(scales)
 #library(cowplot)
-if(.Platform$OS.type == 'windows')
+SOURCE.XLSX = T
+if(SOURCE.XLSX && .Platform$OS.type == 'windows')
     library(xlsx)
 
 #source('code/source_code.R')
@@ -29,26 +30,6 @@ if (1==2)
     
     #-- FOR ANALYSIS 1: --#
     
-#    est.main.10 = get.estimates.and.intervals('mcmc_runs/visualization_simsets/', 
-#                                    msas=TARGET.MSAS,
-#                                    interventions=A1.INTERVENTION.SET,
-#                                    year1=2020,
-#                                    year2=2030,
-#                                    n.sim=N.SIM)
-#    write.systematic.table(est.main.10, file=file.path(SAVE.DIR, 'main_table_10y.xlsx'))
-    
-    
-#    est.main.5 = get.estimates.and.intervals('mcmc_runs/visualization_simsets/', 
-#                                              msas=TARGET.MSAS,
-#                                              interventions=A1.INTERVENTION.SET,
-#                                              year1=2020,
-#                                              year2=2025,
-#                                              n.sim=N.SIM)
-#    write.systematic.table(est.main.5, file=file.path(SAVE.DIR, 'main_table_5y.xlsx'),
-#                           threshold = 0.75)
-    
-    
-    
     est.main.10.3y = get.estimates.and.intervals('mcmc_runs/full_simsets/', 
                                               msas=TARGET.MSAS,
                                               interventions=A1.INTERVENTION.SET.3Y,
@@ -56,32 +37,51 @@ if (1==2)
                                               year2=2030,
                                               n.sim=N.SIM)
     save(est.main.10.3y, file='results/est.main.10.3y.Rdata')
+    load('results/est.main.10.3y.Rdata')
     write.systematic.table(est.main.10.3y, file=file.path(SAVE.DIR, 'main_table_10y_3y.rollout.xlsx'))
     
     est.main.5.3y = get.estimates.and.intervals('mcmc_runs/full_simsets/', 
                                              msas=TARGET.MSAS,
-                                             interventions=A1.INTERVENTION.SET.3Y,
+                                             interventions=A2.INTERVENTION.SET.3Y,
                                              year1=2020,
                                              year2=2025,
                                              n.sim=N.SIM)
     save(est.main.5.3y, file='results/est.main.5.3y.Rdata')
+    load('results/est.main.5.3y.Rdata')
     write.systematic.table(est.main.5.3y, file=file.path(SAVE.DIR, 'main_table_5y_3y.rollout.xlsx'),
                            threshold = 0.75)
 
     #-- FOR ANALYSIS 2: --#
     
-    est = get.estimates.and.intervals('mcmc_runs/visualization_simsets/', 
+    est.secondary.10.3y = get.estimates.and.intervals('mcmc_runs/full_simsets/', 
                                       msas=TARGET.MSAS,
-                                      interventions=c(list(NO.INTERVENTION), A2.INTERVENTION.SET),
+                                      interventions=A2.INTERVENTION.SET,
                                       n.sim=N.SIM)
-    save(est, file='results/quick_estimated_a2.Rdata')
-    #load('results/quick_estimated_a2.Rdata')
-    write.systematic.table(est, file='results/table_s1_raw.xlsx')
+    save(est.secondary.10.3y, file='results/est.secondary.10.3y.Rdata')
+    load('results/est.secondary.10.3y.Rdata')
+    write.systematic.table(est.secondary.10.3y, file=file.path(SAVE.DIR, 'secondary_table_10y_3y.rollout.xlsx'))
     
     
+    est.secondary.5.3y = get.estimates.and.intervals('mcmc_runs/full_simsets/', 
+                                                     msas=TARGET.MSAS,
+                                                     interventions=A2.INTERVENTION.SET,
+                                                     year1=2020,
+                                                     year2=2025,
+                                                     n.sim=N.SIM)
+    save(est.secondary.5.3y, file='results/est.secondary.5.3y.Rdata')
+    load('results/est.secondary.5.3y.Rdata')
+    write.systematic.table(est.secondary.5.3y, file=file.path(SAVE.DIR, 'secondary_table_5y_3y.rollout.xlsx'),
+                           threshold = 0.75)
     
     
-    #-- Summarizing --#
+    #-- Baselines --#
+    
+    baselines.msm = get.baseline.estimates(year=2020, risks='msm')
+    save(baselines.msm, file='results/baselines.msm.Rdata')
+    
+    apply(baselines.msm[,,'mean'], 2, range)
+    
+    #-- Summarizing Main --#
     load('results/est.main.10.3y.Rdata')
     load('results/est.main.5.3y.Rdata')
     
@@ -90,7 +90,8 @@ if (1==2)
     mask = T#c(TARGET.MSAS != SEATTLE.MSA,F)
     
     # Ranges
-    t(round(100*apply(est$estimates[mask,], 2, range, na.rm=T)))
+    t(floor(100*apply(est$estimates[mask,], 2, range, na.rm=T)))
+    
     
     # YBH
     i.high.ybhm = 8
@@ -101,6 +102,11 @@ if (1==2)
     i.high.mi = 12
     sum(est$estimates[-i.total,i.high.mi]>0.9)
     mean(est$estimates[-i.total,i.high.mi]>0.9)
+    
+    # Highest Int
+    i.highest = dim(est$estimates)[2]
+    sum(est$estimates[-i.total,i.highest]>0.9)
+    mean(est$estimates[-i.total,i.highest]>0.9)
     
     # CI for total
     round(100*cbind(est$estimates[i.total,],
@@ -128,6 +134,44 @@ if (1==2)
     sum(est10$estimates[-i.total,-1]>=0.9 & est5$estimates[-i.total,-1]>=0.75)
     sum(est10$estimates[-i.total,-1]>=0.9 & est5$estimates[-i.total,-1]>=0.75)/sum(est5$estimates[-i.total,-1]>=0.75)
     
+    #-- Summarizing Secondary --#
+    
+    load('results/est.secondary.10.3y.Rdata')
+    load('results/est.secondary.5.3y.Rdata')
+    
+    mask = T#c(TARGET.MSAS != SEATTLE.MSA,F)
+    
+    # Ranges
+    i.testing1 = 8
+    i.testing2 = 9
+    diff.testing = est.secondary.10.3y$estimates[-i.total,i.testing2] - est.secondary.10.3y$estimates[-i.total,i.testing1]
+    range(diff.testing)
+    
+    x = range(diff.testing)
+    names(x) = c(msa.names(names(diff.testing)[diff.testing==min(diff.testing)]),
+                 msa.names(names(diff.testing)[diff.testing==max(diff.testing)]))
+    x
+    
+    i.prep1 = 12
+    i.prep2 = 13
+    dimnames(est.secondary.10.3y$estimates)[[2]][c(i.prep1, i.prep2)] 
+    diff.prep = est.secondary.10.3y$estimates[-i.total,i.prep2] - est.secondary.10.3y$estimates[-i.total,i.prep1]
+    range(diff.prep)
+    
+    i.supp1 = 10
+    i.supp2 = 11
+    dimnames(est.secondary.10.3y$estimates)[[2]][c(i.supp1, i.supp2)] 
+    diff.supp = est.secondary.10.3y$estimates[-i.total,i.supp2] - est.secondary.10.3y$estimates[-i.total,i.supp1]
+    range(diff.supp)
+    
+    # PrEP vs Supp
+    mask = est.secondary.10.3y$estimates[-i.total,i.supp2] > est.secondary.10.3y$estimates[-i.total,i.prep2]
+    sum(mask)
+    msa.names(names(diff.prep)[mask])
+    
+    #totals
+    est.secondary.10.3y$estimates[dim(est.secondary.10.3y$estimates)[1],c(i.testing1,i.testing2,i.prep1,i.prep2,i.supp1,i.supp2)]
+
 }
 
 ##------------------------------------------------------------##
@@ -135,7 +179,7 @@ if (1==2)
 ##------------------------------------------------------------##
 
 get.estimates.and.intervals <- function(dir,
-                                        msas=get.hiv.burden()$CBSA,
+                                        msas=TARGET.MSAS,
                                         interventions=INTERVENTION.SET,
                                         n.sim,
                                         verbose=T,
@@ -239,6 +283,54 @@ write.systematic.table <- function(estimates,
                        na.color = na.color,
                        digits=digits,
                        as.pct=T)
+}
+
+##---------------------------------------------------##
+##-- BASELINE TESTING, SUPPRESSION, PrEP ESTIMATES --##
+##---------------------------------------------------##
+
+get.baseline.estimates <- function(dir='mcmc_runs/full_simsets',
+                                    msas=TARGET.MSAS,
+                                    year=2020,
+                                   risks='msm',
+                                   verbose=T)
+{
+    dir = file.path(dir)
+    all.arr = sapply(msas, function(msa){
+        filename = file.path(dir, get.full.filename(location=msa))
+        if (file.exists(filename))
+        {
+            if (verbose)
+                print(paste0(" - ", msa.names(msa)))
+                
+            load(filename)
+            
+            dist = extract.simset.distribution(simset, fn=get.sim.baseline.estimates, year=year, risks=risks)
+            cbind(mean=get.means(dist),
+                  t(get.intervals(dist)))
+        }
+        else
+            matrix(as.numeric(NA), dim=c(3,3))
+    })
+    
+    rv = t(all.arr)
+    dim.names = list(location=msas,
+                     aspect=c('testing','prep','suppression'),
+                     stat=c('mean','lower','upper')
+                     )
+    dim(rv) = sapply(dim.names, length)
+    dimnames(rv) = dim.names
+    
+    rv
+}
+
+get.sim.baseline.estimates <- function(sim, year=2020, risks='msm', races=NULL, ages=NULL)
+{
+    components = attr(sim, 'components')
+    c(testing=1/as.numeric(extract.testing.rates(sim, years=year, races=races, ages=ages, risks = risks, use.cdc.categorizations = T)),
+      prep=as.numeric(extract.prep.coverage(sim, years=year, races=races, ages=ages,risks=risks, use.cdc.categorizations = T)),#, multiplier = get.prep.indications.estimate(ALL.DATA.MANAGERS$prep, location=attr(sim, 'location')))),
+      suppression=as.numeric(extract.suppression(sim, years=year, races=races, ages=ages, risks=risks, use.cdc.categorizations = T))
+    )
 }
 
 

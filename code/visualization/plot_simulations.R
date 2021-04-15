@@ -11,7 +11,9 @@ DATA.TYPE.NAMES = c(new='Reported Cases (n)',
                     mortality='Mortality Among PWH',
                     testing.rate='Rate of HIV Testing',
                     incidence='Incidence',
-                    population='Population Size')
+                    population='Population Size',
+                    testing.period='HIV Testing Frequency',
+                    prep='PrEP Uptake')
 
 
 DATA.TYPE.AXIS.LABELS = c(
@@ -21,8 +23,10 @@ DATA.TYPE.AXIS.LABELS = c(
     mortality='Deaths in PWH (n)',
     suppression='Proportion Suppressed (%)',
     diagnosed='Proportion Aware (%)',
-    testing.rate='Average Tests per Person per Year',
-    population='Population (n)'
+    testing.rate='Tests per Person per Year',
+    population='Population (n)',
+    testing.period='Years Between Tests',
+    prep='Proportion on PrEP (%)'
 )
 
 DATA.TYPE.UNITS = c(
@@ -33,7 +37,9 @@ DATA.TYPE.UNITS = c(
   suppression = 'Suppressed',
   diagnosed = 'Aware',
   testing.rate = 'Tests per year',
-  population = 'People'
+  population = 'People',
+  testing.period = 'Years between tests',
+  prep = 'Uptake'
 )
 
 DIMENSION.NAMES = c(age='Age',
@@ -94,7 +100,7 @@ do.plot.simulations <- function(
     label.change.ci=T,
     change.years=c(2020,2030),
     change.decrease.is.positive=T,
-    label.change.size=5,
+    label.change.size=12,
     label.change.nudge.x=0,
     label.alpha = 0.5,
     label.digits=0,    
@@ -124,7 +130,7 @@ do.plot.simulations <- function(
     y.axis.title.function = NULL,
     y.title.standoff=10,
   
-    return.plot.function=F, #if T, returns a function that takes nrows and returns a plot
+    return.plot.components=F, #if T, returns a list of subplots
      
     place.labels.to.side = T,
     place.labels.at.alpha = 0.025, #if place.labels.to.side==F, then places these at the alpha-th or (1-alpha)th quantile of simulations
@@ -138,7 +144,7 @@ do.plot.simulations <- function(
     keep.dimensions = unique(c('year', facet.by, split.by))
     
     if (is.null(y.axis.title.function))
-      y.axis.title.function = function(data.type){DATA.TYPE.NAMES[data.type]}
+      y.axis.title.function = function(data.type){DATA.TYPE.AXIS.LABELS[data.type]}
     
     #-----------------------#
     #-- Argument Checking --#
@@ -431,9 +437,9 @@ do.plot.simulations <- function(
     if (is(colors, 'function'))
     {
         if (color.by=='intervention' && !is.null(truth.color))
-            colors = c(truth.color, colors(length(color.names)-1))
+            colors = suppressWarnings(c(truth.color, colors(length(color.names)-1)))
         else
-            colors = colors(length(color.names))
+            colors = suppressWarnings(colors(length(color.names)))
     }
     else if (is(colors, 'character'))
     {
@@ -494,138 +500,154 @@ do.plot.simulations <- function(
     #-------------------#
     #-------------------#
     
-    if (use.plotly)
+    #-- SOME INITIAL FORMATTING  (rounding, etc) --#
+#    df.sim = format.values.for.plotly(df.sim, data.type.names, category=plot.format)
+    condense.legend.names = condense.legend && 
+      (color.by=='split' || length(unique(simset.names))==1)
+    
+#    if (!is.null(df.truth))
+#        df.truth = format.values.for.plotly(df.truth, data.type.names, category='truth')
+    
+    
+    #-- SET UP THE FACET CATEGORIES --#
+    df.sim$facet = df.sim$data.type
+    if (!is.null(df.truth))
+        df.truth$facet = df.truth$data.type
+    if (!is.null(df.change))
+        change.facet = df.change$data.type
+    
+    if (length(facet.by)>0)
     {
-        #-- SOME INITIAL FORMATTING  (rounding, etc) --#
-        df.sim = format.values.for.plotly(df.sim, data.type.names)
-        condense.legend.names = condense.legend && 
-          (color.by=='split' || length(unique(simset.names))==1)
+        for (ff in facet.by)
+        {
+            df.sim$facet = paste0(df.sim$facet, '\n', df.sim[,ff])
+            if (!is.null(df.truth))
+                df.truth$facet = paste0(df.truth$facet, '\n', df.truth[,ff])
+            if (!is.null(df.change))
+                change.facet = paste0(change.facet, '\n', df.change[,ff])
+        }
+    }
+    facet.categories = as.character(unique(df.sim$facet))
+    data.types.for.facet.categories = sapply(strsplit(facet.categories, '\n'), function(spl){spl[1]})
+    raw.data.types.for.facet.categories = sapply(data.types.for.facet.categories, function(dt){
+        names(data.type.names)[data.type.names==dt]
+    })
+    names(data.types.for.facet.categories) = facet.categories
+    
+    
+    #-- PRE-CRHUNCH FOR LEGEND --#
+    #This lets us show the truth legend exactly once for each split
+    show.truth.legend.for.facet = sapply(splits, function(split){
+        non.empty = sapply(facet.categories, function(ff){
+            mask = df.truth$facet==ff & df.truth$split==split
+            any(!is.na(df.truth$value[mask]))
+        })
+        facet.categories[non.empty][1]
+    })
+    names(show.truth.legend.for.facet) = splits
+    
+    
+    #-- CALCULATE THE NUMBER OF ROWS --#
+    if (is.null(nrow))
+    {
+        if (is.null(ncol))
+            nrow = floor(sqrt(length(facet.categories)))
+        else
+            nrow = ceiling(length(facet.categories) / ncol)
+    }
+    
+
+    #-- SET UP FOR PROGRESS --#        
+    unique.simset.names = unique(simset.names)
+    n.steps = length(facet.categories) * length(unique.simset.names) * length(splits)
+ 
+    #-- FIGURE OUT HOW MANY DIGITS WE'RE GOING TO ROUND TO --#
+    digits = sapply(1:length(facet.categories), function(ff.i){
+        
+        ff = facet.categories[ff.i]
+        data.type = raw.data.types.for.facet.categories[ff.i]
+
+        sim.facet.mask = df.sim$facet==ff
+
+        if (plot.format=='individual.simulations')
+        {
+            max.val = max(df.sim$value[sim.facet.mask])
+            min.val = min(df.sim$value[sim.facet.mask])
+        }
+        else
+        {
+            max.val = max(df.sim$upper[sim.facet.mask])
+            min.val = min(df.sim$lower[sim.facet.mask])
+        }
+        
         
         if (!is.null(df.truth))
-            df.truth = format.values.for.plotly(df.truth, data.type.names)
-        
-        
-        #-- SET UP THE FACET CATEGORIES --#
-        df.sim$facet = df.sim$data.type
-        if (!is.null(df.truth))
-            df.truth$facet = df.truth$data.type
-        if (!is.null(df.change))
-            change.facet = df.change$data.type
-        
-        if (length(facet.by)>0)
         {
-            for (ff in facet.by)
+            mask = df.truth$facet==ff
+            if (any(mask) && any(!is.na(df.truth$value[mask])))
             {
-                df.sim$facet = paste0(df.sim$facet, '\n', df.sim[,ff])
-                if (!is.null(df.truth))
-                    df.truth$facet = paste0(df.truth$facet, '\n', df.truth[,ff])
-                if (!is.null(df.change))
-                    change.facet = paste0(change.facet, '\n', df.change[,ff])
+                max.val = max(max.val, max(df.truth$value[mask]))
+                min.val = min(min.val, min(df.truth$value[mask]))
             }
         }
-        facet.categories = as.character(unique(df.sim$facet))
-        data.types.for.facet.categories = sapply(strsplit(facet.categories, '\n'), function(spl){spl[1]})
-        raw.data.types.for.facet.categories = sapply(data.types.for.facet.categories, function(dt){
-            names(data.type.names)[data.type.names==dt]
+        
+        DESIRED.DIGITS = 3 #min number of digits before and after decimal place we want
+        span = max.val - min.val
+        pre.decimial.digits.in.span = ceiling(log10(span)+.00000001)
+        
+        rv = max(0, DESIRED.DIGITS-pre.decimial.digits.in.span)
+    })
+    
+    digits.for.sim = digits
+    if (plot.format=='individual.simulations')
+        digits.for.sim[is.integer.data.type(raw.data.types.for.facet.categories)] = 0
+    names(digits.for.sim) = facet.categories
+    
+    digits.for.truth = digits
+    digits.for.truth[is.integer.data.type(raw.data.types.for.facet.categories)] = 0
+    names(digits.for.truth) = facet.categories
+    
+    # Actually apply the rounding
+    df.sim$value = sapply(1:dim(df.sim)[1], function(i){
+        round(df.sim$value[i], digits.for.sim[df.sim$facet[i]])
+    })
+    
+    if (plot.format != 'individual.simulations')
+    {
+        df.sim$lower = sapply(1:dim(df.sim)[1], function(i){
+            round(df.sim$lower[i], digits.for.sim[df.sim$facet[i]])
         })
-        names(data.types.for.facet.categories) = facet.categories
         
-        
-        #-- PRE-CRHUNCH FOR LEGEND --#
-        #This lets us show the truth legend exactly once for each split
-        show.truth.legend.for.facet = sapply(splits, function(split){
-            non.empty = sapply(facet.categories, function(ff){
-                mask = df.truth$facet==ff & df.truth$split==split
-                any(!is.na(df.truth$value[mask]))
-            })
-            facet.categories[non.empty][1]
+        df.sim$upper = sapply(1:dim(df.sim)[1], function(i){
+            round(df.sim$upper[i], digits.for.sim[df.sim$facet[i]])
         })
-        names(show.truth.legend.for.facet) = splits
+    }
+    
+    if (!is.null(df.truth))
+    {
+        df.truth$value = sapply(1:dim(df.truth)[1], function(i){
+            round(df.truth$value[i], digits.for.truth[df.truth$facet[i]])
+        })
+    }
+
+    #-- GENERATE THE PLOTLY OBJECT --#
+    #Make a different subplot for each facet panel
+    subplots = lapply(1:length(facet.categories), function(ff.i){
+        
+        ff = facet.categories[ff.i]
+        data.type = raw.data.types.for.facet.categories[ff.i]
+        
+        plot = plot_ly(x=~year)
+        
+        #df.facet = df.sim[df.sim$facet == ff,]
+        facet.mask = df.sim$facet==ff
+        
+        # Don't forget - all the above is repeated down below in making the subplot labels
         
         
-        #-- CALCULATE THE NUMBER OF ROWS --#
-        if (is.null(nrow))
+        #-- SET UP RIBBONS (if using mean/median + interval) --#
+        if (plot.format != 'individual.simulations')
         {
-            if (is.null(ncol))
-                nrow = floor(sqrt(length(facet.categories)))
-            else
-                nrow = ceiling(length(facet.categories) / ncol)
-        }
-        
-
-        #-- SET UP FOR PROGRESS --#        
-        unique.simset.names = unique(simset.names)
-        n.steps = length(facet.categories) * length(unique.simset.names) * length(splits)
-        
-
-        
-        #-- GENERATE THE PLOTLY OBJECT --#
-        #Make a different subplot for each facet panel
-        subplots = lapply(1:length(facet.categories), function(ff.i){
-            
-            ff = facet.categories[ff.i]
-            data.type = raw.data.types.for.facet.categories[ff.i]
-            
-            plot = plot_ly(x=~year)
-            
-            #df.facet = df.sim[df.sim$facet == ff,]
-            facet.mask = df.sim$facet==ff
-            
-            
-            #-- SET UP RIBBONS (if using mean/median + interval) --#
-            if (plot.format != 'individual.simulations')
-            {
-                for (int.i in 1:length(unique.simset.names))
-                {
-                    intervention = unique.simset.names[int.i]
-                    int.mask = facet.mask & df.sim$intervention==intervention
-                    
-                    sims = unique(df.sim$simulation[int.mask])
-                    for (split.i in 1:length(splits))
-                    {
-                        split = splits[split.i]
-                        split.mask = int.mask & df.sim$split==split
-                        
-                        show.legend = !hide.legend && ff==facet.categories[1] && !hide.legend
-                        
-                        path.name = intervention
-                        if (color.by == 'split' && length(split.by)>0)
-                        {
-                            color = colors[split]
-                            path.name = paste0('Simulations, ', split)
-                            show.legend = show.legend && intervention == simset.names[1]
-                        }
-                        else
-                        {
-                            color = colors[intervention]
-                            path.name = intervention
-                            show.legend = show.legend && split == splits[1]
-                        }
-                        
-                        hover.text = make.hover.text(year=df.sim$year[split.mask],
-                                                     value=df.sim$value[split.mask],
-                                                     lower=df.sim$lower[split.mask],
-                                                     upper=df.sim$upper[split.mask],
-                                                     data.type=data.type,
-                                                     split=split)
-                        
-                        plot = add_ribbons(plot, data=df.sim[split.mask,],
-                                         ymin=~lower, ymax=~upper,
-                                         fillcolor=color, 
-                                         opacity=ribbon.alpha,
-                                         legendgroup=if (condense.legend) NULL else 'Simulations',
-                                         line = list(color=color,
-                                                     width=simulation.line.size/5),
-                                         text = hover.text,
-                                         hoverinfo = 'text',
-                                         name=path.name,
-                                         showlegend = F)
-                    }
-                }
-            }
-            
-            #-- SET UP THE MAIN LINES (sim or mean/median) AND TRUTH --#
-            #make the sim
             for (int.i in 1:length(unique.simset.names))
             {
                 intervention = unique.simset.names[int.i]
@@ -653,463 +675,428 @@ do.plot.simulations <- function(
                         show.legend = show.legend && split == splits[1]
                     }
                     
+                    hover.text = make.hover.text(year=df.sim$year[split.mask],
+                                                 value=df.sim$value[split.mask],
+                                                 lower=df.sim$lower[split.mask],
+                                                 upper=df.sim$upper[split.mask],
+                                                 data.type=data.type,
+                                                 split=split)
                     
-                    if (plot.format=='individual.simulations')
-                    {
-                        #this code makes the lines in the legend show up without opacity
-                        if (show.legend && !condense.legend.names)
-                            plot = add_paths(plot, data=df.sim[split.mask & !is.na(df.sim$value),],
-                                             x=~year[1], y=~value[1], color=color, 
-                                             opacity=1,
-                                             legendgroup=if (condense.legend) NULL else 'Simulations',
-                                             line = list(color=color,
-                                                         width=simulation.line.size),
-                                             name=path.name,
-                                             showlegend = T)
-                        
-                        hover.text = make.hover.text(year=df.sim$year[split.mask],
-                                                     value=df.sim$value[split.mask],
-                                                     sim=df.sim$simulation[split.mask],
-                                                     data.type=data.type,
-                                                     split=split)
-                        
-                        plot = add_paths(plot, data=df.sim[split.mask,],
-                                         y=~value, color=color, 
-                                         opacity=simulation.alpha,
-                                         legendgroup=if (condense.legend) NULL else 'Simulations',
-                                         line = list(color=color,
-                                                     width=simulation.line.size),
-                                         name=path.name,
-                                         text=hover.text,
-                                         hoverinfo='text',
-                                         showlegend = F,
-                                         transforms = list(
-                                             list(type = 'groupby',
-                                                  groups = ~simulation))
-                        )
-                    }
-                    else
-                    {
-                        hover.text = make.hover.text(year=df.sim$year[split.mask],
-                                                     value=df.sim$value[split.mask],
-                                                     lower=df.sim$lower[split.mask],
-                                                     upper=df.sim$upper[split.mask],
-                                                     data.type=data.type,
-                                                     split=split)
-                      
+                    plot = add_ribbons(plot, data=df.sim[split.mask,],
+                                     ymin=~lower, ymax=~upper,
+                                     fillcolor=color, 
+                                     opacity=ribbon.alpha,
+                                     legendgroup=if (condense.legend) NULL else 'Simulations',
+                                     line = list(color=color,
+                                                 width=simulation.line.size/5),
+                                     text = hover.text,
+                                     hoverinfo = 'text',
+                                     name=path.name,
+                                     showlegend = F)
+                }
+            }
+        }
+        
+        #-- SET UP THE MAIN LINES (sim or mean/median) AND TRUTH --#
+        #make the sim
+        for (int.i in 1:length(unique.simset.names))
+        {
+            intervention = unique.simset.names[int.i]
+            int.mask = facet.mask & df.sim$intervention==intervention
+            
+            sims = unique(df.sim$simulation[int.mask])
+            for (split.i in 1:length(splits))
+            {
+                split = splits[split.i]
+                split.mask = int.mask & df.sim$split==split
+                
+                show.legend = !hide.legend && ff==facet.categories[1] && !hide.legend
+                
+                path.name = intervention
+                if (color.by == 'split' && length(split.by)>0)
+                {
+                    color = colors[split]
+                    path.name = paste0('Simulations, ', split)
+                    show.legend = show.legend && intervention == simset.names[1]
+                }
+                else
+                {
+                    color = colors[intervention]
+                    path.name = intervention
+                    show.legend = show.legend && split == splits[1]
+                }
+                
+                
+                if (plot.format=='individual.simulations')
+                {
+                    #this code makes the lines in the legend show up without opacity
+                    if (show.legend && !condense.legend.names)
                         plot = add_paths(plot, data=df.sim[split.mask & !is.na(df.sim$value),],
-                                         y=~value, color=color,
+                                         x=~year[1], y=~value[1], color=color, 
                                          opacity=1,
                                          legendgroup=if (condense.legend) NULL else 'Simulations',
                                          line = list(color=color,
                                                      width=simulation.line.size),
                                          name=path.name,
-                                         text=hover.text,
-                                         hoverinfo='text',
-                                         showlegend = show.legend
-                                         )
-                    }
+                                         showlegend = T)
                     
-                    progress.update(FRACTION.PROGRESS.SETUP.DF +
-                                        (1-FRACTION.PROGRESS.SETUP.DF) *
-                                        (split.i + (int.i-1) * length(splits) +
-                                        (ff.i-1) * length(splits) * length(unique.simset.names)) /
-                                        n.steps)
-                }
-            }
-            
-            if (!is.null(df.truth))
-            {
-                for (split in splits)
-                {
-                    mask = df.truth$facet==ff & df.truth$split==split
-                    if (any(!is.na(df.truth$value[mask])))
-                    {
-                        show.legend = !hide.legend && !is.na(show.truth.legend.for.facet[split]) &&
-                            show.truth.legend.for.facet[split] == ff &&
-                            !hide.legend
-                        
-                        if (color.by!='split')
-                            show.legend = show.legend && split == splits[1]
-                        
-                        one.truth.name = truth.name
-                        if (color.by == 'split')
-                        {
-                            color = colors[split]
-                            if (condense.legend.names)
-                                one.truth.name = split
-                            else
-                                one.truth.name = paste0(one.truth.name, ', ', split)
-                        }
-                        else
-                            color = truth.color
-                        
-                        if (show.legend)
-                            plot = add_trace(plot, data=df.truth[mask,],
-                                             type='scatter',
-                                             mode = if (condense.legend.names) 'lines+markers' else 'markers',
-                                             x=~year[1], y=~value[1], color=color,
-                                             name=one.truth.name,
-                                             marker = list(color=color,
-                                                           size=truth.point.size,
-                                                           symbol=split.shapes[split],
-                                                           line = list(
-                                                               color = '#000000FF',
-                                                               width = 1
-                                                           )),
-                                             legendgroup=if (condense.legend) NULL else 'Truth',
-                                             showlegend = T)
-                        
-                        hover.text = make.hover.text(year=df.truth$year[mask],
-                                                     value=df.truth$value[mask],
-                                                     source=df.truth$Source[mask],
-                                                     data.type=data.type,
-                                                     split=split)
-                        
-                        
-                        plot = add_markers(plot, data=df.truth[mask,],
-                                           y=~value, color=color,
-                                           name=one.truth.name,
-                                           marker = list(color=color,
-                                                         size=truth.point.size,
-                                                         symbol=split.shapes[split],
-                                                         line = list(
-                                                             color = '#000000FF',
-                                                             width = 1
-                                                         )),
-                                           text = hover.text,
-                                           hoverinfo='text',
-                                           legendgroup=if (condense.legend) NULL else 'Truth',
-                                           showlegend = F)
-                        
-                    }
-                }
-            }
-            
-            ##-- ADD THE CHANGE LABELS --##
-            if (label.change)
-            {
-                for (int.i in 1:length(unique.simset.names))
-                {
-                    intervention = unique.simset.names[int.i]
-                    for (split in splits)
-                    {
-                        mask = change.facet==ff & change.split==split & df.change$intervention==intervention
-                        
-                        
-                        if (any(mask))
-                        {
-                            if (color.by == 'split' && length(split.by)>0)
-                                color = colors[split]
-                            else
-                                color = colors[intervention]
-                            
-                            change.name = paste0("change_", change.years[1], "_to_", change.years[2])
-                            if (plot.format=='median.and.interval')
-                                label.text = paste0(round(100*df.change[mask, paste0(change.name, "_median")], digits=label.digits), '%')
-                            else
-                                label.text = paste0(round(100*df.change[mask, paste0(change.name, "_mean")], digits=label.digits), '%')
-                            if (label.change.ci)
-                                label.text = paste0(label.text, 
-                                                    " [",
-                                                    round(100*df.change[mask, paste0(change.name, "_interval_lower")], label.digits),
-                                                    " to ",
-                                                    round(100*df.change[mask, paste0(change.name, "_interval_upper")], label.digits),
-                                                    "%]")
-                            
-                            if (change.decrease.is.positive)
-                                label.text = paste0(label.text, " Reduction")
-                            else
-                                label.text = paste0(label.text, "")
-                            
-                            if (!place.labels.to.side)
-                            {
-                                if (plot.format=='median.and.interval')
-                                {
-                                    #   y1.name = paste0(change.years[1], "_median")
-                                    y2.name = paste0(change.years[2], "_median")
-                                }
-                                else
-                                {
-                                    #   y1.name = paste0(change.years[1], "_mean")
-                                    y2.name = paste0(change.years[2], "_mean")
-                                }
-                            
-                                plot = add.plot.label(plot, 
-                                                      text=label.text,
-                                                      x=change.years[2] + label.change.nudge.x,
-                                                      y=df.change[mask, y2.name],
-                                                      xanchor = 'left',
-                                                      fill=color,
-                                                      alpha=label.alpha)
-                            }
-                            else
-                            {
-                                mask.for.all.interventions = df.sim$year == change.years[2] & df.sim$facet == ff & df.sim$split==split 
-                                mask.for.this.intervention = mask.for.all.interventions & df.sim$intervention==intervention
-                                
-                                mean.for.all.interventions = mean(df.sim$value[mask.for.all.interventions])
-                                mean.for.this.interventions = mean(df.sim$value[mask.for.this.intervention])
-                                label.on.top = mean.for.this.interventions >= mean.for.all.interventions
-                                
-                                label.y.alpha = (1-plot.interval.coverage)/2
-                                if (label.on.top)
-                                    label.y.alpha = 1-label.y.alpha
-                                
-                                LABEL.YEAR.SPAN = 5
-                                label.y.per.year = sapply(c(change.years[2])-c(0,LABEL.YEAR.SPAN), function(year){
-                                    mask = df.sim$year == year & df.sim$facet == ff & df.sim$split==split  & df.sim$intervention==intervention
-                                    if (plot.format=='individual.simulations')
-                                        quantile(df.sim$value[mask], label.y.alpha)[1]
-                                    else if (label.on.top)
-                                        df.sim$upper[mask][1]
-                                    else
-                                        df.sim$lower[mask][1]
-                                })
-                                
-                                if (label.on.top)
-                                {
-                                    yanchor = 'bottom'
-                                    y.label = max(label.y.per.year)
-                                    
-                                }
-                                else
-                                {
-                                    yanchor = 'top'
-                                    y.label = min(label.y.per.year)
-                                }
-                            
-                                plot = add.plot.label(plot, 
-                                                      text=label.text,
-                                                      x=change.years[2],# + label.change.nudge.x,
-                                                      y=y.label,
-                                                      xanchor = 'right', yanchor=yanchor,
-                                                      fill=color,
-                                                      alpha=label.alpha)
-                            }
-                        }
-                    }
-                }
-                
-                if (vline.change.years)
-                    plot = layout(plot, 
-                                  shapes = list(vline(x=change.years[1], dash='dot'),
-                                                vline(x=change.years[2], dash='dot'))
+                    hover.text = make.hover.text(year=df.sim$year[split.mask],
+                                                 value=df.sim$value[split.mask],
+                                                 sim=df.sim$simulation[split.mask],
+                                                 data.type=data.type,
+                                                 split=split)
+                    
+                    plot = add_paths(plot, data=df.sim[split.mask,],
+                                     y=~value, color=color, 
+                                     opacity=simulation.alpha,
+                                     legendgroup=if (condense.legend) NULL else 'Simulations',
+                                     line = list(color=color,
+                                                 width=simulation.line.size),
+                                     name=path.name,
+                                     text=hover.text,
+                                     hoverinfo='text',
+                                     showlegend = F,
+                                     transforms = list(
+                                         list(type = 'groupby',
+                                              groups = ~simulation))
                     )
-            }
-            
-            axis.title = DATA.TYPE.AXIS.LABELS[names(data.type.names)[data.types.for.facet.categories[ff]==data.type.names]]
-            axis.title = sapply(names(data.type.names)[data.types.for.facet.categories[ff]==data.type.names], function(data.type){
-                y.axis.title.function(data.type)
-            })
-            if (plot.format != 'individual.simulations' && label.axis.ci)
-                axis.title = paste0(axis.title, 
-                                    ifelse(wrap.axis.labels, '\n', ' '),
-                                    "(",
-                                    round(100*plot.interval.coverage), 
-                                    '% Prediction Interval)')
-              
-            yaxis.list = list(rangemode = "tozero",
-                              automargin = T,
-                              title = list(text=axis.title,
-                                           standoff=y.title.standoff,
-                                           font=list(size=y.title.size)),
-                              tickfont = list(size=tick.size))
-            
-            if (is.pct.data.type(data.types.for.facet.categories[ff], data.type.names))
-                yaxis.list$tickformat = '%'
-            else
-                yaxis.list$tickformat = ',d'
-            
-            plot = layout(plot,
-                          yaxis = yaxis.list,
-                          xaxis=list(title='',
-                                     automargin=T,
-                                     tickfont = list(size=tick.size)))
+                }
+                else
+                {
+                    hover.text = make.hover.text(year=df.sim$year[split.mask],
+                                                 value=df.sim$value[split.mask],
+                                                 lower=df.sim$lower[split.mask],
+                                                 upper=df.sim$upper[split.mask],
+                                                 data.type=data.type,
+                                                 split=split)
+                  
+                    plot = add_paths(plot, data=df.sim[split.mask & !is.na(df.sim$value),],
+                                     y=~value, color=color,
+                                     opacity=1,
+                                     legendgroup=if (condense.legend) NULL else 'Simulations',
+                                     line = list(color=color,
+                                                 width=simulation.line.size),
+                                     name=path.name,
+                                     text=hover.text,
+                                     hoverinfo='text',
+                                     showlegend = show.legend
+                                     )
+                }
                 
-            if (title.subplots)
-            {
-                plot = add_annotations(plot,
-                                       text = ff,
-                                       x = 0.5,
-                                       y = 1.05,
-                                       yref = "paper",
-                                       xref = "paper",
-                                       align = "center",
-                                       xanchor = "center",
-                                       yanchor = "top",
-                                       font = list(size = title.size),
-                                       showarrow = FALSE)
-                
-             #   plot = layout(plot, margin = list(t = 100))
+                progress.update(FRACTION.PROGRESS.SETUP.DF +
+                                    (1-FRACTION.PROGRESS.SETUP.DF) *
+                                    (split.i + (int.i-1) * length(splits) +
+                                    (ff.i-1) * length(splits) * length(unique.simset.names)) /
+                                    n.steps)
             }
-            
-            plot
-        })
-
-        
-        plot.fn = function(nrows)
-        {
-            if (length(facet.categories)==1)
-                plot = subplots[[1]]
-            else
-                plot = subplot(subplots, shareY = fixed.y, titleY=T, nrows=nrows, 
-                               margin=c(0.05,0.05,0.06,0.06)) #L,R,T,B
-            
-            legend.list = list(orientation = 'h', 
-                               xanchor = "center",
-                               x = 0.5,
-                               font = list(size=legend.text.size))
-            if (!condense.legend)
-                legend.list$traceorder = 'grouped'
-            
-            if (!is.null(margin.top))
-                plot = layout(plot, 
-                              legend = legend.list,
-                              margin = list(t=margin.top))
-            else
-                plot = layout(plot, 
-                              legend = legend.list)
-            
-            plot
-        }
-        
-        if (return.plot.function)
-            plot = plot.fn
-        else
-            plot = plot.fn(nrows=nrow)
-    }
-    
-    
-    
-    
-    
-    else
-    {
-        plot = ggplot()
-        if (plot.format=='individual.simulations')
-        {
-            plot = plot + geom_line(data=df.sim, aes(x=year, y=value, group=group, color=color.by),
-                                    alpha=simulation.alpha, size=simulation.line.size)
-        }
-        else
-        {
-            plot = plot + 
-                geom_ribbon(data=df.sim, aes(x=year, ymin=ci.lower, ymax=ci.upper,
-                                             group=split.by, color=color.by, fill=color.by), alpha=plot.interval.alpha) +
-                geom_line(data=df.sim, aes(x=year, y=value, group=group, color=color.by), size=simulation.line.size)
         }
         
         if (!is.null(df.truth))
         {
-            
-            plot = plot + geom_point(data=df.truth, aes(x=year, y=value, shape=split, fill=color.by), 
-                                     size=truth.point.size)
-        }
-        
-        
-        #Add labeled change
-        if (!is.null(df.change))
-        {
-            plot = plot + geom_label(data=df.change, aes(x=x, y=y, label=label, fill=color.by), 
-                                     hjust='center', size=label.change.size, alpha=0.5,
-                                     label.padding = unit(0.15, 'lines'), nudge_x = label.change.nudge.x)
-        }
-        
-        #-----------------------#
-        #-- SET UP FACET WRAP --#
-        #-----------------------#
-        
-        if (fixed.y)
-            facet.scales = 'fixed'
-        else
-            facet.scales = 'free_y'
-        
-        if (length(data.types)>1)
-        {
-            if (length(facet.by)>0 && any(sapply(dimension.subsets[facet.by], length)>1))
-                facet.formula = as.formula(paste0('~data.type+', paste0(facet.by, collapse='+')))
-            else
-                facet.formula = ~data.type
-        }
-        else
-        {
-            if (length(facet.by)>0 && any(sapply(dimension.subsets[facet.by], length)>1))
-                facet.formula = as.formula(paste0('~', paste0(facet.by, collapse='+')))
-            else
-                facet.formula = NULL
-            
-        }
-        
-        if (!is.null(facet.formula))
-            plot = plot + facet_wrap(facet.formula, scales=facet.scales)
-        
-        
-        #----------#
-        #-- Axes --#
-        #----------#
-        
-        plot = plot + 
-            scale_y_continuous(name=NULL,
-                               labels=function(x){
-                                   if (all(is.na(x) | x <= 1))
-                                       paste0(100*x, '%')
-                                   else
-                                       format(x, big.mark = ',')
-                               },
-                               limits = c(0,NA)) +
-            scale_x_continuous(name='Year',
-                               labels = round)
-        
-        #------------#
-        #-- Styles --#
-        #------------#
-        
-        split.legend.name = NULL#paste0(DIMENSION.NAMES[split.by], collapse=", ")
-        
-        #colors
-        if (color.by=='split')
-        {
-            if (length(split.by)==0)
-                plot = plot + scale_color_manual(values=colors, guide=F) +
-                    scale_fill_manual(values=colors, guide=F)
-            else
-                plot = plot + scale_color_manual(values=colors, name=split.legend.name) +
-                    scale_fill_manual(values=colors, name=split.legend.name)
-            
-        }
-        else
-        {
-            if (length(simsets)>1)
-                plot = plot + scale_color_manual(values=colors, name="Intervention")
-            else
-                plot = plot + scale_color_manual(values=colors, guide=F)
-            
-            if (!is.null(df.change))
+            for (split in splits)
             {
-                if (length(simsets)>1)
-                    plot = plot + scale_fill_manual(values=colors, name="Intervention")
-                else
-                    plot = plot + scale_fill_manual(values=colors, guide=F)
+                mask = df.truth$facet==ff & df.truth$split==split
+                if (any(!is.na(df.truth$value[mask])))
+                {
+                    show.legend = !hide.legend && !is.na(show.truth.legend.for.facet[split]) &&
+                        show.truth.legend.for.facet[split] == ff &&
+                        !hide.legend
+                    
+                    if (color.by!='split')
+                        show.legend = show.legend && split == splits[1]
+                    
+                    one.truth.name = truth.name
+                    if (color.by == 'split')
+                    {
+                        color = colors[split]
+                        if (condense.legend.names)
+                            one.truth.name = split
+                        else
+                            one.truth.name = paste0(one.truth.name, ', ', split)
+                    }
+                    else
+                        color = truth.color
+                    
+                    if (show.legend)
+                        plot = add_trace(plot, data=df.truth[mask,],
+                                         type='scatter',
+                                         mode = if (condense.legend.names) 'lines+markers' else 'markers',
+                                         x=~year[1], y=~value[1], color=color,
+                                         name=one.truth.name,
+                                         marker = list(color=color,
+                                                       size=truth.point.size,
+                                                       symbol=split.shapes[split],
+                                                       line = list(
+                                                           color = '#000000FF',
+                                                           width = 1
+                                                       )),
+                                         legendgroup=if (condense.legend) NULL else 'Truth',
+                                         showlegend = T)
+                    
+                    hover.text = make.hover.text(year=df.truth$year[mask],
+                                                 value=df.truth$value[mask],
+                                                 source=df.truth$Source[mask],
+                                                 data.type=data.type,
+                                                 split=split)
+                    
+                    
+                    plot = add_markers(plot, data=df.truth[mask,],
+                                       y=~value, color=color,
+                                       name=one.truth.name,
+                                       marker = list(color=color,
+                                                     size=truth.point.size,
+                                                     symbol=split.shapes[split],
+                                                     line = list(
+                                                         color = '#000000FF',
+                                                         width = 1
+                                                     )),
+                                       text = hover.text,
+                                       hoverinfo='text',
+                                       legendgroup=if (condense.legend) NULL else 'Truth',
+                                       showlegend = F)
+                    
+                }
             }
         }
         
-        if (length(split.by)==0)
-            plot = plot +
-            scale_shape_manual(values=split.shapes, guide=F)
+       
+        
+        #axis.title = DATA.TYPE.AXIS.LABELS[names(data.type.names)[data.types.for.facet.categories[ff]==data.type.names]]
+        axis.title = sapply(names(data.type.names)[data.types.for.facet.categories[ff]==data.type.names], function(data.type){
+            y.axis.title.function(data.type)
+        })
+        if (plot.format != 'individual.simulations' && label.axis.ci)
+            axis.title = paste0(axis.title, 
+                                ifelse(wrap.axis.labels, '\n', ' '),
+                                "(",
+                                round(100*plot.interval.coverage), 
+                                '% Prediction Interval)')
+          
+        yaxis.list = list(rangemode = "tozero",
+                          automargin = T,
+                          title = list(text=axis.title,
+                                       standoff=y.title.standoff,
+                                       font=list(size=y.title.size)),
+                          tickfont = list(size=tick.size))
+        
+        y.axis.digits = digits.for.sim[ff]-1
+        if (is.pct.data.type(data.types.for.facet.categories[ff], data.type.names))
+            y.axis.digits = y.axis.digits-2
+        y.axis.digits = max(0, y.axis.digits)
+            
+        if (is.pct.data.type(data.types.for.facet.categories[ff], data.type.names))
+            yaxis.list$tickformat = paste0('.', y.axis.digits, '%')
+        else if (y.axis.digits==0)
+            yaxis.list$tickformat = ',d'
         else
+            yaxis.list$tickformat = paste0('.', y.axis.digits, 'd') #',d'
+        
+        plot = layout(plot,
+                      yaxis = yaxis.list,
+                      xaxis=list(title='',
+                                 automargin=T,
+                                 tickfont = list(size=tick.size)))
+            
+        if (title.subplots)
         {
-            plot = plot +
-                scale_shape_manual(values=split.shapes, name=split.legend.name)
+            plot = add_annotations(plot,
+                                   text = ff,
+                                   x = 0.5,
+                                   y = 1.05,
+                                   yref = "paper",
+                                   xref = "paper",
+                                   align = "center",
+                                   xanchor = "center",
+                                   yanchor = "top",
+                                   font = list(size = title.size),
+                                   showarrow = FALSE)
+            
+         #   plot = layout(plot, margin = list(t = 100))
         }
         
-        plot = plot + 
-            theme(panel.grid=element_blank(), panel.background=element_blank(),
-                  axis.line.x.bottom = element_line(color = 'black'),
-                  axis.line.y.left = element_line(color = 'black'),
-                  legend.position = 'bottom', legend.direction = 'vertical') +
-            ylab(NULL)
+        plot
+    })
+    
+    ##-- ADD THE CHANGE LABELS --##
+    if (label.change)
+    {
+        subplot.label.components = lapply(1:length(facet.categories), function(ff.i){
+            
+            ff = facet.categories[ff.i]
+            data.type = raw.data.types.for.facet.categories[ff.i]
+            
+            plot = plot_ly(x=~year)
+            
+            #df.facet = df.sim[df.sim$facet == ff,]
+            facet.mask = df.sim$facet==ff
+            
+            sub.comps = lapply(1:length(unique.simset.names), function(int.i){
+                
+                intervention = unique.simset.names[int.i]
+                
+                sub.sub.comps = lapply(splits, function(split){
+                    
+                    mask = change.facet==ff & change.split==split & df.change$intervention==intervention
+                    
+                    
+                    if (any(mask))
+                    {
+                        if (color.by == 'split' && length(split.by)>0)
+                            color = colors[split]
+                        else
+                            color = colors[intervention]
+                        
+                        change.name = paste0("change_", change.years[1], "_to_", change.years[2])
+                        if (plot.format=='median.and.interval')
+                        {
+                            stat = 'median'
+                            est = round(100*df.change[mask, paste0(change.name, "_median")], digits=label.digits)
+                        }
+                        else
+                        {
+                            stat = 'mean'
+                            est = round(100*df.change[mask, paste0(change.name, "_mean")], digits=label.digits)
+                        }   
+                        ci.lower = round(100*df.change[mask, paste0(change.name, "_interval_lower")], label.digits)
+                        ci.upper = round(100*df.change[mask, paste0(change.name, "_interval_upper")], label.digits)
+                        
+                        label.text = paste0(est, '%')
+                        if (label.change.ci)
+                            label.text = paste0(label.text, 
+                                                " [",
+                                                ci.lower,
+                                                " to ",
+                                                ci.upper,
+                                                "%]")
+                        
+                        if (change.decrease.is.positive)
+                            label.text = paste0(label.text, " Reduction")
+
+                        #make hover text
+                        if (change.decrease.is.positive)
+                        {
+                            est = -est
+                            tmp = ci.upper
+                            ci.upper = -ci.lower
+                            ci.lower = -tmp
+                        }
+                        
+                        label.hover = paste0("The ", stat,
+                                             " projected change in ",
+                                             df.change$data.type[mask], 
+                                             "\nfrom ",
+                                             change.years[1], " to ",
+                                             change.years[2], 
+                                             " (across ", df.change$n.sim[mask],
+                                             " simulations)\nunder '",
+                                             df.change$intervention[mask],
+                                             "' is\n<b>", est, "%</b> (",
+                                             100*plot.interval.coverage, "% prediction interval <b>",
+                                             ci.lower, " to ", ci.upper, "%</b>)")
+                        
+                        # Generate the labels (or objects that hold them)
+                        if (!place.labels.to.side)
+                        {
+                            if (plot.format=='median.and.interval')
+                            {
+                                #   y1.name = paste0(change.years[1], "_median")
+                                y2.name = paste0(change.years[2], "_median")
+                            }
+                            else
+                            {
+                                #   y1.name = paste0(change.years[1], "_mean")
+                                y2.name = paste0(change.years[2], "_mean")
+                            }
+                            
+                            list(text=label.text,
+                                 hovertext = label.hover,
+                                 x=change.years[2] + label.change.nudge.x,
+                                 y=df.change[mask, y2.name],
+                                 xanchor = 'left',
+                                 fill=color,
+                                 alpha=label.alpha)
+                        }
+                        else
+                        {
+                            mask.for.all.interventions = df.sim$year == change.years[2] & df.sim$facet == ff & df.sim$split==split 
+                            mask.for.this.intervention = mask.for.all.interventions & df.sim$intervention==intervention
+                            
+                            mean.for.all.interventions = mean(df.sim$value[mask.for.all.interventions])
+                            mean.for.this.interventions = mean(df.sim$value[mask.for.this.intervention])
+                            label.on.top = mean.for.this.interventions >= mean.for.all.interventions
+                            
+                            label.y.alpha = (1-plot.interval.coverage)/2
+                            if (label.on.top)
+                                label.y.alpha = 1-label.y.alpha
+                            
+                            LABEL.YEAR.SPAN = 5
+                            label.y.per.year = sapply(c(change.years[2])-c(0,LABEL.YEAR.SPAN), function(year){
+                                mask = df.sim$year == year & df.sim$facet == ff & df.sim$split==split  & df.sim$intervention==intervention
+                                if (plot.format=='individual.simulations')
+                                    quantile(df.sim$value[mask], label.y.alpha)[1]
+                                else if (label.on.top)
+                                    df.sim$upper[mask][1]
+                                else
+                                    df.sim$lower[mask][1]
+                            })
+                            
+                            if (label.on.top)
+                            {
+                                yanchor = 'bottom'
+                                y.label = max(label.y.per.year)
+                                
+                            }
+                            else
+                            {
+                                yanchor = 'top'
+                                y.label = min(label.y.per.year)
+                            }
+                            
+                           list(text=label.text,
+                                hovertext=label.hover,
+                                x=change.years[2],# + label.change.nudge.x,
+                                y=y.label,
+                                xanchor = 'right',
+                                yanchor=yanchor,
+                                fill=color,
+                                alpha=label.alpha)
+                        }
+                    }
+                })
+                
+                names(sub.sub.comps) = splits
+                sub.sub.comps
+            })
+            
+            names(sub.comps) = unique.simset.names
+            sub.comps
+        })
     }
+    else
+        subplot.label.components = NULL
+    
+    plot.components = list(subplots=subplots,
+                           facet.categories=facet.categories,
+                           legend.text.size=legend.text.size,
+                           margin.top=margin.top,
+                           fixed.y=fixed.y,
+                           condense.legend=condense.legend,
+                           
+                           subplot.label.components=subplot.label.components,
+                           label.change.size = label.change.size,
+                           facet.categories = facet.categories,
+                           unique.simset.names = unique.simset.names,
+                           vline.change.years = vline.change.years,
+                           splits = splits,
+                           label.alpha = label.alpha,
+                           place.labels.to.side = place.labels.to.side,
+                           change.years = change.years)
+    
+    if (return.plot.components)
+        plot = plot.components
+    else
+        plot = do.plot.from.components(plot.components, nrows=nrow)
+
     
     #------------#
     #-- RETURN --#
@@ -1120,6 +1107,128 @@ do.plot.simulations <- function(
     else
         plot
 }
+
+##------------------------##
+##-- PLOT FROM SUBPLOTS --##
+##------------------------##
+
+do.plot.from.components <- function(plot.components, nrows,
+                                    label.change.size = plot.components$label.change.size)
+{
+    facet.categories = plot.components$facet.categories
+    legend.text.size = plot.components$legend.text.size
+    margin.top = plot.components$margin.top
+    fixed.y = plot.components$fixed.y
+    condense.legend = plot.components$condense.legend
+    
+    
+   # label.change.size
+    facet.categories = plot.components$facet.categories
+    unique.simset.names = plot.components$unique.simset.names
+    vline.change.years = plot.components$vline.change.years
+    splits = plot.components$splits
+    place.labels.to.side = plot.components$place.labels.to.side
+    change.years = plot.components$change.years
+    
+    if (!is.null(plot.components$subplot.label.components))
+    {
+        subplots = lapply(1:length(plot.components$subplots), function(i){
+            
+            plot = plot.components$subplots[[i]]
+            ff = facet.categories[i]
+            
+            for (int.i in 1:length(unique.simset.names))
+            {
+                intervention = unique.simset.names[int.i]
+                for (split in splits)
+                {
+                    sub.comps = plot.components$subplot.label.components[[i]][[intervention]][[split]]
+                    
+                    if (!is.null(sub.comps))
+                    {
+                        if (!place.labels.to.side)
+                        {
+                            plot = add.plot.label(plot, 
+                                                  text=sub.comps$text,
+                                                  hovertext=sub.comps$hovertext,
+                                                  font.size = label.change.size,
+                                                  x=sub.comps$x,
+                                                  y=sub.comps$y,
+                                                  xanchor = sub.comps$xanchor,
+                                                  fill=sub.comps$fill,
+                                                  alpha=sub.comps$alpha)
+                        }
+                        else
+                        {
+                            plot = add.plot.label(plot, 
+                                                  text=sub.comps$text,
+                                                  hovertext=sub.comps$hovertext,
+                                                  font.size = label.change.size,
+                                                  x=sub.comps$x,
+                                                  y=sub.comps$y,
+                                                  xanchor = sub.comps$xanchor, 
+                                                  yanchor=sub.comps$yanchor,
+                                                  fill=sub.comps$fill,
+                                                  alpha=sub.comps$alpha)
+                        }
+                    }
+                }
+            }
+            
+            if (vline.change.years)
+                plot = layout(plot, 
+                              shapes = list(vline(x=change.years[1], dash='dot'),
+                                            vline(x=change.years[2], dash='dot'))
+                )
+        })
+    }
+    else
+        subplots = plot.components$subplots
+    
+    # This block of code fixes plotly's (inner) making of middle rows/columns smaller
+    outer.width.inflation = 1.15
+    outer.height.inflation = 1.375
+    
+    ncols = ceiling(length(facet.categories)/nrows)
+    subplot.widths = rep(1, ncols)
+    subplot.widths[1] = subplot.widths[ncols] = 1/outer.width.inflation
+    subplot.widths = subplot.widths / sum(subplot.widths)
+    
+    subplot.heights = rep(1, nrows)
+    subplot.heights[1] = subplot.heights[nrows] = 1/outer.height.inflation
+    subplot.heights = subplot.heights / sum(subplot.heights)
+    
+    
+    if (length(facet.categories)==1)
+        plot = subplots[[1]]
+    else
+        plot = subplot(subplots, shareY = fixed.y, titleY=T, nrows=nrows, 
+                       widths=subplot.widths,
+                       heights=subplot.heights,
+                       margin=c(0.05,0.05,0.06,0.06)) #L,R,T,B
+    
+    
+    legend.list = list(orientation = 'h', 
+                       xanchor = "center",
+                       x = 0.5,
+                       font = list(size=legend.text.size))
+    if (!condense.legend)
+        legend.list$traceorder = 'grouped'
+    
+    if (!is.null(margin.top))
+        plot = layout(plot, 
+                      legend = legend.list,
+                      margin = list(t=margin.top))
+    else
+        plot = layout(plot, 
+                      legend = legend.list)
+    
+    plot
+}
+
+##------------##
+##-- CHANGE --##
+##------------##
 
 get.data.type.level.and.change.dist <- function(simset,
                                                 data.type,
@@ -1145,10 +1254,14 @@ get.data.type.level.and.change.dist <- function(simset,
         extract.fn = function(sim, years){extract.suppression(sim, years=years, per.population=1)}
     else if (data.type=='mortality')
         extract.fn = function(sim, years){extract.overall.hiv.mortality(sim, years=years, per.population=1)}
-    else if (data.type=='testing.rate')
-        extract.fn = function(sim, years){extract.testing.rates(sim, years=years, per.population=1)}
+ #   else if (data.type=='testing.rate')
+  #      extract.fn = function(sim, years){extract.testing.rates(sim, years=years, per.population=1)}
     else if (data.type=='population')
         extract.fn = function(sim, years){extract.population(sim, years=years)}
+    else if (data.type=='testing.period')
+        extract.fn = function(sim, years){extract.testing.period(sim, years=years, per.population=1)}
+    else if (data.type=='prep')
+        extract.fn = function(sim, years){extract.prep.coverage(sim, years=years, per.population=1)}
     else
         stop(paste0("'", data.type, "' is not a valid data type"))
     
@@ -1182,7 +1295,7 @@ get.truth.df <- function(location,
                                                          surv=surv)
     
     all.dimensions = union(keep.dimensions, names(dimension.subsets))
-    if (data.type=='incidence')
+    if (data.type=='incidence' || data.type=='testing.period' || data.type=='prep')
         return (NULL)
     
     if (data.type=='population')
@@ -1203,12 +1316,21 @@ get.truth.df <- function(location,
                                  aggregate.locations = T, aggregate.years = F,
                                  throw.error.if.missing.data = F)
       
+      data.source = get.surveillance.data.source(surv, location.codes=location, data.type=data.type,
+                                                 years=years,
+                                                 age=any(all.dimensions=='age'), race=any(all.dimensions=='race'),
+                                                 sex=any(all.dimensions=='sex'), risk=any(all.dimensions=='risk'))
+      
       if (data.type=='diagnosed' && is.null(rv) && length(all.dimensions)==1 && all.dimensions=='year')
       {
           rv = get.state.averaged.knowledge.of.status(location,
                                                       state.surveillance,
                                                       years=years,
                                                       census.totals = ALL.DATA.MANAGERS$census.totals)
+          
+          data.source = get.surveillance.data.source(state.surveillance, location=states.for.msa(location),
+                                                     data.type='diagnosed',
+                                                     years=years)
           
           dim(rv) = c(year=length(years))
           dimnames(rv) = list(year = as.character(years))
@@ -1225,6 +1347,11 @@ get.truth.df <- function(location,
                                          sex=any(all.dimensions=='sex'), risk=any(all.dimensions=='risk'),
                                          aggregate.locations = T, aggregate.years = F,
                                          throw.error.if.missing.data = F)
+              
+              data.source = get.surveillance.data.source(state.surveillance, location.codes=states, data.type=data.type.for.surveillance,
+                                                         years = years,
+                                                         age=any(all.dimensions=='age'), race=any(all.dimensions=='race'),
+                                                         sex=any(all.dimensions=='sex'), risk=any(all.dimensions=='risk'))
           }
       }
       
@@ -1243,11 +1370,8 @@ get.truth.df <- function(location,
           rv = reshape2::melt(rv)
           rv = rv[!is.na(rv$value),]
           
-          if (data.type=='suppression' || data.type=='diagnosed')
-              rv$Source = 'Local Health Dept'
-          else
-              rv$Source = 'CDC'
-          
+          rv$Source = data.source
+
           rv
       }
     }
@@ -1329,9 +1453,18 @@ get.sim.dfs <- function(simset,
                                                  years = years, 
                                                  all.dimensions = keep.dimensions,
                                                  dimension.subsets = dimension.subsets)
+    else if (data.type=='testing.period')
+        arr = extract.simset.testing.period(simset,
+                                            years = years, 
+                                            all.dimensions = keep.dimensions,
+                                            dimension.subsets = dimension.subsets)
+    else if (data.type=='prep')
+        arr = extract.simset.prep.coverage(simset,
+                                           years = years, 
+                                           all.dimensions = keep.dimensions,
+                                           dimension.subsets = dimension.subsets)
     else
-        stop(paste0("'", data.type, "' is not a valid data.type. data.type must be one of ",
-                    paste0("'", names(data.type.names), "'", collapse=', ')))
+        stop(paste0("'", data.type, "' is not a valid data.type."))
     
     
     if (get.individual.sims)
@@ -1437,7 +1570,8 @@ get.sim.dfs <- function(simset,
                               year1.upper=ci[2,year1.index,],
                               year2=stat[year2.index,],
                               year2.lower=ci[1,year2.index,],
-                              year2.upper=ci[2,year2.index,])
+                              year2.upper=ci[2,year2.index,],
+                              n.sim=simset@n.sim)
             names(df.change)[names(df.change)=='lower'] = paste0("change_", change.years[1], "_to_", change.years[2], "_interval_lower")
             names(df.change)[names(df.change)=='upper'] = paste0("change_", change.years[1], "_to_", change.years[2], "_interval_upper")
             
@@ -1463,6 +1597,7 @@ add.plot.label <- function(plot,
                            text,
                            x,
                            y,
+                           hovertext=NULL,
                            color='black',
                            fill='white',
                            alpha=0.5,
@@ -1492,6 +1627,7 @@ add.plot.label <- function(plot,
            annotations=list(text=text,
                             x=x,
                             y=y,
+                            hovertext=hovertext,
                             bgcolor=bg.color,
                             font=font.list,
                             showarrow=F,
@@ -1543,7 +1679,7 @@ make.pretty.change.data.frame <- function(change.df, data.type.names=DATA.TYPE.N
     
     rv = change.df[,1:pre.change.index]
     
-    names(rv)[names(rv)=='data.type'] = "Epidemiological Indicator"
+    names(rv)[names(rv)=='data.type'] = "Outcome"
     names(rv) = gsub("\\.", " ", names(rv))
     names(rv)[names(rv)=='risk'] = 'Risk Factor'
     names(rv) = toupper.first(names(rv))
@@ -1588,6 +1724,9 @@ make.pretty.change.data.frame <- function(change.df, data.type.names=DATA.TYPE.N
                       format(round(mult*change.df[,pre.change.index+9]), big.mark = ','),
                       ']')
     names(rv)[names(rv)=='year2'] = paste0(year2, " Level", stats.description)
+    
+    rv$n.sim = change.df$n.sim
+    names(rv)[names(rv)=='n.sim'] = 'Number of Simulations'
     
     rv
 }
@@ -1861,6 +2000,84 @@ extract.simset.suppression <- function(simset, years, all.dimensions,
     rv
 }
 
+extract.simset.prep.coverage <- function(simset, years, all.dimensions,
+                                         dimension.subsets)
+{
+    eg = extract.prep.coverage(simset@simulations[[1]],
+                             years=years, 
+                             keep.dimensions=all.dimensions,
+                             per.population=1,
+                             ages=dimension.subsets[['age']],
+                             races=dimension.subsets[['race']],
+                             subpopulations=dimension.subsets[['subpopulation']],
+                             sexes=dimension.subsets[['sex']],
+                             risks=dimension.subsets[['risk']],
+                             use.cdc.categorizations=T)
+    
+    rv = sapply(simset@simulations, extract.prep.coverage,
+                years=years, 
+                keep.dimensions=all.dimensions,
+                per.population=1,
+                ages=dimension.subsets[['age']],
+                races=dimension.subsets[['race']],
+                subpopulations=dimension.subsets[['subpopulation']],
+                sexes=dimension.subsets[['sex']],
+                risks=dimension.subsets[['risk']],
+                use.cdc.categorizations=T)
+    
+    if (is.null(dim(eg)))
+    {
+        dim.names = list(names(eg), 1:simset@n.sim)
+        names(dim.names) = c(all.dimensions, 'simulation')
+    }
+    else
+        dim.names = c(dimnames(eg), list(simulation=1:simset@n.sim))
+    
+    dim(rv) = sapply(dim.names, length)
+    dimnames(rv) = dim.names
+    
+    rv
+}
+
+extract.simset.testing.period <- function(simset, years, all.dimensions,
+                                         dimension.subsets)
+{
+    eg = extract.testing.period(simset@simulations[[1]],
+                               years=years, 
+                               keep.dimensions=all.dimensions,
+                               per.population=1,
+                               ages=dimension.subsets[['age']],
+                               races=dimension.subsets[['race']],
+                               subpopulations=dimension.subsets[['subpopulation']],
+                               sexes=dimension.subsets[['sex']],
+                               risks=dimension.subsets[['risk']],
+                               use.cdc.categorizations=T)
+    
+    rv = sapply(simset@simulations, extract.testing.period,
+                years=years, 
+                keep.dimensions=all.dimensions,
+                per.population=1,
+                ages=dimension.subsets[['age']],
+                races=dimension.subsets[['race']],
+                subpopulations=dimension.subsets[['subpopulation']],
+                sexes=dimension.subsets[['sex']],
+                risks=dimension.subsets[['risk']],
+                use.cdc.categorizations=T)
+    
+    if (is.null(dim(eg)))
+    {
+        dim.names = list(names(eg), 1:simset@n.sim)
+        names(dim.names) = c(all.dimensions, 'simulation')
+    }
+    else
+        dim.names = c(dimnames(eg), list(simulation=1:simset@n.sim))
+    
+    dim(rv) = sapply(dim.names, length)
+    dimnames(rv) = dim.names
+    
+    rv
+}
+
 extract.simset.knowledge.of.status <- function(simset, years, all.dimensions,
                                                dimension.subsets)
 {
@@ -1925,10 +2142,27 @@ vline <- function(x = 0,
     )
 }
 
+is.integer.data.type <- function(data.type, data.type.names=NULL)
+{
+    rv = !is.pct.data.type(data.type, data.type.names=data.type.names) &
+        data.type != 'testing.period' & data.type != 'testing.rate'
+    
+    
+    if (!is.null(data.type.names))
+    {
+        if (any(names(data.type.names)=='testing.period'))
+            rv = rv & data.type != data.type.names['testing.period']
+        
+        if (any(names(data.type.names)=='testing.rate'))
+            rv = rv & data.type != data.type.names['testing.rate']
+    }
+}
+
 is.pct.data.type <- function(data.type, data.type.names=NULL)
 {
     rv = data.type == 'suppression' |
-         data.type == 'diagnosed'
+         data.type == 'diagnosed' |
+         data.type == 'prep'
     
     if (!is.null(data.type.names))
     {
@@ -1936,6 +2170,8 @@ is.pct.data.type <- function(data.type, data.type.names=NULL)
             rv = rv | data.type == data.type.names['suppression']
         if (any(names(data.type.names)=='diagnosed'))
             rv = rv | data.type == data.type.names['diagnosed']
+        if (any(names(data.type.names)=='prep'))
+            rv = rv | data.type == data.type.names['prep']
     }
     
     rv
@@ -1943,23 +2179,28 @@ is.pct.data.type <- function(data.type, data.type.names=NULL)
 
 format.values.for.plotly <- function(df,
                                      data.type.names,
-                                     pct.digits=1,
+                                     category,
+                                     pct.digits=3,
                                      non.pct.digits=0)
 {
-    pct.mask = is.pct.data.type(df$data.type, data.type.names)
-    
-    df$value[pct.mask] = round(df$value[pct.mask], pct.digits+2)
-    df$value[!pct.mask] = round(df$value[!pct.mask], non.pct.digits)
-    
-    if (any(names(df)=='lower'))
+    if (category=='individual.simulations' || category=='truth')
     {
-        df$lower[!pct.mask] = round(df$lower[!pct.mask], non.pct.digits)
-        df$lower[pct.mask] = round(df$lower[pct.mask], pct.digits+2)
-    }
-    if (any(names(df)=='upper'))
-    {
-        df$upper[!pct.mask] = round(df$upper[!pct.mask], non.pct.digits)
-        df$upper[pct.mask] = round(df$upper[pct.mask], pct.digits+2)
+        pct.mask = is.pct.data.type(df$data.type, data.type.names)
+        integer.mask = is.integer.data.type(df$data.type, data.type.names)
+        
+        df$value[pct.mask] = round(df$value[pct.mask], pct.digits+2)
+        df$value[integer.mask] = round(df$value[!pct.mask], non.pct.digits)
+        
+        if (any(names(df)=='lower'))
+        {
+            df$lower[integer.mask] = round(df$lower[integer.mask], non.pct.digits)
+            df$lower[pct.mask] = round(df$lower[pct.mask], pct.digits+2)
+        }
+        if (any(names(df)=='upper'))
+        {
+            df$upper[integer.mask] = round(df$upper[integer.mask], non.pct.digits)
+            df$upper[pct.mask] = round(df$upper[pct.mask], pct.digits+2)
+        }
     }
     
     df

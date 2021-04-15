@@ -22,6 +22,13 @@ if (1==2)
     save(simsets.nosyk, file='results/simsets_nosyk.Rdata')
 }
 
+cities = c('Atlanta',
+           'Baltimore',
+           'LA',
+           'Miami',
+           'NYC',
+           'Seattle')
+
 if (1==2)
 {
     load('results/simsets_nosyk.Rdata')
@@ -59,12 +66,38 @@ if (1==2)
     
     jheem.incidence.reduction.dists = lapply(simsets.nosyk, get.simset.incidence.reduction, per.population=100000)
     jheem.incidence.reduction = sapply(jheem.incidence.reduction.dists, function(x){x[1]})
+    jheem.incidence.reduction = sapply(jheem.incidence.reduction.dists, function(x){
+        x = -round(100*x)
+        x[x>0] = paste0('+',x[x>0])
+        paste0(x[1], '% [',
+               x[3], ' to ',
+               x[2], '%]')
+    })
+    
+    
+    jheem.incidence.2025.reduction.dists = lapply(simsets.nosyk, get.simset.incidence.reduction, year2=2025, per.population=100000)
+    jheem.incidence.2025.reduction = sapply(jheem.incidence.2025.reduction.dists, function(x){x[1]})
+    jheem.incidence.2025.reduction = sapply(jheem.incidence.2025.reduction.dists, function(x){
+        x = -round(100*x)
+        x[x>0] = paste0('+',x[x>0])
+        paste0(x[1], '% [',
+               x[3], ' to ',
+               x[2], '%]')
+    })
     
     df.reduction = data.frame(Nosyk=nosyk.incidence.reduction,
                          JHEEM=round(jheem.incidence.reduction,2));df.reduction
     
     write.csv(df.reduction, file='../Manuscripts/manuscript_1/tables/nosyk_comparison.csv')
+    
+  #  df.jheem = -round(100*cbind('2030'=jheem.incidence.reduction, '2025'=jheem.incidence.2025.reduction))
+    df.jheem = cbind('2030'=jheem.incidence.reduction, '2025'=jheem.incidence.2025.reduction))
+    dimnames(df.jheem)[[1]]=cities
+    
+    write.csv(df.jheem, file='../Manuscripts/manuscript_1/appendix_1/scratch/jheem_for_nosyk.csv')
 }
+
+
 
 run.nosyk.projections <- function(simset,
                                   run.to.year=2030)

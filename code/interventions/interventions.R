@@ -204,20 +204,9 @@ get.intervention.description.table <- function(int,
                                                prep.descriptor = 'on PrEP',
                                                suppression.descriptor = 'suppressed')
 {
+    target.populations = get.unique.target.populations(int)
+    
     types = names(int$raw)
-    all.target.populations = list()
-    for (subset in int$raw)
-        all.target.populations = c(all.target.populations, subset$target.populations)
-    all.target.population.hashes = sapply(all.target.populations, target.population.hash)
-        
-    #unique
-    target.population.hashes = unique(all.target.population.hashes)
-    target.populations = lapply(target.population.hashes, function(hash){
-        all.target.populations[all.target.population.hashes==hash][[1]]
-    })
-    
-    names(target.populations) = NULL
-    
     rv = sapply(types, function(type){
         subset = int$raw[[type]]
         sapply(target.populations, function(tpop){
@@ -570,6 +559,7 @@ union.intervention.lists <- function(int.list.1, int.list.2,
     codes2 = sapply(int.list.2, get.intervention.code, manager = manager)
     
     codes.all = union(codes1, codes2)
+    
     lapply(codes.all, intervention.from.code, manager = manager)
 }
 
@@ -588,8 +578,9 @@ process.intervention <- function(intervention)
             
             dim.names = dimnames(sub$target.populations[[1]])
             rv = list()
-            rv$start.times = rate.template.arr = array(as.numeric(NA), dim=sapply(dim.names, length), dimnames=dim.names)
-            rv$start.times[] = Inf
+            rv$start.times = rv$end.times = rate.template.arr = array(as.numeric(NA), dim=sapply(dim.names, length), dimnames=dim.names)
+            rv$start.times[] rv$end.times[] = Inf
+            rv$apply.functions = as.character(rate.template.arr)
             
             rv$times = sort(unique(c(
                 unlist(sapply(sub$intervention.units, function(unit){unit$years})),
@@ -602,6 +593,8 @@ process.intervention <- function(intervention)
                 tpop = sub$target.populations[[j]]
                 unit = sub$intervention.units[[j]]
                 rv$start.times[tpop] = unit$start.year
+                rv$end.times[tpop] = unit$end.year
+                rv$apply.functions[tpop] = unit$apply.function
                 
                 rates.for.tpop = interpolate.parameters(values=unit$rates,
                                                         value.times = unit$years,
@@ -620,6 +613,28 @@ process.intervention <- function(intervention)
     }
 
     intervention
+}
+
+##----------------------------------##
+##-- SUMMARIZE TARGET POPULATIONS --##
+##----------------------------------##
+
+get.unique.target.populations <- function(int)
+{
+    all.target.populations = list()
+    for (subset in int$raw)
+        all.target.populations = c(all.target.populations, subset$target.populations)
+    all.target.population.hashes = sapply(all.target.populations, target.population.hash)
+    
+    #unique
+    target.population.hashes = unique(all.target.population.hashes)
+    target.populations = lapply(target.population.hashes, function(hash){
+        all.target.populations[all.target.population.hashes==hash][[1]]
+    })
+    
+    names(target.populations) = NULL
+    
+    target.populations
 }
 
 ##-----------------------##
@@ -671,7 +686,9 @@ setup.components.for.intervention <- function(components,
         components = set.foreground.hiv.testing.rates(components,
                                                       testing.rates = intervention$processed$testing$rates,
                                                       years = intervention$processed$testing$times,
-                                                      start.years = intervention$processed$testing$start.times)
+                                                      start.years = intervention$processed$testing$start.times,
+                                                      end.years = intervention$processed$testing$end.times,
+                                                      apply.functions = intervention$processed$testing$apply.functions)
     }
     
    
@@ -690,14 +707,20 @@ setup.components.for.intervention <- function(components,
             r
         })
         
-        start.times = expand.population.to.hiv.positive(components$jheem, intervention$processed$suppression$start.times)
         undiagnosed.states = setdiff(dimnames(start.times)[['continuum']], 'diagnosed')
+        start.times = expand.population.to.hiv.positive(components$jheem, intervention$processed$suppression$start.times)
         start.times[,,,,,undiagnosed.states,,] = Inf
+        end.times = expand.population.to.hiv.positive(components$jheem, intervention$processed$suppression$end.times)
+        end.times[,,,,,undiagnosed.states,,] = Inf
+        apply.functions = expand.population.to.hiv.positive(components$jheem, intervention$processed$suppression$apply.functions)
+        apply.functions[,,,,,undiagnosed.states,,] = NA
         
         components = set.foreground.suppression(components,
                                                 suppressed.proportions = suppressed.proportions,
                                                 years = intervention$processed$suppression$times,
-                                                start.years = start.times)
+                                                start.years = start.times,
+                                                end.years = end.times,
+                                                apply.functions = apply.functions)
     }
     
     # PrEP
@@ -706,7 +729,9 @@ setup.components.for.intervention <- function(components,
         components = set.foreground.prep.coverage(components,
                                                   prep.coverage = intervention$processed$prep$rates,
                                                   years = intervention$processed$prep$times,
-                                                  start.years = intervention$processed$prep$start.times)
+                                                  start.years = intervention$processed$prep$start.times,
+                                                  end.years = intervention$processed$prep$end.times,
+                                                  apply.functions = intervention$processed$prep$apply.functions)
     }
     
     components

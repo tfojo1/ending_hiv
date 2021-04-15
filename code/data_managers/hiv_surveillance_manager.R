@@ -2,6 +2,12 @@
 ##-----------------##
 ##-- THE GETTERS --##
 ##-----------------##
+ALLOWED.DATA.TYPES = c('prevalence','new','mortality',
+                       'diagnosed','diagnosed.ci.lower','diagnosed.ci.upper',
+                       'suppression','suppression.ci.lower','suppression.ci.upper', 'prevalence.for.continuum',
+                       'estimated.prevalence', 'estimated.prevalence.ci.lower','estimated.prevalence.ci.upper', 'estimated.prevalence.rse',
+                       'cumulative.aids.mortality', 'aids.diagnoses',
+                       'linkage','new.for.continuum', 'prep')
 
 get.surveillance.data <- function(surv=msa.surveillance,
                                   location.codes=BALTIMORE.MSA,
@@ -18,12 +24,7 @@ get.surveillance.data <- function(surv=msa.surveillance,
                                   na.rm=F)
 {
     #Check the data.type argument
-    ALLOWED.DATA.TYPES = c('prevalence','new','mortality',
-                           'diagnosed','diagnosed.ci.lower','diagnosed.ci.upper',
-                           'suppression','suppression.ci.lower','suppression.ci.upper', 'prevalence.for.continuum',
-                           'estimated.prevalence', 'estimated.prevalence.ci.lower','estimated.prevalence.ci.upper', 'estimated.prevalence.rse',
-                           'cumulative.aids.mortality', 'aids.diagnoses',
-                           'linkage','new.for.continuum', 'prep')
+    
     if (all(data.type!=ALLOWED.DATA.TYPES))
         stop(paste0("data.type must be one of: ",
                     paste0(paste0("'", ALLOWED.DATA.TYPES, "'"), collapse=", ")))
@@ -159,6 +160,32 @@ get.surveillance.data <- function(surv=msa.surveillance,
         access(rv, year=as.character(years)) = data
         rv
     }
+}
+
+get.surveillance.data.source <- function(surv=msa.surveillance,
+                                  location.codes=BALTIMORE.MSA,
+                                  data.type=c('new', 'prevalence','mortality','diagnosed')[1],
+                                  years=NULL,
+                                  age=F,
+                                  race=F,
+                                  sex=F,
+                                  risk=F,
+                                  na.rm=F,
+                                  wrap='\\n')
+{
+    data = get.surveillance.data(surv=surv, location.codes=location.codes, data.type=data.type,
+                                 years=years,
+                                 age=age, race=race, sex=sex, risk=risk,
+                                 throw.error.if.missing.data = F, throw.error.if.missing.years = F)
+    
+    if (is.null(data) || all(is.na(data)))
+        'N/A'
+    else if (data.type=='prep')
+        'AidsVu'
+    else if (data.type=='linkage' || data.type=='suppression')
+        'Local Health Department'
+    else
+        'CDC'
 }
 
 get.surveillance.data.rate <- function(surv,
@@ -1207,7 +1234,8 @@ read.msa.file <- function(file, verbose=T, allow.misses=F)
               grepl('metropolitan', df[,1], ignore.case = T) |
               grepl('countie', df[,1], ignore.case = T)
               )))
-        browser()
+        stop('missing codes in df - consider putting a browser statement here')
+   #     browser()
 
     division.mask = division.mask[!is.na(df$code)]
     df = df[!is.na(df$code),]

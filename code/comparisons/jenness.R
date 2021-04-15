@@ -28,25 +28,43 @@ if (1==2)
     
     jheem.testing.dists = lapply(c(list(noint), jenness.simsets), get.simset.incidence.dist, 
                                    year=2030, per.population=100, include.hiv.positive.in.denominator=F, sex='msm')
-    sapply(jheem.testing.dists, get.means)
+#    sapply(jheem.testing.dists, get.means)
     
     
     jheem.black.testing.dists = lapply(c(list(noint), jenness.simsets), get.simset.incidence.dist, 
                                  year=2030, per.population=100, include.hiv.positive.in.denominator=F, sex='msm',
                                  race='black')
-    sapply(jheem.black.testing.dists, get.means)
+#    sapply(jheem.black.testing.dists, get.means)
     
     
     jheem.hispanic.testing.dists = lapply(c(list(noint), jenness.simsets), get.simset.incidence.dist, 
                                        year=2030, per.population=100, include.hiv.positive.in.denominator=F, sex='msm',
                                        race='hispanic')
-    sapply(jheem.hispanic.testing.dists, get.means)
+#    sapply(jheem.hispanic.testing.dists, get.means)
     
     
     jheem.other.testing.dists = lapply(c(list(noint), jenness.simsets), get.simset.incidence.dist, 
                                           year=2030, per.population=100, include.hiv.positive.in.denominator=F, sex='msm',
                                           race='other')
-    sapply(jheem.other.testing.dists, get.means)
+#    sapply(jheem.other.testing.dists, get.means)
+
+    jheem.df = cbind(Overall=sapply(jheem.testing.dists, make.dist.summary),
+                     Black=sapply(jheem.black.testing.dists, make.dist.summary),
+                     Hispanic=sapply(jheem.hispanic.testing.dists, make.dist.summary),
+                     Other=sapply(jheem.other.testing.dists, make.dist.summary))
+    
+    write.csv(jheem.df, file='../Manuscripts/manuscript_1/appendix_1/scratch/jheem_for_jenness.csv')
+}
+
+make.dist.summary <- function(dist, digits=2)
+{
+    ci = format(get.intervals(dist), nsmall=digits, digits=digits)
+    paste0(format(get.means(dist), nsmall=digits, digits=digits), 
+           ' [',
+           ci[1], 
+           '-',
+           ci[2],
+           ']')
 }
 
 ##-- RUN IT --##

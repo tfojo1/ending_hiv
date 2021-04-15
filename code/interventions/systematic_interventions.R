@@ -27,18 +27,19 @@ A2.INTERVENTION.CODES = c('ybhm.tq1',
                           'ybhm.s90',
                           'ybhm.p25',
                           'ybhm.p50',
-                          'mi.tq1.ybh.tq6m',
+                          'mi.tq1.ybh.tq1.x',
                           'mi.tq6m.ybh.tq6m',
-                          'mi.s80.ybhm.s90.x',
+                          'mi.s80.ybhm.s80.x',
                           'mi.s90.ybhm.s90.x',
-                          'mi.p25.ybh.p50.x',
+                          'mi.p25.ybh.p25.x',
                           'mi.p50.ybh.p50.x',
-                          'het.tq2.mi.tq6m',
+                          'het.tq2.mi.tq1.x',
                           'het.tq1.mi.tq6m',
-                          'het.s80.mi.s90.x',
+                          'het.s80.mi.s80.x',
                           'het.s90.mi.s90.x',
-                          'het.p10.mi.p50.x',
+                          'het.p10.mi.p25.x',
                           'het.p25.mi.p50.x')
+
 
 A1.INTERVENTION.SET.1Y = c(list(NO.INTERVENTION),
                         lapply(A1.INTERVENTION.CODES, intervention.from.code))
@@ -64,6 +65,36 @@ ALL.INTERVENTIONS.3Y = union.intervention.lists(A1.INTERVENTION.SET.3Y,
 A1.INTERVENTION.SET = A1.INTERVENTION.SET.3Y
 A2.INTERVENTION.SET = A2.INTERVENTION.SET.3Y
 ALL.INTERVENTIONS = ALL.INTERVENTIONS.3Y
+
+
+# For legacy interventions
+OLD.A2.INTERVENTION.CODES = c('ybhm.tq1',
+                              'ybhm.tq6m',
+                              'ybhm.s80',
+                              'ybhm.s90',
+                              'ybhm.p25',
+                              'ybhm.p50',
+                              'mi.tq1.ybh.tq6m',
+                              'mi.tq6m.ybh.tq6m',
+                              'mi.s80.ybhm.s90.x',
+                              'mi.s90.ybhm.s90.x',
+                              'mi.p25.ybh.p50.x',
+                              'mi.p50.ybh.p50.x',
+                              'het.tq2.mi.tq6m',
+                              'het.tq1.mi.tq6m',
+                              'het.s80.mi.s90.x',
+                              'het.s90.mi.s90.x',
+                              'het.p10.mi.p50.x',
+                              'het.p25.mi.p50.x')
+
+OLD.A2.TO.REMOVE = setdiff(OLD.A2.INTERVENTION.CODES, A2.INTERVENTION.CODES)
+NEW.A2.TO.ADD = setdiff(A2.INTERVENTION.CODES, OLD.A2.INTERVENTION.CODES)
+
+
+OLD.A2.TO.REMOVE.SET.3Y = lapply(paste0(OLD.A2.TO.REMOVE, '.3y'), intervention.from.code)
+NEW.A2.TO.ADD.SET.3Y = lapply(paste0(NEW.A2.TO.ADD, '.3y'), intervention.from.code)
+
+
 
 run.systematic.interventions <- function(simset,
                                          dst.dir,
@@ -110,8 +141,7 @@ run.systematic.interventions <- function(simset,
         filename = get.simset.filename(location=location,
                                        intervention=int)
         int.name = get.intervention.name(int)
-        
-        if (!overwrite && file.exists(file.path(dst.dir, filename)))
+        if (!overwrite && file.exists(file.path(dst.dir, location, filename)))
         {
             if (verbose)
                 print(paste0("Skipping intervention: '", int.name, "' - already done"))
@@ -238,4 +268,23 @@ run.systematic.interventions.from.seed <- function(locations,
     
     if (verbose)
         print('All Done')
+}
+
+remove.systematic.interventions <- function(dir,
+                                            locations = TARGET.MSAS,
+                                            interventions)
+{
+    for (location in locations)
+    {
+        for (int in interventions)
+        {
+            print(paste0("Removing intervention '",
+                   get.intervention.name(int),
+                   "' from ",
+                   location))
+            filename = get.simset.filename(location=location,
+                                           intervention=int)
+            file.remove(file.path(dir, location, filename))   
+        }
+    }
 }

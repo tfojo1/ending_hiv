@@ -15,13 +15,17 @@ get.pretty.unit.type.names <- function(type)
 
 #'@param type The specific rates/proportions to which this intervention applies
 #'@param start.year The precise time at which the intervention starts to scale up (ie, the last time prior to which the intervention rates apply)
+#'@param end.year The precise time at which the intervention stops being applied (ie, the first time when the intervention rates no longer apply)
 #'@param rates A numeric vector of rates that will apply going forward
 #'@param years The times at which those rates apply
+#'@param apply.function The character name of the function that applies the intervention rate. Options are 'absolute' (the intervention rate is used as the new rate), 'multiplier' (the intervention rate is multiplied by the old rate), 'odds.ratio' (the intervention rate is treated as an odds ratio, and applied to the old rate, which is treated as a probability), 'additive' (the intervention rate is added to the old rate)
 #'
 create.intervention.unit <- function(type=c('testing','prep','suppression'),
                                      start.year=2021,
                                      rates,
-                                     years)
+                                     years,
+                                     end.year=Inf,
+                                     apply.function=c('absolute','multiplier','odds.ratio','additive')[1])
 {
     #-- Check Types --#
     ALLOWED.TYPES = c('testing','prep','suppression')
@@ -48,6 +52,15 @@ create.intervention.unit <- function(type=c('testing','prep','suppression'),
     if (any(years <= start.year))
         stop("'start.year' must be prior to ALL elements of 'years'")
     
+    #-- Check apply function --#
+    ALLOWED.APPLY.FUNCTIONS = c('absolute','multiplier','odds.ratio','additive')
+    if (!is(apply.function, 'character') || length(apply.function)!=1 || is.na(apply.function))
+        stop("apply.function must be a single character value")
+    
+    if (all(apply.function != ALLOWED.APPLY.FUNCTIONS))
+        stop(paste0("apply.function must be one of: ",
+                    paste0("'", ALLOWED.APPLY.FUNCTIONS, "'", collapse=', ')))
+    
     #-- Sort by year --#
     o = order(years)
     years = years[o]
@@ -55,8 +68,10 @@ create.intervention.unit <- function(type=c('testing','prep','suppression'),
     
     rv = list(type=type,
               start.year=start.year,
+              end.year=end.year,
               rates=rates,
-              years=years)
+              years=years,
+              apply.function=apply.function)
     
     class(rv) = 'intervention.unit'
     rv

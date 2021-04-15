@@ -266,7 +266,7 @@ get.prep.indications.estimate <- function(prep.manager=ALL.DATA.MANAGERS$prep,
     # male age1-4 from NSFG 2002,
     #   https://www.cdc.gov/nchs/data/ad/ad362.pdf  
     #   
-    # age5 from Tessler https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2426743/
+    # age5 from Lindau 2007 https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2426743/
     
     p.active.male.by.age = c(
         age1=((1-.403)*10208 + (1-.09)*9883)/(10208+9883)*10/12,

@@ -35,6 +35,43 @@ get.testing.model <- function(cm,
 #    OLD.get.testing.model(cm, location, population)
 }
 
+get.newly.suppressed.model <- function(cm,
+                                       location)
+{
+    list(intercept=cm$newly.suppressed$stratified.log.odds.intercept,
+         slope=cm$newly.suppressed$stratified.log.odds.slope,
+         anchor.year = cm$newly.suppressed$anchor.year,
+         max.proportion = cm$newly.suppressed$max.proportion)
+}
+
+
+get.unsuppression.model <- function(cm,
+                                       location)
+{
+    list(intercept=cm$unsuppression$stratified.log.odds.intercept,
+         slope=cm$unsuppression$stratified.log.odds.slope,
+         anchor.year = cm$unsuppression$anchor.year,
+         max.proportion = cm$unsuppression$max.proportion)
+}
+
+get.linkage.model <- function(cm,
+                                       location)
+{
+    list(intercept=cm$linkage$stratified.log.odds.intercept,
+         slope=cm$linkage$stratified.log.odds.slope,
+         anchor.year = cm$linkage$anchor.year,
+         max.proportion = cm$linkage$max.proportion)
+}
+
+get.unsuppressed.to.disengaged.model <- function(cm,
+                                    location)
+{
+    list(intercept=cm$unsuppressed.to.disengaged$stratified.log.odds.intercept,
+         slope=cm$unsuppressed.to.disengaged$stratified.log.odds.slope,
+         anchor.year = cm$unsuppressed.to.disengaged$anchor.year,
+         max.proportion = cm$unsuppressed.to.disengaged$max.proportion)
+}
+
 logit <- function(x){log(x) - log(1-x)}
 expit <- function(x){1/(1+exp(-x))}
 
@@ -138,15 +175,59 @@ get.proportion.ever.tested.in.states <- function(cm,
 create.continuum.manager <- function(dir='cleaned_data/', 
                                      settings = SETTINGS,
                                      national.surveillance = national.surveillance,
+                                     
                                      suppression.anchor.year = 2020,
                                      testing.anchor.year = 2010,
                                      linkage.anchor.year = 2020,
+                                     newly.suppressed.anchor.year = 2020,
+                                     unsuppression.anchor.year = 2020,
+                                     unsuppressed.to.disengaged.anchor.year = 2020,
+                                     
+                                     
                                      max.tested.proportion = 0.9,
                                      max.suppressed.proportion = 0.9,
                                      max.linked.proportion = 0.95,
+                                     max.newly.suppressed.proportion = 0.95,
+                                     max.unsuppressed.proportion = 0.25,
+                                     max.unsuppressed.to.disengaged.proportion = 0.5,
+                                     
                                      verbose=T)
 {
     cm = list()
+    
+    
+    
+    if (verbose)
+        print('Setting up New Suppression')
+    cm = setup.newly.suppressed.model(cm,
+                                      dir=dir,
+                                      anchor.year = newly.suppressed.anchor.year,
+                                      max.newly.suppressed.proportion = max.newly.suppressed.proportion,
+                                      settings=settings)
+    if (verbose)
+        print('Setting up Unsuppression')
+    cm = setup.unsuppression.model(cm,
+                                      dir=dir,
+                                      anchor.year = unsuppression.anchor.year,
+                                      max.unsuppressed.proportion = max.unsuppressed.proportion,
+                                      settings=settings)
+    
+    if (verbose)
+        print('Reading Linkage')
+    cm = run.linkage.regressions(cm,
+                                 dir=dir,
+                                 anchor.year = linkage.anchor.year,
+                                 max.linked.proportion = max.linked.proportion,
+                                 settings=settings)
+    
+    if (verbose)
+        print('Reading unsuppressed.to.disengaged')
+    cm = setup.unsuppressed.to.disengaged.model(cm,
+                                 dir=dir,
+                                 anchor.year = unsuppressed.to.disengaged.anchor.year,
+                                 max.unsuppressed.to.disengaged.proportion = max.unsuppressed.to.disengaged.proportion,
+                                 settings=settings)
+    
     
     if (verbose)
         print("Reading Suppression")
@@ -166,14 +247,84 @@ create.continuum.manager <- function(dir='cleaned_data/',
                                  settings=settings)
     cm$state.testing = read.brfss.state(file = file.path(dir, 'continuum/state/BRFSS_state.csv'))
     
+    cm
+}
+
+##-----------------------------------##
+##-- SET UP NEWLY SUPPRESSED MODEL --##
+##-----------------------------------##
+
+setup.newly.suppressed.model <- function(cm,
+                                         dir,
+                                         anchor.year,
+                                         max.newly.suppressed.proportion,
+                                         settings)
+{
+    cm$newly.suppressed = list(
+        max.proportion = max.newly.suppressed.proportion,
+        anchor.year = anchor.year
+    ) 
     
-    if (verbose)
-        print('Reading Linkage')
-    cm = run.linkage.regressions(cm,
-                                 dir=dir,
-                                 anchor.year = linkage.anchor.year,
-                                 max.linked.proportion = max.linked.proportion,
-                                 settings=settings)
+    
+    dim.names = list(age=settings$AGES$labels, race=settings$RACES, sex=settings$SEXES, risk=settings$RISK_STRATA)
+
+    print("FOR NOW WE ARE USING DUMMY NEWLY SUPPRESSED MODEL")
+    cm$newly.suppressed$stratified.log.odds.intercept = array(logit(.8), dim=sapply(dim.names, length), dimnames=dim.names)
+    cm$newly.suppressed$stratified.log.odds.slope = array(0, dim=sapply(dim.names, length), dimnames=dim.names)
+    
+    
+    cm
+}
+
+##--------------------------------##
+##-- SET UP UNSUPPRESSION MODEL --##
+##--------------------------------##
+
+setup.unsuppression.model <- function(cm,
+                                         dir,
+                                         anchor.year,
+                                         max.unsuppressed.proportion,
+                                         settings)
+{
+    cm$unsuppression = list(
+        max.proportion = max.unsuppressed.proportion,
+        anchor.year = anchor.year
+    ) 
+    
+    
+    dim.names = list(age=settings$AGES$labels, race=settings$RACES, sex=settings$SEXES, risk=settings$RISK_STRATA)
+    
+    print("FOR NOW WE ARE USING DUMMY UNSUPPRESSED MODEL")
+    cm$unsuppression$stratified.log.odds.intercept = array(logit(.02), dim=sapply(dim.names, length), dimnames=dim.names)
+    cm$unsuppression$stratified.log.odds.slope = array(0, dim=sapply(dim.names, length), dimnames=dim.names)
+    
+    
+    cm
+}
+
+
+##---------------------------------------------##
+##-- SET UP UNSUPPRESSED TO DISENGAGED MODEL --##
+##---------------------------------------------##
+
+setup.unsuppressed.to.disengaged.model <- function(cm,
+                                      dir,
+                                      anchor.year,
+                                      max.unsuppressed.to.disengaged.proportion,
+                                      settings)
+{
+    cm$unsuppressed.to.disengaged = list(
+        max.proportion = max.unsuppressed.to.disengaged.proportion,
+        anchor.year = anchor.year
+    ) 
+    
+    
+    dim.names = list(age=settings$AGES$labels, race=settings$RACES, sex=settings$SEXES, risk=settings$RISK_STRATA)
+    
+    print("FOR NOW WE ARE USING DUMMY UNSUPPRESSED TO DISENGAGED MODEL")
+    cm$unsuppressed.to.disengaged$stratified.log.odds.intercept = array(logit(.02), dim=sapply(dim.names, length), dimnames=dim.names)
+    cm$unsuppressed.to.disengaged$stratified.log.odds.slope = array(0, dim=sapply(dim.names, length), dimnames=dim.names)
+    
     
     cm
 }
@@ -191,7 +342,7 @@ run.suppression.regressions <- function(cm,
     #-- Fit Sex x Risk --#
     
     df = melt(national.surveillance$suppression.sex.risk)
-    counts = melt(national.surveillance$prevalence.for.continuum.sex.risk)
+    counts = reshape2::melt(national.surveillance$prevalence.for.continuum.sex.risk)
     df$n = counts$value
     df = df[df$sex != 'female' | (df$risk!='msm' & df$risk!='msm_idu'),]
     
@@ -217,15 +368,15 @@ run.suppression.regressions <- function(cm,
     
     #-- The 'All' Data Frame --#
     
-    df.all = melt(national.surveillance$suppression.all)
+    df.all = reshape2::melt(national.surveillance$suppression.all)
     df.all$n = national.surveillance$prevalence.for.continuum.all[,1]
     
     df.all$value = pmin(df.all$value / max.suppressed.proportion, .9999)
     
     #-- Fit Race --#
     
-    df = melt(national.surveillance$suppression.race)
-    df$n = melt(national.surveillance$prevalence.for.continuum.all)$value
+    df = reshape2::melt(national.surveillance$suppression.race)
+    df$n = reshape2::melt(national.surveillance$prevalence.for.continuum.all)$value
     df$value = pmin(df$value / max.suppressed.proportion, .9999)
     
     df = rbind(df,
@@ -247,8 +398,8 @@ run.suppression.regressions <- function(cm,
     
     #-- Fit Age --#
     
-    df = melt(national.surveillance$suppression.age)
-    df$n = melt(national.surveillance$prevalence.for.continuum.age)$value
+    df = reshape2::melt(national.surveillance$suppression.age)
+    df$n = reshape2::melt(national.surveillance$prevalence.for.continuum.age)$value
     df$value = pmin(df$value / max.suppressed.proportion, .9999)
     
     ages = sort(unique(as.character(df$age)))
@@ -377,7 +528,10 @@ run.suppression.regressions <- function(cm,
     cm
 }
 
-##-- SET UP LINKAGE --##
+##--------------------------##
+##-- SET UP LINKAGE MODEL --##
+##--------------------------##
+
 
 run.linkage.regressions <- function(cm,
                                     dir='cleaned_data',
@@ -568,7 +722,7 @@ run.linkage.regressions <- function(cm,
                       max.proportion = max.linked.proportion,
                       log.ors = numeric())
     
-    dim.names = list(age=settings$AGES$labels, race=settings$RACES, sex=settings$SEXES, risks=settings$RISK_STRATA)
+    dim.names = list(age=settings$AGES$labels, race=settings$RACES, sex=settings$SEXES, risk=settings$RISK_STRATA)
     cm$linkage$stratified.log.odds.slope = cm$linkage$stratified.log.odds.intercept =
         array(0, dim=sapply(dim.names, length), dimnames=dim.names)
     
@@ -721,6 +875,12 @@ setup.retention <- function(cm,
     cm$retention$stratified.log.odds.intercept = array(0, dim=sapply(dim.names, length), dimnames=dim.names)
     cm$retention$stratified.log.odds.slope = array(0, dim=sapply(dim.names, length), dimnames=dim.names)
     
+    
+    
+    
+    
+    # return
+    cm
 }
 
 ##-- SET UP TESTING --##

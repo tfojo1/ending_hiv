@@ -1,9 +1,8 @@
 
 source('code/systematic_calibration/extract_and_run.R')
+msas = TARGET.MSAS[6 + 8*3]#TARGET.MSAS[2 + 8*(0:3)]
 
-msas = c(CLEVELAND.MSA) #TARGET.MSAS[8 + 8*(0:3)]
-
-INTERVENTIONS.TO.DO = ALL.INTERVENTIONS.3Y#[c(5,12)]
+INTERVENTIONS.TO.DO = NEW.A2.TO.ADD.SET.3Y[4] #ALL.INTERVENTIONS.3Y#[c(5,12)]
 
 for (msa in msas)
 {

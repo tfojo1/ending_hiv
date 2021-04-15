@@ -137,7 +137,8 @@ setup.components.for.msa <- function(msa,
                                       r.peak=2*parameters['untreated.hiv.mortality'],
                                       r0=parameters['untreated.hiv.mortality'],
                                       r1=parameters['untreated.hiv.mortality'],
-                                      r2=parameters['untreated.hiv.mortality'])
+                                      r2=parameters['untreated.hiv.mortality'],
+                                      fraction.change.after.end = 0.025)
 
     #-- Initial Population already done by default --#
     if (seed.prevalence)
@@ -221,42 +222,201 @@ setup.components.for.msa <- function(msa,
     if (verbose)
         print('**Setting up suppression proportions')
     
-    comps = setup.background.suppression(comps,
+    if (is.null(settings$VERSION) || settings$VERSION=='collapsed_1.0')
+    {
+        comps = setup.background.suppression(comps,
+                                             continuum.manager=data.managers$continuum,
+                                             location=msa,
+                                             years=smooth.from.year:smooth.to.year)
+        
+        comps = set.background.suppression.ors(comps,
+                                               msm.or.intercept=1,
+                                               heterosexual.or.intercept=1,
+                                               idu.or.intercept=1,
+                                               black.or.intercept=1,
+                                               hispanic.or.intercept=1,
+                                               other.or.intercept=1,
+                                               age1.or.intercept=1,
+                                               age2.or.intercept=1,
+                                               age3.or.intercept=1,
+                                               age4.or.intercept=1,
+                                               age5.or.intercept=1,
+                                               
+                                               total.or.slope=1,
+                                               msm.or.slope=1,
+                                               heterosexual.or.slope=1,
+                                               idu.or.slope=1,
+                                               black.or.slope=1,
+                                               hispanic.or.slope=1,
+                                               other.or.slope=1,
+                                               age1.or.slope=1,
+                                               age2.or.slope=1,
+                                               age3.or.slope=1,
+                                               age4.or.slope=1,
+                                               age5.or.slope=1)
+    }
+    
+
+    #-- PrEP --#
+    
+    comps = set.background.prep.ors(comps,
+                                           msm.or.intercept=1,
+                                           heterosexual.or.intercept=1,
+                                           idu.or.intercept=1)
+    
+        
+    #-- Newly Suppressed, Linkage, etc --#
+    
+    if (!is.null(settings$VERSION) && settings$VERSION=='expanded_1.0')
+    {
+        comps = setup.background.newly.suppressed(comps,
+                                                  continuum.manager=data.managers$continuum,
+                                                  location=msa,
+                                                  years=smooth.from.year:smooth.to.year)
+        
+        comps = set.background.newly.suppressed.ors(comps,
+                                               msm.or.intercept=1,
+                                               heterosexual.or.intercept=1,
+                                               idu.or.intercept=1,
+                                               black.or.intercept=1,
+                                               hispanic.or.intercept=1,
+                                               other.or.intercept=1,
+                                               age1.or.intercept=1,
+                                               age2.or.intercept=1,
+                                               age3.or.intercept=1,
+                                               age4.or.intercept=1,
+                                               age5.or.intercept=1,
+                                               
+                                               total.or.slope=1,
+                                               msm.or.slope=1,
+                                               heterosexual.or.slope=1,
+                                               idu.or.slope=1,
+                                               black.or.slope=1,
+                                               hispanic.or.slope=1,
+                                               other.or.slope=1,
+                                               age1.or.slope=1,
+                                               age2.or.slope=1,
+                                               age3.or.slope=1,
+                                               age4.or.slope=1,
+                                               age5.or.slope=1)
+        
+        
+        comps = setup.background.unsuppression(comps,
+                                                  continuum.manager=data.managers$continuum,
+                                                  location=msa,
+                                                  years=smooth.from.year:smooth.to.year)
+        
+        comps = set.background.unsuppression.ors(comps,
+                                                    msm.or.intercept=1,
+                                                    heterosexual.or.intercept=1,
+                                                    idu.or.intercept=1,
+                                                    black.or.intercept=1,
+                                                    hispanic.or.intercept=1,
+                                                    other.or.intercept=1,
+                                                    age1.or.intercept=1,
+                                                    age2.or.intercept=1,
+                                                    age3.or.intercept=1,
+                                                    age4.or.intercept=1,
+                                                    age5.or.intercept=1,
+                                                    
+                                                    total.or.slope=1,
+                                                    msm.or.slope=1,
+                                                    heterosexual.or.slope=1,
+                                                    idu.or.slope=1,
+                                                    black.or.slope=1,
+                                                    hispanic.or.slope=1,
+                                                    other.or.slope=1,
+                                                    age1.or.slope=1,
+                                                    age2.or.slope=1,
+                                                    age3.or.slope=1,
+                                                    age4.or.slope=1,
+                                                    age5.or.slope=1)
+        
+        comps = setup.background.linkage(comps,
                                          continuum.manager=data.managers$continuum,
                                          location=msa,
                                          years=smooth.from.year:smooth.to.year)
+        
+        comps = set.background.linkage.ors(comps,
+                                               msm.or.intercept=1,
+                                               heterosexual.or.intercept=1,
+                                               idu.or.intercept=1,
+                                               black.or.intercept=1,
+                                               hispanic.or.intercept=1,
+                                               other.or.intercept=1,
+                                               age1.or.intercept=1,
+                                               age2.or.intercept=1,
+                                               age3.or.intercept=1,
+                                               age4.or.intercept=1,
+                                               age5.or.intercept=1,
+                                               
+                                               total.or.slope=1,
+                                               msm.or.slope=1,
+                                               heterosexual.or.slope=1,
+                                               idu.or.slope=1,
+                                               black.or.slope=1,
+                                               hispanic.or.slope=1,
+                                               other.or.slope=1,
+                                               age1.or.slope=1,
+                                               age2.or.slope=1,
+                                               age3.or.slope=1,
+                                               age4.or.slope=1,
+                                               age5.or.slope=1)
+        
+        
+        comps = setup.background.unsuppressed.to.disengaged(comps,
+                                               continuum.manager=data.managers$continuum,
+                                               location=msa,
+                                               years=smooth.from.year:smooth.to.year)
+        
+        comps = set.background.unsuppressed.to.disengaged.ors(comps,
+                                                 msm.or.intercept=1,
+                                                 heterosexual.or.intercept=1,
+                                                 idu.or.intercept=1,
+                                                 black.or.intercept=1,
+                                                 hispanic.or.intercept=1,
+                                                 other.or.intercept=1,
+                                                 age1.or.intercept=1,
+                                                 age2.or.intercept=1,
+                                                 age3.or.intercept=1,
+                                                 age4.or.intercept=1,
+                                                 age5.or.intercept=1,
+                                                 
+                                                 total.or.slope=1,
+                                                 msm.or.slope=1,
+                                                 heterosexual.or.slope=1,
+                                                 idu.or.slope=1,
+                                                 black.or.slope=1,
+                                                 hispanic.or.slope=1,
+                                                 other.or.slope=1,
+                                                 age1.or.slope=1,
+                                                 age2.or.slope=1,
+                                                 age3.or.slope=1,
+                                                 age4.or.slope=1,
+                                                 age5.or.slope=1)
+    }
     
-    comps = set.background.suppression.ors(comps,
-                                           msm.or.intercept=1,
-                                           heterosexual.or.intercept=1,
-                                           idu.or.intercept=1,
-                                           black.or.intercept=1,
-                                           hispanic.or.intercept=1,
-                                           other.or.intercept=1,
-                                           age1.or.intercept=1,
-                                           age2.or.intercept=1,
-                                           age3.or.intercept=1,
-                                           age4.or.intercept=1,
-                                           age5.or.intercept=1,
-                                           
-                                           total.or.slope=1,
-                                           msm.or.slope=1,
-                                           heterosexual.or.slope=1,
-                                           idu.or.slope=1,
-                                           black.or.slope=1,
-                                           hispanic.or.slope=1,
-                                           other.or.slope=1,
-                                           age1.or.slope=1,
-                                           age2.or.slope=1,
-                                           age3.or.slope=1,
-                                           age4.or.slope=1,
-                                           age5.or.slope=1)
     
+    #-- Future slopes --#
     comps = set.future.background.slopes(comps,
-                                         future.supression.slope.or=1,
                                          future.testing.slope.or=1,
                                          future.prep.slope.or=1,
                                          after.year=2020)
+    
+    
+    if (is.null(settings$VERSION) || settings$VERSION=='collapsed_1.0')
+        comps = set.future.background.slopes(comps,
+                                             future.supression.slope.or=1,
+                                             after.year=2020)
+    
+    
+    if (!is.null(settings$VERSION) && settings$VERSION=='expanded_1.0')
+        comps = set.future.background.slopes(comps,
+                                             future.newly.suppressed.slope.or=1,
+                                             future.unsuppression.slope.or=1,
+                                             future.linkage.slope.or=1,
+                                             future.unsuppressed.to.disengaged.slope.or=1,
+                                             after.year=2020)
     
     #-- PrEP --#
     if (verbose)
