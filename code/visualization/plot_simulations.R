@@ -4,8 +4,8 @@ library(htmltools)
 ##-- CONSTANTS --##
 ##---------------##
 
-DATA.TYPE.NAMES = c(new='Reported Cases (n)',
-                    prevalence='Prevalent Cases (n)',
+DATA.TYPE.NAMES = c(new='Reported Cases',
+                    prevalence='Estimated Prevalence',
                     diagnosed='Knowledge of Status',
                     suppression='Viral Suppression',
                     mortality='Mortality Among PWH',
@@ -1654,15 +1654,16 @@ get.nontrivial.dimension.subsets <- function(dimension.subsets,
             F
         else
         {
-            surv.elem.mask = grepl(paste0(data.type, '.*', dimension), names(surv))
-            if (any(surv.elem.mask))
-            {
-                surv.elem = surv[surv.elem.mask][[1]]
-                all.subsets = dimnames(surv.elem)[[dimension]]
-                !setequal(all.subsets, dimension.subsets[[dimension]])
-            }
-            else
-                T
+            !setequal(names(PRETTY.NAMES[[dimension]]), dimension.subsets[[dimension]])
+    #        surv.elem.mask = grepl(paste0(data.type, '.*', dimension), names(surv))
+    #        if (any(surv.elem.mask))
+    #        {
+    #            surv.elem = surv[surv.elem.mask][[1]]
+    #            all.subsets = dimnames(surv.elem)[[dimension]]
+    #            !setequal(all.subsets, dimension.subsets[[dimension]])
+    #        }
+    #        else
+    #            T
         }
     })
     

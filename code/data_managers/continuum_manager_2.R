@@ -72,6 +72,26 @@ get.unsuppressed.to.disengaged.model <- function(cm,
          max.proportion = cm$unsuppressed.to.disengaged$max.proportion)
 }
 
+get.suppressed.to.disengaged.model <- function(cm,
+                                                 location)
+{
+    list(intercept=cm$suppressed.to.disengaged$stratified.log.odds.intercept,
+         slope=cm$suppressed.to.disengaged$stratified.log.odds.slope,
+         anchor.year = cm$suppressed.to.disengaged$anchor.year,
+         max.proportion = cm$suppressed.to.disengaged$max.proportion)
+}
+
+
+get.reengagement.model <- function(cm,
+                                                 location)
+{
+    list(intercept=cm$reengagement$stratified.log.odds.intercept,
+         slope=cm$reengagement$stratified.log.odds.slope,
+         anchor.year = cm$reengagement$anchor.year,
+         max.proportion = cm$reengagement$max.proportion)
+}
+
+
 logit <- function(x){log(x) - log(1-x)}
 expit <- function(x){1/(1+exp(-x))}
 
@@ -182,6 +202,8 @@ create.continuum.manager <- function(dir='cleaned_data/',
                                      newly.suppressed.anchor.year = 2020,
                                      unsuppression.anchor.year = 2020,
                                      unsuppressed.to.disengaged.anchor.year = 2020,
+                                     suppressed.to.disengaged.anchor.year = 2020,
+                                     reengagement.anchor.year = 2020,
                                      
                                      
                                      max.tested.proportion = 0.9,
@@ -190,6 +212,8 @@ create.continuum.manager <- function(dir='cleaned_data/',
                                      max.newly.suppressed.proportion = 0.95,
                                      max.unsuppressed.proportion = 0.25,
                                      max.unsuppressed.to.disengaged.proportion = 0.5,
+                                     max.suppressed.to.disengaged.proportion = 0.5,
+                                     max.reengaged.proportion = 0.5,
                                      
                                      verbose=T)
 {
@@ -227,6 +251,22 @@ create.continuum.manager <- function(dir='cleaned_data/',
                                  anchor.year = unsuppressed.to.disengaged.anchor.year,
                                  max.unsuppressed.to.disengaged.proportion = max.unsuppressed.to.disengaged.proportion,
                                  settings=settings)
+    
+    if (verbose)
+        print('Reading suppressed.to.disengaged')
+    cm = setup.suppressed.to.disengaged.model(cm,
+                                                dir=dir,
+                                                anchor.year = suppressed.to.disengaged.anchor.year,
+                                                max.suppressed.to.disengaged.proportion = max.suppressed.to.disengaged.proportion,
+                                                settings=settings)
+    
+    if (verbose)
+        print('Reading reengagement')
+    cm = setup.reengagement.model(cm,
+                                  dir=dir,
+                                  anchor.year = reengagement.anchor.year,
+                                  max.reengaged.proportion = max.reengaged.proportion,
+                                  settings=settings)
     
     
     if (verbose)
@@ -322,13 +362,64 @@ setup.unsuppressed.to.disengaged.model <- function(cm,
     dim.names = list(age=settings$AGES$labels, race=settings$RACES, sex=settings$SEXES, risk=settings$RISK_STRATA)
     
     print("FOR NOW WE ARE USING DUMMY UNSUPPRESSED TO DISENGAGED MODEL")
-    cm$unsuppressed.to.disengaged$stratified.log.odds.intercept = array(logit(.02), dim=sapply(dim.names, length), dimnames=dim.names)
+    cm$unsuppressed.to.disengaged$stratified.log.odds.intercept = array(logit(.25), dim=sapply(dim.names, length), dimnames=dim.names)
     cm$unsuppressed.to.disengaged$stratified.log.odds.slope = array(0, dim=sapply(dim.names, length), dimnames=dim.names)
     
     
     cm
 }
 
+##---------------------------------------------##
+##-- SET UP SUPPRESSED TO DISENGAGED MODEL --##
+##---------------------------------------------##
+
+setup.suppressed.to.disengaged.model <- function(cm,
+                                                   dir,
+                                                   anchor.year,
+                                                   max.suppressed.to.disengaged.proportion,
+                                                   settings)
+{
+    cm$suppressed.to.disengaged = list(
+        max.proportion = max.suppressed.to.disengaged.proportion,
+        anchor.year = anchor.year
+    ) 
+    
+    
+    dim.names = list(age=settings$AGES$labels, race=settings$RACES, sex=settings$SEXES, risk=settings$RISK_STRATA)
+    
+    print("FOR NOW WE ARE USING DUMMY SUPPRESSED TO DISENGAGED MODEL")
+    cm$suppressed.to.disengaged$stratified.log.odds.intercept = array(logit(.10), dim=sapply(dim.names, length), dimnames=dim.names)
+    cm$suppressed.to.disengaged$stratified.log.odds.slope = array(0, dim=sapply(dim.names, length), dimnames=dim.names)
+    
+    
+    cm
+}
+
+##-------------------------------##
+##-- SET UP REENGAGEMENT MODEL --##
+##-------------------------------##
+
+setup.reengagement.model <- function(cm,
+                                     dir,
+                                     anchor.year,
+                                     max.reengaged.proportion,
+                                     settings)
+{
+    cm$reengagement = list(
+        max.proportion = max.reengaged.proportion,
+        anchor.year = anchor.year
+    ) 
+    
+    
+    dim.names = list(age=settings$AGES$labels, race=settings$RACES, sex=settings$SEXES, risk=settings$RISK_STRATA)
+    
+    print("FOR NOW WE ARE USING DUMMY UNSUPPRESSED TO DISENGAGED MODEL")
+    cm$reengagement$stratified.log.odds.intercept = array(logit(.02), dim=sapply(dim.names, length), dimnames=dim.names)
+    cm$reengagement$stratified.log.odds.slope = array(0, dim=sapply(dim.names, length), dimnames=dim.names)
+    
+    
+    cm
+}
 ##------------------------##
 ##-- SET UP SUPPRESSION --##
 ##------------------------##

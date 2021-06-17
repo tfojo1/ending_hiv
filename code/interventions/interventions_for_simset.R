@@ -9,7 +9,8 @@ prepare.simset.for.interventions <- function(simset,
                                              total.future.testing.slope.or.dist = TOTAL.FUTURE.SLOPE.OR.DIST,
                                              total.future.prep.slope.or.dist = TOTAL.FUTURE.SLOPE.OR.DIST,
                                              total.future.suppressed.slope.or.dist = TOTAL.FUTURE.SLOPE.OR.DIST,
-                                             future.slope.after.year=2020)
+                                             future.slope.after.year=2020,
+                                             fix.components=T)
 {
     #-- Future Slopes --#
     
@@ -74,7 +75,11 @@ prepare.simset.for.interventions <- function(simset,
         components = unfix.jheem.components(components)
         
         components = get.components.for.calibrated.parameters(parameters, components)
-        components = fix.jheem.components(components)
+        
+        if (fix.components)
+            components = fix.jheem.components(components)
+        else
+            components = crunch.all.jheem.components(components)
 
         attr(sim, 'components') = components
         sim
@@ -129,7 +134,13 @@ run.sim.intervention <- function(sim,
                                  run.to.year,
                                  keep.years=run.from.year:run.to.year)
 {
-    components = setup.components.for.intervention(attr(sim, 'components'), intervention)
+    if (!is(intervention, 'list'))
+        intervention = list(intervention)
+    
+    components = attr(sim, 'components')
+    for (int in intervention)
+        components = setup.components.for.intervention(components, int, overwrite.prior.intervention=F)
+
     run.jheem.from.components(components, start.year=run.from.year, end.year=run.to.year,
                               prior.results = sim, keep.components = T, keep.years=keep.years)
 }

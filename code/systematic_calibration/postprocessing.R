@@ -4,6 +4,11 @@
 CDC.SEXES = c('male','female')
 CDC.RISKS = c('msm', 'idu', 'msm_idu', 'heterosexual')
 
+##-----------------------##
+##-- PROJECT FUNCTIONS --##
+##-----------------------##
+
+#an alias for backward compatibility
 get.sim.absolute.incidence <- function(sim,
                                        keep.dimensions = 'year',
                                        years=sim$years,
@@ -15,7 +20,30 @@ get.sim.absolute.incidence <- function(sim,
                                        census.totals = if (exists('ALL.DATA.MANAGERS')) ALL.DATA.MANAGERS$census.totals else CENSUS.TOTALS,
                                        use.cdc.categorizations=T)
 {
-    total.population = get.total.population(sim=sim, years=years, census.totals = census.totals)
+    project.absolute.incidence(sim=sim,
+                               keep.dimensions = keep.dimensions,
+                               years=years,
+                               ages=ages,
+                               races=races,
+                               subpopulations=subpopulations,
+                               sexes=sexes,
+                               risks=risks,
+                               census.totals = census.totals,
+                               use.cdc.categorizations=use.cdc.categorizations)
+}
+
+project.absolute.incidence <- function(sim,
+                                       keep.dimensions = 'year',
+                                       years=sim$years,
+                                       ages=NULL,
+                                       races=NULL,
+                                       subpopulations=NULL,
+                                       sexes=NULL,
+                                       risks=NULL,
+                                       census.totals = if (exists('ALL.DATA.MANAGERS')) ALL.DATA.MANAGERS$census.totals else CENSUS.TOTALS,
+                                       use.cdc.categorizations=T)
+{
+    
     numerators = do.extract.incidence(sim,
                                       years=years, 
                                       keep.dimensions=keep.dimensions,
@@ -30,8 +58,137 @@ get.sim.absolute.incidence <- function(sim,
                                       cd4=NULL,
                                       hiv.subsets=NULL,
                                       use.cdc.categorizations=use.cdc.categorizations)
+    
+    do.project.absolute(sim=sim,
+                        numerators=numerators,
+                        years=years,
+                        census.totals = census.totals)
 
-    denominators = do.extract.population.subset(sim, years=years, keep.dimensions = 'year', use.cdc.categorizations = use.cdc.categorizations)
+
+}
+
+project.absolute.new.diagnoses <- function(sim,
+                                           keep.dimensions = 'year',
+                                           years=sim$years,
+                                           ages=NULL,
+                                           races=NULL,
+                                           subpopulations=NULL,
+                                           sexes=NULL,
+                                           risks=NULL,
+                                           continuum.from=NULL,
+                                           cd4=NULL,
+                                           hiv.subsets = NULL,
+                                           census.totals = if (exists('ALL.DATA.MANAGERS')) ALL.DATA.MANAGERS$census.totals else CENSUS.TOTALS,
+                                           use.cdc.categorizations=T)
+{
+    numerators = do.extract.new.diagnoses(sim,
+                                          per.population=NA,
+                                          years=years,
+                                          ages=ages,
+                                          races=races,
+                                          subpopulations=subpopulations,
+                                          sexes=sexes,
+                                          risks=risks,
+                                          continuum.from=continuum.from,
+                                          cd4s=cd4,
+                                          hiv.subsets=hiv.subsets,
+                                          keep.dimensions=keep.dimensions,
+                                          include.hiv.positive.in.denominator=T,
+                                          use.cdc.categorizations=use.cdc.categorizations)
+    
+    do.project.absolute(sim=sim,
+                        numerators=numerators,
+                        years=years,
+                        census.totals = census.totals)
+}
+
+project.absolute.prevalence <- function(sim,
+                                        keep.dimensions = 'year',
+                                        years=sim$years,
+                                        ages=NULL,
+                                        races=NULL,
+                                        subpopulations=NULL,
+                                        sexes=NULL,
+                                        risks=NULL,
+                                        continuum=NULL,
+                                        cd4=NULL,
+                                        hiv.subsets = NULL,
+                                        census.totals = if (exists('ALL.DATA.MANAGERS')) ALL.DATA.MANAGERS$census.totals else CENSUS.TOTALS,
+                                        use.cdc.categorizations=T)
+{   
+    numerators = do.extract.prevalence(sim,
+                                       per.population=NA,
+                                       years=years,
+                                       ages=ages,
+                                       races=races,
+                                       subpopulations=subpopulations,
+                                       sexes=sexes,
+                                       risks=risks,
+                                       continuum=continuum,
+                                       cd4s=cd4,
+                                       hiv.subsets=hiv.subsets,
+                                       keep.dimensions=keep.dimensions,
+                                       use.cdc.categorizations=use.cdc.categorizations)
+    
+    do.project.absolute(sim=sim,
+                        numerators=numerators,
+                        years=years,
+                        census.totals = census.totals)
+}
+
+project.population.subset <- function(sim,
+                                      years=sim$years,
+                                      keep.dimensions='year',
+                                      ages=NULL,
+                                      races=NULL,
+                                      subpopulations=NULL,
+                                      sexes=NULL,
+                                      risks=NULL,
+                                      non.hiv.subsets=NULL,
+                                      continuum=NULL,
+                                      cd4s=NULL,
+                                      hiv.subsets=NULL,
+                                      include.hiv.positive=T,
+                                      include.hiv.negative=T,
+                                      census.totals = if (exists('ALL.DATA.MANAGERS')) ALL.DATA.MANAGERS$census.totals else CENSUS.TOTALS,
+                                      use.cdc.categorizations=F)
+{
+    numerators = do.extract.population.subset(sim,
+                                              per.population=NA,
+                                             years=years,
+                                             ages=ages,
+                                             races=races,
+                                             subpopulations=subpopulations,
+                                             sexes=sexes,
+                                             risks=risks,
+                                             non.hiv.subsets=non.hiv.subsets,
+                                             continuum=continuum,
+                                             cd4s=cd4s,
+                                             hiv.subsets=hiv.subsets,
+                                             include.hiv.positive=include.hiv.positive,
+                                             include.hiv.negative=include.hiv.negative,
+                                             keep.dimensions=keep.dimensions,
+                                             use.cdc.categorizations=use.cdc.categorizations)
+    
+    do.project.absolute(sim=sim,
+                        numerators=numerators,
+                        years=years,
+                        census.totals = census.totals)
+}
+
+do.project.absolute <- function(sim,
+                                numerators,
+                                years,
+                                census.totals)
+{
+    if (length(intersect(sim$years, census.totals$years))==0)
+        stop(paste0("Cannot project absolute trends unless the simulation contains at least one year in the census totals (",
+                    min(census.totals$years), "-", max(census.totals$years), ')'))
+    
+    total.population = get.total.population(sim=sim, years=years, census.totals = census.totals)
+    denominators = do.extract.population.subset(sim, years=years, 
+                                                keep.dimensions = 'year', 
+                                                use.cdc.categorizations = F)
     
     rv = as.numeric(numerators) / as.numeric(denominators) * total.population
     
@@ -83,6 +240,10 @@ get.total.population <- function(sim,
     rv
 }
     
+
+##-----------------------##
+##-- EXTRACT FUNCTIONS --##
+##-----------------------##
     
 do.extract.population.subset <- function(results,
                                          years=NULL,

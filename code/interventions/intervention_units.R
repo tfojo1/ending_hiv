@@ -1,4 +1,7 @@
 
+CHECK.YEAR = 2030
+#Will print warnings if an intervention uses any time greater than this year
+THROW.ERROR.IF.PAST.CHECK.YEAR = T
 
 INTERVENTION.UNIT.TYPE.PRETTY.NAMES = c(testing='Testing',
                                         prep='PrEP',
@@ -19,16 +22,40 @@ get.pretty.unit.type.names <- function(type)
 #'@param rates A numeric vector of rates that will apply going forward
 #'@param years The times at which those rates apply
 #'@param apply.function The character name of the function that applies the intervention rate. Options are 'absolute' (the intervention rate is used as the new rate), 'multiplier' (the intervention rate is multiplied by the old rate), 'odds.ratio' (the intervention rate is treated as an odds ratio, and applied to the old rate, which is treated as a probability), 'additive' (the intervention rate is added to the old rate)
+#'@param allow.less.than.otherwse Whether the relevant rates are allowed to be less than they would have been without the intervention
 #'
 create.intervention.unit <- function(type=c('testing','prep','suppression'),
                                      start.year=2021,
                                      rates,
                                      years,
                                      end.year=Inf,
-                                     apply.function=c('absolute','multiplier','odds.ratio','additive')[1])
+                                     apply.function=c('absolute','multiplier','odds.ratio','additive')[1],
+                                     allow.less.than.otherwise = F)
 {
+    #-- Check Years against CHECK.YEAR --#
+    check.year.msg = ''
+    if (start.year > CHECK.YEAR)
+        check.year.msg = paste0("start year (", start.year, ") is > ", CHECK.YEAR, "; ",
+                                check.year.msg)
+    if (end.year > CHECK.YEAR && end.year != Inf)
+        check.year.msg = paste0("end year (", end.year, ") is > ", CHECK.YEAR, "; ",
+                                check.year.msg)
+    if (any(years > CHECK.YEAR))
+        check.year.msg = paste0("some years (", 
+                                paste0(years[years>CHECK.YEAR], collapse=", "),
+                                ") are > ", CHECK.YEAR, "; ",
+                                check.year.msg)
+    if (check.year.msg != '')
+    {
+        if (THROW.ERROR.IF.PAST.CHECK.YEAR)
+            stop(check.year.msg)
+        else
+            print(paste0("**WARNING:** ", check.year.msg))
+    }
+    
     #-- Check Types --#
-    ALLOWED.TYPES = c('testing','prep','suppression')
+    ALLOWED.TYPES = c('testing','prep','suppression',
+                      'heterosexual.transmission', 'msm.transmission', 'idu.transmission')
     if (!is(type, 'character') || !length(type)==1)
         stop("'type' must be a single character value")
     if (all(type != ALLOWED.TYPES))
@@ -71,7 +98,8 @@ create.intervention.unit <- function(type=c('testing','prep','suppression'),
               end.year=end.year,
               rates=rates,
               years=years,
-              apply.function=apply.function)
+              apply.function=apply.function,
+              allow.less.than.otherwise=allow.less.than.otherwise)
     
     class(rv) = 'intervention.unit'
     rv

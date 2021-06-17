@@ -523,7 +523,9 @@ clear.dependent.values <- function(components,
                             'newly.suppressed.rates.and.times',
                             'unsuppression.rates.and.times',
                             'linkage.rates.and.times',
-                            'unsuppressed.to.disengaged.rates.and.times'
+                            'unsuppressed.to.disengaged.rates.and.times',
+                            'suppressed.to.disengaged.rates.and.times',
+                            'reengagement.rates.and.times'
                             )
     
     dependencies = list(model.idu=all.dependent.names,
@@ -548,7 +550,7 @@ clear.dependent.values <- function(components,
                         aids.progression.rate='cd4.transitions',
                         cd4.recovery.rate='cd4.transitions',
                         prep.screening.frequency='continuum.transitions',
-                        background.testing.proportions=c('continuum.transitions','testing.rates.and.times'),
+                        background.testing=c('continuum.transitions','testing.rates.and.times'),
                         foreground.testing=c('continuum.transitions','testing.rates.and.times'),
 #                        background.testing.rate.ratios=c('continuum.transitions','testing.rates.and.times'),
                         background.suppression=c('suppression.rates.and.times','hiv.mortality.rates','sexual.transmissibilities','idu.transmissibilities'),
@@ -561,7 +563,11 @@ clear.dependent.values <- function(components,
                         foreground.linkage=c('linkage.rates.and.times','continuum.transitions'),
                         background.unsuppressed.to.disengaged=c('unsuppressed.to.disengaged.rates.and.times','continuum.transitions'),
                         foreground.unsuppressed.to.disengaged=c('unsuppressed.to.disengaged.rates.and.times','continuum.transitions'),
-                        background.prep.coverage=c('prep.rates.and.times','susceptibility','new.infection.proportions','new.infection.proportions.years'),
+                        background.suppressed.to.disengaged=c('suppressed.to.disengaged.rates.and.times','continuum.transitions'),
+                        foreground.suppressed.to.disengaged=c('suppressed.to.disengaged.rates.and.times','continuum.transitions'),
+                        background.reengagement=c('reengagement.rates.and.times','continuum.transitions'),
+                        foreground.reengagement=c('reengagement.rates.and.times','continuum.transitions'),
+                        background.prep=c('prep.rates.and.times','susceptibility','new.infection.proportions','new.infection.proportions.years'),
                         foreground.prep=c('prep.rates.and.times','susceptibility','new.infection.proportions','new.infection.proportions.years'),
                         prep.rr.heterosexual='sexual.susceptibility',
                         prep.rr.msm='sexual.susceptibility',
@@ -577,7 +583,9 @@ clear.dependent.values <- function(components,
                         male.to.female.sexual.transmission='sexual.contact.arrays',
                         female.to.male.sexual.transmission='sexual.contact.arrays',
                         sexual.transmission='sexual.contact.arrays',
+                        foreground.sexual.transmission='sexual.contact.arrays',
                         idu.transmission='idu.contact.arrays',
+                        foreground.idu.transmission='idu.contact.arrays',
                         susceptibility=c('sexual.susceptibility','idu.susceptibility'),
                         fertility='fertility.check',
                         global.sexual.transmission.rates='global.sexual.transmission.rates',
@@ -1027,12 +1035,12 @@ do.setup.continuum.transitions <- function(components)
             linkage.proportions = calculate.linkage(components)
             
             linkage.rates = list(rates=lapply(linkage.proportions$rates, function(p){
-                p / components$linkage.time
+                p / components$time.to.link.vs.disengage
             }),
                                  times=linkage.proportions$times)
             
             non.linkage.rates = list(rates=lapply(linkage.proportions$rates, function(p){
-                (1-p) / components$linkage.time
+                (1-p) / components$time.to.link.vs.disengage
             }),
             times=linkage.proportions$times)
             
@@ -1095,12 +1103,16 @@ do.setup.continuum.transitions <- function(components)
                                                               value.times = reengagement.rates$times,
                                                               desired.times = all.times)
             
+            testing.rates$rates = interpolate.parameters(values = testing.rates$rates,
+                                                              value.times = testing.rates$times,
+                                                              desired.times = all.times)
+            
             #-- PLUG IT INTO TRANSITIONS --#
             
             components$continuum.transitions = lapply(1:length(all.times), function(i){
                 continuum.transitions.for.year = base.transitions
                 
-                # undiagnosed --> unengagedd
+                # undiagnosed --> unengaged
                 continuum.transitions.for.year[,,,,,'undiagnosed',,,components$settings$FIRST_DIAGNOSED_STATE] =
                     testing.rates$rates[[i]][,,,,,'undiagnosed',,]
                 
@@ -1189,13 +1201,13 @@ do.calculate.suppression <- function(components)
         #Overlay foreground suppression
         suppression = get.rates.from.background.and.foreground(background.rates = background.suppression,
                                                                background.times = background.suppression.years,
-                                                               foreground.rates = components$foreground.suppression,
-                                                               foreground.times = components$foreground.suppression.years,
-                                                               foreground.start.times = components$foreground.suppression.start.years,
-                                                              # foreground.end.times = components$foreground.suppression.end.years,
-                                                              # foreground.functions = components$foreground.suppression.function,
+                                                               foreground.rates = components$foreground.suppression$rates,
+                                                               foreground.times = components$foreground.suppression$years,
+                                                               foreground.start.times = components$foreground.suppression$start.years,
+                                                               foreground.end.times = components$foreground.suppression$end.years,
+                                                               foreground.functions = components$foreground.suppression$apply.functions,
                                                                max.background.time = components$background.change.to.years$suppression,
-                                                               allow.foreground.less = F)
+                                                               allow.foreground.less = components$foreground.suppression$allow.foreground.less)
         
         
         components$suppression.rates.and.times = suppression
@@ -1264,11 +1276,13 @@ do.calculate.testing.rates <- function(components)
     #Overlay foreground rates
     testing.rates = get.rates.from.background.and.foreground(background.rates = background.testing.rates,
                                                              background.times = background.testing.years,
-                                                             foreground.rates = components$foreground.testing.rates,
-                                                             foreground.times = components$foreground.testing.years,
-                                                             foreground.start.times = components$foreground.testing.start.years,
+                                                             foreground.rates = components$foreground.testing$rates,
+                                                             foreground.times = components$foreground.testing$years,
+                                                             foreground.start.times = components$foreground.testing$start.years,
+                                                             foreground.end.times = components$foreground.testing$end.years,
+                                                             foreground.functions = components$foreground.testing$apply.functions,
                                                              max.background.time = components$background.change.to.years$testing,
-                                                             allow.foreground.less = F)
+                                                             allow.foreground.less = components$foreground.testing$allow.foreground.less)
     
     #Return
     components$testing.rates.and.times = testing.rates
@@ -1318,11 +1332,13 @@ do.calculate.prep.coverage <- function(components)
     
     components$prep.rates.and.times = get.rates.from.background.and.foreground(background.rates = background.prep,
                                                                                background.times = background.prep.years,
-                                                                               foreground.rates = components$foreground.prep.coverage,
-                                                                               foreground.times = components$foreground.prep.years,
-                                                                               foreground.start.times = components$foreground.prep.start.years,
+                                                                               foreground.rates = components$foreground.prep$rates,
+                                                                               foreground.times = components$foreground.prep$years,
+                                                                               foreground.start.times = components$foreground.prep$start.years,
+                                                                               foreground.end.times = components$foreground.prep$end.years,
+                                                                               foreground.functions = components$foreground.prep$apply.functions,
                                                                                max.background.time = components$background.change.to.years$prep,
-                                                                               allow.foreground.less = F)
+                                                                               allow.foreground.less = components$foreground.prep$allow.foreground.less)
     
     components
 }
@@ -1371,8 +1387,10 @@ do.calculate.newly.suppressed.rates <- function(components)
                                                                foreground.rates = components$foreground.newly.suppressed.rates,
                                                                foreground.times = components$foreground.newly.suppressed.years,
                                                                foreground.start.times = components$foreground.newly.suppressed.start.years,
+                                                               foreground.end.times = components$foreground.newly.suppressed$end.years,
+                                                               foreground.functions = components$foreground.newly.suppressed$apply.functions,
                                                                max.background.time = components$background.change.to.years$newly.suppressed,
-                                                               allow.foreground.less = F)
+                                                               allow.foreground.less = components$foreground.newly.suppressed$allow.foreground.less)
         
         
         components$newly.suppressed.rates.and.times = suppression
@@ -1418,8 +1436,7 @@ do.calculate.unsuppression.rates <- function(components)
             p[,,,,,unsuppression.doesnt.apply,,] = 0
             -log(1-p)
         })
-        
-        
+         
         background.unsuppression.years = c(components$background.unsuppression$unsuppression.ramp.year, 
                                            components$background.unsuppression$years)
         background.rates = c(list(components$background.unsuppression$unsuppression.ramp.multiplier * background.rates[[1]]),
@@ -1428,11 +1445,13 @@ do.calculate.unsuppression.rates <- function(components)
         #Overlay foreground unsuppression
         unsuppression = get.rates.from.background.and.foreground(background.rates = background.rates,
                                                                  background.times = background.unsuppression.years,
-                                                                 foreground.rates = components$foreground.unsuppression.rates,
-                                                                 foreground.times = components$foreground.unsuppression.years,
-                                                                 foreground.start.times = components$foreground.unsuppression.start.years,
+                                                                 foreground.rates = components$foreground.unsuppression$rates,
+                                                                 foreground.times = components$foreground.unsuppression$years,
+                                                                 foreground.start.times = components$foreground.unsuppression$start.years,
+                                                                 foreground.end.times = components$foreground.unsuppression$end.years,
+                                                                 foreground.functions = components$foreground.unsuppression$apply.functions,
                                                                  max.background.time = components$background.change.to.years$unsuppression,
-                                                                 allow.foreground.less = F)
+                                                                 allow.foreground.less = components$foreground.unsuppression$allow.foreground.less)
         
         
         components$unsuppression.rates.and.times = unsuppression
@@ -1471,10 +1490,9 @@ do.calculate.linkage <- function(components)
                                                             jheem=components$jheem)
         
         #Add in prior linkage
-        
         background.linkage.years = c(components$background.linkage$linkage.ramp.year, 
                                          components$background.linkage$years)
-        background.list = c(list(components$background.linkage$linkage.ramp.multiplier * background.linkage[[1]]), background.linkage)
+        background.linkage = c(list(components$background.linkage$linkage.ramp.multiplier * background.linkage[[1]]), background.linkage)
         
         linkage.doesnt.apply = setdiff(dimnames(background.linkage[[1]])[['continuum']], 'unengaged')
         
@@ -1485,14 +1503,16 @@ do.calculate.linkage <- function(components)
         
         #Overlay foreground linkage
         linkage = get.rates.from.background.and.foreground(background.rates = background.linkage,
-                                                               background.times = background.linkage.years,
-                                                               foreground.rates = components$foreground.linkage,
-                                                               foreground.times = components$foreground.linkage.years,
-                                                               foreground.start.times = components$foreground.linkage.start.years,
-                                                               max.background.time = components$background.change.to.years$linkage,
-                                                               allow.foreground.less = F)
+                                                           background.times = background.linkage.years,
+                                                           foreground.rates = components$foreground.linkage$rates,
+                                                           foreground.times = components$foreground.linkage$years,
+                                                           foreground.start.times = components$foreground.linkage$start.years,
+                                                           foreground.end.times = components$foreground.linkage$end.years,
+                                                           foreground.functions = components$foreground.linkage$apply.functions,
+                                                           max.background.time = components$background.change.to.years$linkage,
+                                                           allow.foreground.less = components$foreground.linkage$allow.foreground.less)
         
-        
+
         components$linkage.rates.and.times = linkage
         components
     }
@@ -1546,14 +1566,16 @@ do.calculate.unsuppressed.to.disengaged.rates <- function(components)
         #Overlay foreground unsuppressed.to.disengaged
         unsuppressed.to.disengaged = get.rates.from.background.and.foreground(background.rates = background.rates,
                                                                  background.times = background.unsuppressed.to.disengaged.years,
-                                                                 foreground.rates = components$foreground.unsuppressed.to.disengaged.rates,
-                                                                 foreground.times = components$foreground.unsuppressed.to.disengaged.years,
-                                                                 foreground.start.times = components$foreground.unsuppressed.to.disengaged.start.years,
+                                                                 foreground.rates = components$foreground.unsuppressed.to.disengaged$rates,
+                                                                 foreground.times = components$foreground.unsuppressed.to.disengaged$years,
+                                                                 foreground.start.times = components$foreground.unsuppressed.to.disengaged$start.years,
+                                                                 foreground.end.times = components$foreground.unsuppressed.to.disengaged$end.years,
+                                                                 foreground.functions = components$foreground.unsuppressed.to.disengaged$apply.functions,
                                                                  max.background.time = components$background.change.to.years$unsuppressed.to.disengaged,
-                                                                 allow.foreground.less = F)
+                                                                 allow.foreground.less = components$foreground.unsuppressed.to.disengaged$allow.foreground.less)
         
         
-        components$unsuppression.rates.and.times = unsuppressed.to.disengaged
+        components$unsuppressed.to.disengaged.rates.and.times = unsuppressed.to.disengaged
         components
     }
     else
@@ -1563,6 +1585,130 @@ do.calculate.unsuppressed.to.disengaged.rates <- function(components)
     }
 }
 
+##-- SUPPRESSED TO DISENGAGED --##
+
+calculate.suppressed.to.disengaged.rates <- function(components)
+{
+    if (is.null(components$suppressed.to.disengaged.rates.and.times))
+        components = do.calculate.suppressed.to.disengaged.rates(components)
+    components$suppressed.to.disengaged.rates.and.times
+}
+
+do.calculate.suppressed.to.disengaged.rates <- function(components)
+{
+    if (!is.null(components$settings$VERSION) && components$settings$VERSION=='expanded_1.0')
+    {
+        #Pull background suppression proportions from logistic model
+        background.p = get.background.proportions(base.model = components$background.suppressed.to.disengaged$model,
+                                                  years = components$background.suppressed.to.disengaged$years,
+                                                  additional.intercepts = log(components$background.suppressed.to.disengaged$additional.intercept.ors),
+                                                  additional.slopes = log(components$background.suppressed.to.disengaged$additional.slope.ors),
+                                                  future.slope = log(components$background.suppressed.to.disengaged$future.slope.or),
+                                                  future.slope.after.year = components$background.suppressed.to.disengaged$future.slope.after.year,
+                                                  idu.applies.to.in.remission = T,
+                                                  idu.applies.to.msm.idu=T,
+                                                  msm.applies.to.msm.idu=T,
+                                                  jheem=components$jheem)
+        
+        #Add in ramp
+        
+        suppressed.states = 'engaged_suppressed'
+        doesnt.apply = setdiff(components$settings$CONTINUUM_OF_CARE, suppressed.states)
+        background.rates = lapply(background.p, function(p){
+            p[,,,,,doesnt.apply,,] = 0
+            -log(1-p)
+        })
+        
+        
+        background.suppressed.to.disengaged.years = c(components$background.suppressed.to.disengaged$suppressed.to.disengaged.ramp.year, 
+                                                        components$background.suppressed.to.disengaged$years)
+        background.rates = c(list(components$background.suppressed.to.disengaged$suppressed.to.disengaged.ramp.multiplier * background.rates[[1]]),
+                             background.rates)
+        
+        #Overlay foreground suppressed.to.disengaged
+        suppressed.to.disengaged = get.rates.from.background.and.foreground(background.rates = background.rates,
+                                                                              background.times = background.suppressed.to.disengaged.years,
+                                                                              foreground.rates = components$foreground.suppressed.to.disengaged$rates,
+                                                                              foreground.times = components$foreground.suppressed.to.disengaged$years,
+                                                                              foreground.start.times = components$foreground.suppressed.to.disengaged$start.years,
+                                                                              foreground.end.times = components$foreground.suppressed.to.disengaged$end.years,
+                                                                              foreground.functions = components$foreground.suppressed.to.disengaged$apply.functions,
+                                                                              max.background.time = components$background.change.to.years$suppressed.to.disengaged,
+                                                                              allow.foreground.less = components$foreground.suppressed.to.disengaged$allow.foreground.less)
+        
+        
+        components$suppressed.to.disengaged.rates.and.times = suppressed.to.disengaged
+        components
+    }
+    else
+    {
+        # This code should never be called - if not expanded continuum
+        print("THIS CODE SHOULD NOT HAVE BEEN CALLED - calculating suppressed to disengaged rates with collapsed continuum")
+    }
+}
+
+
+##-- REENGAGMENT --##
+
+calculate.reengagement.rates <- function(components)
+{
+    if (is.null(components$reengagement.rates.and.times))
+        components = do.calculate.reengagement.rates(components)
+    components$reengagement.rates.and.times
+}
+
+do.calculate.reengagement.rates <- function(components)
+{
+    if (!is.null(components$settings$VERSION) && components$settings$VERSION=='expanded_1.0')
+    {
+        #Pull background suppression proportions from logistic model
+        background.p = get.background.proportions(base.model = components$background.reengagement$model,
+                                                  years = components$background.reengagement$years,
+                                                  additional.intercepts = log(components$background.reengagement$additional.intercept.ors),
+                                                  additional.slopes = log(components$background.reengagement$additional.slope.ors),
+                                                  future.slope = log(components$background.reengagement$future.slope.or),
+                                                  future.slope.after.year = components$background.reengagement$future.slope.after.year,
+                                                  idu.applies.to.in.remission = T,
+                                                  idu.applies.to.msm.idu=T,
+                                                  msm.applies.to.msm.idu=T,
+                                                  jheem=components$jheem)
+        
+        #Add in ramp
+        
+        disengaged.states = 'disengaged'
+        doesnt.apply = setdiff(components$settings$CONTINUUM_OF_CARE, disengaged.states)
+        background.rates = lapply(background.p, function(p){
+            p[,,,,,doesnt.apply,,] = 0
+            -log(1-p)
+        })
+        
+        
+        background.reengagement.years = c(components$background.reengagement$reengagement.ramp.year, 
+                                                        components$background.reengagement$years)
+        background.rates = c(list(components$background.reengagement$reengagement.ramp.multiplier * background.rates[[1]]),
+                             background.rates)
+        
+        #Overlay foreground reengagement
+        reengagement = get.rates.from.background.and.foreground(background.rates = background.rates,
+                                                                              background.times = background.reengagement.years,
+                                                                              foreground.rates = components$foreground.reengagement$rates,
+                                                                              foreground.times = components$foreground.reengagement$years,
+                                                                              foreground.start.times = components$foreground.reengagement$start.years,
+                                                                              foreground.end.times = components$foreground.reengagement$end.years,
+                                                                              foreground.functions = components$foreground.reengagement$apply.functions,
+                                                                              max.background.time = components$background.change.to.years$reengagement,
+                                                                              allow.foreground.less = components$foreground.reengagement$allow.foreground.less)
+        
+        
+        components$reengagement.rates.and.times = reengagement
+        components
+    }
+    else
+    {
+        # This code should never be called - if not expanded continuum
+        print("THIS CODE SHOULD NOT HAVE BEEN CALLED - calculating unsuppressed to disengaged rates with collapsed continuum")
+    }
+}
 
 if (1==2)
 {
@@ -2258,6 +2404,45 @@ do.setup.sexual.contact <- function(components)
                                                 sexual.transmission.by.sex)
             
         })
+        
+        if (!is.null(components$foreground.sexual.transmission))
+        {
+            rates.and.times = get.rates.from.background.and.foreground(background.rates=components$sexual.contact.arrays,
+                                                                       background.times=components$sexual.contact.years,
+                                                                       foreground.rates = components$foreground.sexual.transmission$rates,
+                                                                       foreground.times = components$foreground.sexual.transmission$years,
+                                                                       foreground.start.times = components$foreground.sexual.transmission$start.years,
+                                                                       foreground.end.times = components$foreground.sexual.transmission$end.years,
+                                                                       foreground.functions = components$foreground.sexual.transmission$apply.functions,
+                                                                       max.background.time = Inf,
+                                                                       allow.foreground.less = components$foreground.sexual.transmission$allow.foreground.less)
+            
+            if (1==2) #for debugging
+            {
+                r.new = sapply(rates.and.times$rates, function(r){
+                    r[3,'black','female',1,3,'black','heterosexual_male',1]
+                })
+                names(r.new) = rates.and.times$times
+                qplot(rates.and.times$times, r.new, geom='line')
+                
+                r.old = sapply(components$sexual.contact.arrays, function(r){
+                    r[3,'black','female',1,3,'black','heterosexual_male',1]
+                })
+                names(r.old) = components$sexual.contact.years
+                
+                y = intersect(names(r.new), names(r.old))
+                r.new[y] / r.old[y]
+                
+                type=c(rep('new',length(rates.and.times$times)), rep('old', length(components$sexual.contact.years)))
+                qplot(c(rates.and.times$times, components$sexual.contact.years),
+                      c(r.new, r.old), 
+                      color=type, geom='line'
+                      ) + ylim(0,NA)
+            }
+            
+            components$sexual.contact.arrays = rates.and.times$rates
+            components$sexual.contact.years = rates.and.times$times
+        }
     }
     else
     {
@@ -2374,6 +2559,20 @@ do.setup.idu.contact <- function(components)
         
         idu.transmission.arrays = get.idu.transmission.arrays(components)
         
+        if (!is.null(components$foreground.idu.transmission))
+        {
+            idu.transmission.arrays = get.rates.from.background.and.foreground(background.rates=idu.transmission.arrays$rates,
+                                                                       background.times=idu.transmission.arrays$times,
+                                                                       foreground.rates = components$foreground.idu.transmission$rates,
+                                                                       foreground.times = components$foreground.idu.transmission$years,
+                                                                       foreground.start.times = components$foreground.idu.transmission$start.years,
+                                                                       foreground.end.times = components$foreground.idu.transmission$end.years,
+                                                                       foreground.functions = components$foreground.idu.transmission$apply.functions,
+                                                                       max.background.time = Inf,
+                                                                       allow.foreground.less = components$foreground.idu.transmission$allow.foreground.less)
+            
+        }
+        
         #-- Put it all together and set it --#
         components$idu.contact.arrays = lapply(idu.transmission.arrays$rates, function(idu.transmission)
         {
@@ -2485,99 +2684,119 @@ do.setup.new.infection.proportions <- function(components)
 ##-- HELPERS --##
 ##-------------##
 
+#allows multiple foreground settings by recursing on this lists in foreground.rates, foreground.times, etc
 get.rates.from.background.and.foreground <- function(background.rates,
                                                      background.times,
                                                      foreground.rates,
                                                      foreground.times,
                                                      foreground.start.times,
-                                                     foreground.end.times=NA,
+                                                     foreground.end.times,
                                                      max.background.time=Inf,
-                                                     allow.foreground.less=F,
-                                                     foreground.functions=c('absolute','multiplier','odds.ratio','additive')[1])
+                                                     allow.foreground.less,
+                                                     foreground.functions)
 {
-    if (is.null(foreground.times))
+    if (is.null(foreground.times) || length(foreground.times)==0)
         list(rates=background.rates[background.times<=max.background.time],
              times=background.times[background.times<=max.background.time])
     else
     {
-        if (is.null(foreground.rates))
+        if (is.null(foreground.rates) || is.null(foreground.rates[[1]]))
             stop("foreground.rates is NULL")
+        
+        this.foreground.rates = foreground.rates[[1]]
+        this.foreground.times = foreground.times[[1]]
+        this.foreground.start.times = foreground.start.times[[1]]
+        this.foreground.end.times = foreground.end.times[[1]]
+        this.allow.foreground.less = allow.foreground.less[[1]]
+        this.foreground.functions = foreground.functions[[1]]
         
         background.rates = background.rates[background.times<=max.background.time]
         background.times = background.times[background.times<=max.background.time]
         
-        all.times = sort(unique(c(background.times, foreground.times)))
+        all.times = sort(unique(c(background.times, 
+                                  this.foreground.times, 
+                                  as.numeric(this.foreground.start.times), 
+                                  as.numeric(this.foreground.end.times))))
+        all.times = all.times[all.times<Inf]
+        
         interpolated.background.rates = interpolate.parameters(values=background.rates,
                                                                value.times=background.times,
                                                                desired.times = all.times)
         
         names(interpolated.background.rates) = as.character(all.times)
-        names(foreground.rates) = as.character(foreground.times)
+        names(this.foreground.rates) = as.character(this.foreground.times)
         
-        dim.names = dimnames(foreground.rates[[1]])
+        dim.names = dimnames(this.foreground.rates[[1]])
         
         sub.rates = numeric(length(all.times))
         names(sub.rates) = as.character(all.times)
 
-        raw.rates = sapply(1:length(foreground.rates[[1]]), function(i){
+        raw.rates = sapply(1:length(this.foreground.rates[[1]]), function(i){
             bg.rates = sub.rates = sapply(interpolated.background.rates, function(bg){bg[i]}) #start off with the background rates
             
-            if (is.na(foreground.end.times[i]))
-                from.foreground.times = as.character(foreground.times[foreground.times > foreground.start.times[i]])
+            if (is.na(this.foreground.end.times[i]))
+                from.foreground.times = as.character(this.foreground.times[this.foreground.times > this.foreground.start.times[i]])
             else
-                from.foreground.times = as.character(foreground.times[foreground.times > foreground.start.times[i] & 
-                                                                          foreground.times < foreground.end.times[i]])
+                from.foreground.times = as.character(this.foreground.times[this.foreground.times > this.foreground.start.times[i] & 
+                                                                            this.foreground.times < this.foreground.end.times[i]])
+            
             
             if (length(from.foreground.times)>0)
             {
-                from.foreground.rates = sapply(foreground.rates[from.foreground.times], function(fg){fg[i]})
-                background.at.from.foreground = bg.rates[from.foreground.times]
-                print('need to confirm this background at foreground is correct')
+                from.foreground.rates = sapply(this.foreground.rates[from.foreground.times], function(fg){fg[i]})
+                use.background.not.foreground = from.foreground.rates == -Inf
+                from.foreground.times = from.foreground.times[!use.background.not.foreground]
+                from.foreground.rates = from.foreground.rates[!use.background.not.foreground]
                 
-#                if (is(foreground.function, 'function'))
- #                   from.foreground.rates = foreground.function(from.foreground.rates, background.at.from.foreground)
-                if (is.na(foreground.functions[i]) || foreground.functions[i]=='absolute')
-                {}
-                else if (foreground.functions[i]=='multiplier')
-                    from.foreground.rates = from.foreground.rates * background.at.from.foreground
-                else if (foreground.functions[i]=='odds.ratio')
+                if (length(from.foreground.times)>0)
                 {
-                    odds = background.at.from.foreground / (1-background.at.from.foreground) * from.foreground.rates
-                    from.foreground.rates = odds / (1 + odds)
-                }
-                else if (foreground.functions[i]=='additive')
-                    from.foreground.rates = from.foreground.rates + background.at.from.foreground
-                #else absolute
-                
-                if (any(!is.na(from.foreground.rates)))
-                {
-                    #sub.rates[all.times>=min(from.foreground.times)] = NA #this was an error
-                    
-                    if (is.na(foreground.end.times[i]))
-                        sub.rates[all.times > foreground.start.times[i]] = NA
-                    else
-                        sub.rates[all.times > foreground.start.times[i] & all.times < foreground.end.times[i]] = NA
-                    
-                    sub.rates[from.foreground.times] = from.foreground.rates
-                    
-                    if (any(is.na(sub.rates)))
+                    background.at.from.foreground = bg.rates[from.foreground.times]
+    
+    #                if (is(foreground.function, 'function'))
+     #                   from.foreground.rates = foreground.function(from.foreground.rates, background.at.from.foreground)
+                    if (is.na(this.foreground.functions[i]) || this.foreground.functions[i]=='absolute')
+                    {}
+                    else if (this.foreground.functions[i]=='multiplier')
+                        from.foreground.rates = from.foreground.rates * background.at.from.foreground
+                    else if (this.foreground.functions[i]=='odds.ratio')
                     {
-                        to.interpolate.times = all.times[is.na(sub.rates)]
-                        sub.rates[is.na(sub.rates)] = interpolate.parameters(values=sub.rates[!is.na(sub.rates)],
-                                                                             value.times=all.times[!is.na(sub.rates)],
-                                                                             desired.times=to.interpolate.times,
-                                                                             return.list = F)
-#                        bg.time = foreground.start.times[i]
-#                        fg.time = min(all.times[!is.na(sub.rates) & all.times>bg.time])
-#                        sub.rates[is.na(sub.rates)] = interpolate.parameters(values=sub.rates[as.character(c(bg.time,fg.time))],
-#                                                                             value.times=c(bg.time,fg.time),
-#                                                                             desired.times=to.interpolate.times,
-#                                                                             return.list=F)
+                        odds = background.at.from.foreground / (1-background.at.from.foreground) * from.foreground.rates
+                        from.foreground.rates = odds / (1 + odds)
+                    }
+                    else if (this.foreground.functions[i]=='additive')
+                        from.foreground.rates = from.foreground.rates + background.at.from.foreground
+                    #else absolute
+                    
+                    if (any(!is.na(from.foreground.rates)))
+                    {
+                        #sub.rates[all.times>=min(from.foreground.times)] = NA #this was an error
+                        
+                        if (is.na(this.foreground.end.times[i]))
+                            sub.rates[all.times > this.foreground.start.times[i]] = NA
+                        else
+                            sub.rates[all.times > this.foreground.start.times[i] & all.times < this.foreground.end.times[i]] = NA
+                        
+                        sub.rates[from.foreground.times] = from.foreground.rates
+                        
+                        if (any(is.na(sub.rates)))
+                        {
+                            to.interpolate.times = all.times[is.na(sub.rates)]
+                            sub.rates[is.na(sub.rates)] = interpolate.parameters(values=sub.rates[!is.na(sub.rates)],
+                                                                                 value.times=all.times[!is.na(sub.rates)],
+                                                                                 desired.times=to.interpolate.times,
+                                                                                 return.list = F)
+    #                        bg.time = foreground.start.times[i]
+    #                        fg.time = min(all.times[!is.na(sub.rates) & all.times>bg.time])
+    #                        sub.rates[is.na(sub.rates)] = interpolate.parameters(values=sub.rates[as.character(c(bg.time,fg.time))],
+    #                                                                             value.times=c(bg.time,fg.time),
+    #                                                                             desired.times=to.interpolate.times,
+    #                                                                             return.list=F)
+                        }
                     }
                 }
             }
             
-            if (!allow.foreground.less)
+            if (!this.allow.foreground.less[i])
                 sub.rates[sub.rates < bg.rates] = bg.rates[sub.rates < bg.rates]
             
             sub.rates
@@ -2590,8 +2809,25 @@ get.rates.from.background.and.foreground <- function(background.rates,
             arr
         })
         
-        list(rates=rates,
-             times=all.times)
+        if (length(foreground.times)>1)
+        {
+            # The recursive call
+            get.rates.from.background.and.foreground(background.rates=rates,
+                                                     background.times=all.times,
+                                                     foreground.rates=foreground.rates[-1],
+                                                     foreground.times=foreground.times[-1],
+                                                     foreground.start.times=foreground.start.times[-1],
+                                                     foreground.end.times=foreground.end.times[-1],
+                                                     max.background.time=Inf,
+                                                     allow.foreground.less=allow.foreground.less[-1],
+                                                     foreground.functions=foreground.functions[-1])
+                
+        }
+        else
+        {
+            list(rates=rates,
+                 times=all.times)
+        }
     }
 }
 

@@ -27,7 +27,7 @@ initialize.jheem.components <- function(settings,
     #-- Store settings and fips--#
     components$settings = settings
     components$fips = fips
-
+    
     #-- By default, we will plan to model PrEP, IDU, and HIV transmission --#
     components$model.idu = T
     components$model.hiv.transmission = model.hiv.transmission
@@ -727,7 +727,7 @@ set.background.hiv.testing.ors <- function(components,
     if (!is.na(age5.or.slope))
         components$background.testing$additional.slope.ors['age5'] = age5.or.slope
     
-    components = clear.dependent.values(components, 'background.testing.proportions')
+    components = clear.dependent.values(components, 'background.testing')
     components
 }
 
@@ -744,7 +744,7 @@ set.background.hiv.testing.ramp.up <- function(components,
     if (!is.na(testing.ramp.up.yearly.increase))
         components$background.testing$ramp.up.yearly.increase = testing.ramp.up.yearly.increase
     
-    components = clear.dependent.values(components, 'background.testing.proportions')
+    components = clear.dependent.values(components, 'background.testing')
     components
 }
 
@@ -782,7 +782,7 @@ setup.background.hiv.testing <- function(components,
                                                             population=population)
     components$background.testing$model$mixed.linear=F
     
-    components = clear.dependent.values(components, 'background.testing.proportions')
+    components = clear.dependent.values(components, 'background.testing')
     components
 }
 
@@ -792,58 +792,46 @@ set.foreground.rates <- function(components,
                                  years,
                                  start.years,
                                  end.years,
-                                 apply.functions)
+                                 apply.functions,
+                                 allow.foreground.less=F,
+                                 overwrite.previous=T)
 {
     type.name = paste0('foreground.', type)
     if (is.null(rates))
-        components[[type.name]] = NULL
+    {
+        if (overwrite.previous)
+            components[[type.name]] = NULL
+    }
     else
     {
-        components[[type.name]] = list()
+        if (is.null(components[[type.name]]) || overwrite.previous)
+        {
+            components[[type.name]] = list()
+            
+            components[[type.name]]$rates = list()
+            components[[type.name]]$years = list()
+            components[[type.name]]$start.years = list()
+            components[[type.name]]$end.years = list()
+            components[[type.name]]$apply.functions = list()
+            components[[type.name]]$allow.foreground.less = list()
+        }
         
         if (class(rates)!='list')
             rates = list(rates)
+        names(rates) = as.character(years)
         
-        components[[type.name]]$rates = rates
-        names(components[[type.name]]$rates) = as.character(years)
+        # Add the new settings
+        components[[type.name]]$rates = c(components[[type.name]]$rates, list(rates))
         
-        components[[type.name]]$years = years
-        components[[type.name]]$start.years = start.years
-        components[[type.name]]$end.years = end.years
-        components[[type.name]]$apply.functions = apply.functions
+        components[[type.name]]$years = c(components[[type.name]]$years, list(years))
+        components[[type.name]]$start.years = c(components[[type.name]]$start.years, list(start.years))
+        components[[type.name]]$end.years = c(components[[type.name]]$end.years, list(end.years))
+        components[[type.name]]$apply.functions = c(components[[type.name]]$apply.functions, list(apply.functions))
+        components[[type.name]]$allow.foreground.less = c(components[[type.name]]$allow.foreground.less, list(allow.foreground.less))
         
+        # Clear dependencies
         components = clear.dependent.values(components, type.name)
-        components
     }
-}
-
-set.foreground.hiv.testing.rates <- function(components,
-                                             testing.rates,
-                                             years,
-                                             start.years='temp',
-                                             end.years='temp',
-                                             apply.functions=NA)
-{
-    components$foreground.testing = list()
-    if (is.null(testing.rates))
-        components$foreground.testing.years = components$foreground.testing.rates =
-            components$foreground.testing.start.years = components$foreground.testing.start.years =
-            components$foreground.testing.apply.functions = NULL
-    else
-    {
-        if (class(testing.rates)!='list')
-            testing.rates = list(testing.rates)
-        
-        components$foreground.testing.rates = lapply(testing.rates, function(rate){
-            expand.population.to.hiv.positive(components$jheem, rate)
-        })
-        names(components$foreground.testing.rates) = as.character(years)
-        
-        components$foreground.testing.years = years
-        components$foreground.testing.start.years = expand.population.to.hiv.positive(components$jheem, start.years)
-    }
-    
-    components = clear.dependent.values(components, 'foreground.testing.proportions')
     components
 }
 
@@ -1236,7 +1224,6 @@ set.background.suppression.ors <- function(components,
                                        age5.or.slope=age5.or.slope
                                        )
     
-    components = clear.dependent.values(components, 'background.suppression')
     components
 }
 
@@ -1339,6 +1326,8 @@ do.set.background.ors <- function(components,
     if (!is.na(age5.or.slope))
         components[[component.name]]$additional.slope.ors['age5'] = age5.or.slope
     
+    
+    components = clear.dependent.values(components, component.name)
     components
 }
 
@@ -1350,6 +1339,8 @@ set.future.background.slopes <- function(components,
                                          future.unsuppression.slope.or=NA,
                                          future.linkage.slope.or=NA,
                                          future.unsuppressed.to.disengaged.slope.or=NA,
+                                         future.suppressed.to.disengaged.slope.or=NA,
+                                         future.reengagement.slope.or=NA,
                                          after.year=2020)
 {
     if (is.null(components$background.suppression))
@@ -1366,14 +1357,14 @@ set.future.background.slopes <- function(components,
     {
         components$background.testing$future.slope.or = future.testing.slope.or
         components$background.testing$future.slope.after.year = after.year
-        components = clear.dependent.values(components, 'background.testing.proportions')
+        components = clear.dependent.values(components, 'background.testing')
     }
     
     if (!is.na(future.prep.slope.or))
     {
         components$background.prep$future.slope.or = future.prep.slope.or
         components$background.prep$future.slope.after.year = after.year
-        components = clear.dependent.values(components, 'background.prep.coverage')
+        components = clear.dependent.values(components, 'background.prep')
     }
     
     if (!is.na(future.newly.suppressed.slope.or))
@@ -1404,6 +1395,20 @@ set.future.background.slopes <- function(components,
         components = clear.dependent.values(components, 'background.unsuppressed.to.disengaged')
     }
     
+    if (!is.na(future.suppressed.to.disengaged.slope.or))
+    {
+        components$background.suppressed.to.disengaged$future.slope.or = future.suppressed.to.disengaged.slope.or
+        components$background.suppressed.to.disengaged$future.slope.after.year = after.year
+        components = clear.dependent.values(components, 'background.suppressed.to.disengaged')
+    }
+    
+    if (!is.na(future.reengagement.slope.or))
+    {
+        components$background.reengagement$future.slope.or = future.reengagement.slope.or
+        components$background.reengagement$future.slope.after.year = after.year
+        components = clear.dependent.values(components, 'background.reengagement')
+    }
+    
     components 
 }
 
@@ -1428,29 +1433,6 @@ setup.background.suppression <- function(components,
     components
 }
 
-set.foreground.suppression <- function(components,
-                                       suppressed.proportions,
-                                       years,
-                                       start.years='temp')
-{
-    if (is.null(suppressed.proportions))
-        components$foreground.suppression.years = components$foreground.suppression = 
-            components$foreground.suppression.start.years = NULL
-    else
-    {
-        if (class(suppressed.proportions)!='list')
-            suppressed.proportions = list(suppressed.proportions)
-        
-        components$foreground.suppression = suppressed.proportions
-        names(components$foreground.suppression) = as.character(years)
-        
-        components$foreground.suppression.years = years
-        components$foreground.suppression.start.years = start.years
-    }
-    
-    components = clear.dependent.values(components, 'foreground.suppression')
-    components
-}
 
 #-- NEWLY SUPPRESSED --#
 setup.background.newly.suppressed <- function(components,
@@ -1540,55 +1522,32 @@ set.background.newly.suppressed.ors <- function(components,
     components
 }
 
-
-set.foreground.newly.suppressed <- function(components,
-                                            suppressed.rates,
-                                            years,
-                                            start.years='temp')
-{
-    if (is.null(suppressed.rates))
-        components$foreground.newly.suppressed.years = components$foreground.newly.suppressed.rates = 
-            components$foreground.newly.suppressed.start.years = NULL
-    else
-    {
-        if (class(suppressed.rates)!='list')
-            suppressed.rates = list(suppressed.rates)
-        
-        components$foreground.newly.suppressed = suppressed.rates
-        names(components$foreground.newly.suppressed) = as.character(years)
-        
-        components$foreground.newly.suppressed.years = years
-        components$foreground.newly.suppressed.start.years = start.years
-    }
-    
-    components = clear.dependent.values(components, 'foreground.newly.suppressed')
-    components
-}
-
-#-- UNSUPPRESSION --#
 setup.background.unsuppression <- function(components,
-                                           continuum.manager,
-                                           location,
-                                           years,
-                                           ramp.year=1996,
-                                           ramp.multiplier=1)
+                                     continuum.manager,
+                                     location,
+                                     years,
+                                     unsuppression.ramp.year=1996,
+                                     unsuppression.ramp.multiplier=1,
+                                     time.to.link.vs.disengage=1/4 #3 months
+)
 {
     if (is.null(components$background.unsuppression))
         components$background.unsuppression = list()
     
     components$background.unsuppression$years = years
-    components$background.unsuppression$unsuppression.ramp.year = ramp.year
-    components$background.unsuppression$unsuppression.ramp.multiplier = ramp.multiplier
+    components$background.unsuppression$unsuppression.ramp.year = unsuppression.ramp.year
+    components$background.unsuppression$unsuppression.ramp.multiplier = unsuppression.ramp.multiplier
     
     components$background.unsuppression$model = get.unsuppression.model(continuum.manager, 
-                                                                              location=location)
+                                                            location=location)
     
     components$background.unsuppression$model$mixed.linear = F
+    
+    components$time.to.link.vs.disengage = time.to.link.vs.disengage
     
     components = clear.dependent.values(components, 'background.unsuppression')
     components
 }
-
 
 set.background.unsuppression.ors <- function(components,
                                                 msm.or.intercept=NA,
@@ -1656,38 +1615,16 @@ set.background.unsuppression.ors <- function(components,
 }
 
 
-set.foreground.unsuppression <- function(components,
-                                            unsuppression.rates,
-                                            years,
-                                            start.years='temp')
-{
-    if (is.null(unsuppression.rates))
-        components$foreground.unsuppression.years = components$foreground.unsuppression.rates = 
-            components$foreground.unsuppression.start.years = NULL
-    else
-    {
-        if (class(unsuppression.rates)!='list')
-            unsuppression.rates = list(unsuppression.rates)
-        
-        components$foreground.unsuppression = unsuppression.rates
-        names(components$foreground.unsuppression) = as.character(years)
-        
-        components$foreground.unsuppression.years = years
-        components$foreground.unsuppression.start.years = start.years
-    }
-    
-    components = clear.dependent.values(components, 'foreground.unsuppression')
-    components
-}
-
 
 #-- LINKAGE --#
 setup.background.linkage <- function(components,
-                                              continuum.manager,
-                                              location,
-                                              years,
-                                              linkage.ramp.year=1996,
-                                              linkage.ramp.multiplier=1)
+                                     continuum.manager,
+                                     location,
+                                     years,
+                                     linkage.ramp.year=1996,
+                                     linkage.ramp.multiplier=1,
+                                     time.to.link.vs.disengage=1/4 #3 months
+                                     )
 {
     if (is.null(components$background.linkage))
         components$background.linkage = list()
@@ -1700,6 +1637,8 @@ setup.background.linkage <- function(components,
                                                             location=location)
     
     components$background.linkage$model$mixed.linear = F
+    
+    components$time.to.link.vs.disengage = time.to.link.vs.disengage
     
     components = clear.dependent.values(components, 'background.linkage')
     components
@@ -1768,31 +1707,6 @@ set.background.linkage.ors <- function(components,
     )
     
     components = clear.dependent.values(components, 'background.linkage')
-    components
-}
-
-
-set.foreground.linkage <- function(components,
-                                            linkage.proportions,
-                                            years,
-                                            start.years='temp')
-{
-    if (is.null(linkage.proportions))
-        components$foreground.linkage.years = components$foreground.linkage.rates = 
-            components$foreground.linkage.start.years = NULL
-    else
-    {
-        if (class(linkage.proportions)!='list')
-            linkage.proportions = list(linkage.proportions)
-        
-        components$foreground.linkage = linkage.proportions
-        names(components$foreground.linkage) = as.character(years)
-        
-        components$foreground.linkage.years = years
-        components$foreground.linkage.start.years = start.years
-    }
-    
-    components = clear.dependent.values(components, 'foreground.linkage')
     components
 }
 
@@ -1886,31 +1800,186 @@ set.background.unsuppressed.to.disengaged.ors <- function(components,
     components
 }
 
-
-set.foreground.unsuppressed.to.disengaged <- function(components,
-                                                      unsuppressed.to.disengaged.rates,
-                                         years,
-                                         start.years='temp')
+#-- SUPPRESSED TO DISENGAGED --#
+setup.background.suppressed.to.disengaged <- function(components,
+                                                        continuum.manager,
+                                                        location,
+                                                        years,
+                                                        ramp.year=1996,
+                                                        ramp.multiplier=1)
 {
-    if (is.null(unsuppressed.to.disengaged.rates))
-        components$foreground.unsuppressed.to.disengaged.years = components$foreground.unsuppressed.to.disengaged.rates = 
-            components$foreground.unsuppressed.to.disengaged.start.years = NULL
-    else
-    {
-        if (class(unsuppressed.to.disengaged.rates)!='list')
-            unsuppressed.to.disengaged.rates = list(unsuppressed.to.disengaged.rates)
-        
-        components$foreground.unsuppressed.to.disengaged = unsuppressed.to.disengaged.rates
-        names(components$foreground.unsuppressed.to.disengaged) = as.character(years)
-        
-        components$foreground.unsuppressed.to.disengaged.years = years
-        components$foreground.unsuppressed.to.disengaged.start.years = start.years
-    }
+    if (is.null(components$background.suppressed.to.disengaged))
+        components$background.suppressed.to.disengaged = list()
     
-    components = clear.dependent.values(components, 'foreground.unsuppressed.to.disengaged')
+    components$background.suppressed.to.disengaged$years = years
+    components$background.suppressed.to.disengaged$suppressed.to.disengaged.ramp.year = ramp.year
+    components$background.suppressed.to.disengaged$suppressed.to.disengaged.ramp.multiplier = ramp.multiplier
+    
+    components$background.suppressed.to.disengaged$model = get.suppressed.to.disengaged.model(continuum.manager, 
+                                                                                                  location=location)
+    
+    components$background.suppressed.to.disengaged$model$mixed.linear = F
+    
+    components = clear.dependent.values(components, 'background.suppressed.to.disengaged')
     components
 }
 
+
+set.background.suppressed.to.disengaged.ors <- function(components,
+                                                          msm.or.intercept=NA,
+                                                          heterosexual.or.intercept=NA,
+                                                          idu.or.intercept=NA,
+                                                          msm.idu.or.intercept=NA,
+                                                          black.or.intercept=NA,
+                                                          hispanic.or.intercept=NA,
+                                                          other.or.intercept=NA,
+                                                          age1.or.intercept=NA,
+                                                          age2.or.intercept=NA,
+                                                          age3.or.intercept=NA,
+                                                          age4.or.intercept=NA,
+                                                          age5.or.intercept=NA,
+                                                          
+                                                          total.or.slope=NA,
+                                                          
+                                                          msm.or.slope=NA,
+                                                          heterosexual.or.slope=NA,
+                                                          idu.or.slope=NA,
+                                                          msm.idu.or.slope=NA,
+                                                          black.or.slope=NA,
+                                                          hispanic.or.slope=NA,
+                                                          other.or.slope=NA,
+                                                          age1.or.slope=NA,
+                                                          age2.or.slope=NA,
+                                                          age3.or.slope=NA,
+                                                          age4.or.slope=NA,
+                                                          age5.or.slope=NA)
+{
+    components = do.set.background.ors(components,
+                                       component.name='background.suppressed.to.disengaged',
+                                       
+                                       msm.or.intercept=msm.or.intercept,
+                                       heterosexual.or.intercept=heterosexual.or.intercept,
+                                       idu.or.intercept=idu.or.intercept,
+                                       msm.idu.or.intercept=msm.idu.or.intercept,
+                                       black.or.intercept=black.or.intercept,
+                                       hispanic.or.intercept=hispanic.or.intercept,
+                                       other.or.intercept=other.or.intercept,
+                                       age1.or.intercept=age1.or.intercept,
+                                       age2.or.intercept=age2.or.intercept,
+                                       age3.or.intercept=age3.or.intercept,
+                                       age4.or.intercept=age4.or.intercept,
+                                       age5.or.intercept=age5.or.intercept,
+                                       
+                                       total.or.slope=total.or.slope,
+                                       
+                                       msm.or.slope=msm.or.slope,
+                                       heterosexual.or.slope=heterosexual.or.slope,
+                                       idu.or.slope=idu.or.slope,
+                                       msm.idu.or.slope=msm.idu.or.slope,
+                                       black.or.slope=black.or.slope,
+                                       hispanic.or.slope=hispanic.or.slope,
+                                       other.or.slope=other.or.slope,
+                                       age1.or.slope=age1.or.slope,
+                                       age2.or.slope=age2.or.slope,
+                                       age3.or.slope=age3.or.slope,
+                                       age4.or.slope=age4.or.slope,
+                                       age5.or.slope=age5.or.slope
+    )
+    
+    components = clear.dependent.values(components, 'background.suppressed.to.disengaged')
+    components
+}
+
+
+#-- REENGAGEMENT --#
+setup.background.reengagement <- function(components,
+                                                      continuum.manager,
+                                                      location,
+                                                      years,
+                                                      ramp.year=1996,
+                                                      ramp.multiplier=1)
+{
+    if (is.null(components$background.reengagement))
+        components$background.reengagement = list()
+    
+    components$background.reengagement$years = years
+    components$background.reengagement$reengagement.ramp.year = ramp.year
+    components$background.reengagement$reengagement.ramp.multiplier = ramp.multiplier
+    
+    components$background.reengagement$model = get.reengagement.model(continuum.manager, 
+                                                                                              location=location)
+    
+    components$background.reengagement$model$mixed.linear = F
+    
+    components = clear.dependent.values(components, 'background.reengagement')
+    components
+}
+
+
+set.background.reengagement.ors <- function(components,
+                                                        msm.or.intercept=NA,
+                                                        heterosexual.or.intercept=NA,
+                                                        idu.or.intercept=NA,
+                                                        msm.idu.or.intercept=NA,
+                                                        black.or.intercept=NA,
+                                                        hispanic.or.intercept=NA,
+                                                        other.or.intercept=NA,
+                                                        age1.or.intercept=NA,
+                                                        age2.or.intercept=NA,
+                                                        age3.or.intercept=NA,
+                                                        age4.or.intercept=NA,
+                                                        age5.or.intercept=NA,
+                                                        
+                                                        total.or.slope=NA,
+                                                        
+                                                        msm.or.slope=NA,
+                                                        heterosexual.or.slope=NA,
+                                                        idu.or.slope=NA,
+                                                        msm.idu.or.slope=NA,
+                                                        black.or.slope=NA,
+                                                        hispanic.or.slope=NA,
+                                                        other.or.slope=NA,
+                                                        age1.or.slope=NA,
+                                                        age2.or.slope=NA,
+                                                        age3.or.slope=NA,
+                                                        age4.or.slope=NA,
+                                                        age5.or.slope=NA)
+{
+    components = do.set.background.ors(components,
+                                       component.name='background.reengagement',
+                                       
+                                       msm.or.intercept=msm.or.intercept,
+                                       heterosexual.or.intercept=heterosexual.or.intercept,
+                                       idu.or.intercept=idu.or.intercept,
+                                       msm.idu.or.intercept=msm.idu.or.intercept,
+                                       black.or.intercept=black.or.intercept,
+                                       hispanic.or.intercept=hispanic.or.intercept,
+                                       other.or.intercept=other.or.intercept,
+                                       age1.or.intercept=age1.or.intercept,
+                                       age2.or.intercept=age2.or.intercept,
+                                       age3.or.intercept=age3.or.intercept,
+                                       age4.or.intercept=age4.or.intercept,
+                                       age5.or.intercept=age5.or.intercept,
+                                       
+                                       total.or.slope=total.or.slope,
+                                       
+                                       msm.or.slope=msm.or.slope,
+                                       heterosexual.or.slope=heterosexual.or.slope,
+                                       idu.or.slope=idu.or.slope,
+                                       msm.idu.or.slope=msm.idu.or.slope,
+                                       black.or.slope=black.or.slope,
+                                       hispanic.or.slope=hispanic.or.slope,
+                                       other.or.slope=other.or.slope,
+                                       age1.or.slope=age1.or.slope,
+                                       age2.or.slope=age2.or.slope,
+                                       age3.or.slope=age3.or.slope,
+                                       age4.or.slope=age4.or.slope,
+                                       age5.or.slope=age5.or.slope
+    )
+    
+    components = clear.dependent.values(components, 'background.reengagement')
+    components
+}
 
 #-- CHANGE TO YEARS --#
 
@@ -1921,7 +1990,9 @@ set.background.change.to.years <- function(components,
                                            newly.suppressed.change.to.year=NA,
                                            unsuppression.change.to.year=NA,
                                            linkage.change.to.year=NA,
-                                           unsuppressed.to.disengaged.change.to.year=NA)
+                                           unsuppressed.to.disengaged.change.to.year=NA,
+                                           suppressed.to.disengaged.change.to.year=NA,
+                                           reengagement.change.to.year=NA)
 {
     components$background.change.to.years = list(testing=testing.change.to.year,
                                                  suppression=suppression.change.to.year,
@@ -1929,15 +2000,19 @@ set.background.change.to.years <- function(components,
                                                  newly.suppressed=newly.suppressed.change.to.year,
                                                  unsuppression=unsuppression.change.to.year,
                                                  linkage=linkage.change.to.year,
-                                                 unsuppressed.to.disengaged=unsuppressed.to.disengaged.change.to.year)
+                                                 unsuppressed.to.disengaged=unsuppressed.to.disengaged.change.to.year,
+                                                 suppressed.to.disengaged.change.to.year=suppressed.to.disengaged.change.to.year,
+                                                 reengagement.change.to.year=reengagement.change.to.year)
     
-    components = clear.dependent.values(components, c('background.prep.coverage',
-                                                      'background.testing.proportions',
+    components = clear.dependent.values(components, c('background.prep',
+                                                      'background.testing',
                                                       'background.suppression',
                                                       'background.newly.suppressed',
                                                       'background.unsuppression',
                                                       'background.linkage',
-                                                      'background.unsuppressed.to.disengaged'))
+                                                      'background.unsuppressed.to.disengaged',
+                                                      'background.suppressed.to.disengaged',
+                                                      'background.reengagement'))
     components
 }
 
@@ -1993,7 +2068,7 @@ set.background.prep.max.proportions <- function(components,
         components$background.prep$max.proportion.ors['female'] = female.or
     
     
-    components = clear.dependent.values(components, 'background.prep.coverage')
+    components = clear.dependent.values(components, 'background.prep')
     components
 }
 
@@ -2101,7 +2176,7 @@ set.background.prep.ors <- function(components,
         components$background.prep$additional.slope.ors['female'] = female
     
     
-    components = clear.dependent.values(components, 'background.prep.coverage')
+    components = clear.dependent.values(components, 'background.prep')
     components
 }
 
@@ -2123,33 +2198,7 @@ setup.background.prep <- function(components,
     names(components$background.prep$model)[grepl('intercept', names(components$background.prep$model))] = 'intercept'
     names(components$background.prep$model)[grepl('slope', names(components$background.prep$model))] = 'slope'
     
-    components = clear.dependent.values(components, 'background.prep.coverage')
-    components
-}
-
-set.foreground.prep.coverage <- function(components,
-                                         prep.coverage,
-                                         years,
-                                         start.years='temp')
-{
-    if (is.null(prep.coverage))
-        components$foreground.prep.years = components$foreground.prep.coverage =
-            components$foreground.prep.start.years = NULL
-    else
-    {
-        if (class(prep.coverage)!='list')
-            prep.coverage = list(prep.coverage)
-        
-        components$foreground.prep.coverage = lapply(prep.coverage, function(pc){
-            expand.population.to.hiv.negative(components$jheem, pc)  
-        })
-        names(components$foreground.prep.coverage) = as.character(years)
-        
-        components$foreground.prep.years = years
-        components$foreground.prep.start.years = start.years
-    }
-    
-    components = clear.dependent.values(components, 'foreground.prep.coverage')
+    components = clear.dependent.values(components, 'background.prep')
     components
 }
 

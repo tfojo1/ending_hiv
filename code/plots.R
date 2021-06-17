@@ -760,8 +760,11 @@ plot.calibration <- function(sims,
                                                                                years=years,
                                                                                census.totals = ALL.DATA.MANAGERS$census.totals)
                          
-                            dim(truth.numerators) = c(year=length(years))
-                            dimnames(truth.numerators) = list(year = as.character(years))
+                            if (!is.null(truth.numerators))
+                            {
+                              dim(truth.numerators) = c(year=length(years))
+                              dimnames(truth.numerators) = list(year = as.character(years))
+                            }
                         }
                     #    else if (data.type=='prep' && !is.null(truth.numerators))
                      #       truth.numerators = convert.prep.rx.to.true.prep(truth.numerators)
@@ -1361,11 +1364,19 @@ get.sim.projections <- function(jheem.results, data.type, years, keep.dimensions
             numerators = do.extract.incidence(jheem.results, years=years, keep.dimensions = keep.dimensions,
                                                per.population = NA, use.cdc.categorizations = use.cdc)
         else if (data.type=='prevalence')
-            numerators = do.extract.prevalence(jheem.results, continuum='diagnosed', years=years, keep.dimensions = keep.dimensions,
-                                            per.population = NA, use.cdc.categorizations = use.cdc)
+        {
+          print('update the jheem $diagnosed.continuum.states')
+      #      numerators = do.extract.prevalence(jheem.results, continuum=jheem.results$diagnosed.continuum.states, years=years, keep.dimensions = keep.dimensions,
+          numerators = do.extract.prevalence(jheem.results, continuum=SETTINGS$DIAGNOSED_STATES, years=years, keep.dimensions = keep.dimensions,
+                                             per.population = NA, use.cdc.categorizations = use.cdc)
+        }
         else if (data.type=='mortality' || data.type=='cumulative.mortality')
-            numerators = do.extract.overall.hiv.mortality(jheem.results, continuum='diagnosed', years=years, keep.dimensions = keep.dimensions,
+        {
+          print('update the jheem $diagnosed.continuum.states')
+          #  numerators = do.extract.overall.hiv.mortality(jheem.results, continuum=jheem.results$diagnosed.continuum.states, years=years, keep.dimensions = keep.dimensions,
+          numerators = do.extract.overall.hiv.mortality(jheem.results, continuum=SETTINGS$DIAGNOSED_STATES, years=years, keep.dimensions = keep.dimensions,
                                                        per.population = NA, use.cdc.categorizations = use.cdc)
+        }
         else if (data.type=='prep')
             numerators = extract.prep.coverage(jheem.results, years=years, keep.dimensions=keep.dimensions,
                                                 per.population = NA, use.cdc.categorizations = use.cdc,

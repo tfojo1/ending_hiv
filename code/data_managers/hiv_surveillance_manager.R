@@ -106,7 +106,12 @@ get.surveillance.data <- function(surv=msa.surveillance,
     years = years[!missing.years]
     
     if (length(years)==0)
-        stop("No data is available for any of the requested years")
+    {
+        if (throw.error.if.missing.data)
+            stop("No data is available for any of the requested years")
+        else
+            return (NULL)
+    }
     
     #pull the data
     target.dimnames = dimnames(data)[c('year','location',categories)]
