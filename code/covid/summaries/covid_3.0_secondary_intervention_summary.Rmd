@@ -1,0 +1,55 @@
+---
+title: "COVID-JHEEM Results Summary"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+df = read.csv('../results/jheem_covid_3.0_results.csv', stringsAsFactors = F)
+source('../make_covid_figures_and_tables.R')
+source('../covid_timeline_plot.R')
+source('../run_covid_simset_3.0.R')
+source('../../targets/target_msas.R')
+msas = as.character(unique(df$msa))
+msa.names = as.character(sapply(msas, function(msa){df$msa.name[df$msa==msa][1]}))
+names(msa.names) = msas
+
+ALPHA = 0.7
+POINT.SIZE = 3
+
+MSA = MIAMI.MSA
+INT.SCENARIOS = c('base','delayed.hiv.care','rebound.sexual.transmission','rebound.sex.delayed.hiv.care')[c(2,4)]
+```
+
+
+In this version, we explore how 
+
+
+```{r echo=F, fig.height=7}
+
+    print(make.covid.timeline.plot(df, aggregate.locations = F, years=2015:2030,
+                                   locations = MSA,
+                                   scenarios = INT.SCENARIOS,
+                                   outcomes = c('incidence','new','diagnosed')
+                                   ) +
+                         #   geom_vline(xintercept = c(2020.25, 2021, 2021 + 184/365), linetype='dotted') +
+              ggtitle("HIV Outcomes in NYC\nUnder Different Scenarios vis-a-vis COVID-19"))
+
+    
+```
+
+Now, we apply an intervention - where we screen 75% of the entire population for HIV in the second half of 2022 (ie, July 1 to Dec 31, 2022):
+
+```{r echo=F, fig.height=7}
+
+    print(make.covid.timeline.plot(df, aggregate.locations = F, years=2015:2030,
+                                   locations = MSA,
+                                   scenarios = INT.SCENARIOS[2],
+                                   intervention.names = c(NA, 'testing.75.6.6'),
+                                   outcomes = c('incidence','new','diagnosed')
+                                   ) +
+                         #   geom_vline(xintercept = c(2020.25, 2021, 2021 + 184/365), linetype='dotted') +
+              ggtitle("HIV Outcomes in NYC\nUnder Different Scenarios vis-a-vis COVID-19"))
+
+    
+```
