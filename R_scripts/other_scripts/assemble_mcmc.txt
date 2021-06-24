@@ -1,0 +1,11 @@
+#!/bin/bash
+
+#SBATCH --job-name=assemble_mcmcs
+#SBATCH --mem=16GB
+#SBATCH --output=Ending_HIV/R_scripts/output/assemble_mcmcs.out
+#SBATCH --time=12:00:00
+#SBATCH --partition=shared
+#SBATCH --account=tfojo1
+
+ml R
+Rscript Ending_HIV/R_scripts/assemble_mcmc_script.R

@@ -1,8 +1,0 @@
----
----
-
-## Design Interventions
-
-We still have to implement this.
-
-The idea is that users will be able to come here, design any intervention they want (any levels of testing rate, PrEP, and suppression on any combination of subgroups), run it in real-time on the calibrated simulations (will take a few minutes) and have it populate into the list of interventions on the 'Visualize Projections' tab.
