@@ -984,6 +984,24 @@ setup.prep.susceptibility <- function(components,
     components
 }
 
+setup.needle.exchange.remission.effect <- function(components,
+                                                   needle.exchange.remission.rate.ratio)
+{
+    components$needle.exchange.remission.rate.ratio = needle.exchange.remission.rate.ratio
+    
+    components = clear.dependent.values(components, 'needle.exchange.remission.rate.ratio')
+    components
+}
+
+setup.needle.exchange.susceptibility <- function(components,
+                                                 needle.exchange.rr)
+{
+    components$needle.exchange.rr = needle.exchange.rr
+    
+    components = clear.dependent.values(components, 'needle.exchange.rr')
+    components
+}
+
 setup.sexual.susceptibility <- function(components,
                                         age1.sexual.susceptibility.rr=1,
                                         age2.sexual.susceptibility.rr=1,
@@ -2199,6 +2217,23 @@ setup.background.prep <- function(components,
     names(components$background.prep$model)[grepl('slope', names(components$background.prep$model))] = 'slope'
     
     components = clear.dependent.values(components, 'background.prep')
+    components
+}
+
+setup.background.needle.exchange <- function(components,
+                                             proportions=0,
+                                             years=2010)
+{
+    if (!is(proportions, 'list'))
+        proportions = list(proportions)
+    components$background.needle.exchange = list(
+        years = years,
+        proportions = lapply(proportions, function(p){
+            expand.population.to.general(components$jheem, p)[,,1,,'active_IDU'] #gives us [age, race, sex]
+        })
+    )
+    
+    components = clear.dependent.values(components, 'background.needle.exchange')
     components
 }
 

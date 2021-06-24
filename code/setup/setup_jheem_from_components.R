@@ -58,6 +58,8 @@ crunch.intervention.rates <- function(components)
         components = do.calculate.testing.rates(components)
     if (is.null(components$prep.rates.and.times))
         components = do.calculate.prep.coverage(components)
+    if (is.null(components$needle.exchange.rates.and.times))
+        components = do.calculate.needle.exchange.coverage(components)
     
     components
 }
@@ -525,7 +527,8 @@ clear.dependent.values <- function(components,
                             'linkage.rates.and.times',
                             'unsuppressed.to.disengaged.rates.and.times',
                             'suppressed.to.disengaged.rates.and.times',
-                            'reengagement.rates.and.times'
+                            'reengagement.rates.and.times',
+                            'needle.exchange.rates.and.times'
                             )
     
     dependencies = list(model.idu=all.dependent.names,
@@ -544,12 +547,19 @@ clear.dependent.values <- function(components,
                         untreated.hiv.mortality='hiv.mortality.rates',
                         untreated.aids.mortality='hiv.mortality.rates',
                         incident.idu='idu.transitions',
+                        foreground.idu.incidence='idu.transitions',
                         idu.remission='idu.transitions',
+                        foreground.idu.remission='idu.transitions',
                         idu.relapse='idu.transitions',
+                        foreground.idu.relapse='idu.transitions',
                         acute.hiv.duration='cd4.transitions',
                         aids.progression.rate='cd4.transitions',
                         cd4.recovery.rate='cd4.transitions',
                         prep.screening.frequency='continuum.transitions',
+                        background.needle.exchange = c('needle.exchange.rates.and.times','susceptibility','idu.transitions'),
+                        foreground.needle.exchange = c('needle.exchange.rates.and.times','susceptibility','idu.transitions'),
+                        needle.exchange.rr = 'susceptibility',
+                        needle.exchange.remission.rate.ratio = 'idu.transitions',
                         background.testing=c('continuum.transitions','testing.rates.and.times'),
                         foreground.testing=c('continuum.transitions','testing.rates.and.times'),
 #                        background.testing.rate.ratios=c('continuum.transitions','testing.rates.and.times'),
@@ -926,53 +936,120 @@ do.setup.idu.transitions <- function(components)
         if (is.null(components$incident.idu) || is.null(components$idu.remission) || is.null(components$idu.relapse))
             stop("IDU transition parameters have not been set in the components for the JHEEM")
         
+        #setting up the background
         if (length(components$years.for.idu.transitions)==2)
         {
-            components$interpolated.idu.transition.years = components$years.for.idu.transitions[1]:components$end.year.idu.transition
+            background.idu.transition.years = components$years.for.idu.transitions[1]:components$end.year.idu.transition
             
-            multi.incident.idu = calculate.change.ratios.logistic.array(r0.arr=components$incident.idu[[1]],
+            background.idu.incidence = calculate.change.ratios.logistic.array(r0.arr=components$incident.idu[[1]],
                                                                         r1.arr=components$incident.idu[[2]],
-                                                                        times=components$interpolated.idu.transition.years,
+                                                                        times=background.idu.transition.years,
                                                                         t0=components$years.for.idu.transitions[1],
                                                                         t1=components$years.for.idu.transitions[2],
                                                                         fraction.of.asymptote.after.end=components$fraction.idu.transitions.change.after.last.year,
                                                                         fraction.of.asymptote.before.start=0.025)
-            multi.idu.remission = calculate.change.ratios.logistic.array(r0.arr=components$idu.remission[[1]],
+            background.idu.remission = calculate.change.ratios.logistic.array(r0.arr=components$idu.remission[[1]],
                                                                          r1.arr=components$idu.remission[[2]],
-                                                                         times=components$interpolated.idu.transition.years,
+                                                                         times=background.idu.transition.years,
                                                                          t0=components$years.for.idu.transitions[1],
                                                                          t1=components$years.for.idu.transitions[2],
                                                                          fraction.of.asymptote.after.end=components$fraction.idu.transitions.change.after.last.year,
                                                                          fraction.of.asymptote.before.start=0.025)
-            multi.idu.relapse = calculate.change.ratios.logistic.array(r0.arr=components$idu.relapse[[1]],
+            background.idu.relapse = calculate.change.ratios.logistic.array(r0.arr=components$idu.relapse[[1]],
                                                                        r1.arr=components$idu.relapse[[2]],
-                                                                       times=components$interpolated.idu.transition.years,
+                                                                       times=background.idu.transition.years,
                                                                        t0=components$years.for.idu.transitions[1],
                                                                        t1=components$years.for.idu.transitions[2],
                                                                        fraction.of.asymptote.after.end=components$fraction.idu.transitions.change.after.last.year,
                                                                        fraction.of.asymptote.before.start=0.025)
-            
-            idu.transitions = get.general.transition.array.skeleton(components$jheem, transition.dimension='risk')
-            components$idu.transitions = lapply(1:length(1:length(multi.incident.idu)), function(i){
-                idu.transitions[,,,,'never_IDU','active_IDU'] = multi.incident.idu[[i]]
-                idu.transitions[,,,,'active_IDU','IDU_in_remission'] = multi.idu.remission[[i]]
-                idu.transitions[,,,,'IDU_in_remission', 'active_IDU'] = multi.idu.relapse[[i]] 
-                
-                idu.transitions
-            })
         }
         else
         {
-            idu.transitions = get.general.transition.array.skeleton(components$jheem, transition.dimension='risk')
-            components$idu.transitions = lapply(1:length(components$years.for.idu.transitions), function(i){
-                idu.transitions[,,,,'never_IDU','active_IDU'] = components$incident.idu[[i]]
-                idu.transitions[,,,,'active_IDU','IDU_in_remission'] = components$idu.remission[[i]]
-                idu.transitions[,,,,'IDU_in_remission', 'active_IDU'] = components$idu.relapse[[i]]
-                
-                idu.transitions
-            })
-            components$interpolated.idu.transition.years = components$years.for.idu.transitions
+            background.idu.incidence = components$incident.idu
+            background.idu.remission = components$idu.remission
+            background.idu.relapse = components$idu.relapse
+           
+            background.idu.transition.years = components$years.for.idu.transitions
         }
+        
+        # Add foreground
+        idu.incidence = get.rates.from.background.and.foreground(background.rates = background.idu.incidence,
+                                                                 background.times = background.idu.transition.years,
+                                                                 foreground.rates = components$foreground.idu.incidence$rates,
+                                                                 foreground.times = components$foreground.idu.incidence$years,
+                                                                 foreground.start.times = components$foreground.idu.incidence$start.years,
+                                                                 foreground.end.times = components$foreground.idu.incidence$end.years,
+                                                                 foreground.functions = components$foreground.idu.incidence$apply.functions,
+                                                                 max.background.time = Inf,
+                                                                 allow.foreground.less = components$foreground.idu.incidence$allow.foreground.less)
+        
+        
+        idu.remission = get.rates.from.background.and.foreground(background.rates = background.idu.remission,
+                                                                 background.times = background.idu.transition.years,
+                                                                 foreground.rates = components$foreground.idu.remission$rates,
+                                                                 foreground.times = components$foreground.idu.remission$years,
+                                                                 foreground.start.times = components$foreground.idu.remission$start.years,
+                                                                 foreground.end.times = components$foreground.idu.remission$end.years,
+                                                                 foreground.functions = components$foreground.idu.remission$apply.functions,
+                                                                 max.background.time = Inf,
+                                                                 allow.foreground.less = components$foreground.idu.remission$allow.foreground.less)
+        
+        idu.relapse = get.rates.from.background.and.foreground(background.rates = background.idu.relapse,
+                                                                 background.times = background.idu.transition.years,
+                                                                 foreground.rates = components$foreground.idu.relapse$rates,
+                                                                 foreground.times = components$foreground.idu.relapse$years,
+                                                                 foreground.start.times = components$foreground.idu.relapse$start.years,
+                                                                 foreground.end.times = components$foreground.idu.relapse$end.years,
+                                                                 foreground.functions = components$foreground.idu.relapse$apply.functions,
+                                                                 max.background.time = Inf,
+                                                                 allow.foreground.less = components$foreground.idu.relapse$allow.foreground.less)
+        
+        if (is.null(components$needle.exchange.rates.and.times))
+            components = do.calculate.needle.exchange.coverage(components)
+        needle.exchange = calculate.needle.exchange.coverage(components)
+        
+        
+        # Merge all the rates by time, with needle exchange        
+        components$interpolated.idu.transition.years = sort(unique(union(needle.exchange$times,
+                                                                         union(idu.relapse$times,
+                                                                               union(idu.incidence$times, 
+                                                                                     idu.remission$times)
+                                                                               ))))
+        
+        if (!setequal(components$interpolated.idu.transition.years, idu.incidence$times))
+            idu.incidence$rates = interpolate.parameters(values=idu.incidence$rates,
+                                                         value.times=idu.incidence$times,
+                                                         desired.times=components$interpolated.idu.transition.years)
+        
+        if (!setequal(components$interpolated.idu.transition.years, idu.remission$times))
+            idu.remission$rates = interpolate.parameters(values=idu.remission$rates,
+                                                         value.times=idu.remission$times,
+                                                         desired.times=components$interpolated.idu.transition.years)
+        
+        if (!setequal(components$interpolated.idu.transition.years, idu.relapse$times))
+            idu.relapse$rates = interpolate.parameters(values=idu.relapse$rates,
+                                                       value.times=idu.relapse$times,
+                                                       desired.times=components$interpolated.idu.transition.years)
+        
+        if (!setequal(components$interpolated.idu.transition.years, needle.exchange$times))
+            needle.exchange$rates = interpolate.parameters(values=needle.exchange$rates,
+                                                       value.times=needle.exchange$times,
+                                                       desired.times=components$interpolated.idu.transition.years)
+                    
+
+        # Put it together into transitions array
+        idu.transitions = get.general.transition.array.skeleton(components$jheem, transition.dimension='risk')
+        components$idu.transitions = lapply(1:length(components$interpolated.idu.transition.years), function(i){
+            
+            idu.transitions[,,,,'never_IDU','active_IDU'] = idu.incidence$rates[[i]]
+            
+            idu.transitions[,,,,'active_IDU','IDU_in_remission'] = idu.remission$rates[[i]] * 
+                (1 - needle.exchange$rates[[i]] * (components$needle.exchange.remission.rate.ratio + 1) )
+            
+            idu.transitions[,,,,'IDU_in_remission', 'active_IDU'] = idu.relapse$rates[[i]] 
+            
+            idu.transitions
+        })
     }
     else
     {
@@ -1332,6 +1409,28 @@ do.calculate.prep.coverage <- function(components)
     
     components$prep.rates.and.times = get.rates.from.background.and.foreground(background.rates = background.prep,
                                                                                background.times = background.prep.years,
+                                                                               foreground.rates = components$foreground.prep$rates,
+                                                                               foreground.times = components$foreground.prep$years,
+                                                                               foreground.start.times = components$foreground.prep$start.years,
+                                                                               foreground.end.times = components$foreground.prep$end.years,
+                                                                               foreground.functions = components$foreground.prep$apply.functions,
+                                                                               max.background.time = components$background.change.to.years$prep,
+                                                                               allow.foreground.less = components$foreground.prep$allow.foreground.less)
+    
+    components
+}
+
+calculate.needle.exchange.coverage <- function(components)
+{
+    if (is.null(components$needle.exchange.rates.and.times))
+        components = do.calculate.needle.exchange.coverage(components)
+    components$needle.exchange.rates.and.times
+}
+
+do.calculate.needle.exchange.coverage <- function(components)
+{
+    components$needle.exchange.rates.and.times = get.rates.from.background.and.foreground(background.rates = components$background.needle.exchange$proportions,
+                                                                               background.times = components$background.needle.exchange$years,
                                                                                foreground.rates = components$foreground.prep$rates,
                                                                                foreground.times = components$foreground.prep$years,
                                                                                foreground.start.times = components$foreground.prep$start.years,
@@ -2149,9 +2248,9 @@ do.setup.susceptibility <- function(components)
     if (components$model.prep)
     {
         components = do.calculate.prep.coverage(components)
-        rates.and.times = calculate.prep.coverage(components)
+        prep.rates.and.times = calculate.prep.coverage(components)
         
-        components$sexual.susceptibility = lapply(rates.and.times$rates, function(prep.coverage){
+        components$sexual.susceptibility = lapply(prep.rates.and.times$rates, function(prep.coverage){
             
             if (is.null(dim(prep.coverage)))
                 prep.coverage = as.numeric(prep.coverage)
@@ -2165,24 +2264,63 @@ do.setup.susceptibility <- function(components)
             susceptibility = non.prep.risk + prep.risk
             susceptibility * base.sexual.susceptibility
         })
-        components$sexual.susceptibility.years = rates.and.times$times
+        components$sexual.susceptibility.years = prep.rates.and.times$times
         
         if (components$model.idu)
         {
-            components$idu.susceptibility = lapply(rates.and.times$rates, function(prep.coverage){
+            if (is.null(components$needle.exchange.rates.and.times))
+                components = do.calculate.needle.exchange.coverage(components)
+            
+            needle.exchange.rates.and.times = calculate.needle.exchange.coverage(components)
+            
+            rates.and.times = merge.rates(rates1 = prep.rates.and.times$rates,
+                                          times1 = prep.rates.and.times$times,
+                                          rates2 = needle.exchange.rates.and.times$rates,
+                                          times2 = needle.exchange.rates.and.times$times)
+            
+            components$idu.susceptibility = lapply(1:length(rates.and.times$times), function(i){
+                
+                prep.coverage = rates.and.times$rates1[[i]]
+                needle.exchange.coverage = rates.and.times$rates2[[i]]
                 
                 if (is.null(dim(prep.coverage)))
                     prep.coverage = as.numeric(prep.coverage)
                 prep.coverage = expand.population.to.hiv.negative(components$jheem, prep.coverage)
+                needle.exchange.coverage = expand.population.to.hiv.negative(components$jheem, needle.exchange.coverage)
                 
-                non.prep.risk = (1-prep.coverage)
-                prep.risk = prep.coverage * components$prep.rr.heterosexual
-                prep.risk[,,,'msm',,] = prep.coverage[,,,'msm',,] * components$prep.rr.msm
-                prep.risk[,,,,'active_IDU',] = prep.coverage[,,,,'active_IDU',] * components$prep.rr.idu
+                # Set up the proportions for the 2x2 combos of PrEP & needle exchange
+                #we presume here prep use and needle exchange are independent (ie, using one does not impact your chances of using the other)
+                # (if we ever change this, would need to change new infection proportions as well)
+                
+                no.prep.no.exchange.p = (1-prep.coverage) * (1-needle.exchange.coverage)
+                no.prep.yes.exchange.p = (1-prep.coverage) * needle.exchange.coverage
+                yes.prep.no.exchange.p = prep.coverage * (1-needle.exchange.coverage)
+                yes.prep.yes.exchange.p = prep.coverage * needle.exchange.coverage
+                
+                # Multiply by RRs to get risk
+                
+                no.prep.no.exchange.risk = no.prep.no.exchange.p
+                
+                no.prep.yes.exchange.risk = no.prep.yes.exchange.p
+                no.prep.yes.exchange.risk[,,,,'active_IDU',] = no.prep.yes.exchange.p[,,,,'active_IDU',] *
+                    components$needle.exchange.rr
+                
+                yes.prep.no.exchange.risk = yes.prep.no.exchange.p
+                yes.prep.no.exchange.risk[,,,,'active_IDU',] = yes.prep.no.exchange.p[,,,,'active_IDU',] *
+                    components$prep.rr.idu
+                
+                yes.prep.yes.exchange.risk = yes.prep.yes.exchange.p
+                yes.prep.yes.exchange.risk[,,,,'active_IDU',] = yes.prep.yes.exchange.p[,,,,'active_IDU',] *
+                    components$prep.rr.idu * components$needle.exchange.rr
 
-                susceptibility = non.prep.risk + prep.risk
+                # Add together
+                susceptibility = no.prep.no.exchange.risk + no.prep.yes.exchange.risk +
+                    yes.prep.no.exchange.risk + yes.prep.yes.exchange.risk
+                
                 susceptibility * base.idu.susceptibility
             })
+            
+            
             components$idu.susceptibility.years = rates.and.times$times
         }
     }

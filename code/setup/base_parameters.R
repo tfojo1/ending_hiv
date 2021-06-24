@@ -9,7 +9,7 @@ add.parameter <- function(params, param.name,
     params$values[param.name] = value
     params$ci.lower[param.name] = ci.lower
     params$ci.upper[param.name] = ci.upper
-    params$citation[param.name] = citation
+    params$citation[[param.name]] = list(citation)
     params$comment[param.name] = comment
 
     params
@@ -18,7 +18,7 @@ add.parameter <- function(params, param.name,
 BASE_PARAMETERS = list(values=numeric(),
               ci.lower=numeric(),
               ci.upper=numeric(),
-              citation=character(),
+              citation=list(),
               comment=character())
 
 ##-- MORTALITY --#
@@ -182,7 +182,21 @@ BASE_PARAMETERS = add.parameter(BASE_PARAMETERS, 'suppressed.idu.z',
                        0, SUPPRESSED.Z.LOWER, SUPPRESSED.Z.UPPER)
 
 
-#to calculate AIDS progression rate
+##-- Needle Exchange --##
+
+print("For now, dummy values for needle exchange")
+BASE_PARAMETERS = add.parameter(BASE_PARAMETERS, 'needle.exchange.rr',
+                                1,1,1,
+                                citation=23769234)
+
+
+BASE_PARAMETERS = add.parameter(BASE_PARAMETERS, 'needle.exchange.remission.rate.ratio',
+                                1,1,1,
+                                citation=23769234)
+
+
+
+#-- to calculate AIDS progression rate --#
 if (1==2)
 {
     #Poorolajal 2016

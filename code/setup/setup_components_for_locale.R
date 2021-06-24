@@ -482,6 +482,19 @@ setup.components.for.msa <- function(msa,
                                              future.reengagement.slope.or=1,
                                              after.year=2020)
     
+    #-- Needle Exchange --#
+    
+    # By default, no one using needle exchange
+    comps = setup.background.needle.exchange(comps,
+                                             proportions=0,
+                                             years=2010)
+    
+    comps = setup.needle.exchange.susceptibility(comps,
+                                                 needle.exchange.rr=parameters['needle.exchange.rr'])
+    comps = setup.needle.exchange.remission.effect(comps,
+                                                   needle.exchange.remission.rate.ratio=parameters['needle.exchange.remission.rate.ratio'])
+    
+    
     #-- PrEP --#
     if (verbose)
         print('**Setting up PrEP')
