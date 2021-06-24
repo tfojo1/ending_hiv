@@ -109,10 +109,10 @@ FRACTION.PREP.GT.1MO.SD = 0.05
 # http://205.186.56.104/largeDatabase/sample_details.php?id=75332
 FRACTION.PREP.MISCLASSIFIED = .04 + .099 #not using this - sd would be
 FRACTION.PREP.MISCLASSIFIED.SD = ((.125-.079) + (.058-.028)) / 2 / 1.96
-FRACTION.PREP.CORRECTLY.CLASSIFIED = 0.724 #The ppv
-FRACTION.PREP.CORRECTLY.CLASSIFIED.SD = (75.8 - 68.9)/100 / 2 / 1.96# * 3 #inflate by 3 to allow for location specific differences
-#FRACTION.PREP.CORRECTLY.CLASSIFIED = 1-FRACTION.PREP.MISCLASSIFIED
-#FRACTION.PREP.CORRECTLY.CLASSIFIED.SD = FRACTION.PREP.MISCLASSIFIED.SD * 3 #inflate by 3 to allow for location specific differences
+#FRACTION.PREP.CORRECTLY.CLASSIFIED = 0.724 #The ppv
+#FRACTION.PREP.CORRECTLY.CLASSIFIED.SD = (75.8 - 68.9)/100 / 2 / 1.96# * 3 #inflate by 3 to allow for location specific differences
+FRACTION.PREP.CORRECTLY.CLASSIFIED = 1-FRACTION.PREP.MISCLASSIFIED
+FRACTION.PREP.CORRECTLY.CLASSIFIED.SD = FRACTION.PREP.MISCLASSIFIED.SD * 3 #inflate by 3 to allow for location specific differences
 
 # the 3mo numbers from:
 # https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6286209/
@@ -145,6 +145,9 @@ INDIV.PREP.RET.N = c(
 PREP.RETENTION.3MO = sum(INDIV.PREP.RETENTION*INDIV.PREP.RET.N)/sum(INDIV.PREP.RET.N)
 PREP.RETENTION.3MO.SD = sqrt(sum(INDIV.PREP.RET.N*(INDIV.PREP.RETENTION-PREP.RETENTION.3MO)^2) / sum(INDIV.PREP.RET.N))
 
+# Ratio v1 to v2 - from the first calibration sent to annals vs updated (more) PrEP
+PREP.RATIO.V2.TO.V1 = 0.5425921 * 0.301984
+
 # No longer using this
 # https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6378757/
 PREP.PERSISTENCE = c(total=0.56,
@@ -170,7 +173,8 @@ PREP.PERSISTENCE.SD = sqrt(PREP.PERSISTENCE * (1-PREP.PERSISTENCE) /
 
 convert.true.prep.to.rx <- function(x)
 {
-    x / FRACTION.PREP.CORRECTLY.CLASSIFIED / PREP.RX.3MO.To.1Y['total'] / PREP.RETENTION.3MO * FRACTION.PREP.STARTS.RECORDED
+    x / FRACTION.PREP.CORRECTLY.CLASSIFIED / PREP.RX.3MO.To.1Y['total'] * FRACTION.PREP.STARTS.RECORDED
+    #x / FRACTION.PREP.CORRECTLY.CLASSIFIED / PREP.RX.3MO.To.1Y['total'] / PREP.RETENTION.3MO * FRACTION.PREP.STARTS.RECORDED
     #x / FRACTION.PREP.GT.1MO / PREP.RX.3MO.To.1Y['total'] / PREP.RETENTION.3MO * FRACTION.PREP.STARTS.RECORDED
     # x * FRACTION.PREP.STARTS.RECORDED / PREP.RX.3MO.To.1Y['total'] / PREP.PERSISTENCE['total']
 }
@@ -205,8 +209,10 @@ prep.3mo.to.1y.ratios.by.region <- function(prep.manager = ALL.DATA.MANAGERS$pre
 
 convert.prep.rx.to.true.prep <- function(x,
                                          description=NULL)
-{
-    return (x * FRACTION.PREP.CORRECTLY.CLASSIFIED * PREP.RX.3MO.To.1Y['total'] * PREP.RETENTION.3MO / FRACTION.PREP.STARTS.RECORDED )
+{   
+    return (x * FRACTION.PREP.CORRECTLY.CLASSIFIED * PREP.RX.3MO.To.1Y['total'] / FRACTION.PREP.STARTS.RECORDED )
+    
+#    return (x * FRACTION.PREP.CORRECTLY.CLASSIFIED * PREP.RX.3MO.To.1Y['total'] * PREP.RETENTION.3MO / FRACTION.PREP.STARTS.RECORDED )
     
     #Older
     if (is.null(description))
