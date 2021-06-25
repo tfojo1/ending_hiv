@@ -59,12 +59,36 @@ make.run.scripts <- function(msa.indices,
                                mem=mem,
                                output = file.path(OUTPUT.DIR, paste0("run_", msa.name, "_", chain, ".out")),
                                partition = 'unlimited',
-                               time.hours = 5*24,
+                               time.hours = 7*24,
                                account=account,
                                commands= paste0("Rscript Ending_HIV/R_scripts/run_parallel_chain_script.R ", i, " ", chain))
         }
     }
 }
+
+make.quick.run.scripts <- function(msa.indices,
+                             chains=1:4,
+                             dir='R_scripts/quick_run_scripts/',
+                             account='tfojo1',
+                             mem=NULL)
+{
+    for (i in msa.indices)
+    {
+        for (chain in chains)
+        {
+            msa.name = names(TARGET.MSAS)[i]
+            make.sbatch.script(filename=file.path(dir, get.run.filename(i,chain)),
+                               job.name = paste0("qr", chain, msa.name),
+                               mem=mem,
+                               output = file.path(OUTPUT.DIR, paste0("qrun_", msa.name, "_", chain, ".out")),
+                               partition = 'shared',
+                               time.hours = 72,
+                               account=account,
+                               commands= paste0("Rscript Ending_HIV/R_scripts/run_parallel_chain_script.R ", i, " ", chain))
+        }
+    }
+}
+
 
 make.intervention.scripts <- function(msa.indices,
                                       dir='R_scripts/intervention_scripts/',
@@ -160,6 +184,22 @@ make.master.run.script <- function(msa.indices,
     sink()
 }
 
+make.master.quick.run.script <- function(msa.indices,
+                                         chains=1:4,
+                                         filename='R_scripts/master_scripts/quick_run_master.bat',
+                                         path="Ending_HIV/R_scripts/quick_run_scripts/")
+{
+    n.msa = length(msa.indices)
+    msa.indices = rep(msa.indices, each=length(chains))
+    chains = rep(chains, n.msa)
+    
+    sink(filename)
+    contents = cat(paste0(paste0("sbatch ", path, get.quick.run.filename(msa.indices, chains)),
+                          collapse='\n'),
+                   sep='')
+    sink()
+}
+
 ##-------------##
 ##-- HELPERS --##
 ##-------------##
@@ -168,6 +208,12 @@ get.run.filename <- function(index, chain)
 {
     paste0("run_", index, "_", chain, ".bat")
 }
+
+get.quick.run.filename <- function(index, chain)
+{
+    paste0("run_", index, "_", chain, ".bat")
+}
+
 
 get.setup.filename <- function(index)
 {
