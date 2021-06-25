@@ -780,10 +780,10 @@ make.prep.model.mixed.linear <- function(settings=SETTINGS,
     
     # Slopes
     mmwr.msm.slope = (data$mmwr$msm.2017$p*msm.correction.rr - data$mmwr$msm.2014$p*msm.correction.rr) / (2017-2014)
-   # sullivan.slopes = apply(data$sullivan$msm.2013.2017, 1, function(x){
-    #    years = 2013:2017
-     #   lm(x*msm.correction.rr~years)$coefficients[2]
-    #})
+  #  sullivan.slopes = apply(data$sullivan$msm.2013.2017$p, 1, function(x){
+  #      years = 2013:2017
+  #      lm(x*msm.correction.rr~years)$coefficients[2]
+  #  })
     msm.slope.lo = model$log.or.vector['msm_slope'] = logit(mmwr.msm.slope['total'])
     
     # Intercept
@@ -824,32 +824,41 @@ make.prep.model.mixed.linear <- function(settings=SETTINGS,
     
     mmwr.msm.slope.cv = mmwr.msm.slope / (data$mmwr$msm.2017$p*msm.correction.rr)
     
+
+    
     black.lor = model$log.or.vector['black'] =
-        mean(c(logit(data$nhbs$msm.2017$p['black']*msm.correction.rr * (1-(2017-anchor.year)*mmwr.msm.slope.cv['black'])) - 
-                           logit(data$nhbs$msm.2017$p['total']*msm.correction.rr * (1-(2017-anchor.year)*mmwr.msm.slope.cv['total'])),
-                       logit(data$mmwr$msm.2014$p['black']*msm.correction.rr * (1-(2014-anchor.year)*mmwr.msm.slope.cv['black'])) - 
-                           logit(data$mmwr$msm.2014$p['total']*msm.correction.rr * (1-(2014-anchor.year)*mmwr.msm.slope.cv['total'])),
-                       logit(data$ca$msm.2017$p['black']*msm.correction.rr * (1-(2017-anchor.year)*mmwr.msm.slope.cv['black'])) - 
-                           logit(data$ca$msm.2017$p['total']*msm.correction.rr * (1-(2017-anchor.year)*mmwr.msm.slope.cv['total']))
-    ))
+        mean(c(logit(data$nhbs$msm.2017$p['black']*msm.correction.rr) - 
+                   logit(data$nhbs$msm.2017$p['total']*msm.correction.rr),
+               logit(data$mmwr$msm.2014$p['black']*msm.correction.rr) - 
+                   logit(data$mmwr$msm.2014$p['total']*msm.correction.rr),
+               logit(data$ca$msm.2017$p['black']*msm.correction.rr) - 
+                   logit(data$ca$msm.2017$p['total']*msm.correction.rr),
+               logit(data$shover$msm.2015.2018$p['black']*msm.correction.rr) - 
+                   logit(data$shover$msm.2015.2018$p['total']*msm.correction.rr)
+        ))
+    
     
     hispanic.lor = model$log.or.vector['hispanic'] =
-        mean(c(logit(data$nhbs$msm.2017$p['hispanic']*msm.correction.rr * (1-(2017-anchor.year)*mmwr.msm.slope.cv['hispanic'])) - 
-                           logit(data$nhbs$msm.2017$p['total']*msm.correction.rr * (1-(2017-anchor.year)*mmwr.msm.slope.cv['total'])),
-                       logit(data$mmwr$msm.2014$p['hispanic']*msm.correction.rr * (1-(2014-anchor.year)*mmwr.msm.slope.cv['hispanic'])) - 
-                           logit(data$mmwr$msm.2014$p['total']*msm.correction.rr * (1-(2014-anchor.year)*mmwr.msm.slope.cv['total'])),
-                       logit(data$ca$msm.2017$p['hispanic']*msm.correction.rr * (1-(2017-anchor.year)*mmwr.msm.slope.cv['hispanic'])) - 
-                           logit(data$ca$msm.2017$p['total']*msm.correction.rr * (1-(2017-anchor.year)*mmwr.msm.slope.cv['total']))
+        mean(c(logit(data$nhbs$msm.2017$p['hispanic']*msm.correction.rr) - 
+                           logit(data$nhbs$msm.2017$p['total']*msm.correction.rr),
+                       logit(data$mmwr$msm.2014$p['hispanic']*msm.correction.rr) - 
+                           logit(data$mmwr$msm.2014$p['total']*msm.correction.rr),
+                       logit(data$ca$msm.2017$p['hispanic']*msm.correction.rr) - 
+                           logit(data$ca$msm.2017$p['total']*msm.correction.rr),
+               logit(data$shover$msm.2015.2018$p['hispanic']*msm.correction.rr) - 
+                   logit(data$shover$msm.2015.2018$p['total']*msm.correction.rr)
     ))
     
     other.lor = model$log.or.vector['other'] =
-        mean(c(logit(data$nhbs$msm.2017$p['white']*msm.correction.rr * (1-(2017-anchor.year)*mmwr.msm.slope.cv['white'])) - 
-                           logit(data$nhbs$msm.2017$p['total']*msm.correction.rr * (1-(2017-anchor.year)*mmwr.msm.slope.cv['total'])),
-                       logit(data$mmwr$msm.2014$p['white']*msm.correction.rr * (1-(2014-anchor.year)*mmwr.msm.slope.cv['white'])) - 
-                           logit(data$mmwr$msm.2014$p['total']*msm.correction.rr * (1-(2014-anchor.year)*mmwr.msm.slope.cv['total'])),
-                       logit(data$ca$msm.2017$p['white']*msm.correction.rr * (1-(2017-anchor.year)*mmwr.msm.slope.cv['white'])) - 
-                           logit(data$ca$msm.2017$p['total']*msm.correction.rr * (1-(2017-anchor.year)*mmwr.msm.slope.cv['total']))
-    ))
+        mean(c(logit(data$nhbs$msm.2017$p['white']*msm.correction.rr) - 
+                   logit(data$nhbs$msm.2017$p['total']*msm.correction.rr),
+               logit(data$mmwr$msm.2014$p['white']*msm.correction.rr) - 
+                   logit(data$mmwr$msm.2014$p['total']*msm.correction.rr),
+               logit(data$ca$msm.2017$p['white']*msm.correction.rr) - 
+                   logit(data$ca$msm.2017$p['total']*msm.correction.rr),
+               logit(data$shover$msm.2015.2018$p['white']*msm.correction.rr) - 
+                   logit(data$shover$msm.2015.2018$p['total']*msm.correction.rr)
+        ))
     
     
     #-- Age --#
@@ -1193,14 +1202,15 @@ get.prep.lit.data <- function(as.proportion.of.indicated=T)
         age5 = 0.16,
         black = 0.11,
         hispanic = 0.08,
-        other = 0.17
+        white = 0.17
         
     )
     
     #-- Sullivan et al 2013 - 2017 --#
     
     rv$sullivan = list(
-        msm.2013.2017 = cbind(
+        msm.2013.2017 = list(
+            p=cbind(
             '2013' = c(
                 total = 0.017,
                 age1 = 0.012,
@@ -1210,7 +1220,7 @@ get.prep.lit.data <- function(as.proportion.of.indicated=T)
                 age5 = 0.013,
                 black = 0,
                 hispanic = 0.015,
-                other = 0.017,
+                white = 0.017,
                 urban = 0.029
             ),
             '2014' = c(
@@ -1222,7 +1232,7 @@ get.prep.lit.data <- function(as.proportion.of.indicated=T)
                 age5 = 0.067,
                 black = 0.051,
                 hispanic = 0.060,
-                other = 0.061,
+                white = 0.061,
                 urban = 0.091
             ),
             '2015' = c(
@@ -1234,7 +1244,7 @@ get.prep.lit.data <- function(as.proportion.of.indicated=T)
                 age5 = 0.076,
                 black = 0.054,
                 hispanic = 0.067,
-                other = 0.080,
+                white = 0.080,
                 urban = 0.106
             ),
             '2016' = c(
@@ -1260,7 +1270,19 @@ get.prep.lit.data <- function(as.proportion.of.indicated=T)
                 hispanic = 0.163,
                 other = 0.137,
                 urban = 0.270
-            )
+            ),
+            or = c(
+                total = 1,
+                age1 = 1.13,
+                age2 = 1,
+                age3 = 0.98,
+                age4 = 0.89,
+                age5 = 0.89,
+                black = 1.05,
+                hispanic= 1,
+                other = 1,
+                urban = 1
+            ))
         )
     )
     
@@ -2151,6 +2173,15 @@ OLD.FIRST.ANNALS.make.prep.model.mixed.linear <- function(settings=SETTINGS,
     
     mmwr.msm.slope.cv = mmwr.msm.slope / (data$mmwr$msm.2017$p*msm.correction.rr)
     
+    other.lor = model$log.or.vector['other'] =
+        mean(c(logit(data$nhbs$msm.2017$p['white']*msm.correction.rr * (1-(2017-anchor.year)*mmwr.msm.slope.cv['white'])) - 
+                   logit(data$nhbs$msm.2017$p['total']*msm.correction.rr * (1-(2017-anchor.year)*mmwr.msm.slope.cv['total'])),
+               logit(data$mmwr$msm.2014$p['white']*msm.correction.rr * (1-(2014-anchor.year)*mmwr.msm.slope.cv['white'])) - 
+                   logit(data$mmwr$msm.2014$p['total']*msm.correction.rr * (1-(2014-anchor.year)*mmwr.msm.slope.cv['total'])),
+               logit(data$ca$msm.2017$p['white']*msm.correction.rr * (1-(2017-anchor.year)*mmwr.msm.slope.cv['white'])) - 
+                   logit(data$ca$msm.2017$p['total']*msm.correction.rr * (1-(2017-anchor.year)*mmwr.msm.slope.cv['total']))
+        ))
+    
     black.lor = model$log.or.vector['black'] =
         mean(c(logit(data$nhbs$msm.2017$p['black']*msm.correction.rr * (1-(2017-anchor.year)*mmwr.msm.slope.cv['black'])) - 
                    logit(data$nhbs$msm.2017$p['total']*msm.correction.rr * (1-(2017-anchor.year)*mmwr.msm.slope.cv['total'])),
@@ -2168,15 +2199,7 @@ OLD.FIRST.ANNALS.make.prep.model.mixed.linear <- function(settings=SETTINGS,
                logit(data$ca$msm.2017$p['hispanic']*msm.correction.rr * (1-(2017-anchor.year)*mmwr.msm.slope.cv['hispanic'])) - 
                    logit(data$ca$msm.2017$p['total']*msm.correction.rr * (1-(2017-anchor.year)*mmwr.msm.slope.cv['total']))
         ))
-    
-    other.lor = model$log.or.vector['other'] =
-        mean(c(logit(data$nhbs$msm.2017$p['white']*msm.correction.rr * (1-(2017-anchor.year)*mmwr.msm.slope.cv['white'])) - 
-                   logit(data$nhbs$msm.2017$p['total']*msm.correction.rr * (1-(2017-anchor.year)*mmwr.msm.slope.cv['total'])),
-               logit(data$mmwr$msm.2014$p['white']*msm.correction.rr * (1-(2014-anchor.year)*mmwr.msm.slope.cv['white'])) - 
-                   logit(data$mmwr$msm.2014$p['total']*msm.correction.rr * (1-(2014-anchor.year)*mmwr.msm.slope.cv['total'])),
-               logit(data$ca$msm.2017$p['white']*msm.correction.rr * (1-(2017-anchor.year)*mmwr.msm.slope.cv['white'])) - 
-                   logit(data$ca$msm.2017$p['total']*msm.correction.rr * (1-(2017-anchor.year)*mmwr.msm.slope.cv['total']))
-        ))
+
     
     
     #-- Age --#
