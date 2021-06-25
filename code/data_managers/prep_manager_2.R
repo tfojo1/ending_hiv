@@ -107,8 +107,10 @@ FRACTION.PREP.GT.1MO.SD = 0.05
 
 # MacCannell T, Verma S, Shvachko V, Rawlings K, Mera R. Validation of a Truvada for PrEP Algorithm using an Electronic Medical Record. 8th IAS Conference on HIV Pathogenesis, Treatment & Prevention. Vancouver Canada July 2015.
 # http://205.186.56.104/largeDatabase/sample_details.php?id=75332
-FRACTION.PREP.MISCLASSIFIED = .04 + .099 #not using this - sd would be
-FRACTION.PREP.MISCLASSIFIED.SD = ((.125-.079) + (.058-.028)) / 2 / 1.96
+#FRACTION.PREP.MISCLASSIFIED = .04 + .099
+#FRACTION.PREP.MISCLASSIFIED.SD = ((.125-.079) + (.058-.028)) / 2 / 1.96
+FRACTION.PREP.MISCLASSIFIED = .099 # just the misclassifications of PEP - we'll assume as we scale up there's not a lot of HBV
+FRACTION.PREP.MISCLASSIFIED.SD = (.125-.079) / 2 / 1.96
 #FRACTION.PREP.CORRECTLY.CLASSIFIED = 0.724 #The ppv
 #FRACTION.PREP.CORRECTLY.CLASSIFIED.SD = (75.8 - 68.9)/100 / 2 / 1.96# * 3 #inflate by 3 to allow for location specific differences
 FRACTION.PREP.CORRECTLY.CLASSIFIED = 1-FRACTION.PREP.MISCLASSIFIED
@@ -146,7 +148,7 @@ PREP.RETENTION.3MO = sum(INDIV.PREP.RETENTION*INDIV.PREP.RET.N)/sum(INDIV.PREP.R
 PREP.RETENTION.3MO.SD = sqrt(sum(INDIV.PREP.RET.N*(INDIV.PREP.RETENTION-PREP.RETENTION.3MO)^2) / sum(INDIV.PREP.RET.N))
 
 # Ratio v1 to v2 - from the first calibration sent to annals vs updated (more) PrEP
-PREP.RATIO.V2.TO.V1 = 0.5425921 * 0.301984
+PREP.RATIO.V2.TO.V1 = 0.5677996 / 0.301984
 
 # No longer using this
 # https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6378757/
@@ -177,6 +179,9 @@ convert.true.prep.to.rx <- function(x)
     #x / FRACTION.PREP.CORRECTLY.CLASSIFIED / PREP.RX.3MO.To.1Y['total'] / PREP.RETENTION.3MO * FRACTION.PREP.STARTS.RECORDED
     #x / FRACTION.PREP.GT.1MO / PREP.RX.3MO.To.1Y['total'] / PREP.RETENTION.3MO * FRACTION.PREP.STARTS.RECORDED
     # x * FRACTION.PREP.STARTS.RECORDED / PREP.RX.3MO.To.1Y['total'] / PREP.PERSISTENCE['total']
+    
+ #   x / 0.724 / PREP.RX.3MO.To.1Y['total'] / PREP.RETENTION.3MO * FRACTION.PREP.STARTS.RECORDED
+    
 }
 
 # A helper to get an estimate of the sds
@@ -747,12 +752,12 @@ make.prep.model <- function(anchor.year,
 
 make.prep.model.mixed.linear <- function(settings=SETTINGS,
                                          as.proportion.of.indicated=T,
-                                         max.proportion=0.5,
+                                         max.proportion=0.3,
                                          use.logistic.tail=T,
                                          logistic.after.frac.of.max.p=0.5,
-                                         msm.correction.rr = 0.0691,#0.158, #from calling calculate.msm.prep.correction.rr
-                                         idu.correction.rr = 0.0525,#.070,
-                                         het.correction.rr = 0.0525,#0.070)
+                                         msm.correction.rr = 0.1298588, #from calling calculate.msm.prep.correction.rr()
+                                         idu.correction.rr = 0.09869363, #from calling calculate.female.prep.correction.rr()
+                                         het.correction.rr = 0.09869363, #from calling calculate.female.prep.correction.rr()
                                          age1.correction.rr = 0.612,#0.538,
                                          age2.correction.rr = 1.138,#1,
                                          age3.correction.rr = 1.312,#1.153,
@@ -775,6 +780,10 @@ make.prep.model.mixed.linear <- function(settings=SETTINGS,
     
     # Slopes
     mmwr.msm.slope = (data$mmwr$msm.2017$p*msm.correction.rr - data$mmwr$msm.2014$p*msm.correction.rr) / (2017-2014)
+   # sullivan.slopes = apply(data$sullivan$msm.2013.2017, 1, function(x){
+    #    years = 2013:2017
+     #   lm(x*msm.correction.rr~years)$coefficients[2]
+    #})
     msm.slope.lo = model$log.or.vector['msm_slope'] = logit(mmwr.msm.slope['total'])
     
     # Intercept
@@ -1167,6 +1176,93 @@ get.prep.lit.data <- function(as.proportion.of.indicated=T)
         rv$mmwr$msm.2014$p = rv$mmwr$msm.2014$p / p.indicated.msm
         rv$mmwr$msm.2017$p = rv$mmwr$msm.2017$p / p.indicated.msm
     }
+    
+    #-- Shover et al 2015-2018 --#
+    # https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6137770/
+    
+    rv$shover = list(
+        msm.2015.2018 = list()
+    )
+    
+    rv$shover$msm.2015.2018$p = c(
+        total = 0.13,
+        age1 = 0.05,
+        age2 = 0.10,
+        age3 = 0.16,
+        age4 = 0.19,
+        age5 = 0.16,
+        black = 0.11,
+        hispanic = 0.08,
+        other = 0.17
+        
+    )
+    
+    #-- Sullivan et al 2013 - 2017 --#
+    
+    rv$sullivan = list(
+        msm.2013.2017 = cbind(
+            '2013' = c(
+                total = 0.017,
+                age1 = 0.012,
+                age2 = 0.022,
+                age3 = 0.028,
+                age4 = 0.013,
+                age5 = 0.013,
+                black = 0,
+                hispanic = 0.015,
+                other = 0.017,
+                urban = 0.029
+            ),
+            '2014' = c(
+                total = 0.061,
+                age1 = 0.029,
+                age2 = 0.061,
+                age3 = 0.070,
+                age4 = 0.067,
+                age5 = 0.067,
+                black = 0.051,
+                hispanic = 0.060,
+                other = 0.061,
+                urban = 0.091
+            ),
+            '2015' = c(
+                total = 0.077,
+                age1 = 0.047,
+                age2 = 0.092,
+                age3 = 0.114,
+                age4 = 0.076,
+                age5 = 0.076,
+                black = 0.054,
+                hispanic = 0.067,
+                other = 0.080,
+                urban = 0.106
+            ),
+            '2016' = c(
+                total = 0.134,
+                age1 = 0.064,
+                age2 = 0.18,
+                age3 = 0.188,
+                age4 = 0.138,
+                age5 = 0.138,
+                black = 0.116,
+                hispanic = 0.138,
+                other = 0.137,
+                urban = 0.207
+            ),
+            '2017' = c(
+                total = 0.199,
+                age1 = 0.094,
+                age2 = 0.246,
+                age3 = 0.302,
+                age4 = 0.205,
+                age5 = 0.205,
+                black = 0.231,
+                hispanic = 0.163,
+                other = 0.137,
+                urban = 0.270
+            )
+        )
+    )
     
     #-- CA MSM Study young MSM 2017 --#
     
@@ -1977,4 +2073,209 @@ OLD.make.prep.model <- function(anchor.year=2020,
     model
 }
 
+}
+
+
+#OLD - first draft to annals
+
+if (1==2)
+{
+
+OLD.FIRST.ANNALS.make.prep.model.mixed.linear <- function(settings=SETTINGS,
+                                         as.proportion.of.indicated=T,
+                                         max.proportion=0.5,
+                                         use.logistic.tail=T,
+                                         logistic.after.frac.of.max.p=0.5,
+                                         msm.correction.rr = 0.0691,#0.158, #from calling calculate.msm.prep.correction.rr
+                                         idu.correction.rr = 0.0525,#.070,
+                                         het.correction.rr = 0.0525,#0.070)
+                                         age1.correction.rr = 0.612,#0.538,
+                                         age2.correction.rr = 1.138,#1,
+                                         age3.correction.rr = 1.312,#1.153,
+                                         age4.correction.rr = 1.240,#1.090,
+                                         age5.correction.rr = 0.697#0.613
+                                         #x=calculate.age.prep.correction.rr(relative.to=NULL);x/mean(x)
+)
+{
+    anchor.year=2014
+    data = get.prep.lit.data(as.proportion.of.indicated=as.proportion.of.indicated)
+    model = list(anchor.year=anchor.year,
+                 mixed.linear=T,
+                 use.logistic.tail=use.logistic.tail,
+                 logistic.after.frac.of.max.p = logistic.after.frac.of.max.p,
+                 max.proportion=1,
+                 max.proportion.for.logistic.tail=max.proportion,
+                 log.or.vector=numeric())
+    
+    #-- MSM --#
+    
+    # Slopes
+    mmwr.msm.slope = (data$mmwr$msm.2017$p*msm.correction.rr - data$mmwr$msm.2014$p*msm.correction.rr) / (2017-2014)
+    msm.slope.lo = model$log.or.vector['msm_slope'] = logit(mmwr.msm.slope['total'])
+    
+    # Intercept
+    msm.slope.cv = mmwr.msm.slope['total'] / (data$mmwr$msm.2017$p['total'] * msm.correction.rr)
+    msm.intercept.lo = model$log.or.vector['msm'] =
+        mean(logit(c(data$mmwr$msm.2014$p['total']*msm.correction.rr * (1 + (anchor.year-2014) * msm.slope.cv),
+                     data$nhbs$msm.2017$p['total']*msm.correction.rr * (1 + (anchor.year-2017) * msm.slope.cv),
+                     data$ca$msm.2017$p['total']*msm.correction.rr * (1 + (anchor.year-2017) * msm.slope.cv)
+        )))
+    
+    
+    #-- IDU --#
+    
+    idu.slope = (data$nhbs$idu.2018$p['total']*idu.correction.rr - data$nhbs$idu.2015$p['total']*idu.correction.rr) / (2018-2015)
+    idu.slope.lo = model$log.or.vector['idu_slope'] = logit(idu.slope)
+    idu.slope.cv = idu.slope / (data$nhbs$idu.2018$p['total']*idu.correction.rr)
+    
+    idu.intercept.lo = model$log.or.vector['idu'] = logit(data$nhbs$idu.2015$p['total']*idu.correction.rr + (anchor.year-2015)*idu.slope)
+    
+    
+    #-- Heterosexual --#
+    
+    het.slope.cv = idu.slope.cv
+    het.slope.lo = model$log.or.vector['heterosexual_slope'] = logit(het.slope.cv * data$nhbs$het.2016$p['total']*het.correction.rr)
+    
+    het.intercept.lo = model$log.or.vector['heterosexual'] = logit(data$nhbs$het.2016$p['total']*het.correction.rr * (1+(anchor.year-2016)*het.slope.cv))
+    
+    
+    #-- Race --#
+    
+    mmwr.msm.slope = (data$mmwr$msm.2017$p*msm.correction.rr - data$mmwr$msm.2014$p*msm.correction.rr) / (2017-2014)
+    black.slope.lor = model$log.or.vector['black_slope'] =
+        logit(mmwr.msm.slope['black']) - logit(mmwr.msm.slope['total'])
+    hispanic.slope.lor = model$log.or.vector['hispanic_slope'] =
+        logit(mmwr.msm.slope['hispanic']) - logit(mmwr.msm.slope['total'])
+    other.slope.lor = model$log.or.vector['other_slope'] =
+        logit(mmwr.msm.slope['white']) - logit(mmwr.msm.slope['total'])
+    
+    mmwr.msm.slope.cv = mmwr.msm.slope / (data$mmwr$msm.2017$p*msm.correction.rr)
+    
+    black.lor = model$log.or.vector['black'] =
+        mean(c(logit(data$nhbs$msm.2017$p['black']*msm.correction.rr * (1-(2017-anchor.year)*mmwr.msm.slope.cv['black'])) - 
+                   logit(data$nhbs$msm.2017$p['total']*msm.correction.rr * (1-(2017-anchor.year)*mmwr.msm.slope.cv['total'])),
+               logit(data$mmwr$msm.2014$p['black']*msm.correction.rr * (1-(2014-anchor.year)*mmwr.msm.slope.cv['black'])) - 
+                   logit(data$mmwr$msm.2014$p['total']*msm.correction.rr * (1-(2014-anchor.year)*mmwr.msm.slope.cv['total'])),
+               logit(data$ca$msm.2017$p['black']*msm.correction.rr * (1-(2017-anchor.year)*mmwr.msm.slope.cv['black'])) - 
+                   logit(data$ca$msm.2017$p['total']*msm.correction.rr * (1-(2017-anchor.year)*mmwr.msm.slope.cv['total']))
+        ))
+    
+    hispanic.lor = model$log.or.vector['hispanic'] =
+        mean(c(logit(data$nhbs$msm.2017$p['hispanic']*msm.correction.rr * (1-(2017-anchor.year)*mmwr.msm.slope.cv['hispanic'])) - 
+                   logit(data$nhbs$msm.2017$p['total']*msm.correction.rr * (1-(2017-anchor.year)*mmwr.msm.slope.cv['total'])),
+               logit(data$mmwr$msm.2014$p['hispanic']*msm.correction.rr * (1-(2014-anchor.year)*mmwr.msm.slope.cv['hispanic'])) - 
+                   logit(data$mmwr$msm.2014$p['total']*msm.correction.rr * (1-(2014-anchor.year)*mmwr.msm.slope.cv['total'])),
+               logit(data$ca$msm.2017$p['hispanic']*msm.correction.rr * (1-(2017-anchor.year)*mmwr.msm.slope.cv['hispanic'])) - 
+                   logit(data$ca$msm.2017$p['total']*msm.correction.rr * (1-(2017-anchor.year)*mmwr.msm.slope.cv['total']))
+        ))
+    
+    other.lor = model$log.or.vector['other'] =
+        mean(c(logit(data$nhbs$msm.2017$p['white']*msm.correction.rr * (1-(2017-anchor.year)*mmwr.msm.slope.cv['white'])) - 
+                   logit(data$nhbs$msm.2017$p['total']*msm.correction.rr * (1-(2017-anchor.year)*mmwr.msm.slope.cv['total'])),
+               logit(data$mmwr$msm.2014$p['white']*msm.correction.rr * (1-(2014-anchor.year)*mmwr.msm.slope.cv['white'])) - 
+                   logit(data$mmwr$msm.2014$p['total']*msm.correction.rr * (1-(2014-anchor.year)*mmwr.msm.slope.cv['total'])),
+               logit(data$ca$msm.2017$p['white']*msm.correction.rr * (1-(2017-anchor.year)*mmwr.msm.slope.cv['white'])) - 
+                   logit(data$ca$msm.2017$p['total']*msm.correction.rr * (1-(2017-anchor.year)*mmwr.msm.slope.cv['total']))
+        ))
+    
+    
+    #-- Age --#
+    
+    
+    ages = paste0('age', 1:5)
+    age.correction.rrs = c(age1=age1.correction.rr,
+                           age2=age2.correction.rr,
+                           age3=age3.correction.rr,
+                           age4=age4.correction.rr,
+                           age5=age5.correction.rr)
+    p.total = (data$nhbs$msm.2017$p['total']*msm.correction.rr * data$nhbs$msm.2017$n['total'] +
+                   data$nhbs$idu.2018$p['total']*idu.correction.rr * data$nhbs$idu.2018$n['total']) /
+        (data$nhbs$msm.2017$n['total'] + data$nhbs$idu.2018$n['total'])
+    p.age = (data$nhbs$msm.2017$p[ages]*msm.correction.rr*age.correction.rrs * data$nhbs$msm.2017$n[ages] +
+                 data$nhbs$idu.2018$p[ages]*idu.correction.rr*age.correction.rrs * data$nhbs$idu.2018$n[ages]) /
+        (data$nhbs$msm.2017$n[ages] + data$nhbs$idu.2018$n[ages])
+    
+    age.lors = model$log.or.vector[ages] = logit(p.age) - logit(p.total)
+    
+    #-- Male vs Female --#
+    
+    p.total = (data$nhbs$idu.2018$p['total']*idu.correction.rr * data$nhbs$idu.2018$n['total'] +
+                   data$nhbs$het.2016$p['total']*het.correction.rr * data$nhbs$het.2016$n['total']) /
+        (data$nhbs$idu.2018$n['total'] + data$nhbs$het.2016$n['total'])
+    p.male = (data$nhbs$idu.2018$p['male']*idu.correction.rr * data$nhbs$idu.2018$n['male'] +
+                  data$nhbs$het.2016$p['male']*het.correction.rr * data$nhbs$het.2016$n['male']) /
+        (data$nhbs$idu.2018$n['male'] + data$nhbs$het.2016$n['male'])
+    p.female = (data$nhbs$idu.2018$p['female']*idu.correction.rr * data$nhbs$idu.2018$n['female'] +
+                    data$nhbs$het.2016$p['female']*het.correction.rr * data$nhbs$het.2016$n['female']) /
+        (data$nhbs$idu.2018$n['female'] + data$nhbs$het.2016$n['female'])
+    
+    male.lor = model$log.or.vector['male'] = logit(p.male) - logit(p.total)
+    female.lor = model$log.or.vector['female'] = logit(p.female) - logit(p.total)
+    
+    
+    #-- Put It Together --#
+    
+    dim.names = list(age=settings$AGES$labels, race=settings$RACES, sex=settings$SEXES, risk=settings$RISK_STRATA)
+    model$intercept = model$slope = array(0, dim=sapply(dim.names, length), dimnames=dim.names)
+    
+    # Slopes - Risk
+    model$slope[,,c('heterosexual_male','female'),'never_IDU'] = 
+        model$slope[,,c('heterosexual_male','female'),'never_IDU'] + het.slope.lo
+    model$slope[,,c('heterosexual_male','female'),c('active_IDU','IDU_in_remission')] =
+        model$slope[,,c('heterosexual_male','female'),c('active_IDU','IDU_in_remission')] + idu.slope.lo
+    model$slope[,,'msm',] =
+        model$slope[,,'msm',] + msm.slope.lo
+    
+    # Intercepts - Risk
+    model$intercept[,,c('heterosexual_male','female'),'never_IDU'] = 
+        model$intercept[,,c('heterosexual_male','female'),'never_IDU'] + het.intercept.lo
+    model$intercept[,,c('heterosexual_male','female'),c('active_IDU','IDU_in_remission')] =
+        model$intercept[,,c('heterosexual_male','female'),c('active_IDU','IDU_in_remission')] + idu.intercept.lo
+    model$intercept[,,'msm',] =
+        model$intercept[,,'msm',] + msm.intercept.lo
+    
+    # Log ORs - Race
+    model$intercept[,'black',,] = 
+        model$intercept[,'black',,] + black.lor
+    model$intercept[,'hispanic',,] = 
+        model$intercept[,'hispanic',,] + hispanic.lor
+    model$intercept[,'other',,] = 
+        model$intercept[,'other',,] + other.lor
+    
+    model$slope[,'black',,] = 
+        model$slope[,'black',,] + black.slope.lor
+    model$slope[,'hispanic',,] = 
+        model$slope[,'hispanic',,] + hispanic.slope.lor
+    model$slope[,'other',,] = 
+        model$slope[,'other',,] + other.slope.lor
+    
+    # Log ORs - Age
+    for (age in 1:length(age.lors))
+    {
+        model$intercept[age,,,] = 
+            model$intercept[age,,,] + age.lors[age]
+        
+        model$slope[age,,,] = 
+            model$slope[age,,,] + age.lors[age]
+    }
+    
+    # Log ORs - Male/Female
+    model$intercept[,,'heterosexual_male',] = 
+        model$intercept[,,'heterosexual_male',] + male.lor
+    model$intercept[,,'female',] = 
+        model$intercept[,,'female',] + female.lor
+    
+    model$intercept[,,'heterosexual_male',] = 
+        model$intercept[,,'heterosexual_male',] + male.lor
+    model$intercept[,,'female',] = 
+        model$intercept[,,'female',] + female.lor
+    
+    # Return
+    model$mixed.linear=T
+    model$use.logistic.tail=use.logistic.tail
+    model$logistic.after.frac.of.max.p = logistic.after.frac.of.max.p
+    
+    model
+    
+}
 }
