@@ -77,7 +77,7 @@ make.quick.run.scripts <- function(msa.indices,
         for (chain in chains)
         {
             msa.name = names(TARGET.MSAS)[i]
-            make.sbatch.script(filename=file.path(dir, get.run.filename(i,chain)),
+            make.sbatch.script(filename=file.path(dir, get.quick.run.filename(i,chain)),
                                job.name = paste0("qr", chain, msa.name),
                                mem=mem,
                                output = file.path(OUTPUT.DIR, paste0("qrun_", msa.name, "_", chain, ".out")),
@@ -211,7 +211,7 @@ get.run.filename <- function(index, chain)
 
 get.quick.run.filename <- function(index, chain)
 {
-    paste0("run_", index, "_", chain, ".bat")
+    paste0("qrun_", index, "_", chain, ".bat")
 }
 
 
