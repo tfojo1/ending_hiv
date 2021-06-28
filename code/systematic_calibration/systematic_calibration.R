@@ -7,8 +7,8 @@
 create.msa.likelihood <- function(msa,
                                   EVERYTHING.WEIGHT=1/2,
                                   
-                                  NEW.WEIGHT = 1/2,#1,
-                                  PREV.WEIGHT = 2,#4,
+                                  NEW.WEIGHT = 1/4,#1/2,
+                                  PREV.WEIGHT = 1,#2,
                                   MORT.WEIGHT = 1,
                                   CUM.MORT.WEIGHT = 1,
                                   IDU.WEIGHT = 1,
