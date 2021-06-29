@@ -389,7 +389,8 @@ setup.initial.mcmc.for.msa <- function(msa,
                                        run=T,
                                        verbose=T,
                                        step.size.multiplier=1,
-                                       derive.step.size.from.prior.mcmc=F)
+                                       derive.step.size.from.prior.mcmc=F,
+                                       plot.first.sim=run)
 {
     
     # Likelihood
@@ -475,7 +476,7 @@ setup.initial.mcmc.for.msa <- function(msa,
                        COV.UPDATE.PRIOR = COV.UPDATE.PRIOR,
                        COV.BASE.UPDATE = COV.BASE.UPDATE,
                        
-                       plot.first.sim=run
+                       plot.first.sim=plot.first.sim
     )
 }
 

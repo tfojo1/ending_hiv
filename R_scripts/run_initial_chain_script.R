@@ -25,6 +25,7 @@ print(paste0("Running initial MCMC for ", msa.names(msa)))
 set.seed(1234)
 
 mcmc = setup.initial.mcmc.for.msa(msa, run=T, save.suffix = '', 
+                                  run = T, plot.first.sim = F,
                                   target.acceptance.rate = 0.100, derive.step.size.from.prior.mcmc = F,
                                   likelihood = create.msa.likelihood(msa=msa, EVERYTHING.WEIGHT=1/8))
 
