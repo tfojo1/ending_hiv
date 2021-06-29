@@ -89,6 +89,25 @@ make.quick.run.scripts <- function(msa.indices,
     }
 }
 
+make.initial.scripts <- function(msa.indices,
+                                 dir='R_scripts/initial_scripts/',
+                                 account='tfojo1',
+                                 mem=NULL)
+{
+    for (i in msa.indices)
+    {
+        msa.name = names(TARGET.MSAS)[i]
+        make.sbatch.script(filename=file.path(dir, get.initial.filename(i)),
+                           job.name = paste0("i", msa.name),
+                           mem=mem,
+                           output = file.path(OUTPUT.DIR, paste0("init_", msa.name, ".out")),
+                           partition = 'shared',
+                           time.hours = 48,
+                           account=account,
+                           commands= paste0("Rscript Ending_HIV/R_scripts/run_initial_chain_script.R ", i))
+    }
+}
+
 
 make.intervention.scripts <- function(msa.indices,
                                       dir='R_scripts/intervention_scripts/',
@@ -200,6 +219,17 @@ make.master.quick.run.script <- function(msa.indices,
     sink()
 }
 
+make.master.initial.script <- function(msa.indices,
+                                         filename='R_scripts/master_scripts/initial_master.bat',
+                                         path="Ending_HIV/R_scripts/initial_scripts/")
+{
+    sink(filename)
+    contents = cat(paste0(paste0("sbatch ", path, get.initial.filename(msa.indices)),
+                          collapse='\n'),
+                   sep='')
+    sink()
+}
+
 ##-------------##
 ##-- HELPERS --##
 ##-------------##
@@ -214,6 +244,10 @@ get.quick.run.filename <- function(index, chain)
     paste0("qrun_", index, "_", chain, ".bat")
 }
 
+get.initial.filename <- function(index)
+{
+    paste0("init_", index, ".bat")
+}
 
 get.setup.filename <- function(index)
 {
