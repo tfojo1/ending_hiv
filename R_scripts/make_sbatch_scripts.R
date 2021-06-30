@@ -70,7 +70,7 @@ make.quick.run.scripts <- function(msa.indices,
                              chains=1:4,
                              dir='R_scripts/quick_run_scripts/',
                              account='tfojo1',
-                             mem='1GB')
+                             mem='16GB')
 {
     for (i in msa.indices)
     {
