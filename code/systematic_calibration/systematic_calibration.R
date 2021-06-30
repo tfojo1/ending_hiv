@@ -1,4 +1,4 @@
-
+CACHE.FREQUENCY = 500
 
 ##---------------------------##
 ##-- CREATE THE LIKELIHOOD --##
@@ -375,7 +375,7 @@ setup.initial.mcmc.for.msa <- function(msa,
                                        save.dir=file.path(SYSTEMATIC.ROOT.DIR, 'systematic_initial'),
                                        cache.dir=file.path(SYSTEMATIC.ROOT.DIR, 'systematic_caches'),
                                        update.frequency=200,
-                                       cache.frequency=500,
+                                       cache.frequency=CACHE.FREQUENCY,
                                        save.suffix='',
                                        
                                        target.acceptance.rate=0.1,
@@ -513,7 +513,7 @@ setup.parallel.mcmc.for.msa <- function(msa,
                                         save.dir=file.path(SYSTEMATIC.ROOT.DIR, 'systematic_parallel'),
                                         cache.dir=file.path(SYSTEMATIC.ROOT.DIR, 'systematic_caches'),
                                         update.frequency=200,
-                                        cache.frequency=1000,
+                                        cache.frequency=CACHE.FREQUENCY,
                                         save.suffix='',
                                         
                                         target.acceptance.rate=0.238,
@@ -600,7 +600,7 @@ setup.mcmc.for.msa <- function(msa,
                                save.dir=file.path(SYSTEMATIC.ROOT.DIR, 'systematic_parallel'),
                                cache.dir=file.path(SYSTEMATIC.ROOT.DIR, 'systematic_caches'),
                                update.frequency=200,
-                               cache.frequency=2000,
+                               cache.frequency=CACHE.FREQUENCY,
                                save.suffix='',
                                
                                target.acceptance.rate=0.238,
