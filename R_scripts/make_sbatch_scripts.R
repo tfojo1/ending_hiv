@@ -5,6 +5,7 @@ OUTPUT.DIR = "Ending_HIV/R_scripts/output"
 
 make.sbatch.script <- function(filename,
                               mem='16GB',
+                              mem.per.cpu=NULL,
                               time.hours=NULL,
                               output=NULL,
                               job.name=NULL,
@@ -21,6 +22,9 @@ make.sbatch.script <- function(filename,
     
     if (!is.null(mem))
         cat("#SBATCH --mem=", mem, '\n', sep='')
+    
+    if (!is.null(mem.per.cpu))
+        cat("#SBATCH --mem-per-cpu=", mem.per.cpu, '\n', sep='')
     
     if (!is.null(output))
         cat("#SBATCH --output=", output, '\n', sep='')
@@ -70,7 +74,8 @@ make.quick.run.scripts <- function(msa.indices,
                              chains=1:4,
                              dir='R_scripts/quick_run_scripts/',
                              account='tfojo1',
-                             mem='16GB')
+                             mem=NULL,
+                             mem.per.cpu='4GB')
 {
     for (i in msa.indices)
     {
@@ -80,6 +85,7 @@ make.quick.run.scripts <- function(msa.indices,
             make.sbatch.script(filename=file.path(dir, get.quick.run.filename(i,chain)),
                                job.name = paste0("q", chain, msa.name),
                                mem=mem,
+                               mem.per.cpu=mem.per.cpu,
                                output = file.path(OUTPUT.DIR, paste0("qrun_", msa.name, "_", chain, ".out")),
                                partition = 'shared',
                                time.hours = 72,
