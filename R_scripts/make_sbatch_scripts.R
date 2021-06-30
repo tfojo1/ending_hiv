@@ -157,7 +157,16 @@ make.assemble.mcmc.script <- function(dir='R_scripts/other_scripts/',
                        commands= paste0("Rscript Ending_HIV/R_scripts/assemble_mcmc_script.R"))
 }
 
-
+make.assemble.quick.mcmc.script <- function(dir='R_scripts/other_scripts/',
+                                      account='tfojo1')
+{
+    make.sbatch.script(filename=file.path(dir, 'quick_assemble_mcmc.bat'),
+                       job.name = 'q_assemble',
+                       partition='shared',
+                       account=account,
+                       output = file.path(OUTPUT.DIR, paste0("quick_assemble_mcmc.out")),
+                       commands= paste0("Rscript Ending_HIV/R_scripts/assemble_quick_script.R"))
+}
 
 ##--------------------##
 ##-- MASTER SCRIPTS --##
