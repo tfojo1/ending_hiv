@@ -38,7 +38,7 @@ if (length(to.do)>1)
     {
         print(paste0("- Doing ", msa, " (", msa.names(msa), ")..."))
         load(file.path(SYSTEMATIC.ROOT.DIR, "systematic_initial", paste0(msa, ".Rdata")))
-        simset = extract.simset(mcmc, additional.burn=10000, additional.thin=200)
+        simset = extract.simset(mcmc, additional.burn=0, additional.thin=20)
         save(simset, file=file.path(SYSTEMATIC.ROOT.DIR, "quick_simsets", paste0("1.0_", msa, "_quick.Rdata")))
         print("   ...DONE")
     }
