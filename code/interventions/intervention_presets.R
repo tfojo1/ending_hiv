@@ -17,9 +17,15 @@ TARGET.POPULATION.MANAGER.1.0 = add.target.population(ALL.MSM, code='msm', name=
 ALL.ACTIVE.IDU = create.target.population(risks='active_IDU')
 TARGET.POPULATION.MANAGER.1.0 = add.target.population(ALL.ACTIVE.IDU, code='aidu', name='All active IDU')
 
+ALL.PRIOR.IDU = create.target.population(risks='IDU_in_remission')
+TARGET.POPULATION.MANAGER.1.0 = add.target.population(ALL.PRIOR.IDU, code='pidu', name='All prior IDU')
+
 ALL.ACTIVE.AND.PRIOR.IDU = create.target.population(risks=c('active_IDU','IDU_in_remission'))
 TARGET.POPULATION.MANAGER.1.0 = add.target.population(ALL.ACTIVE.AND.PRIOR.IDU, code='idu', name='All active and prior IDU')
 
+NON.ACTIVE.IDU = create.target.population(risks=c('never_IDU','IDU_in_remission'))
+TARGET.POPULATION.MANAGER.1.0 = add.target.population(NON.ACTIVE.IDU, code='nonactive.idu', name='All never-IDU and prior IDU ')
+                                          
 ALL.MSM.AND.IDU = union.target.populations(ALL.MSM, ALL.ACTIVE.AND.PRIOR.IDU)
 TARGET.POPULATION.MANAGER.1.0 = add.target.population(ALL.MSM.AND.IDU, code='allmi', name='All MSM and all active and prior IDU')
 
@@ -38,22 +44,9 @@ TARGET.POPULATION.MANAGER.1.0 = add.target.population(ALL.HETEROSEXUAL.NON.IDU, 
 ALL.HETEROSEXUAL.NON.ACTIVE.IDU = create.target.population(sexes=c('heterosexual_male','female'), risks=c('IDU_in_remission', 'never_IDU'))
 TARGET.POPULATION.MANAGER.1.0 = add.target.population(ALL.HETEROSEXUAL.NON.ACTIVE.IDU, code='hetpri', name='All Heterosexual non-active IDU')
 
+WHOLE.POPULATION = create.target.population()
+TARGET.POPULATION.MANAGER.1.0 = add.target.population(WHOLE.POPULATION, code='wholepop', name="Whole Population")
 
-
-##-----------------------------##
-##-- SOME INTERVENTION UNITS --##
-##-----------------------------##
-
-TESTING.YEARLY.21.22 = create.intervention.unit('testing', 2021, 1, 2022)
-TESTING.Q2Y.21.22 = create.intervention.unit('testing', 2021, 0.5, 2022)
-TESTING.Q6M.21.22 = create.intervention.unit('testing', 2021, 2, 2022)
-
-PREP.10.21.22 = create.intervention.unit('prep', 2021, 0.1, 2022)
-PREP.25.21.22 = create.intervention.unit('prep', 2021, 0.25, 2022)
-PREP.50.21.22 = create.intervention.unit('prep', 2021, 0.5, 2022)
-
-SUPPRESSION.80.21.22 = create.intervention.unit('suppression', 2021, 0.8, 2022)
-SUPPRESSION.90.21.22 = create.intervention.unit('suppression', 2021, 0.9, 2022)
 
 
 ##-------------------##
@@ -65,12 +58,12 @@ INTERVENTION.MANAGER.1.0 = create.intervention.manager()
 NO.INTERVENTION = create.null.intervention()
 INTERVENTION.MANAGER.1.0 = register.intervention(NO.INTERVENTION, code='noint', name='No Intervention')
 
-INTERVENTION.MANAGER.1.0 = register.standard.interventions(start.year=2021,
-                                                           end.year=2022,
-                                                           suffix='',
-                                                           INTERVENTION.MANAGER=INTERVENTION.MANAGER.1.0)
+INTERVENTION.MANAGER.1.0 = register.standard.interventions.annals.revision(start.year=2023,
+                                                                           end.year=2027,
+                                                                           suffix='23.27',
+                                                                           INTERVENTION.MANAGER=INTERVENTION.MANAGER.1.0)
 
-INTERVENTION.MANAGER.1.0 = register.standard.interventions(start.year=2021,
-                                                           end.year=2024,
-                                                           suffix='3y',
-                                                           INTERVENTION.MANAGER=INTERVENTION.MANAGER.1.0)
+INTERVENTION.MANAGER.1.0 = register.standard.interventions.annals.revision(start.year=2023,
+                                                                           end.year=2025,
+                                                                           suffix='23.25',
+                                                                           INTERVENTION.MANAGER=INTERVENTION.MANAGER.1.0)

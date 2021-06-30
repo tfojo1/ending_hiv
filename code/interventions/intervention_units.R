@@ -5,7 +5,23 @@ THROW.ERROR.IF.PAST.CHECK.YEAR = T
 
 INTERVENTION.UNIT.TYPE.PRETTY.NAMES = c(testing='Testing',
                                         prep='PrEP',
-                                        suppression='Viral Suppression')
+                                        suppression="Viral Suppression",
+                                        needle.exchange='Needle Exchange',
+                                        
+                                        #Transmission
+                                        heterosexual.transmission="Heterosexual Transmission",
+                                        msm.transmission = 'MSM Transmission',
+                                        idu.transmission = "IV Transmission",
+                                        
+                                        #IDU Transitions
+                                        idu.incidence = "Incident IDU",
+                                        idu.remission = "IDU Remission",
+                                        idu.relapse = "IDU Relapse"
+                                        
+                                        )
+
+INTERVENTION.UNIT.TYPES = names(INTERVENTION.UNIT.TYPE.PRETTY.NAMES)
+
 get.pretty.unit.type.names <- function(type)
 {
     INTERVENTION.UNIT.TYPE.PRETTY.NAMES[type]
@@ -30,7 +46,9 @@ create.intervention.unit <- function(type=c('testing','prep','suppression'),
                                      years,
                                      end.year=Inf,
                                      apply.function=c('absolute','multiplier','odds.ratio','additive')[1],
-                                     allow.less.than.otherwise = F)
+                                     allow.less.than.otherwise = F,
+                                     min.rate=Inf,
+                                     max.rate=Inf)
 {
     #-- Check Years against CHECK.YEAR --#
     check.year.msg = ''
@@ -54,13 +72,11 @@ create.intervention.unit <- function(type=c('testing','prep','suppression'),
     }
     
     #-- Check Types --#
-    ALLOWED.TYPES = c('testing','prep','suppression',
-                      'heterosexual.transmission', 'msm.transmission', 'idu.transmission')
     if (!is(type, 'character') || !length(type)==1)
         stop("'type' must be a single character value")
-    if (all(type != ALLOWED.TYPES))
+    if (all(type != INTERVENTION.UNIT.TYPES))
         stop(paste0("'", type, "' is not a valid value for the 'type' argument. It must be one of: ",
-                    paste0("'", ALLOWED.TYPES, "'", collapse=', ')))
+                    paste0("'", INTERVENTION.UNIT.TYPES, "'", collapse=', ')))
     
     #-- Check rates --#
     if ((!is(rates, 'numeric') && !is(rates, 'integer')) || length(rates)==0)
@@ -99,10 +115,34 @@ create.intervention.unit <- function(type=c('testing','prep','suppression'),
               rates=rates,
               years=years,
               apply.function=apply.function,
-              allow.less.than.otherwise=allow.less.than.otherwise)
+              allow.less.than.otherwise=allow.less.than.otherwise,
+              min.rate = min.rate,
+              max.rate = max.rate)
     
     class(rv) = 'intervention.unit'
     rv
+}
+
+# Creates an intervention unit where the effect is a multiplier applied to a proportion of the population
+create.proportion.multiplier.intervention.unit <- function(type=c('testing','prep','suppression'),
+                                                           start.year=2021,
+                                                           proportions,
+                                                           multipliers,
+                                                           years,
+                                                           end.year=Inf,
+                                                           allow.less.than.otherwise = F,
+                                                           min.rate=Inf,
+                                                           max.rate=Inf)
+{
+    rates = (1-proportions) + proportions * multipliers
+    create.intervention.unit(type=type,
+                             start.year=start.year,
+                             rates=rates,
+                             years=years,
+                             end.year=end.year,
+                             allow.less.than.otherwise=allow.less.than.otherwise,
+                             min.rate=min.rate,
+                             max.rate=max.rate)
 }
 
 get.intervention.unit.name <- function(unit, 

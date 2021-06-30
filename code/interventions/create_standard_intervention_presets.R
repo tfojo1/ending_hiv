@@ -1,6 +1,348 @@
 
+register.standard.interventions.annals.revision <- function(start.year=2023,
+                                                            end.year=2027,
+                                                            suffix='',
+                                                            INTERVENTION.MANAGER=INTERVENTION.MANAGER.1.0)
+{
+    if (suffix != '' && substr(suffix, 1,1)!='_')
+        suffix = paste0("_", suffix)
+    
+    ##------------------------##
+    ##-- INTERVENTION UNITS --##
+    ##------------------------##
+    
+    TESTING.1x = create.intervention.unit('testing', start.year, 1, end.year)
+    TESTING.0.5x = create.intervention.unit('testing', start.year, 0.5, end.year)
+    TESTING.2x = create.intervention.unit('testing', start.year, 2, end.year)
+    
+    PREP.10 = create.intervention.unit('prep', start.year, 0.1, end.year)
+    PREP.25 = create.intervention.unit('prep', start.year, 0.25, end.year)
+    PREP.50 = create.intervention.unit('prep', start.year, 0.5, end.year)
+    
+    SUPPRESSION.80 = create.intervention.unit('suppression', start.year, 0.8, end.year)
+    SUPPRESSION.90 = create.intervention.unit('suppression', start.year, 0.9, end.year)
+    
+    MARGINAL.TESTING.1.25 = create.intervention.unit("testing", start.year, 1.25, end.year,
+                                                     apply.function = 'multiplier')
+    MARGINAL.PREP.05 = create.intervention.unit("prep", start.year, 0.05, end.year,
+                                                apply.function = 'additive',
+                                                max.rate = 0.5)
+    MARGINAL.SUPPRESSION.10 = create.intervention.unit("suppression", start.year, 0.10, end.year,
+                                                       apply.function = 'additive',
+                                                       max.rate = 0.9)
+    
+    NEEDLE.EXCHANGE.10 = create.intervention.unit('needle.exchange', start.year, 0.1, end.year)
+    NEEDLE.EXCHANGE.25 = create.intervention.unit('needle.exchange', start.year, 0.25, end.year)
+    
+    MOUD.10 = create.proportion.multiplier.intervention.unit('idu.relapse', start.year,
+                                                             proportions=0.1 * BASE_PARAMETER_VALUES['fraction.opioid.of.idu'],
+                                                             multipliers=BASE_PARAMETER_VALUES['moud.relapse.rr'],
+                                                             end.year)
+    MOUD.25 = create.proportion.multiplier.intervention.unit('idu.relapse', start.year,
+                                                             proportions=0.1 * BASE_PARAMETER_VALUES['fraction.opioid.of.idu'],
+                                                             multipliers=BASE_PARAMETER_VALUES['moud.relapse.rr'],
+                                                             end.year)
+    
+    ##------------------##
+    ##-- TESTING ONLY --##
+    ##------------------##
+    
+    # Young Black and Hispanic MSM
+    YBHM.T05x = create.intervention(YOUNG.BLACK.HISPANIC.MSM,
+                                   TESTING.0.5x)
+    INTERVENTION.MANAGER = register.intervention(YBHM.T05x, code=paste0('ybhm.t05x', suffix),
+                                                 name='Young Black and Hispanic MSM tested once every 2 years',
+                                                 manager = INTERVENTION.MANAGER)
+    
+    YBHM.T1x = create.intervention(YOUNG.BLACK.HISPANIC.MSM,
+                                   TESTING.1x)
+    INTERVENTION.MANAGER = register.intervention(YBHM.T1x, code=paste0('ybhm.t1x', suffix),
+                                                 name='Young Black and Hispanic MSM tested once a year',
+                                                 manager = INTERVENTION.MANAGER)
+    
+    YBHM.T2x = create.intervention(YOUNG.BLACK.HISPANIC.MSM,
+                                    TESTING.2x)
+    INTERVENTION.MANAGER = register.intervention(YBHM.T2x, code=paste0('ybhm.tq2x', suffix),
+                                                 name='Young Black and Hispanic MSM tested twice a year',
+                                                 manager = INTERVENTION.MANAGER)
+    
+    # All MSM and all IDU
+    MI.T05x = join.interventions(YBHM.T05x,
+                                 create.intervention(ALL.MSM.AND.ACTIVE.IDU.MINUS.YOUNG.BH,
+                                                     TESTING.0.5x))
+    INTERVENTION.MANAGER = register.intervention(MI.T05x, code=paste0('mi.t05x', suffix),
+                                                 name='All MSM and all PWID tested once every 2 years',
+                                                 manager = INTERVENTION.MANAGER)
+    
+    MI.T1x = join.interventions(YBHM.T1x,
+                                 create.intervention(ALL.MSM.AND.ACTIVE.IDU.MINUS.YOUNG.BH,
+                                                     TESTING.1x))
+    INTERVENTION.MANAGER = register.intervention(MI.T05x, code=paste0('mi.t1x', suffix),
+                                                 name='All MSM and all PWID tested once a year',
+                                                 manager = INTERVENTION.MANAGER)
+    
+    MI.T2x = join.interventions(YBHM.T2x,
+                                 create.intervention(ALL.MSM.AND.ACTIVE.IDU.MINUS.YOUNG.BH,
+                                                     TESTING.2x))
+    INTERVENTION.MANAGER = register.intervention(MI.T2x, code=paste0('mi.t2x', suffix),
+                                                 name='All MSM and all PWID tested twice a year',
+                                                 manager = INTERVENTION.MANAGER)
+    
+    # Plus Heterosexuals
+    ALL.T05x = join.interventions(MI.T05x,
+                                  create.intervention(ALL.HETEROSEXUAL.NON.ACTIVE.IDU,
+                                                     TESTING.0.5x))
+    INTERVENTION.MANAGER = register.intervention(ALL.T05x, code=paste0('all.t05x', suffix),
+                                                 name='Whole population tested once every 2 years',
+                                                 manager = INTERVENTION.MANAGER)
+    
+    MI.T1x.HET.T05x = join.interventions(MI.T1x,
+                                  create.intervention(ALL.HETEROSEXUAL.NON.ACTIVE.IDU,
+                                                      TESTING.0.5x))
+    INTERVENTION.MANAGER = register.intervention(MI.T1x.HET.T05x, code=paste0('mi.t1x_het.t05x', suffix),
+                                                 name='All MSM and all PWID tested once a year, heterosexuals tested once every two years',
+                                                 manager = INTERVENTION.MANAGER)
+    
+    MI.T2x.HET.T1x = join.interventions(MI.T2x,
+                                         create.intervention(ALL.HETEROSEXUAL.NON.ACTIVE.IDU,
+                                                             TESTING.1x))
+    INTERVENTION.MANAGER = register.intervention(MI.T2x.HET.T1x, code=paste0('mi.t2x_het.t1x', suffix),
+                                                 name='All MSM and all PWID tested twice a year, heterosexuals tested once a year',
+                                                 manager = INTERVENTION.MANAGER)
+    
+    ##----------------------##
+    ##-- SUPPRESSION ONLY --##
+    ##----------------------##
+    
+    # Young Black and Hispanic MSM
+    YBHM.S80 = create.intervention(YOUNG.BLACK.HISPANIC.MSM,
+                                    SUPPRESSION.80)
+    INTERVENTION.MANAGER = register.intervention(YBHM.S80, code=paste0('ybhm.s80', suffix),
+                                                 name='80% of young Black and Hispanic MSM PWH suppressed',
+                                                 manager = INTERVENTION.MANAGER)
+    
+    YBHM.S90 = create.intervention(YOUNG.BLACK.HISPANIC.MSM,
+                                   SUPPRESSION.90)
+    INTERVENTION.MANAGER = register.intervention(YBHM.S90, code=paste0('ybhm.s90', suffix),
+                                                 name='90% of young Black and Hispanic MSM PWH suppressed',
+                                                 manager = INTERVENTION.MANAGER)
+    
 
-register.standard.interventions <- function(start.year=2021,
+    # All MSM and all IDU
+    MI.S80 = join.interventions(YBHM.S80,
+                                 create.intervention(ALL.MSM.AND.ACTIVE.IDU.MINUS.YOUNG.BH,
+                                                     SUPPRESSION.80))
+    INTERVENTION.MANAGER = register.intervention(MI.S80, code=paste0('mi.s80', suffix),
+                                                 name='80% of MSM and PWID PWH suppressed',
+                                                 manager = INTERVENTION.MANAGER)
+    
+    MI.S90 = join.interventions(YBHM.S90,
+                                create.intervention(ALL.MSM.AND.ACTIVE.IDU.MINUS.YOUNG.BH,
+                                                    SUPPRESSION.90))
+    INTERVENTION.MANAGER = register.intervention(MI.S80, code=paste0('mi.s90', suffix),
+                                                 name='90% of MSM and PWID PWH suppressed',
+                                                 manager = INTERVENTION.MANAGER)
+    
+    # Plus Heterosexuals
+    ALL.S80 = join.interventions(MI.S80,
+                                create.intervention(ALL.HETEROSEXUAL.NON.ACTIVE.IDU,
+                                                    SUPPRESSION.80))
+    INTERVENTION.MANAGER = register.intervention(ALL.S80, code=paste0('all.s80', suffix),
+                                                 name='80% of all PWH suppressed',
+                                                 manager = INTERVENTION.MANAGER)
+    
+    ALL.S90 = join.interventions(MI.S90,
+                                create.intervention(ALL.HETEROSEXUAL.NON.ACTIVE.IDU,
+                                                    SUPPRESSION.90))
+    INTERVENTION.MANAGER = register.intervention(ALL.S90, code=paste0('all.s90', suffix),
+                                                 name='90% of all PWH suppressed',
+                                                 manager = INTERVENTION.MANAGER)
+    
+    ##---------------##
+    ##-- PREP ONLY --##
+    ##---------------##
+    
+    # Young Black and Hispanic MSM
+    YBHM.P10 = create.intervention(YOUNG.BLACK.HISPANIC.MSM,
+                                   PREP.10)
+    INTERVENTION.MANAGER = register.intervention(YBHM.P10, code=paste0('ybhm.p10', suffix),
+                                                 name='10% of young Black and Hispanic MSM on PrEP',
+                                                 manager = INTERVENTION.MANAGER)
+    
+    YBHM.P25 = create.intervention(YOUNG.BLACK.HISPANIC.MSM,
+                                   PREP.25)
+    INTERVENTION.MANAGER = register.intervention(YBHM.P25, code=paste0('ybhm.p25', suffix),
+                                                 name='25% of young Black and Hispanic MSM on PrEP',
+                                                 manager = INTERVENTION.MANAGER)
+    
+    
+    # All MSM and all IDU
+    MI.P10 = join.interventions(YBHM.P10,
+                                create.intervention(ALL.MSM.AND.ACTIVE.IDU.MINUS.YOUNG.BH,
+                                                    PREP.10))
+    INTERVENTION.MANAGER = register.intervention(MI.P10, code=paste0('mi.p10', suffix),
+                                                 name='25% of MSM and PWID on PrEP',
+                                                 manager = INTERVENTION.MANAGER)
+    
+    MI.P25 = join.interventions(YBHM.P25,
+                                create.intervention(ALL.MSM.AND.ACTIVE.IDU.MINUS.YOUNG.BH,
+                                                    PREP.25))
+    INTERVENTION.MANAGER = register.intervention(MI.P25, code=paste0('mi.p25', suffix),
+                                                 name='25% of MSM and PWID on PrEP
+                                                 ',
+                                                 manager = INTERVENTION.MANAGER)
+    
+    # Plus Heterosexuals
+    ALL.P10 = join.interventions(MI.P10,
+                                 create.intervention(ALL.HETEROSEXUAL.NON.ACTIVE.IDU,
+                                                     PREP.10))
+    INTERVENTION.MANAGER = register.intervention(ALL.P10, code=paste0('all.p10', suffix),
+                                                 name='10% of all at risk on PrEP',
+                                                 manager = INTERVENTION.MANAGER)
+    
+    ALL.P25 = join.interventions(MI.P25,
+                                 create.intervention(ALL.HETEROSEXUAL.NON.ACTIVE.IDU,
+                                                     PREP.25))
+    INTERVENTION.MANAGER = register.intervention(ALL.S90, code=paste0('all.p25', suffix),
+                                                 name='25% of all at risk on PrEP',
+                                                 manager = INTERVENTION.MANAGER)
+    
+    
+    ##------------------------------------##
+    ##-- TESTING, SUPPRESSION, and PREP --##
+    ##------------------------------------##
+    
+    # Young Black and Hispanic MSM
+    YBHM.T1x.P10.S80 = create.intervention(YOUNG.BLACK.HISPANIC.MSM,
+                                           TESTING.1x, PREP.10, SUPPRESSION.80)
+    INTERVENTION.MANAGER = register.intervention(YBHM.T1x.P10.S80, code=paste0('ybhm.t1x.p10.s80', suffix),
+                                                 name='Young Black and Hispanic MSM tested yearly, 10% on PrEP, and 80% suppressed',
+                                                 manager = INTERVENTION.MANAGER)
+    
+    YBHM.T2x.P10.S80 = create.intervention(YOUNG.BLACK.HISPANIC.MSM,
+                                           TESTING.2x, PREP.10, SUPPRESSION.80)
+    INTERVENTION.MANAGER = register.intervention(YBHM.T2x.P10.S80, code=paste0('ybhm.t2x.p10.s80', suffix),
+                                                 name='Young Black and Hispanic MSM twice a year, 10% on PrEP, and 80% suppressed',
+                                                 manager = INTERVENTION.MANAGER)
+    
+    YBHM.T2x.P25.S80 = create.intervention(YOUNG.BLACK.HISPANIC.MSM,
+                                           TESTING.2x, PREP.25, SUPPRESSION.80)
+    INTERVENTION.MANAGER = register.intervention(YBHM.T2x.P25.S80, code=paste0('ybhm.t2x.p25.s80', suffix),
+                                                 name='Young Black and Hispanic MSM twice a year, 25% on PrEP, and 80% suppressed',
+                                                 manager = INTERVENTION.MANAGER)
+    
+    YBHM.T2x.P25.S90 = create.intervention(YOUNG.BLACK.HISPANIC.MSM,
+                                           TESTING.2x, PREP.25, SUPPRESSION.90)
+    INTERVENTION.MANAGER = register.intervention(YBHM.T2x.P25.S90, code=paste0('ybhm.t2x.p25.s90', suffix),
+                                                 name='Young Black and Hispanic MSM twice a year, 25% on PrEP, and 90% suppressed',
+                                                 manager = INTERVENTION.MANAGER)
+    
+    # All MSM and all IDU
+    MI.T1x.P10.S80 = join.interventions(YBHM.T1x.P10.S80,
+                                create.intervention(ALL.MSM.AND.ACTIVE.IDU.MINUS.YOUNG.BH,
+                                                    TESTING.1x, PREP.10, SUPPRESSION.80))
+    INTERVENTION.MANAGER = register.intervention(MI.T1x.P10.S80, code=paste0('mi.t1x.p10.s80', suffix),
+                                                 name='All MSM and all PWID tested yearly, 10% on PrEP, and 80% suppressed',
+                                                 manager = INTERVENTION.MANAGER)
+    
+    MI.T2x.P10.S80 = join.interventions(YBHM.T2x.P10.S80,
+                                        create.intervention(ALL.MSM.AND.ACTIVE.IDU.MINUS.YOUNG.BH,
+                                                            TESTING.2x, PREP.10, SUPPRESSION.80))
+    INTERVENTION.MANAGER = register.intervention(MI.T2x.P10.S80, code=paste0('mi.t2x.p10.s80', suffix),
+                                                 name='All MSM and all PWID tested twice a year, 10% on PrEP, and 80% suppressed',
+                                                 manager = INTERVENTION.MANAGER)
+    
+    MI.T2x.P25.S80 = join.interventions(YBHM.T2x.P25.S80,
+                                        create.intervention(ALL.MSM.AND.ACTIVE.IDU.MINUS.YOUNG.BH,
+                                                            TESTING.2x, PREP.25, SUPPRESSION.80))
+    INTERVENTION.MANAGER = register.intervention(MI.T2x.P25.S80, code=paste0('mi.t2x.p25.s80', suffix),
+                                                 name='All MSM and all PWID tested twice a year, 25% on PrEP, and 80% suppressed',
+                                                 manager = INTERVENTION.MANAGER)
+    
+    MI.T2x.P25.S90 = join.interventions(YBHM.T2x.P25.S90,
+                                        create.intervention(ALL.MSM.AND.ACTIVE.IDU.MINUS.YOUNG.BH,
+                                                            TESTING.2x, PREP.25, SUPPRESSION.90))
+    INTERVENTION.MANAGER = register.intervention(MI.T2x.P25.S90, code=paste0('mi.t2x.p25.s90', suffix),
+                                                 name='All MSM and all PWID tested twice a year, 25% on PrEP, and 90% suppressed',
+                                                 manager = INTERVENTION.MANAGER)
+    
+    # Plus Heterosexuals
+    MI.T1x.P10.S80_HET.T05x.P10.S80 = join.interventions(MI.T1x.P10.S80,
+                                 create.intervention(ALL.HETEROSEXUAL.NON.ACTIVE.IDU,
+                                                     TESTING.0.5x, PREP.10, SUPPRESSION.80))
+    INTERVENTION.MANAGER = register.intervention(MI.T1x.P10.S80_HET.T05x.P10.S80, code=paste0('mi.t1x.p10.s80_het.t05x.p10.s80', suffix),
+                                                 name='All MSM and all PWID tested yearly; heterosexuals tested once every two years. 10% of all at risk on PrEP, and 80% of all PWH suppressed',
+                                                 manager = INTERVENTION.MANAGER)
+    
+    MI.T2x.P10.S80_HET.T1x.P10.S80 = join.interventions(MI.T2x.P10.S80,
+                                                          create.intervention(ALL.HETEROSEXUAL.NON.ACTIVE.IDU,
+                                                                              TESTING.1x, PREP.10, SUPPRESSION.80))
+    INTERVENTION.MANAGER = register.intervention(MI.T2x.P10.S80_HET.T1x.P10.S80, code=paste0('mi.t2x.p10.s80_het.t1x.p10.s80', suffix),
+                                                 name='All MSM and all PWID tested twice a year; heterosexuals tested yearly. 10% of all at risk on PrEP, and 80% of all PWH suppressed',
+                                                 manager = INTERVENTION.MANAGER)
+    
+    MI.T2x.P25.S80_HET.T1x.P25.S80 = join.interventions(MI.T2x.P25.S80,
+                                                         create.intervention(ALL.HETEROSEXUAL.NON.ACTIVE.IDU,
+                                                                             TESTING.1x, PREP.25, SUPPRESSION.80))
+    INTERVENTION.MANAGER = register.intervention(MI.T2x.P25.S80_HET.T1x.P25.S80, code=paste0('mi.t2x.p25.s80_het.t1x.p25.s80', suffix),
+                                                 name='All MSM and all PWID tested twice a year; heterosexuals tested yearly. 25% of all at risk on PrEP, and 80% of all PWH suppressed',
+                                                 manager = INTERVENTION.MANAGER)
+    
+    MI.T2x.P25.S90_HET.T1x.P25.S90 = join.interventions(MI.T2x.P25.S90,
+                                                         create.intervention(ALL.HETEROSEXUAL.NON.ACTIVE.IDU,
+                                                                             TESTING.1x, PREP.25, SUPPRESSION.90))
+    INTERVENTION.MANAGER = register.intervention(MI.T2x.P25.S90_HET.T1x.P25.S90, code=paste0('mi.t2x.p25.s90_het.t1x.p25.s90', suffix),
+                                                 name='All MSM and all PWID tested twice a year; heterosexuals tested yearly. 25% of all at risk on PrEP, and 90% of all PWH suppressed',
+                                                 manager = INTERVENTION.MANAGER)
+
+    ##---------------------------##
+    ##-- MARGINAL INTERVENTION --##
+    ##---------------------------##
+    
+    ALL.MARGINAL.T125.P05.S10 = create.intervention(WHOLE.POPULATION,
+                                                    MARGINAL.TESTING.1.25, MARGINAL.PREP.05, MARGINAL.SUPPRESSION.10)
+    INTERVENTION.MANAGER = register.intervention(ALL.MARGINAL.T125.P05.S10,
+                                                 code=paste0("all.marginal.t125.p05.s10", suffix),
+                                                 name="Whole population tested 1.25 times as frequently, 5% more on PrEP, 10% more suppressed")
+    
+    
+    ##------------------------------##
+    ##-- NEEDLE SHARING and MOUDs --##
+    ##------------------------------##
+    
+    NON.IDU.P25_IDU.N25.MOUD25 = join.interventions(
+        create.intervention(NON.ACTIVE.IDU, PREP.25),
+        create.intervention(ALL.ACTIVE.IDU, NEEDLE.EXCHANGE.25),
+        create.intervention(ALL.PRIOR.IDU, MOUD.25)
+    )
+    
+    
+    ##-- RETURN --##
+    INTERVENTION.MANAGER
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+## THESE WERE THE INTERVENTIONS SENT TO THE FIRST DRAFT FOR ANNALS
+original.annals.register.standard.interventions <- function(start.year=2021,
                                           end.year=2022,
                                           suffix='',
                                           INTERVENTION.MANAGER=INTERVENTION.MANAGER.1.0)

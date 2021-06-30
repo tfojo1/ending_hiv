@@ -578,8 +578,11 @@ process.intervention <- function(intervention)
             
             dim.names = dimnames(sub$target.populations[[1]])
             rv = list()
-            rv$start.times = rv$end.times = rate.template.arr = array(as.numeric(NA), dim=sapply(dim.names, length), dimnames=dim.names)
-            rv$start.times[] = rv$end.times[] = Inf
+            rv$start.times = rv$end.times = 
+              rv$min.rates = rv$max.rates =
+              rate.template.arr = array(as.numeric(NA), dim=sapply(dim.names, length), dimnames=dim.names)
+            rv$start.times[] = rv$end.times[] = rv$max.rates[] = Inf
+            rv$min.rates[] = -Inf
             
             character.na=character(); character.na[1] = NA
             rv$apply.functions = array(character.na, dim=sapply(dim.names, length), dimnames=dim.names)
@@ -599,6 +602,8 @@ process.intervention <- function(intervention)
                 rv$end.times[tpop] = unit$end.year
                 rv$apply.functions[tpop] = unit$apply.function
                 rv$allow.less.than.otherwise[tpop] = unit$allow.less.than.otherwise
+                rv$min.rates[tpop] = unit$min.rate
+                rv$max.rates[tpop] = unit$max.rate
                 
                 rates.for.tpop = interpolate.parameters(values=unit$rates,
                                                         value.times = unit$years,
@@ -685,6 +690,9 @@ setup.components.for.intervention <- function(components,
     if (is.null(intervention) || is.null.intervention(intervention))
         return (components)
     
+    # Set up
+    idu.states = 'active_IDU'
+    
     # Testing
     if (!is.null(intervention$processed$testing))
     {
@@ -701,6 +709,12 @@ setup.components.for.intervention <- function(components,
         start.times[,,,,,diagnosed.states,,] = Inf
         end.times = expand.population.to.hiv.positive(components$jheem, intervention$processed$testing$end.times)
         end.times[,,,,,diagnosed.states,,] = Inf
+        
+        min.rates = expand.population.to.hiv.positive(components$jheem, intervention$processed$testing$min.rates)
+        min.rates[,,,,,diagnosed.states,,] = -Inf
+        max.rates = expand.population.to.hiv.positive(components$jheem, intervention$processed$testing$max.rates)
+        max.rates[,,,,,diagnosed.states,,] = -Inf
+        
         apply.functions = expand.character.array(expand.population.to.hiv.positive,
                                                  components$jheem,
                                                  intervention$processed$testing$apply.functions)
@@ -716,7 +730,9 @@ setup.components.for.intervention <- function(components,
                                           end.years = end.times,
                                           apply.functions = apply.functions,
                                           allow.foreground.less = allow.less,
-                                          overwrite.previous = overwrite.prior.intervention)
+                                          overwrite.previous = overwrite.prior.intervention,
+                                          foreground.min = min.rates,
+                                          foreground.max = max.rates)
     }
     
    
@@ -737,6 +753,12 @@ setup.components.for.intervention <- function(components,
         start.times[,,,,,undiagnosed.states,,] = Inf
         end.times = expand.population.to.hiv.positive(components$jheem, intervention$processed$suppression$end.times)
         end.times[,,,,,undiagnosed.states,,] = Inf
+        
+        min.rates = expand.population.to.hiv.positive(components$jheem, intervention$processed$testing$min.rates)
+        min.rates[,,,,,undiagnosed.states,,] = -Inf
+        max.rates = expand.population.to.hiv.positive(components$jheem, intervention$processed$testing$max.rates)
+        max.rates[,,,,,undiagnosed.states,,] = -Inf
+        
         apply.functions = expand.character.array(expand.population.to.hiv.positive,
                                                  components$jheem,
                                                  intervention$processed$suppression$apply.functions)
@@ -751,7 +773,9 @@ setup.components.for.intervention <- function(components,
                                           end.years = end.times,
                                           apply.functions = apply.functions,
                                           allow.foreground.less = allow.less,
-                                          overwrite.previous = overwrite.prior.intervention)
+                                          overwrite.previous = overwrite.prior.intervention,
+                                          foreground.min = min.rates,
+                                          foreground.max = max.rates)
     }
     
     # PrEP
@@ -761,10 +785,12 @@ setup.components.for.intervention <- function(components,
         
         start.times = expand.population.to.hiv.negative(components$jheem, intervention$processed$prep$start.times)
         end.times = expand.population.to.hiv.negative(components$jheem, intervention$processed$prep$end.times)
+        min.rates = expand.population.to.hiv.negative(components$jheem, intervention$processed$prep$min.rates)
+        max.rates = expand.population.to.hiv.negative(components$jheem, intervention$processed$prep$max.rates)
         apply.functions = expand.character.array(expand.population.to.hiv.negative,
                                                  components$jheem,
                                                  intervention$processed$prep$apply.functions)
-        allow.less = as.logical(expand.population.to.hiv.positive(components$jheem, 
+        allow.less = as.logical(expand.population.to.hiv.negative(components$jheem, 
                                                                   as.numeric(intervention$processed$prep$allow.less.than.otherwise)))
         
         components = set.foreground.rates(components, 'prep',
@@ -774,7 +800,74 @@ setup.components.for.intervention <- function(components,
                                           end.years = end.times,
                                           apply.functions = apply.functions,
                                           allow.foreground.less = allow.less,
-                                          overwrite.previous = overwrite.prior.intervention)
+                                          overwrite.previous = overwrite.prior.intervention,
+                                          foreground.min = min.rates,
+                                          foreground.max = max.rates)
+    }
+  
+    # Needle Exchange
+    if (!is.null(intervention$processed$needle.exchange))
+    {
+        rates = lapply(intervention$processed$needle.exchange$rates, function(r){
+            expand.population.to.general(jheem=components$jheem, r)[,,,,idu.states]
+        })
+        
+        start.times = expand.population.to.general(components$jheem, intervention$processed$needle.exchange$start.times)[,,,,idu.states]
+        end.times = expand.population.to.general(components$jheem, intervention$processed$needle.exchange$end.times)[,,,,idu.states]
+        min.rates = expand.population.to.general(components$jheem, intervention$processed$needle.exchange$min.rates)[,,,,idu.states]
+        max.rates = expand.population.to.general(components$jheem, intervention$processed$needle.exchange$max.rates)[,,,,idu.states]
+        apply.functions = expand.character.array(expand.population.to.general,
+                                                 components$jheem,
+                                                 intervention$processed$needle.exchange$apply.functions)[,,,,idu.states]
+        allow.less = as.logical(expand.population.to.general(components$jheem, 
+                                                                  as.numeric(intervention$processed$needle.exchange$allow.less.than.otherwise)))[,,,,idu.states]
+        
+        components = set.foreground.rates(components, 'needle.exchange',
+                                          rates = rates,
+                                          years = intervention$processed$needle.exchange$times,
+                                          start.years = start.times,
+                                          end.years = end.times,
+                                          apply.functions = apply.functions,
+                                          allow.foreground.less = allow.less,
+                                          overwrite.previous = overwrite.prior.intervention,
+                                          foreground.min = min.rates,
+                                          foreground.max = max.rates)
+    }
+    
+    # IDU Transitions
+    for (idu.trans in c('idu.incidence','idu.remission','idu.relapse'))
+    {
+        state.for.trans = c(idu.incidence='never_idu',
+                            idu.remission='active_IDU',
+                            idu.relapse='IDU_in_remission'
+                            )[idu.trans]
+        if (!is.null(intervention$processed[[idu.trans]]))
+        {
+            rates = lapply(intervention$processed[[idu.trans]]$rates, function(r){
+                expand.population.to.general(jheem=components$jheem, r)[,,,,state.for.trans]
+            })
+            
+            start.times = expand.population.to.general(components$jheem, intervention$processed[[idu.trans]]$start.times)[,,,,state.for.trans]
+            end.times = expand.population.to.general(components$jheem, intervention$processed[[idu.trans]]$end.times)[,,,,state.for.trans]
+            min.rates = expand.population.to.general(components$jheem, intervention$processed[[idu.trans]]$min.rates)[,,,,state.for.trans]
+            max.rates = expand.population.to.general(components$jheem, intervention$processed[[idu.trans]]$max.rates)[,,,,state.for.trans]
+            apply.functions = expand.character.array(expand.population.to.general,
+                                                     components$jheem,
+                                                     intervention$processed$needle.exchange$apply.functions)[,,,,state.for.trans]
+            allow.less = as.logical(expand.population.to.general(components$jheem, 
+                                                                 as.numeric(intervention$processed$needle.exchange$allow.less.than.otherwise)))[,,,,state.for.trans]
+            
+            components = set.foreground.rates(components, idu.trans,
+                                              rates = rates,
+                                              years = intervention$processed[[idu.trans]]$times,
+                                              start.years = start.times,
+                                              end.years = end.times,
+                                              apply.functions = apply.functions,
+                                              allow.foreground.less = allow.less,
+                                              overwrite.previous = overwrite.prior.intervention,
+                                              foreground.min = min.rates,
+                                              foreground.max = max.rates)
+        }
     }
     
     # Sexual Transmission
@@ -821,6 +914,14 @@ setup.components.for.intervention <- function(components,
                                                                    heterosexual.arr = intervention$processed$heterosexual.transmission$end.times,
                                                                    msm.arr = intervention$processed$msm.transmission$end.times,
                                                                    default.value = Inf)
+        min.rates = merge.heterosexual.and.msm.transmission.arrays(jheem=components$jheem,
+                                                                   heterosexual.arr = intervention$processed$heterosexual.transmission$min.rates,
+                                                                   msm.arr = intervention$processed$msm.transmission$min.rates,
+                                                                   default.value = -Inf)
+        max.rates = merge.heterosexual.and.msm.transmission.arrays(jheem=components$jheem,
+                                                                   heterosexual.arr = intervention$processed$heterosexual.transmission$max.rates,
+                                                                   msm.arr = intervention$processed$msm.transmission$max.rates,
+                                                                   default.value = Inf)
         character.na = character(); character.na[1] = NA
         apply.functions = merge.heterosexual.and.msm.transmission.arrays(jheem=components$jheem,
                                                                          heterosexual.arr = intervention$processed$heterosexual.transmission$apply.functions,
@@ -838,7 +939,9 @@ setup.components.for.intervention <- function(components,
                                           end.years = end.times,
                                           apply.functions = apply.functions,
                                           allow.foreground.less = allow.less,
-                                          overwrite.previous = overwrite.prior.intervention)
+                                          overwrite.previous = overwrite.prior.intervention,
+                                          foreground.min = min.rates,
+                                          foreground.max = max.rates)
     }
     
     # IDU Transmission
@@ -846,7 +949,6 @@ setup.components.for.intervention <- function(components,
     {
         if (any(intervention$processed$idu.transmission$apply.functions=='absolute', na.rm=T))
             stop("'absolute' apply.function cannot be used for idu.transmission")
-        idu.states = 'active_IDU'
         
         rates = lapply(intervention$processed$idu.transmission$rates, function(r){
             expand.array.to.contact(r[,,,idu.states])
@@ -854,6 +956,8 @@ setup.components.for.intervention <- function(components,
         
         start.times = expand.array.to.contact(intervention$processed$idu.transmission$start.times[,,,idu.states])
         end.times = expand.array.to.contact(intervention$processed$idu.transmission$end.times[,,,idu.states])
+        min.rates = expand.array.to.contact(intervention$processed$idu.transmission$min.rates[,,,idu.states])
+        max.rates = expand.array.to.contact(intervention$processed$idu.transmission$max.rates[,,,idu.states])
         apply.functions = expand.array.to.contact(intervention$processed$idu.transmission$apply.functions[,,,idu.states])
         allow.less = expand.array.to.contact(intervention$processed$idu.transmission$allow.less.than.otherwise[,,,idu.states])
 
@@ -864,7 +968,9 @@ setup.components.for.intervention <- function(components,
                                           end.years = end.times,
                                           apply.functions = apply.functions,
                                           allow.foreground.less = allow.less,
-                                          overwrite.previous = overwrite.prior.intervention)
+                                          overwrite.previous = overwrite.prior.intervention,
+                                          foreground.min = min.rates,
+                                          foreground.max = max.rates)
     }
     
     
