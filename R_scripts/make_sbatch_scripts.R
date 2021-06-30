@@ -75,7 +75,7 @@ make.quick.run.scripts <- function(msa.indices,
                              dir='R_scripts/quick_run_scripts/',
                              account='tfojo1',
                              mem=NULL,
-                             mem.per.cpu='4GB')
+                             mem.per.cpu='8GB')
 {
     for (i in msa.indices)
     {
