@@ -8,12 +8,12 @@ print(Sys.Date())
 print(Sys.time())
 
 to.do = TARGET.MSAS
-done.filenames = list.files(file.path(SYSTEMATIC.ROOT.DIR), 'quick_simsets')
+done.filenames = list.files(file.path(SYSTEMATIC.ROOT.DIR, 'quick_simsets'))
 already.done.mask = sapply(to.do, function(msa){
     any(grepl(msa, done.filenames))
 })
 
-mcmc.filenames = list.files(file.path(SYSTEMATIC.ROOT.DIR), 'systematic_initial')
+mcmc.filenames = list.files(file.path(SYSTEMATIC.ROOT.DIR, 'systematic_initial'))
 mcmc.done.mask = sapply(to.do, function(msa){
     any(grepl(msa, mcmc.filenames))
 })
