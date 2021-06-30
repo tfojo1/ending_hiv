@@ -62,6 +62,7 @@ source('code/interventions/interventions.R')
 source('code/interventions/create_standard_intervention_presets.R')
 source('code/interventions/intervention_presets.R')
 source('code/interventions/interventions_for_simset.R')
+source('code/interventions/systematic_intervention_sets.R')
 source('code/interventions/systematic_interventions.R')
 
 #-- Redo Surveillance Manager to get rid of old version stuck somewhere in loaded object --#

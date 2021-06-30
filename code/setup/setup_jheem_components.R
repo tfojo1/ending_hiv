@@ -606,9 +606,9 @@ set.idu.transitions <- function(components,
     
     for (index in indices)
     {
-        components$incident.idu[[index]] = incident.idu
-        components$idu.remission[[index]] = idu.remission
-        components$idu.relapse[[index]] = idu.relapse
+        components$incident.idu[[index]] = expand.population.to.general(components$jheem, incident.idu)[,,,,'active_IDU']
+        components$idu.remission[[index]] = expand.population.to.general(components$jheem, idu.remission)[,,,,'active_IDU']
+        components$idu.relapse[[index]] = expand.population.to.general(components$jheem, idu.relapse)[,,,,'active_IDU']
     }
     
     components = clear.dependent.values(components, c('incident.idu','idu.remission','idu.relapse'))
@@ -793,6 +793,8 @@ set.foreground.rates <- function(components,
                                  start.years,
                                  end.years,
                                  apply.functions,
+                                 foreground.min,
+                                 foreground.max,
                                  allow.foreground.less=F,
                                  overwrite.previous=T)
 {
@@ -814,6 +816,8 @@ set.foreground.rates <- function(components,
             components[[type.name]]$end.years = list()
             components[[type.name]]$apply.functions = list()
             components[[type.name]]$allow.foreground.less = list()
+            components[[type.name]]$foreground.min = list()
+            components[[type.name]]$foreground.max = list()
         }
         
         if (class(rates)!='list')
@@ -828,6 +832,8 @@ set.foreground.rates <- function(components,
         components[[type.name]]$end.years = c(components[[type.name]]$end.years, list(end.years))
         components[[type.name]]$apply.functions = c(components[[type.name]]$apply.functions, list(apply.functions))
         components[[type.name]]$allow.foreground.less = c(components[[type.name]]$allow.foreground.less, list(allow.foreground.less))
+        components[[type.name]]$foreground.min = c(components[[type.name]]$foreground.min, list(foreground.min))
+        components[[type.name]]$foreground.max = c(components[[type.name]]$foreground.max, list(foreground.max))
         
         # Clear dependencies
         components = clear.dependent.values(components, type.name)
@@ -2229,7 +2235,7 @@ setup.background.needle.exchange <- function(components,
     components$background.needle.exchange = list(
         years = years,
         proportions = lapply(proportions, function(p){
-            expand.population.to.general(components$jheem, p)[,,1,,'active_IDU'] #gives us [age, race, sex]
+            expand.population.to.general(components$jheem, p)[,,,,'active_IDU'] #gives us [age, race, subpop, sex]
         })
     )
     

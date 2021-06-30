@@ -135,53 +135,6 @@ BASE_PARAMETERS = add.parameter(BASE_PARAMETERS, 'viral.suppression.rate',
                        citation=30412140)
 
 
-TESTING.Z.LOWER=-3
-TESTING.Z.UPPER=3
-BASE_PARAMETERS = add.parameter(BASE_PARAMETERS, 'testing.heterosexual.z',
-                       0, TESTING.Z.LOWER, TESTING.Z.UPPER)
-BASE_PARAMETERS = add.parameter(BASE_PARAMETERS, 'testing.black.z',
-                       0, TESTING.Z.LOWER, TESTING.Z.UPPER)
-BASE_PARAMETERS = add.parameter(BASE_PARAMETERS, 'testing.hispanic.z',
-                       0, TESTING.Z.LOWER, TESTING.Z.UPPER)
-BASE_PARAMETERS = add.parameter(BASE_PARAMETERS, 'testing.age1.z',
-                       0, TESTING.Z.LOWER, TESTING.Z.UPPER)
-BASE_PARAMETERS = add.parameter(BASE_PARAMETERS, 'testing.age2.z',
-                       0, TESTING.Z.LOWER, TESTING.Z.UPPER)
-BASE_PARAMETERS = add.parameter(BASE_PARAMETERS, 'testing.age4.z',
-                       0, TESTING.Z.LOWER, TESTING.Z.UPPER)
-BASE_PARAMETERS = add.parameter(BASE_PARAMETERS, 'testing.age5.z',
-                       0, TESTING.Z.LOWER, TESTING.Z.UPPER)
-BASE_PARAMETERS = add.parameter(BASE_PARAMETERS, 'testing.msm.z',
-                       0, TESTING.Z.LOWER, TESTING.Z.UPPER)
-BASE_PARAMETERS = add.parameter(BASE_PARAMETERS, 'testing.female.z',
-                       0, TESTING.Z.LOWER, TESTING.Z.UPPER)
-BASE_PARAMETERS = add.parameter(BASE_PARAMETERS, 'testing.idu.z',
-                       0, TESTING.Z.LOWER, TESTING.Z.UPPER)
-
-SUPPRESSED.Z.LOWER=-3
-SUPPRESSED.Z.UPPER=3
-BASE_PARAMETERS = add.parameter(BASE_PARAMETERS, 'suppressed.total.z',
-                       0, SUPPRESSED.Z.LOWER, SUPPRESSED.Z.UPPER)
-BASE_PARAMETERS = add.parameter(BASE_PARAMETERS, 'suppressed.black.z',
-                       0, SUPPRESSED.Z.LOWER, SUPPRESSED.Z.UPPER)
-BASE_PARAMETERS = add.parameter(BASE_PARAMETERS, 'suppressed.hispanic.z',
-                       0, SUPPRESSED.Z.LOWER, SUPPRESSED.Z.UPPER)
-BASE_PARAMETERS = add.parameter(BASE_PARAMETERS, 'suppressed.age1.z',
-                       0, SUPPRESSED.Z.LOWER, SUPPRESSED.Z.UPPER)
-BASE_PARAMETERS = add.parameter(BASE_PARAMETERS, 'suppressed.age2.z',
-                       0, SUPPRESSED.Z.LOWER, SUPPRESSED.Z.UPPER)
-BASE_PARAMETERS = add.parameter(BASE_PARAMETERS, 'suppressed.age4.z',
-                       0, SUPPRESSED.Z.LOWER, SUPPRESSED.Z.UPPER)
-BASE_PARAMETERS = add.parameter(BASE_PARAMETERS, 'suppressed.age5.z',
-                       0, SUPPRESSED.Z.LOWER, SUPPRESSED.Z.UPPER)
-BASE_PARAMETERS = add.parameter(BASE_PARAMETERS, 'suppressed.msm.z',
-                       0, SUPPRESSED.Z.LOWER, SUPPRESSED.Z.UPPER)
-BASE_PARAMETERS = add.parameter(BASE_PARAMETERS, 'suppressed.female.z',
-                       0, SUPPRESSED.Z.LOWER, SUPPRESSED.Z.UPPER)
-BASE_PARAMETERS = add.parameter(BASE_PARAMETERS, 'suppressed.idu.z',
-                       0, SUPPRESSED.Z.LOWER, SUPPRESSED.Z.UPPER)
-
-
 ##-- Needle Exchange --##
 
 print("For now, dummy values for needle exchange")
@@ -195,6 +148,13 @@ BASE_PARAMETERS = add.parameter(BASE_PARAMETERS, 'needle.exchange.remission.rate
                                 citation=23769234)
 
 
+BASE_PARAMETERS = add.parameter(BASE_PARAMETERS, 'moud.relapse.rr',
+                                1, 1, 1,
+                                citation=1)
+
+BASE_PARAMETERS = add.parameter(BASE_PARAMETERS, 'fraction.opioid.of.idu',
+                                1, 1, 1,
+                                citation=1)
 
 #-- to calculate AIDS progression rate --#
 if (1==2)
