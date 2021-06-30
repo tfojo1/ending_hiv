@@ -18,7 +18,7 @@ mcmc.done.mask = sapply(to.do, function(msa){
     any(grepl(msa, mcmc.filenames))
 })
 
-to.do = to.do[mcmmcmc.done.mask & !already.done.mask]
+to.do = to.do[mcmc.done.mask & !already.done.mask]
 if (length(to.do)==0)
     print(paste0("Have already made quick simsets for all done MCMCs (",
                  sum(!mcmc.done.mask), " MSA",
