@@ -224,10 +224,91 @@ parameters.prior = join.distributions(
     
 #MELISSA HERE  
     #-- LINKAGE --#
+    heterosexual.proportion.linked.or = Lognormal.Distribution(0, log(2)),
+    msm.proportion.linked.or = Lognormal.Distribution(0, log(2)),
+    idu.proportion.linked.or = Lognormal.Distribution(0, log(2)),
+    msm.idu.proportion.linked.or = Lognormal.Distribution(0, log(2)),
+    
+    black.proportion.linked.or = Lognormal.Distribution(0, log(2)),
+    hispanic.proportion.linked.or = Lognormal.Distribution(0, log(2)),
+    
+    age1.proportion.linked.or = Lognormal.Distribution(0, log(2)),
+    age2.proportion.linked.or = Lognormal.Distribution(0, log(2)),
+    age4.proportion.linked.or = Lognormal.Distribution(0, log(2)),
+    age5.proportion.linked.or = Lognormal.Distribution(0, log(2)),
+    
+    heterosexual.proportion.linked.slope.or = Lognormal.Distribution(0, 0.5*log(2)/5),
+    msm.proportion.linked.slope.or = Lognormal.Distribution(0, 0.5*log(2)/5),
+    idu.proportion.linked.slope.or = Lognormal.Distribution(0, 0.5*log(2)/5),
+    msm.idu.proportion.linked.slope.or = Lognormal.Distribution(0, 0.5*log(2)/5),
+    
+    black.proportion.linked.slope.or = Lognormal.Distribution(0, 0.5*log(2)/5),
+    hispanic.proportion.linked.slope.or = Lognormal.Distribution(0, 0.5*log(2)/5),
+    
+    age1.proportion.linked.slope.or = Lognormal.Distribution(0, 0.5*log(2)/5),
+    age2.proportion.linked.slope.or = Lognormal.Distribution(0, 0.5*log(2)/5),
+    age4.proportion.linked.slope.or = Lognormal.Distribution(0, 0.5*log(2)/5),
+    age5.proportion.linked.slope.or = Lognormal.Distribution(0, 0.5*log(2)/5),
+
     #-- ADHERENCE --#
-    # (plus a term for which direction suppression/loss of suppression)
-    #-- DISENGAGEDMENT/REENGAGEMENT --#
-    # (plus a term for from suppressed or from unsuppressed)
+    heterosexual.proportion.adherent.or = Lognormal.Distribution(0, log(2)),
+    msm.proportion.adherent.or = Lognormal.Distribution(0, log(2)),
+    idu.proportion.adherent.or = Lognormal.Distribution(0, log(2)),
+    msm.idu.proportion.adherent.or = Lognormal.Distribution(0, log(2)),
+    
+    black.proportion.adherent.or = Lognormal.Distribution(0, log(2)),
+    hispanic.proportion.adherent.or = Lognormal.Distribution(0, log(2)),
+    
+    age1.proportion.adherent.or = Lognormal.Distribution(0, log(2)),
+    age2.proportion.adherent.or = Lognormal.Distribution(0, log(2)),
+    age4.proportion.adherent.or = Lognormal.Distribution(0, log(2)),
+    age5.proportion.adherent.or = Lognormal.Distribution(0, log(2)),
+    
+    heterosexual.proportion.adherent.slope.or = Lognormal.Distribution(0, 0.5*log(2)/5),
+    msm.proportion.adherent.slope.or = Lognormal.Distribution(0, 0.5*log(2)/5),
+    idu.proportion.adherent.slope.or = Lognormal.Distribution(0, 0.5*log(2)/5),
+    msm.idu.proportion.adherent.slope.or = Lognormal.Distribution(0, 0.5*log(2)/5),
+    
+    black.proportion.adherent.slope.or = Lognormal.Distribution(0, 0.5*log(2)/5),
+    hispanic.proportion.adherent.slope.or = Lognormal.Distribution(0, 0.5*log(2)/5),
+    
+    age1.proportion.adherent.slope.or = Lognormal.Distribution(0, 0.5*log(2)/5),
+    age2.proportion.adherent.slope.or = Lognormal.Distribution(0, 0.5*log(2)/5),
+    age4.proportion.adherent.slope.or = Lognormal.Distribution(0, 0.5*log(2)/5),
+    age5.proportion.adherent.slope.or = Lognormal.Distribution(0, 0.5*log(2)/5),
+
+    # (plus a term for which direction suppression/loss of suppression) - I don't actually know what values we would use here
+    suppression.direction = Lognormal.Distribution(0, 0.5*log(2)),
+
+    #-- DISENGAGEMENT/REENGAGEMENT --#
+    heterosexual.proportion.lost.or = Lognormal.Distribution(0, log(2)),
+    msm.proportion.lost.or = Lognormal.Distribution(0, log(2)),
+    idu.proportion.lost.or = Lognormal.Distribution(0, log(2)),
+    msm.idu.proportion.lost.or = Lognormal.Distribution(0, log(2)),
+    
+    black.proportion.lost.or = Lognormal.Distribution(0, log(2)),
+    hispanic.proportion.lost.or = Lognormal.Distribution(0, log(2)),
+    
+    age1.proportion.lost.or = Lognormal.Distribution(0, log(2)),
+    age2.proportion.lost.or = Lognormal.Distribution(0, log(2)),
+    age4.proportion.lost.or = Lognormal.Distribution(0, log(2)),
+    age5.proportion.lost.or = Lognormal.Distribution(0, log(2)),
+    
+    heterosexual.proportion.lost.slope.or = Lognormal.Distribution(0, 0.5*log(2)/5),
+    msm.proportion.lost.slope.or = Lognormal.Distribution(0, 0.5*log(2)/5),
+    idu.proportion.lost.slope.or = Lognormal.Distribution(0, 0.5*log(2)/5),
+    msm.idu.proportion.lost.slope.or = Lognormal.Distribution(0, 0.5*log(2)/5),
+    
+    black.proportion.lost.slope.or = Lognormal.Distribution(0, 0.5*log(2)/5),
+    hispanic.proportion.lost.slope.or = Lognormal.Distribution(0, 0.5*log(2)/5),
+    
+    age1.proportion.lost.slope.or = Lognormal.Distribution(0, 0.5*log(2)/5),
+    age2.proportion.lost.slope.or = Lognormal.Distribution(0, 0.5*log(2)/5),
+    age4.proportion.lost.slope.or = Lognormal.Distribution(0, 0.5*log(2)/5),
+    age5.proportion.lost.slope.or = Lognormal.Distribution(0, 0.5*log(2)/5),
+
+    # (plus a term for from suppressed or from unsuppressed) - I don't actually know what values we would use here
+    disengagement.origin = Lognormal.Distribution(0, 0.5*log(2)),
     
     #-- PrEP --#
     
@@ -735,23 +816,6 @@ get.components.for.calibrated.parameters <- function(parameters, components,
   
   #-- HIV Testing --#
 
-# MELISSA HERE  
-  components = set.background.linkage.ors(components,
-                                          msm.or.intercept = parameters['msm.proportion.linked.or'])
-  
-  components = set.background.newly.suppressed.ors(components,
-                                      msm.or.intercept = parameters['msm.proportion.adherent.or'])
-  components = set.background.unsuppression.ors(components,
-                                   msm.or.intercept = 1/parameters['msm.proportion.adherent.or'])
-  
-  components = set.background.suppressed.to.disengaged.ors(components,
-                                                           msm.or.intercept = parameters['msm.proportion.lost.or'])
-  components = set.background.unsuppressed.to.disengaged.ors(components,
-                                                           msm.or.intercept = parameters['msm.proportion.lost.or'])
-  components = set.background.reengagement.ors(components,
-                                                           msm.or.intercept = 1/parameters['msm.proportion.lost.or'])
-  
-  
   components = set.background.hiv.testing.ors(components,
                                               msm.or.intercept=parameters['msm.proportion.tested.or'],
                                               heterosexual.or.intercept=parameters['heterosexual.proportion.tested.or'],
@@ -771,6 +835,184 @@ get.components.for.calibrated.parameters <- function(parameters, components,
   
   components = set.background.hiv.testing.ramp.up(components,
                                                   testing.ramp.up.vs.current.rr=parameters['testing.ramp.up.vs.current.rr'])
+  
+  
+  
+  # MELISSA HERE  
+  components = set.background.linkage.ors(components,
+                                          msm.or.intercept = parameters['msm.proportion.linked.or'],
+                                          heterosexual.or.intercept=parameters['non.msm.proportion.linked.or'],
+                                          idu.or.intercept=parameters['non.msm.proportion.linked.or'],
+                                          msm.idu.or.intercept=parameters['msm.proportion.linked.or'],
+                                          
+                                          black.or.intercept=parameters['black.proportion.linked.or'],
+                                          hispanic.or.intercept=parameters['hispanic.proportion.linked.or'],
+                                          
+                                          age1.or.intercept=parameters['age1.proportion.linked.or'],
+                                          age2.or.intercept=parameters['age2.proportion.linked.or'],
+                                          age4.or.intercept=parameters['age4.proportion.linked.or'],
+                                          age5.or.intercept=parameters['age5.proportion.linked.or'],
+                                          
+                                          
+                                          msm.or.slope=parameters['msm.proportion.linked.slope.or'],
+                                          heterosexual.or.slope=parameters['heterosexual.proportion.linked.slope.or'],
+                                          idu.or.slope=parameters['idu.proportion.linked.slope.or'],
+                                          msm.idu.or.slope=parameters['msm.proportion.linked.slope.or'],
+                                          
+                                          black.or.slope=parameters['black.proportion.linked.or'],
+                                          hispanic.or.slope=parameters['hispanic.proportion.linked.or'],
+                                          
+                                          age1.or.slope=parameters['age1.proportion.linked.or'],
+                                          age2.or.slope=parameters['age2.proportion.linked.or'],
+                                          age4.or.slope=parameters['age4.proportion.linked.or'],
+                                          age5.or.slope=parameters['age5.proportion.linked.or']
+)
+  
+  components = set.background.newly.suppressed.ors(components,
+                                                   msm.or.intercept = parameters['msm.proportion.adherent.or'],
+                                                   heterosexual.or.intercept=parameters['non.msm.proportion.adherent.or'],
+                                                   idu.or.intercept=parameters['non.msm.proportion.adherent.or'],
+                                                   msm.idu.or.intercept=parameters['msm.proportion.adherent.or'],
+                                                   
+                                                   black.or.intercept=parameters['black.proportion.adherent.or'],
+                                                   hispanic.or.intercept=parameters['hispanic.proportion.adherent.or'],
+                                                   
+                                                   age1.or.intercept=parameters['age1.proportion.adherent.or'],
+                                                   age2.or.intercept=parameters['age2.proportion.adherent.or'],
+                                                   age4.or.intercept=parameters['age4.proportion.adherent.or'],
+                                                   age5.or.intercept=parameters['age5.proportion.adherent.or'],
+                                                   
+                                                   
+                                                   msm.or.slope=parameters['msm.proportion.adherent.slope.or'],
+                                                   heterosexual.or.slope=parameters['heterosexual.proportion.adherent.slope.or'],
+                                                   idu.or.slope=parameters['idu.proportion.adherent.slope.or'],
+                                                   msm.idu.or.slope=parameters['msm.proportion.adherent.slope.or'],
+                                                   
+                                                   black.or.slope=parameters['black.proportion.adherent.or'],
+                                                   hispanic.or.slope=parameters['hispanic.proportion.adherent.or'],
+                                                   
+                                                   age1.or.slope=parameters['age1.proportion.adherent.or'],
+                                                   age2.or.slope=parameters['age2.proportion.adherent.or'],
+                                                   age4.or.slope=parameters['age4.proportion.adherent.or'],
+                                                   age5.or.slope=parameters['age5.proportion.adherent.or']
+)
+  
+  components = set.background.unsuppression.ors(components,
+                                                msm.or.intercept = 1/parameters['msm.proportion.adherent.or'],
+                                                heterosexual.or.intercept=1/parameters['non.msm.proportion.adherent.or'],
+                                                idu.or.intercept=1/parameters['non.msm.proportion.adherent.or'],
+                                                msm.idu.or.intercept=1/parameters['msm.proportion.adherent.or'],
+                                                
+                                                black.or.intercept=1/parameters['black.proportion.adherent.or'],
+                                                hispanic.or.intercept=1/parameters['hispanic.proportion.adherent.or'],
+                                                
+                                                age1.or.intercept=1/parameters['age1.proportion.adherent.or'],
+                                                age2.or.intercept=1/parameters['age2.proportion.adherent.or'],
+                                                age4.or.intercept=1/parameters['age4.proportion.adherent.or'],
+                                                age5.or.intercept=1/parameters['age5.proportion.adherent.or'],
+                                                
+                                                
+                                                msm.or.slope=1/parameters['msm.proportion.adherent.slope.or'],
+                                                heterosexual.or.slope=1/parameters['heterosexual.proportion.adherent.slope.or'],
+                                                idu.or.slope=1/parameters['idu.proportion.adherent.slope.or'],
+                                                msm.idu.or.slope=1/parameters['msm.proportion.adherent.slope.or'],
+                                                
+                                                black.or.slope=1/parameters['black.proportion.adherent.or'],
+                                                hispanic.or.slope=1/parameters['hispanic.proportion.adherent.or'],
+                                                
+                                                age1.or.slope=1/parameters['age1.proportion.adherent.or'],
+                                                age2.or.slope=1/parameters['age2.proportion.adherent.or'],
+                                                age4.or.slope=1/parameters['age4.proportion.adherent.or'],
+                                                age5.or.slope=1/parameters['age5.proportion.adherent.or']
+)
+  
+  components = set.background.suppressed.to.disengaged.ors(components,
+                                                           msm.or.intercept = parameters['msm.proportion.lost.or'],
+                                                           heterosexual.or.intercept=parameters['non.msm.proportion.lost.or'],
+                                                           idu.or.intercept=parameters['non.msm.proportion.lost.or'],
+                                                           msm.idu.or.intercept=parameters['msm.proportion.lost.or'],
+                                                           
+                                                           black.or.intercept=parameters['black.proportion.lost.or'],
+                                                           hispanic.or.intercept=parameters['hispanic.proportion.lost.or'],
+                                                           
+                                                           age1.or.intercept=parameters['age1.proportion.lost.or'],
+                                                           age2.or.intercept=parameters['age2.proportion.lost.or'],
+                                                           age4.or.intercept=parameters['age4.proportion.lost.or'],
+                                                           age5.or.intercept=parameters['age5.proportion.lost.or'],
+                                                           
+                                                           
+                                                           msm.or.slope=parameters['msm.proportion.lost.slope.or'],
+                                                           heterosexual.or.slope=parameters['heterosexual.proportion.lost.slope.or'],
+                                                           idu.or.slope=parameters['idu.proportion.lost.slope.or'],
+                                                           msm.idu.or.slope=parameters['msm.proportion.lost.slope.or'],
+                                                           
+                                                           black.or.slope=parameters['black.proportion.lost.or'],
+                                                           hispanic.or.slope=parameters['hispanic.proportion.lost.or'],
+                                                           
+                                                           age1.or.slope=parameters['age1.proportion.lost.or'],
+                                                           age2.or.slope=parameters['age2.proportion.lost.or'],
+                                                           age4.or.slope=parameters['age4.proportion.lost.or'],
+                                                           age5.or.slope=parameters['age5.proportion.lost.or']
+)
+  
+  components = set.background.unsuppressed.to.disengaged.ors(components,
+                                                             msm.or.intercept = parameters['msm.proportion.lost.or'],
+                                                             heterosexual.or.intercept=parameters['non.msm.proportion.lost.or'],
+                                                             idu.or.intercept=parameters['non.msm.proportion.lost.or'],
+                                                             msm.idu.or.intercept=parameters['msm.proportion.lost.or'],
+                                                             
+                                                             black.or.intercept=parameters['black.proportion.lost.or'],
+                                                             hispanic.or.intercept=parameters['hispanic.proportion.lost.or'],
+                                                             
+                                                             age1.or.intercept=parameters['age1.proportion.lost.or'],
+                                                             age2.or.intercept=parameters['age2.proportion.lost.or'],
+                                                             age4.or.intercept=parameters['age4.proportion.lost.or'],
+                                                             age5.or.intercept=parameters['age5.proportion.lost.or'],
+                                                             
+                                                             
+                                                             msm.or.slope=parameters['msm.proportion.lost.slope.or'],
+                                                             heterosexual.or.slope=parameters['heterosexual.proportion.lost.slope.or'],
+                                                             idu.or.slope=parameters['idu.proportion.lost.slope.or'],
+                                                             msm.idu.or.slope=parameters['msm.proportion.lost.slope.or'],
+                                                             
+                                                             black.or.slope=parameters['black.proportion.lost.or'],
+                                                             hispanic.or.slope=parameters['hispanic.proportion.lost.or'],
+                                                             
+                                                             age1.or.slope=parameters['age1.proportion.lost.or'],
+                                                             age2.or.slope=parameters['age2.proportion.lost.or'],
+                                                             age4.or.slope=parameters['age4.proportion.lost.or'],
+                                                             age5.or.slope=parameters['age5.proportion.lost.or']
+)
+  
+  components = set.background.reengagement.ors(components,
+                                               msm.or.intercept = 1/parameters['msm.proportion.lost.or'],
+                                               heterosexual.or.intercept=1/parameters['non.msm.proportion.lost.or'],
+                                               idu.or.intercept=1/parameters['non.msm.proportion.lost.or'],
+                                               msm.idu.or.intercept=1/parameters['msm.proportion.lost.or'],
+                                               
+                                               black.or.intercept=1/parameters['black.proportion.lost.or'],
+                                               hispanic.or.intercept=1/parameters['hispanic.proportion.lost.or'],
+                                               
+                                               age1.or.intercept=1/parameters['age1.proportion.lost.or'],
+                                               age2.or.intercept=1/parameters['age2.proportion.lost.or'],
+                                               age4.or.intercept=1/parameters['age4.proportion.lost.or'],
+                                               age5.or.intercept=1/parameters['age5.proportion.lost.or'],
+                                               
+                                               
+                                               msm.or.slope=1/parameters['msm.proportion.lost.slope.or'],
+                                               heterosexual.or.slope=1/parameters['heterosexual.proportion.lost.slope.or'],
+                                               idu.or.slope=1/parameters['idu.proportion.lost.slope.or'],
+                                               msm.idu.or.slope=1/parameters['msm.proportion.lost.slope.or'],
+                                               
+                                               black.or.slope=1/parameters['black.proportion.lost.or'],
+                                               hispanic.or.slope=1/parameters['hispanic.proportion.lost.or'],
+                                               
+                                               age1.or.slope=1/parameters['age1.proportion.lost.or'],
+                                               age2.or.slope=1/parameters['age2.proportion.lost.or'],
+                                               age4.or.slope=1/parameters['age4.proportion.lost.or'],
+                                               age5.or.slope=1/parameters['age5.proportion.lost.or']
+)
+  
   
   
   #-- PrEP --#
