@@ -51,7 +51,8 @@ make.run.scripts <- function(msa.indices,
                              chains=1:4,
                              dir='R_scripts/run_scripts/',
                              account='tfojo1',
-                             mem=NULL)
+                             partition='unlimited',
+                             mem='9600MB')
 {
     for (i in msa.indices)
     {
@@ -62,7 +63,7 @@ make.run.scripts <- function(msa.indices,
                                job.name = paste0("r", chain, msa.name),
                                mem=mem,
                                output = file.path(OUTPUT.DIR, paste0("run_", msa.name, "_", chain, ".out")),
-                               partition = 'unlimited',
+                               partition = partition,
                                time.hours = 7*24,
                                account=account,
                                commands= paste0("Rscript Ending_HIV/R_scripts/run_parallel_chain_script.R ", i, " ", chain))
@@ -74,7 +75,8 @@ make.quick.run.scripts <- function(msa.indices,
                              chains=1:4,
                              dir='R_scripts/quick_run_scripts/',
                              account='tfojo1',
-                             mem=NULL,
+                             partition='shared',
+                             mem='9600MB',
                              mem.per.cpu=NULL)
 {
     for (i in msa.indices)
@@ -87,7 +89,7 @@ make.quick.run.scripts <- function(msa.indices,
                                mem=mem,
                                mem.per.cpu=mem.per.cpu,
                                output = file.path(OUTPUT.DIR, paste0("qrun_", msa.name, "_", chain, ".out")),
-                               partition = 'shared',
+                               partition = partition,
                                time.hours = 72,
                                account=account,
                                commands= paste0("Rscript Ending_HIV/R_scripts/run_parallel_chain_script.R ", i, " ", chain))
@@ -97,6 +99,7 @@ make.quick.run.scripts <- function(msa.indices,
 
 make.initial.scripts <- function(msa.indices,
                                  dir='R_scripts/initial_scripts/',
+                                 partition='shared',
                                  account='tfojo1',
                                  mem=NULL)
 {
@@ -129,7 +132,7 @@ make.intervention.scripts <- function(msa.indices,
                            job.name = paste0("i", msa.name),
                            mem=mem,
                            output = file.path(OUTPUT.DIR, paste0("int_", msa.name, ".out")),
-                           partition = 'shared',
+                           partition = partition,
                            time.hours = 12,
                            account=account,
                            commands= paste0("Rscript Ending_HIV/R_scripts/run_interventions_script.R ", i))
@@ -138,6 +141,7 @@ make.intervention.scripts <- function(msa.indices,
 
 make.setup.scripts <- function(msa.indices,
                                dir='R_scripts/setup_scripts/',
+                               partition='express',
                                account='tfojo1')
 {
     for (i in msa.indices)
@@ -145,7 +149,7 @@ make.setup.scripts <- function(msa.indices,
         msa.name = names(TARGET.MSAS)[i]
         make.sbatch.script(filename=file.path(dir, get.setup.filename(i)),
                            job.name = paste0("s", msa.name),
-                           partition='shared',
+                           partition=partition,
                            account=account,
                            output = file.path(OUTPUT.DIR, paste0("setup_", msa.name, ".out")),
                            commands= paste0("Rscript Ending_HIV/R_scripts/setup_parallel_mcmc_script.R ", i))
@@ -153,22 +157,24 @@ make.setup.scripts <- function(msa.indices,
 }
 
 make.assemble.mcmc.script <- function(dir='R_scripts/other_scripts/',
+                                      partition='express',
                                       account='tfojo1')
 {
     make.sbatch.script(filename=file.path(dir, 'assemble_mcmc.bat'),
                        job.name = 'assemble',
-                       partition='shared',
+                       partition=partition,
                        account=account,
                        output = file.path(OUTPUT.DIR, paste0("assemble_mcmc.out")),
                        commands= paste0("Rscript Ending_HIV/R_scripts/assemble_mcmc_script.R"))
 }
 
 make.assemble.quick.mcmc.script <- function(dir='R_scripts/other_scripts/',
+                                            partition='express',
                                       account='tfojo1')
 {
     make.sbatch.script(filename=file.path(dir, 'quick_assemble_mcmc.bat'),
                        job.name = 'q_assemble',
-                       partition='shared',
+                       partition=partition,
                        account=account,
                        output = file.path(OUTPUT.DIR, paste0("quick_assemble_mcmc.out")),
                        commands= paste0("Rscript Ending_HIV/R_scripts/assemble_quick_script.R"))
