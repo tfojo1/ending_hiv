@@ -97,6 +97,35 @@ make.quick.run.scripts <- function(msa.indices,
     }
 }
 
+make.flex.run.scripts <- function(msa.indices,
+                                  chains=1:4,
+                                  dir='R_scripts/flex_run_scripts/',
+                                  account='tfojo1',
+                                  partition='express',
+                                  prefix='f',
+                                  time.hours=12,
+                                  mem='9600MB',
+                                  mem.per.cpu=NULL)
+{
+    for (i in msa.indices)
+    {
+        for (chain in chains)
+        {
+            msa.name = names(TARGET.MSAS)[i]
+            make.sbatch.script(filename=file.path(dir, get.flex.run.filename(i,chain)),
+                               job.name = paste0(prefix, chain, msa.name),
+                               mem=mem,
+                               mem.per.cpu=mem.per.cpu,
+                               output = file.path(OUTPUT.DIR, paste0("flex_", msa.name, "_", chain, ".out")),
+                               partition = partition,
+                               time.hours = time.hours,
+                               account=account,
+                               commands= paste0("Rscript Ending_HIV/R_scripts/run_parallel_chain_script.R ", i, " ", chain))
+        }
+    }
+}
+
+
 make.initial.scripts <- function(msa.indices,
                                  dir='R_scripts/initial_scripts/',
                                  partition='shared',
@@ -263,6 +292,11 @@ get.run.filename <- function(index, chain)
 get.quick.run.filename <- function(index, chain)
 {
     paste0("qrun_", index, "_", chain, ".bat")
+}
+
+get.flex.run.filename <- function(index, chain)
+{
+    paste0("flex_", index, "_", chain, ".bat")
 }
 
 get.initial.filename <- function(index)
