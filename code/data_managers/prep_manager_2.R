@@ -752,7 +752,7 @@ make.prep.model <- function(anchor.year,
 
 make.prep.model.mixed.linear <- function(settings=SETTINGS,
                                          as.proportion.of.indicated=T,
-                                         max.proportion=0.3,
+                                         max.proportion=0.4,
                                          use.logistic.tail=T,
                                          logistic.after.frac.of.max.p=0.5,
                                          msm.correction.rr = 0.1298588, #from calling calculate.msm.prep.correction.rr()

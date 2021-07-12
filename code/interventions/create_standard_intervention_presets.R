@@ -77,7 +77,7 @@ register.standard.interventions.annals.revision <- function(start.year=2023,
     MI.T1x = join.interventions(YBHM.T1x,
                                  create.intervention(ALL.MSM.AND.ACTIVE.IDU.MINUS.YOUNG.BH,
                                                      TESTING.1x))
-    INTERVENTION.MANAGER = register.intervention(MI.T05x, code=paste0('mi.t1x', suffix),
+    INTERVENTION.MANAGER = register.intervention(MI.T1x, code=paste0('mi.t1x', suffix),
                                                  name='All MSM and all PWID tested once a year',
                                                  manager = INTERVENTION.MANAGER)
     
@@ -139,7 +139,7 @@ register.standard.interventions.annals.revision <- function(start.year=2023,
     MI.S90 = join.interventions(YBHM.S90,
                                 create.intervention(ALL.MSM.AND.ACTIVE.IDU.MINUS.YOUNG.BH,
                                                     SUPPRESSION.90))
-    INTERVENTION.MANAGER = register.intervention(MI.S80, code=paste0('mi.s90', suffix),
+    INTERVENTION.MANAGER = register.intervention(MI.S90, code=paste0('mi.s90', suffix),
                                                  name='90% of MSM and PWID PWH suppressed',
                                                  manager = INTERVENTION.MANAGER)
     
@@ -203,7 +203,7 @@ register.standard.interventions.annals.revision <- function(start.year=2023,
     ALL.P25 = join.interventions(MI.P25,
                                  create.intervention(ALL.HETEROSEXUAL.NON.ACTIVE.IDU,
                                                      PREP.25))
-    INTERVENTION.MANAGER = register.intervention(ALL.S90, code=paste0('all.p25', suffix),
+    INTERVENTION.MANAGER = register.intervention(ALL.P25, code=paste0('all.p25', suffix),
                                                  name='25% of all at risk on PrEP',
                                                  manager = INTERVENTION.MANAGER)
     
@@ -303,7 +303,8 @@ register.standard.interventions.annals.revision <- function(start.year=2023,
                                                     MARGINAL.TESTING.1.25, MARGINAL.PREP.05, MARGINAL.SUPPRESSION.10)
     INTERVENTION.MANAGER = register.intervention(ALL.MARGINAL.T125.P05.S10,
                                                  code=paste0("all.marginal.t125.p05.s10", suffix),
-                                                 name="Whole population tested 1.25 times as frequently, 5% more on PrEP, 10% more suppressed")
+                                                 name="Whole population tested 1.25 times as frequently, 5% more on PrEP, 10% more suppressed",
+                                                 manager = INTERVENTION.MANAGER)
     
     
     ##------------------------------##
@@ -315,6 +316,10 @@ register.standard.interventions.annals.revision <- function(start.year=2023,
         create.intervention(ALL.ACTIVE.IDU, NEEDLE.EXCHANGE.25),
         create.intervention(ALL.PRIOR.IDU, MOUD.25)
     )
+    INTERVENTION.MANAGER = register.intervention(NON.IDU.P25_IDU.N25.MOUD25,
+                                                 code=paste0("non.idu.p25_idu.n25.moud25", suffix),
+                                                 name='25% of Non-IDU on PrEP; 25% of active IDU in needle-exchange programs; 25% of prior IDU on MOUDs',
+                                                 manager = INTERVENTION.MANAGER)
     
     
     ##-- RETURN --##

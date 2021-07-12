@@ -47,7 +47,7 @@ create.intervention.unit <- function(type=c('testing','prep','suppression'),
                                      end.year=Inf,
                                      apply.function=c('absolute','multiplier','odds.ratio','additive')[1],
                                      allow.less.than.otherwise = F,
-                                     min.rate=Inf,
+                                     min.rate=-Inf,
                                      max.rate=Inf)
 {
     #-- Check Years against CHECK.YEAR --#
@@ -131,7 +131,7 @@ create.proportion.multiplier.intervention.unit <- function(type=c('testing','pre
                                                            years,
                                                            end.year=Inf,
                                                            allow.less.than.otherwise = F,
-                                                           min.rate=Inf,
+                                                           min.rate=-Inf,
                                                            max.rate=Inf)
 {
     rates = (1-proportions) + proportions * multipliers

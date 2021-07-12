@@ -2796,6 +2796,8 @@ get.rates.from.background.and.foreground <- function(background.rates,
         this.foreground.end.times = foreground.end.times[[1]]
         this.allow.foreground.less = allow.foreground.less[[1]]
         this.foreground.functions = foreground.functions[[1]]
+        this.foreground.min = foreground.min[[1]]
+        this.foreground.max = foreground.max[[1]]
         
         background.rates = background.rates[background.times<=max.background.time]
         background.times = background.times[background.times<=max.background.time]
@@ -2855,12 +2857,12 @@ get.rates.from.background.and.foreground <- function(background.rates,
                     else 
                         stop("foreground functions must be one of: 'absolute', 'multiplier', 'odds.ratio', or 'additive'")
                     
-                    if (!is.null(foreground.min) && !is.na(foreground.min[i]))
+                    if (!is.null(this.foreground.min) && !is.na(this.foreground.min[i]))
                         from.foreground.rates[!is.na(from.foreground.rates)] = pmax(from.foreground.rates[!is.na(from.foreground.rates)],
-                                                                                    foreground.min[i])
-                    if (!is.null(foreground.max) && !is.na(foreground.max[i]))
+                                                                                    this.foreground.min[i])
+                    if (!is.null(this.foreground.max) && !is.na(this.foreground.max[i]))
                         from.foreground.rates[!is.na(from.foreground.rates)] = pmin(from.foreground.rates[!is.na(from.foreground.rates)],
-                                                                                    foreground.max[i])
+                                                                                    this.foreground.max[i])
                     
                     if (any(!is.na(from.foreground.rates)))
                     {
@@ -2992,7 +2994,6 @@ merge.rates <- function(rates1,
             index.before = (1:n.times)[times <= time]
             index.before = index.before[length(index.before)]
             index.after = (1:n.times)[times > time][1]
-            
             if (length(index.before)==0)
                 rates[[index.after]]
             else if (is.na(index.after) || is.infinite(times[index.before]))

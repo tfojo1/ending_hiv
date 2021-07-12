@@ -5,13 +5,14 @@
 ##------------------------------##
 
 MAIN.INTERVENTION.CODES = c(
+    # Marginal
+    'all.marginal.t125.p05.s10',
+    
     # Single-modality
     'mi.t2x_het.t1x',
     'all.p25',
     'all.s90',
     
-    # Marginal
-    'all.marginal.t125.p05.s10',
     
     # YBHM Only
     'ybhm.t1x.p10.s80',
@@ -30,9 +31,24 @@ MAIN.INTERVENTION.CODES = c(
     'mi.t2x.p10.s80_het.t1x.p10.s80',
     'mi.t2x.p25.s80_het.t1x.p25.s80',
     'mi.t2x.p25.s90_het.t1x.p25.s90'
+    
+    # MOUD/Needle Exchange
+#    'non.idu.p25_idu.n25.moud25'
 )
 
 #APPENDIX.INTERVENTION.CODES
+
+
+MAIN.INTERVENTIONS.23.27 = c(list(NO.INTERVENTION),
+                               lapply(paste0(MAIN.INTERVENTION.CODES, '_23.27'), intervention.from.code))
+
+
+
+
+
+
+
+
 
 #OLDER VERSIONS 
 if (1==2)

@@ -36,14 +36,13 @@ run.systematic.interventions <- function(simset,
         save.simset(simset, dir=dst.dir, compress=compress)
 
         if (verbose)
-            print("Preparing baseline simset...")
+            print("Preparing seed simset...")
         save.seed.simset(simset, dir=dst.dir)
-        
-        return()
     }
     
     start.time = Sys.time()
     n.total.sim=0
+    
     for (int in interventions)
     {
         filename = get.simset.filename(location=location,
@@ -58,6 +57,7 @@ run.systematic.interventions <- function(simset,
         {
             if (verbose)
                 print(paste0("Running intervention: '", int.name, "' on ", base.simset@n.sim, " simulations..."))
+            
             simset = run.simset.intervention(base.simset,
                                              intervention=int,
                                              run.from.year = run.from.year,

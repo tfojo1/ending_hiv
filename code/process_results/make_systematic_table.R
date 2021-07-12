@@ -11,11 +11,9 @@ if(SOURCE.XLSX && .Platform$OS.type == 'windows')
     library(xlsx)
 
 #source('code/source_code.R')
-source('code/source_code.R')
-#source('code/targets/parse_targets.R')
-source('code/targets/target_msas.R')
-source('code/interventions/systematic_interventions.R')
-source('code/interventions/synthesize_interventions.R')
+#source('code/targets/target_msas.R')
+#source('code/interventions/systematic_interventions.R')
+#source('code/interventions/synthesize_interventions.R')
 
 ##--------------------------------------------##
 ##-- CODE TO RUN OUR MAIN ANALYSIS - BY MSA --##
@@ -178,16 +176,13 @@ if (1==2)
 ##-- GENERATING AND WRITING ESTIMATES FOR THE MAIN ANALYSIS --##
 ##------------------------------------------------------------##
 
-get.estimates.and.intervals <- function(dir,
-                                        msas=TARGET.MSAS,
-                                        interventions=INTERVENTION.SET,
-                                        n.sim,
-                                        verbose=T,
-                                        year1=2020,
-                                        year2=2030,
-                                        summary.stat=mean,
-                                        interval.coverage=0.95,
-                                        calculate.total=T)
+get.raw.estimates <- function(dir,
+                              msas=TARGET.MSAS,
+                              interventions=INTERVENTION.SET,
+                              n.sim,
+                              verbose=T,
+                              year1=2020,
+                              year2=2030)
 {
     dir = file.path(dir)
     all.arr = sapply(1:length(interventions), function(i){
@@ -230,6 +225,43 @@ get.estimates.and.intervals <- function(dir,
     dim(all.arr) = sapply(dim.names, length)
     dimnames(all.arr) = dim.names
     
+    attr(all.arr, 'interventions') = interventions
+    
+    all.arr
+}
+
+get.estimates.and.intervals <- function(dir,
+                                        msas=TARGET.MSAS,
+                                        interventions=INTERVENTION.SET,
+                                        n.sim,
+                                        verbose=T,
+                                        year1=2020,
+                                        year2=2030,
+                                        summary.stat=mean,
+                                        interval.coverage=0.95,
+                                        calculate.total=T)
+{
+    all.arr = get.raw.estimates(dir=dir,
+                                msas=msas,
+                                interventions=interventions,
+                                n.sim=n.sim,
+                                verbose=verbose,
+                                year1=year1,
+                                year2=year2)
+    
+    do.crunch.estimates.and.intervals(all.arr,
+                                      summary.stat=summary.stat,
+                                      interval.coverage=interval.coverage,
+                                      calculate.total=calculate.total)
+}
+
+do.crunch.estimates.and.intervals <- function(all.arr,
+                                              summary.stat=mean,
+                                              interval.coverage=0.95,
+                                              calculate.total=T)
+{
+    dim.names = dimnames(all.arr)
+    
     if (calculate.total)
     {
         dim.names$location = c(dim.names$location, 'Total')
@@ -241,6 +273,9 @@ get.estimates.and.intervals <- function(dir,
     
     #indexed [sim, msa, intervention]
     rel.change = -(all.arr[2,,,] - all.arr[1,,,]) / all.arr[1,,,]
+    dim.names = dim.names[-1]
+    dim(rel.change) = sapply(dim.names, length)
+    dimnames(rel.change) = dim.names
 
     alpha = (1-interval.coverage)/2
     
@@ -249,7 +284,15 @@ get.estimates.and.intervals <- function(dir,
             ci.upper=apply(rel.change, 2:3, quantile, probs=1-alpha, na.rm=T)
             )
     
-    attr(rv, 'interventions') = interventions
+    dim.names = dim.names[-1]
+    dim(rv$estimates) = sapply(dim.names, length)
+    dimnames(rv$estimates) = dim.names
+    dim(rv$ci.lower) = sapply(dim.names, length)
+    dimnames(rv$ci.lower) = dim.names
+    dim(rv$ci.upper) = sapply(dim.names, length)
+    dimnames(rv$ci.upper) = dim.names
+    
+    attr(rv, 'interventions') = attr(all.arr, 'interventions')
     attr(rv, 'locations') = dim.names$location
     
     rv
@@ -269,9 +312,17 @@ write.systematic.table <- function(estimates,
 {
     x = estimates$estimates
     
-    dimnames(x)[[1]] = unlist(msa.names(as.character(attr(estimates, 'location'))))
-    dimnames(x)[[2]] = sapply(interventions, get.intervention.name)
-
+    int.names = sapply(interventions, get.intervention.name)
+    int.codes = sapply(interventions, get.intervention.code)
+    x = x[,int.codes]
+    
+    dim.names = list(location = unlist(msa.names(as.character(attr(estimates, 'location')))),
+                     intervention = int.names)
+    
+    dim(x) = sapply(dim.names, length)
+    dimnames(x) = dim.names
+#    dimnames(x)[[1]] = 
+ #   dimnames(x)[[2]] = sapply(interventions, get.intervention.name)
     
     write.shaded.table(x=x,
                        file=file,

@@ -362,7 +362,8 @@ register.intervention <- function(int,
                                   code,
                                   name,
                                   short.name=name,
-                                  manager=INTERVENTION.MANAGER.1.0)
+                                  manager=INTERVENTION.MANAGER.1.0,
+                                  allow.intervention.multiple.names=F)
 {
     if (!is(int, 'intervention'))
         stop("'int' must be of class 'intervention'")
@@ -371,9 +372,8 @@ register.intervention <- function(int,
         stop(paste0("'", code, "' is a reserved keyword and cannot be used as an intervention code"))
 
     # Check if already added under a different name or code
-    
-    ALLOW.INTERVENTION.ALIASES = T
-    if (!ALLOW.INTERVENTION.ALIASES)
+
+    if (!allow.intervention.multiple.names)
     {
         mask = sapply(manager$intervention, function(comp){
             interventions.equal(int, comp)
@@ -433,7 +433,8 @@ get.intervention.code <- function(int, manager=INTERVENTION.MANAGER.1.0)
         NULL
 }
 
-get.intervention.name <- function(int, manager=INTERVENTION.MANAGER.1.0)
+get.intervention.name <- function(int, manager=INTERVENTION.MANAGER.1.0,
+                                  throw.error.if.multiple.names=T)
 {   
     if (is.null(int))
         return ("No Intervention")
@@ -442,7 +443,12 @@ get.intervention.name <- function(int, manager=INTERVENTION.MANAGER.1.0)
         interventions.equal(int, comp)
     })
     if (any(mask))
+    {
+        if (sum(mask)>1 && throw.error.if.multiple.names)
+            stop(paste0("More than one name for the given intervention has been registered: ",
+                        paste0("'", manager$name[mask], "'", collapse=", ")))
         as.character(manager$name[mask])
+    }
     else
         NULL
 }
@@ -754,9 +760,9 @@ setup.components.for.intervention <- function(components,
         end.times = expand.population.to.hiv.positive(components$jheem, intervention$processed$suppression$end.times)
         end.times[,,,,,undiagnosed.states,,] = Inf
         
-        min.rates = expand.population.to.hiv.positive(components$jheem, intervention$processed$testing$min.rates)
+        min.rates = expand.population.to.hiv.positive(components$jheem, intervention$processed$suppression$min.rates)
         min.rates[,,,,,undiagnosed.states,,] = -Inf
-        max.rates = expand.population.to.hiv.positive(components$jheem, intervention$processed$testing$max.rates)
+        max.rates = expand.population.to.hiv.positive(components$jheem, intervention$processed$suppression$max.rates)
         max.rates[,,,,,undiagnosed.states,,] = -Inf
         
         apply.functions = expand.character.array(expand.population.to.hiv.positive,
@@ -853,9 +859,9 @@ setup.components.for.intervention <- function(components,
             max.rates = expand.population.to.general(components$jheem, intervention$processed[[idu.trans]]$max.rates)[,,,,state.for.trans]
             apply.functions = expand.character.array(expand.population.to.general,
                                                      components$jheem,
-                                                     intervention$processed$needle.exchange$apply.functions)[,,,,state.for.trans]
+                                                     intervention$processed[[idu.trans]]$apply.functions)[,,,,state.for.trans]
             allow.less = as.logical(expand.population.to.general(components$jheem, 
-                                                                 as.numeric(intervention$processed$needle.exchange$allow.less.than.otherwise)))[,,,,state.for.trans]
+                                                                 as.numeric(intervention$processed[[idu.trans]]$allow.less.than.otherwise)))[,,,,state.for.trans]
             
             components = set.foreground.rates(components, idu.trans,
                                               rates = rates,
