@@ -3,7 +3,6 @@ setwd("Ending_HIV")
 source('code/source_code.R')
 source('code/targets/target_msas.R')
 
-print("RE-RUNNING SIMSETS")
 print(Sys.Date())
 print(Sys.time())
 
@@ -13,6 +12,7 @@ REDO = F
 SIMSET.DIR = file.path(SYSTEMATIC.ROOT.DIR, 'full_simsets')
 BK.DIR = file.path(SYSTEMATIC.ROOT.DIR, 'backup_simsets')
 
+print("RE-RUNNING SIMSETS")
 for (msa in to.do)
 {
     filename = get.full.filename(location=msa, version=VERSION)
@@ -22,7 +22,7 @@ for (msa in to.do)
     else if (file.exists(file.path(SIMSET.DIR, filename)))
     {
         print(paste0("- Redoing ", msa, " (", msa.names(msa), ")..."))
-        load(SYSTEMATIC.ROOT.DIR, 'start_values', paste0(msa, '.Rdata'))
+        load(file.path(SYSTEMATIC.ROOT.DIR, 'start_values', paste0(msa, '.Rdata')))
         load(file.path(SIMSET.DIR, filename))
         save(simset, file=file.path(BK.DIR, filename))
         
@@ -37,3 +37,4 @@ for (msa in to.do)
         print(paste0("- Skipping ", msa, " (", msa.names(msa), ") - simset not present."))
         
 }
+print("DONE")
