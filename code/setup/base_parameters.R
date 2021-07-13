@@ -139,22 +139,22 @@ BASE_PARAMETERS = add.parameter(BASE_PARAMETERS, 'viral.suppression.rate',
 
 print("For now, dummy values for needle exchange")
 BASE_PARAMETERS = add.parameter(BASE_PARAMETERS, 'needle.exchange.rr',
-                                1,1,1,
-                                citation=23769234)
+                                0.6917807,NA,NA,
+                                citation='10.1080/10826080600669579')
 
 
 BASE_PARAMETERS = add.parameter(BASE_PARAMETERS, 'needle.exchange.remission.rate.ratio',
-                                1,1,1,
-                                citation=23769234)
+                                1.357033, NA, NA,
+                                citation=' 11027894;10609594;17034440')
 
 
 BASE_PARAMETERS = add.parameter(BASE_PARAMETERS, 'moud.relapse.rr',
-                                1, 1, 1,
-                                citation=1)
+                                0.4469188, NA, NA,
+                                citation='10.1111/ajad.13051')
 
 BASE_PARAMETERS = add.parameter(BASE_PARAMETERS, 'fraction.opioid.of.idu',
-                                1, 1, 1,
-                                citation=1)
+                                0.6320987, NA, NA,
+                                citation="NSDUH 2014-2016")
 
 #-- to calculate AIDS progression rate --#
 if (1==2)
