@@ -130,6 +130,7 @@ create.proportion.multiplier.intervention.unit <- function(type=c('testing','pre
                                                            multipliers,
                                                            years,
                                                            end.year=Inf,
+                                                           apply.function=c('absolute','multiplier','odds.ratio','additive')[1],
                                                            allow.less.than.otherwise = F,
                                                            min.rate=-Inf,
                                                            max.rate=Inf)
@@ -140,6 +141,7 @@ create.proportion.multiplier.intervention.unit <- function(type=c('testing','pre
                              rates=rates,
                              years=years,
                              end.year=end.year,
+                             apply.function = apply.function,
                              allow.less.than.otherwise=allow.less.than.otherwise,
                              min.rate=min.rate,
                              max.rate=max.rate)

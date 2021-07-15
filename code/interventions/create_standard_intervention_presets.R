@@ -37,10 +37,12 @@ register.standard.interventions.annals.revision <- function(start.year=2023,
     MOUD.10 = create.proportion.multiplier.intervention.unit('idu.relapse', start.year,
                                                              proportions=0.1 * BASE_PARAMETER_VALUES['fraction.opioid.of.idu'],
                                                              multipliers=BASE_PARAMETER_VALUES['moud.relapse.rr'],
+                                                             apply.function = 'multiplier',
                                                              end.year)
     MOUD.25 = create.proportion.multiplier.intervention.unit('idu.relapse', start.year,
-                                                             proportions=0.1 * BASE_PARAMETER_VALUES['fraction.opioid.of.idu'],
+                                                             proportions=0.25 * BASE_PARAMETER_VALUES['fraction.opioid.of.idu'],
                                                              multipliers=BASE_PARAMETER_VALUES['moud.relapse.rr'],
+                                                             apply.function = 'multiplier',
                                                              end.year)
     
     ##------------------##
@@ -62,7 +64,7 @@ register.standard.interventions.annals.revision <- function(start.year=2023,
     
     YBHM.T2x = create.intervention(YOUNG.BLACK.HISPANIC.MSM,
                                     TESTING.2x)
-    INTERVENTION.MANAGER = register.intervention(YBHM.T2x, code=paste0('ybhm.tq2x', suffix),
+    INTERVENTION.MANAGER = register.intervention(YBHM.T2x, code=paste0('ybhm.t2x', suffix),
                                                  name='Young Black and Hispanic MSM tested twice a year',
                                                  manager = INTERVENTION.MANAGER)
     
@@ -310,6 +312,40 @@ register.standard.interventions.annals.revision <- function(start.year=2023,
     ##------------------------------##
     ##-- NEEDLE SHARING and MOUDs --##
     ##------------------------------##
+    
+    IDU.N10 = create.intervention(ALL.ACTIVE.IDU, NEEDLE.EXCHANGE.10)
+    INTERVENTION.MANAGER = register.intervention(IDU.N10,
+                                                 code=paste0("idu.n10", suffix),
+                                                 name='10% of active IDU in needle-exchange programs',
+                                                 manager = INTERVENTION.MANAGER)
+    
+    IDU.N25 = create.intervention(ALL.ACTIVE.IDU, NEEDLE.EXCHANGE.25)
+    INTERVENTION.MANAGER = register.intervention(IDU.N25,
+                                                 code=paste0("idu.n25", suffix),
+                                                 name='25% of active IDU in needle-exchange programs',
+                                                 manager = INTERVENTION.MANAGER)
+    
+    IDU.MOUD10 = create.intervention(ALL.PRIOR.IDU, MOUD.10)
+    INTERVENTION.MANAGER = register.intervention(IDU.MOUD10,
+                                                 code=paste0("idu.moud10", suffix),
+                                                 name='10% of prior IDU on MOUDs',
+                                                 manager = INTERVENTION.MANAGER)
+    
+    IDU.MOUD25 = create.intervention(ALL.PRIOR.IDU, MOUD.25)
+    INTERVENTION.MANAGER = register.intervention(IDU.MOUD25,
+                                                 code=paste0("idu.moud25", suffix),
+                                                 name='25% of prior IDU on MOUDs',
+                                                 manager = INTERVENTION.MANAGER)
+    
+    NON.IDU.P10_IDU.N10.MOUD10 = join.interventions(
+        create.intervention(NON.ACTIVE.IDU, PREP.10),
+        create.intervention(ALL.ACTIVE.IDU, NEEDLE.EXCHANGE.10),
+        create.intervention(ALL.PRIOR.IDU, MOUD.10)
+    )
+    INTERVENTION.MANAGER = register.intervention(NON.IDU.P10_IDU.N10.MOUD10,
+                                                 code=paste0("non.idu.p10_idu.n10.moud10", suffix),
+                                                 name='10% of Non-IDU on PrEP; 10% of active IDU in needle-exchange programs; 10% of prior IDU on MOUDs',
+                                                 manager = INTERVENTION.MANAGER)
     
     NON.IDU.P25_IDU.N25.MOUD25 = join.interventions(
         create.intervention(NON.ACTIVE.IDU, PREP.25),

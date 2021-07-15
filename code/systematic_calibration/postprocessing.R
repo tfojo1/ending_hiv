@@ -314,7 +314,9 @@ do.extract.population.subset <- function(results,
                                                         include.hiv.positive=include.hiv.positive,
                                                         include.hiv.negative=include.hiv.negative,
                                                         keep.dimensions=denominator.dimensions,
+                                                        use.cdc.categorizations = use.cdc.categorizations,
                                                         per.population=NA)
+            
             denominators = expand.population(denominators,
                                              target.dim.names = dimnames(numerators))
             
@@ -686,13 +688,98 @@ extract.suppression <- function(sim,
                                 subpopulations=NULL,
                                 sexes=NULL,
                                 risks=NULL,
-                                continuum='diagnosed',
+                                continuum=sim$diagnosed.continuum.states,
                                 cd4=NULL,
                                 hiv.subsets=NULL,
                                 use.cdc.categorizations=F)
 {
-    raw.suppression.rates = calculate.suppression(attr(sim, 'components'))
-    do.extract.rates(raw.rates = raw.suppression.rates,
+    if (any(keep.dimensions=='continuum'))
+        stop("Cannot keep the continuum dimension in calculating suppression")
+    
+    components = attr(sim, 'components')
+    if (components$settings$IS_CONTINUUM_COLLAPSED)
+    {
+        raw.suppression.rates = calculate.suppression(components)
+        do.extract.rates(raw.rates = raw.suppression.rates,
+                         sim=sim,
+                         years=years,
+                         keep.dimensions=keep.dimensions,
+                         per.population=per.population,
+                         ages=ages,
+                         races=races,
+                         subpopulations=subpopulations,
+                         sexes=sexes,
+                         risks=risks,
+                         continuum=continuum,
+                         cd4=cd4,
+                         hiv.subsets=hiv.subsets,
+                         use.cdc.categorizations=use.cdc.categorizations,
+                         include.hiv.negative = F)
+    }
+    else
+    {
+        suppressed.states = intersect(components$settings$SUPPRESSED_STATES, continuum)
+        if (length(suppressed.states)==0)
+            stop(paste0("None of the specified continuum states (",
+                        paste0("'", continuum, "'", collapse=', '),
+                        ") are suppressed states"))
+        
+        numerators = do.extract.population.subset(results=sim,
+                                                  years=years,
+                                                  ages=ages,
+                                                  races=races,
+                                                  subpopulations=subpopulations,
+                                                  sexes=sexes,
+                                                  risks=risks,
+                                                  continuum=suppressed.states,
+                                                  cd4s=cd4,
+                                                  hiv.subsets=hiv.subsets,
+                                                  include.hiv.positive=T,
+                                                  include.hiv.negative=F,
+                                                  keep.dimensions=keep.dimensions,
+                                                  per.population=NA,
+                                                  use.cdc.categorizations=use.cdc.categorizations)
+        
+        denominators = do.extract.population.subset(results=sim,
+                                                    years=years,
+                                                    ages=ages,
+                                                    races=races,
+                                                    subpopulations=subpopulations,
+                                                    sexes=sexes,
+                                                    risks=risks,
+                                                    continuum=continuum,
+                                                    cd4s=cd4,
+                                                    hiv.subsets=hiv.subsets,
+                                                    include.hiv.positive=T,
+                                                    include.hiv.negative=F,
+                                                    keep.dimensions=keep.dimensions,
+                                                    per.population=NA,
+                                                    use.cdc.categorizations=use.cdc.categorizations)
+        
+        numerators / denominators
+    }
+}
+
+extract.linkage <- function(sim,
+                            years=sim$years,
+                            keep.dimensions='year',
+                            per.population=1,
+                            ages=NULL,
+                            races=NULL,
+                            subpopulations=NULL,
+                            sexes=NULL,
+                            risks=NULL,
+                            continuum='unengaged',
+                            cd4=NULL,
+                            hiv.subsets=NULL,
+                            use.cdc.categorizations=F)
+{
+    components = attr(sim, 'components')
+    if (components$settings$IS_CONTINUUM_COLLAPSED)
+        stop("Simulation uses a collapsed continuum - cannot extract linkage")
+    
+    raw.linkage.rates = calculate.linkage(components)
+    do.extract.rates(raw.rates = raw.linkage.rates,
                      sim=sim,
                      years=years,
                      keep.dimensions=keep.dimensions,
@@ -707,6 +794,68 @@ extract.suppression <- function(sim,
                      hiv.subsets=hiv.subsets,
                      use.cdc.categorizations=use.cdc.categorizations,
                      include.hiv.negative = F)
+}
+
+do.extract.engagement <- function(sim,
+                                years=sim$years,
+                                keep.dimensions='year',
+                                per.population=1,
+                                ages=NULL,
+                                races=NULL,
+                                subpopulations=NULL,
+                                sexes=NULL,
+                                risks=NULL,
+                                continuum=sim$diagnosed.continuum.states,
+                                cd4=NULL,
+                                hiv.subsets=NULL,
+                                use.cdc.categorizations=F)
+{
+    if (any(keep.dimensions=='continuum'))
+        stop("Cannot keep the continuum dimension in calculating suppression")
+    
+    components = attr(sim, 'components')
+    if (components$settings$IS_CONTINUUM_COLLAPSED)
+        stop("Simulation uses a collapsed continuum - cannot extract linkage")
+    
+    engaged.states = intersect(components$settings$ENGAGED_STATES, continuum)
+    if (length(engaged.states)==0)
+        stop(paste0("None of the specified continuum states (",
+                    paste0("'", continuum, "'", collapse=', '),
+                    ") are engaged states"))
+    
+    numerators = do.extract.population.subset(results=sim,
+                                              years=years,
+                                              ages=ages,
+                                              races=races,
+                                              subpopulations=subpopulations,
+                                              sexes=sexes,
+                                              risks=risks,
+                                              continuum=engaged.states,
+                                              cd4s=cd4,
+                                              hiv.subsets=hiv.subsets,
+                                              include.hiv.positive=T,
+                                              include.hiv.negative=F,
+                                              keep.dimensions=keep.dimensions,
+                                              per.population=NA,
+                                              use.cdc.categorizations=use.cdc.categorizations)
+    
+    denominators = do.extract.population.subset(results=sim,
+                                                years=years,
+                                                ages=ages,
+                                                races=races,
+                                                subpopulations=subpopulations,
+                                                sexes=sexes,
+                                                risks=risks,
+                                                continuum=continuum,
+                                                cd4s=cd4,
+                                                hiv.subsets=hiv.subsets,
+                                                include.hiv.positive=T,
+                                                include.hiv.negative=F,
+                                                keep.dimensions=keep.dimensions,
+                                                per.population=NA,
+                                                use.cdc.categorizations=use.cdc.categorizations)
+    
+    numerators / denominators
 }
 
 extract.prep.coverage <- function(sim,
@@ -803,7 +952,7 @@ do.extract.rates <- function(raw.rates,
                              subpopulations=NULL,
                              sexes=NULL,
                              risks=NULL,
-                             continuum='diagnosed',
+                             continuum=sim$diagnosed.continuum.states,
                              cd4=NULL,
                              hiv.subsets=NULL,
                              use.cdc.categorizations=F,
@@ -842,7 +991,7 @@ do.extract.rates <- function(raw.rates,
                                                sexes=NULL, risks=NULL,
                                                continuum=continuum, cd4=cd4, hiv.subsets=hiv.subsets,
                                                include.hiv.negative = F)
-    
+
     n.dim = length(dim(stratified.arr))
     if (include.hiv.negative)
         n.dim = n.dim-1
@@ -1261,27 +1410,52 @@ sum.arr.to.cdc <- function(arr,
             if (any(risks=='msm'))
                 access(rv, risk='msm') = access(arr, sex='msm', risk='never_IDU')
             if (any(risks=='msm_idu'))
-                access(rv, risk='msm_idu') = apply(access(arr, sex='msm', risk=idu.states, collapse.length.one.dimensions = F), non.risk.non.sex.dimensions, sum)
+            {
+                if (length(non.risk.non.sex.dimensions)==0)
+                    access(rv, risk='msm_idu') = sum(access(arr, sex='msm', risk=idu.states, collapse.length.one.dimensions = F))
+                else
+                    access(rv, risk='msm_idu') = apply(access(arr, sex='msm', risk=idu.states, collapse.length.one.dimensions = F), non.risk.non.sex.dimensions, sum)
+            }
         }
         
         if (setequal(sexes, CDC.SEXES))
         {
             if (any(risks=='idu'))
-                access(rv, risk='idu') = apply(access(arr, sex=c('heterosexual_male','female'), risk=idu.states, collapse.length.one.dimensions = F), non.risk.non.sex.dimensions, sum)
+            {
+                if (length(non.risk.non.sex.dimensions)==0)
+                    access(rv, risk='idu') = sum(access(arr, sex=c('heterosexual_male','female'), risk=idu.states, collapse.length.one.dimensions = F))
+                else
+                    access(rv, risk='idu') = apply(access(arr, sex=c('heterosexual_male','female'), risk=idu.states, collapse.length.one.dimensions = F), non.risk.non.sex.dimensions, sum)
+            }
             if (any(risks=='heterosexual'))
-                access(rv, risk='heterosexual') = apply(access(arr, sex=c('heterosexual_male','female'), risk='never_IDU'), non.risk.non.sex.dimensions, sum)
+            {
+                if (length(non.risk.non.sex.dimensions)==0)
+                    access(rv, risk='heterosexual') = sum(access(arr, sex=c('heterosexual_male','female'), risk='never_IDU'))
+                else
+                    access(rv, risk='heterosexual') = apply(access(arr, sex=c('heterosexual_male','female'), risk='never_IDU'), non.risk.non.sex.dimensions, sum)
+            }
         }
         else if (any(sexes=='male'))
         {
             if (any(risks=='idu'))
-                access(rv, risk='idu') = apply(access(arr, sex='heterosexual_male', risk=idu.states, collapse.length.one.dimensions = F), non.risk.non.sex.dimensions, sum)
+            {
+                if (length(non.risk.non.sex.dimensions)==0)
+                    access(rv, risk='idu') = sum(access(arr, sex='heterosexual_male', risk=idu.states, collapse.length.one.dimensions = F))
+                else
+                    access(rv, risk='idu') = apply(access(arr, sex='heterosexual_male', risk=idu.states, collapse.length.one.dimensions = F), non.risk.non.sex.dimensions, sum)
+            }
             if (any(risks=='heterosexual'))
                 access(rv, risk='heterosexual') = access(arr, sex='heterosexual_male', risk='never_IDU')
         }
         else #sexes == female
         {
             if (any(risks=='idu'))
-                access(rv, risk='idu') = apply(access(arr, sex='female', risk=idu.states, collapse.length.one.dimensions = F), non.risk.non.sex.dimensions, sum)
+            {
+                if (length(non.risk.non.sex.dimensions)==0)
+                    access(rv, risk='idu') = sum(access(arr, sex='female', risk=idu.states, collapse.length.one.dimensions = F))
+                else
+                    access(rv, risk='idu') = apply(access(arr, sex='female', risk=idu.states, collapse.length.one.dimensions = F), non.risk.non.sex.dimensions, sum)
+            }
             if (any(risks=='heterosexual'))
                 access(rv, risk='heterosexual') = access(arr, sex='female', risk='never_IDU')
         }

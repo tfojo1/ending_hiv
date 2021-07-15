@@ -826,7 +826,7 @@ setup.components.for.intervention <- function(components,
                                                  components$jheem,
                                                  intervention$processed$needle.exchange$apply.functions)[,,,,idu.states]
         allow.less = as.logical(expand.population.to.general(components$jheem, 
-                                                                  as.numeric(intervention$processed$needle.exchange$allow.less.than.otherwise)))[,,,,idu.states]
+                                                                  as.numeric(intervention$processed$needle.exchange$allow.less.than.otherwise))[,,,,idu.states])
         
         components = set.foreground.rates(components, 'needle.exchange',
                                           rates = rates,
@@ -861,7 +861,7 @@ setup.components.for.intervention <- function(components,
                                                      components$jheem,
                                                      intervention$processed[[idu.trans]]$apply.functions)[,,,,state.for.trans]
             allow.less = as.logical(expand.population.to.general(components$jheem, 
-                                                                 as.numeric(intervention$processed[[idu.trans]]$allow.less.than.otherwise)))[,,,,state.for.trans]
+                                                                 as.numeric(intervention$processed[[idu.trans]]$allow.less.than.otherwise))[,,,,state.for.trans])
             
             components = set.foreground.rates(components, idu.trans,
                                               rates = rates,

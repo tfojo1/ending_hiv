@@ -137,7 +137,6 @@ BASE_PARAMETERS = add.parameter(BASE_PARAMETERS, 'viral.suppression.rate',
 
 ##-- Needle Exchange --##
 
-print("For now, dummy values for needle exchange")
 BASE_PARAMETERS = add.parameter(BASE_PARAMETERS, 'needle.exchange.rr',
                                 0.6917807,NA,NA,
                                 citation='10.1080/10826080600669579')

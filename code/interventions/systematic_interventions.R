@@ -22,7 +22,7 @@ run.systematic.interventions <- function(simset,
     
     if (!is.na(seed))
         set.seed(seed)
-    base.simset = prepare.simset.for.interventions(simset)
+    base.simset = prepare.simset.for.interventions(simset, fix.components = F)
     
     location = attr(base.simset@simulations[[1]], 'location')
     run.from.year=attr(base.simset, 'run.from.year')

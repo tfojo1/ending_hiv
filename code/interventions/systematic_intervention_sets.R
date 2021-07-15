@@ -13,7 +13,6 @@ MAIN.INTERVENTION.CODES = c(
     'all.p25',
     'all.s90',
     
-    
     # YBHM Only
     'ybhm.t1x.p10.s80',
     'ybhm.t2x.p10.s80',
@@ -31,12 +30,44 @@ MAIN.INTERVENTION.CODES = c(
     'mi.t2x.p10.s80_het.t1x.p10.s80',
     'mi.t2x.p25.s80_het.t1x.p25.s80',
     'mi.t2x.p25.s90_het.t1x.p25.s90'
-    
-    # MOUD/Needle Exchange
-#    'non.idu.p25_idu.n25.moud25'
 )
 
-#APPENDIX.INTERVENTION.CODES
+SINGLE.MODALITY.INTERVENTION.CODES = c(
+    
+    #Testing
+    'ybhm.t1x',
+    'ybhm.t2x',
+    'mi.t1x',
+    'mi.t2x',
+    'mi.t1x_het.t05x',
+    'mi.t2x_het.t1x',
+    
+    #PrEP
+    'ybhm.p10',
+    'ybhm.p25',
+    'mi.p10',
+    'mi.p25',
+    'all.p10',
+    'all.p25',
+    
+    #Suppression
+    'ybhm.s80',
+    'ybhm.s90',
+    'mi.s80',
+    'mi.s90',
+    'all.s80',
+    'all.s90'
+)
+
+IDU.INTERVENTION.CODES = c(
+    'idu.n10',
+    'idu.n25',
+    'idu.moud10',
+    'idu.moud25',
+    'non.idu.p10_idu.n10.moud10',
+    'non.idu.p25_idu.n25.moud25'
+)
+
 
 
 MAIN.INTERVENTIONS.23.27 = c(list(NO.INTERVENTION),
@@ -44,9 +75,22 @@ MAIN.INTERVENTIONS.23.27 = c(list(NO.INTERVENTION),
 
 
 
+IDU.INTERVENTIONS.23.27 = c(list(NO.INTERVENTION),
+                             lapply(paste0(IDU.INTERVENTION.CODES, '_23.27'), intervention.from.code))
 
 
+ALL.INTERVENTION.CODES = unique(c(
+    'noint',
+    
+    paste0(MAIN.INTERVENTION.CODES, "_23.27"),
+    paste0(MAIN.INTERVENTION.CODES, "_23.25"),
+    
+    paste0(SINGLE.MODALITY.INTERVENTION.CODES, "_23.27"),
+    
+    paste0(IDU.INTERVENTION.CODES, "_23.27")
+))
 
+ALL.INTERVENTIONS = lapply(ALL.INTERVENTION.CODES, intervention.from.code)
 
 
 

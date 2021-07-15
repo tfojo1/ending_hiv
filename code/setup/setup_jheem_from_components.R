@@ -556,10 +556,6 @@ clear.dependent.values <- function(components,
                         aids.progression.rate='cd4.transitions',
                         cd4.recovery.rate='cd4.transitions',
                         prep.screening.frequency='continuum.transitions',
-                        background.needle.exchange = c('needle.exchange.rates.and.times','susceptibility','idu.transitions'),
-                        foreground.needle.exchange = c('needle.exchange.rates.and.times','susceptibility','idu.transitions'),
-                        needle.exchange.rr = 'susceptibility',
-                        needle.exchange.remission.rate.ratio = 'idu.transitions',
                         background.testing=c('continuum.transitions','testing.rates.and.times'),
                         foreground.testing=c('continuum.transitions','testing.rates.and.times'),
 #                        background.testing.rate.ratios=c('continuum.transitions','testing.rates.and.times'),
@@ -577,8 +573,12 @@ clear.dependent.values <- function(components,
                         foreground.suppressed.to.disengaged=c('suppressed.to.disengaged.rates.and.times','continuum.transitions'),
                         background.reengagement=c('reengagement.rates.and.times','continuum.transitions'),
                         foreground.reengagement=c('reengagement.rates.and.times','continuum.transitions'),
-                        background.prep=c('prep.rates.and.times','susceptibility','new.infection.proportions','new.infection.proportions.years'),
-                        foreground.prep=c('prep.rates.and.times','susceptibility','new.infection.proportions','new.infection.proportions.years'),
+                        background.prep=c('prep.rates.and.times','idu.susceptibility','sexual.susceptibility','new.infection.proportions','new.infection.proportions.years'),
+                        foreground.prep=c('prep.rates.and.times','idu.susceptibility','sexual.susceptibility','new.infection.proportions','new.infection.proportions.years'),
+                        background.needle.exchange = c('needle.exchange.rates.and.times','idu.susceptibility','idu.transitions'),
+                        foreground.needle.exchange = c('needle.exchange.rates.and.times','idu.susceptibility','idu.transitions'),
+                        needle.exchange.rr = 'idu.susceptibility',
+                        needle.exchange.remission.rate.ratio = 'idu.transitions',
                         prep.rr.heterosexual='sexual.susceptibility',
                         prep.rr.msm='sexual.susceptibility',
                         prep.rr.idu='idu.susceptibility',
@@ -1032,7 +1032,7 @@ do.setup.idu.transitions <- function(components)
             idu.transitions[,,,,'never_IDU','active_IDU'] = idu.incidence$rates[[i]]
             
             idu.transitions[,,,,'active_IDU','IDU_in_remission'] = idu.remission$rates[[i]] * 
-                (1 - needle.exchange$rates[[i]] * (components$needle.exchange.remission.rate.ratio + 1) )
+                (1 + needle.exchange$rates[[i]] * (components$needle.exchange.remission.rate.ratio - 1) )
             
             idu.transitions[,,,,'IDU_in_remission', 'active_IDU'] = idu.relapse$rates[[i]] 
             
@@ -1404,8 +1404,8 @@ do.calculate.needle.exchange.coverage <- function(components)
 {
     components$needle.exchange.rates.and.times = do.get.rates.from.background.and.foreground(background.rates = components$background.needle.exchange$proportions,
                                                                                              background.times = components$background.needle.exchange$years,
-                                                                                             foreground = components$foreground.prep,
-                                                                                             max.background.time = components$background.change.to.years$prep)
+                                                                                             foreground = components$foreground.needle.exchange,
+                                                                                             max.background.time = Inf)#components$background.change.to.years$needle.exchange)
     
     components
 }
@@ -2249,12 +2249,14 @@ do.setup.susceptibility <- function(components)
                 yes.prep.yes.exchange.risk = yes.prep.yes.exchange.p
                 yes.prep.yes.exchange.risk[,,,,'active_IDU',] = yes.prep.yes.exchange.p[,,,,'active_IDU',] *
                     components$prep.rr.idu * components$needle.exchange.rr
-
+#if (rates.and.times$times[i]>=2027)
+ #   browser()
                 # Add together
                 susceptibility = no.prep.no.exchange.risk + no.prep.yes.exchange.risk +
                     yes.prep.no.exchange.risk + yes.prep.yes.exchange.risk
                 
                 susceptibility * base.idu.susceptibility
+                
             })
             
             

@@ -10,7 +10,8 @@ prepare.simset.for.interventions <- function(simset,
                                              total.future.prep.slope.or.dist = TOTAL.FUTURE.SLOPE.OR.DIST,
                                              total.future.suppressed.slope.or.dist = TOTAL.FUTURE.SLOPE.OR.DIST,
                                              future.slope.after.year=2020,
-                                             fix.components=T)
+                                             fix.components=T,
+                                             redo.needle.exchange=T)
 {
     #-- Future Slopes --#
     
@@ -74,6 +75,13 @@ prepare.simset.for.interventions <- function(simset,
         
         components = unfix.jheem.components(components)
         
+        if (redo.needle.exchange)
+        {
+            components = setup.needle.exchange.remission.effect(components, 
+                                                                needle.exchange.remission.rate.ratio = BASE_PARAMETER_VALUES['needle.exchange.remission.rate.ratio'])
+            components = setup.needle.exchange.susceptibility(components,
+                                                              needle.exchange.rr = BASE_PARAMETER_VALUES['needle.exchange.rr'])
+        }
         components = get.components.for.calibrated.parameters(parameters, components)
         
         if (fix.components)
