@@ -150,7 +150,7 @@ make.initial.scripts <- function(msa.indices,
 make.intervention.scripts <- function(msa.indices,
                                       dir='R_scripts/intervention_scripts/',
                                       account='tfojo1',
-                                      mem='16G')
+                                      mem='9600MB')
 {
     msa.indices = check.msa.indices(msa.indices)
     
