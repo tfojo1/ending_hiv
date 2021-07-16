@@ -27,6 +27,62 @@ do.run.interventions <- function(location,
                                  save.baseline.and.seed=F)
 }
 
+do.rerun.simset <- function(locations,
+                            bk.dir=file.path(SYSTEMATIC.ROOT.DIR, 'backup_simsets'),
+                            simset.dir=file.path(SYSTEMATIC.ROOT.DIR, 'full_simsets'),
+                            verbose=T,
+                            update.frequency.frac=0.05)
+{
+    if (verbose)
+        print(paste0("REDOING ", length(locations),
+                     ifelse(length(locations)==1, "location", "locations")))
+    
+    for (location in locations)
+    {
+        filename = get.full.filename(location=msa, version=VERSION)
+        
+        if (file.exists(file.path(bk.dir, filename)))
+        {
+            if (verbose)
+                print(paste0("- Skipping ", msa, " (", msa.names(msa), ") - already done."))
+        }
+        else if (file.exists(file.path(simset.dir, filename)))
+        {
+            if (verbose)
+                print(paste0("- Redoing ", msa, " (", msa.names(msa), ")..."))
+            
+            load(file.path(SYSTEMATIC.ROOT.DIR, 'start_values', paste0(msa, '.Rdata')))
+            load(file.path(simset.dir, filename))
+            orig.simset = simset
+
+            n.sim = simset@n.sim
+            counter = 0
+            update.frequency = floor(n.sim * update.frequency.frac)
+            
+            run.simulation = create.run.simulation.function(msa=msa, start.values = starting.parameters)
+            simset = extend.simulations(simset, fn=function(sim, pp){
+                run.simulation(pp)  
+                
+                counter <<- counter + 1
+                if (verbose && counter %% update.frequency == 0)
+                    print(paste0("Finished ", counter, " of ", n.sim, " simulations"))
+            })
+            save(simset, file=file.path(SIMSET.DIR, filename))
+            
+            simset = orig.simset
+            save(simset, file=file.path(bk.dir, filename))
+        }
+        else
+        {
+            if (verbose)
+                print(paste0("- Skipping ", msa, " (", msa.names(msa), ") - simset not present."))
+        }
+    }
+    
+    if (verbose)
+        print("DONE")
+}
+
 assemble.and.thin.mcmcs <- function(targets = TARGET.MSAS,
                                     cache.dir=file.path(SYSTEMATIC.ROOT.DIR, 'systematic_caches'),
                                     dst.dir=file.path(SYSTEMATIC.ROOT.DIR, 'systematic_parallel'),

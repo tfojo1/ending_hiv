@@ -169,6 +169,29 @@ make.intervention.scripts <- function(msa.indices,
      }
 }
 
+make.rerun.scripts <- function(msa.indices,
+                                      dir='R_scripts/rerun_scripts/',
+                                      partition='shared',
+                                      account='tfojo1',
+                                      mem='9600MB')
+{
+    msa.indices = check.msa.indices(msa.indices)
+    
+    for (i in msa.indices)
+    {
+        msa.name = names(TARGET.MSAS)[i]
+        make.sbatch.script(filename=file.path(dir, get.rerun.script.filename(i)),
+                           job.name = paste0("rr", msa.name),
+                           mem=mem,
+                           output = file.path(OUTPUT.DIR, paste0("rerun_", msa.name, ".out")),
+                           partition = partition,
+                           time.hours = 2,
+                           account=account,
+                           commands= paste0("Rscript Ending_HIV/R_scripts/rerun_simset_script.R ", i))
+    }
+}
+
+
 make.setup.scripts <- function(msa.indices,
                                dir='R_scripts/setup_scripts/',
                                partition='express',
@@ -233,6 +256,20 @@ make.master.interventions.script <- function(msa.indices,
     
     sink(filename)
     contents = cat(paste0(paste0("sbatch ", path, get.intervention.script.filename(msa.indices)),
+                          collapse='\n'),
+                   sep='')
+    sink()
+}
+
+
+make.master.rerun.script <- function(msa.indices,
+                                             filename='R_scripts/master_scripts/rerun_master.bat',
+                                             path="Ending_HIV/R_scripts/rerun_scripts/")
+{
+    msa.indices = check.msa.indices(msa.indices)
+    
+    sink(filename)
+    contents = cat(paste0(paste0("sbatch ", path, get.rerun.script.filename(msa.indices)),
                           collapse='\n'),
                    sep='')
     sink()
@@ -313,6 +350,11 @@ get.setup.filename <- function(index)
 get.intervention.script.filename <- function(index)
 {
     paste0("int_", index, ".bat")
+}
+
+get.rerun.script.filename <- function(index)
+{
+    paste0("rerun_", index, ".bat")
 }
 
 check.msa.indices <- function(msa.indices)

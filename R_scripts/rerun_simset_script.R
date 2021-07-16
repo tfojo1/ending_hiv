@@ -1,40 +1,28 @@
 
-setwd("Ending_HIV")
-source('code/source_code.R')
-source('code/targets/target_msas.R')
-
-print(Sys.Date())
-print(Sys.time())
-
-to.do = TARGET.MSAS
-VERSION = '1.0'
-REDO = F
-SIMSET.DIR = file.path(SYSTEMATIC.ROOT.DIR, 'full_simsets')
-BK.DIR = file.path(SYSTEMATIC.ROOT.DIR, 'backup_simsets')
-
-print("RE-RUNNING SIMSETS")
-for (msa in to.do)
-{
-    filename = get.full.filename(location=msa, version=VERSION)
-    
-    if (file.exists(file.path(BK.DIR, filename)))
-        print(paste0("- Skipping ", msa, " (", msa.names(msa), ") - already done."))
-    else if (file.exists(file.path(SIMSET.DIR, filename)))
-    {
-        print(paste0("- Redoing ", msa, " (", msa.names(msa), ")..."))
-        load(file.path(SYSTEMATIC.ROOT.DIR, 'start_values', paste0(msa, '.Rdata')))
-        load(file.path(SIMSET.DIR, filename))
-        save(simset, file=file.path(BK.DIR, filename))
-        
-        
-        run.simulation = create.run.simulation.function(msa=msa, start.values = starting.parameters)
-        simset = extend.simulations(simset, fn=function(sim, pp){
-            run.simulation(pp)  
-        })
-        save(simset, file=file.path(SIMSET.DIR, filename))
-    }
-    else
-        print(paste0("- Skipping ", msa, " (", msa.names(msa), ") - simset not present."))
-        
+#-- CHECK ARGUMENTS --#
+args = commandArgs(trailingOnly=TRUE)
+if (length(args)<1) {
+    stop("One argument must be supplied", call.=FALSE)
 }
-print("DONE")
+
+#-- SET THE WD --#
+setwd('Ending_HIV')
+
+#-- SOURCE THE RELEVANT FILES --#
+print("Loading Source Files...")
+source('code/systematic_calibration/extract_and_run.R')
+
+#-- GET THE MSA --#
+index = as.integer(args[1])
+if (is.na(index) || index<1 || index>length(TARGET.MSAS))
+    stop(paste0("The first argument to the script must be an integer between 1 and ", length(TARGET.MSAS)))
+msa = TARGET.MSAS[index]
+
+#-- DO THE SET UP--#
+print(paste0("Redoing simset for ", msa.names(msa)))
+
+
+do.rerun.simset(locations=msa,
+                bk.dir=file.path(SYSTEMATIC.ROOT.DIR, 'backup_simsets'),
+                simset.dir=file.path(SYSTEMATIC.ROOT.DIR, 'full_simsets'),
+                verbose=T)
