@@ -163,7 +163,7 @@ make.intervention.scripts <- function(msa.indices,
                            mem=mem,
                            output = file.path(OUTPUT.DIR, paste0("int_", msa.name, ".out")),
                            partition = partition,
-                           time.hours = 48,
+                           time.hours = 72,
                            account=account,
                            commands= paste0("Rscript Ending_HIV/R_scripts/run_interventions_script.R ", i))
      }

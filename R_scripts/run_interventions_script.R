@@ -24,4 +24,5 @@ print(paste0("Running interventions for ", msa.names(msa)))
 do.run.interventions(location=msa,
                      simset.dir=file.path(SYSTEMATIC.ROOT.DIR, 'full_simsets'),
                      dst.dir=file.path(SYSTEMATIC.ROOT.DIR, 'full_simsets'),
-                     interventions = ALL.INTERVENTIONS)
+                     interventions = ALL.INTERVENTIONS,
+                     overwrite=F)
