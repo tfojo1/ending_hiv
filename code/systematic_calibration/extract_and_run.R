@@ -61,11 +61,13 @@ do.rerun.simset <- function(locations,
             
             run.simulation = create.run.simulation.function(msa=msa, start.values = starting.parameters)
             simset = extend.simulations(simset, fn=function(sim, pp){
-                run.simulation(pp)  
+                sim = run.simulation(pp)  
                 
                 counter <<- counter + 1
                 if (verbose && counter %% update.frequency == 0)
                     print(paste0("Finished ", counter, " of ", n.sim, " simulations"))
+                
+                sim
             })
             save(simset, file=file.path(simset.dir, filename))
             
