@@ -67,7 +67,7 @@ do.rerun.simset <- function(locations,
                 if (verbose && counter %% update.frequency == 0)
                     print(paste0("Finished ", counter, " of ", n.sim, " simulations"))
             })
-            save(simset, file=file.path(SIMSET.DIR, filename))
+            save(simset, file=file.path(simset.dir, filename))
             
             simset = orig.simset
             save(simset, file=file.path(bk.dir, filename))
