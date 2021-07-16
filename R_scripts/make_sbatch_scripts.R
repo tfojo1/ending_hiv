@@ -185,7 +185,7 @@ make.rerun.scripts <- function(msa.indices,
                            mem=mem,
                            output = file.path(OUTPUT.DIR, paste0("rerun_", msa.name, ".out")),
                            partition = partition,
-                           time.hours = 2,
+                           time.hours = 8,
                            account=account,
                            commands= paste0("Rscript Ending_HIV/R_scripts/rerun_simset_script.R ", i))
     }
