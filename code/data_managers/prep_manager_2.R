@@ -5,7 +5,7 @@
 
 get.prep.model <- function(prep.manager,
                            anchor.year=2014,
-                           max.proportion=0.25,
+                           max.proportion=0.333,
                            mixed.linear=T,
                            apply.age.ors.to.max=F,
                            apply.race.ors.to.max=F,
