@@ -35,7 +35,7 @@ do.rerun.simset <- function(locations,
 {
     if (verbose)
         print(paste0("REDOING ", length(locations),
-                     ifelse(length(locations)==1, "location", "locations")))
+                     ifelse(length(locations)==1, "vlocation", " locations")))
     
     for (location in locations)
     {

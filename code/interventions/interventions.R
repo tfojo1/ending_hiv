@@ -725,8 +725,8 @@ setup.components.for.intervention <- function(components,
                                                  components$jheem,
                                                  intervention$processed$testing$apply.functions)
         apply.functions[,,,,,diagnosed.states,,] = NA
-        allow.less = as.logical(expand.population.to.hiv.positive(components$jheem, 
-                                                                  as.numeric(intervention$processed$testing$allow.less.than.otherwise)))
+        allow.less = expand.population.to.hiv.positive(components$jheem, 
+                                                       intervention$processed$testing$allow.less.than.otherwise)
         
         
         components = set.foreground.rates(components, 'testing',
@@ -769,8 +769,8 @@ setup.components.for.intervention <- function(components,
                                                  components$jheem,
                                                  intervention$processed$suppression$apply.functions)
         apply.functions[,,,,,undiagnosed.states,,] = NA
-        allow.less = as.logical(expand.population.to.hiv.positive(components$jheem, 
-                                                                  as.numeric(intervention$processed$suppression$allow.less.than.otherwise)))
+        allow.less = expand.population.to.hiv.positive(components$jheem, 
+                                                                  intervention$processed$suppression$allow.less.than.otherwise)
         
         components = set.foreground.rates(components, 'suppression',
                                           rates = suppressed.proportions,
@@ -796,8 +796,8 @@ setup.components.for.intervention <- function(components,
         apply.functions = expand.character.array(expand.population.to.hiv.negative,
                                                  components$jheem,
                                                  intervention$processed$prep$apply.functions)
-        allow.less = as.logical(expand.population.to.hiv.negative(components$jheem, 
-                                                                  as.numeric(intervention$processed$prep$allow.less.than.otherwise)))
+        allow.less = expand.population.to.hiv.negative(components$jheem, 
+                                                                  intervention$processed$prep$allow.less.than.otherwise)
         
         components = set.foreground.rates(components, 'prep',
                                           rates = rates,
@@ -825,8 +825,8 @@ setup.components.for.intervention <- function(components,
         apply.functions = expand.character.array(expand.population.to.general,
                                                  components$jheem,
                                                  intervention$processed$needle.exchange$apply.functions)[,,,,idu.states]
-        allow.less = as.logical(expand.population.to.general(components$jheem, 
-                                                                  as.numeric(intervention$processed$needle.exchange$allow.less.than.otherwise))[,,,,idu.states])
+        allow.less = expand.population.to.general(components$jheem, 
+                                                  intervention$processed$needle.exchange$allow.less.than.otherwise)[,,,,idu.states]
         
         components = set.foreground.rates(components, 'needle.exchange',
                                           rates = rates,
@@ -860,9 +860,9 @@ setup.components.for.intervention <- function(components,
             apply.functions = expand.character.array(expand.population.to.general,
                                                      components$jheem,
                                                      intervention$processed[[idu.trans]]$apply.functions)[,,,,state.for.trans]
-            allow.less = as.logical(expand.population.to.general(components$jheem, 
-                                                                 as.numeric(intervention$processed[[idu.trans]]$allow.less.than.otherwise))[,,,,state.for.trans])
-            
+            allow.less = expand.population.to.general(components$jheem, 
+                                                                 intervention$processed[[idu.trans]]$allow.less.than.otherwise)[,,,,state.for.trans]
+
             components = set.foreground.rates(components, idu.trans,
                                               rates = rates,
                                               years = intervention$processed[[idu.trans]]$times,
