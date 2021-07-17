@@ -587,6 +587,8 @@ plot.calibration <- function(sims,
                              diagnosed.name = 'PWH with Diagnosed HIV (%)',
                              population.name = 'Population (%)',
                              suppression.name = 'Suppression (%)', 
+                             linkage.name = "Linkage (%)",
+                             engagement.name = "Engagement (%)",
                              testing.name = 'Testing',
                              prep.name = 'PrEP Coverage (%)',
                              incidence.name = if (show.rates) 'Incidence (per 100,000)' else 'Incidence (number of cases)',
@@ -657,11 +659,13 @@ plot.calibration <- function(sims,
                         cumulative.mortality=cumulative.mortality.name,
                         suppression=suppression.name,
                         testing=testing.name,
-                        prep=prep.name)
+                        prep=prep.name,
+                        linkage=linkage.name,
+                        engagement=engagement.name)
     if (show.rates)
-        data.type.denominators = c(new=100000, prevalence=100000, mortality=100000, population=100, diagnosed=100, suppression=100, incidence=100000, cumulative.mortality=100000, testing=1, prep=100)
+        data.type.denominators = c(new=100000, prevalence=100000, mortality=100000, population=100, diagnosed=100, suppression=100, linkage=100, engagement=100, incidence=100000, cumulative.mortality=100000, testing=1, prep=100)
     else
-        data.type.denominators = c(new=1, prevalence=1, mortality=1, population=100, diagnosed=100, suppression=100, incidence=1, cumulative.mortality=1, testing=1, prep=1)
+        data.type.denominators = c(new=1, prevalence=1, mortality=1, population=100, diagnosed=100, suppression=100, linkage=100, engagement=100, incidence=1, cumulative.mortality=1, testing=1, prep=1)
 
     race.names = c(black='Black',hispanic="Hispanic", other='Other')
     risk.names = c(msm='MSM', idu='IDU', msm_idu='MSM+IDU', heterosexual='Heterosexual',
@@ -686,7 +690,8 @@ plot.calibration <- function(sims,
             #Set up denominators
             #In general, we are going to pull the years we need from the population given
             #If years are missing from the given population, will just use the nearest year
-            if (data.type=='diagnosed' || data.type=='population' || data.type=='suppression' || data.type=='testing')
+            if (data.type=='diagnosed' || data.type=='population' || data.type=='suppression' ||
+                data.type=='testing' || data.type=='engagement' || data.type=='linkage')
                 denominators = 1
             else
                 denominators = get.denominator.population(population=population,
@@ -700,23 +705,29 @@ plot.calibration <- function(sims,
             {
                 if (data.type=='population')
                 {
-                    truth.numerators = apply(access(population, year=as.character(years)), all.dimensions, sum)
-                    if (!is.null(truth.numerators) && is.null(dim(truth.numerators)))
+                    years.for.population = intersect(dimnames(population)['year'], as.character(years))
+                    if (length(years.for.population)>0)
                     {
-                        dim.names = list(names(truth.numerators))
-                        names(dim.names) = all.dimensions
-                        truth.numerators = array(truth.numerators, dim=sapply(dim.names, length), dimnames=dim.names)
+                        truth.numerators = apply(access(population, year=as.character(years)), all.dimensions, sum)
+                        if (!is.null(truth.numerators) && is.null(dim(truth.numerators)))
+                        {
+                            dim.names = list(names(truth.numerators))
+                            names(dim.names) = all.dimensions
+                            truth.numerators = array(truth.numerators, dim=sapply(dim.names, length), dimnames=dim.names)
+                        }
+                        
+                        if (is.null(dim(truth.numerators))) 
+                            truth.denominators = truth.numerators
+                        else if (length(facet.by)==0)
+                            truth.denominators = sum(truth.numerators)
+                        else
+                            truth.denominators = apply(truth.numerators, facet.by, sum)
+                        truth.denominators = expand.population(truth.denominators, target.dim.names=dimnames(truth.numerators))
+                        truth.numerators = truth.numerators/truth.denominators
+                        truth.type = cdc.label
                     }
-                    
-                    if (is.null(dim(truth.numerators))) 
-                        truth.denominators = truth.numerators
-                    else if (length(facet.by)==0)
-                        truth.denominators = sum(truth.numerators)
                     else
-                        truth.denominators = apply(truth.numerators, facet.by, sum)
-                    truth.denominators = expand.population(truth.denominators, target.dim.names=dimnames(truth.numerators))
-                    truth.numerators = truth.numerators/truth.denominators
-                    truth.type = cdc.label
+                        truth.numerators = truth.denominators = NULL
                 }
                 else if (data.type=='cumulative.mortality')
                 {
@@ -997,75 +1008,78 @@ plot.calibration <- function(sims,
                 #          paste0(one.df[,split.by], collapse='\n')
                 #     })
 
-                if (any(all.dimensions=='risk'))
-                    one.df$risk = risk.names[tolower(one.df$risk)]
-
-                if (any(all.dimensions=='race'))
-                    one.df$race = race.names[tolower(one.df$race)]
-
-                if (!is.null(split.by) && length(split.by)>0)
+                if (dim(one.df)[1]>0)
                 {
-                    one.df$split.by = one.df[,split.by[1]]
-                    if (length(split.by)>1)
+                    if (any(all.dimensions=='risk'))
+                        one.df$risk = risk.names[tolower(one.df$risk)]
+    
+                    if (any(all.dimensions=='race'))
+                        one.df$race = race.names[tolower(one.df$race)]
+                    
+                    if (!is.null(split.by) && length(split.by)>0)
                     {
-                        for (i in 2:length(split.by))
-                            one.df$split.by = paste0(one.df$split.by, ", ", one.df[,split.by[i]])
+                        one.df$split.by = one.df[,split.by[1]]
+                        if (length(split.by)>1)
+                        {
+                            for (i in 2:length(split.by))
+                                one.df$split.by = paste0(one.df$split.by, ", ", one.df[,split.by[i]])
+                        }
                     }
-                }
-                else
-                    one.df$split.by = 'All'
-
-                one.df$data.type=data.type.names[data.type]
-                one.df$type = type
-                if (type==cdc.label)
-                    one.df$subtype = truth.type
-                else
-                    one.df$subtype = type
-
-                if (facet.data.type.first)
-                    one.df$facet.by = one.df$data.type
-                else
-                    one.df$facet.by = ''
-                if (!is.null(facet.by) && length(facet.by)>0)
-                {
-                    for (i in 1:length(facet.by))
+                    else
+                        one.df$split.by = 'All'
+    
+                    one.df$data.type=data.type.names[data.type]
+                    one.df$type = type
+                    if (type==cdc.label)
+                        one.df$subtype = truth.type
+                    else
+                        one.df$subtype = type
+    
+                    if (facet.data.type.first)
+                        one.df$facet.by = one.df$data.type
+                    else
+                        one.df$facet.by = ''
+                    if (!is.null(facet.by) && length(facet.by)>0)
                     {
-                        if (facet.data.type.first)
-                            one.df$facet.by = paste0(one.df$facet.by, "\n", one.df[,facet.by[i]])
-                        else
-                            one.df$facet.by = paste0(one.df$facet.by, one.df[,facet.by[i]], "\n")
+                        for (i in 1:length(facet.by))
+                        {
+                            if (facet.data.type.first)
+                                one.df$facet.by = paste0(one.df$facet.by, "\n", one.df[,facet.by[i]])
+                            else
+                                one.df$facet.by = paste0(one.df$facet.by, one.df[,facet.by[i]], "\n")
+                        }
                     }
-                }
-                if (!facet.data.type.first)
-                    one.df$facet.by = one.df$facet.by = paste0(one.df$facet.by, one.df$data.type)
-
-                if (is.null(x.variables) || length(x.variables)==0)
-                    one.df$x = 'All'
-                else
-                {
-                    one.df$x = one.df[,x.variables[1]]
-                    if (length(x.variables)>1)
+                    if (!facet.data.type.first)
+                        one.df$facet.by = one.df$facet.by = paste0(one.df$facet.by, one.df$data.type)
+    
+                    if (is.null(x.variables) || length(x.variables)==0)
+                        one.df$x = 'All'
+                    else
                     {
-                        for (i in 2:length(x.variables))
-                            one.df$x = paste0(one.df$x, '-', one.df[,x.variables[i]])
+                        one.df$x = one.df[,x.variables[1]]
+                        if (length(x.variables)>1)
+                        {
+                            for (i in 2:length(x.variables))
+                                one.df$x = paste0(one.df$x, '-', one.df[,x.variables[i]])
+                        }
+    
+                        if (all(x.variables=='year'))
+                            one.df$x = as.numeric(as.character(one.df$x))
                     }
-
-                    if (all(x.variables=='year'))
-                        one.df$x = as.numeric(as.character(one.df$x))
+    
+                    #-- Normalize within facet --#
+                    if (normalize.within.facet)
+                    {
+                        one.df$value = sapply(1:dim(one.df)[1], function(i){
+                            100*one.df$value[i] / sum(one.df$value[one.df$facet.by==one.df$facet.by[i] &
+                                                                   one.df$split.by==one.df$split.by[i] &
+                                                                   one.df$group==one.df$group[i]])
+                        })
+                    }
+    
+                    #-- Add it --#
+                    df = rbind(df, one.df)
                 }
-
-                #-- Normalize within facet --#
-                if (normalize.within.facet)
-                {
-                    one.df$value = sapply(1:dim(one.df)[1], function(i){
-                        100*one.df$value[i] / sum(one.df$value[one.df$facet.by==one.df$facet.by[i] &
-                                                               one.df$split.by==one.df$split.by[i] &
-                                                               one.df$group==one.df$group[i]])
-                    })
-                }
-
-                #-- Add it --#
-                df = rbind(df, one.df)
             }
         }
     }
@@ -1120,12 +1134,12 @@ plot.calibration <- function(sims,
    # else
     #    all.facet.by = c(facet.by, 'data.type')
     split.name = paste0(toupper(substr(split.by,1,1)), substr(split.by,2,nchar(split.by)))
-
+    
     if (any(names(df)=='year'))
         df$year = as.numeric(as.character(df$year))
-    if (!is.null(x.variables) && all(x.variables=='year'))
+    if (!is.null(df) && !is.null(x.variables) && all(x.variables=='year'))
         df$x = as.numeric(df$x)
-
+    
     df = df[!is.na(df$value),]
 
     #plot cdc on top
@@ -1242,10 +1256,16 @@ get.sim.values <- function(sim,
                                             per.population = 1, use.cdc.categorizations = use.cdc)
     else if (data.type=='population')
         model.rates = do.extract.population.subset(sim, years=years, keep.dimensions = all.dimensions,
-                                                denominator.dimensions = facet.by, per.population = 1,
+                                                denominator.dimensions = facet.by, per.population = NA,#1
                                                 use.cdc.categorizations = use.cdc)
     else if (data.type=='suppression')
         model.rates = extract.suppression(sim, years=years, keep.dimensions=all.dimensions,
+                                          use.cdc.categorizations = use.cdc)
+    else if (data.type=='linkage')
+        model.rates = extract.linkage(sim, years=years, keep.dimensions=all.dimensions,
+                                          use.cdc.categorizations = use.cdc)
+    else if (data.type=='engagement')
+        model.rates = do.extract.engagement(sim, years=years, keep.dimensions=all.dimensions,
                                           use.cdc.categorizations = use.cdc)
     else if (data.type=='testing')
         model.rates = extract.testing.rates(sim, years=years, keep.dimensions=all.dimensions,
@@ -1262,7 +1282,8 @@ get.sim.values <- function(sim,
                                           use.cdc=use.cdc,
                                           denominator.dimensions = denominator.dimensions)
 
-    if (show.rates || data.type=='population' || data.type=='diagnosed' || data.type=='suppression' || data.type=='testing')
+    if (show.rates || data.type=='population' || data.type=='diagnosed' || data.type=='suppression' || 
+        data.type=='testing' || data.type=='linkage' || data.type=='engagement')
         values = model.rates
     else
     {
@@ -1352,6 +1373,12 @@ get.sim.projections <- function(jheem.results, data.type, years, keep.dimensions
     else if (data.type=='suppression')
         model.rates = extract.suppression(jheem.results, years=years, keep.dimensions=keep.dimensions,
                                           use.cdc.categorizations = use.cdc)
+    else if (data.type=='linkage')
+        model.rates = extract.linkage(jheem.results, years=years, keep.dimensions=keep.dimensions,
+                                          use.cdc.categorizations = use.cdc)
+    else if (data.type=='engagement')
+        model.rates = do.extract.engagement(jheem.results, years=years, keep.dimensions=keep.dimensions,
+                                      use.cdc.categorizations = use.cdc)
     else if (data.type=='testing')
         model.rates = extract.testing.rates(jheem.results, years=years, keep.dimensions=keep.dimensions,
                                             use.cdc.categorizations = use.cdc)
@@ -1365,16 +1392,12 @@ get.sim.projections <- function(jheem.results, data.type, years, keep.dimensions
                                                per.population = NA, use.cdc.categorizations = use.cdc)
         else if (data.type=='prevalence')
         {
-          print('update the jheem $diagnosed.continuum.states')
-      #      numerators = do.extract.prevalence(jheem.results, continuum=jheem.results$diagnosed.continuum.states, years=years, keep.dimensions = keep.dimensions,
-          numerators = do.extract.prevalence(jheem.results, continuum=SETTINGS$DIAGNOSED_STATES, years=years, keep.dimensions = keep.dimensions,
+          numerators = do.extract.prevalence(jheem.results, continuum=jheem.results$diagnosed.continuum.states, years=years, keep.dimensions = keep.dimensions,
                                              per.population = NA, use.cdc.categorizations = use.cdc)
         }
         else if (data.type=='mortality' || data.type=='cumulative.mortality')
         {
-          print('update the jheem $diagnosed.continuum.states')
-          #  numerators = do.extract.overall.hiv.mortality(jheem.results, continuum=jheem.results$diagnosed.continuum.states, years=years, keep.dimensions = keep.dimensions,
-          numerators = do.extract.overall.hiv.mortality(jheem.results, continuum=SETTINGS$DIAGNOSED_STATES, years=years, keep.dimensions = keep.dimensions,
+          numerators = do.extract.overall.hiv.mortality(jheem.results, continuum=jheem.results$diagnosed.continuum.states, years=years, keep.dimensions = keep.dimensions,
                                                        per.population = NA, use.cdc.categorizations = use.cdc)
         }
         else if (data.type=='prep')
@@ -1480,7 +1503,7 @@ get.denominator.population <- function(population,
     for (year in missing.years)
     {
         closest.year = available.years[order(abs(available.years-year))][1]
-
+        
         closest.pop = access(population, year=as.character(closest.year), collapse.length.one.dimensions = F)
 
         if (length(dim(closest.pop))==1)

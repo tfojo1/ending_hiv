@@ -4,7 +4,6 @@ source('code/source_code.R')
 
 load('mcmc_runs/start_values/12580.Rdata')
 
-components
 
 
 run.simulation = create.run.simulation.function('12580', starting.parameters)
