@@ -236,12 +236,12 @@ get.raw.values.one.intervention <- function(dir,
                                             verbose=T,
                                             ...)
 {
+    if (verbose)
+        print(paste0("Reading ", length(msas), " locations for intervention : ",
+                 get.intervention.filename(intervention)))
+  
     dir = file.path(dir)
     all.arr = sapply(msas, function(msa){
-        
-        if (verbose)
-            print(paste0("Reading ", length(msas), " locations for intervention : ",
-                         get.intervention.filename(intervention)))
         
         filename = file.path(dir, msa, get.simset.filename(location=msa, intervention=intervention))
         if (file.exists(filename))

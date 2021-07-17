@@ -98,13 +98,15 @@ get.baseline.levels <- function(name=c('prep','testing','suppression')[1],
                                    msas=TARGET.MSAS,
                                    summary.stat = mean,
                                    interval.coverage=0.95,
-                                   calculate.total = T)
+                                   calculate.total = T,
+                                n.sim=N.SIM)
 {
     # Get raw numbers
     raw.baseline = get.raw.values.one.intervention(dir=dir,
                                                    msas=msas,
                                                    fn=make.extract.baseline.function(name),
-                                                   n.values=8)
+                                                   n.values=8,
+                                                   n.sim=n.sim)
     
     # Add total
     if (calculate.total)
