@@ -38,11 +38,13 @@ register.standard.interventions.annals.revision <- function(start.year=2023,
                                                              proportions=0.1 * BASE_PARAMETER_VALUES['fraction.opioid.of.idu'],
                                                              multipliers=BASE_PARAMETER_VALUES['moud.relapse.rr'],
                                                              apply.function = 'multiplier',
+                                                             allow.less.than.otherwise = T,
                                                              end.year)
     MOUD.25 = create.proportion.multiplier.intervention.unit('idu.relapse', start.year,
                                                              proportions=0.25 * BASE_PARAMETER_VALUES['fraction.opioid.of.idu'],
                                                              multipliers=BASE_PARAMETER_VALUES['moud.relapse.rr'],
                                                              apply.function = 'multiplier',
+                                                             allow.less.than.otherwise = T,
                                                              end.year)
     
     ##------------------##
