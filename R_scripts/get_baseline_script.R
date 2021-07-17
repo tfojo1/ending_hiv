@@ -14,16 +14,16 @@ print("------------------------")
 
 
 print("Doing Baseline PrEP")
-baseline.prep = get.baseline.levels('prep', dir='mcmc_runs/full_simsets/')
+baseline.prep = get.baseline.levels('prep', dir=file.path(SYSTEMATIC.ROOT.DIR, 'full_simsets'))
 save(baseline.prep, file=file.path(SYSTEMATIC.ROOT.DIR, '..', 'results', 'baseline.prep.Rdata'))
 print("Done")
 
 print("Doing Baseline Testing")
-baseline.testing = get.baseline.levels('testing', dir='mcmc_runs/full_simsets/')
+baseline.testing = get.baseline.levels('testing', dir=file.path(SYSTEMATIC.ROOT.DIR, 'full_simsets'))
 save(baseline.testing, file=file.path(SYSTEMATIC.ROOT.DIR, '..', 'results', 'baseline.testing.Rdata'))
 print("Done")
 
 print("Doing Baseline Suppression")
-baseline.suppression = get.baseline.levels('suppression', dir='mcmc_runs/full_simsets/')
+baseline.suppression = get.baseline.levels('suppression', dir=file.path(SYSTEMATIC.ROOT.DIR, 'full_simsets'))
 save(baseline.suppression, file=file.path(SYSTEMATIC.ROOT.DIR, '..', 'results', 'baseline.suppression.Rdata'))
 print("Done")
