@@ -231,6 +231,7 @@ get.raw.values.one.intervention <- function(dir,
                                             intervention=NO.INTERVENTION,
                                             fn,
                                             value.names=NULL,
+                                            n.values=length(value.names),
                                             n.sim=NA,
                                             verbose=T,
                                             ...)
@@ -270,7 +271,7 @@ get.raw.values.one.intervention <- function(dir,
             values
         }
         else
-            rep(NA, n.sim*length(value.names))
+            rep(NA, n.sim*n.values)
     })
     
     dim.names = list(value=value.names,
