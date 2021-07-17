@@ -151,7 +151,7 @@ make.intervention.scripts <- function(msa.indices,
                                       dir='R_scripts/intervention_scripts/',
                                       partition='shared',
                                       account='tfojo1',
-                                      mem='9600MB')
+                                      mem='16GB')
 {
     msa.indices = check.msa.indices(msa.indices)
     
