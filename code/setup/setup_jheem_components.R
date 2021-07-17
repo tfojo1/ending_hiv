@@ -606,7 +606,6 @@ set.idu.transitions <- function(components,
     
     for (index in indices)
     {
-        browser()
         components$incident.idu[[index]] = expand.population.to.general(components$jheem, incident.idu)[,,,,'active_IDU']
         components$idu.remission[[index]] = expand.population.to.general(components$jheem, idu.remission)[,,,,'active_IDU']
         components$idu.relapse[[index]] = expand.population.to.general(components$jheem, idu.relapse)[,,,,'active_IDU']
