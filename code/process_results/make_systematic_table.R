@@ -226,6 +226,65 @@ get.raw.estimates <- function(dir,
     all.arr
 }
 
+get.raw.values.one.intervention <- function(dir,
+                                            msas=TARGET.MSAS,
+                                            intervention=NO.INTERVENTION,
+                                            fn,
+                                            value.names=NULL,
+                                            n.sim=NA,
+                                            verbose=T,
+                                            ...)
+{
+    dir = file.path(dir)
+    all.arr = sapply(msas, function(msa){
+        
+        if (verbose)
+            print(paste0("Reading ", length(msas), " locations for intervention : ",
+                         get.intervention.filename(intervention)))
+        
+        filename = file.path(dir, msa, get.simset.filename(location=msa, intervention=intervention))
+        if (file.exists(filename))
+        {
+            if (verbose)
+                print(paste0(" - ", msa.names(msa)))
+            
+            load(filename)
+            if (is.na(n.sim))
+                n.sim <<- simset@n.sim
+            
+            if (sum(simset@weights)<n.sim)
+                stop(paste0("The simset for ", msa.names(msa), " on intervention '",
+                            get.intervention.name(intervention), "' does not have ",
+                            n.sim, " simulations"))
+            
+            indices = unlist(sapply(1:simset@n.sim, function(i){
+                rep(i, simset@weights[i])
+            }))
+            indices = indices[1:n.sim]
+            
+            values = sapply(simset@simulations[unique(indices)], fn, ...)
+            values = values[,indices]
+            if (is.null(value.names))
+                value.names <<- dimnames(values)[[1]]
+            
+            values
+        }
+        else
+            rep(NA, n.sim*length(value.names))
+    })
+    
+    dim.names = list(value=value.names,
+                     sim=1:n.sim,
+                     location=msas)
+    
+    dim(all.arr) = sapply(dim.names, length)
+    dimnames(all.arr) = dim.names
+    
+    attr(all.arr, 'interventions') = intervention
+    
+    all.arr
+}
+
 get.estimates.and.intervals <- function(dir,
                                         msas=TARGET.MSAS,
                                         interventions=INTERVENTION.SET,

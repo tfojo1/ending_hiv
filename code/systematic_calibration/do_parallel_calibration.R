@@ -9,8 +9,8 @@ source('code/source_code.R')
 source('code/systematic_calibration/systematic_calibration.R')
 source('code/targets/target_msas.R')
 
-msa = CLEVELAND.MSA
-chain = 1
+msa = NEW.ORLEANS.MSA
+chain = 3
 
 # Get the cache and run it
 cache.dirs = list.dirs(file.path(SYSTEMATIC.ROOT.DIR, 'systematic_caches'), recursive = F)

@@ -7,7 +7,7 @@ ALLOWED.DATA.TYPES = c('prevalence','new','mortality',
                        'suppression','suppression.ci.lower','suppression.ci.upper', 'prevalence.for.continuum',
                        'estimated.prevalence', 'estimated.prevalence.ci.lower','estimated.prevalence.ci.upper', 'estimated.prevalence.rse',
                        'cumulative.aids.mortality', 'aids.diagnoses',
-                       'linkage','new.for.continuum', 'prep')
+                       'linkage','engagement','new.for.continuum', 'prep')
 
 get.surveillance.data <- function(surv=msa.surveillance,
                                   location.codes=BALTIMORE.MSA,
@@ -895,10 +895,10 @@ add.local.data.one.location <- function(surv,
         for (col in 2:dim(df)[2])
             df[,col] = as.numeric(as.character(df[,col]))
         
-        if (any(df$data.type=='aware' | df$data.type=='suppressed' | df$data.type=='prevalent'))
-        {
+   #     if (any(df$data.type=='aware' | df$data.type=='suppressed' | df$data.type=='prevalent'))
+   #     {
             df = df[df$data.type=='aware' | df$data.type=='suppressed' | df$data.type=='prevalent' | 
-                        df$data.type=='linked' | df$data.type=='new',]
+                        df$data.type=='linked' | df$data.type=='new' | df$data.type=='engaged',]
             df = df[,!is.na(names(df))]
             df = df[apply(!is.na(df), 1, any),]
             
@@ -914,6 +914,8 @@ add.local.data.one.location <- function(surv,
                     data.type = 'linkage'
                 else if (df$data.type[i]=='new')
                     data.type = 'new.for.continuum'
+                else if (df$data.type[i]=='engaged')
+                    data.type = 'engagement'
                 else
                     stop("Invalid data.type")
                 
@@ -955,7 +957,7 @@ add.local.data.one.location <- function(surv,
                                                   location=location,
                                                   years=df$year[i],
                                                   values=df[i,'total'])
-            }
+            #}
         }
     }
     
@@ -994,6 +996,13 @@ add.local.data.one.location <- function(surv,
                                          location=location,
                                          years=df[,1],
                                          values=df$new)
+        
+        if (any(names(df)=='engaged'))
+            surv = add.surveillance.data(surv,
+                                         data.type='engagement',
+                                         location=location,
+                                         years=df[,1],
+                                         values=df$engaged)
     }
     
     surv

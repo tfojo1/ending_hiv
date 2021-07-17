@@ -278,7 +278,7 @@ parameters.prior = join.distributions(
     age5.proportion.adherent.slope.or = Lognormal.Distribution(0, 0.5*log(2)/5),
 
     # (plus a term for which direction suppression/loss of suppression) - I don't actually know what values we would use here
-    suppression.direction = Lognormal.Distribution(0, 0.5*log(2)),
+    suppressed.vs.nonsuppressed.proportion.adherent.or = Lognormal.Distribution(0, 0.5*log(2)),
 
     #-- DISENGAGEMENT/REENGAGEMENT --#
     heterosexual.proportion.lost.or = Lognormal.Distribution(0, log(2)),
@@ -308,8 +308,9 @@ parameters.prior = join.distributions(
     age5.proportion.lost.slope.or = Lognormal.Distribution(0, 0.5*log(2)/5),
 
     # (plus a term for from suppressed or from unsuppressed) - I don't actually know what values we would use here
-    disengagement.origin = Lognormal.Distribution(0, 0.5*log(2)),
-    
+    suppressed.vs.nonsuppressed.proportion.lost.or = Lognormal.Distribution(0, 0.5*log(2)),
+    already.lost.vs.nonsuppressed.proportion.lost.or = Lognormal.Distribution(0, 0.5*log(2)),
+
     #-- PrEP --#
     
     msm.prep.intercept.or = Lognormal.Distribution(0, log(8)),
@@ -898,10 +899,10 @@ get.components.for.calibrated.parameters <- function(parameters, components,
 )
   
   components = set.background.unsuppression.ors(components,
-                                                msm.or.intercept = 1/parameters['msm.proportion.adherent.or'],
-                                                heterosexual.or.intercept=1/parameters['non.msm.proportion.adherent.or'],
-                                                idu.or.intercept=1/parameters['non.msm.proportion.adherent.or'],
-                                                msm.idu.or.intercept=1/parameters['msm.proportion.adherent.or'],
+                                                msm.or.intercept = 1/parameters['msm.proportion.adherent.or']/parameters['suppressed.vs.nonsuppressed.proportion.adherent.or'],
+                                                heterosexual.or.intercept=1/parameters['non.msm.proportion.adherent.or']/parameters['suppressed.vs.nonsuppressed.proportion.adherent.or'],
+                                                idu.or.intercept=1/parameters['non.msm.proportion.adherent.or']/parameters['suppressed.vs.nonsuppressed.proportion.adherent.or'],
+                                                msm.idu.or.intercept=1/parameters['msm.proportion.adherent.or']/parameters['suppressed.vs.nonsuppressed.proportion.adherent.or'],
                                                 
                                                 black.or.intercept=1/parameters['black.proportion.adherent.or'],
                                                 hispanic.or.intercept=1/parameters['hispanic.proportion.adherent.or'],
@@ -927,10 +928,10 @@ get.components.for.calibrated.parameters <- function(parameters, components,
 )
   
   components = set.background.suppressed.to.disengaged.ors(components,
-                                                           msm.or.intercept = parameters['msm.proportion.lost.or'],
-                                                           heterosexual.or.intercept=parameters['non.msm.proportion.lost.or'],
-                                                           idu.or.intercept=parameters['non.msm.proportion.lost.or'],
-                                                           msm.idu.or.intercept=parameters['msm.proportion.lost.or'],
+                                                           msm.or.intercept = parameters['msm.proportion.lost.or']*parameters['suppressed.vs.nonsuppressed.proportion.lost.or'],
+                                                           heterosexual.or.intercept=parameters['non.msm.proportion.lost.or']*parameters['suppressed.vs.nonsuppressed.proportion.lost.or'],
+                                                           idu.or.intercept=parameters['non.msm.proportion.lost.or']*parameters['suppressed.vs.nonsuppressed.proportion.lost.or'],
+                                                           msm.idu.or.intercept=parameters['msm.proportion.lost.or']*parameters['suppressed.vs.nonsuppressed.proportion.lost.or'],
                                                            
                                                            black.or.intercept=parameters['black.proportion.lost.or'],
                                                            hispanic.or.intercept=parameters['hispanic.proportion.lost.or'],
@@ -985,10 +986,10 @@ get.components.for.calibrated.parameters <- function(parameters, components,
 )
   
   components = set.background.reengagement.ors(components,
-                                               msm.or.intercept = 1/parameters['msm.proportion.lost.or'],
-                                               heterosexual.or.intercept=1/parameters['non.msm.proportion.lost.or'],
-                                               idu.or.intercept=1/parameters['non.msm.proportion.lost.or'],
-                                               msm.idu.or.intercept=1/parameters['msm.proportion.lost.or'],
+                                               msm.or.intercept = 1/parameters['msm.proportion.lost.or']/parameters['already.lost.vs.nonsuppressed.proportion.lost.or'],
+                                               heterosexual.or.intercept=1/parameters['non.msm.proportion.lost.or']/parameters['already.lost.vs.nonsuppressed.proportion.lost.or'],
+                                               idu.or.intercept=1/parameters['non.msm.proportion.lost.or']/parameters['already.lost.vs.nonsuppressed.proportion.lost.or'],
+                                               msm.idu.or.intercept=1/parameters['msm.proportion.lost.or']/parameters['already.lost.vs.nonsuppressed.proportion.lost.or'],
                                                
                                                black.or.intercept=1/parameters['black.proportion.lost.or'],
                                                hispanic.or.intercept=1/parameters['hispanic.proportion.lost.or'],

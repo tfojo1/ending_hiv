@@ -883,6 +883,7 @@ extract.prep.coverage <- function(sim,
                      risks=risks,
                      use.cdc.categorizations=use.cdc.categorizations,
                      include.hiv.negative = T,
+                     include.hiv.positive = F,
                      multiplier=multiplier)
 }
 
@@ -939,7 +940,8 @@ extract.testing.rates <- function(sim,
                      sexes=sexes,
                      risks=risks,
                      use.cdc.categorizations=use.cdc.categorizations,
-                     include.hiv.negative = T)
+                     include.hiv.negative = T,
+                     include.hiv.positive = F)
 }
 
 do.extract.rates <- function(raw.rates,
@@ -957,6 +959,7 @@ do.extract.rates <- function(raw.rates,
                              hiv.subsets=NULL,
                              use.cdc.categorizations=F,
                              include.hiv.negative=F,
+                             include.hiv.positive=T,
                              multiplier=NULL)
 {
     interpolated.rates = interpolate.parameters(values=raw.rates$rates,
@@ -984,7 +987,8 @@ do.extract.rates <- function(raw.rates,
         prevalence = extract.population.subset(sim, years=years, keep.dimensions = all.dimension.names,
                                                ages=ages, races=races, subpopulations=subpopulations,
                                                sexes=NULL, risks=NULL, 
-                                               include.hiv.negative = T)
+                                               include.hiv.negative = T,
+                                               include.hiv.positive = include.hiv.positive)
     else    
         prevalence = extract.population.subset(sim, years=years, keep.dimensions = all.dimension.names,
                                                ages=ages, races=races, subpopulations=subpopulations,

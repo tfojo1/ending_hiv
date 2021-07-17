@@ -805,7 +805,7 @@ get.components.for.calibrated.parameters <- function(parameters, components,
   idu.remission = components$idu.transition.elements$idu.remission * parameters['idu.remission.multiplier']
   idu.relapse = components$idu.transition.elements$idu.relapse  * parameters['idu.relapse.multiplier']
   
-  
+  browser()
   components = set.idu.transitions(components,
                                    indices=1,
                                    incident.idu = incident.idu.0,
