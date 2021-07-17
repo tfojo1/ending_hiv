@@ -249,26 +249,33 @@ get.raw.values.one.intervention <- function(dir,
             if (verbose)
                 print(paste0(" - ", msa.names(msa)))
             
-            load(filename)
-            if (is.na(n.sim))
-                n.sim <<- simset@n.sim
-            
-            if (sum(simset@weights)<n.sim)
-                stop(paste0("The simset for ", msa.names(msa), " on intervention '",
-                            get.intervention.name(intervention), "' does not have ",
-                            n.sim, " simulations"))
-            
-            indices = unlist(sapply(1:simset@n.sim, function(i){
-                rep(i, simset@weights[i])
-            }))
-            indices = indices[1:n.sim]
-            
-            values = sapply(simset@simulations[unique(indices)], fn, ...)
-            values = values[,indices]
-            if (is.null(value.names))
-                value.names <<- dimnames(values)[[1]]
-            
-            values
+            tryCatch({
+                
+                load(filename)
+                if (is.na(n.sim))
+                    n.sim <<- simset@n.sim
+                
+                if (sum(simset@weights)<n.sim)
+                    stop(paste0("The simset for ", msa.names(msa), " on intervention '",
+                                get.intervention.name(intervention), "' does not have ",
+                                n.sim, " simulations"))
+                
+                indices = unlist(sapply(1:simset@n.sim, function(i){
+                    rep(i, simset@weights[i])
+                }))
+                indices = indices[1:n.sim]
+                
+                values = sapply(simset@simulations[unique(indices)], fn, ...)
+                values = values[,indices]
+                if (is.null(value.names))
+                    value.names <<- dimnames(values)[[1]]
+                
+                values
+            },
+            error = function(e){
+                rep(NA, n.sim*n.values)
+            })
+
         }
         else
             rep(NA, n.sim*n.values)
