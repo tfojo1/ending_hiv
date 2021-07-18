@@ -14,7 +14,7 @@ prepare.simset.for.interventions <- function(simset,
                                              redo.needle.exchange=T)
 {
     #-- Flatten it out --#
-    flatten.simset(simset)
+    simset = flatten.simset(simset)
     
     #-- Future Slopes --#
     
