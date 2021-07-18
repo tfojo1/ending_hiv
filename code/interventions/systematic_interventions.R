@@ -22,7 +22,7 @@ run.systematic.interventions <- function(simset,
     
     if (!is.na(seed))
         set.seed(seed)
-    base.simset = prepare.simset.for.interventions(simset, fix.components = F)
+    base.simset = prepare.simset.for.interventions(simset)
     
     location = attr(base.simset@simulations[[1]], 'location')
     run.from.year=attr(base.simset, 'run.from.year')
@@ -30,14 +30,20 @@ run.systematic.interventions <- function(simset,
     
     if (save.baseline.and.seed)
     {
-        if (verbose)
-            print("Compressing baseline simset...")
+        if (overwrite || !file.exists(file.path(dst.dir, location, get.baseline.filename(location))))
+        {
+            if (verbose)
+                print("Compressing baseline simset...")
         
-        save.simset(simset, dir=dst.dir, compress=compress)
-
-        if (verbose)
-            print("Preparing seed simset...")
-        save.seed.simset(simset, dir=dst.dir)
+            save.simset(simset, dir=dst.dir, compress=compress)
+        }
+        
+        if (overwrite || !file.exists(file.path(dst.dir, location, get.seed.filename(location))))
+        {
+            if (verbose)
+                print("Preparing seed simset...")
+            save.seed.simset(simset, dir=dst.dir)
+        }
     }
     
     start.time = Sys.time()

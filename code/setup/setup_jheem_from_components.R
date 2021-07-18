@@ -64,6 +64,22 @@ crunch.intervention.rates <- function(components)
     components
 }
 
+pare.components <- function(components,
+                            keep.rates.and.times=T)
+{
+    components = unfix.jheem.components(components)
+    
+    to.clear = ALL.DEPENDENT.NAMES
+    if (keep.rates.and.times)
+        to.clear = to.clear[!grepl('rates.and.times', to.clear)]
+    for (elem in to.clear)
+        components[[elem]] = NULL
+    
+    components = do.setup.jheem.skeleton(components)
+    
+    components
+}
+
 FIX = 1
 CRUNCH = 2
 PRODUCE.FROM.UNFIXED = 3
@@ -486,147 +502,113 @@ do.setup.crunch.or.fix <- function(components,
 ##-- CLEAR DEPENDENT VALUES --##
 ##----------------------------##
 
+
+DEPENDENCIES = list(seed.rate.per.stratum='initial.population',
+                    num.to.seed.per.race='initial.population',
+                    male.to.female.birth.ratio='birth.proportions',
+                    num.to.seed.per.race='initial.population',
+                    proportions.msm.of.male=c('initial.population','birth.proportions','sexual.contact.arrays','idu.contact.arrays'),
+                    active.idu.prevalence='initial.population',
+                    idu.ever.prevalence='initial.population',
+                    excess.idu.mortality='general.mortality',
+                    raw.mortality.rates='general.mortality',
+                    untreated.hiv.mortality='hiv.mortality.rates',
+                    untreated.aids.mortality='hiv.mortality.rates',
+                    incident.idu='idu.transitions',
+                    foreground.idu.incidence='idu.transitions',
+                    idu.remission='idu.transitions',
+                    foreground.idu.remission='idu.transitions',
+                    idu.relapse='idu.transitions',
+                    foreground.idu.relapse='idu.transitions',
+                    acute.hiv.duration='cd4.transitions',
+                    aids.progression.rate='cd4.transitions',
+                    cd4.recovery.rate='cd4.transitions',
+                    prep.screening.frequency='continuum.transitions',
+                    background.testing=c('continuum.transitions','testing.rates.and.times'),
+                    foreground.testing=c('continuum.transitions','testing.rates.and.times'),
+                    #                        background.testing.rate.ratios=c('continuum.transitions','testing.rates.and.times'),
+                    background.suppression=c('suppression.rates.and.times','hiv.mortality.rates','sexual.transmissibilities','idu.transmissibilities'),
+                    foreground.suppression=c('suppression.rates.and.times','hiv.mortality.rates','sexual.transmissibilities','idu.transmissibilities'),
+                    background.newly.suppressed=c('newly.suppressed.rates.and.times','continuum.transitions'),
+                    foreground.newly.suppressed=c('newly.suppressed.rates.and.times','continuum.transitions'),
+                    background.unsuppression=c('unsuppression.rates.and.times','continuum.transitions'),
+                    foreground.unsuppression=c('unsuppression.rates.and.times','continuum.transitions'),
+                    background.linkage=c('linkage.rates.and.times','continuum.transitions'),
+                    foreground.linkage=c('linkage.rates.and.times','continuum.transitions'),
+                    background.unsuppressed.to.disengaged=c('unsuppressed.to.disengaged.rates.and.times','continuum.transitions'),
+                    foreground.unsuppressed.to.disengaged=c('unsuppressed.to.disengaged.rates.and.times','continuum.transitions'),
+                    background.suppressed.to.disengaged=c('suppressed.to.disengaged.rates.and.times','continuum.transitions'),
+                    foreground.suppressed.to.disengaged=c('suppressed.to.disengaged.rates.and.times','continuum.transitions'),
+                    background.reengagement=c('reengagement.rates.and.times','continuum.transitions'),
+                    foreground.reengagement=c('reengagement.rates.and.times','continuum.transitions'),
+                    background.prep=c('prep.rates.and.times','idu.susceptibility','sexual.susceptibility','new.infection.proportions','new.infection.proportions.years'),
+                    foreground.prep=c('prep.rates.and.times','idu.susceptibility','sexual.susceptibility','new.infection.proportions','new.infection.proportions.years'),
+                    background.needle.exchange = c('needle.exchange.rates.and.times','idu.susceptibility','idu.transitions'),
+                    foreground.needle.exchange = c('needle.exchange.rates.and.times','idu.susceptibility','idu.transitions'),
+                    needle.exchange.rr = 'idu.susceptibility',
+                    needle.exchange.remission.rate.ratio = 'idu.transitions',
+                    prep.rr.heterosexual='sexual.susceptibility',
+                    prep.rr.msm='sexual.susceptibility',
+                    prep.rr.idu='idu.susceptibility',
+                    acute.transmissibility.rr=c('sexual.transmissibilities','idu.transmissibilities'),
+                    diagnosed.needle.sharing.rr='idu.transmissibilities',
+                    diagnosed.het.male.condomless.rr='sexual.transmissibilities',
+                    diagnosed.female.condomless.rr='sexual.transmissibilities',
+                    diagnosed.msm.condomless.rr='sexual.transmissibilities',
+                    idu.transmissibility.rr.by.race='idu.transmissibilities',
+                    sexual.transmissibility.rr.by.race='sexual.transmissibilities',
+                    male.to.male.sexual.transmission='sexual.contact.arrays',
+                    male.to.female.sexual.transmission='sexual.contact.arrays',
+                    female.to.male.sexual.transmission='sexual.contact.arrays',
+                    sexual.transmission='sexual.contact.arrays',
+                    foreground.sexual.transmission='sexual.contact.arrays',
+                    idu.transmission='idu.contact.arrays',
+                    foreground.idu.transmission='idu.contact.arrays',
+                    susceptibility=c('sexual.susceptibility','idu.susceptibility'),
+                    fertility='fertility.check',
+                    global.sexual.transmission.rates='global.sexual.transmission.rates',
+                    global.idu.transmission.rates='global.idu.transmission.rates',
+                    fix.strata.sizes='fix.strata.sizes.check',
+                    track.mortality='track.mortality.check',
+                    aging=c('aging.rates.hiv.positive')
+)
+
+ALL.DEPENDENT.NAMES = unique(unlist(DEPENDENCIES)) 
+
+
+DEPENDENCIES = c(DEPENDENCIES,
+                 list(model.idu=ALL.DEPENDENT.NAMES,
+                      model.hiv.transmission=ALL.DEPENDENT.NAMES,
+                      model.prep=ALL.DEPENDENT.NAMES,
+                      populations=ALL.DEPENDENT.NAMES))
+
 clear.dependent.values <- function(components,
                                    dependent.on)
 {
-    all.dependent.names = c('jheem',
-                            'initial.population',
-                            'birth.proportions',
-                            'general.mortality',
-                            'hiv.mortality.rates',
-                            'hiv.mortality.years',
-                            'idu.transitions',
-                            'cd4.transitions',
-                            'continuum.transitions',
-                            'continuum.transition.years',
-                            'sexual.susceptiblity',
-                            'idu.susceptibility',
-                            'susceptibility',
-                            'susceptibility.years',
-                            'sexual.transmissibilities',
-                            'sexual.transmissibility.years',
-                            'idu.transmissibilities',
-                            'idu.transmissibility.years',
-                            'sexual.contact.arrays',
-                            'idu.contact.arrays',
-                            'new.infection.proportions',
-                            'new.infection.proportions.years',
-                            'fertility',
-                            'fertility.check',
-                            'global.sexual.transmission.rates',
-                            'global.idu.transmission.rates',
-                            'fix.strata.sizes.check',
-                            'track.mortality.check',
-                            'sexual.susceptibility',
-                            'aging.rates.hiv.positive',
-                            'suppression.rates.and.times',
-                            'testing.rates.and.times',
-                            'prep.rates.and.times',
-                            'newly.suppressed.rates.and.times',
-                            'unsuppression.rates.and.times',
-                            'linkage.rates.and.times',
-                            'unsuppressed.to.disengaged.rates.and.times',
-                            'suppressed.to.disengaged.rates.and.times',
-                            'reengagement.rates.and.times',
-                            'needle.exchange.rates.and.times'
-                            )
-    
-    dependencies = list(model.idu=all.dependent.names,
-                        model.hiv.transmission=all.dependent.names,
-                        model.prep=all.dependent.names,
-                        populations=all.dependent.names,
-                        seed.rate.per.stratum='initial.population',
-                        num.to.seed.per.race='initial.population',
-                        male.to.female.birth.ratio='birth.proportions',
-                        num.to.seed.per.race='initial.population',
-                        proportions.msm.of.male=c('initial.population','birth.proportions','sexual.contact.arrays','idu.contact.arrays'),
-                        active.idu.prevalence='initial.population',
-                        idu.ever.prevalence='initial.population',
-                        excess.idu.mortality='general.mortality',
-                        raw.mortality.rates='general.mortality',
-                        untreated.hiv.mortality='hiv.mortality.rates',
-                        untreated.aids.mortality='hiv.mortality.rates',
-                        incident.idu='idu.transitions',
-                        foreground.idu.incidence='idu.transitions',
-                        idu.remission='idu.transitions',
-                        foreground.idu.remission='idu.transitions',
-                        idu.relapse='idu.transitions',
-                        foreground.idu.relapse='idu.transitions',
-                        acute.hiv.duration='cd4.transitions',
-                        aids.progression.rate='cd4.transitions',
-                        cd4.recovery.rate='cd4.transitions',
-                        prep.screening.frequency='continuum.transitions',
-                        background.testing=c('continuum.transitions','testing.rates.and.times'),
-                        foreground.testing=c('continuum.transitions','testing.rates.and.times'),
-#                        background.testing.rate.ratios=c('continuum.transitions','testing.rates.and.times'),
-                        background.suppression=c('suppression.rates.and.times','hiv.mortality.rates','sexual.transmissibilities','idu.transmissibilities'),
-                        foreground.suppression=c('suppression.rates.and.times','hiv.mortality.rates','sexual.transmissibilities','idu.transmissibilities'),
-                        background.newly.suppressed=c('newly.suppressed.rates.and.times','continuum.transitions'),
-                        foreground.newly.suppressed=c('newly.suppressed.rates.and.times','continuum.transitions'),
-                        background.unsuppression=c('unsuppression.rates.and.times','continuum.transitions'),
-                        foreground.unsuppression=c('unsuppression.rates.and.times','continuum.transitions'),
-                        background.linkage=c('linkage.rates.and.times','continuum.transitions'),
-                        foreground.linkage=c('linkage.rates.and.times','continuum.transitions'),
-                        background.unsuppressed.to.disengaged=c('unsuppressed.to.disengaged.rates.and.times','continuum.transitions'),
-                        foreground.unsuppressed.to.disengaged=c('unsuppressed.to.disengaged.rates.and.times','continuum.transitions'),
-                        background.suppressed.to.disengaged=c('suppressed.to.disengaged.rates.and.times','continuum.transitions'),
-                        foreground.suppressed.to.disengaged=c('suppressed.to.disengaged.rates.and.times','continuum.transitions'),
-                        background.reengagement=c('reengagement.rates.and.times','continuum.transitions'),
-                        foreground.reengagement=c('reengagement.rates.and.times','continuum.transitions'),
-                        background.prep=c('prep.rates.and.times','idu.susceptibility','sexual.susceptibility','new.infection.proportions','new.infection.proportions.years'),
-                        foreground.prep=c('prep.rates.and.times','idu.susceptibility','sexual.susceptibility','new.infection.proportions','new.infection.proportions.years'),
-                        background.needle.exchange = c('needle.exchange.rates.and.times','idu.susceptibility','idu.transitions'),
-                        foreground.needle.exchange = c('needle.exchange.rates.and.times','idu.susceptibility','idu.transitions'),
-                        needle.exchange.rr = 'idu.susceptibility',
-                        needle.exchange.remission.rate.ratio = 'idu.transitions',
-                        prep.rr.heterosexual='sexual.susceptibility',
-                        prep.rr.msm='sexual.susceptibility',
-                        prep.rr.idu='idu.susceptibility',
-                        acute.transmissibility.rr=c('sexual.transmissibilities','idu.transmissibilities'),
-                        diagnosed.needle.sharing.rr='idu.transmissibilities',
-                        diagnosed.het.male.condomless.rr='sexual.transmissibilities',
-                        diagnosed.female.condomless.rr='sexual.transmissibilities',
-                        diagnosed.msm.condomless.rr='sexual.transmissibilities',
-                        idu.transmissibility.rr.by.race='idu.transmissibilities',
-                        sexual.transmissibility.rr.by.race='sexual.transmissibilities',
-                        male.to.male.sexual.transmission='sexual.contact.arrays',
-                        male.to.female.sexual.transmission='sexual.contact.arrays',
-                        female.to.male.sexual.transmission='sexual.contact.arrays',
-                        sexual.transmission='sexual.contact.arrays',
-                        foreground.sexual.transmission='sexual.contact.arrays',
-                        idu.transmission='idu.contact.arrays',
-                        foreground.idu.transmission='idu.contact.arrays',
-                        susceptibility=c('sexual.susceptibility','idu.susceptibility'),
-                        fertility='fertility.check',
-                        global.sexual.transmission.rates='global.sexual.transmission.rates',
-                        global.idu.transmission.rates='global.idu.transmission.rates',
-                        fix.strata.sizes='fix.strata.sizes.check',
-                        track.mortality='track.mortality.check',
-                        aging=c('aging.rates.hiv.positive')
-    )
+
     
     #An internal check
-    missing.from.all = sapply(unlist(dependencies), function(dep){
-        !any(all.dependent.names==dep)
+    missing.from.all = sapply(unlist(DEPENDENCIES), function(dep){
+        !any(ALL.DEPENDENT.NAMES==dep)
     })
     if (any(missing.from.all))
-        stop(paste0("The following are missing from 'all.dependent.names: ",
-                    paste0("'", unique(unlist(dependencies)[missing.from.all]), "'", collapse=', ')))
+        stop(paste0("The following are missing from 'ALL.DEPENDENT.NAMES: ",
+                    paste0("'", unique(unlist(DEPENDENCIES)[missing.from.all]), "'", collapse=', ')))
     
     missing.dependency = sapply(dependent.on, function(dep){
-        !any(names(dependencies)==dep) && !any(all.dependent.names==dep)
+        !any(names(DEPENDENCIES)==dep) && !any(ALL.DEPENDENT.NAMES==dep)
     })
     
     if (any(missing.dependency))
-        stop("The following are not valid parameters for dependencies: ",
+        stop("The following are not valid parameters for DEPENDENCIES: ",
              paste0("'", dependent.on[missing.dependency], "'", collapse=', '))
     
     for (d in dependent.on)
     {
-        #        if (any(all.dependent.names==d))
+        #        if (any(ALL.DEPENDENT.NAMES==d))
         #            d.dep = d
         #        else
-        d.dep = dependencies[[d]]
+        d.dep = DEPENDENCIES[[d]]
         
         for (elem in d.dep)
         {
@@ -694,7 +676,6 @@ do.setup.jheem.skeleton <- function(components)
     
     components$jheem = jheem
     
-    components = do.crunch.components.masks(components)
     
     
     components
@@ -925,12 +906,6 @@ get.hiv.mortality.rate.arrays <- function(components)
 
 ##-- TRANSITIONS --##
 
-do.crunch.components.masks <- function(components)
-{
-    
-    
-    components
-}
 
 do.setup.idu.transitions <- function(components)
 {
