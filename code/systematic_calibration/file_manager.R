@@ -102,6 +102,7 @@ save.simset <- function(simset,
     if (!dir.exists(dir))
         dir.create(dir)
     
+    print(paste0("Saving simset: ", file.path(dir, filename)))
     save(simset, file=file.path(dir, filename))
 }
 
