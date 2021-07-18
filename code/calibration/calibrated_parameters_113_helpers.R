@@ -9,7 +9,7 @@ run.jheem.from.components <- function(components,
                                       max.run.time.seconds=Inf,
                                       prior.results=NULL,
                                       keep.components=T,
-                                      pare.components.to.keep=T,
+                                      pare.components=F,
                                       keep.years=start.year:end.year,
                                       atol=atol, rtol=rtol)
 {
@@ -34,8 +34,8 @@ run.jheem.from.components <- function(components,
     if (keep.components)
     {
         components = crunch.intervention.rates(components)
-        if (pare.components.to.keep)
-            components = pare.components(components)
+        if (pare.components)
+            components = pare.jheem.components(components)
         attr(results, 'components') = components
     }
     

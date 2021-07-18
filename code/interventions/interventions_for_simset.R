@@ -10,6 +10,7 @@ prepare.simset.for.interventions <- function(simset,
                                              total.future.prep.slope.or.dist = TOTAL.FUTURE.SLOPE.OR.DIST,
                                              total.future.suppressed.slope.or.dist = TOTAL.FUTURE.SLOPE.OR.DIST,
                                              future.slope.after.year=2020,
+                                             crunch.components=F,
                                              redo.needle.exchange=T)
 {
     #-- Flatten it out --#
@@ -91,6 +92,9 @@ prepare.simset.for.interventions <- function(simset,
 #        else
 #            components = crunch.all.jheem.components(components)
 
+        if (crunch.components)
+            components = crunch.all.jheem.components(components)
+
         attr(sim, 'components') = components
         sim
     })
@@ -153,7 +157,8 @@ run.sim.intervention <- function(sim,
         components = setup.components.for.intervention(components, int, overwrite.prior.intervention=F)
     
     run.jheem.from.components(components, start.year=run.from.year, end.year=run.to.year,
-                              prior.results = sim, keep.components = T, keep.years=keep.years)
+                              prior.results = sim, keep.components = T, keep.years=keep.years,
+                              pare.components = T)
 }
 
 run.multiple.simset.interventions <- function(simset,
@@ -203,7 +208,7 @@ pare.simset.components <- function(simset)
 {
     simset = extend.simulations(simset, function(sim, parameters){
         components = attr(sim, 'components')
-        components = pare.components(components)
+        components = pare.jheem.components(components)
         attr(sim, 'components') = components
         sim
     })

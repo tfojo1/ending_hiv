@@ -64,7 +64,7 @@ crunch.intervention.rates <- function(components)
     components
 }
 
-pare.components <- function(components,
+pare.jheem.components <- function(components,
                             keep.rates.and.times=T)
 {
     components = unfix.jheem.components(components)

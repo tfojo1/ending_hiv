@@ -84,12 +84,15 @@ get.simset.filename <- function(simset,
 save.simset <- function(simset, 
                         dir='mcmc_runs/visualization_simsets',
                         compress=!full,
+                        pare.components=!full,
 #                        compress.years=max(attr(simset, 'run.from.year'), min(simset@simulations[[1]]$years)):max(simset@simulations[[1]]$years),
                         full=F)
 {
     if (compress)
         simset = compress.simset(simset)#, keep.years=compress.years)
-
+    if (pare.components)
+        simset = pare.simset.components(simset)
+    
     location = attr(simset@simulations[[1]], 'location')
     
     if (full)
@@ -102,28 +105,6 @@ save.simset <- function(simset,
     if (!dir.exists(dir))
         dir.create(dir)
     
-    save(simset, file=file.path(dir, filename))
-}
-
-make.and.save.compressed.baseline.and.seed <- function(simset,
-                                                       dir='mcmc_runs/visualization_simsets',
-                                                       min.seed.keep.to.year=2020,
-                                                       max.seed.keep.from.year=2018, #for census totals
-                                                       version=VERSION)
-{
-    stop("Don't use this function anymore")
-    save.simset(simset, dir=dir, compress=T)
-    
-    simset = prepare.simset.for.interventions(simset)
-    run.from.year = attr(simset, 'run.from.year')
-    
-    seed.keep.from.year = min(run.from.year-1, max.seed.keep.from.year-1)
-    seed.keep.to.year = max(run.from.year, min.seed.keep.to.year)
-    
-    simset = subset.simset.by.year(simset, seed.keep.from.year:seed.keep.to.year)
-    
-    filename = get.seed.filename(location=attr(simset@simulations[[1]], 'location'),
-                                 version=version)
     save(simset, file=file.path(dir, filename))
 }
 
