@@ -105,7 +105,7 @@ get.baseline.levels <- function(name=c('prep','testing','suppression')[1],
     raw.baseline = get.raw.values.one.intervention(dir=dir,
                                                    msas=msas,
                                                    fn=make.extract.baseline.function(name),
-                                                   n.values=8,
+                                                   n.values=16,
                                                    n.sim=n.sim)
     
     # Add total
