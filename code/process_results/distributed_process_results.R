@@ -50,7 +50,7 @@ do.get.raw.estimates <- function(dir.name=c('full','quick')[1],
     save(est, file=file.path(SYSTEMATIC.ROOT.DIR, '..', 'results', dir.name, paste0(msa, suffix, '.Rdata')))
 }
 
-assemble.estimates.and.intervals <- function(dir.name=c('full','quick'),
+assemble.estimates.and.intervals <- function(dir.name=c('full','quick')[1],
                                              msas=TARGET.MSAS,
                                              suffix = '',
                                              summary.stat=mean,
@@ -72,19 +72,22 @@ assemble.estimates.and.intervals <- function(dir.name=c('full','quick'),
     })
     
     was.missing = sapply(ests, is.null)
-    msas = msas[!was.missing]
-    ests = ests[!was.missing]
+ #   msas = msas[!was.missing]
+ #   ests = ests[!was.missing]
     
-    if (length(ests)==0)
+    if (all(was.missing))
         stop("No locations have been done")
     
-    dim.names = dimnames(ests[[1]])
+    dim.names = dimnames(ests[!was.missing][[1]])
     dim.names$location = msas
     
-    all.arr = array(0, dim=sapply(dim.names, length),
+    all.arr = array(NaN, dim=sapply(dim.names, length),
                     dimnames=dim.names)
     for (i in 1:length(msas))
-        all.arr[,,i,] = ests[[i]]
+    {
+        if (!was.missing[i])
+            all.arr[,,i,] = ests[[i]]
+    }
     
     attr(all.arr, 'interventions') = attr(ests[[1]], 'interventions')
     
