@@ -7,7 +7,7 @@ source('code/targets/target_msas.R')
 source('code/process_results/distributed_process_results.R')
 source('code/process_results/make_systematic_table.R')
 
-ROOT.DIR = file.path(SYSTEMATIC.ROOT.DIR, "..", "Ending_HIV", "results", "full", "estimates")
+ROOT.DIR = file.path(SYSTEMATIC.ROOT.DIR, "..", "results", "full", "estimates")
 
 #-- MAIN --#
 print("Assembling Main Estimates")
