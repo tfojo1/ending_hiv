@@ -12,7 +12,8 @@ ROOT.DIR = file.path(SYSTEMATIC.ROOT.DIR, "..", "results", "full", "estimates")
 #-- MAIN --#
 print("Assembling Main Estimates")
 ests.main = assemble.estimates.and.intervals(dir.name='full',
-                                             suffix='main')
+                                             suffix='main',
+                                             throw.error.if.all.missing = F)
 if (is.null(ests.main))
     print("- No estimates have been done\n")
 if (!is.null(ests.main))
@@ -25,7 +26,8 @@ if (!is.null(ests.main))
 #-- MAIN to 2025 --#
 print("Assembling Main Estimates to 2025")
 ests.main.2025 = assemble.estimates.and.intervals(dir.name='full',
-                                             suffix='main.2025')
+                                             suffix='main.2025',
+                                             throw.error.if.all.missing = F)
 
 if (is.null(ests.main.2025))
     print("- No estimates have been done\n")
@@ -39,7 +41,8 @@ if (!is.null(ests.main))
 #-- 3y ROLLOUT --#
 print("Assembling Estimates, 3y Roll-Out")
 ests.rollout.3y = assemble.estimates.and.intervals(dir.name='full',
-                                             suffix='rollout.3y')
+                                             suffix='rollout.3y',
+                                             throw.error.if.all.missing = F)
 
 if (is.null(ests.rollout.3y))
     print("- No estimates have been done\n")
@@ -53,7 +56,8 @@ if (!is.null(ests.rollout.3y))
 #-- 3y ROLLOUT, to 2025 --#
 print("Assembling Estimates, 3y Roll-Out, to 2027")
 ests.rollout.3y.2025 = assemble.estimates.and.intervals(dir.name='full',
-                                                   suffix='rollout.3y.2025')
+                                                   suffix='rollout.3y.2025',
+                                                   throw.error.if.all.missing = F)
 
 if (is.null(ests.rollout.3y.2025))
     print("- No estimates have been done\n")
@@ -67,7 +71,8 @@ if (!is.null(ests.rollout.3y.2025))
 #-- IDU --#
 print("Assembling IDU Estimates")
 ests.idu = assemble.estimates.and.intervals(dir.name='full',
-                                             suffix='idu')
+                                             suffix='idu',
+                                            throw.error.if.all.missing = F)
 
 if (is.null(ests.idu))
     print("- No estimates have been done\n")

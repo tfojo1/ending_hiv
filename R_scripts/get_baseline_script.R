@@ -15,15 +15,15 @@ print("------------------------")
 
 print("Doing Baseline PrEP")
 baseline.prep = get.baseline.levels('prep', dir=file.path(SYSTEMATIC.ROOT.DIR, 'full_simsets'))
-save(baseline.prep, file=file.path(SYSTEMATIC.ROOT.DIR, '..', 'results', 'baseline.prep.Rdata'))
+save(baseline.prep, file=file.path(SYSTEMATIC.ROOT.DIR, '..', 'results', 'full', 'baseline.prep.Rdata'))
 print("Done")
 
 print("Doing Baseline Testing")
 baseline.testing = get.baseline.levels('testing', dir=file.path(SYSTEMATIC.ROOT.DIR, 'full_simsets'))
-save(baseline.testing, file=file.path(SYSTEMATIC.ROOT.DIR, '..', 'results', 'baseline.testing.Rdata'))
+save(baseline.testing, file=file.path(SYSTEMATIC.ROOT.DIR, '..', 'results', 'full', 'baseline.testing.Rdata'))
 print("Done")
 
 print("Doing Baseline Suppression")
 baseline.suppression = get.baseline.levels('suppression', dir=file.path(SYSTEMATIC.ROOT.DIR, 'full_simsets'))
-save(baseline.suppression, file=file.path(SYSTEMATIC.ROOT.DIR, '..', 'results', 'baseline.suppression.Rdata'))
+save(baseline.suppression, file=file.path(SYSTEMATIC.ROOT.DIR, '..', 'results', 'full', 'baseline.suppression.Rdata'))
 print("Done")
