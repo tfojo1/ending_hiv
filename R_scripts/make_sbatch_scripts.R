@@ -170,7 +170,7 @@ make.intervention.scripts <- function(msa.indices,
 }
 
 make.summarize.intervention.scripts <- function(msa.indices,
-                                                dir='R_scripts/intervention_scripts/',
+                                                dir='R_scripts/summarize_intervention_scripts/',
                                                 partition='shared',
                                                 account='tfojo1',
                                                 mem='4800MB')
