@@ -29,4 +29,41 @@ do.get.raw.estimates(dir.name='full',
                      interventions=MAIN.INTERVENTIONS.23.27,
                      suffix='main',
                      year2=2030,
-                     msa=msa)
+                     msa=msa,
+                     overwrite=F,
+                     save.if.incomplete = F)
+
+do.get.raw.estimates(dir.name='full',
+                     interventions=MAIN.INTERVENTIONS.23.27,
+                     suffix='main.2025',
+                     year2=2025,
+                     msa=msa,
+                     overwrite=F,
+                     save.if.incomplete = F)
+
+do.get.raw.estimates(dir.name='full',
+                     interventions=MAIN.INTERVENTIONS.23.25,
+                     suffix='rollout.3y',
+                     year2=2030,
+                     msa=msa,
+                     overwrite=F,
+                     save.if.incomplete = F)
+
+do.get.raw.estimates(dir.name='full',
+                     interventions=MAIN.INTERVENTIONS.23.25,
+                     suffix='rollout.3y.2025',
+                     year2=2025,
+                     msa=msa,
+                     overwrite=F,
+                     save.if.incomplete = F)
+
+do.get.raw.estimates(dir.name='full',
+                     interventions=IDU.INTERVENTIONS.PLUS.23.27,
+                     suffix='idu',
+                     year2=2030,
+                     msa=msa,
+                     overwrite=F,
+                     save.if.incomplete = F)
+
+
+print("All Done")

@@ -2,7 +2,7 @@ library(xlsx)
 
 write.systematic.table <- function(estimates,
                                    file,
-                                   interventions=attr(estimates, 'interventions'),
+                                   interventions,
                                    include.interval=F,
                                    below.threshold.min.color='red',
                                    below.threshold.max.color='yellow2',
@@ -17,7 +17,7 @@ write.systematic.table <- function(estimates,
     int.names = sapply(interventions, get.intervention.name)
     int.codes = sapply(interventions, get.intervention.code)
     x = x[,int.codes]
-    
+
     dim.names = list(location = unlist(msa.names(as.character(attr(estimates, 'location')))),
                      intervention = int.names)
     
@@ -80,7 +80,7 @@ write.shaded.table <- function(x,
     if (use.floor.not.round)
         format.function = function(z) {
             na.mask = is.na(z)
-            rv = floor(mult * as.numeric(val) * 10^digits) / 10^digits
+            rv = floor(mult * as.numeric(z) * 10^digits) / 10^digits
             rv = format(rv, nsmall=digits)
             rv[na.mask] = NA
             rv

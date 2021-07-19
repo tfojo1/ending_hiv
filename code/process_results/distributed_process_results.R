@@ -34,20 +34,41 @@ do.get.raw.estimates <- function(dir.name=c('full','quick')[1],
                                  n.sim=c(full=1000, quick=50)[dir.name],
                                  verbose=T,
                                  year1=2020,
-                                 year2=2030)
+                                 year2=2030,
+                                 overwrite=F,
+                                 save.if.incomplete=F)
 {
     if (nchar(suffix) > 0 && !grepl("^_", suffix))
         suffix = paste0("_", suffix)
     
     dir = file.path(SYSTEMATIC.ROOT.DIR, paste0(dir.name, "_simsets"))
-    est=get.raw.estimates(dir=dir,
-                                msas=msa,
-                                interventions=interventions,
-                                n.sim=n.sim,
-                                verbose=verbose,
-                                year1=year1,
-                                year2=year2)
-    save(est, file=file.path(SYSTEMATIC.ROOT.DIR, '..', 'results', dir.name, paste0(msa, suffix, '.Rdata')))
+    filename = file.path(SYSTEMATIC.ROOT.DIR, '..', 'results', dir.name, paste0(msa, suffix, '.Rdata'))
+    
+    if (overwrite || !file.exists(filename))
+    {
+        if (verbose)
+            print(paste0("Doing '", suffix, "' run for ", msa.names(msa)))
+        est=get.raw.estimates(dir=dir,
+                                    msas=msa,
+                                    interventions=interventions,
+                                    n.sim=n.sim,
+                                    verbose=verbose,
+                                    year1=year1,
+                                    year2=year2)
+        
+        if (save.if.incomplete || sum(is.na(est))==0)
+        {
+            print(paste0(" --> Done. Saving"))
+            save(est, file=filename)
+        }
+        else
+            print(paste0(" --> simulations were INCOMPLETE. Not saving"))
+        
+    }
+    else if (verbose)
+    {
+        print(paste0("skipping '", suffix, "' run for ", msa.names(msa)))
+    }
 }
 
 assemble.estimates.and.intervals <- function(dir.name=c('full','quick')[1],
