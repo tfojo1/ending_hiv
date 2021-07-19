@@ -169,6 +169,29 @@ make.intervention.scripts <- function(msa.indices,
      }
 }
 
+make.summarize.intervention.scripts <- function(msa.indices,
+                                                dir='R_scripts/intervention_scripts/',
+                                                partition='shared',
+                                                account='tfojo1',
+                                                mem='4800MB')
+{
+    msa.indices = check.msa.indices(msa.indices)
+    
+    for (i in msa.indices)
+    {
+        msa.name = names(TARGET.MSAS)[i]
+        make.sbatch.script(filename=file.path(dir, get.summarize.intervention.script.filename(i)),
+                           job.name = paste0("si", msa.name),
+                           mem=mem,
+                           output = file.path(OUTPUT.DIR, paste0("summ.int_", msa.name, ".out")),
+                           partition = partition,
+                           time.hours = 12,
+                           account=account,
+                           commands= paste0("Rscript Ending_HIV/R_scripts/summarize_interventions_script.R ", i))
+    }
+}
+
+
 make.rerun.scripts <- function(msa.indices,
                                       dir='R_scripts/rerun_scripts/',
                                       partition='shared',
@@ -261,6 +284,18 @@ make.master.interventions.script <- function(msa.indices,
     sink()
 }
 
+make.master.summarize.interventions.script <- function(msa.indices,
+                                             filename='R_scripts/master_scripts/summarize_interventions_master.bat',
+                                             path="Ending_HIV/R_scripts/summarize_intervention_scripts/")
+{
+    msa.indices = check.msa.indices(msa.indices)
+    
+    sink(filename)
+    contents = cat(paste0(paste0("sbatch ", path, get.summarize.intervention.script.filename(msa.indices)),
+                          collapse='\n'),
+                   sep='')
+    sink()
+}
 
 make.master.rerun.script <- function(msa.indices,
                                              filename='R_scripts/master_scripts/rerun_master.bat',
@@ -350,6 +385,11 @@ get.setup.filename <- function(index)
 get.intervention.script.filename <- function(index)
 {
     paste0("int_", index, ".bat")
+}
+
+get.summarize.intervention.script.filename <- function(index)
+{
+    paste0("summ.int_", index, ".bat")
 }
 
 get.rerun.script.filename <- function(index)
