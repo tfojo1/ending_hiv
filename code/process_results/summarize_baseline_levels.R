@@ -1,14 +1,26 @@
 
+FIGURE.DIR = '../Manuscripts/manuscript_1/Annals Submission/revision 1/tables/'
 if (1==2)
 {
-    baseline.prep = get.baseline.levels('prep', dir='mcmc_runs/quick_simsets/')
-    write.csv(make.pretty.baseline.table(baseline.prep, digits=1, pct=T), file='../Manuscripts/manuscript_1/Annals Submission/revision 1/tables/baseline_prep.csv')
+    source('code/process_results/make_pretty_table.R')
     
-    baseline.testing = get.baseline.levels('testing', dir='mcmc_runs/quick_simsets/')
-    write.csv(make.pretty.baseline.table(baseline.testing, digits=2, pct=F), file='../Manuscripts/manuscript_1/Annals Submission/revision 1/tables/baseline_testing.csv')
+    load('results/full/baseline.prep.Rdata')
     
-    baseline.suppression = get.baseline.levels('suppression', dir='mcmc_runs/quick_simsets/')
-    write.csv(make.pretty.baseline.table(baseline.suppression, digits=1, pct=T), file='../Manuscripts/manuscript_1/Annals Submission/revision 1/tables/baseline_suppression.csv')
+    write.shaded.table(x=baseline.prep$estimates,
+                       file=file.path(FIGURE.DIR, 'baseline.prep.xlsx'),
+                       lowers = baseline.prep$ci.lower,
+                       uppers = baseline.prep$ci.upper,
+                       max.value = 1,
+                       threshold = 0.1,
+                       label.lower = 0.01,
+                       as.pct = T,
+                       digits = 0,
+                       use.floor.not.round = F)
+    
+    round(100*apply(baseline.prep$estimates, 2, range, na.rm=T),0)
+    
+    load('results/full/baseline.testing.Rdata')
+    round(apply(baseline.testing$estimates, 2, range, na.rm=T),1)
     
 }
 
@@ -40,11 +52,21 @@ make.extract.baseline.function <- function(name='prep',
         include.hiv.negative=T
     }
     
+    if (name=='prep')
+        denominator.function = function(sim, include.hiv.positive, include.hiv.negative, continuum, ...){
+            extract.n.prep.indicated(sim, ...)
+        }
+    else
+        denominator.function = extract.population.subset
+    
     function(sim)
     {
-        ybhm.numerator = rowSums(extract.fn(sim, years=years, races=c('black','hispanic'), sexes='msm', 
-                                            keep.dimensions=c('year','age'), use.cdc.categorizations = F, per.population = NA)[,1:2])
-        ybhm.denominator = extract.population.subset(sim, years=years, race=c('black','hispanic'), sexes='msm', ages=1:2, 
+    #    ybhm.numerator = rowSums(extract.fn(sim, years=years, races=c('black','hispanic'), sexes='msm', 
+     #                                       keep.dimensions=c('year','age'), use.cdc.categorizations = F, per.population = NA)[,1:2])
+        ybhm.numerator = extract.fn(sim, years=years, races=c('black','hispanic'), sexes='msm', 
+                                    ages=sim$ages[1:2], keep.dimensions='year', use.cdc.categorizations = F,
+                                    per.population = NA)
+        ybhm.denominator = denominator.function(sim, years=years, race=c('black','hispanic'), sexes='msm', ages=1:2, 
                                                      keep.dimensions='year',
                                                      continuum = sim$diagnosed.continuum.states,
                                                      include.hiv.negative = include.hiv.negative,
@@ -57,7 +79,7 @@ make.extract.baseline.function <- function(name='prep',
                        keep.dimensions='year', use.cdc.categorizations = F, per.population = NA)
         
         
-        msm.denominator = extract.population.subset(sim, years=years, sexes='msm', risks=non.idu.risks,
+        msm.denominator = denominator.function(sim, years=years, sexes='msm', risks=non.idu.risks,
                                                    keep.dimensions='year', use.cdc.categorizations = F,
                                                    continuum = sim$diagnosed.continuum.states,
                                                    include.hiv.negative = include.hiv.negative,
@@ -74,7 +96,7 @@ make.extract.baseline.function <- function(name='prep',
                          risks=non.idu.risks,
                          keep.dimensions='year', use.cdc.categorizations = F, per.population=NA)
         
-        het.denominator = extract.population.subset(sim, years=years, sexes=c('female','heterosexual_male'),
+        het.denominator = denominator.function(sim, years=years, sexes=c('female','heterosexual_male'),
                                    risks=non.idu.risks,
                                    keep.dimensions='year',
                                    include.hiv.negative = include.hiv.negative,

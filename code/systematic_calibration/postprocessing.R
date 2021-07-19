@@ -868,8 +868,17 @@ extract.prep.coverage <- function(sim,
                                   sexes=NULL,
                                   risks=NULL,
                                   use.cdc.categorizations=F,
-                                  multiplier=NULL)
+                                  indications.multiplier = get.prep.indications.estimate())
 {
+    # it is more efficient to multiply into the numerator (for technical reasons)
+    # so if we just need the numerator, then apply the estimates for the numerator
+    # otherwise, apply them to the denominator
+    numerator.multiplier = denominator.multiplier = NULL
+    if (is.na(per.population))
+        numerator.multiplier = indications.multiplier
+    else
+        denominator.multiplier = indications.multiplier
+    
     raw.prep.coverage = calculate.prep.coverage(attr(sim, 'components'))
     do.extract.rates(raw.rates = raw.prep.coverage,
                      sim=sim,
@@ -884,7 +893,81 @@ extract.prep.coverage <- function(sim,
                      use.cdc.categorizations=use.cdc.categorizations,
                      include.hiv.negative = T,
                      include.hiv.positive = F,
-                     multiplier=multiplier)
+                     multiplier=numerator.multiplier,
+                     denominator.multiplier = denominator.multiplier)
+}
+
+extract.n.prep.indicated <- function(sim,
+                                     years=sim$years,
+                                     keep.dimensions='year',
+                                     per.population=1,
+                                     ages=NULL,
+                                     races=NULL,
+                                     subpopulations=NULL,
+                                     sexes=NULL,
+                                     risks=NULL,
+                                     non.hiv.subsets=NULL,
+                                     use.cdc.categorizations=F,
+                                     indications.estimate = get.prep.indications.estimate())
+{
+    #-- Pull the pop and multiply by indications --#
+    indications.dim.names = dimnames(indications.estimate)
+    
+    pop = extract.population.subset(sim, 
+                                    years=years, 
+                                    keep.dimensions = c('year',names(indications.dim.names)),
+                                    ages=indications.dim.names[['age']],
+                                    races=indications.dim.names[['race']],
+                                    subpopulations=indications.dim.names[['subpopulation']],
+                                    sexes=indications.dim.names[['sex']],
+                                    risks=indications.dim.names[['risk']], 
+                                    non.hiv.subsets = indications.dim.names[['non.hiv.subsets']],
+                                    include.hiv.negative = T,
+                                    include.hiv.positive = F)
+    
+    pop = pop * expand.population(indications.estimate, dimnames(pop))
+
+    #-- Aggregate (for CDC categorizations if needed) --#
+    
+    if (setequal(risks, CDC.RISKS))
+        risks = NULL
+    if (setequal(sexes, CDC.SEXES))
+        sexes = NULL
+    
+    if (use.cdc.categorizations &&
+        (any(keep.dimensions=='sex') ||
+         any(keep.dimensions=='risk') ||
+         !is.null(risks) ||
+         !is.null(sexes)))
+    {
+        pop = access(pop,
+                     age=ages,
+                     race=races,
+                     subpopulation=subpopulations,
+                     non.hiv.subset = non.hiv.subsets,
+                     collapse.length.one.dimensions = F)
+        
+        pop = sum.arr.to.cdc(pop,
+                                    keep.dimensions=keep.dimensions,
+                                    sexes=sexes,
+                                    risks=risks,
+                                    female.msm.value = 0)
+    }
+    else
+    {
+        pop = access(pop,
+                     age=ages,
+                     race=races,
+                     subpopulation=subpopulations,
+                     sex=sexes,
+                     risk=risks,
+                     non.hiv.subset = non.hiv.subsets,
+                     collapse.length.one.dimensions = F)
+        
+    }
+
+    pop = apply(pop, keep.dimensions, sum)
+    pop
 }
 
 extract.testing.period <- function(sim,
@@ -960,7 +1043,8 @@ do.extract.rates <- function(raw.rates,
                              use.cdc.categorizations=F,
                              include.hiv.negative=F,
                              include.hiv.positive=T,
-                             multiplier=NULL)
+                             multiplier=NULL,
+                             denominator.multiplier=NULL)
 {
     interpolated.rates = interpolate.parameters(values=raw.rates$rates,
                                                 value.times=raw.rates$times,
@@ -996,6 +1080,26 @@ do.extract.rates <- function(raw.rates,
                                                continuum=continuum, cd4=cd4, hiv.subsets=hiv.subsets,
                                                include.hiv.negative = F)
 
+    if (!is.null(denominator.multiplier))
+    {
+        denominator.to.access = dimnames(prevalence)[names(dimnames(denominator.multiplier))]
+        
+        denominator.multiplier = access(denominator.multiplier,
+                                        year=denominator.to.access$year,
+                                        age=denominator.to.access$age,
+                                        race=denominator.to.access$race,
+                                        subpopulation=denominator.to.access$subpopulation,
+                                        sex=denominator.to.access$sex,
+                                        risk=denominator.to.access$risk,
+                                        continuum=denominator.to.access$continuum,
+                                        cd4=denominator.to.access$cd4,
+                                        hiv.subset=denominator.to.access$hiv.subset)
+        
+        denominator.multiplier = expand.population(denominator.multiplier, dimnames(prevalence))
+        prevalence = prevalence * denominator.multiplier
+    }
+    
+    
     n.dim = length(dim(stratified.arr))
     if (include.hiv.negative)
         n.dim = n.dim-1

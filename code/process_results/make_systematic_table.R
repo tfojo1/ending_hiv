@@ -271,18 +271,18 @@ get.raw.values.one.intervention <- function(dir,
                     value.names <<- dimnames(values)[[1]]
                 
                 print(paste0("...done with ", msa.names(msa), " (", msa, ")"))
-                values
+                as.numeric(values)
             },
             error = function(e){
                 print(paste0("...error reading ", msa.names(msa), " (", msa, ") - skipping..."))
-                rep(NA, n.sim*n.values)
+                rep(NaN, n.sim*n.values)
             })
 
         }
         else
         {
             print(paste0("...", msa.names(msa), " (", msa, ") not yet done - skipping..."))
-            rep(NA, n.sim*n.values)
+            rep(NaN, n.sim*n.values)
         }
     })
     

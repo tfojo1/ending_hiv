@@ -61,7 +61,9 @@ write.shaded.table <- function(x,
                                interval.open='[',
                                interval.close=']',
                                interval.spacer='-',
-                               label.lower=NULL)
+                               label.lower=NULL,
+                               min.value=0,
+                               max.value=1)
 {
     if (as.pct)
     {
@@ -121,12 +123,12 @@ write.shaded.table <- function(x,
             na.color
         else if (val>=threshold)
         {
-            scaled.val = (min(1,val)-threshold)/(1-threshold)
+            scaled.val = (min(max.value,val)-threshold)/(max.value-threshold)
             rgb.to.hex(above.threshold.color(scaled.val), prepend='#')
         }
         else
         {
-            scaled.val = max(0,as.numeric(val))/threshold
+            scaled.val = max(min.value,as.numeric(val))/(threshold-min.value)
             rgb.to.hex(below.threshold.color(scaled.val), prepend='#')
         }
     })
