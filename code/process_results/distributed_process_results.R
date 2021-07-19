@@ -42,7 +42,7 @@ do.get.raw.estimates <- function(dir.name=c('full','quick')[1],
         suffix = paste0("_", suffix)
     
     dir = file.path(SYSTEMATIC.ROOT.DIR, paste0(dir.name, "_simsets"))
-    filename = file.path(SYSTEMATIC.ROOT.DIR, '..', 'results', dir.name, paste0(msa, suffix, '.Rdata'))
+    filename = file.path(SYSTEMATIC.ROOT.DIR, '..', 'results', dir.name, 'scratch', paste0(msa, suffix, '.Rdata'))
     
     if (overwrite || !file.exists(filename))
     {
@@ -83,7 +83,7 @@ assemble.estimates.and.intervals <- function(dir.name=c('full','quick')[1],
         suffix = paste0("_", suffix)
     
     ests = lapply(msas, function(msa){
-        file=file.path(SYSTEMATIC.ROOT.DIR, '..', 'results', dir.name, paste0(msa, suffix, '.Rdata'))
+        file=file.path(SYSTEMATIC.ROOT.DIR, '..', 'results', dir.name, 'scratch', paste0(msa, suffix, '.Rdata'))
         if (file.exists(file))
         {
             load(file)
