@@ -4,23 +4,56 @@ if (1==2)
 {
     source('code/process_results/make_pretty_table.R')
     
+    
+    #-- PrEP --#
     load('results/full/baseline.prep.Rdata')
     
     write.shaded.table(x=baseline.prep$estimates,
                        file=file.path(FIGURE.DIR, 'baseline.prep.xlsx'),
                        lowers = baseline.prep$ci.lower,
                        uppers = baseline.prep$ci.upper,
-                       max.value = 1,
+                       max.value = .2,
                        threshold = 0.1,
                        label.lower = 0.01,
                        as.pct = T,
                        digits = 0,
                        use.floor.not.round = F)
     
-    round(100*apply(baseline.prep$estimates, 2, range, na.rm=T),0)
+    round(100*apply(baseline.prep$estimates, 2, range, na.rm=T),0)[,5:6]
     
+    
+    #-- Testing --#
     load('results/full/baseline.testing.Rdata')
+    
+    write.shaded.table(x=baseline.testing$estimates,
+                       file=file.path(FIGURE.DIR, 'baseline.testing.xlsx'),
+                       lowers = baseline.testing$ci.lower,
+                       uppers = baseline.testing$ci.upper,
+                       max.value = 2,
+                       threshold = 1,
+                       label.lower = 0.01,
+                       as.pct = F,
+                       digits = 1,
+                       use.floor.not.round = F)
+    
     round(apply(baseline.testing$estimates, 2, range, na.rm=T),1)
+    
+    
+    #-- Suppression --#
+    load('results/full/baseline.suppression.Rdata')
+    
+    write.shaded.table(x=baseline.suppression$estimates,
+                       file=file.path(FIGURE.DIR, 'baseline.suppression.xlsx'),
+                       lowers = baseline.suppression$ci.lower,
+                       uppers = baseline.suppression$ci.upper,
+                       max.value = 1,
+                       threshold = 0.8,
+                       label.lower = 0.01,
+                       as.pct = T,
+                       digits = 0,
+                       use.floor.not.round = F)
+    
+    round(100*apply(baseline.suppression$estimates, 2, range, na.rm=T),0)
     
 }
 

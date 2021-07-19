@@ -7,6 +7,45 @@ done.mcmc.locations <- function(dir=file.path(SYSTEMATIC.ROOT.DIR, 'systematic_p
     gsub("^([^_]+)_.*$", "\\1", files)
 }
 
+check.intervention.status <- function(dir=file.path(SYSTEMATIC.ROOT.DIR, 'full_simsets'),
+                                      interventions=ALL.INTERVENTIONS,
+                                      locations=TARGET.MSAS)
+{
+    done = do.check.interventions.done(dir=dir,
+                                       locations=locations,
+                                       interventions=interventions)
+    
+    cat(round(100*mean(done)), "% (",
+          sum(done), " of ", length(done), " interventions x locations) of all interventions done\n",
+        sep = '')
+    
+    cat("\n---\n")
+    
+    done.by.intervention = colSums(done)
+    int.codes = sapply(interventions, get.intervention.code)
+    cat(paste0("- ", int.codes, ": ", done.by.intervention, " of ", length(locations), " locations done", collapse='\n'))
+    
+    
+    cat("\n---\n")
+    done.by.location = rowSums(done)
+    loc.names = unlist(msa.names(locations))
+    cat(paste0("- ", loc.names, ": ", done.by.location, " of ", length(interventions), " interventions done", collapse='\n'))
+    
+}
+
+do.check.interventions.done <- function(dir,
+                                        locations,
+                                        interventions)
+{
+    sapply(interventions, function(int){
+        sapply(locations, function(loc){
+            filename = get.simset.filename(location=loc, intervention=int)
+            file.exists(file.path(dir, loc, filename))
+        })
+    })
+}
+
+
 do.run.interventions <- function(location,
                                  simset.dir=file.path(SYSTEMATIC.ROOT.DIR, 'full_simsets'),
                                  dst.dir=file.path(SYSTEMATIC.ROOT.DIR, 'full_simsets'),
