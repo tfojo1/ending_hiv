@@ -76,7 +76,8 @@ assemble.estimates.and.intervals <- function(dir.name=c('full','quick')[1],
                                              suffix = '',
                                              summary.stat=mean,
                                              interval.coverage=0.95,
-                                             calculate.total=T)
+                                             calculate.total=T,
+                                             throw.error.if.all.missing=T)
 {
     if (nchar(suffix) > 0 && !grepl("^_", suffix))
         suffix = paste0("_", suffix)
@@ -97,7 +98,12 @@ assemble.estimates.and.intervals <- function(dir.name=c('full','quick')[1],
  #   ests = ests[!was.missing]
     
     if (all(was.missing))
-        stop("No locations have been done")
+    {
+        if (throw.error.if.all.missing)
+            stop("No locations have been done")
+        else
+            return (NULL)
+    }
     
     dim.names = dimnames(ests[!was.missing][[1]])
     dim.names$location = msas

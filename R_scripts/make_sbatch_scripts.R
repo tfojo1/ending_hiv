@@ -185,7 +185,7 @@ make.summarize.intervention.scripts <- function(msa.indices,
                            mem=mem,
                            output = file.path(OUTPUT.DIR, paste0("summ.int_", msa.name, ".out")),
                            partition = partition,
-                           time.hours = 12,
+                           time.hours = 3,
                            account=account,
                            commands= paste0("Rscript Ending_HIV/R_scripts/summarize_interventions_script.R ", i))
     }
