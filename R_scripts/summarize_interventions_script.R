@@ -25,6 +25,7 @@ msa = TARGET.MSAS[index]
 print(paste0("Processing interventions for ", msa.names(msa)))
 
 
+#-- MAIN --#
 do.get.raw.estimates(dir.name='full',
                      interventions=MAIN.INTERVENTIONS.23.27,
                      suffix='main',
@@ -41,6 +42,7 @@ do.get.raw.estimates(dir.name='full',
                      overwrite=F,
                      save.if.incomplete = F)
 
+#-- 3y ROLLOUT --#
 do.get.raw.estimates(dir.name='full',
                      interventions=MAIN.INTERVENTIONS.23.25,
                      suffix='rollout.3y',
@@ -57,10 +59,36 @@ do.get.raw.estimates(dir.name='full',
                      overwrite=F,
                      save.if.incomplete = F)
 
+#-- SINGLE MODALITY --#
+do.get.raw.estimates(dir.name='full',
+                     interventions=SINGLE.MODALITY.INTERVENTIONS.23.27,
+                     suffix='single.mod',
+                     year2=2030,
+                     msa=msa,
+                     overwrite=F,
+                     save.if.incomplete = F)
+
+do.get.raw.estimates(dir.name='full',
+                     interventions=SINGLE.MODALITY.INTERVENTIONS.23.27,
+                     suffix='single.mod.2025',
+                     year2=2025,
+                     msa=msa,
+                     overwrite=F,
+                     save.if.incomplete = F)
+
+#-- IDU --#
 do.get.raw.estimates(dir.name='full',
                      interventions=IDU.INTERVENTIONS.PLUS.23.27,
                      suffix='idu',
                      year2=2030,
+                     msa=msa,
+                     overwrite=F,
+                     save.if.incomplete = F)
+
+do.get.raw.estimates(dir.name='full',
+                     interventions=IDU.INTERVENTIONS.PLUS.23.27,
+                     suffix='idu.2025',
+                     year2=2025,
                      msa=msa,
                      overwrite=F,
                      save.if.incomplete = F)

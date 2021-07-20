@@ -68,6 +68,36 @@ if (!is.null(ests.rollout.3y.2025))
 }
 
 
+#-- SINGLE-MODALITY --#
+print("Assembling Single-Modality Estimates")
+ests.single.mod = assemble.estimates.and.intervals(dir.name='full',
+                                             suffix='single.mod',
+                                             throw.error.if.all.missing = F)
+if (is.null(ests.single.mod))
+    print("- No estimates have been done\n")
+if (!is.null(ests.single.mod))
+{
+    save(ests.single.mod, file=file.path(ROOT.DIR, "ests.single.mod.Rdata"))
+    print("- Done\n")
+}
+
+
+#-- SINGLE-MODALITY to 2025 --#
+print("Assembling Single-Modality Estimates to 2025")
+ests.single.mod.2025 = assemble.estimates.and.intervals(dir.name='full',
+                                                  suffix='single.mod.2025',
+                                                  throw.error.if.all.missing = F)
+
+if (is.null(ests.single.mod.2025))
+    print("- No estimates have been done\n")
+if (!is.null(ests.single.mod.2025))
+{
+    save(ests.single.mod.2025, file=file.path(ROOT.DIR, "ests.single.mod.2025.Rdata"))
+    print("- Done\n")
+}
+
+
+
 #-- IDU --#
 print("Assembling IDU Estimates")
 ests.idu = assemble.estimates.and.intervals(dir.name='full',
@@ -79,5 +109,20 @@ if (is.null(ests.idu))
 if (!is.null(ests.idu))
 {
     save(ests.idu, file=file.path(ROOT.DIR, "ests.idu.Rdata"))
+    print("- Done\n")
+}
+
+
+#-- IDU, to 2025 --#
+print("Assembling IDU Estimates")
+ests.idu.2025 = assemble.estimates.and.intervals(dir.name='full',
+                                            suffix='idu.2025',
+                                            throw.error.if.all.missing = F)
+
+if (is.null(ests.idu.2025))
+    print("- No estimates have been done\n")
+if (!is.null(ests.idu.2025))
+{
+    save(ests.idu.2025, file=file.path(ROOT.DIR, "ests.idu.2025.Rdata"))
     print("- Done\n")
 }
