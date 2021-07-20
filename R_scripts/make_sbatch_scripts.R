@@ -216,10 +216,10 @@ make.distributed.intervention.scripts <- function(msa.indices,
     {
         print("making master script too")
         
-        make.master.distributed.interventions.script <- function(msa.indices,
-                                                                 scripts,
-                                                                 filename=master.filename,
-                                                                 path=dir)
+        make.master.distributed.interventions.script(msa.indices=msa.indices,
+                                                     scripts=1:n.scripts.per.msa,
+                                                     filename=master.filename,
+                                                     path=dir)
         print("All done")
     }
 }
