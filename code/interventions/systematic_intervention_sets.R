@@ -79,9 +79,6 @@ MAIN.INTERVENTIONS.23.27 = c(list(NO.INTERVENTION),
 MAIN.INTERVENTIONS.23.25 = c(list(NO.INTERVENTION),
                              lapply(paste0(MAIN.INTERVENTION.CODES, '_23.25'), intervention.from.code))
 
-MAIN.INTERVENTIONS.PLUS.APPROX959595.23.25 = c(MAIN.INTERVENTIONS.23.25,
-                                               APPROX959595.23.25)
-
 
 SINGLE.MODALITY.INTERVENTIONS.23.27 = c(list(NO.INTERVENTION),
                                         lapply(paste0(SINGLE.MODALITY.INTERVENTION.CODES, '_23.27'), intervention.from.code))
