@@ -178,7 +178,7 @@ make.distributed.intervention.scripts <- function(msa.indices,
                                                   total.n.interventions=56,
                                                   n.scripts.per.msa=23,
                                                   make.master.script=T,
-                                                  master.filename = 'R_scripts/master_scripts/distributed_interventions_master.bat',)
+                                                  master.filename = 'R_scripts/master_scripts/distributed_interventions_master.bat')
 {
     msa.indices = check.msa.indices(msa.indices)
     
