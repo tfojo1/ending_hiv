@@ -169,6 +169,62 @@ make.intervention.scripts <- function(msa.indices,
      }
 }
 
+#break up interventions across multiple scripts
+make.distributed.intervention.scripts <- function(msa.indices,
+                                                  dir='R_scripts/intervention_scripts/',
+                                                  partition='shared',
+                                                  account='tfojo1',
+                                                  mem='9600MB',
+                                                  total.n.interventions=56,
+                                                  n.scripts.per.msa=23,
+                                                  make.master.script=T,
+                                                  master.filename = 'R_scripts/master_scripts/distributed_interventions_master.bat',)
+{
+    msa.indices = check.msa.indices(msa.indices)
+    
+    min.interventions.per.script = floor(total.n.interventions/n.scripts.per.msa)
+    max.interventions.per.script = ceiling(total.n.interventions/n.scripts.per.msa)
+    n.at.min = n.scripts.per.msa * max.interventions.per.script - total.n.interventions
+    n.at.max = n.scripts.per.msa - n.at.min
+    
+    n.per.script = c(rep(min.interventions.per.script, n.at.min),
+                     rep(max.interventions.per.script, n.at.max))
+    
+    upper.indices = cumsum(n.per.script)
+    lower.indices = upper.indices - n.per.script + 1
+    
+    for (i in msa.indices)
+    {
+        msa.name = names(TARGET.MSAS)[i]
+        for (j in 1:n.scripts.per.msa)
+        {
+            make.sbatch.script(filename=file.path(dir, get.distributed.intervention.script.filename(i,j)),
+                               job.name = paste0("i", j, msa.name),
+                               mem=mem,
+                               output = file.path(OUTPUT.DIR, paste0("int_", msa.name, "_", j, ".out")),
+                               partition = partition,
+                               time.hours = 24,
+                               account=account,
+                               commands= paste0("Rscript Ending_HIV/R_scripts/run_interventions_script.R ", 
+                                                i, " ",
+                                                lower.indices[j], " ",
+                                                upper.indices[j]))
+        }
+    }
+    
+    if (make.master.script)
+    {
+        print("making master script too")
+        
+        make.master.distributed.interventions.script <- function(msa.indices,
+                                                                 scripts,
+                                                                 filename=master.filename,
+                                                                 path=dir)
+        print("All done")
+    }
+}
+
+
 make.summarize.intervention.scripts <- function(msa.indices,
                                                 dir='R_scripts/summarize_intervention_scripts/',
                                                 partition='shared',
@@ -284,6 +340,23 @@ make.master.interventions.script <- function(msa.indices,
     sink()
 }
 
+make.master.distributed.interventions.script <- function(msa.indices,
+                                                         scripts,
+                                                         filename='R_scripts/master_scripts/distributed_interventions_master.bat',
+                                                         path="R_scripts/intervention_scripts/")
+{
+    n.msa = length(msa.indices)
+    msa.indices = rep(msa.indices, each=length(scripts))
+    scripts = rep(scripts, n.msa)
+    
+    sink(filename)
+    contents = cat(paste0(paste0("sbatch ", path, get.distributed.intervention.script.filename(msa.indices, scripts)),
+                          collapse='\n'),
+                   sep='')
+    sink()
+}
+
+
 make.master.summarize.interventions.script <- function(msa.indices,
                                              filename='R_scripts/master_scripts/summarize_interventions_master.bat',
                                              path="Ending_HIV/R_scripts/summarize_intervention_scripts/")
@@ -386,6 +459,12 @@ get.intervention.script.filename <- function(index)
 {
     paste0("int_", index, ".bat")
 }
+
+get.distributed.intervention.script.filename <- function(index, script)
+{
+    paste0("dist_int_", index, "_", script, ".bat")
+}
+
 
 get.summarize.intervention.script.filename <- function(index)
 {

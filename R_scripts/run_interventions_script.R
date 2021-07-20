@@ -12,6 +12,11 @@ setwd('Ending_HIV')
 print("Loading Source Files...")
 source('code/systematic_calibration/extract_and_run.R')
 
+#-- GET THE INTERVENTIONS --#
+interventions.to.do = ALL.INTERVENTIONS
+if (length(args)>=3)
+    interventions.to.do = interventions.to.do[as.integer(args[2]):as.integer(args[3])]
+
 #-- GET THE MSA --#
 index = as.integer(args[1])
 if (is.na(index) || index<1 || index>length(TARGET.MSAS))
@@ -24,5 +29,5 @@ print(paste0("Running interventions for ", msa.names(msa)))
 do.run.interventions(location=msa,
                      simset.dir=file.path(SYSTEMATIC.ROOT.DIR, 'full_simsets'),
                      dst.dir=file.path(SYSTEMATIC.ROOT.DIR, 'full_simsets'),
-                     interventions = ALL.INTERVENTIONS,
+                     interventions = interventions.to.do,
                      overwrite=F)
