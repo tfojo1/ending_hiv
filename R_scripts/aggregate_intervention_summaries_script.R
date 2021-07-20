@@ -26,8 +26,8 @@ if (!is.null(ests.main))
 #-- MAIN to 2025 --#
 print("Assembling Main Estimates to 2025")
 ests.main.2025 = assemble.estimates.and.intervals(dir.name='full',
-                                             suffix='main.2025',
-                                             throw.error.if.all.missing = F)
+                                                  suffix='main.2025',
+                                                  throw.error.if.all.missing = F)
 
 if (is.null(ests.main.2025))
     print("- No estimates have been done\n")
@@ -38,11 +38,39 @@ if (!is.null(ests.main))
 }
 
 
+#-- MAIN - new diagnoses --#
+print("Assembling Main Estimates (New Diagnoses)")
+ests.main.new = assemble.estimates.and.intervals(dir.name='full',
+                                             suffix='main.new',
+                                             throw.error.if.all.missing = F)
+if (is.null(ests.main.new))
+    print("- No estimates have been done\n")
+if (!is.null(ests.main.new))
+{
+    save(ests.main.new, file=file.path(ROOT.DIR, "ests.main.new.Rdata"))
+    print("- Done\n")
+}
+
+
+#-- MAIN - new diagnoses - to 2025 --#
+print("Assembling Main Estimates to 2025 (New Diagnoses)")
+ests.main.new.2025 = assemble.estimates.and.intervals(dir.name='full',
+                                                  suffix='main.new.2025',
+                                                  throw.error.if.all.missing = F)
+
+if (is.null(ests.main.new.2025))
+    print("- No estimates have been done\n")
+if (!is.null(ests.main.new.2025))
+{
+    save(ests.main.new.2025, file=file.path(ROOT.DIR, "ests.main.new.2025.Rdata"))
+    print("- Done\n")
+}
+
 #-- 3y ROLLOUT --#
 print("Assembling Estimates, 3y Roll-Out")
 ests.rollout.3y = assemble.estimates.and.intervals(dir.name='full',
-                                             suffix='rollout.3y',
-                                             throw.error.if.all.missing = F)
+                                                   suffix='rollout.3y',
+                                                   throw.error.if.all.missing = F)
 
 if (is.null(ests.rollout.3y))
     print("- No estimates have been done\n")
@@ -56,8 +84,8 @@ if (!is.null(ests.rollout.3y))
 #-- 3y ROLLOUT, to 2025 --#
 print("Assembling Estimates, 3y Roll-Out, to 2027")
 ests.rollout.3y.2025 = assemble.estimates.and.intervals(dir.name='full',
-                                                   suffix='rollout.3y.2025',
-                                                   throw.error.if.all.missing = F)
+                                                        suffix='rollout.3y.2025',
+                                                        throw.error.if.all.missing = F)
 
 if (is.null(ests.rollout.3y.2025))
     print("- No estimates have been done\n")
@@ -71,8 +99,8 @@ if (!is.null(ests.rollout.3y.2025))
 #-- SINGLE-MODALITY --#
 print("Assembling Single-Modality Estimates")
 ests.single.mod = assemble.estimates.and.intervals(dir.name='full',
-                                             suffix='single.mod',
-                                             throw.error.if.all.missing = F)
+                                                   suffix='single.mod',
+                                                   throw.error.if.all.missing = F)
 if (is.null(ests.single.mod))
     print("- No estimates have been done\n")
 if (!is.null(ests.single.mod))
@@ -85,8 +113,8 @@ if (!is.null(ests.single.mod))
 #-- SINGLE-MODALITY to 2025 --#
 print("Assembling Single-Modality Estimates to 2025")
 ests.single.mod.2025 = assemble.estimates.and.intervals(dir.name='full',
-                                                  suffix='single.mod.2025',
-                                                  throw.error.if.all.missing = F)
+                                                        suffix='single.mod.2025',
+                                                        throw.error.if.all.missing = F)
 
 if (is.null(ests.single.mod.2025))
     print("- No estimates have been done\n")
@@ -101,7 +129,7 @@ if (!is.null(ests.single.mod.2025))
 #-- IDU --#
 print("Assembling IDU Estimates")
 ests.idu = assemble.estimates.and.intervals(dir.name='full',
-                                             suffix='idu',
+                                            suffix='idu',
                                             throw.error.if.all.missing = F)
 
 if (is.null(ests.idu))
@@ -116,8 +144,8 @@ if (!is.null(ests.idu))
 #-- IDU, to 2025 --#
 print("Assembling IDU Estimates")
 ests.idu.2025 = assemble.estimates.and.intervals(dir.name='full',
-                                            suffix='idu.2025',
-                                            throw.error.if.all.missing = F)
+                                                 suffix='idu.2025',
+                                                 throw.error.if.all.missing = F)
 
 if (is.null(ests.idu.2025))
     print("- No estimates have been done\n")

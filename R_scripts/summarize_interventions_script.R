@@ -42,6 +42,26 @@ do.get.raw.estimates(dir.name='full',
                      overwrite=F,
                      save.if.incomplete = F)
 
+
+#-- MAIN - new diagnoses --#
+do.get.raw.estimates(dir.name='full',
+                     interventions=MAIN.INTERVENTIONS.23.27,
+                     suffix='main.new',
+                     year2=2030,
+                     msa=msa,
+                     overwrite=F,
+                     save.if.incomplete = F,
+                     outcome = 'new')
+
+do.get.raw.estimates(dir.name='full',
+                     interventions=MAIN.INTERVENTIONS.23.27,
+                     suffix='main.new.2025',
+                     year2=2025,
+                     msa=msa,
+                     overwrite=F,
+                     save.if.incomplete = F,
+                     outcome = 'new')
+
 #-- 3y ROLLOUT --#
 do.get.raw.estimates(dir.name='full',
                      interventions=MAIN.INTERVENTIONS.23.25,

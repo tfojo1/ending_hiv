@@ -36,7 +36,8 @@ do.get.raw.estimates <- function(dir.name=c('full','quick')[1],
                                  year1=2020,
                                  year2=2030,
                                  overwrite=F,
-                                 save.if.incomplete=F)
+                                 save.if.incomplete=F,
+                                 outcome=c('incidence','new')[1])
 {
     if (nchar(suffix) > 0 && !grepl("^_", suffix))
         suffix = paste0("_", suffix)
@@ -54,7 +55,8 @@ do.get.raw.estimates <- function(dir.name=c('full','quick')[1],
                                     n.sim=n.sim,
                                     verbose=verbose,
                                     year1=year1,
-                                    year2=year2)
+                                    year2=year2,
+                              outcome=outcome)
         
         if (save.if.incomplete || sum(is.na(est))==0)
         {

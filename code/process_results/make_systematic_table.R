@@ -178,7 +178,8 @@ get.raw.estimates <- function(dir,
                               n.sim,
                               verbose=T,
                               year1=2020,
-                              year2=2030)
+                              year2=2030,
+                              outcome=c('incidence','new')[1])
 {
     dir = file.path(dir)
     all.arr = sapply(1:length(interventions), function(i){
@@ -205,7 +206,12 @@ get.raw.estimates <- function(dir,
                 }))
                 indices = indices[1:n.sim]
                 
-                values = sapply(simset@simulations[unique(indices)], get.sim.absolute.incidence, years=c(year1,year2))
+                if (outcome=='new')
+                    outcome.fn = project.absolute.new.diagnoses
+                else
+                    outcome.fn = project.absolute.incidence
+                
+                values = sapply(simset@simulations[unique(indices)], outcome.fn, years=c(year1,year2))
                 values = values[,indices]
                 values
             }
