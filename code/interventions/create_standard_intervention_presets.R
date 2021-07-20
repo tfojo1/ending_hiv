@@ -298,6 +298,14 @@ register.standard.interventions.annals.revision <- function(start.year=2023,
     INTERVENTION.MANAGER = register.intervention(MI.T2x.P25.S90_HET.T1x.P25.S90, code=paste0('mi.t2x.p25.s90_het.t1x.p25.s90', suffix),
                                                  name='All MSM and all PWID tested twice a year; heterosexuals tested yearly. 25% of all at risk on PrEP, and 90% of all PWH suppressed',
                                                  manager = INTERVENTION.MANAGER)
+    
+    # To approximate 95-95-95
+    
+    ALL.T05X.P25.S90 = create.intervention(WHOLE.POPULATION,
+                                           TESTING.0.5x, PREP.25, SUPPRESSION.90)
+    INTERVENTION.MANAGER = register.intervention(ALL.T05X.P25.S90, code=paste0('all.t05x.p25.s90', suffix),
+                                                 name='Entire population tested every two years, 25% of all at risk on PrEP, and 90% of all PWH suppressed',
+                                                 manager = INTERVENTION.MANAGER)
 
     ##---------------------------##
     ##-- MARGINAL INTERVENTION --##

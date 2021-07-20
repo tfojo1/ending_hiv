@@ -76,6 +76,11 @@ MAIN.INTERVENTIONS.23.27 = c(list(NO.INTERVENTION),
 MAIN.INTERVENTIONS.23.25 = c(list(NO.INTERVENTION),
                              lapply(paste0(MAIN.INTERVENTION.CODES, '_23.25'), intervention.from.code))
 
+APPROX959595.23.27 = list(intervention.from.code('all.t05x.p25.s90_23.25'))
+MAIN.INTERVENTIONS.PLUS.APPROX959595.23.25 = c(MAIN.INTERVENTIONS.23.25,
+                                               APPROX959595.23.25)
+
+
 SINGLE.MODALITY.INTERVENTIONS.23.27 = c(list(NO.INTERVENTION),
                                         lapply(paste0(SINGLE.MODALITY.INTERVENTION.CODES, '_23.27'), intervention.from.code))
 
@@ -95,7 +100,9 @@ ALL.INTERVENTION.CODES = unique(c(
     
     paste0(SINGLE.MODALITY.INTERVENTION.CODES, "_23.27"),
     
-    paste0(IDU.INTERVENTION.CODES, "_23.27")
+    paste0(IDU.INTERVENTION.CODES, "_23.27"), 
+    
+    'all.t05x.p25.s90_23.25'
 ))
 
 ALL.INTERVENTIONS = lapply(ALL.INTERVENTION.CODES, intervention.from.code)
