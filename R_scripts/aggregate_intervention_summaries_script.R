@@ -154,3 +154,19 @@ if (!is.null(ests.idu.2025))
     save(ests.idu.2025, file=file.path(ROOT.DIR, "ests.idu.2025.Rdata"))
     print("- Done\n")
 }
+
+
+
+#-- APPROX 95-95-95 --#
+print("Assembling Approximate 95-95-95 Estimates")
+ests.approx959595.3y.new = assemble.estimates.and.intervals(dir.name='full',
+                                            suffix='approx959595.3y.new',
+                                            throw.error.if.all.missing = F)
+
+if (is.null(ests.approx959595.3y.new))
+    print("- No estimates have been done\n")
+if (!is.null(ests.approx959595.3y.new))
+{
+    save(ests.approx959595.3y.new, file=file.path(ROOT.DIR, "ests.approx959595.3y.new.Rdata"))
+    print("- Done\n")
+}

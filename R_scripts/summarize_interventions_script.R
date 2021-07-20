@@ -113,5 +113,17 @@ do.get.raw.estimates(dir.name='full',
                      overwrite=F,
                      save.if.incomplete = F)
 
+#-- APPROX 95-95-95 for Bradley et. al --#
+
+do.get.raw.estimates(dir.name='full',
+                     interventions=APPROX959595.INTERVENTIONS.23.25,
+                     suffix='approx959595.3y.new',
+                     year1=2018,
+                     year2=2030,
+                     outcome='new',
+                     msa=msa,
+                     overwrite=T,
+                     save.if.incomplete = T)
+
 
 print("All Done")

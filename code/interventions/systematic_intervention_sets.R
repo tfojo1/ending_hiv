@@ -68,7 +68,10 @@ IDU.INTERVENTION.CODES = c(
     'non.idu.p25_idu.n25.moud25'
 )
 
-
+APPROX959595.CODES = c(
+    'all.t05x.p25.s90',
+    'all.p25.s90'
+)
 
 MAIN.INTERVENTIONS.23.27 = c(list(NO.INTERVENTION),
                              lapply(paste0(MAIN.INTERVENTION.CODES, '_23.27'), intervention.from.code))
@@ -76,7 +79,6 @@ MAIN.INTERVENTIONS.23.27 = c(list(NO.INTERVENTION),
 MAIN.INTERVENTIONS.23.25 = c(list(NO.INTERVENTION),
                              lapply(paste0(MAIN.INTERVENTION.CODES, '_23.25'), intervention.from.code))
 
-APPROX959595.23.25 = list(intervention.from.code('all.t05x.p25.s90_23.25'))
 MAIN.INTERVENTIONS.PLUS.APPROX959595.23.25 = c(MAIN.INTERVENTIONS.23.25,
                                                APPROX959595.23.25)
 
@@ -91,6 +93,7 @@ IDU.INTERVENTIONS.23.27 = c(list(NO.INTERVENTION),
 IDU.INTERVENTIONS.PLUS.23.27 = c(IDU.INTERVENTIONS.23.27,
                                  lapply(paste0(c('all.p10','all.p25'), '_23.27'), intervention.from.code))
 
+APPROX959595.INTERVENTIONS.23.25 = lapply(paste0(APPROX959595.CODES, '_23.25'), intervention.from.code)
 
 ALL.INTERVENTION.CODES = unique(c(
     'noint',
@@ -102,7 +105,7 @@ ALL.INTERVENTION.CODES = unique(c(
     
     paste0(IDU.INTERVENTION.CODES, "_23.27"), 
     
-    'all.t05x.p25.s90_23.25'
+    paste0(APPROX959595.CODES, '23.25')
 ))
 
 ALL.INTERVENTIONS = lapply(ALL.INTERVENTION.CODES, intervention.from.code)
