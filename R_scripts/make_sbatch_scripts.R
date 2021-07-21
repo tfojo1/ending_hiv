@@ -219,7 +219,7 @@ make.distributed.intervention.scripts <- function(msa.indices,
         make.master.distributed.interventions.script(msa.indices=msa.indices,
                                                      scripts=1:n.scripts.per.msa,
                                                      filename=master.filename,
-                                                     path=dir)
+                                                     path=file.path('Ending_HIV', dir))
         print("All done")
     }
 }
