@@ -350,13 +350,13 @@ do.crunch.estimates.and.intervals <- function(all.arr,
     dim.names = dim.names[-1]
     dim(rel.change) = sapply(dim.names, length)
     dimnames(rel.change) = dim.names
-
+    
     alpha = (1-interval.coverage)/2
     
     rv=list(estimates=apply(rel.change, 2:3, summary.stat, na.rm=T),
             ci.lower=apply(rel.change, 2:3, quantile, probs=alpha, na.rm=T),
             ci.upper=apply(rel.change, 2:3, quantile, probs=1-alpha, na.rm=T)
-            )
+    )
     
     dim.names = dim.names[-1]
     dim(rv$estimates) = sapply(dim.names, length)
@@ -378,47 +378,47 @@ do.crunch.estimates.and.intervals <- function(all.arr,
 ##---------------------------------------------------##
 
 get.baseline.estimates <- function(dir='mcmc_runs/full_simsets',
-                                    msas=TARGET.MSAS,
-                                    year=2020,
+                                   msas=TARGET.MSAS,
+                                   year=2020,
                                    risks='msm',
                                    verbose=T)
 {
-    dir = file.path(dir)
-    all.arr = sapply(msas, function(msa){
-        filename = file.path(dir, get.full.filename(location=msa))
-        if (file.exists(filename))
-        {
-            if (verbose)
-                print(paste0(" - ", msa.names(msa)))
-                
-            load(filename)
-            
-            dist = extract.simset.distribution(simset, fn=get.sim.baseline.estimates, year=year, risks=risks)
-            cbind(mean=get.means(dist),
-                  t(get.intervals(dist)))
-        }
-        else
-            matrix(as.numeric(NA), dim=c(3,3))
-    })
-    
-    rv = t(all.arr)
-    dim.names = list(location=msas,
-                     aspect=c('testing','prep','suppression'),
-                     stat=c('mean','lower','upper')
-                     )
-    dim(rv) = sapply(dim.names, length)
-    dimnames(rv) = dim.names
-    
-    rv
+  dir = file.path(dir)
+  all.arr = sapply(msas, function(msa){
+    filename = file.path(dir, get.full.filename(location=msa))
+    if (file.exists(filename))
+    {
+      if (verbose)
+        print(paste0(" - ", msa.names(msa)))
+      
+      load(filename)
+      
+      dist = extract.simset.distribution(simset, fn=get.sim.baseline.estimates, year=year, risks=risks)
+      cbind(mean=get.means(dist),
+            t(get.intervals(dist)))
+    }
+    else
+      matrix(as.numeric(NA), dim=c(3,3))
+  })
+  
+  rv = t(all.arr)
+  dim.names = list(location=msas,
+                   aspect=c('testing','prep','suppression'),
+                   stat=c('mean','lower','upper')
+  )
+  dim(rv) = sapply(dim.names, length)
+  dimnames(rv) = dim.names
+  
+  rv
 }
 
 get.sim.baseline.estimates <- function(sim, year=2020, risks='msm', races=NULL, ages=NULL)
 {
-    components = attr(sim, 'components')
-    c(testing=1/as.numeric(extract.testing.rates(sim, years=year, races=races, ages=ages, risks = risks, use.cdc.categorizations = T)),
-      prep=as.numeric(extract.prep.coverage(sim, years=year, races=races, ages=ages,risks=risks, use.cdc.categorizations = T)),#, multiplier = get.prep.indications.estimate(ALL.DATA.MANAGERS$prep, location=attr(sim, 'location')))),
-      suppression=as.numeric(extract.suppression(sim, years=year, races=races, ages=ages, risks=risks, use.cdc.categorizations = T))
-    )
+  components = attr(sim, 'components')
+  c(testing=1/as.numeric(extract.testing.rates(sim, years=year, races=races, ages=ages, risks = risks, use.cdc.categorizations = T)),
+    prep=as.numeric(extract.prep.coverage(sim, years=year, races=races, ages=ages,risks=risks, use.cdc.categorizations = T)),#, multiplier = get.prep.indications.estimate(ALL.DATA.MANAGERS$prep, location=attr(sim, 'location')))),
+    suppression=as.numeric(extract.suppression(sim, years=year, races=races, ages=ages, risks=risks, use.cdc.categorizations = T))
+  )
 }
 
 
@@ -437,38 +437,38 @@ get.estimates.for.interventions <- function(intervention.codes,
                                             summary.stat = mean,
                                             outcome.fn = extract.total.incidence.reduction.20.30)
 {
-    rv = sapply(1:length(intervention.codes), function(i){
-        int.code = intervention.codes[i]
-        int = intervention.from.code(int.code)
-        if (length(location)==1)
-            loc = location
-        else
-            loc = location[i]
-        
-        filename = file.path(dir, loc, get.simset.filename(location=loc, intervention=int))
-        load(filename)
-        
-        sim.outcomes = sapply(simset@simulations, outcome.fn)
-        sim.outcomes = unlist(sapply(1:simset@n.sim, function(i){
-            rep(sim.outcomes[i], simset@weights[i])
-        }))
-        summary.stat(sim.outcomes)
-    })
-    
-    if (is.null(dim(intervention.codes)))
-    {
-        if (is.null(names(intervention.codes)))
-            names(rv) = intervention.codes
-        else
-            names(rv) = names(intervention.codes)
-    }
+  rv = sapply(1:length(intervention.codes), function(i){
+    int.code = intervention.codes[i]
+    int = intervention.from.code(int.code)
+    if (length(location)==1)
+      loc = location
     else
-    {
-        dim(rv) = dim(intervention.codes)
-        dimnames(rv) = dimnames(intervention.codes)
-    }
+      loc = location[i]
     
-    rv
+    filename = file.path(dir, loc, get.simset.filename(location=loc, intervention=int))
+    load(filename)
+    
+    sim.outcomes = sapply(simset@simulations, outcome.fn)
+    sim.outcomes = unlist(sapply(1:simset@n.sim, function(i){
+      rep(sim.outcomes[i], simset@weights[i])
+    }))
+    summary.stat(sim.outcomes)
+  })
+  
+  if (is.null(dim(intervention.codes)))
+  {
+    if (is.null(names(intervention.codes)))
+      names(rv) = intervention.codes
+    else
+      names(rv) = names(intervention.codes)
+  }
+  else
+  {
+    dim(rv) = dim(intervention.codes)
+    dimnames(rv) = dimnames(intervention.codes)
+  }
+  
+  rv
 }
 
 #'@param intervention.codes can be an array, table, whatever
@@ -482,10 +482,10 @@ get.quantiles.for.interventions <- function(intervention.codes,
                                             prob,
                                             outcome.fn = extract.total.incidence.reduction.20.30)
 {
-    q.fn = function(x){quantile(x, probs=prob)}
-    get.estimates.for.interventions(intervention.codes=intervention.codes,
-                                    location=location,
-                                    dir=dir,
-                                    summary.stat = q.fn,
-                                    outcome.fn=outcome.fn)
+  q.fn = function(x){quantile(x, probs=prob)}
+  get.estimates.for.interventions(intervention.codes=intervention.codes,
+                                  location=location,
+                                  dir=dir,
+                                  summary.stat = q.fn,
+                                  outcome.fn=outcome.fn)
 }

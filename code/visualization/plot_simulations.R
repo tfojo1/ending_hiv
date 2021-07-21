@@ -95,6 +95,9 @@ do.plot.simulations <- function(
     truth.name='Observed Outcome',
     truth.color=NULL,
     ribbon.alpha = 0.25,
+  
+    linetype.by = c(NA, 'intervention', 'split')[1],
+    linetypes = c ("solid", "dash", "dot", "longdash", "dashdot", "longdashdot"),
     
     label.change=F,
     label.change.ci=T,
@@ -445,15 +448,15 @@ do.plot.simulations <- function(
     {
         if (color.by=='intervention' && !is.null(truth.color))
         {   
-            if (length(colors)<(length(color.by)-1))
-                stop(paste0("Not enough colors given in 'colors': ", length(color.by)-1, " colors are needed"))
+            if (length(colors)<(length(color.names)-1))
+                stop(paste0("Not enough colors given in 'colors': ", length(color.names)-1, " colors are needed"))
             
             colors = c(truth.color, colors[1:(length(color.names)-1)])
         }
         else
         {
-            if (length(colors)<length(color.by))
-                stop(paste0("Not enough colors given in 'colors': ", length(color.by), " colors are needed"))
+            if (length(colors)<length(color.names))
+                stop(paste0("Not enough colors given in 'colors': ", length(color.names), " colors are needed"))
             
             colors = colors[1:length(color.names)]
         }
@@ -494,6 +497,32 @@ do.plot.simulations <- function(
     
     
     
+    #-------------------#
+    #-- SET UP LINE TYPES --#
+    #-------------------#
+    
+    if (!is.na(linetype.by))
+    {
+        if (linetype.by=='split')
+            linetype.names = splits
+        else
+            linetype.names = unique(simset.names)
+        
+        if (length(linetypes)<length(linetype.names))
+            stop(paste0("Not enough line types given in 'linetypes': ", length(linetype.names), " line types are needed"))
+                
+        linetypes = linetypes[1:length(linetype.names)]
+        names(linetypes) = linetype.names
+        
+        if (!is.null(df.sim))
+        {
+            if (linetype.by=='split')
+                df.sim$linetype.by = df.sim$split
+            else
+                df.sim$linetype.by = df.sim$intervention
+        }
+    }
+
     #-------------------#
     #-------------------#
     #-- MAKE THE PLOT --#
@@ -665,7 +694,10 @@ do.plot.simulations <- function(
                     if (color.by == 'split' && length(split.by)>0)
                     {
                         color = colors[split]
-                        path.name = paste0('Simulations, ', split)
+                        if (condense.legend)
+                            path.name = split
+                        else
+                            path.name = paste0('Simulations, ', split)
                         show.legend = show.legend && intervention == simset.names[1]
                     }
                     else
@@ -716,8 +748,16 @@ do.plot.simulations <- function(
                 if (color.by == 'split' && length(split.by)>0)
                 {
                     color = colors[split]
-                    path.name = paste0('Simulations, ', split)
-                    show.legend = show.legend && intervention == simset.names[1]
+                    if (condense.legend)
+                    {
+                        path.name = split
+                        show.legend = F
+                    }
+                    else
+                    {   
+                        path.name = paste0('Simulations, ', split)
+                        show.legend = show.legend && intervention == simset.names[1]
+                    }
                 }
                 else
                 {
@@ -725,6 +765,13 @@ do.plot.simulations <- function(
                     path.name = intervention
                     show.legend = show.legend && split == splits[1]
                 }
+                
+                if (is.na(linetype.by))
+                    line.type = 'solid'
+                else if (linetype.by=='split')
+                    line.type = linetypes[split]
+                else
+                    line.type = linetypes[intervention]
                 
                 
                 if (plot.format=='individual.simulations')
@@ -751,7 +798,8 @@ do.plot.simulations <- function(
                                      opacity=simulation.alpha,
                                      legendgroup=if (condense.legend) NULL else 'Simulations',
                                      line = list(color=color,
-                                                 width=simulation.line.size),
+                                                 width=simulation.line.size,
+                                                 dash=line.type),
                                      name=path.name,
                                      text=hover.text,
                                      hoverinfo='text',
@@ -775,7 +823,8 @@ do.plot.simulations <- function(
                                      opacity=1,
                                      legendgroup=if (condense.legend) NULL else 'Simulations',
                                      line = list(color=color,
-                                                 width=simulation.line.size),
+                                                 width=simulation.line.size,
+                                                 dash=line.type),
                                      name=path.name,
                                      text=hover.text,
                                      hoverinfo='text',

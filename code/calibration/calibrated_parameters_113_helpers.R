@@ -102,7 +102,7 @@ clear.calibration.dependencies <- function(components)
                         idu.transitions=c('incident.idu','idu.remission','idu.relapse'),
                         global.trate=c('global.sexual.transmission.rates','global.idu.transmission.rates'),
                         idu.mortality='excess.idu.mortality')
-stop('hi')
+    
     dependencies = unique(unlist(dependencies))
     clear.dependent.values(components, dependencies)
 }

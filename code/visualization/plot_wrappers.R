@@ -23,7 +23,8 @@ if (!exists('state.surveillance'))
     load('visualization/shiny/resources/state_surveillance.Rdata')
 
 if (!exists('CENSUS.TOTALS'))
-    load('visualization/shiny/resources/census_totals.Rdata')
+    CENSUS.TOTALS = ALL.DATA.MANAGERS$census.totals
+#    load('visualization/shiny/resources/census_totals.Rdata')
 
 if (!exists('DEFAULT.LOCALE.MAPPING'))
     load('visualization/shiny/resources/locale_mapping.Rdata')
@@ -93,7 +94,7 @@ plot.simulations.race.risk <- function(simsets,
                                        plot.format='individual.simulations',
                                        show.truth=T,
                                        ...
-                                       )
+)
 {
     do.plot.simulations(simsets,
                         years = years,
