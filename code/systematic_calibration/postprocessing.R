@@ -136,6 +136,34 @@ project.absolute.prevalence <- function(sim,
                         census.totals = census.totals)
 }
 
+project.absolute.prevalence.aware <- function(sim,
+                                              keep.dimensions = 'year',
+                                              years=sim$years,
+                                              ages=NULL,
+                                              races=NULL,
+                                              subpopulations=NULL,
+                                              sexes=NULL,
+                                              risks=NULL,
+                                              cd4=NULL,
+                                              hiv.subsets = NULL,
+                                              census.totals = if (exists('ALL.DATA.MANAGERS')) ALL.DATA.MANAGERS$census.totals else CENSUS.TOTALS,
+                                              use.cdc.categorizations=T)
+{   
+    project.absolute.prevalence(sim,
+                                keep.dimensions = keep.dimensions,
+                                years=years,
+                                ages=ages,
+                                races=races,
+                                subpopulations=subpopulations,
+                                sexes=sexes,
+                                risks=risks,
+                                continuum=sim$diagnosed.continuum.states,
+                                cd4=cd4,
+                                hiv.subsets = hiv.subsets,
+                                census.totals = census.totals,
+                                use.cdc.categorizations=T)
+}
+
 project.population.subset <- function(sim,
                                       years=sim$years,
                                       keep.dimensions='year',
@@ -169,6 +197,76 @@ project.population.subset <- function(sim,
                                              include.hiv.negative=include.hiv.negative,
                                              keep.dimensions=keep.dimensions,
                                              use.cdc.categorizations=use.cdc.categorizations)
+    
+    do.project.absolute(sim=sim,
+                        numerators=numerators,
+                        years=years,
+                        census.totals = census.totals)
+}
+
+project.absolute.n.suppressed <- function(sim,
+                                          keep.dimensions = 'year',
+                                          years=sim$years,
+                                          ages=NULL,
+                                          races=NULL,
+                                          subpopulations=NULL,
+                                          sexes=NULL,
+                                          risks=NULL,
+                                          continuum=NULL,
+                                          cd4=NULL,
+                                          hiv.subsets = NULL,
+                                          census.totals = if (exists('ALL.DATA.MANAGERS')) ALL.DATA.MANAGERS$census.totals else CENSUS.TOTALS,
+                                          use.cdc.categorizations=T)
+{
+    numerators = extract.suppression(sim,
+                                     per.population = NA,
+                                     years=years,
+                                     keep.dimensions=keep.dimensions,
+                                     ages=ages,
+                                     races=races,
+                                     subpopulations=subpopulations,
+                                     sexes=sexes,
+                                     risks=risks,
+                                     continuum=continuum,
+                                     cd4=cd4,
+                                     hiv.subsets=hiv.subsets,
+                                     use.cdc.categorizations=use.cdc.categorizations)
+    
+    
+    do.project.absolute(sim=sim,
+                        numerators=numerators,
+                        years=years,
+                        census.totals = census.totals)
+}
+
+project.absolute.overall.hiv.mortality <- function(sim,
+                                                   keep.dimensions = 'year',
+                                                   years=sim$years,
+                                                   ages=NULL,
+                                                   races=NULL,
+                                                   subpopulations=NULL,
+                                                   sexes=NULL,
+                                                   risks=NULL,
+                                                   continuum=NULL,
+                                                   cd4=NULL,
+                                                   hiv.subsets = NULL,
+                                                   census.totals = if (exists('ALL.DATA.MANAGERS')) ALL.DATA.MANAGERS$census.totals else CENSUS.TOTALS,
+                                                   use.cdc.categorizations=T)
+{
+    numerators = do.extract.overall.hiv.mortality(sim,
+                                                  per.population = NA,
+                                                  years=years,
+                                                  ages=ages,
+                                                  races=races,
+                                                  subpopulations=subpopulations,
+                                                  sexes=sexes,
+                                                  risks=risks,
+                                                  continuum=continuum,
+                                                  cd4s=cd4,
+                                                  hiv.subsets=hiv.subsets,
+                                                  keep.dimensions=keep.dimensions,
+                                                  use.cdc.categorizations=use.cdc.categorizations)
+    
     
     do.project.absolute(sim=sim,
                         numerators=numerators,
@@ -718,6 +816,8 @@ extract.suppression <- function(sim,
     }
     else
     {
+        if (is.null(continuum))
+            continuum = sim$continuum
         suppressed.states = intersect(components$settings$SUPPRESSED_STATES, continuum)
         if (length(suppressed.states)==0)
             stop(paste0("None of the specified continuum states (",
