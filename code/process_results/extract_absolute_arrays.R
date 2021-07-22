@@ -377,6 +377,12 @@ assemble.absolute.outcome.arrays <- function(dir.name = c('full','quick')[1],
     {
         for (loc.i in 1:length(locations))
         {
+            print("to fill dim: ")
+            print(dim(rv[,,,loc.i,int.i,]))
+            
+            print('fill with dim: ')
+            print(dim(elems[[int.i]][[loc.i]]))
+            
             if (!is.null(elems[[int.i]][[loc.i]]))
                 rv[,,,loc.i,int.i,] = elems[[int.i]][[loc.i]]
         }
