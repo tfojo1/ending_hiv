@@ -102,7 +102,7 @@ ALL.INTERVENTION.CODES = unique(c(
     
     paste0(IDU.INTERVENTION.CODES, "_23.27"), 
     
-    paste0(APPROX959595.CODES, '23.25')
+    paste0(APPROX959595.CODES, '_23.25')
 ))
 
 ALL.INTERVENTIONS = lapply(ALL.INTERVENTION.CODES, intervention.from.code)
