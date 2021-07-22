@@ -331,7 +331,7 @@ assemble.absolute.outcome.arrays <- function(dir.name = c('full','quick')[1],
         lapply(1:length(locations), function(loc.i){
             loc = locations[loc.i]
             
-            file = get.distributed.abs.arr.filename(intervention=intervention, location=location, dir.name=dir.name)
+            file = get.distributed.abs.arr.filename(intervention=int, location=loc, dir.name=dir.name)
             
             if (file.exists(file))
             {
