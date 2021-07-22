@@ -288,6 +288,27 @@ make.setup.scripts <- function(msa.indices,
     }
 }
 
+
+make.extract.abs.scripts <- function(msa.indices,
+                               dir='R_scripts/extract_abs_scripts/',
+                               partition='shared',
+                               account='tfojo1',
+                               mem='4800MB')
+{
+    for (i in msa.indices)
+    {
+        msa.name = names(TARGET.MSAS)[i]
+        make.sbatch.script(filename=file.path(dir, get.extract.abs.script.filename(i)),
+                           job.name = paste0("ea_", msa.name),
+                           partition=partition,
+                           account=account,
+                           mem = mem,
+                           time.hours = 1,
+                           output = file.path(OUTPUT.DIR, paste0("extract_abs_", msa.name, ".out")),
+                           commands= paste0("Rscript Ending_HIV/R_scripts/extract_absolute_arrays_script.R ", i))
+    }
+}
+
 make.assemble.mcmc.script <- function(dir='R_scripts/other_scripts/',
                                       partition='express',
                                       account='tfojo1')
@@ -383,6 +404,19 @@ make.master.rerun.script <- function(msa.indices,
     sink()
 }
 
+make.master.extract.abs.script <- function(msa.indices,
+                                     filename='R_scripts/master_scripts/extract_abs_master.bat',
+                                     path="Ending_HIV/R_scripts/extract_abs_scripts/")
+{
+    msa.indices = check.msa.indices(msa.indices)
+    
+    sink(filename)
+    contents = cat(paste0(paste0("sbatch ", path, get.extract.abs.script.filename(msa.indices)),
+                          collapse='\n'),
+                   sep='')
+    sink()
+}
+
 make.master.run.script <- function(msa.indices,
                                    chains=1:4,
                                      filename='R_scripts/master_scripts/run_master.bat',
@@ -453,6 +487,11 @@ get.initial.filename <- function(index)
 get.setup.filename <- function(index)
 {
     paste0("setup_", index, ".bat")
+}
+
+get.extract.abs.script.filename <- function(index)
+{
+    paste0("extract_abs_", index, ".bat")
 }
 
 get.intervention.script.filename <- function(index)
