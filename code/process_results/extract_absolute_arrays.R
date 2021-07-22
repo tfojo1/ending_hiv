@@ -337,7 +337,7 @@ assemble.absolute.outcome.arrays <- function(dir.name = c('full','quick')[1],
             {
                 if (verbose)
                     print(paste0("  - Loading results for '",
-                                 locations[i], "' (", loc.i, " of ", length(locations), ")"))
+                                 locations[loc.i], "' (", loc.i, " of ", length(locations), ")"))
                 load(file)
                 arr
             }
