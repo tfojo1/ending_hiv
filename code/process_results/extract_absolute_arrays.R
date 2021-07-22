@@ -109,6 +109,19 @@ get.simset.absolute.outcome.array <- function(simset,
     dim(rv) = sapply(dim.names, length)
     dimnames(rv) = dim.names
     
+    if (simset@n.sim != sum(simset@weights))
+    {
+        indices = unlist(sapply(1:simset@n.sim, function(i){
+            rep(i, simset@weights[i])
+        }))
+        
+        rv = rv[,,,indices]
+        dim.names$sim=1:sum(simset@weights)
+        
+        dim(rv) = sapply(dim.names, length)
+        dimnames(rv) = dim.names
+    }
+    
     rv
 }
 
@@ -377,12 +390,6 @@ assemble.absolute.outcome.arrays <- function(dir.name = c('full','quick')[1],
     {
         for (loc.i in 1:length(locations))
         {
-            print("to fill dim: ")
-            print(dim(rv[,,,loc.i,int.i,]))
-            
-            print('fill with dim: ')
-            print(dim(elems[[int.i]][[loc.i]]))
-            
             if (!is.null(elems[[int.i]][[loc.i]]))
                 rv[,,,loc.i,int.i,] = elems[[int.i]][[loc.i]]
         }
