@@ -235,35 +235,43 @@ distributed.get.absolute.outcome.array <- function(dir.name = c('full','quick')[
                                                                      'sex.race',
                                                                      'sex.risk',
                                                                      'race.risk')[1:5],
-                                                   verbose=T)
+                                                   verbose=T,
+                                                   overwrite=F)
 {
-    dir = file.path(SYSTEMATIC.ROOT.DIR, paste0(dir.name, '_simsets'))
-    
-    if (is.null(intervention))
-        file = file.path(dir, get.full.filename(location=location))
-    else
-        file = file.path(dir, location, get.simset.filename(location=location, intervention=intervention))
-    
+    dst.file = get.distributed.abs.arr.filename(intervention=intervention, location=location, dir.name=dir.name)
     if (is.null(intervention))
         int.name = 'Baseline'
     else
         int.name = get.intervention.name(intervention)
     
-    if (file.exists(file))
+    
+    if (overwrite || !file.exists(dst.file))
     {
-        load(file)
-        arr = get.simset.absolute.outcome.array(simset,
-                                                years=years,
-                                                outcomes=outcomes,
-                                                stratifications=stratifications)
-        save(arr,
-             file=get.distributed.abs.arr.filename(intervention=intervention, location=location, dir.name=dir.name))
+        dir = file.path(SYSTEMATIC.ROOT.DIR, paste0(dir.name, '_simsets'))
         
-        if (verbose)
-            print(paste0("Done extracting for intervention '", int.name, "' at location '", location, "'"))
+        if (is.null(intervention))
+            file = file.path(dir, get.full.filename(location=location))
+        else
+            file = file.path(dir, location, get.simset.filename(location=location, intervention=intervention))
+        
+        if (file.exists(file))
+        {
+            load(file)
+            arr = get.simset.absolute.outcome.array(simset,
+                                                    years=years,
+                                                    outcomes=outcomes,
+                                                    stratifications=stratifications)
+            save(arr, file=dst.file)
+            
+            if (verbose)
+                print(paste0("Done extracting for intervention '", int.name, "' at location '", location, "'"))
+        }
+        else if (verbose)
+            print(paste0("The requested intervention (", int.name, ") has not been run at the location (", location, ")"))
     }
     else if (verbose)
-        print(paste0("The requested intervention (", int.name, ") has not been run at the location (", location, ")"))
+        print(paste0("Skipping - absolute array has already been extracted for intervention '", int.name, 
+                     "' at location '", location, "'"))
 }
 
 get.distributed.abs.arr.filename <- function(intervention,
@@ -287,17 +295,6 @@ get.distributed.abs.arr.filename <- function(intervention,
 assemble.absolute.outcome.arrays <- function(dir.name = c('full','quick')[1],
                                              locations=TARGET.MSAS,
                                              interventions=list(NULL),
-                                             years=2010:2018,
-                                             outcomes=c('incidence','new','prevalence','mortality','suppression','diagnosed'),
-                                             stratifications=c('total',
-                                                               'age',
-                                                               'race',
-                                                               'sex',
-                                                               'risk',
-                                                               'sex.age',
-                                                               'sex.race',
-                                                               'sex.risk',
-                                                               'race.risk')[1:5],
                                              verbose=T)
 {
     dir = file.path(SYSTEMATIC.ROOT.DIR, paste0(dir.name, '_simsets'))
@@ -387,6 +384,107 @@ assemble.absolute.outcome.arrays <- function(dir.name = c('full','quick')[1],
     
     if (verbose)
         print("All Done")
+    
+    rv
+}
+
+add.abs.total.row <- function(abs.arr,
+                              mask=NULL)
+{
+    non.loc.dims = setdiff(names(dimnames(abs.arr)), 'location')
+    if (!is.null(mask))
+    {
+        mask = expand.population(mask, target.dim.names = dimnames(abs.arr))
+        totals = apply(abs.arr * mask, non.loc.dims, sum)
+    }
+    else
+        totals = apply(abs.arr, non.loc.dims, sum)
+    
+    dim.names = dimnames(abs.arr)
+    dim.names$location = c(dim.names$location, 'Total')
+    
+    rv = array(0, dim=sapply(dim.names, length), dimnames=dim.names)
+    
+    rv[,,,dimnames(abs.arr)$location,,] = abs.arr
+    rv[,,,'Total',,] = totals
+    
+    rv
+}
+
+get.suppression.from.absolute <- function(abs.arr)
+{
+    abs.arr[,,'suppression',,,] / abs.arr[,,'prevalence.diagnosed',,,]
+}
+
+get.diagnosed.from.absolute <- function(abs.arr)
+{   
+    abs.arr[,,'prevalence.diagnosed',,,] / abs.arr[,,'prevalence.all',,,]
+}
+
+get.surveillance.outcomes.array <- function(years=2010:2018,
+                                            locations=TARGET.MSAS,
+                                            outcomes=c('new','prevalence','suppression'),
+                                            stratifications=c('total',
+                                                              'age',
+                                                              'race',
+                                                              'sex',
+                                                              'risk',
+                                                              'sex.age',
+                                                              'sex.race',
+                                                              'sex.risk',
+                                                              'race.risk')[1:5],
+                                            surv=msa.surveillance)
+{
+    
+    strat.categories = list()
+    
+    rv = sapply(locations, function(loc){
+            sapply(outcomes, function(outcome){
+                unlist(sapply(stratifications, function(strat){
+                    
+#                    print(paste0("Location = ", loc, "\nOutcome = ", outcome, "\nStrat = ", strat))
+
+                    raw = get.surveillance.data(surv=surv,
+                                                location.codes = loc, 
+                                                years = years,
+                                                data.type = outcome,
+                                                age=grepl('age', strat),
+                                                race=grepl('race', strat),
+                                                sex=grepl('sex', strat),
+                                                risk=grepl('risk', strat),
+                                                throw.error.if.missing.data = F,
+                                                throw.error.if.missing.years = F)
+                    
+                    if (is.null(raw))
+                    {
+                        if (is.null(strat.categories[[strat]]))
+                            stop(paste0("Data missing for '", outcome, "' at location '", location, "' for ",
+                                        "stratification ", strat, " - and no previous data has been pulled"))
+                        
+                        raw = array(NaN, dim=c(year=length(years), strat=length(strat.categories[[strat]])))
+                    }
+                    
+                    if (is.null(strat.categories[[strat]]))
+                    {
+                        if (strat=='total')
+                            strat.categories$total <<- 'total'
+                        else
+                            strat.categories[[strat]] <<- collapse.dim.names(dimnames(raw)[-1])
+                    }
+                    
+                    raw
+                    
+                }))
+            })
+    })
+    
+    dim.names = list(year=as.character(years),
+                     stratification = as.character(unlist(strat.categories)),
+                     outcome = outcomes,
+                     location=locations)
+
+    dim(rv) = sapply(dim.names, length)
+    dimnames(rv) = dim.names
     
     rv
 }
