@@ -40,3 +40,11 @@ distributed.get.absolute.outcome.array(dir.name='full',
                                        years=2020:2030)
 print("Done\n\n")
 
+
+
+print("Extracting for 95-95-95 (v2)")
+distributed.get.absolute.outcome.array(dir.name='full',
+                                       location=msa,
+                                       intervention=APPROX959595.INTERVENTIONS.23.25[[2]],
+                                       years=2020:2030)
+print("Done\n\n")

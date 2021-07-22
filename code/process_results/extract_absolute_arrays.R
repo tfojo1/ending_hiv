@@ -402,24 +402,51 @@ assemble.absolute.outcome.arrays <- function(dir.name = c('full','quick')[1],
 }
 
 add.abs.total.row <- function(abs.arr,
-                              mask=NULL)
+                              mask=NULL,
+                              na.rm=T)
 {
+    # save the dim names
+    dim.names = dimnames(abs.arr)
+  
+    # prepare to re-index for before, location, after
+    n.locations = dim(abs.arr)['location']
+    n.dims = length(dim.names)
+    location.index = (1:n.dims)[names(dim.names)=='location']
+    dims.before = dim(abs.arr)[(1:n.dims)<location.index]
+    dims.after = dim(abs.arr)[(1:n.dims)>location.index]
+    
+    compressed.dims = c(before=prod(dims.before),
+                        location=n.locations,
+                        after=prod(dims.after))
+    
+    
+    # Calculate the totals
     non.loc.dims = setdiff(names(dimnames(abs.arr)), 'location')
     if (!is.null(mask))
     {
         mask = expand.population(mask, target.dim.names = dimnames(abs.arr))
-        totals = apply(abs.arr * mask, non.loc.dims, sum)
+        totals = apply(abs.arr * mask, non.loc.dims, sum, na.rm=na.rm)
     }
     else
-        totals = apply(abs.arr, non.loc.dims, sum)
+        totals = apply(abs.arr, non.loc.dims, sum, na.rm=na.rm)
     
-    dim.names = dimnames(abs.arr)
-    dim.names$location = c(dim.names$location, 'Total')
+    # compress dimensions
+    dim(abs.arr) = compressed.dims
+    dim(totals) = compressed.dims[-2]
     
-    rv = array(0, dim=sapply(dim.names, length), dimnames=dim.names)
+    compressed.plus.total.dims = compressed.dims
+    compressed.plus.total.dims[2] = n.locations + 1
     
-    rv[,,,dimnames(abs.arr)$location,,] = abs.arr
-    rv[,,,'Total',,] = totals
+    # make the rv
+    rv = array(0, dim=compressed.plus.total.dims)
+    rv[,1:n.locations,] = abs.arr
+    rv[,n.locations+1,] = totals
+    
+    rv.dim.names = dim.names
+    rv.dim.names$location = c(dim.names$location, 'Total')
+    
+    dim(rv) = sapply(rv.dim.names, length)
+    dimnames(rv) = rv.dim.names
     
     rv
 }
