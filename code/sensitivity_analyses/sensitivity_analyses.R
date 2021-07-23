@@ -17,7 +17,7 @@ THEME = theme(text = element_text(size=11))
 N.SIM = 1000
 if (1==2)
 {
-    intervention.for.sensitivity = intervention.from.code('mi.6m.50.90.ybh.high6.3y')   
+    intervention.for.sensitivity = intervention.from.code('mi.t2x.p25.s90_23.27')   
     sensitivity.dfs = make.sensitivity.dfs('mcmc_runs/full_simsets',
                                            interventions=list(intervention.for.sensitivity),
                                            n.sim=N.SIM)

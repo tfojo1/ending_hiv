@@ -107,3 +107,6 @@ ALL.INTERVENTION.CODES = unique(c(
 
 ALL.INTERVENTIONS = lapply(ALL.INTERVENTION.CODES, intervention.from.code)
 
+# A check here
+if (any(sapply(ALL.INTERVENTIONS, is.null)))
+    stop("Error in specifying ALL.INTERVENTIONS")
