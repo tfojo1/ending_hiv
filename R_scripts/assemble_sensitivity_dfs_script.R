@@ -12,7 +12,7 @@ INTERVENTION.FOR.SENSITIVITY = intervention.from.code('mi.t2x.p25.s90_23.27')
 
 print("ASSEMBLING SENSITIVITY DATA FRAMES...")
 print("")
-sensitivity.dfs = make.sensitivity.dfs('mcmc_runs/full_simsets',
+sensitivity.dfs = make.sensitivity.dfs(file.path(SYSTEMATIC.ROOT.DIR, 'full_simsets'),
                                        interventions=list(INTERVENTION.FOR.SENSITIVITY),
                                        n.sim=N.SIM)
 save(sensitivity.dfs, file='results/sensitivity.dfs.Rdata')
