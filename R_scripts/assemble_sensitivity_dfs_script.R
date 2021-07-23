@@ -15,6 +15,6 @@ print("")
 sensitivity.dfs = make.sensitivity.dfs(file.path(SYSTEMATIC.ROOT.DIR, 'full_simsets'),
                                        interventions=list(INTERVENTION.FOR.SENSITIVITY),
                                        n.sim=N.SIM)
-save(sensitivity.dfs, file='results/sensitivity.dfs.Rdata')
+save(sensitivity.dfs, file=file.path(SYSTEMATIC.ROOT.DIR, '..', 'results', 'full', 'sensitivity.dfs.Rdata'))
 print("")
 print("ALL DONE")
