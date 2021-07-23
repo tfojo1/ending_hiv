@@ -191,7 +191,7 @@ get.absolute.outcome.arrays <- function(dir = file.path(SYSTEMATIC.ROOT.DIR, 'fu
             {
                 if (verbose)
                     print(paste0("  - Skipping ",
-                                 locations[i], " (", loc.i, " of ", length(locations), ") - not done"))
+                                 locations[loc.ii], " (", loc.i, " of ", length(locations), ") - not done"))
                 
                 NULL
             }
