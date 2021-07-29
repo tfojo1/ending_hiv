@@ -262,7 +262,7 @@ copy.and.thin.simsets <- function(locations,
         {
             file = files[i]
             if (verbose)
-                print(" - Loading and thinning simset ", i, " of ", length(files))
+                print(paste0(" - Loading and thinning simset ", i, " of ", length(files)))
             
             load(file.path(src.dir, location, file))
             simset = do.thin.simset.to(simset, thin.to)
