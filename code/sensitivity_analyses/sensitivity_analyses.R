@@ -1,7 +1,7 @@
 library(data.table)
 #library(sensitivity)
 library(reshape2)
-#library(ggsci)
+library(ggsci)
 library(scales)
 
 source("code/process_results/pretty_formatting.R")
@@ -11,25 +11,27 @@ source('code/interventions/systematic_interventions.R')
 source('code/targets/target_msas.R')
 
 
-IMAGE.DIR = '../Manuscripts/manuscript_1/images'
+IMAGE.DIR = '../Manuscripts/manuscript_1/Annals Submission/revision 1/images/'
+library(ggplot2)
 THEME = theme(text = element_text(size=11))
 
 N.SIM = 1000
 if (1==2)
 {
-    intervention.for.sensitivity = intervention.from.code('mi.t2x.p25.s90_23.27')   
-    sensitivity.dfs = make.sensitivity.dfs('mcmc_runs/full_simsets',
-                                           interventions=list(intervention.for.sensitivity),
-                                           n.sim=N.SIM)
-    save(sensitivity.dfs, file='results/sensitivity.dfs.Rdata')
+#    intervention.for.sensitivity = intervention.from.code('mi.t2x.p25.s90_23.27')   
+#    sensitivity.dfs = make.sensitivity.dfs('mcmc_runs/full_simsets',
+#                                           interventions=list(intervention.for.sensitivity),
+#                                           n.sim=N.SIM)
+#    save(sensitivity.dfs, file='results/sensitivity.dfs.Rdata')
     
+    load('results/full/sensitivity.dfs.Rdata')
     
     merged.sensitvity.df = merge.sensitivity.dfs(sensitivity.dfs)
     ranked.sensitvity.df = merge.sensitivity.dfs(sensitivity.dfs, rank=T)
     
     
     prccs = get.locationwise.prccs(sensitivity.dfs)
-    save(prccs, file='results/prccs.Rdata')
+    save(prccs, file='results/full/prccs.Rdata')
     
     mean.prccs = rowMeans(prccs); mean.prccs = mean.prccs[order(abs(mean.prccs), decreasing = T)]
     
@@ -47,14 +49,14 @@ if (1==2)
     
         png(file.path(IMAGE.DIR, 'sensitivity/high_v_low.png'), pointsize=10, width=6.5, height=4, res=300, units='in')
 #    plot.high.vs.low.outcomes(ranked.out)
-    plot.high.vs.low.outcomes(ranked.aggregate.change) + THEME
+    plot.high.vs.low.outcomes(ranked.aggregate.change, limits=c(NA,.863)) + THEME
     dev.off()
     
-    
-    png(file.path(IMAGE.DIR, 'sensitivity/high_v_low v1.png'), pointsize=10, width=6, height=4, res=300, units='in')
-    plot.locationwise.outcome.diff(ranked.out, variables=vars.to.show) + 
-        ylab("Difference in Projected Reduction in Incidence\nfor 200 Simulations with Highest Value of\nEach Parameter vs. 200 Simulations with Lowest")
-    dev.off()
+    #not using this
+ #   png(file.path(IMAGE.DIR, 'sensitivity/high_v_low v1.png'), pointsize=10, width=6, height=4, res=300, units='in')
+ #   plot.locationwise.outcome.diff(ranked.out, variables=vars.to.show) + 
+ #       ylab("Difference in Projected Reduction in Incidence\nfor 200 Simulations with Highest Value of\nEach Parameter vs. 200 Simulations with Lowest")
+ #   dev.off()
     
     #for text
     get.high.vs.low.outcomes(ranked.out[,1:2,])
@@ -65,7 +67,7 @@ if (1==2)
    # hl2 = hl[hl$variable==hl$variable[2],]; hl2=hl2[order(hl2$value),]; hl2$location=msa.names(hl2$location);hl2[1:2,]
     
     # for text of high vs low
-    hl = get.locationwise.high.low(ranked.out, variables=vars.to.show[1:2])
+    hl = get.locationwise.high.low(ranked.out, variables=vars.to.show[1:2], interval.coverage = .95)
     hl = hl[hl$variable==hl$variable[1],]
     greatest.diff.index = (1:dim(hl)[1])[abs(hl$diff)==max(abs(hl$diff))][1]
     
@@ -164,7 +166,8 @@ get.high.vs.low.outcomes <- function(ranked.out,
 
 plot.high.vs.low.outcomes <- function(ranked.out,
                                       frac=0.2,
-                                      box.width=0.6)
+                                      box.width=0.6,
+                                      limits=c(NA,NA))
 {
     df = get.high.vs.low.outcomes(ranked.out=ranked.out, frac=frac)
     
@@ -185,7 +188,7 @@ plot.high.vs.low.outcomes <- function(ranked.out,
         theme(legend.position = 'bottom',
               legend.direction='vertical',
               panel.background=element_blank()) +
-        scale_y_continuous(labels=percent)
+        scale_y_continuous(labels=percent, limits = limits)
 }
 
 
@@ -397,7 +400,7 @@ plot.locationwise.prccs <- function(prccs,
                               stat='identity', fill=fill, width=box.width) +
         geom_hline(yintercept = 0, linetype='dashed') +
         ylim(-1,1) +
-        xlab(NULL) + ylab("Partial Rank Correlation Coefficient (PRCC)") +
+        xlab(NULL) + ylab("Partial Rank Correlation Coefficient") +
         theme(panel.background=element_blank()) + coord_flip()
     
 #    ggplot(df) + geom_boxplot(aes(value, variable), fill=fill) +

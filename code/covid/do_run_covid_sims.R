@@ -5,9 +5,11 @@ source('code/covid/prepare_and_run_covid_sims.R')
 source('code/covid/run_covid_simset_3.0.R')
 source('code/targets/target_msas.R')
 
-msas = TARGET.MSAS[1 + 4*0:7][4:8] #setdiff(TARGET.MSAS, c(ATLANTA.MSA, BALTIMORE.MSA, MIAMI.MSA, NYC.MSA))[3*7 + 1:7]
-scenarios = c('base','delayed.hiv.care','rebound.sexual.transmission','rebound.sex.delayed.hiv.care')
-interventions.per.scenario = 'testing.50.6.6'#c(NA, 'testing.5.6.6')
+source('code/covid/process_covid_results3.R')
+
+msas = TARGET.MSAS[28]#[8 + 8*0:3][-1] 
+scenarios = c('base','delayed.hiv.care','rebound.sexual.transmission','rebound.sex.delayed.hiv.care')[c(1,2,4)]
+interventions.per.scenario = NA
 
 
 #END.TIMES.SEXUAL.TRANSMISSION = c(2022)
@@ -31,7 +33,7 @@ for (msa in msas)
 
     print("- Preparing simset for simulations")
     set.seed(1234)
-    base.simset = prepare.simset.for.interventions(base.simset, fix.components = F)
+    base.simset = prepare.simset.for.interventions(base.simset)
     base.simset = prepare.simset.for.covid(base.simset)
     
     for (scenario in scenarios)
@@ -54,8 +56,16 @@ for (msa in msas)
             if (!dir.exists(file.path(DST.DIR, msa)))
                 dir.create(file.path(DST.DIR, msa))
             save(simset, file=file.path(DST.DIR, msa, get.covid.simset.name(msa, scenario=scenario, intervention.name=int.name)))
+            
         }
     }
+    
+    print("Processing Outcomes")
+    
+    outcomes.sub.arr = process.covid.outcomes(locations=msa)
+    save(outcomes.sub.arr, file=paste0('results/covid/subs/covid_4.1_results_', msa, '.Rdata'))
+    
+    print(paste0("Done with ", msa))
 }
 
 if (1==2)

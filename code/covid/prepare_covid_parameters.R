@@ -10,7 +10,7 @@ generate.covid.parameters <- function(N=1000,
                                       max.time.from.sex.to.tps=c(-0.5,1),
                                       sexual.ramp.down.time = 0.25,
                                       tps.ramp.down.time = 0.25,
-                                      seed=123343,
+                                      seed=123343456, #12334345
                                       sample.time.frames=F
                                       )
 {

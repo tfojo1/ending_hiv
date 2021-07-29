@@ -1,7 +1,9 @@
 
-source('code/interventions/intervention_presets.R')
+source('code/source_code.R')
+#source('code/interventions/intervention_presets.R')
 
 ##-- PROCESS RESULTS --##
+SAVE.TO.DIR = '../Manuscripts/manuscript_1/Annals Submission/revision 1/tables/'
 if (1==2)
 {
     load('results/jenness.simsets.Rdata')
@@ -23,7 +25,7 @@ if (1==2)
                            Other=c(Base='0.32 [0.18-0.49]',
                                      Annual='0.29 [0.14-0.46]',
                                      Biannual='0.29 [0.14-0.47]',
-                                     Quarterly='0.29 [0.14-0.47]'),
+                                     Quarterly='0.29 [0.14-0.47]')
                            )
     
     jheem.testing.dists = lapply(c(list(noint), jenness.simsets), get.simset.incidence.dist, 
@@ -53,7 +55,7 @@ if (1==2)
                      Hispanic=sapply(jheem.hispanic.testing.dists, make.dist.summary),
                      Other=sapply(jheem.other.testing.dists, make.dist.summary))
     
-    write.csv(jheem.df, file='../Manuscripts/manuscript_1/appendix_1/scratch/jheem_for_jenness.csv')
+    write.csv(jheem.df, file=file.path(SAVE.TO.DIR, 'jheem_for_jenness.csv'))
 }
 
 make.dist.summary <- function(dist, digits=2)
@@ -98,9 +100,14 @@ jenness.simsets = lapply(1:length(JENNESS.INTERVENTIONS), function(i){
     print(paste0("Running Intervention ", i, " of ", length(JENNESS.INTERVENTIONS)))
     run.simset.intervention(simset, JENNESS.INTERVENTIONS[[i]])
 })
-save(jenness.simsets, file='results/jenness.simsets.Rdata')
+save(jenness.simsets, file='mcmc_runs/comparison_simsets/jenness.simsets.Rdata')
 
 load('mcmc_runs/full_simsets/12060/1.0_12060_noint.Rdata')
+# GENERATING the simsets is now done
+
+
+
+## other older code
 noint = simset
 
 pias = sapply(jenness.simsets, get.infections.averted, reference.simset=noint, sexes='msm')

@@ -17,17 +17,20 @@ library(plotly)
 source('code/visualization/plot_simulations.R')
 
 if (!exists('msa.surveillance'))
-    load('visualization/shiny/resources/msa_surveillance.Rdata')
+    load('cached/msa.surveillance.Rdata')
+#    load('visualization/shiny/resources/msa_surveillance.Rdata')
 
 if (!exists('state.surveillance'))
-    load('visualization/shiny/resources/state_surveillance.Rdata')
+    load('cached/state.surveillance.Rdata')
+#    load('visualization/shiny/resources/state_surveillance.Rdata')
 
 if (!exists('CENSUS.TOTALS'))
-    CENSUS.TOTALS = ALL.DATA.MANAGERS$census.totals
+    load('cached/census_totals.Rdata')
 #    load('visualization/shiny/resources/census_totals.Rdata')
 
 if (!exists('DEFAULT.LOCALE.MAPPING'))
-    load('visualization/shiny/resources/locale_mapping.Rdata')
+    load('cached/DEFAULT.LOCALE.MAPPING.Rdata')
+#    load('visualization/shiny/resources/locale_mapping.Rdata')
 
 DEFAULT.AGES = c("13-24 years", "25-34 years", "35-44 years", "45-54 years", "55+ years")
 DEFAULT.RACES = c('black', 'hispanic', 'other')

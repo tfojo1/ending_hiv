@@ -141,7 +141,8 @@ do.plot.simulations <- function(
     label.axis.ci = T,
     wrap.axis.labels = F,
   
-    margin.top=NULL
+    margin.top=NULL,
+    ylim=NULL
     )
 {
     keep.dimensions = unique(c('year', facet.by, split.by))
@@ -921,12 +922,16 @@ do.plot.simulations <- function(
                                 round(100*plot.interval.coverage), 
                                 '% Prediction Interval)')
           
-        yaxis.list = list(rangemode = "tozero",
-                          automargin = T,
+        yaxis.list = list(automargin = T,
                           title = list(text=axis.title,
                                        standoff=y.title.standoff,
                                        font=list(size=y.title.size)),
                           tickfont = list(size=tick.size))
+        
+        if (is.null(ylim))
+            yaxis.list$rangemode = "tozero"
+        else
+            yaxis.list$range = ylim
         
         y.axis.digits = digits.for.sim[ff]-1
         if (is.pct.data.type(data.types.for.facet.categories[ff], data.type.names))

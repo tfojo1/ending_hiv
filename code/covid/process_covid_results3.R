@@ -6,20 +6,20 @@ if (1==2)
     source('code/source_code.R')
     source('code/targets/target_msas.R')
     
-    N.SUB = 32
-    N.SUB.PER = length(TARGET.MSAS)/N.SUB
-    subs = lapply(1:32, function(i){
-        print(paste0("DOING ", i, " OF ", N.SUB))
-        outcomes.sub.arr = process.covid.outcomes(locations=TARGET.MSAS[(i-1)*N.SUB.PER + 1:N.SUB.PER])
-        save(outcomes.sub.arr, file=paste0('code/covid/results/covid_4.0_results_sub', i, '.Rdata'))
+    INDICES.TO.DO = 1 + 8*0:3
+    subs = lapply(1:length(INDICES.TO.DO), function(i){
+        print(paste0("DOING '", TARGET.MSAS[INDICES.TO.DO[i]], "' - ", i, " OF ", length(INDICES.TO.DO)))
+        outcomes.sub.arr = process.covid.outcomes(locations=TARGET.MSAS[INDICES.TO.DO[i]])
+        save(outcomes.sub.arr, file=paste0('results/covid/covid_4.1_results_sub', INDICES.to.DO[i], '.Rdata'))
         outcomes.sub.arr
     })
-    outcomes.arr = load.and.merge.covid.outcomes()
+    
+    outcomes.arr = load.and.merge.covid.outcomes(prefix='covid_4.1')
     parameters = generate.covid.parameters(N=1000)
     location.names = unlist(msa.names(TARGET.MSAS))
     
     
-    save(outcomes.arr, parameters, location.names, file='code/covid/results/covid_4.0_results.Rdata')
+    save(outcomes.arr, parameters, location.names, file='results/covid/covid_4.0_results.Rdata')
     
     nyc.means = apply(outcomes.arr[2,,1,,'prevalence.diagnosed',], c('scenario','year'), mean)
     nyc.means = apply(outcomes.arr[2,,1,,'suppression',]/outcomes.arr[2,,1,,'prevalence.diagnosed',], c('scenario','year'), mean)
@@ -55,8 +55,8 @@ COVID.DIR = 'mcmc_runs/covid_simsets'
 # - suppression_reduction
 # 
 process.covid.outcomes <- function(locations=TARGET.MSAS,
-                                   scenarios=c('base','delayed.hiv.care','rebound.sexual.transmission','rebound.sex.delayed.hiv.care'),
-                                   intervention.names = c(NA, 'testing.50.6.6'),
+                                   scenarios=c('base','delayed.hiv.care','rebound.sexual.transmission','rebound.sex.delayed.hiv.care')[c(1,2,4)],
+                                   intervention.names = NA,#c(NA, 'testing.50.6.6'),
                                    include.baseline=T,
                                    years=2010:2030,
                                    version=COVID.VERSION,
@@ -98,7 +98,6 @@ process.covid.outcomes <- function(locations=TARGET.MSAS,
                                                      scenario=scenario, 
                                                      intervention.name = int.name)
                     filename = file.path(COVID.DIR, loc, filename)
-                    print(filename)
                     if (file.exists(filename))
                         load(file=filename)
                     else
@@ -158,10 +157,12 @@ merge.covid.outcomes <- function(sub.list)
     rv
 }
 
-load.and.merge.covid.outcomes <- function(indices=1:32)
+load.and.merge.covid.outcomes <- function(msas=TARGET.MSAS,
+                                          dir='results/covid/subs',
+                                          prefix='covid_4.1')
 {
-    subs = lapply(indices, function(i){
-        filename = paste0('code/covid/results/covid_4.0_results_sub', i, '.Rdata')
+    subs = lapply(msas, function(msa){
+        filename = file.path(dir, paste0(prefix, '_results_', msa, '.Rdata'))
         if (file.exists(filename))
         {
             load(file=filename)

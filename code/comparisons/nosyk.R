@@ -2,6 +2,8 @@ source('code/source_code.R')
 source('code/targets/target_msas.R')
 source('code/interventions/synthesize_interventions.R')
 
+SAVE.TO.DIR = '../Manuscripts/manuscript_1/Annals Submission/revision 1/tables/'
+
 ##-- RUN INTERVENTIONS --##
 if (1==2)
 {
@@ -19,7 +21,7 @@ if (1==2)
         run.nosyk.projections(simset)
     })
     
-    save(simsets.nosyk, file='results/simsets_nosyk.Rdata')
+    save(simsets.nosyk, file='mcmc_runs/comparison_simsets/simsets_nosyk.Rdata')
 }
 
 cities = c('Atlanta',
@@ -85,16 +87,16 @@ if (1==2)
                x[2], '%]')
     })
     
-    df.reduction = data.frame(Nosyk=nosyk.incidence.reduction,
-                         JHEEM=round(jheem.incidence.reduction,2));df.reduction
+ #   df.reduction = data.frame(Nosyk=nosyk.incidence.reduction,
+  #                       JHEEM=round(jheem.incidence.reduction,2));df.reduction
     
-    write.csv(df.reduction, file='../Manuscripts/manuscript_1/tables/nosyk_comparison.csv')
+   # write.csv(df.reduction, file='../Manuscripts/manuscript_1/tables/nosyk_comparison.csv')
     
   #  df.jheem = -round(100*cbind('2030'=jheem.incidence.reduction, '2025'=jheem.incidence.2025.reduction))
-    df.jheem = cbind('2030'=jheem.incidence.reduction, '2025'=jheem.incidence.2025.reduction))
+    df.jheem = cbind('2030'=jheem.incidence.reduction, '2025'=jheem.incidence.2025.reduction)
     dimnames(df.jheem)[[1]]=cities
     
-    write.csv(df.jheem, file='../Manuscripts/manuscript_1/appendix_1/scratch/jheem_for_nosyk.csv')
+    write.csv(df.jheem, file=file.path(SAVE.TO.DIR, 'jheem_for_nosyk.csv'))
 }
 
 
