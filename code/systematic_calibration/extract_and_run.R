@@ -204,7 +204,7 @@ assemble.and.thin.mcmcs <- function(targets = TARGET.MSAS,
 
 copy.and.thin.simsets <- function(locations,
                                   src.dir = file.path(SYSTEMATIC.ROOT.DIR, 'full_simsets'),
-                                  dst.dir = file.path(SYSTEMATIR.ROOT.DIR, 'visualization_simsets'),
+                                  dst.dir = file.path(SYSTEMATIC.ROOT.DIR, 'visualization_simsets'),
                                   thin.to=80,
                                   compress=T,
                                   verbose=T,

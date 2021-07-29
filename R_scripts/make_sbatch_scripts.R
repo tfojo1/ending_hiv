@@ -300,6 +300,7 @@ make.copy.scripts <- function(msa.indices,
                            job.name = paste0("c", msa.name),
                            partition=partition,
                            account=account,
+                           time.hours = 8,
                            output = file.path(OUTPUT.DIR, paste0("copy_", msa.name, ".out")),
                            commands = paste0("Rscript Ending_HIV/R_scripts/copy_simset_script.R ", i))
     }
