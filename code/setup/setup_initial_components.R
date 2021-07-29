@@ -7,6 +7,7 @@ T0.5 = 2006
 YOUNG.T0=2000
 
 setup.initial.components <- function(msa=BALTIMORE.MSA,
+                                     settings=SETTINGS,
                                      population.year=2007,
                                      max.smoothed.suppressed.proportion=0.8,
 
@@ -64,6 +65,7 @@ setup.initial.components <- function(msa=BALTIMORE.MSA,
                                      fix=F)
 {
     msa.components = setup.components.for.msa(msa,
+                                              settings=settings,
                                               population.year=population.year,
                                               max.smoothed.suppressed.proportion = max.smoothed.suppressed.proportion,
                                               smooth.to.year = last.background.year,

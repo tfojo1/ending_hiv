@@ -780,45 +780,66 @@ setup.mcmc.for.msa <- function(msa,
 
 create.run.simulation.function <- function(msa,
                                            start.values,
-                                           max.sim.time=Inf)
+                                           settings = SETTINGS,
+                                           max.sim.time=Inf,
+                                           catch.errors=T,
+                                           fix.components=T)
 {
     #-- Init Components --#
-    base.components = setup.initial.components(msa=msa)
+    base.components = setup.initial.components(msa=msa, settings = settings)
     
-    init.components = get.components.for.calibrated.parameters(start.values, base.components)
-    init.components = fix.components.for.calibration(components = init.components)
+    get.components.fn = get.components.function.for.version(VERSION.MANAGER, settings$VERSION)
+    
+    init.components = get.components.fn(start.values, base.components)
+    
+    if (fix.components)
+        init.components = fix.components.for.calibration(components = init.components)
     
     #-- Run Function --#
-    run.simulation <- function(parameters)
-    {
-        tryCatch({
-            components = get.components.for.calibrated.parameters(parameters, init.components)
+    
+    if (catch.errors)
+      run.simulation <- function(parameters)
+      {
+          tryCatch({
+              components = get.components.fn(parameters, init.components)
+              sim = run.jheem.from.components(components, max.run.time.seconds = max.sim.time)
+              
+              if (sum(sapply(sim, function(x){sum(is.na(x))}))>0)
+                  stop("NA values in simulation")
+              
+              sim
+          },
+          error = function(e){
+              cat("----------------------------------\n")
+              cat("THERE WAS AN ERROR RUNNING THE SIMULATION:\n")
+              cat(e$message, '\n')
+              
+              error.file = file.path(SYSTEMATIC.ROOT.DIR, 'errors', paste0('error_', msa, '_', Sys.Date()))
+              
+              save(e,
+                   parameters,
+                   components,
+                   init.components,
+                   file=error.file)
+              
+              cat("Saving the details to '", error.file, "'\n and allowing the mcmc to continue.\n", sep='')
+              cat("----------------------------------\n")
+              
+              list(terminated=T)
+          })
+      }
+    else
+        run.simulation <- function(parameters)
+        {
+            components = get.components.fn(parameters, init.components)
             sim = run.jheem.from.components(components, max.run.time.seconds = max.sim.time)
             
             if (sum(sapply(sim, function(x){sum(is.na(x))}))>0)
-                stop("NA values in simulation")
+              stop("NA values in simulation")
             
             sim
-        },
-        error = function(e){
-            cat("----------------------------------\n")
-            cat("THERE WAS AN ERROR RUNNING THE SIMULATION:\n")
-            cat(e$message, '\n')
-            
-            error.file = file.path(SYSTEMATIC.ROOT.DIR, 'errors', paste0('error_', msa, '_', Sys.Date()))
-            
-            save(e,
-                 parameters,
-                 components,
-                 init.components,
-                 file=error.file)
-            
-            cat("Saving the details to '", error.file, "'\n and allowing the mcmc to continue.\n", sep='')
-            cat("----------------------------------\n")
-            
-            list(terminated=T)
-        })
-    }
+        }
+        
     
     run.simulation
 }
