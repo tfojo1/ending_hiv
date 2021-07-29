@@ -201,3 +201,88 @@ assemble.and.thin.mcmcs <- function(targets = TARGET.MSAS,
     
     cat("All Done!\n")
 }
+
+copy.and.thin.simsets <- function(locations,
+                                  src.dir = file.path(SYSTEMATIC.ROOT.DIR, 'full_simsets'),
+                                  dst.dir = file.path(SYSTEMATIR.ROOT.DIR, 'visualization_simsets'),
+                                  thin.to=80,
+                                  compress=T,
+                                  verbose=T,
+                                  redo.seed=T,
+                                  redo.baseline=T,
+                                  compress.to.years=2010:2030)
+{
+    for (location in locations)
+    {
+        print(paste0("Copying and thinning simsets for ", location))
+        
+        if (!file.exists(dst.dir))
+            dir.create(dst.dir)
+        if (!file.exists(file.path(dst.dir, location)))
+            dir.create(file.path(dst.dir, location))
+        
+        need.to.do.seed = redo.seed || !file.exists(file.path(src.dir, location, get.seed.filename(location)))
+        need.to.do.baseline = redo.baseline || !file.exists(file.path(src.dir, location, get.baseline.filename(location)))
+        if (need.to.do.seed || need.to.do.baseline)
+        {
+            if (verbose)
+            {
+                if (need.to.do.seed && need.to.do.baseline)
+                    print(" - Preparing seed and baseline simsets")
+                else if (neneed.to.do.seed)
+                    print(" - Preparing seed simset")
+                else
+                    print(" - Preparing baseline simset")
+            }
+            
+            full.file = file.path(src.dir, get.full.filename(location))
+            if (!file.exists(full.file))
+                stop(paste0("Full file ('", full.file, "') does not exist"))
+            load(full.file)
+            simset = do.thin.simset.to(simset, thin.to)
+            
+            if (need.to.do.seed)
+                save.seed.simset(simset, dir=file.path(dst.dir, location))
+            
+            if (need.to.do.baseline)
+            {
+                if (compress)
+                    simset = compress.simset(simset, keep.years=intersect(simset@simulations[[1]]$years, compress.to.years))
+                save.simset(simset, dir=file.path(dst.dir, location), compress=F)
+            }
+        }
+        
+        
+        files = list.files(file.path(src.dir, location))
+        if (need.to.do.baseline)
+            files = files[files != get.baseline.filename(location)]
+        if (need.to.do.seed)
+            files = files[files != get.seed.filename(location)]
+        for (i in (1:length(files)))
+        {
+            file = files[i]
+            if (verbose)
+                print(" - Loading and thinning simset ", i, " of ", length(files))
+            
+            load(file.path(src.dir, location, file))
+            simset = do.thin.simset.to(simset, thin.to)
+            if (compress)
+                simset = compress.simset(simset, keep.years=intersect(simset@simulations[[1]]$years, compress.to.years))
+            save.simset(simset, dir=file.path(dst.dir, location), compress=F)
+        }
+        
+        print(paste0("Done with ", location))
+    }
+}
+
+do.thin.simset.to <- function(simset, thin.to)
+{
+    if (simset@n.sim < thin.to)
+        stop(paste0("The simset only has ", simset@n.sim, " simulations. Cannot thin to ", thin.to, " simulations"))
+    
+    indices = (1:thin.to)*floor(simset@n.sim/thin.to)
+    indices = indices + (simset@n.sim - max(indices))
+    
+    simset = subset.simset(simset, indices=indices)
+    simset
+}

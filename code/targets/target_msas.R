@@ -1,4 +1,8 @@
 
+##-----------------------------------##
+##-- ALL MSAs DEFINED AS CONSTANTS --##
+##-----------------------------------##
+
 NYC.MSA = '35620'
 MIAMI.MSA = '33100'
 LA.MSA = '31080'
@@ -39,46 +43,59 @@ BATON.ROUGE.MSA = '12940'
 SACRAMENTO.MSA = '40900'
 CLEVELAND.MSA = '17460'
 
-TARGET.MSAS = c(NYC=NYC.MSA,
-                Miami=MIAMI.MSA,
-                LA=LA.MSA,
-                Atlanta=ATLANTA.MSA,
-                Houston=HOUSTON.MSA,
-                Dallas=DALLAS.MSA,
-                Chicago=CHICAGO.MSA,
-                DC=DC.MSA,
-                Philadelphia=PHILADELPHIA.MSA,
-                Orlando=ORLANDO.MSA,
-                SF=SF.MSA,
-                Phoenix=PHOENIX.MSA,
-                Tampa=TAMPA.MSA,
-                Riverside=RIVERSIDE.MSA,
-                Detroit=DETROIT.MSA,
-                Baltimore=BALTIMORE.MSA,
-                Vegas=VEGAS.MSA,
-                Boston=BOSTON.MSA,
-                San_Diego=SAN.DIEGO.MSA,
-                Charlotte=CHARLOTTE.MSA,
-                San_Antonio=SAN.ANTONIO.MSA,
-                Jacksonville=JACKSONVILLE.MSA,
-                New_Orleans=NEW.ORLEANS.MSA,
-                Memphis=MEMPHIS.MSA,
-                Seattle=SEATTLE.MSA,
-                Austin=AUSTIN.MSA,
-                Indianapolis=INDIANAPOLIS.MSA,
-                Cincinatti=CINCINATTI.MSA,
-                Columbus=COLUMBUS.MSA,
-                Baton_Rouge=BATON.ROUGE.MSA,
-                Sacramento=SACRAMENTO.MSA,
-                Cleveland=CLEVELAND.MSA)
+ST.LOUIS.MSA = '41180'
 
+##----------------------------##
+##-- LUMP THEM INTO VECTORS --##
+##----------------------------##
+
+# Every MSA we have represented in the code anywhere
+ALL.MSAS = c(NYC=NYC.MSA,
+             Miami=MIAMI.MSA,
+             LA=LA.MSA,
+             Atlanta=ATLANTA.MSA,
+             Houston=HOUSTON.MSA,
+             Dallas=DALLAS.MSA,
+             Chicago=CHICAGO.MSA,
+             DC=DC.MSA,
+             Philadelphia=PHILADELPHIA.MSA,
+             Orlando=ORLANDO.MSA,
+             SF=SF.MSA,
+             Phoenix=PHOENIX.MSA,
+             Tampa=TAMPA.MSA,
+             Riverside=RIVERSIDE.MSA,
+             Detroit=DETROIT.MSA,
+             Baltimore=BALTIMORE.MSA,
+             Vegas=VEGAS.MSA,
+             Boston=BOSTON.MSA,
+             San_Diego=SAN.DIEGO.MSA,
+             Charlotte=CHARLOTTE.MSA,
+             San_Antonio=SAN.ANTONIO.MSA,
+             Jacksonville=JACKSONVILLE.MSA,
+             New_Orleans=NEW.ORLEANS.MSA,
+             Memphis=MEMPHIS.MSA,
+             Seattle=SEATTLE.MSA,
+             Austin=AUSTIN.MSA,
+             Indianapolis=INDIANAPOLIS.MSA,
+             Cincinatti=CINCINATTI.MSA,
+             Columbus=COLUMBUS.MSA,
+             Baton_Rouge=BATON.ROUGE.MSA,
+             Sacramento=SACRAMENTO.MSA,
+             Cleveland=CLEVELAND.MSA,
+             St_Louis=ST.LOUIS.MSA)
+
+# Just the ones for EHE counties
+TARGET.MSAS = ALL.MSAS[1:32]
+
+
+##-- FUNCTIONS (map to indices) --##
 
 msas.to.indices <- function(msas)
 {
     sapply(msas, function(msa){
-        mask = TARGET.MSAS==as.character(msa)
+        mask = ALL.MSAS==as.character(msa)
         if (any(mask))
-            (1:length(TARGET.MSAS))[mask]
+            (1:length(ALL.MSAS))[mask]
         else
             as.integer(NA)
     })

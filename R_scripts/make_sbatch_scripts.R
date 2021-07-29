@@ -288,6 +288,23 @@ make.setup.scripts <- function(msa.indices,
     }
 }
 
+make.copy.scripts <- function(msa.indices,
+                               dir='R_scripts/copy_scripts/',
+                               partition='shared',
+                               account='tfojo1')
+{
+    for (i in msa.indices)
+    {
+        msa.name = names(TARGET.MSAS)[i]
+        make.sbatch.script(filename=file.path(dir, get.copy.filename(i)),
+                           job.name = paste0("c", msa.name),
+                           partition=partition,
+                           account=account,
+                           output = file.path(OUTPUT.DIR, paste0("copy_", msa.name, ".out")),
+                           commands = paste0("Rscript Ending_HIV/R_scripts/copy_simset_script.R ", i))
+    }
+}
+
 
 make.extract.abs.scripts <- function(msa.indices,
                                dir='R_scripts/extract_abs_scripts/',
@@ -343,6 +360,17 @@ make.master.setup.script <- function(msa.indices,
 {
     sink(filename)
     contents = cat(paste0(paste0("sbatch ", path, get.setup.filename(msa.indices)),
+                          collapse='\n'),
+                   sep='')
+    sink()
+}
+
+make.master.copy.script <- function(msa.indices,
+                                     filename='R_scripts/master_scripts/copy_master.bat',
+                                     path="Ending_HIV/R_scripts/copy_scripts/")
+{
+    sink(filename)
+    contents = cat(paste0(paste0("sbatch ", path, get.copy.filename(msa.indices)),
                           collapse='\n'),
                    sep='')
     sink()
@@ -487,6 +515,11 @@ get.initial.filename <- function(index)
 get.setup.filename <- function(index)
 {
     paste0("setup_", index, ".bat")
+}
+
+get.copy.filename <- function(index)
+{
+    paste0("copy_", index, ".bat")
 }
 
 get.extract.abs.script.filename <- function(index)
