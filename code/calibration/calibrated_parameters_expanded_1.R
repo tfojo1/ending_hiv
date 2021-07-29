@@ -194,35 +194,6 @@ parameters.prior = join.distributions(
     testing.ramp.up.vs.current.rr = Lognormal.Distribution(log(0.5), 0.25*log(2), upper = 1),
     
     
-    #-- Suppression --#
-    # WE WILL DELETE SUPPRESSION
-    heterosexual.suppressed.or = Lognormal.Distribution(0, log(2)),
-    msm.suppressed.or = Lognormal.Distribution(0, log(2)),
-    idu.suppressed.or = Lognormal.Distribution(0, log(2)),
-    msm.idu.suppressed.or = Lognormal.Distribution(0, log(2)),
-    
-    black.suppressed.or = Lognormal.Distribution(0, log(2)),
-    hispanic.suppressed.or = Lognormal.Distribution(0, log(2)),
-    
-    age1.suppressed.or = Lognormal.Distribution(0, log(2)),
-    age2.suppressed.or = Lognormal.Distribution(0, log(2)),
-    age4.suppressed.or = Lognormal.Distribution(0, log(2)),
-    age5.suppressed.or = Lognormal.Distribution(0, log(2)),
-    
-    heterosexual.suppressed.slope.or = Lognormal.Distribution(0, 0.5*log(2)/5),
-    msm.suppressed.slope.or = Lognormal.Distribution(0, 0.5*log(2)/5),
-    idu.suppressed.slope.or = Lognormal.Distribution(0, 0.5*log(2)/5),
-    msm.idu.suppressed.slope.or = Lognormal.Distribution(0, 0.5*log(2)/5),
-    
-    black.suppressed.slope.or = Lognormal.Distribution(0, 0.5*log(2)/5),
-    hispanic.suppressed.slope.or = Lognormal.Distribution(0, 0.5*log(2)/5),
-    
-    age1.suppressed.slope.or = Lognormal.Distribution(0, 0.5*log(2)/5),
-    age2.suppressed.slope.or = Lognormal.Distribution(0, 0.5*log(2)/5),
-    age4.suppressed.slope.or = Lognormal.Distribution(0, 0.5*log(2)/5),
-    age5.suppressed.slope.or = Lognormal.Distribution(0, 0.5*log(2)/5),
-    
-#MELISSA HERE  
     #-- LINKAGE --#
     heterosexual.proportion.linked.or = Lognormal.Distribution(0, log(2)),
     msm.proportion.linked.or = Lognormal.Distribution(0, log(2)),
@@ -387,6 +358,9 @@ parameters.prior = join.distributions(
     heterosexual.fraction.trate.change.after.t2 = Lognormal.Distribution(meanlog=log(0.1), sdlog=log(2), lower=0, upper=0.5),
     idu.fraction.trate.change.after.t2 = Lognormal.Distribution(meanlog=log(0.1), sdlog=log(2), lower=0, upper=0.5)
 )
+VERSION.MANAGER = register.parameters.prior(VERSION.MANAGER,
+                                            prior=parameters.prior,
+                                            version=SETTINGS.EXPANDED.CONTINUUM$VERSION)
 
 PARAMETER.VAR.BLOCKS.1 = list(
   
@@ -572,6 +546,9 @@ PARAMETER.VAR.BLOCKS.1 = list(
                     'hiv.mortality.0',
                     'hiv.mortality.2')
 )
+VERSION.MANAGER = register.parameter.sampling.blocks(VERSION.MANAGER,
+                                                     blocks=PARAMETER.VAR.BLOCKS.1,
+                                                     version=SETTINGS.EXPANDED.CONTINUUM$VERSION)
 
 if (1==2)
 {
@@ -1203,7 +1180,9 @@ get.components.for.calibrated.parameters <- function(parameters, components,
   #-- Return --#
   components
 }
-
+VERSION.MANAGER = register.get.components.function(VERSION.MANAGER, 
+                                                   fn=get.components.for.calibrated.parameters,
+                                                   version = SETTINGS.EXPANDED.CONTINUUM$VERSION)
 
 
 
