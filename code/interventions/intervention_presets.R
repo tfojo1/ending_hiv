@@ -59,11 +59,11 @@ NO.INTERVENTION = create.null.intervention()
 INTERVENTION.MANAGER.1.0 = register.intervention(NO.INTERVENTION, code='noint', name='No Intervention')
 
 INTERVENTION.MANAGER.1.0 = register.standard.interventions.annals.revision(start.year=2023,
-                                                                           end.year=2027,
+                                                                           end.year=2028,
                                                                            suffix='23.27',
                                                                            INTERVENTION.MANAGER=INTERVENTION.MANAGER.1.0)
 
 INTERVENTION.MANAGER.1.0 = register.standard.interventions.annals.revision(start.year=2023,
-                                                                           end.year=2025,
+                                                                           end.year=2026,
                                                                            suffix='23.25',
                                                                            INTERVENTION.MANAGER=INTERVENTION.MANAGER.1.0)

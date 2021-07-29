@@ -789,7 +789,8 @@ extract.suppression <- function(sim,
                                 continuum=sim$diagnosed.continuum.states,
                                 cd4=NULL,
                                 hiv.subsets=NULL,
-                                use.cdc.categorizations=F)
+                                use.cdc.categorizations=F,
+                                year.anchor=c('start','mid','end')[2])
 {
     if (any(keep.dimensions=='continuum'))
         stop("Cannot keep the continuum dimension in calculating suppression")
@@ -797,22 +798,77 @@ extract.suppression <- function(sim,
     components = attr(sim, 'components')
     if (components$settings$IS_CONTINUUM_COLLAPSED)
     {
-        raw.suppression.rates = calculate.suppression(components)
-        do.extract.rates(raw.rates = raw.suppression.rates,
-                         sim=sim,
-                         years=years,
-                         keep.dimensions=keep.dimensions,
-                         per.population=per.population,
-                         ages=ages,
-                         races=races,
-                         subpopulations=subpopulations,
-                         sexes=sexes,
-                         risks=risks,
-                         continuum=continuum,
-                         cd4=cd4,
-                         hiv.subsets=hiv.subsets,
-                         use.cdc.categorizations=use.cdc.categorizations,
-                         include.hiv.negative = F)
+        if (year.anchor=='start')
+        {
+            raw.suppression.rates = calculate.suppression(components)
+            do.extract.rates(raw.rates = raw.suppression.rates,
+                             sim=sim,
+                             years=years,
+                             population.years.offset = -1,
+                             keep.dimensions=keep.dimensions,
+                             per.population=per.population,
+                             ages=ages,
+                             races=races,
+                             subpopulations=subpopulations,
+                             sexes=sexes,
+                             risks=risks,
+                             continuum=continuum,
+                             cd4=cd4,
+                             hiv.subsets=hiv.subsets,
+                             use.cdc.categorizations=use.cdc.categorizations,
+                             include.hiv.negative = F)
+        }
+        else if (year.anchor=='end')
+        {
+            #year-end yyyy = year-start yyyy+1
+            rename.year.dim.with.offset(extract.suppression(sim,
+                                                            years=years+1,
+                                                            keep.dimensions=keep.dimensions,
+                                                            per.population=per.population,
+                                                            ages=ages,
+                                                            races=races,
+                                                            subpopulations=subpopulations,
+                                                            sexes=sexes,
+                                                            risks=risks,
+                                                            continuum=sim$diagnosed.continuum.states,
+                                                            cd4=cd4,
+                                                            hiv.subsets=hiv.subsets,
+                                                            use.cdc.categorizations=use.cdc.categorizations,
+                                                            year.anchor='start'),
+                                        keep.dimensions = keep.dimensions,
+                                        offset=-1)
+        }
+        else #mid
+        {
+            (extract.suppression(sim,
+                                years=years,
+                                keep.dimensions=keep.dimensions,
+                                per.population=per.population,
+                                ages=ages,
+                                races=races,
+                                subpopulations=subpopulations,
+                                sexes=sexes,
+                                risks=risks,
+                                continuum=sim$diagnosed.continuum.states,
+                                cd4=cd4,
+                                hiv.subsets=hiv.subsets,
+                                use.cdc.categorizations=use.cdc.categorizations,
+                                year.anchor='start') +
+                 extract.suppression(sim,
+                                     years=years,
+                                     keep.dimensions=keep.dimensions,
+                                     per.population=per.population,
+                                     ages=ages,
+                                     races=races,
+                                     subpopulations=subpopulations,
+                                     sexes=sexes,
+                                     risks=risks,
+                                     continuum=sim$diagnosed.continuum.states,
+                                     cd4=cd4,
+                                     hiv.subsets=hiv.subsets,
+                                     use.cdc.categorizations=use.cdc.categorizations,
+                                     year.anchor='end')) / 2
+        }
     }
     else
     {
@@ -968,33 +1024,83 @@ extract.prep.coverage <- function(sim,
                                   sexes=NULL,
                                   risks=NULL,
                                   use.cdc.categorizations=F,
-                                  indications.multiplier = get.prep.indications.estimate())
+                                  indications.multiplier = get.prep.indications.estimate(),
+                                  year.anchor=c('start','mid','end')[2])
 {
-    # it is more efficient to multiply into the numerator (for technical reasons)
-    # so if we just need the numerator, then apply the estimates for the numerator
-    # otherwise, apply them to the denominator
-    numerator.multiplier = denominator.multiplier = NULL
-    if (is.na(per.population))
-        numerator.multiplier = indications.multiplier
-    else
-        denominator.multiplier = indications.multiplier
-    
-    raw.prep.coverage = calculate.prep.coverage(attr(sim, 'components'))
-    do.extract.rates(raw.rates = raw.prep.coverage,
-                     sim=sim,
-                     years=years,
-                     keep.dimensions=keep.dimensions,
-                     per.population=per.population,
-                     ages=ages,
-                     races=races,
-                     subpopulations=subpopulations,
-                     sexes=sexes,
-                     risks=risks,
-                     use.cdc.categorizations=use.cdc.categorizations,
-                     include.hiv.negative = T,
-                     include.hiv.positive = F,
-                     multiplier=numerator.multiplier,
-                     denominator.multiplier = denominator.multiplier)
+    if (year.anchor=='start')
+    {
+        # it is more efficient to multiply into the numerator (for technical reasons)
+        # so if we just need the numerator, then apply the estimates for the numerator
+        # otherwise, apply them to the denominator
+        numerator.multiplier = denominator.multiplier = NULL
+        if (is.na(per.population))
+            numerator.multiplier = indications.multiplier
+        else
+            denominator.multiplier = indications.multiplier
+        
+        raw.prep.coverage = calculate.prep.coverage(attr(sim, 'components'))
+        do.extract.rates(raw.rates = raw.prep.coverage,
+                         sim=sim,
+                         years=years,
+                         population.years.offset = -1,
+                         keep.dimensions=keep.dimensions,
+                         per.population=per.population,
+                         ages=ages,
+                         races=races,
+                         subpopulations=subpopulations,
+                         sexes=sexes,
+                         risks=risks,
+                         use.cdc.categorizations=use.cdc.categorizations,
+                         include.hiv.negative = T,
+                         include.hiv.positive = F,
+                         multiplier=numerator.multiplier,
+                         denominator.multiplier = denominator.multiplier)
+    }
+    else if (year.anchor=='end')
+    {
+        rename.year.dim.with.offset(extract.prep.coverage(sim,
+                                                          years=years+1,
+                                                          keep.dimensions=keep.dimensions,
+                                                          per.population=per.population,
+                                                          ages=ages,
+                                                          races=races,
+                                                          subpopulations=subpopulations,
+                                                          sexes=sexes,
+                                                          risks=risks,
+                                                          use.cdc.categorizations=use.cdc.categorizations,
+                                                          indications.multiplier = indications.multiplier,
+                                                          year.anchor='start'),
+                                    keep.dimensions = keep.dimensions,
+                                    offset=-1)
+    }
+    else # year.anchor=='mid'
+    {
+        (extract.prep.coverage(sim,
+                              years=years,
+                              keep.dimensions=keep.dimensions,
+                              per.population=per.population,
+                              ages=ages,
+                              races=races,
+                              subpopulations=subpopulations,
+                              sexes=sexes,
+                              risks=risks,
+                              use.cdc.categorizations=use.cdc.categorizations,
+                              indications.multiplier = indications.multiplier,
+                              year.anchor='start') +
+             extract.prep.coverage(sim,
+                                   years=years,
+                                   keep.dimensions=keep.dimensions,
+                                   per.population=per.population,
+                                   ages=ages,
+                                   races=races,
+                                   subpopulations=subpopulations,
+                                   sexes=sexes,
+                                   risks=risks,
+                                   use.cdc.categorizations=use.cdc.categorizations,
+                                   indications.multiplier = indications.multiplier,
+                                   year.anchor='end')) / 2
+    }
+
 }
 
 extract.n.prep.indicated <- function(sim,
@@ -1048,10 +1154,10 @@ extract.n.prep.indicated <- function(sim,
                      collapse.length.one.dimensions = F)
         
         pop = sum.arr.to.cdc(pop,
-                                    keep.dimensions=keep.dimensions,
-                                    sexes=sexes,
-                                    risks=risks,
-                                    female.msm.value = 0)
+                             keep.dimensions=keep.dimensions,
+                             sexes=sexes,
+                             risks=risks,
+                             female.msm.value = 0)
     }
     else
     {
@@ -1079,7 +1185,8 @@ extract.testing.period <- function(sim,
                                    subpopulations=NULL,
                                    sexes=NULL,
                                    risks=NULL,
-                                   use.cdc.categorizations=F)
+                                   use.cdc.categorizations=F,
+                                   year.anchor=c('start','mid','end')[2])
 {
     1 / extract.testing.rates(sim,
                               years=years,
@@ -1090,7 +1197,8 @@ extract.testing.period <- function(sim,
                               subpopulations=subpopulations,
                               sexes=sexes,
                               risks=risks,
-                              use.cdc.categorizations = use.cdc.categorizations)
+                              use.cdc.categorizations = use.cdc.categorizations,
+                              year.anchor = year.anchor)
 }
 
 extract.testing.rates <- function(sim,
@@ -1102,34 +1210,81 @@ extract.testing.rates <- function(sim,
                                   subpopulations=NULL,
                                   sexes=NULL,
                                   risks=NULL,
-                                  use.cdc.categorizations=F)
+                                  use.cdc.categorizations=F,
+                                  year.anchor=c('start','mid','end')[2])
 {
-    raw.testing.rates = calculate.testing.rates(attr(sim, 'components'))
-    raw.testing.rates$rates = lapply(raw.testing.rates$rates, function(r){
-        dim.names = dimnames(r)[1:5]
-        r = r[,,,,,'undiagnosed',1,1]
-        dim(r) = sapply(dim.names, length)
-        dimnames(r) = dim.names
-        r
-    })
-    do.extract.rates(raw.rates = raw.testing.rates,
-                     sim=sim,
-                     years=years,
-                     keep.dimensions=keep.dimensions,
-                     per.population=per.population,
-                     ages=ages,
-                     races=races,
-                     subpopulations=subpopulations,
-                     sexes=sexes,
-                     risks=risks,
-                     use.cdc.categorizations=use.cdc.categorizations,
-                     include.hiv.negative = T,
-                     include.hiv.positive = F)
+    if (year.anchor=='start')
+    {
+        raw.testing.rates = calculate.testing.rates(attr(sim, 'components'))
+        raw.testing.rates$rates = lapply(raw.testing.rates$rates, function(r){
+            dim.names = dimnames(r)[1:5]
+            r = r[,,,,,'undiagnosed',1,1]
+            dim(r) = sapply(dim.names, length)
+            dimnames(r) = dim.names
+            r
+        })
+        do.extract.rates(raw.rates = raw.testing.rates,
+                         sim=sim,
+                         years=years,
+                         population.years.offset = -1,
+                         keep.dimensions=keep.dimensions,
+                         per.population=per.population,
+                         ages=ages,
+                         races=races,
+                         subpopulations=subpopulations,
+                         sexes=sexes,
+                         risks=risks,
+                         use.cdc.categorizations=use.cdc.categorizations,
+                         include.hiv.negative = T,
+                         include.hiv.positive = F)
+    }
+    else if (year.anchor=='end')
+    {
+        rename.year.dim.with.offset(extract.testing.rates(sim,
+                                                          years=years+1,
+                                                          keep.dimensions=keep.dimensions,
+                                                          per.population=per.population,
+                                                          ages=ages,
+                                                          races=races,
+                                                          subpopulations=subpopulations,
+                                                          sexes=sexes,
+                                                          risks=risks,
+                                                          use.cdc.categorizations=use.cdc.categorizations,
+                                                          year.anchor='start'),
+                                    keep.dimensions = keep.dimensions,
+                                    offset = -1)
+    }
+    else #year.anchor == 'mid'
+    {
+        (extract.testing.rates(sim,
+                               years=years,
+                               keep.dimensions=keep.dimensions,
+                               per.population=per.population,
+                               ages=ages,
+                               races=races,
+                               subpopulations=subpopulations,
+                               sexes=sexes,
+                               risks=risks,
+                               use.cdc.categorizations=use.cdc.categorizations,
+                               year.anchor='start') +
+            extract.testing.rates(sim,
+                                  years=years,
+                                  keep.dimensions=keep.dimensions,
+                                  per.population=per.population,
+                                  ages=ages,
+                                  races=races,
+                                  subpopulations=subpopulations,
+                                  sexes=sexes,
+                                  risks=risks,
+                                  use.cdc.categorizations=use.cdc.categorizations,
+                                  year.anchor='end')) / 2
+    }
 }
 
 do.extract.rates <- function(raw.rates,
                              sim,
                              years=sim$years,
+                             population.years.offset=0,
                              keep.dimensions='year',
                              per.population=1,
                              ages=NULL,
@@ -1168,17 +1323,23 @@ do.extract.rates <- function(raw.rates,
     
     all.dimension.names = setdiff(all.dimension.names, 'non.hiv.subset')
     if (include.hiv.negative)
-        prevalence = extract.population.subset(sim, years=years, keep.dimensions = all.dimension.names,
-                                               ages=ages, races=races, subpopulations=subpopulations,
-                                               sexes=NULL, risks=NULL, 
-                                               include.hiv.negative = T,
-                                               include.hiv.positive = include.hiv.positive)
+        prevalence = rename.year.dim.with.offset(extract.population.subset(sim, years=years+population.years.offset,
+                                                                           keep.dimensions = all.dimension.names,
+                                                                           ages=ages, races=races, subpopulations=subpopulations,
+                                                                           sexes=NULL, risks=NULL, 
+                                                                           include.hiv.negative = T,
+                                                                           include.hiv.positive = include.hiv.positive),
+                                                 keep.dimensions = all.dimension.names,
+                                                 offset = -population.years.offset)
     else    
-        prevalence = extract.population.subset(sim, years=years, keep.dimensions = all.dimension.names,
-                                               ages=ages, races=races, subpopulations=subpopulations,
-                                               sexes=NULL, risks=NULL,
-                                               continuum=continuum, cd4=cd4, hiv.subsets=hiv.subsets,
-                                               include.hiv.negative = F)
+        prevalence = rename.year.dim.with.offset(extract.population.subset(sim, years=years+population.years.offset, 
+                                                                           keep.dimensions = all.dimension.names,
+                                                                           ages=ages, races=races, subpopulations=subpopulations,
+                                                                           sexes=NULL, risks=NULL,
+                                                                           continuum=continuum, cd4=cd4, hiv.subsets=hiv.subsets,
+                                                                           include.hiv.negative = F),
+                                                 keep.dimensions = all.dimension.names,
+                                                 offset = -population.years.offset)
 
     if (!is.null(denominator.multiplier))
     {
@@ -1347,129 +1508,6 @@ do.extract.rates <- function(raw.rates,
     
         rv
     }
-}
-
-OLD.extract.suppression <- function(sim,
-                                    years=sim$years,
-                                    keep.dimensions='year',
-                                    per.population=1,
-                                    ages=NULL,
-                                    races=NULL,
-                                    subpopulations=NULL,
-                                    sexes=NULL,
-                                    risks=NULL,
-                                    continuum='diagnosed',
-                                    cd4=NULL,
-                                    hiv.subsets=NULL,
-                                    use.cdc.categorizations=F)
-{
-    raw.suppression.rates = calculate.suppression(attr(sim, 'components'))
-    
-    interpolated.rates = interpolate.parameters(values=raw.suppression.rates$rates,
-                                                value.times=raw.suppression.rates$times,
-                                                desired.times = years)
-    
-    stratified.dim.names = c(list(year=as.character(years)), dimnames(interpolated.rates[[1]]))
-    
-    stratified.suppression.arr = t(sapply(interpolated.rates, function(r){r}))
-    dim(stratified.suppression.arr) = sapply(stratified.dim.names, length)
-    dimnames(stratified.suppression.arr) = stratified.dim.names
-    
-    
-    all.dimension.names = names(stratified.dim.names)
-    #    dimensions.length.geq.1.names = all.dimension.names[sapply(stratified.dim.names, length)>1]
-    #    if (setequal()
-    
-    prevalence = extract.population.subset(sim, years=years, keep.dimensions = all.dimension.names,
-                                           ages=ages, races=races, subpopulations=subpopulations,
-                                           sexes=NULL, risks=NULL,
-                                           continuum=continuum, cd4=cd4, hiv.subsets=hiv.subsets,
-                                           include.hiv.negative = F)
-    
-    #check if we're using a collapsed (compressed) array
-    compressed.mask = sapply(names(dimnames(stratified.suppression.arr)), function(dimension){
-        length(setdiff(dimnames(prevalence)[[dimension]], dimnames(stratified.suppression.arr)[[dimension]]))>0
-    })
-    
-    if (any(compressed.mask))
-    {
-        dim.names = dimnames(stratified.suppression.arr)
-        non.compressed.dimensions = names(dim.names)[!compressed.mask]
-        compressed.dimensions = names(dim.names)[compressed.mask]
-        
-        if (any(sapply(dimnames(prevalence), length)[compressed.mask]>1))
-            stop(("Cannot use compressed arrays; rates must be compressed to dimension of 1"))
-        
-        #check if compressible
-        for (dimension in compressed.dimensions)
-        {
-            if (any(apply(stratified.suppression.arr, setdiff(names(dim.names), dimension), sd)) != 0)
-                stop(paste0("Cannot use the compressed arrays; rates are not the same across all subsets of ", dimension))
-            dim.names[[dimension]] = dimnames(prevalence)[[dimension]]
-        }
-        
-        stratified.suppression.arr = apply(stratified.suppression.arr, non.compressed.dimensions, mean)
-        dim(stratified.suppression.arr) = sapply(dim.names, length)
-        dimnames(stratified.suppression.arr) = dim.names
-    }
-    
-    numerators = as.numeric(prevalence) *
-        as.numeric(stratified.suppression.arr[,dimnames(prevalence)[['age']],dimnames(prevalence)[['race']],
-                                              dimnames(prevalence)[['subpopulation']],dimnames(prevalence)[['sex']],
-                                              dimnames(prevalence)[['risk']],dimnames(prevalence)[['continuum']],
-                                              dimnames(prevalence)[['cd4']],dimnames(prevalence)[['hiv.subset']]])
-    dim(numerators) = dim(prevalence)
-    dimnames(numerators) = dimnames(prevalence)
-    
-    if (use.cdc.categorizations && (any(keep.dimensions=='risk') || any(keep.dimensions=='sex')))
-    {
-        numerators = sum.suppression.arr.to.cdc(numerators)
-        prevalence = sum.suppression.arr.to.cdc(prevalence)
-    }
-    
-    if (!is.null(sexes) && !is.null(risks))
-    {
-        dim.names = dimnames(numerators)
-        dim.names[['sex']] = sexes
-        dim.names[['risk']] = risks
-        
-        numerators = numerators[,,,,sexes,risks,,,]
-        prevalence = prevalence[,,,,sexes,risks,,,]
-        
-        dim(numerators) = sapply(dim.names, length)
-        dimnames(numerators) = dim.names
-        dim(prevalence) = sapply(dim.names, length)
-        dimnames(prevalence) = dim.names
-    }
-    else if (!is.null(sexes))
-    {
-        dim.names = dimnames(numerators)
-        dim.names[['sex']] = sexes
-        
-        numerators = numerators[,,,,sexes,,,,]
-        prevalence = prevalence[,,,,sexes,,,,]
-        
-        dim(numerators) = sapply(dim.names, length)
-        dimnames(numerators) = dim.names
-        dim(prevalence) = sapply(dim.names, length)
-        dimnames(prevalence) = dim.names
-    }
-    else if (!is.null(risks))
-    {
-        dim.names = dimnames(numerators)
-        dim.names[['risk']] = risks
-        
-        numerators = numerators[,,,,,risks,,,]
-        prevalence = prevalence[,,,,,risks,,,]
-        
-        dim(numerators) = sapply(dim.names, length)
-        dimnames(numerators) = dim.names
-        dim(prevalence) = sapply(dim.names, length)
-        dimnames(prevalence) = dim.names
-    }
-    
-    rv = apply(numerators, keep.dimensions, sum) / apply(prevalence, keep.dimensions, sum)
-    rv
 }
 
 ##-------------##
@@ -1743,4 +1781,25 @@ sum.arr.to.cdc <- function(arr,
     }
     
     rv
+}
+
+rename.year.dim.with.offset <- function(arr,
+                                        offset,
+                                        keep.dimensions)
+{
+    if (any(keep.dimensions=='year') && offset!=0)
+    {
+        if (is.null(dim(arr)))
+        {
+            names(arr) = as.character(as.numeric(names(arr)) + offset)
+        }
+        else
+        {
+            dimnames(arr)$year = as.character(as.numeric(dimnames(arr)$year) + offset)
+        }
+        
+        arr
+    }
+    else
+        arr
 }
