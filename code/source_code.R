@@ -22,6 +22,9 @@ source('code/data_managers/prep_manager_2.R')
 source('code/data_managers/continuum_manager_2.R')
 source('code/data_managers/hiv_surveillance_manager.R')
 
+source('code/calibration/version_manager.R')
+source('code/targets/target_msas.R')
+
 #-- Load cached data managers --#
 load('cached/msa.surveillance.Rdata')
 load('cached/state.surveillance.Rdata')
