@@ -297,6 +297,9 @@ parameters.prior = join.distributions(
     heterosexual.fraction.trate.change.after.t2 = Lognormal.Distribution(meanlog=log(0.1), sdlog=log(2), lower=0, upper=0.5),
     idu.fraction.trate.change.after.t2 = Lognormal.Distribution(meanlog=log(0.1), sdlog=log(2), lower=0, upper=0.5)
 )
+VERSION.MANAGER = register.parameters.prior(VERSION.MANAGER,
+                                            prior=parameters.prior,
+                                            version=SETTINGS.COLLAPSED.CONTINUUM$VERSION)
 
 PARAMETER.VAR.BLOCKS.1 = list(
   
@@ -482,6 +485,9 @@ PARAMETER.VAR.BLOCKS.1 = list(
                     'hiv.mortality.0',
                     'hiv.mortality.2')
 )
+VERSION.MANAGER = register.parameter.sampling.blocks(VERSION.MANAGER,
+                                                     blocks=PARAMETER.VAR.BLOCKS.1,
+                                                     version=SETTINGS.COLLAPSED.CONTINUUM$VERSION)
 
 if (1==2)
 {
@@ -934,7 +940,9 @@ get.components.for.calibrated.parameters <- function(parameters, components,
   #-- Return --#
   components
 }
-
+VERSION.MANAGER = register.get.components.function(VERSION.MANAGER, 
+                                                   fn=get.components.for.calibrated.parameters,
+                                                   version = SETTINGS.COLLAPSED.CONTINUUM$VERSION)
 
 
 

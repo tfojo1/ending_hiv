@@ -189,7 +189,7 @@ setup.components.for.msa <- function(msa,
     comps = setup.background.hiv.testing(comps,
                                          continuum.manager = data.managers$continuum,
                                          location=msa,
-                                         years=smooth.from.year:smooth.to.year)
+                                         years=smooth.from.year:(smooth.to.year+1))
     comps = set.background.hiv.testing.ramp.up(comps,
                                                testing.ramp.up.yearly.increase=as.numeric(ramp.yearly.increase))
     comps = set.background.hiv.testing.ors(comps,
@@ -227,7 +227,7 @@ setup.components.for.msa <- function(msa,
         comps = setup.background.suppression(comps,
                                              continuum.manager=data.managers$continuum,
                                              location=msa,
-                                             years=smooth.from.year:smooth.to.year)
+                                             years=smooth.from.year:(smooth.to.year+1))
         
         comps = set.background.suppression.ors(comps,
                                                msm.or.intercept=1,
@@ -272,7 +272,7 @@ setup.components.for.msa <- function(msa,
         comps = setup.background.newly.suppressed(comps,
                                                   continuum.manager=data.managers$continuum,
                                                   location=msa,
-                                                  years=smooth.from.year:smooth.to.year)
+                                                  years=smooth.from.year:(smooth.to.year+1))
         
         comps = set.background.newly.suppressed.ors(comps,
                                                msm.or.intercept=1,
@@ -304,7 +304,7 @@ setup.components.for.msa <- function(msa,
         comps = setup.background.unsuppression(comps,
                                                   continuum.manager=data.managers$continuum,
                                                   location=msa,
-                                                  years=smooth.from.year:smooth.to.year)
+                                                  years=smooth.from.year:(smooth.to.year+1))
         
         comps = set.background.unsuppression.ors(comps,
                                                     msm.or.intercept=1,
@@ -335,7 +335,7 @@ setup.components.for.msa <- function(msa,
         comps = setup.background.linkage(comps,
                                          continuum.manager=data.managers$continuum,
                                          location=msa,
-                                         years=smooth.from.year:smooth.to.year)
+                                         years=smooth.from.year:(smooth.to.year+1))
         
         comps = set.background.linkage.ors(comps,
                                                msm.or.intercept=1,
@@ -367,7 +367,7 @@ setup.components.for.msa <- function(msa,
         comps = setup.background.unsuppressed.to.disengaged(comps,
                                                continuum.manager=data.managers$continuum,
                                                location=msa,
-                                               years=smooth.from.year:smooth.to.year)
+                                               years=smooth.from.year:(smooth.to.year+1))
         
         comps = set.background.unsuppressed.to.disengaged.ors(comps,
                                                  msm.or.intercept=1,
@@ -398,7 +398,7 @@ setup.components.for.msa <- function(msa,
         comps = setup.background.suppressed.to.disengaged(comps,
                                                             continuum.manager=data.managers$continuum,
                                                             location=msa,
-                                                            years=smooth.from.year:smooth.to.year)
+                                                            years=smooth.from.year:(smooth.to.year+1))
         
         comps = set.background.suppressed.to.disengaged.ors(comps,
                                                               msm.or.intercept=1,
@@ -429,7 +429,7 @@ setup.components.for.msa <- function(msa,
         comps = setup.background.reengagement(comps,
                                                             continuum.manager=data.managers$continuum,
                                                             location=msa,
-                                                            years=smooth.from.year:smooth.to.year)
+                                                            years=smooth.from.year:(smooth.to.year+1))
         
         comps = set.background.reengagement.ors(comps,
                                                               msm.or.intercept=1,
@@ -502,12 +502,12 @@ setup.components.for.msa <- function(msa,
     if (prep.model$mixed.linear)
         comps = setup.background.prep(comps,
                                       prep.manager=ALL.DATA.MANAGERS$prep,
-                                      years = max(prep.model$anchor.year, smooth.from.year):smooth.to.year,
+                                      years = max(prep.model$anchor.year, smooth.from.year):(smooth.to.year+1),
                                       zero.prep.year=zero.prep.year)
     else
         comps = setup.background.prep(comps,
                                       prep.manager=ALL.DATA.MANAGERS$prep,
-                                      years = max(zero.prep.year+1, smooth.from.year):smooth.to.year,
+                                      years = max(zero.prep.year+1, smooth.from.year):(smooth.to.year+1),
                                       zero.prep.year=zero.prep.year)
     
     comps = set.background.change.to.years(comps,
