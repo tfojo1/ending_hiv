@@ -31,11 +31,100 @@ if (1==2)
     
     sim1 = test.run.simulation()
     plot.calibration(sim1)
+
+    ## Checking linkage ##
+    
+    # Risk groups: Only MSM works; nothing happens for other risk groups
+    sim2 = test.run.simulation(heterosexual.proportion.linked.or=2)
+    plot.calibration(list(sim1,sim2), data.types='linkage')
+    
+    # Race and age: higher linkage by 2020, but weird slope to get there. Changing the slope.or doesn't matter
+    sim2 = test.run.simulation(black.proportion.linked.or=1.1)
+    plot.calibration(list(sim1,sim2), data.types='linkage', facet.by = 'race')
+    sim2 = test.run.simulation(black.proportion.linked.or=1.1, black.proportion.linked.slope.or=.5)
+    plot.calibration(list(sim1,sim2), data.types='linkage', facet.by = 'race')
+    # (Same patterns for hispanic; and age groups)
+    
+    
+    # Slopes - linkage 
+    # Risk groups: Look okay except MSM-IDU doesn't do anything
+    sim2 = test.run.simulation(heterosexual.proportion.linked.slope.or=1.2)
+    plot.calibration(list(sim1,sim2), data.types='linkage')
+    
+    # Race and age: don't do anything
+    sim2 = test.run.simulation(black.proportion.linked.slope.or=2)
+    plot.calibration(list(sim1,sim2), data.types='linkage', facet.by = 'race')
+    
+    
+    
+    
+    ## Checking adherence ##
+    
+    # Risk groups: Only MSM works; nothing happens for other risk groups
+    sim2 = test.run.simulation(heterosexual.proportion.adherent.or=2)
+    plot.calibration(list(sim1,sim2), data.types='suppression')
+    
+    # Race and age: lower suppression by 2020 (wrong), and weird slope to get there. Changing the slope.or doesn't matter
+    sim2 = test.run.simulation(black.proportion.adherent.or=2)
+    plot.calibration(list(sim1,sim2), data.types='suppression', facet.by = 'race')
+    sim2 = test.run.simulation(black.proportion.adherent.or=2, black.proportion.adherent.slope.or=2)
+    plot.calibration(list(sim1,sim2), data.types='suppression', facet.by = 'race')
+    # (Same patterns for hispanic; and age groups)
+    
+    
+    # Slopes - adherence 
+    # Risk groups: slope looks like the right pattern but 2020 value is lower (wrong). MSM-IDU doesn't do anything
+    sim2 = test.run.simulation(msm.proportion.adherent.slope.or=2)
+    plot.calibration(list(sim1,sim2), data.types='suppression')
+    
+    # Race and age: don't do anything
+    sim2 = test.run.simulation(black.proportion.adherent.slope.or=2)
+    plot.calibration(list(sim1,sim2), data.types='suppression', facet.by = 'race')
+    
+    
+    # Doesn't do anything (maybe *barely* changes MSM with very extreme values)
+    sim2 = test.run.simulation(suppressed.vs.nonsuppressed.proportion.adherent.or=200)
+    plot.calibration(list(sim1,sim2), data.types='suppression')
+    
+    
+    
+    
+    ## Checking lost ##
+    
+    # Risk groups: Only MSM works; nothing happens for other risk groups
+    sim2 = test.run.simulation(heterosexual.proportion.lost.or=2)
+    plot.calibration(list(sim1,sim2), data.types='suppression')
+    
+    # Race and age: higher suppression by 2020 (wrong). Changing the slope.or doesn't matter
+    sim2 = test.run.simulation(black.proportion.lost.or=1.1)
+    plot.calibration(list(sim1,sim2), data.types='suppression', facet.by = 'race')
+    sim2 = test.run.simulation(black.proportion.lost.or=1.1, black.proportion.lost.slope.or=2)
+    plot.calibration(list(sim1,sim2), data.types='suppression', facet.by = 'race')
+    # (Same patterns for hispanic; and age groups)
+
+    
+    # Slopes - lost 
+    # Risk groups: slope looks like the right pattern but 2020 value is higher (wrong). MSM-IDU doesn't do anything
+    sim2 = test.run.simulation(heterosexual.proportion.lost.slope.or=2)
+    plot.calibration(list(sim1,sim2), data.types='suppression')
+    
+    # Race and age: don't do anything
+    sim2 = test.run.simulation(black.proportion.lost.slope.or=2)
+    plot.calibration(list(sim1,sim2), data.types='suppression', facet.by = 'race')
+    
+    
+    # Only affects MSM
+    sim2 = test.run.simulation(suppressed.vs.nonsuppressed.proportion.lost.or=2)
+    plot.calibration(list(sim1,sim2), data.types='suppression')
+    
+    sim2 = test.run.simulation(already.lost.vs.nonsuppressed.proportion.lost.or=2)
+    plot.calibration(list(sim1,sim2), data.types='suppression')
+    
+    
+    
     plot.calibration(sim1, data.types=c('linkage','suppression'), facet.by=NULL)
     plot.calibration(sim1, facet.by='risk', split.by='sex')
     
-    sim2 = test.run.simulation(msm.proportion.linked.or=2)
-    plot.calibration(list(sim1,sim2), data.types='linkage')
 }
 
 
