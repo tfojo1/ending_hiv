@@ -9,7 +9,7 @@ DATA.TYPE.NAMES = c(new='Reported Cases',
                     diagnosed='Knowledge of Status',
                     suppression='Viral Suppression',
                     mortality='Mortality Among PWH',
-                    testing.rate='Rate of HIV Testing',
+                    testing.rate='HIV Testing Rate',
                     incidence='Incidence',
                     population='Population Size',
                     testing.period='HIV Testing Frequency',
@@ -23,7 +23,7 @@ DATA.TYPE.AXIS.LABELS = c(
     mortality='Deaths in PWH (n)',
     suppression='Proportion Suppressed (%)',
     diagnosed='Proportion Aware (%)',
-    testing.rate='Tests per Person per Year',
+    testing.rate='Avg. Tests per Person per Year',
     population='Population (n)',
     testing.period='Years Between Tests',
     prep='Proportion on PrEP (%)'
@@ -223,9 +223,9 @@ do.plot.simulations <- function(
         intervention.years = unique(as.numeric(unlist(
             sapply( (1:length(simsets))[!is.baseline], function(i){
                 ss = simsets[[i]]
-                if (is.no.intervention[i])
-                    ss@simulations[[1]]$years
-                else
+          #      if (is.no.intervention[i])
+           #         ss@simulations[[1]]$years
+            #    else
                     ss@simulations[[1]]$years[-1]
             }))))
         for (i in (1:length(simsets))[is.baseline])
@@ -915,13 +915,15 @@ do.plot.simulations <- function(
         axis.title = sapply(names(data.type.names)[data.types.for.facet.categories[ff]==data.type.names], function(data.type){
             y.axis.title.function(data.type)
         })
+        
+        print(axis.title)
         if (plot.format != 'individual.simulations' && label.axis.ci)
             axis.title = paste0(axis.title, 
                                 ifelse(wrap.axis.labels, '\n', ' '),
                                 "(",
                                 round(100*plot.interval.coverage), 
                                 '% Prediction Interval)')
-          
+        
         yaxis.list = list(automargin = T,
                           title = list(text=axis.title,
                                        standoff=y.title.standoff,
@@ -942,8 +944,8 @@ do.plot.simulations <- function(
             yaxis.list$tickformat = paste0('.', y.axis.digits, '%')
         else if (y.axis.digits==0)
             yaxis.list$tickformat = ',d'
-        else
-            yaxis.list$tickformat = paste0('.', y.axis.digits, 'd') #',d'
+  #      else
+   #         yaxis.list$tickformat = paste0('.', y.axis.digits, 'd') #',d'
         
         plot = layout(plot,
                       yaxis = yaxis.list,
@@ -1361,6 +1363,8 @@ get.truth.df <- function(location,
         rv$Source = 'US Census Bureau'
         rv
     }
+    else if (data.type=='testing.rate' || data.type=='testing.period')
+        rv = NULL
     else
     {
       rv = get.surveillance.data(surv, location.codes=location, data.type=data.type,
@@ -1464,9 +1468,15 @@ get.sim.dfs <- function(simset,
                        aggregate.statistic = 'mean',
                        ci.coverage=0.95,
                        change.years,
-                       change.decrease.is.positive)
+                       change.decrease.is.positive,
+                       year.anchor=c('start','mid','end')[2])
 {
-    years = intersect(simset@simulations[[1]]$years, years)
+    if ((year.anchor=='start' || year.anchor=='mid') &&
+        (data.type=='suppression' || data.type=='testing.rate' || data.type=='testing.period' || data.type=='prep'))
+        years = intersect(simset@simulations[[1]]$years[-1], years)
+    else
+        years = intersect(simset@simulations[[1]]$years, years)
+    
     if (length(years)==0)
         return (NULL)
     
@@ -1501,7 +1511,8 @@ get.sim.dfs <- function(simset,
         arr = extract.simset.suppression(simset,
                                          years = years, 
                                          all.dimensions = keep.dimensions,
-                                         dimension.subsets = dimension.subsets)
+                                         dimension.subsets = dimension.subsets,
+                                         year.anchor=year.anchor)
     else if (data.type=='diagnosed')
         arr = extract.simset.knowledge.of.status(simset,
                                                  years = years, 
@@ -1511,12 +1522,20 @@ get.sim.dfs <- function(simset,
         arr = extract.simset.testing.period(simset,
                                             years = years, 
                                             all.dimensions = keep.dimensions,
-                                            dimension.subsets = dimension.subsets)
+                                            dimension.subsets = dimension.subsets,
+                                            year.anchor=year.anchor)
+    else if (data.type=='testing.rate')
+        arr = extract.simset.testing.rates(simset,
+                                            years = years, 
+                                            all.dimensions = keep.dimensions,
+                                            dimension.subsets = dimension.subsets,
+                                           year.anchor=year.anchor)
     else if (data.type=='prep')
         arr = extract.simset.prep.coverage(simset,
                                            years = years, 
                                            all.dimensions = keep.dimensions,
-                                           dimension.subsets = dimension.subsets)
+                                           dimension.subsets = dimension.subsets,
+                                           year.anchor=year.anchor)
     else
         stop(paste0("'", data.type, "' is not a valid data.type."))
     
@@ -2012,7 +2031,7 @@ extract.simset.hiv.mortality <- function(simset, years, all.dimensions,
 }
 
 extract.simset.suppression <- function(simset, years, all.dimensions,
-                                       dimension.subsets)
+                                       dimension.subsets, year.anchor)
 {
     eg = extract.suppression(simset@simulations[[1]],
                              years=years, 
@@ -2026,7 +2045,8 @@ extract.simset.suppression <- function(simset, years, all.dimensions,
                              continuum='diagnosed',
                              cd4=NULL,
                              hiv.subsets=NULL,
-                             use.cdc.categorizations=T)
+                             use.cdc.categorizations=T,
+                             year.anchor=year.anchor)
     rv = sapply(simset@simulations, extract.suppression,
                 years=years, 
                 keep.dimensions=all.dimensions,
@@ -2039,7 +2059,8 @@ extract.simset.suppression <- function(simset, years, all.dimensions,
                 continuum='diagnosed',
                 cd4=NULL,
                 hiv.subsets=NULL,
-                use.cdc.categorizations=T)
+                use.cdc.categorizations=T,
+                year.anchor=year.anchor)
     
     if (is.null(dim(eg)))
     {
@@ -2056,7 +2077,7 @@ extract.simset.suppression <- function(simset, years, all.dimensions,
 }
 
 extract.simset.prep.coverage <- function(simset, years, all.dimensions,
-                                         dimension.subsets)
+                                         dimension.subsets, year.anchor)
 {
     eg = extract.prep.coverage(simset@simulations[[1]],
                              years=years, 
@@ -2067,7 +2088,8 @@ extract.simset.prep.coverage <- function(simset, years, all.dimensions,
                              subpopulations=dimension.subsets[['subpopulation']],
                              sexes=dimension.subsets[['sex']],
                              risks=dimension.subsets[['risk']],
-                             use.cdc.categorizations=T)
+                             use.cdc.categorizations=T,
+                             year.anchor=year.anchor)
     
     rv = sapply(simset@simulations, extract.prep.coverage,
                 years=years, 
@@ -2078,7 +2100,8 @@ extract.simset.prep.coverage <- function(simset, years, all.dimensions,
                 subpopulations=dimension.subsets[['subpopulation']],
                 sexes=dimension.subsets[['sex']],
                 risks=dimension.subsets[['risk']],
-                use.cdc.categorizations=T)
+                use.cdc.categorizations=T,
+                year.anchor=year.anchor)
     
     if (is.null(dim(eg)))
     {
@@ -2094,8 +2117,50 @@ extract.simset.prep.coverage <- function(simset, years, all.dimensions,
     rv
 }
 
+extract.simset.testing.rates <- function(simset, years, all.dimensions,
+                                          dimension.subsets, year.anchor)
+{
+    eg = extract.testing.rates(simset@simulations[[1]],
+                                years=years, 
+                                keep.dimensions=all.dimensions,
+                                per.population=1,
+                                ages=dimension.subsets[['age']],
+                                races=dimension.subsets[['race']],
+                                subpopulations=dimension.subsets[['subpopulation']],
+                                sexes=dimension.subsets[['sex']],
+                                risks=dimension.subsets[['risk']],
+                                use.cdc.categorizations=T,
+                               year.anchor=year.anchor)
+    
+    rv = sapply(simset@simulations, extract.testing.rates,
+                years=years, 
+                keep.dimensions=all.dimensions,
+                per.population=1,
+                ages=dimension.subsets[['age']],
+                races=dimension.subsets[['race']],
+                subpopulations=dimension.subsets[['subpopulation']],
+                sexes=dimension.subsets[['sex']],
+                risks=dimension.subsets[['risk']],
+                use.cdc.categorizations=T,
+                year.anchor=year.anchor)
+    
+    if (is.null(dim(eg)))
+    {
+        dim.names = list(names(eg), 1:simset@n.sim)
+        names(dim.names) = c(all.dimensions, 'simulation')
+    }
+    else
+        dim.names = c(dimnames(eg), list(simulation=1:simset@n.sim))
+    
+    dim(rv) = sapply(dim.names, length)
+    dimnames(rv) = dim.names
+    
+    rv
+}
+
+
 extract.simset.testing.period <- function(simset, years, all.dimensions,
-                                         dimension.subsets)
+                                         dimension.subsets, year.anchor)
 {
     eg = extract.testing.period(simset@simulations[[1]],
                                years=years, 
@@ -2106,7 +2171,8 @@ extract.simset.testing.period <- function(simset, years, all.dimensions,
                                subpopulations=dimension.subsets[['subpopulation']],
                                sexes=dimension.subsets[['sex']],
                                risks=dimension.subsets[['risk']],
-                               use.cdc.categorizations=T)
+                               use.cdc.categorizations=T,
+                               year.anchor=year.anchor)
     
     rv = sapply(simset@simulations, extract.testing.period,
                 years=years, 
@@ -2117,7 +2183,8 @@ extract.simset.testing.period <- function(simset, years, all.dimensions,
                 subpopulations=dimension.subsets[['subpopulation']],
                 sexes=dimension.subsets[['sex']],
                 risks=dimension.subsets[['risk']],
-                use.cdc.categorizations=T)
+                use.cdc.categorizations=T,
+                year.anchor=year.anchor)
     
     if (is.null(dim(eg)))
     {

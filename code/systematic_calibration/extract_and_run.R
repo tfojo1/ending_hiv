@@ -205,12 +205,13 @@ assemble.and.thin.mcmcs <- function(targets = TARGET.MSAS,
 copy.and.thin.simsets <- function(locations,
                                   src.dir = file.path(SYSTEMATIC.ROOT.DIR, 'full_simsets'),
                                   dst.dir = file.path(SYSTEMATIC.ROOT.DIR, 'visualization_simsets'),
+                                  interventions=ALL.INTERVENTIONS,
                                   thin.to=80,
                                   compress=T,
                                   verbose=T,
                                   redo.seed=T,
                                   redo.baseline=T,
-                                  compress.to.years=2010:2030)
+                                  compress.to.years=2009:2030)
 {
     for (location in locations)
     {
@@ -229,7 +230,7 @@ copy.and.thin.simsets <- function(locations,
             {
                 if (need.to.do.seed && need.to.do.baseline)
                     print(" - Preparing seed and baseline simsets")
-                else if (neneed.to.do.seed)
+                else if (need.to.do.seed)
                     print(" - Preparing seed simset")
                 else
                     print(" - Preparing baseline simset")
@@ -247,22 +248,17 @@ copy.and.thin.simsets <- function(locations,
             if (need.to.do.baseline)
             {
                 if (compress)
-                    simset = compress.simset(simset, keep.years=intersect(simset@simulations[[1]]$years, compress.to.years))
+                    simset = compress.simset(simset, 
+                                             keep.years=intersect(simset@simulations[[1]]$years, compress.to.years))
                 save.simset(simset, dir=file.path(dst.dir, location), compress=F)
             }
         }
         
-        
-        files = list.files(file.path(src.dir, location))
-        if (need.to.do.baseline)
-            files = files[files != get.baseline.filename(location)]
-        if (need.to.do.seed)
-            files = files[files != get.seed.filename(location)]
-        for (i in (1:length(files)))
+        for (i in (1:length(interventions)))
         {
-            file = files[i]
+            file = get.simset.filename(location=location, intervention=interventions[[i]])
             if (verbose)
-                print(paste0(" - Loading and thinning simset ", i, " of ", length(files)))
+                print(paste0(" - Loading and thinning simset ", i, " of ", length(interventions)))
             
             load(file.path(src.dir, location, file))
             simset = do.thin.simset.to(simset, thin.to)

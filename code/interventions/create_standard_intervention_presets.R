@@ -39,13 +39,23 @@ register.standard.interventions.annals.revision <- function(start.year=2023,
                                                              multipliers=BASE_PARAMETER_VALUES['moud.relapse.rr'],
                                                              apply.function = 'multiplier',
                                                              allow.less.than.otherwise = T,
-                                                             end.year)
+                                                             end.year,
+                                                             raw.proportions = 0.1,
+                                                             name.as.pct = T,
+                                                             name.apply.function = 'absolute',
+                                                             name.post.descriptor = ' taking MOUDs',
+                                                             name.category = 'MOUDs')
     MOUD.25 = create.proportion.multiplier.intervention.unit('idu.relapse', start.year,
                                                              proportions=0.25 * BASE_PARAMETER_VALUES['fraction.opioid.of.idu'],
                                                              multipliers=BASE_PARAMETER_VALUES['moud.relapse.rr'],
                                                              apply.function = 'multiplier',
                                                              allow.less.than.otherwise = T,
-                                                             end.year)
+                                                             end.year,
+                                                             raw.proportions = 0.25,
+                                                             name.as.pct = T,
+                                                             name.apply.function = 'absolute',
+                                                             name.post.descriptor = ' taking MOUDs',
+                                                             name.category = 'MOUDs')
     
     ##------------------##
     ##-- TESTING ONLY --##
@@ -71,31 +81,27 @@ register.standard.interventions.annals.revision <- function(start.year=2023,
                                                  manager = INTERVENTION.MANAGER)
     
     # All MSM and all IDU
-    MI.T05x = join.interventions(YBHM.T05x,
-                                 create.intervention(ALL.MSM.AND.ACTIVE.IDU.MINUS.YOUNG.BH,
-                                                     TESTING.0.5x))
+    MI.T05x = create.intervention(ALL.MSM.AND.ACTIVE.IDU,
+                                  TESTING.0.5x)
     INTERVENTION.MANAGER = register.intervention(MI.T05x, code=paste0('mi.t05x', suffix),
                                                  name='All MSM and all PWID tested once every 2 years',
                                                  manager = INTERVENTION.MANAGER)
     
-    MI.T1x = join.interventions(YBHM.T1x,
-                                 create.intervention(ALL.MSM.AND.ACTIVE.IDU.MINUS.YOUNG.BH,
-                                                     TESTING.1x))
+    MI.T1x = create.intervention(ALL.MSM.AND.ACTIVE.IDU,
+                                 TESTING.1x)
     INTERVENTION.MANAGER = register.intervention(MI.T1x, code=paste0('mi.t1x', suffix),
                                                  name='All MSM and all PWID tested once a year',
                                                  manager = INTERVENTION.MANAGER)
     
-    MI.T2x = join.interventions(YBHM.T2x,
-                                 create.intervention(ALL.MSM.AND.ACTIVE.IDU.MINUS.YOUNG.BH,
-                                                     TESTING.2x))
+    MI.T2x = create.intervention(ALL.MSM.AND.ACTIVE.IDU,
+                                 TESTING.2x)
     INTERVENTION.MANAGER = register.intervention(MI.T2x, code=paste0('mi.t2x', suffix),
                                                  name='All MSM and all PWID tested twice a year',
                                                  manager = INTERVENTION.MANAGER)
     
     # Plus Heterosexuals
-    ALL.T05x = join.interventions(MI.T05x,
-                                  create.intervention(ALL.HETEROSEXUAL.NON.ACTIVE.IDU,
-                                                     TESTING.0.5x))
+    ALL.T05x = create.intervention(WHOLE.POPULATION,
+                                   TESTING.0.5x)
     INTERVENTION.MANAGER = register.intervention(ALL.T05x, code=paste0('all.t05x', suffix),
                                                  name='Whole population tested once every 2 years',
                                                  manager = INTERVENTION.MANAGER)
@@ -133,31 +139,27 @@ register.standard.interventions.annals.revision <- function(start.year=2023,
     
     
     # All MSM and all IDU
-    MI.S80 = join.interventions(YBHM.S80,
-                                create.intervention(ALL.MSM.AND.ACTIVE.IDU.MINUS.YOUNG.BH,
-                                                    SUPPRESSION.80))
+    MI.S80 = create.intervention(ALL.MSM.AND.IDU,
+                                 SUPPRESSION.80)
     INTERVENTION.MANAGER = register.intervention(MI.S80, code=paste0('mi.s80', suffix),
                                                  name='80% of MSM and PWID PWH suppressed',
                                                  manager = INTERVENTION.MANAGER)
     
-    MI.S90 = join.interventions(YBHM.S90,
-                                create.intervention(ALL.MSM.AND.ACTIVE.IDU.MINUS.YOUNG.BH,
-                                                    SUPPRESSION.90))
+    MI.S90 = create.intervention(ALL.MSM.AND.IDU,
+                                 SUPPRESSION.90)
     INTERVENTION.MANAGER = register.intervention(MI.S90, code=paste0('mi.s90', suffix),
                                                  name='90% of MSM and PWID PWH suppressed',
                                                  manager = INTERVENTION.MANAGER)
     
     # Plus Heterosexuals
-    ALL.S80 = join.interventions(MI.S80,
-                                 create.intervention(ALL.HETEROSEXUAL.NON.ACTIVE.IDU,
-                                                     SUPPRESSION.80))
+    ALL.S80 = create.intervention(WHOLE.POPULATION,
+                                  SUPPRESSION.80)
     INTERVENTION.MANAGER = register.intervention(ALL.S80, code=paste0('all.s80', suffix),
                                                  name='80% of all PWH suppressed',
                                                  manager = INTERVENTION.MANAGER)
     
-    ALL.S90 = join.interventions(MI.S90,
-                                 create.intervention(ALL.HETEROSEXUAL.NON.ACTIVE.IDU,
-                                                     SUPPRESSION.90))
+    ALL.S90 = create.intervention(WHOLE.POPULATION,
+                                  SUPPRESSION.90)
     INTERVENTION.MANAGER = register.intervention(ALL.S90, code=paste0('all.s90', suffix),
                                                  name='90% of all PWH suppressed',
                                                  manager = INTERVENTION.MANAGER)
@@ -181,32 +183,28 @@ register.standard.interventions.annals.revision <- function(start.year=2023,
     
     
     # All MSM and all IDU
-    MI.P10 = join.interventions(YBHM.P10,
-                                create.intervention(ALL.MSM.AND.ACTIVE.IDU.MINUS.YOUNG.BH,
-                                                    PREP.10))
+    MI.P10 = create.intervention(ALL.MSM.AND.ACTIVE.IDU,
+                                 PREP.10)
     INTERVENTION.MANAGER = register.intervention(MI.P10, code=paste0('mi.p10', suffix),
                                                  name='25% of MSM and PWID on PrEP',
                                                  manager = INTERVENTION.MANAGER)
     
-    MI.P25 = join.interventions(YBHM.P25,
-                                create.intervention(ALL.MSM.AND.ACTIVE.IDU.MINUS.YOUNG.BH,
-                                                    PREP.25))
+    MI.P25 = create.intervention(ALL.MSM.AND.ACTIVE.IDU,
+                                 PREP.25)
     INTERVENTION.MANAGER = register.intervention(MI.P25, code=paste0('mi.p25', suffix),
                                                  name='25% of MSM and PWID on PrEP
                                                  ',
                                                  manager = INTERVENTION.MANAGER)
     
     # Plus Heterosexuals
-    ALL.P10 = join.interventions(MI.P10,
-                                 create.intervention(ALL.HETEROSEXUAL.NON.ACTIVE.IDU,
-                                                     PREP.10))
+    ALL.P10 = create.intervention(WHOLE.POPULATION,
+                                  PREP.10)
     INTERVENTION.MANAGER = register.intervention(ALL.P10, code=paste0('all.p10', suffix),
                                                  name='10% of all at risk on PrEP',
                                                  manager = INTERVENTION.MANAGER)
     
-    ALL.P25 = join.interventions(MI.P25,
-                                 create.intervention(ALL.HETEROSEXUAL.NON.ACTIVE.IDU,
-                                                     PREP.25))
+    ALL.P25 = create.intervention(WHOLE.POPULATION,
+                                  PREP.25)
     INTERVENTION.MANAGER = register.intervention(ALL.P25, code=paste0('all.p25', suffix),
                                                  name='25% of all at risk on PrEP',
                                                  manager = INTERVENTION.MANAGER)
@@ -242,30 +240,34 @@ register.standard.interventions.annals.revision <- function(start.year=2023,
                                                  manager = INTERVENTION.MANAGER)
     
     # All MSM and all IDU
-    MI.T1x.P10.S80 = join.interventions(YBHM.T1x.P10.S80,
-                                        create.intervention(ALL.MSM.AND.ACTIVE.IDU.MINUS.YOUNG.BH,
-                                                            TESTING.1x, PREP.10, SUPPRESSION.80))
+    MI.T1x.P10.S80 = join.interventions(create.intervention(ALL.MSM.AND.ACTIVE.IDU,
+                                                            TESTING.1x, PREP.10),
+                                        create.intervention(ALL.MSM.AND.IDU,
+                                                            SUPPRESSION.80))
     INTERVENTION.MANAGER = register.intervention(MI.T1x.P10.S80, code=paste0('mi.t1x.p10.s80', suffix),
                                                  name='All MSM and all PWID tested yearly, 10% on PrEP, and 80% suppressed',
                                                  manager = INTERVENTION.MANAGER)
     
-    MI.T2x.P10.S80 = join.interventions(YBHM.T2x.P10.S80,
-                                        create.intervention(ALL.MSM.AND.ACTIVE.IDU.MINUS.YOUNG.BH,
-                                                            TESTING.2x, PREP.10, SUPPRESSION.80))
+    MI.T2x.P10.S80 = join.interventions(create.intervention(ALL.MSM.AND.ACTIVE.IDU,
+                                                            TESTING.2x, PREP.10),
+                                        create.intervention(ALL.MSM.AND.IDU,
+                                                            SUPPRESSION.80))
     INTERVENTION.MANAGER = register.intervention(MI.T2x.P10.S80, code=paste0('mi.t2x.p10.s80', suffix),
                                                  name='All MSM and all PWID tested twice a year, 10% on PrEP, and 80% suppressed',
                                                  manager = INTERVENTION.MANAGER)
     
-    MI.T2x.P25.S80 = join.interventions(YBHM.T2x.P25.S80,
-                                        create.intervention(ALL.MSM.AND.ACTIVE.IDU.MINUS.YOUNG.BH,
-                                                            TESTING.2x, PREP.25, SUPPRESSION.80))
+    MI.T2x.P25.S80 = join.interventions(create.intervention(ALL.MSM.AND.ACTIVE.IDU,
+                                                            TESTING.2x, PREP.25),
+                                        create.intervention(ALL.MSM.AND.IDU,
+                                                            SUPPRESSION.80))
     INTERVENTION.MANAGER = register.intervention(MI.T2x.P25.S80, code=paste0('mi.t2x.p25.s80', suffix),
                                                  name='All MSM and all PWID tested twice a year, 25% on PrEP, and 80% suppressed',
                                                  manager = INTERVENTION.MANAGER)
     
-    MI.T2x.P25.S90 = join.interventions(YBHM.T2x.P25.S90,
-                                        create.intervention(ALL.MSM.AND.ACTIVE.IDU.MINUS.YOUNG.BH,
-                                                            TESTING.2x, PREP.25, SUPPRESSION.90))
+    MI.T2x.P25.S90 = join.interventions(create.intervention(ALL.MSM.AND.ACTIVE.IDU,
+                                                            TESTING.1x, PREP.25),
+                                        create.intervention(ALL.MSM.AND.IDU,
+                                                            SUPPRESSION.90))
     INTERVENTION.MANAGER = register.intervention(MI.T2x.P25.S90, code=paste0('mi.t2x.p25.s90', suffix),
                                                  name='All MSM and all PWID tested twice a year, 25% on PrEP, and 90% suppressed',
                                                  manager = INTERVENTION.MANAGER)

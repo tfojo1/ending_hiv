@@ -23,6 +23,7 @@ msa = ALL.MSAS[index]
 print(paste0("Copying simsets for ", msa.names(msa)))
 print("----------------------------------")
 
+interventions.to.do = WEB.TOOL.INTEVENTIONS.CODES
 
 copy.and.thin.simsets(locations=msa,
                       src.dir = file.path(SYSTEMATIC.ROOT.DIR, 'full_simsets'),
@@ -32,7 +33,8 @@ copy.and.thin.simsets(locations=msa,
                       verbose=T,
                       redo.seed=T,
                       redo.baseline=T,
-                      compress.to.years=2010:2030)
+                      compress.to.years=2009:2030,
+                      interventions=interventions.to.do)
 
 
 print("----------------------------------")

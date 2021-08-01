@@ -175,7 +175,9 @@ get.intervention.description <- function(int,
         else
             rv = paste0(rv, delimiter)
         
-        rv = paste0(rv, pre.header, INTERVENTION.UNIT.TYPE.PRETTY.NAMES[type], ":", post.header)
+        #rv = paste0(rv, pre.header, INTERVENTION.UNIT.TYPE.PRETTY.NAMES[type], ":", post.header)
+        category = int$raw[[type]]$intervention.units[[1]]$name.metadata$category
+        rv = paste0(rv, pre.header, category,":", post.header)
         
         subset = int$raw[[type]]
         
@@ -187,7 +189,7 @@ get.intervention.description <- function(int,
                         target.population.name(subset$target.populations[[i]]), ": ",
                         post.target.pop)
             rv = paste0(rv, get.intervention.unit.name(subset$intervention.units[[i]],
-                                                       include.start.text = 'ramping up from'))
+                                                       include.start.time=T))
             rv = paste0(rv, bullet.post)
         }
         rv = paste0(rv, post.list)
@@ -198,14 +200,13 @@ get.intervention.description <- function(int,
 
 get.intervention.description.table <- function(int,
                                                empty.value='',
-                                               include.start.text = 'ramping up from',
-                                               include.by=T,
-                                               testing.descriptor = 'tested',
-                                               prep.descriptor = 'on PrEP',
-                                               suppression.descriptor = 'suppressed')
+                                               include.start.time=F,
+                                               include.end.time=F,
+                                               round.digits=2)
 {
     target.populations = get.unique.target.populations(int)
     
+    # for now we are using a shortcut assumptions that types is 1:1 with categories
     types = names(int$raw)
     rv = sapply(types, function(type){
         subset = int$raw[[type]]
@@ -215,11 +216,9 @@ get.intervention.description.table <- function(int,
             
             if (any(tpop.mask))
                 get.intervention.unit.name(subset$intervention.units[[tpop.index]],
-                                          include.start.text = include.start.text,
-                                          include.by = include.by,
-                                          testing.descriptor = testing.descriptor,
-                                          prep.descriptor = prep.descriptor,
-                                          suppression.descriptor = suppression.descriptor)
+                                           include.start.time=include.start.time,
+                                           include.end.time=include.end.time,
+                                           round.digits=round.digits)
             else
                 empty.value
         })
@@ -228,7 +227,9 @@ get.intervention.description.table <- function(int,
     dim(rv) = c(target.population = length(target.populations), intervention.type=length(types))
     
     dimnames(rv) = list(NULL, intervention.type=types)
-    attr(rv, 'unit.types') = INTERVENTION.UNIT.TYPE.PRETTY.NAMES[types]
+    attr(rv, 'unit.types') = sapply(types, function(type){
+        int$raw[[type]]$intervention.units[[1]]$name.metadata$category
+    })
     attr(rv, 'target.populations') = target.populations
 #    attr(rv, 'target.population.names') = sapply(target.populations, target.population.name)
     
@@ -304,8 +305,8 @@ get.intervention.description.by.target <- function(int,
             if (units.text != '')
                 units.text = paste0(units.text, unit.delimiter)
             units.text = paste0(units.text, get.intervention.unit.name(units.for.tpop[[i]], 
-                                                             include.start.text=if (include.start.text && (!all.unit.starts.same || i==1)) 'ramping up from' else NA,
-                                                             include.by=!all.unit.years.same || i==length(units.for.tpop),
+                                                             include.start.time=include.start.text && (!all.unit.starts.same || i==1),
+                                                             include.end.time=!all.unit.years.same || i==length(units.for.tpop),
                                                              round.digits=1))
         }
 
