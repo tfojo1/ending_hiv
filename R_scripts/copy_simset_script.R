@@ -23,7 +23,7 @@ msa = ALL.MSAS[index]
 print(paste0("Copying simsets for ", msa.names(msa)))
 print("----------------------------------")
 
-interventions.to.do = WEB.TOOL.INTEVENTIONS.CODES
+interventions.to.do = WEB.TOOL.INTEVENTIONS
 
 copy.and.thin.simsets(locations=msa,
                       src.dir = file.path(SYSTEMATIC.ROOT.DIR, 'full_simsets'),
