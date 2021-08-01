@@ -916,7 +916,6 @@ do.plot.simulations <- function(
             y.axis.title.function(data.type)
         })
         
-        print(axis.title)
         if (plot.format != 'individual.simulations' && label.axis.ci)
             axis.title = paste0(axis.title, 
                                 ifelse(wrap.axis.labels, '\n', ' '),
@@ -1543,15 +1542,20 @@ get.sim.dfs <- function(simset,
     {
         new.dim.names = dimnames(arr)
         new.dim.names$simulation = 1:sum(simset@weights)
-        new.arr = array(0, dim=sapply(new.dim.names, length), dimnames=new.dim.names)
-        dim(arr) = c(everything.else = prod(dim(arr))/simset@n.sim,
-                     simulation=1:simset@n.sim)
         
-        browser()
+        dim(arr) = c(everything.else = prod(dim(arr))/simset@n.sim,
+                     simulation=simset@n.sim)
+        flattened.indices = unlist(sapply(1:simset@n.sim, function(i){
+            rep(i, simset@weights[i])
+        }))
+        arr = arr[,flattened.indices]
+        
+        dim(arr) = sapply(new.dim.names, length)
+        dimnames(arr) = new.dim.names
     }
     
     if (get.individual.sims)
-      df.sim = reshape2::melt(arr)
+        df.sim = reshape2::melt(arr)
     
     #Aggregate to mean/median and CI if requested
     #Generate the change df if requested
