@@ -1539,6 +1539,16 @@ get.sim.dfs <- function(simset,
     else
         stop(paste0("'", data.type, "' is not a valid data.type."))
     
+    if (simset@n.sim != sum(simset@weights))
+    {
+        new.dim.names = dimnames(arr)
+        new.dim.names$simulation = 1:sum(simset@weights)
+        new.arr = array(0, dim=sapply(new.dim.names, length), dimnames=new.dim.names)
+        dim(arr) = c(everything.else = prod(dim(arr))/simset@n.sim,
+                     simulation=1:simset@n.sim)
+        
+        browser()
+    }
     
     if (get.individual.sims)
       df.sim = reshape2::melt(arr)
