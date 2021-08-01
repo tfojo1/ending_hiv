@@ -224,7 +224,8 @@ copy.and.thin.simsets <- function(locations,
         
         need.to.do.seed = redo.seed || !file.exists(file.path(src.dir, location, get.seed.filename(location)))
         need.to.do.baseline = redo.baseline || !file.exists(file.path(src.dir, location, get.baseline.filename(location)))
-        if (need.to.do.seed || need.to.do.baseline)
+        if (1==2)
+#        if (need.to.do.seed || need.to.do.baseline)
         {
             if (verbose)
             {
@@ -264,6 +265,11 @@ copy.and.thin.simsets <- function(locations,
             simset = do.thin.simset.to(simset, thin.to)
             if (compress)
                 simset = compress.simset(simset, keep.years=intersect(simset@simulations[[1]]$years, compress.to.years))
+            
+            #this is a fix for in case we have changed the intervention representation (lumping target populations, eg)
+            attr(simset, 'intervention') = intervnetions[[i]]
+            
+            # save it
             save.simset(simset, dir=file.path(dst.dir, location), compress=F)
         }
         
@@ -280,5 +286,7 @@ do.thin.simset.to <- function(simset, thin.to)
     indices = indices + (simset@n.sim - max(indices))
     
     simset = subset.simset(simset, indices=indices)
+
+    #return
     simset
 }
