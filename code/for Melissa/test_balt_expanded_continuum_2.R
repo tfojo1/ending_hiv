@@ -92,10 +92,27 @@ if (1==2)
     
     
     # Doesn't do anything (maybe *barely* changes MSM with very extreme values)
-    sim2 = test.run.simulation(suppressed.vs.nonsuppressed.proportion.adherent.or=200)
+    sim2 = test.run.simulation(suppressed.vs.nonsuppressed.proportion.adherent.or=.1)
     plot.calibration(list(sim1,sim2), data.types='suppression')
     
+    sim1 = test.run.simulation(msm.proportion.lost.or=.001,
+                               heterosexual.proportion.lost.or=.001,
+                               idu.proportion.lost.or=0.001,
+                               msm.idu.proportion.lost.or=.001)
+    plot.calibration(sim1, data.types=c('engagement','suppression'))
     
+    sim2 = test.run.simulation(suppressed.vs.nonsuppressed.proportion.adherent.or=1,
+                               
+                               msm.proportion.adherent.or=0.1,
+                               heterosexual.proportion.adherent.or=0.1,
+                               idu.proportion.adherent.or=0.1,
+                               msm.idu.proportion.adherent.or=0.1,
+                               
+                               msm.proportion.lost.or=.001,
+                               heterosexual.proportion.lost.or=.001,
+                               idu.proportion.lost.or=0.001,
+                               msm.idu.proportion.lost.or=.001)
+    plot.calibration(list(sim1,sim2), data.types=c('engagement','suppression'))
     
     
     ## Checking lost ##

@@ -875,6 +875,7 @@ get.components.for.calibrated.parameters <- function(parameters, components,
                                                    age5.or.slope=parameters['age5.proportion.adherent.slope.or']
 )
   
+  
   components = set.background.unsuppression.ors(components,
                                                 msm.or.intercept = 1/parameters['msm.proportion.adherent.or']/parameters['suppressed.vs.nonsuppressed.proportion.adherent.or'],
                                                 heterosexual.or.intercept=1/parameters['heterosexual.proportion.adherent.or']/parameters['suppressed.vs.nonsuppressed.proportion.adherent.or'],
