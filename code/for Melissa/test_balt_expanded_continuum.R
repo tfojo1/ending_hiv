@@ -39,7 +39,7 @@ if (1==2)
     plot.calibration(list(sim1,sim2), data.types='linkage')
     
     # Race and age: higher linkage by 2020, but weird slope to get there. Changing the slope.or doesn't matter
-    sim2 = test.run.simulation(black.proportion.linked.or=1.1)
+    sim2 = test.run.simulation(black.proportion.linked.or=2)
     plot.calibration(list(sim1,sim2), data.types='linkage', facet.by = 'race')
     sim2 = test.run.simulation(black.proportion.linked.or=1.1, black.proportion.linked.slope.or=.5)
     plot.calibration(list(sim1,sim2), data.types='linkage', facet.by = 'race')
@@ -67,8 +67,8 @@ if (1==2)
     # Race and age: lower suppression by 2020 (wrong), and weird slope to get there. Changing the slope.or doesn't matter
     sim2 = test.run.simulation(black.proportion.adherent.or=2)
     plot.calibration(list(sim1,sim2), data.types='suppression', facet.by = 'race')
-    sim2 = test.run.simulation(black.proportion.adherent.or=2, black.proportion.adherent.slope.or=2)
-    plot.calibration(list(sim1,sim2), data.types='suppression', facet.by = 'race')
+    sim2 = test.run.simulation(black.proportion.adherent.or=10, black.proportion.adherent.slope.or=2)
+    plot.calibration(list(sim1,sim2), data.types=c('suppression','engagement'), facet.by = 'race')
     # (Same patterns for hispanic; and age groups)
     
     
@@ -96,10 +96,10 @@ if (1==2)
     plot.calibration(list(sim1,sim2), data.types='suppression')
     
     # Race and age: higher suppression by 2020 (wrong). Changing the slope.or doesn't matter
-    sim2 = test.run.simulation(black.proportion.lost.or=1.1)
-    plot.calibration(list(sim1,sim2), data.types='suppression', facet.by = 'race')
-    sim2 = test.run.simulation(black.proportion.lost.or=1.1, black.proportion.lost.slope.or=2)
-    plot.calibration(list(sim1,sim2), data.types='suppression', facet.by = 'race')
+    sim2 = test.run.simulation(black.proportion.lost.or=2)
+    plot.calibration(list(sim1,sim2), data.types='engagement', facet.by = 'race')
+    sim2 = test.run.simulation(black.proportion.lost.or=1.1, black.proportion.lost.slope.or=1.1)
+    plot.calibration(list(sim1,sim2), data.types='engagement', facet.by = 'race')
     # (Same patterns for hispanic; and age groups)
 
     
@@ -110,7 +110,7 @@ if (1==2)
     
     # Race and age: don't do anything
     sim2 = test.run.simulation(black.proportion.lost.slope.or=2)
-    plot.calibration(list(sim1,sim2), data.types='suppression', facet.by = 'race')
+    plot.calibration(list(sim1,sim2), data.types='engagement', facet.by = 'race')
     
     
     # Only affects MSM
