@@ -1,6 +1,12 @@
 load("~/Dropbox/Documents_local/Hopkins/PhD/Dissertation/EHE/CNICS/synthetic_fixed_2021-08-06.Rdata")
 
 library(nnet)
+library(multgee)
+
+anchor.year = 2010
+
+dataset <- dataset[!dataset$sex=="Intersexed",]
+dataset$relative.year <- dataset$date - anchor.year
 
 # Creating three datasets
 engaged <-dataset[dataset$engaged.now==TRUE,]
@@ -34,8 +40,15 @@ for (i in 1:nrow(engaged.unsuppressed)) {
 engaged.unsuppressed$future.state <- factor(engaged.unsuppressed$future.state)
 engaged.unsuppressed$future.state <- relevel(engaged.unsuppressed$future.state, ref="remain")
 
-model <- multinom(future.state ~ sex, data=engaged.unsuppressed)
-summary(model)
+
+## multgee version 
+model.engaged.unsuppressed <- nomLORgee(future.state ~ sex + relative.year, data=engaged.unsuppressed, id=id)
+summary(model.engaged.unsuppressed)
+model.engaged.unsuppressed$coefficients
+
+## nnet version
+# model1 <- multinom(future.state ~ sex, data=engaged.unsuppressed)
+# summary(model1)
 
 ##------------------------------------##
 ##--- DATASET 2: Engaged suppressed---##
@@ -63,10 +76,15 @@ for (i in 1:nrow(engaged.suppressed)) {
 engaged.suppressed$future.state <- factor(engaged.suppressed$future.state)
 engaged.suppressed$future.state <- relevel(engaged.suppressed$future.state, ref="remain")
 
-model <- multinom(future.state ~ sex, data=engaged.suppressed)
-summary(model)
 
+## multgee version 
+model.engaged.suppressed <- nomLORgee(future.state ~ sex+ relative.year, data=engaged.suppressed, id=id)
+summary(model.engaged.suppressed)
+model.engaged.suppressed$coefficients
 
+## nnet version
+# model2 <- multinom(future.state ~ sex, data=engaged.suppressed)
+# summary(model2)
 
 ##------------------------------------##
 ##------- DATASET 3: Disengaged ------##
@@ -94,10 +112,21 @@ for (i in 1:nrow(disengaged)) {
 disengaged$future.state <- factor(disengaged$future.state)
 disengaged$future.state <- relevel(disengaged$future.state, ref="remain")
 
-model <- multinom(future.state ~ sex, data=disengaged)
-summary(model)
+## multgee version 
+model.disengaged <- nomLORgee(future.state ~ sex + relative.year, data=disengaged, id=id)
+summary(model.disengaged)
+model.disengaged$coefficients
 
+## nnet version
+# model3 <- multinom(future.state ~ sex, data=disengaged)
+# summary(model3)
 
+output <- list(engaged.unsuppressed.coefficients=model.engaged.unsuppressed$coefficients,
+               engaged.unsuppressed.variance=model.engaged.unsuppressed$robust.variance,
+               engaged.suppressed.coefficients=model.engaged.suppressed$coefficients,
+               engaged.suppressed.variance=model.engaged.suppressed$robust.variance,
+               disengaged.coefficients=model.disengaged$coefficients,
+               disengaged.variance=model.disengaged$robust.variance)
 
 
 ### Old way of doing this
