@@ -1,4 +1,22 @@
-load("~/Dropbox/Documents_local/Hopkins/PhD/Dissertation/EHE/CNICS/synthetic_fixed_2021-08-06.Rdata")
+MELISSAS.FILE = "~/Dropbox/Documents_local/Hopkins/PhD/Dissertation/EHE/CNICS/synthetic_fixed_2021-08-06.Rdata"
+TODDS.FILE = '../../CNICS/cleaned_datasets/arch68/cnics_fixed_2021-08-06.Rdata'
+if (file.exists(MELISSAS.FILE))
+{
+    load(MELISSAS.FILE)
+    print("Using synthetic data")
+    dataset.type='synthetic'
+}
+if (file.exists(TODDS.FILE))
+{
+    load(TODDS.FILE)
+    print("Using real data")
+    dataset.type='real'
+}
+
+#A quick fix to the mis-named age.category field
+# (the synthetic dataset erroneously labels this 'age.category.randomized')
+if (any(names(dataset)=='age.category.randomized'))
+    names(dataset)[names(dataset)=='age.category.randomized'] = 'age.category'
 
 library(nnet)
 library(multgee)
@@ -17,6 +35,7 @@ engaged <-dataset[dataset$engaged.now==TRUE,]
 ##-- DATASET 1: Engaged unsuppressed--##
 ##------------------------------------##
 
+print("Preparing Dataset for engaged-unsuppressed")
 engaged.unsuppressed <-dataset[dataset$engaged.now==TRUE & dataset$suppressed.now==FALSE,]
 
 for (i in 1:nrow(engaged.unsuppressed)) {
@@ -41,8 +60,9 @@ engaged.unsuppressed$future.state <- factor(engaged.unsuppressed$future.state, l
 # engaged.unsuppressed$future.state <- relevel(engaged.unsuppressed$future.state, ref="remain")
 
 
+print("Fitting Model for engaged-unsuppressed")
 ## multgee version 
-model.engaged.unsuppressed <- nomLORgee(future.state ~ age.category.randomized + sex + race + risk + relative.year
+model.engaged.unsuppressed <- nomLORgee(future.state ~ age.category + sex + race + risk + relative.year
                                         + site + art.naive + years.in.care + aids.defining.illness,
                                         data=engaged.unsuppressed, id=id)
 
@@ -53,6 +73,10 @@ model.engaged.unsuppressed <- nomLORgee(future.state ~ age.category.randomized +
 ##------------------------------------##
 ##--- DATASET 2: Engaged suppressed---##
 ##------------------------------------##
+
+
+print("Preparing Dataset for engaged-suppressed")
+
 engaged.suppressed <-dataset[dataset$engaged.now==TRUE & dataset$suppressed.now==TRUE & !is.na(dataset$suppressed.now),]
 
 for (i in 1:nrow(engaged.suppressed)) {
@@ -73,12 +97,14 @@ for (i in 1:nrow(engaged.suppressed)) {
     
 }
 
+
 engaged.suppressed$future.state <- factor(engaged.suppressed$future.state, levels = c("unsuppress","lost","missing", "remain"))
 # engaged.suppressed$future.state <- relevel(engaged.suppressed$future.state, ref="remain")
 
 
 ## multgee version 
-model.engaged.suppressed <- nomLORgee(future.state ~ age.category.randomized + sex + race + risk + relative.year
+print("Fitting Model for engaged-suppressed")
+model.engaged.suppressed <- nomLORgee(future.state ~ age.category + sex + race + risk + relative.year
                                       + site + art.naive + years.in.care + aids.defining.illness,
                                       data=engaged.suppressed, id=id)
 
@@ -89,6 +115,8 @@ model.engaged.suppressed <- nomLORgee(future.state ~ age.category.randomized + s
 ##------------------------------------##
 ##------- DATASET 3: Disengaged ------##
 ##------------------------------------##
+
+print("Preparing Dataset for disengaged")
 disengaged <-dataset[dataset$engaged.now==FALSE,]
 
 for (i in 1:nrow(disengaged)) {
@@ -113,7 +141,8 @@ disengaged$future.state <- factor(disengaged$future.state, levels = c("reengage.
 # disengaged$future.state <- relevel(disengaged$future.state, ref="remain")
 
 ## multgee version 
-model.disengaged <- nomLORgee(future.state ~ age.category.randomized + sex + race + risk + relative.year 
+print("Fitting Model for disengaged")
+model.disengaged <- nomLORgee(future.state ~ age.category + sex + race + risk + relative.year 
                               + site + art.naive + years.in.care + aids.defining.illness,
                               data=disengaged, id=id)
 
@@ -128,6 +157,9 @@ output <- list(engaged.unsuppressed.coefficients=model.engaged.unsuppressed$coef
                disengaged.coefficients=model.disengaged$coefficients,
                disengaged.variance=model.disengaged$robust.variance)
 
+print("Done - saving output")
+save(output, file=file.path('code','for Melissa', 'CNICS analysis', 
+                            paste0('multinomial_output_', dataset.type, '_', Sys.Date())))
 
 ### Old way of doing this
 # engaged.unsuppressed$remain = as.numeric(engaged.unsuppressed$engaged.future==TRUE 
