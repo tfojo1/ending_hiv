@@ -33,18 +33,18 @@ for (i in 1:nrow(engaged.unsuppressed)) {
         engaged.unsuppressed$future.state[i]="lost"
         
     } else 
-        engaged.unsuppressed$future.state[i]="NA"
+        engaged.unsuppressed$future.state[i]="missing"
     
 }
 
-engaged.unsuppressed$future.state <- factor(engaged.unsuppressed$future.state)
-engaged.unsuppressed$future.state <- relevel(engaged.unsuppressed$future.state, ref="remain")
+engaged.unsuppressed$future.state <- factor(engaged.unsuppressed$future.state, levels = c("suppress","lost","missing", "remain"))
+# engaged.unsuppressed$future.state <- relevel(engaged.unsuppressed$future.state, ref="remain")
 
 
 ## multgee version 
-model.engaged.unsuppressed <- nomLORgee(future.state ~ sex + relative.year, data=engaged.unsuppressed, id=id)
-summary(model.engaged.unsuppressed)
-model.engaged.unsuppressed$coefficients
+model.engaged.unsuppressed <- nomLORgee(future.state ~ age.category.randomized + sex + race + risk + relative.year
+                                        + site + art.naive + years.in.care + aids.defining.illness,
+                                        data=engaged.unsuppressed, id=id)
 
 ## nnet version
 # model1 <- multinom(future.state ~ sex, data=engaged.unsuppressed)
@@ -69,18 +69,18 @@ for (i in 1:nrow(engaged.suppressed)) {
         engaged.suppressed$future.state[i]="lost"
         
     } else 
-        engaged.suppressed$future.state[i]="NA"
+        engaged.suppressed$future.state[i]="missing"
     
 }
 
-engaged.suppressed$future.state <- factor(engaged.suppressed$future.state)
-engaged.suppressed$future.state <- relevel(engaged.suppressed$future.state, ref="remain")
+engaged.suppressed$future.state <- factor(engaged.suppressed$future.state, levels = c("unsuppress","lost","missing", "remain"))
+# engaged.suppressed$future.state <- relevel(engaged.suppressed$future.state, ref="remain")
 
 
 ## multgee version 
-model.engaged.suppressed <- nomLORgee(future.state ~ sex+ relative.year, data=engaged.suppressed, id=id)
-summary(model.engaged.suppressed)
-model.engaged.suppressed$coefficients
+model.engaged.suppressed <- nomLORgee(future.state ~ age.category.randomized + sex + race + risk + relative.year
+                                      + site + art.naive + years.in.care + aids.defining.illness,
+                                      data=engaged.suppressed, id=id)
 
 ## nnet version
 # model2 <- multinom(future.state ~ sex, data=engaged.suppressed)
@@ -104,18 +104,18 @@ for (i in 1:nrow(disengaged)) {
         disengaged$future.state[i]="reengage.suppress"
         
     } else 
-        disengaged$future.state[i]="NA"
+        disengaged$future.state[i]="missing"
     
 }
 
 
-disengaged$future.state <- factor(disengaged$future.state)
-disengaged$future.state <- relevel(disengaged$future.state, ref="remain")
+disengaged$future.state <- factor(disengaged$future.state, levels = c("reengage.unsuppress","reengage.suppress","missing", "remain"))
+# disengaged$future.state <- relevel(disengaged$future.state, ref="remain")
 
 ## multgee version 
-model.disengaged <- nomLORgee(future.state ~ sex + relative.year, data=disengaged, id=id)
-summary(model.disengaged)
-model.disengaged$coefficients
+model.disengaged <- nomLORgee(future.state ~ age.category.randomized + sex + race + risk + relative.year 
+                              + site + art.naive + years.in.care + aids.defining.illness,
+                              data=disengaged, id=id)
 
 ## nnet version
 # model3 <- multinom(future.state ~ sex, data=disengaged)
