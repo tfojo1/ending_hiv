@@ -66,6 +66,10 @@ model.engaged.unsuppressed <- nomLORgee(future.state ~ age.category + sex + race
                                         + site + art.naive + years.in.care + aids.defining.illness,
                                         data=engaged.unsuppressed, id=id)
 
+exp(model.engaged.unsuppressed$coefficients[grepl('beta',names(model.engaged.unsuppressed$coefficients))])
+# exp(model.engaged.unsuppressed$coefficients[c(1,25,49)])
+table(engaged.unsuppressed$future.state)
+
 ## nnet version
 # model1 <- multinom(future.state ~ sex, data=engaged.unsuppressed)
 # summary(model1)
@@ -108,6 +112,9 @@ model.engaged.suppressed <- nomLORgee(future.state ~ age.category + sex + race +
                                       + site + art.naive + years.in.care + aids.defining.illness,
                                       data=engaged.suppressed, id=id)
 
+## Problem is clearly with age.category - only runs when I remove it; doesn't even run if I *only* include it (and nothing else)
+
+
 ## nnet version
 # model2 <- multinom(future.state ~ sex, data=engaged.suppressed)
 # summary(model2)
@@ -145,6 +152,9 @@ print("Fitting Model for disengaged")
 model.disengaged <- nomLORgee(future.state ~ age.category + sex + race + risk + relative.year 
                               + site + art.naive + years.in.care + aids.defining.illness,
                               data=disengaged, id=id)
+
+## Problem is clearly with age.category - only runs when I remove it; doesn't even run if I *only* include it (and nothing else)
+
 
 ## nnet version
 # model3 <- multinom(future.state ~ sex, data=disengaged)
