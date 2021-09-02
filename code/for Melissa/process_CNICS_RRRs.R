@@ -1,23 +1,52 @@
-load("~/Dropbox/Documents_local/Hopkins/PhD/Dissertation/EHE/Ending_HIV/ending_hiv/code/for Melissa/CNICS analysis/multinomial_output_synthetic_2021-09-01")
+load("~/Dropbox/Documents_local/Hopkins/PhD/Dissertation/EHE/Ending_HIV/ending_hiv/code/for Melissa/CNICS analysis/multinomial_output_synthetic_2021-09-02")
 
-covariates.EU = names(output$engaged.unsuppressed.coefficients[1:(length(output$engaged.unsuppressed.coefficients)/3)])
-future.states.EU = c("suppress","lost","missing") 
-engaged.unsuppressed.table = matrix(exp(output$engaged.unsuppressed.coefficients),
-                                    (length(output$engaged.unsuppressed.coefficients)/3),3, 
+## Engaged unsuppressed
+covariates.EU = names(output$engaged.unsuppressed.coefficients[1:(length(output$engaged.unsuppressed.coefficients)/2)])
+future.states.EU = c("suppress","lost") 
+standard.error.EU = sqrt(diag(output$engaged.unsuppressed.variance))
+ci.upper.EU = exp(output$engaged.unsuppressed.coefficients - qnorm(.025)*standard.error.EU)
+ci.lower.EU = exp(output$engaged.unsuppressed.coefficients + qnorm(.025)*standard.error.EU)
+
+tab = paste0(format(exp(output$engaged.unsuppressed.coefficients), digits = 2, nsmall=2),
+             " [", format(ci.lower.EU, digits=2, nsmall=2),
+             " to ", format(ci.upper.EU, digit=2, nsmall=2), "]")
+
+engaged.unsuppressed.table = matrix(tab, (length(output$engaged.unsuppressed.coefficients)/2),2, 
                                     dimnames = list(covariates.EU,future.states.EU))
 
-covariates.ES = names(output$engaged.suppressed.coefficients[1:(length(output$engaged.suppressed.coefficients)/3)])
-future.states.ES = c("unsuppress","lost","missing") 
-engaged.suppressed.table = matrix(exp(output$engaged.suppressed.coefficients),
-                                    (length(output$engaged.suppressed.coefficients)/3),3, 
+
+## Engaged suppressed
+covariates.ES = names(output$engaged.suppressed.coefficients[1:(length(output$engaged.suppressed.coefficients)/2)])
+future.states.ES = c("unsuppress","lost") 
+standard.error.ES = sqrt(diag(output$engaged.suppressed.variance))
+ci.upper.ES = exp(output$engaged.suppressed.coefficients - qnorm(.025)*standard.error.ES)
+ci.lower.ES = exp(output$engaged.suppressed.coefficients + qnorm(.025)*standard.error.ES)
+
+tab = paste0(format(exp(output$engaged.suppressed.coefficients), digits = 2, nsmall=2),
+             " [", format(ci.lower.ES, digits=2, nsmall=2),
+             " to ", format(ci.upper.ES, digit=2, nsmall=2), "]")
+
+engaged.suppressed.table = matrix(tab, (length(output$engaged.suppressed.coefficients)/2),2, 
                                     dimnames = list(covariates.ES,future.states.ES))
 
-covariates.DE = names(output$disengaged.coefficients[1:(length(output$disengaged.coefficients)/3)])
-future.states.DE = c("reengage.unsuppress","reengage.suppress","missing") 
-disengaged.table = matrix(exp(output$disengaged.coefficients),
-                                  (length(output$disengaged.coefficients)/3),3, 
+
+
+## Disengaged
+covariates.DE = names(output$disengaged.coefficients[1:(length(output$disengaged.coefficients)/2)])
+future.states.DE = c("reengage.unsuppress","reengage.suppress") 
+standard.error.DE = sqrt(diag(output$disengaged.variance))
+ci.upper.DE = exp(output$disengaged.coefficients - qnorm(.025)*standard.error.DE)
+ci.lower.DE = exp(output$disengaged.coefficients + qnorm(.025)*standard.error.DE)
+
+tab = paste0(format(exp(output$disengaged.coefficients), digits = 2, nsmall=2),
+             " [", format(ci.lower.DE, digits=2, nsmall=2),
+             " to ", format(ci.upper.DE, digit=2, nsmall=2), "]")
+
+disengaged.table = matrix(tab, (length(output$disengaged.coefficients)/2),2, 
                                   dimnames = list(covariates.DE,future.states.DE))
 
+
+## Save tables
 write.csv(engaged.unsuppressed.table, file=file.path('code','for Melissa', 'CNICS analysis', 
                                                    "engaged.unsuppressed.RRRs.csv"))
 

@@ -21,14 +21,11 @@ if (any(names(dataset)=='age.category.randomized'))
 library(nnet)
 library(multgee)
 
+dataset <- dataset[dataset$sex!="Intersexed",]
+dataset <- dataset[dataset$age.category!="0-13",]
+
 anchor.year = 2010
-
-dataset <- dataset[!dataset$sex=="Intersexed",]
 dataset$relative.year <- dataset$date - anchor.year
-
-# Creating three datasets
-engaged <-dataset[dataset$engaged.now==TRUE,]
-#Putting NA's in the unsuppressed for now. I think we said we'd treat as missing? 
 
 
 ##------------------------------------##
@@ -36,7 +33,7 @@ engaged <-dataset[dataset$engaged.now==TRUE,]
 ##------------------------------------##
 
 print("Preparing Dataset for engaged-unsuppressed")
-engaged.unsuppressed <-dataset[dataset$engaged.now==TRUE & dataset$suppressed.now==FALSE,]
+engaged.unsuppressed <-dataset[dataset$engaged.now==TRUE & dataset$suppressed.now==FALSE & !is.na(dataset$suppressed.now),]
 
 for (i in 1:nrow(engaged.unsuppressed)) {
     if(!is.na(engaged.unsuppressed$engaged.future[i]) && !is.na(engaged.unsuppressed$suppressed.future[i]) &&
@@ -56,31 +53,28 @@ for (i in 1:nrow(engaged.unsuppressed)) {
     
 }
 
-engaged.unsuppressed$future.state <- factor(engaged.unsuppressed$future.state, levels = c("suppress","lost","missing", "remain"))
-# engaged.unsuppressed$future.state <- relevel(engaged.unsuppressed$future.state, ref="remain")
+engaged.unsuppressed <-engaged.unsuppressed[engaged.unsuppressed$future.state!="missing",]
+engaged.unsuppressed$future.state <- factor(engaged.unsuppressed$future.state, levels = c("suppress","lost", "remain"))
+engaged.unsuppressed$age.category <- factor(engaged.unsuppressed$age.category, levels = c("35-45","13-25","25-35","45-55","55+"))
+engaged.unsuppressed$sex <- factor(engaged.unsuppressed$sex, levels = c("Male","Female"))
+engaged.unsuppressed$race <- factor(engaged.unsuppressed$race, levels = c("other","black","hispanic"))
+engaged.unsuppressed$risk <- factor(engaged.unsuppressed$risk, levels = c("heterosexual","idu","msm","msm_idu","other"))
 
 
 print("Fitting Model for engaged-unsuppressed")
-## multgee version 
 model.engaged.unsuppressed <- nomLORgee(future.state ~ age.category + sex + race + risk + relative.year
                                         + site + art.naive + years.in.care + aids.defining.illness,
                                         data=engaged.unsuppressed, id=id)
 
-exp(model.engaged.unsuppressed$coefficients[grepl('beta',names(model.engaged.unsuppressed$coefficients))])
-# exp(model.engaged.unsuppressed$coefficients[c(1,25,49)])
-table(engaged.unsuppressed$future.state)
+# exp(model.engaged.unsuppressed$coefficients[grepl('beta',names(model.engaged.unsuppressed$coefficients))])
+# table(engaged.unsuppressed$future.state)
 
-## nnet version
-# model1 <- multinom(future.state ~ sex, data=engaged.unsuppressed)
-# summary(model1)
 
 ##------------------------------------##
 ##--- DATASET 2: Engaged suppressed---##
 ##------------------------------------##
 
-
 print("Preparing Dataset for engaged-suppressed")
-
 engaged.suppressed <-dataset[dataset$engaged.now==TRUE & dataset$suppressed.now==TRUE & !is.na(dataset$suppressed.now),]
 
 for (i in 1:nrow(engaged.suppressed)) {
@@ -101,23 +95,19 @@ for (i in 1:nrow(engaged.suppressed)) {
     
 }
 
+engaged.suppressed <-engaged.suppressed[engaged.suppressed$future.state!="missing",]
+engaged.suppressed$future.state <- factor(engaged.suppressed$future.state, levels = c("unsuppress","lost","remain"))
+engaged.suppressed$age.category <- factor(engaged.suppressed$age.category, levels = c("35-45","13-25","25-35","45-55","55+"))
+engaged.suppressed$sex <- factor(engaged.suppressed$sex, levels = c("Male","Female"))
+engaged.suppressed$race <- factor(engaged.suppressed$race, levels = c("other","black","hispanic"))
+engaged.suppressed$risk <- factor(engaged.suppressed$risk, levels = c("heterosexual","idu","msm","msm_idu","other"))
 
-engaged.suppressed$future.state <- factor(engaged.suppressed$future.state, levels = c("unsuppress","lost","missing", "remain"))
-# engaged.suppressed$future.state <- relevel(engaged.suppressed$future.state, ref="remain")
 
-
-## multgee version 
 print("Fitting Model for engaged-suppressed")
 model.engaged.suppressed <- nomLORgee(future.state ~ age.category + sex + race + risk + relative.year
                                       + site + art.naive + years.in.care + aids.defining.illness,
                                       data=engaged.suppressed, id=id)
 
-## Problem is clearly with age.category - only runs when I remove it; doesn't even run if I *only* include it (and nothing else)
-
-
-## nnet version
-# model2 <- multinom(future.state ~ sex, data=engaged.suppressed)
-# summary(model2)
 
 ##------------------------------------##
 ##------- DATASET 3: Disengaged ------##
@@ -143,22 +133,23 @@ for (i in 1:nrow(disengaged)) {
     
 }
 
+disengaged <-disengaged[disengaged$future.state!="missing",]
+disengaged$future.state <- factor(disengaged$future.state, levels = c("reengage.unsuppress","reengage.suppress", "remain"))
+disengaged$age.category <- factor(disengaged$age.category, levels = c("35-45","13-25","25-35","45-55","55+"))
+disengaged$sex <- factor(disengaged$sex, levels = c("Male","Female"))
+disengaged$race <- factor(disengaged$race, levels = c("other","black","hispanic"))
+disengaged$risk <- factor(disengaged$risk, levels = c("heterosexual","idu","msm","msm_idu","other"))
 
-disengaged$future.state <- factor(disengaged$future.state, levels = c("reengage.unsuppress","reengage.suppress","missing", "remain"))
-# disengaged$future.state <- relevel(disengaged$future.state, ref="remain")
 
-## multgee version 
 print("Fitting Model for disengaged")
 model.disengaged <- nomLORgee(future.state ~ age.category + sex + race + risk + relative.year 
                               + site + art.naive + years.in.care + aids.defining.illness,
                               data=disengaged, id=id)
 
-## Problem is clearly with age.category - only runs when I remove it; doesn't even run if I *only* include it (and nothing else)
 
-
-## nnet version
-# model3 <- multinom(future.state ~ sex, data=disengaged)
-# summary(model3)
+##------------------------------------##
+##------------- Output ---------------##
+##------------------------------------##
 
 output <- list(engaged.unsuppressed.coefficients=model.engaged.unsuppressed$coefficients,
                engaged.unsuppressed.variance=model.engaged.unsuppressed$robust.variance,
