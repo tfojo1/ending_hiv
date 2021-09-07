@@ -27,6 +27,33 @@ dataset <- dataset[dataset$age.category!="0-13",]
 anchor.year = 2010
 dataset$relative.year <- dataset$date - anchor.year
 
+for (i in 1:nrow(dataset)) {
+    if(dataset$risk[i]=="msm")  {
+        dataset$sex.risk[i]="msm"
+        
+    } else if(dataset$risk[i]=="msm_idu")  {
+        dataset$sex.risk[i]="msm_idu"
+        
+    } else if(dataset$sex[i]=="Male" && dataset$risk[i]=="heterosexual")  {
+        dataset$sex.risk[i]="heterosexual_male"
+        
+    } else if(dataset$sex[i]=="Female" && dataset$risk[i]=="heterosexual")  {
+        dataset$sex.risk[i]="heterosexual_female"
+        
+    } else if(dataset$sex[i]=="Male" && dataset$risk[i]=="idu")  {
+        dataset$sex.risk[i]="idu_male"
+        
+    } else if(dataset$sex[i]=="Female" && dataset$risk[i]=="idu")  {
+        dataset$sex.risk[i]="idu_female"
+        
+    } else if(dataset$risk[i]=="other")  {
+        dataset$sex.risk[i]="other"
+            
+    } else 
+        dataset$sex.risk[i]="missing"
+}
+
+
 
 ##------------------------------------##
 ##-- DATASET 1: Engaged unsuppressed--##
@@ -59,10 +86,13 @@ engaged.unsuppressed$age.category <- factor(engaged.unsuppressed$age.category, l
 engaged.unsuppressed$sex <- factor(engaged.unsuppressed$sex, levels = c("Male","Female"))
 engaged.unsuppressed$race <- factor(engaged.unsuppressed$race, levels = c("other","black","hispanic"))
 engaged.unsuppressed$risk <- factor(engaged.unsuppressed$risk, levels = c("heterosexual","idu","msm","msm_idu","other"))
+engaged.unsuppressed$sex.risk <- factor(engaged.unsuppressed$sex.risk, levels = c("msm","msm_idu",
+                                                                                  "heterosexual_male","heterosexual_female",
+                                                                                  "idu_male","idu_female","other"))
 
 
 print("Fitting Model for engaged-unsuppressed")
-model.engaged.unsuppressed <- nomLORgee(future.state ~ age.category + sex + race + risk + relative.year
+model.engaged.unsuppressed <- nomLORgee(future.state ~ age.category + sex.risk + race + relative.year
                                         + site + art.naive + years.in.care + aids.defining.illness,
                                         data=engaged.unsuppressed, id=id)
 
@@ -101,10 +131,12 @@ engaged.suppressed$age.category <- factor(engaged.suppressed$age.category, level
 engaged.suppressed$sex <- factor(engaged.suppressed$sex, levels = c("Male","Female"))
 engaged.suppressed$race <- factor(engaged.suppressed$race, levels = c("other","black","hispanic"))
 engaged.suppressed$risk <- factor(engaged.suppressed$risk, levels = c("heterosexual","idu","msm","msm_idu","other"))
-
+engaged.suppressed$sex.risk <- factor(engaged.suppressed$sex.risk, levels = c("msm","msm_idu",
+                                                                              "heterosexual_male","heterosexual_female",
+                                                                              "idu_male","idu_female","other"))
 
 print("Fitting Model for engaged-suppressed")
-model.engaged.suppressed <- nomLORgee(future.state ~ age.category + sex + race + risk + relative.year
+model.engaged.suppressed <- nomLORgee(future.state ~ age.category + sex.risk + race + relative.year
                                       + site + art.naive + years.in.care + aids.defining.illness,
                                       data=engaged.suppressed, id=id)
 
@@ -139,10 +171,13 @@ disengaged$age.category <- factor(disengaged$age.category, levels = c("35-45","1
 disengaged$sex <- factor(disengaged$sex, levels = c("Male","Female"))
 disengaged$race <- factor(disengaged$race, levels = c("other","black","hispanic"))
 disengaged$risk <- factor(disengaged$risk, levels = c("heterosexual","idu","msm","msm_idu","other"))
+disengaged$sex.risk <- factor(disengaged$sex.risk, levels = c("msm","msm_idu",
+                                                              "heterosexual_male","heterosexual_female",
+                                                              "idu_male","idu_female","other"))
 
 
 print("Fitting Model for disengaged")
-model.disengaged <- nomLORgee(future.state ~ age.category + sex + race + risk + relative.year 
+model.disengaged <- nomLORgee(future.state ~ age.category + sex.risk + race + relative.year 
                               + site + art.naive + years.in.care + aids.defining.illness,
                               data=disengaged, id=id)
 
