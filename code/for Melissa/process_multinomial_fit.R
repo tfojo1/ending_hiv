@@ -28,18 +28,40 @@ make.x.beta <- function(coefficients,
 rv =  sapply(risks, function(risk){
       
         sapply(sexes, function(sex){
-            # calculate sex risk covariates here
+          if(risk!="never_IDU" && sex=="msm")
+            x[paste0("sex.riskmsm_idu:",k)] = 1
+          if(risk=="never_IDU" && sex=="heterosexual_male")
+            x[paste0("sex.riskheterosexual_male:",k)] = 1
+          if(risk=="never_IDU" && sex=="female")
+            x[paste0("sex.riskheterosexual_female:",k)] = 1
+          if(risk!="never_IDU" && sex=="heterosexual_male")
+            x[paste0("sex.riskidu_male:",k)] = 1
+          if(risk!="never_IDU" && sex=="female")
+            x[paste0("sex.riskidu_female:",k)] = 1
+         # if()
+          #  x[paste0("sex.riskother",k)] = 1
+           # not sure what to do for other
             
             sapply(races, function(race){
-                if(race=="black") 
-                    x[paste0("raceblack:",k)] = 1
-                if(race=="hispanic") 
-                    x[paste0("racehispanic:",k)] = 1
-                sapply(ages, function(age){
-                    
-                    sapply(years, function(year){
-                        x[paste0("relative.year:",k)] = year - anchor.year
-                        sum(x*coefficients)
+              if(race=="black") 
+                x[paste0("raceblack:",k)] = 1
+              if(race=="hispanic") 
+                x[paste0("racehispanic:",k)] = 1
+              
+              sapply(ages, function(age){
+                if(age=="13-24 years") 
+                  x[paste0("age.category13-25:",k)] = 1
+                if(age=="25-34 years") 
+                  x[paste0("age.category25-35:",k)] = 1
+                if(age=="55+ years") 
+                  x[paste0("age.category45-55:",k)] = 1
+                if(age=="13-24 years") 
+                  x[paste0("age.category55+:",k)] = 1
+                
+                sapply(years, function(year){
+                  x[paste0("relative.year:",k)] = year - anchor.year
+                  
+                    sum(x*coefficients)
                         })
                 })
             })
