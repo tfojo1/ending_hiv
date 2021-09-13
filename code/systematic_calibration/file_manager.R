@@ -125,9 +125,11 @@ save.seed.simset <- function(simset,
     simset = subset.simset.by.year(simset, seed.keep.from.year:seed.keep.to.year)
 #    attr(simset, 'components') = unfix.jheem.components(attr(simset, 'components'))
     
-    filename = get.seed.filename(location=attr(simset@simulations[[1]], 'location'),
+    location = attr(simset@simulations[[1]], 'location')
+    filename = get.seed.filename(location=location,
                                  version=version)
-    save(simset, file=file.path(dir, filename))
+    
+    save(simset, file=file.path(dir, location, filename))
 }
 
 get.seed.filename <- function(location,

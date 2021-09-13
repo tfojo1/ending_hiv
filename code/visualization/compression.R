@@ -100,7 +100,12 @@ compress.jheem.results <- function(sim,
         sim[[dimension]] = 'all'
 
     #-- Compress Components --#
-    #attr(sim, 'components') = compress.components(attr(sim, 'components'))
+    if (!is.null(attr(sim, 'components')))
+        attr(sim, 'components') = compress.jheem.components(attr(sim, 'components'),
+                                                            sim=sim,
+                                                            keep.years = keep.years,
+                                                            keep.dimensions = keep.dimensions,
+                                                            compress.continuum.to.diagnosed.vs.undiagnosed = compress.continuum.to.diagnosed.vs.undiagnosed)
     
     #-- Return --#
     sim
@@ -128,21 +133,6 @@ subset.jheem.results.by.year <- function(sim, years=2018:2020)
                            compress.continuum.to.diagnosed.vs.undiagnosed=F)
 }
 
-#not using this anymore - they weren't big enough to make it worthwhile
-compress.components <- function(components)
-{
-    to.retain = c('background.prep.years',
-                  'background.prep.coverage',
-                  'background.suppression',
-                  'background.testing',
-                  names(components)[grepl('foreground', names(components))],
-                  'jheem',
-                  'background.change.to.years'
-                  )
-    
-    
-    components[to.retain]
-}
 
 compress.jheem.array <- function(arr,
                                  sim,
@@ -152,18 +142,21 @@ compress.jheem.array <- function(arr,
 {
     dim.names = dimnames(arr)
     
-    keep.years = intersect(as.character(keep.years),
-                           dimnames(arr)[['year']])
-    if (length(keep.years) < dim(arr)['year'])
+    if (any(names(dim(arr))=='year'))
     {
-        dim(arr) = c(dim(arr)[1], prod(dim(arr)[-1]))
-        dimnames(arr) = list(year=dim.names[['year']], other=NULL)
-        
-        dim.names[['year']] = keep.years
-        arr = arr[keep.years,]
-        
-        dim(arr) = sapply(dim.names, length)
-        dimnames(arr) = dim.names
+        keep.years = intersect(as.character(keep.years),
+                               dimnames(arr)[['year']])
+        if (length(keep.years) < dim(arr)['year'])
+        {
+            dim(arr) = c(dim(arr)[1], prod(dim(arr)[-1]))
+            dimnames(arr) = list(year=dim.names[['year']], other=NULL)
+            
+            dim.names[['year']] = keep.years
+            arr = arr[keep.years,]
+            
+            dim(arr) = sapply(dim.names, length)
+            dimnames(arr) = dim.names
+        }
     }
     
     to.keep = sapply(names(dim.names), function(name){any(name==keep.dimensions)})
@@ -182,7 +175,7 @@ compress.jheem.array <- function(arr,
     }
     
     if (compress.continuum.to.diagnosed.vs.undiagnosed && any(non.compress.dimensions=='continuum') &&
-        length('continuum')>1)
+        length(dim.names$continuum)>1)
     {
         non.continuum.dimensions = setdiff(names(dim.names), 'continuum')
         undiagnosed.continuum.states = setdiff(dim.names[['continuum']], sim$diagnosed.continuum.states)
@@ -201,4 +194,61 @@ compress.jheem.array <- function(arr,
     }
     
     arr
+}
+
+compress.jheem.components <- function(components,
+                                      sim,
+                                      keep.years,
+                                      keep.dimensions,
+                                      compress.continuum.to.diagnosed.vs.undiagnosed)
+{
+    to.compress = names(components)[grepl('rates.and.times', names(components))]
+    
+    for (elem in to.compress)
+    {
+        components[[elem]] = trim.rates.and.times(components[[elem]], keep.times=keep.years)
+        components[[elem]]$rates = lapply(components[[elem]]$rates, compress.jheem.array,
+                                          sim=sim,
+                                          keep.years=keep.years,
+                                          keep.dimensions=keep.dimensions,
+                                          compress.continuum.to.diagnosed.vs.undiagnosed=compress.continuum.to.diagnosed.vs.undiagnosed)
+    }
+    
+    components
+}
+
+pare.simset.components <- function(simset,
+                                   aggressive=F,
+                                   keep.years = simset@simulations[[1]]$years)
+{
+    simset = extend.simulations(simset, function(sim, parameters){
+        components = attr(sim, 'components')
+        components = pare.jheem.components(components,
+                                           aggressive=aggressive,
+                                           keep.years=keep.years)
+        attr(sim, 'components') = components
+        sim
+    })
+    
+    simset
+}
+
+combine.simset.simulations <- function(pre.simset,
+                                       post.simset,
+                                       compress=T,
+                                       keep.years=2009:2030)
+{
+    pre.simset = flatten.simset(pre.simset)
+    post.simset = flatten.simset(post.simset)
+    
+    post.simset@simulations = lapply(1:post.simset@n.sim, function(i){
+        results = combine.jheem.results(post.simset@simulations[[i]],
+                                        pre.simset@simulations[[i]])
+        if (compress)
+            results = compress.jheem.results(results, keep.years=keep.years, compress.continuum.to.diagnosed.vs.undiagnosed = T)
+        
+        results
+    })
+    
+    post.simset
 }

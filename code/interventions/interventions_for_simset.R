@@ -203,15 +203,3 @@ run.multiple.simset.interventions <- function(simset,
         }
     }
 }
- 
-pare.simset.components <- function(simset)
-{
-    simset = extend.simulations(simset, function(sim, parameters){
-        components = attr(sim, 'components')
-        components = pare.jheem.components(components)
-        attr(sim, 'components') = components
-        sim
-    })
-    
-    simset
-}

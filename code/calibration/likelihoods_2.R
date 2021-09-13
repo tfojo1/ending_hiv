@@ -487,6 +487,8 @@ get.states.for.msa.suppression <- function(msa)
             states = 'MA'
         else if (msa=='16740') #Charlotte
             states = 'NC'
+        else if (msa=='41180') # St Louis
+            states = 'MO'
         else
             stop(paste0("More than one state for msa '", msa, "' ('", msa.names(msa), "') - cannot supply suppression data"))
     }
@@ -970,31 +972,6 @@ do.knowledge.race.sex.idu.regression <- function(df, year=NA)
          cov.mat=vcov(fit)[names.to.keep, names.to.keep])
 }
 
-get.state.averaged.knowledge.of.status <- function(msa,
-                                                   state.surveillance,
-                                                   years,
-                                                   census.totals = ALL.DATA.MANAGERS$census.totals, 
-                                                   throw.error.if.missing=F)
-{
-    states = states.for.msa(msa)
-    if (length(states)==1)
-        get.surveillance.data(state.surveillance, states, data.type = 'diagnosed', years=years, throw.error.if.missing.data = throw.error.if.missing)
-    else
-    {
-        p = get.surveillance.data(state.surveillance, states, data.type = 'diagnosed', years=years, aggregate.locations = F, throw.error.if.missing.data = throw.error.if.missing)
-        
-        counties = counties.for.msa(msa)
-        county.populations = get.census.totals(census.totals, location=counties, years=years, collapse.counties=F)
-        states.by.county = state.for.county(counties)
-        state.populations.from.counties = sapply(states, function(st){
-            sapply(years, function(year){
-                sum(county.populations[as.character(year), states.by.county==st])
-            })
-        })
-        
-        rowSums(p * state.populations.from.counties / rowSums(state.populations.from.counties))
-    }
-}
 
 ##-------------##
 ##-- TESTING --##
@@ -1717,7 +1694,7 @@ pull.simulations.rates <- function(jheem.results,
         numerators = extract.prep.coverage(jheem.results, years=years,
                                            keep.dimensions = c('year','age','race','sex','risk'),
                                            per.population = NA,
-                                           multiplier = prep.multiplier)
+                                           indications.multiplier = prep.multiplier)
     else
         stop("data.type must be one of 'new', 'prevalence', 'mortality', 'aware', or 'prep")
     

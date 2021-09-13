@@ -196,7 +196,7 @@ get.covid.simset.name <- function(msa,
                                   intervention.name=NA,
                                   version=COVID.VERSION)
 {
-    paste0("covid_", version, "_", msa, 
+    paste0("covid", version, "_", msa, 
            ifelse(is.null(scenario), "", paste0("_", scenario)),
            ifelse(is.null(intervention.name) || is.na(intervention.name), '', paste0("_", intervention.name)),
            ".Rdata")

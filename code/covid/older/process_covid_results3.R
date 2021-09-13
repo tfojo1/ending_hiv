@@ -1,16 +1,16 @@
 
+source('code/source_code.R')
 source('code/covid/prepare_and_run_covid_sims.R')
 source('code/covid/prepare_covid_parameters.R')
+
 if (1==2)
 {
-    source('code/source_code.R')
-    source('code/targets/target_msas.R')
     
-    INDICES.TO.DO = 1 + 8*0:3
+    INDICES.TO.DO = 8 + 8*0:3
     subs = lapply(1:length(INDICES.TO.DO), function(i){
         print(paste0("DOING '", TARGET.MSAS[INDICES.TO.DO[i]], "' - ", i, " OF ", length(INDICES.TO.DO)))
         outcomes.sub.arr = process.covid.outcomes(locations=TARGET.MSAS[INDICES.TO.DO[i]])
-        save(outcomes.sub.arr, file=paste0('results/covid/covid_4.1_results_sub', INDICES.to.DO[i], '.Rdata'))
+        save(outcomes.sub.arr, file=paste0('results/covid/subs/covid_4.1_results_', TARGET.MSAS[INDICES.TO.DO[i]], '.Rdata'))
         outcomes.sub.arr
     })
     
@@ -18,14 +18,12 @@ if (1==2)
     parameters = generate.covid.parameters(N=1000)
     location.names = unlist(msa.names(TARGET.MSAS))
     
+    save(outcomes.arr, parameters, location.names, file='results/covid/covid_4.1_results.Rdata')
     
-    save(outcomes.arr, parameters, location.names, file='results/covid/covid_4.0_results.Rdata')
     
-    nyc.means = apply(outcomes.arr[2,,1,,'prevalence.diagnosed',], c('scenario','year'), mean)
-    nyc.means = apply(outcomes.arr[2,,1,,'suppression',]/outcomes.arr[2,,1,,'prevalence.diagnosed',], c('scenario','year'), mean)
-    nyc.means = apply(outcomes.arr[2,,1,,'prevalence.diagnosed',]/outcomes.arr[2,,1,,'prevalence.all',], c('scenario','year'), mean)
-    nyc.df = melt(nyc.means)
-    ggplot(nyc.df, aes(x=year, y=value, color=scenario)) + geom_line(size=2)
+#    for (i in 1:32)
+ #       file.rename(file.path('results','covid','subs',paste0('covid_4.1_results_sub', i, '.Rdata')),
+  #                  file.path('results','covid','subs',paste0('covid_4.1_results_', TARGET.MSAS[i], '.Rdata')))
 }
 
 
@@ -146,7 +144,6 @@ merge.covid.outcomes <- function(sub.list)
     locations = unlist(sapply(sub.list, function(sub){
         dimnames(sub)[['location']]
     }))
-    
     dim.names = dimnames(sub.list[[1]])
     dim.names[['location']] = locations
     rv = array(NaN, dim=sapply(dim.names, length), dimnames=dim.names)
@@ -169,7 +166,10 @@ load.and.merge.covid.outcomes <- function(msas=TARGET.MSAS,
             outcomes.sub.arr
         }
         else
+        {
+            print(paste0("'", filename, "' does not exist - skipping"))
             NULL
+        }
     })
     subs = subs[!sapply(subs, is.null)]
     
@@ -183,11 +183,11 @@ extract.covid.results <- function(sim1,
     # Set up data structures
     inc = rep(NaN, length(years))
     names(inc) = as.character(years)
-    prev.all = prev.diagnosed = new.dx = suppressed = pop = inc
+    prev.all = prev.diagnosed = new.dx = suppressed = pop = testing = inc
         
     
     # Pull from sim1
-    sim1.years = intersect(years, sim1$years)
+    sim1.years = intersect(years, sim1$years[-1])
     if (length(sim1.years) == 0)
         stop("The simulation does not encompass any of the requested years")
     
@@ -204,10 +204,13 @@ extract.covid.results <- function(sim1,
                                                                years=sim1.years)
     pop[as.character(sim1.years)] = get.total.population(sim=sim1, years=sim1.years)
     
+    testing[as.character(sim1.years)] = extract.testing.rates(sim=sim1, keep.dimensions = 'year',
+                                                              years=sim1.years)
+    
     # Pull from sim2
     if (!is.null(sim2))
     {
-        sim2.years = intersect(years, sim1$years)
+        sim2.years = intersect(years, sim2$years[-1])
         sim2.years = setdiff(sim2.years, sim1.years)
         if (length(sim2.years)>0)
         {
@@ -223,6 +226,9 @@ extract.covid.results <- function(sim1,
                                                                                    continuum=sim2$diagnosed.continuum.states)
             suppressed[as.character(sim2.years)] = extract.suppression(sim=sim2, keep.dimensions = 'year',
                                                                        years=sim2.years)
+            testing[as.character(sim2.years)] = extract.testing.rates(sim=sim2, keep.dimensions = 'year',
+                                                                      years=sim2.years)
+            
             pop[as.character(sim2.years)] = get.total.population(sim=sim2, years=sim2.years)
         }
     }
@@ -232,7 +238,8 @@ extract.covid.results <- function(sim1,
                prevalence.all=prev.all,
                prevalence.diagnosed=prev.diagnosed,
                suppression=suppressed*prev.diagnosed,
-               population=pop)
+               population=pop,
+               testing=testing)
     rv = rv[,RAW.COVID.OUTCOMES]
     
     rv
@@ -244,8 +251,9 @@ COVID.OUTCOMES = c(
     prevalence.all = "Prevalent Cases",
     prevalence.diagnosed = "Prevalent Cases Aware of Diagnosis",
     suppression = "Suppressed PWH",
-    population = "Population"
+    population = "Population",
+    testing = 'Testing Rates'
 )
 
-RAW.COVID.OUTCOMES = names(COVID.OUTCOMES)[1:6]
+RAW.COVID.OUTCOMES = names(COVID.OUTCOMES)[1:7]
 

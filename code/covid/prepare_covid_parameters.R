@@ -1,4 +1,7 @@
 
+
+
+##-- THE ORIGINAL FUNCTION --##
 generate.covid.parameters <- function(N=1000,
                                       sexual.transmission.range=c(0,0.5),
                                       suppression.range=c(0,0.40),#c(0.025,0.40),

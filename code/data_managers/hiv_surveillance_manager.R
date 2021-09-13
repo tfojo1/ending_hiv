@@ -232,11 +232,31 @@ has.location.surveillance <- function(surv, location)
     }))
 }
 
-get.total.diagnosed <- function(msa.code,
-                                msa.surveillance,
-                                state.surveillance)
+
+get.state.averaged.knowledge.of.status <- function(msa,
+                                                   state.surveillance,
+                                                   years,
+                                                   census.totals = ALL.DATA.MANAGERS$census.totals, 
+                                                   throw.error.if.missing=F)
 {
-    
+    states = states.for.msa(msa)
+    if (length(states)==1)
+        get.surveillance.data(state.surveillance, states, data.type = 'diagnosed', years=years, throw.error.if.missing.data = throw.error.if.missing)
+    else
+    {
+        p = get.surveillance.data(state.surveillance, states, data.type = 'diagnosed', years=years, aggregate.locations = F, throw.error.if.missing.data = throw.error.if.missing)
+        
+        counties = counties.for.msa(msa)
+        county.populations = get.census.totals(census.totals, location=counties, years=years, collapse.counties=F)
+        states.by.county = state.for.county(counties)
+        state.populations.from.counties = sapply(states, function(st){
+            sapply(years, function(year){
+                sum(county.populations[as.character(year), states.by.county==st])
+            })
+        })
+        
+        rowSums(p * state.populations.from.counties / rowSums(state.populations.from.counties))
+    }
 }
 
 ##---------------------------##
@@ -1550,7 +1570,7 @@ max.marginal.sum <- function(arr1, arr2, keep=c('race','risk'))
 ##-- READ STATE SURVEILLANCE --##
 ##-----------------------------##
 
-read.state.surveillance.manager <- function(dir='cleaned_data',
+OLD.read.state.surveillance.manager <- function(dir='cleaned_data',
                                             verbose=T)
 {
     if (verbose)

@@ -1,7 +1,7 @@
 
 ##-- READING IN THE MAPPINGS --##
 
-create.locale.mappings <- function(dir='../data/mappings')
+create.locale.mappings <- function(dir='cleaned_data/mappings')
 {
     rv = list()
 
@@ -38,6 +38,11 @@ create.locale.mappings <- function(dir='../data/mappings')
     names(rucc.codes) = format.combined.fips(rural.urban$FIPS)
     rv$counties$RUCC_2013 = rucc.codes[rv$counties$combined_fips]
 
+    rv$counties = add.lat.long(rv$counties,
+                               code.field = 'combined_fips',
+                               dir=dir,
+                               location.filename='2021_Gaz_counties_national.txt')
+    
     #msas
     cbsas = read.csv(paste0(dir, '/cbsas.csv'), stringsAsFactors = F)
     cbsas.for.msas = cbsas[cbsas$Metropolitan.Micropolitan.Statistical.Area=='Metropolitan Statistical Area',]
@@ -51,6 +56,11 @@ create.locale.mappings <- function(dir='../data/mappings')
                    division_name=cbsas.for.msas$Metropolitan.Division.Title)
     rv$msas$combined_fips = combined.fips(rv$msas$state_fips, rv$msas$county_fips)
     dimnames(rv$msas)[[1]] = rv$msas$combined_fips
+    
+    rv$msas = add.lat.long(df=rv$msas,
+                           code.field = 'cbsa',
+                           dir=dir,
+                           location.filename='2021_Gaz_cbsa_national.txt')
 
     #msa to state
     msas = unique(rv$msas[,c('cbsa','name')])
@@ -81,6 +91,30 @@ create.locale.mappings <- function(dir='../data/mappings')
     rv
 }
 
+add.lat.long <- function(df, 
+                         code.field = 'cbsa',
+                         dir='cleaned_data/mappings',
+                         location.filename='2021_Gaz_cbsa_national.txt')
+{
+    loc.df = read.table(file.path(dir, location.filename), sep='\t', header = T, quote="\"")
+    lat.long = sapply(df[,code.field], function(code){
+        mask = loc.df$GEOID==code
+        if (any(mask))
+        {
+            c(latitude = loc.df$INTPTLAT[mask][1],
+              longitude = loc.df$INTPTLONG[mask][1])
+        }
+        else
+            c(latitude=NaN,
+              longitude=NaN)
+    })
+    
+    df$latitude = lat.long[1,]
+    df$longitude = lat.long[2,]
+    
+    df
+}
+
 #fixes Wade Hampton Census Area -> Kusilvak Census Area
 # and Shannon County -> Oglala Lakota County
 fix.census.fips <- function(fips)
@@ -106,6 +140,85 @@ format.combined.fips <- function(codes)
 format.zip3 <- function(zip3s)
 {
     sprintf("%03d", as.numeric(zip3s))
+}
+
+##-----------------------------------------##
+##-- GENERAL GETTERS FOR ALL RESOLUTIONS --##
+##-----------------------------------------##
+
+get.location.latitude.longitude <- function(location.codes,
+                                   mappings=DEFAULT.LOCALE.MAPPING)
+{
+    location.codes = as.character(location.codes)
+    lat.long = sapply(location.codes, function(code){
+        
+        state.mask = mappings$states$state_fips==code
+        if (any(state.mask))
+        {
+            c(latitude=mappings$states$latitude[state.mask][1],
+              longitude=mappings$states$longitude[state.mask][1])
+        }
+        else
+        {
+            msa.mask = mappings$msas$cbsa==code
+            if (any(msa.mask))
+            {
+                c(latitude=mappings$msas$latitude[msa.mask][1],
+                  longitude=mappings$msas$longitude[msa.mask][1])
+            }
+            else
+            {
+                county.mask = mappings$counties$combined_fips==code
+                if (any(county.mask))
+                {
+                    c(latitude=mappings$counties$latitude[county.mask][1],
+                      longitude=mappings$counties$longitude[county.mask][1]) 
+                }
+                else
+                {
+                    c(latitude=NaN,
+                      longitude=NaN)
+                }
+            }
+        }
+    })
+    
+    rv = list(
+        latitude=lat.long[1,],
+        longitude=lat.long[2,]
+    )
+    names(rv$latitude) = location.codes
+    names(rv$longitude) = location.codes
+    
+    rv
+}
+
+get.location.name <- function(location.codes,
+                              mappings=DEFAULT.LOCALE.MAPPING,
+                              use.state.abbreviations=F,
+                              return.code.if.missing.name=T)
+{
+    location.codes = as.character(location.codes)
+    
+    if (use.state.abbreviations)
+    {
+        rv = state.fips.to.abbreviation(location.codes, mappings=mappings)
+        rv[is.na(rv)] = state.name.to.abbreviation(location.codes[is.na(rv)], mappings=mappings)
+    }
+    else
+    {
+        rv = state.fips.to.name(location.codes, mappings=mappings)
+        rv[is.na(rv)] = state.fips.to.name(state.abbreviation.to.fips(location.codes[is.na(rv)], mappings=mappings))
+    }
+    
+    rv[is.na(rv)] = unlist(msa.names(location.codes[is.na(rv)], mappings=mappings))
+    
+    rv[is.na(rv)] = county.names(location.codes[is.na(rv)], mappings=mappings)
+    
+    if (return.code.if.missing.name)
+        rv[is.na(rv)] = location.codes[is.na(rv)]
+    
+    rv
 }
 
 ##---------------------------------##
@@ -611,6 +724,11 @@ state.name.to.abbreviation <- function(state.names, mappings=DEFAULT.LOCALE.MAPP
 state.fips.to.abbreviation <- function(state.fips, mappings=DEFAULT.LOCALE.MAPPING)
 {
     mappings$states[as.character(state.fips), 'abbreviation']
+}
+
+state.fips.to.name <- function(state.fips, mappings=DEFAULT.LOCALE.MAPPING)
+{
+    mappings$states[as.character(state.fips), 'name']
 }
 
 state.abbreviation.to.fips <- function(state.abbreviations, mappings=DEFAULT.LOCALE.MAPPING)

@@ -1322,6 +1322,7 @@ do.extract.rates <- function(raw.rates,
     #    if (setequal()
     
     all.dimension.names = setdiff(all.dimension.names, 'non.hiv.subset')
+    
     if (include.hiv.negative)
         prevalence = rename.year.dim.with.offset(extract.population.subset(sim, years=years+population.years.offset,
                                                                            keep.dimensions = all.dimension.names,

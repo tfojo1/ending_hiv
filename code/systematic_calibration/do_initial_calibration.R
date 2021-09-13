@@ -11,9 +11,9 @@ source('code/targets/target_msas.R')
 
 set.seed(5557)
  
-msa=SEATTLE.MSA
-save.suffix = 'final.2011'
-DO.vIS.INTERVENTIONS = T
+msa=ST.LOUIS.MSA
+save.suffix = ''
+DO.vIS.INTERVENTIONS = F
 
 RESUME=F
 if (RESUME)

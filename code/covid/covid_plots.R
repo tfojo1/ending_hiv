@@ -13,14 +13,14 @@ source('code/covid/run_covid_simset_3.0.R')
 COVID.SCENARIO.NAMES = c(
     baseline = 'Absent COVID',
     noint = "Absent COVID",
-    base = "COVID: Base Case",
-    delayed.hiv.care = "COVID: Delayed Resumption of HIV Screening, Care, and PrEP",
+    base = "Rapid Resumption of Care",
+    delayed.hiv.care = "Prolonged Barriers to Care",
     rebound.sexual.transmission = "COVID: Rebound Increase in Sexual Transmission",
     rebound.sex.delayed.hiv.care = "COVID: Rebound Sexual Transmission and Delayed HIV Care"
 )
 
-COVID.OUTCOME.NAMES = c(incidence="Incident Cases (n)",
-                        new='Reported Cases (n)',
+COVID.OUTCOME.NAMES = c(incidence="Incident Cases",
+                        new='Reported Cases',
                         prevalence="Prevalent Cases (n)",
                         incidence.rate="Incidence (per 100,000)",
                         new.rate='Reported Diagnoses (per 100,000)',
@@ -60,6 +60,7 @@ make.covid.scatterplot <- function(results=outcomes.arr,
                                    #style arguments
                                    point.size=5,
                                    point.fill='gray',
+                                   point.alpha=0.4,
                                    label.rho=T,
                                    label.rho.size=7,
                                    label.rho.hjust='middle',
@@ -131,7 +132,7 @@ make.covid.scatterplot <- function(results=outcomes.arr,
 
 
     rv = ggplot(df, aes(value1, value2)) +
-        geom_point(size=point.size, shape=21, fill=point.fill) +
+        geom_point(size=point.size, shape=21, fill=point.fill, alpha=point.alpha) +
         BLANK.THEME
 
     if (!aggregate.locations && length(locations)>1)    
@@ -198,6 +199,196 @@ make.covid.scatterplot <- function(results=outcomes.arr,
     
     rv    
 }
+
+make.covid.binned.boxplot <- function(results=outcomes.arr,
+                                   params=parameters,
+                                   locations=dimnames(results)[['location']],
+                                   aggregate.locations = T,
+                                   
+                                   #binning arguments
+                                   var1.bin.width=0.05,
+                                   summary.stat=median,
+                                   interval1.coverage = 0.5,
+                                   interval2.coverage = 0.95,
+                                   
+                                   #other arguments
+                                   var1='suppression.reduction',
+                                   var2='incidence',
+                                   var1.years=2020:2025,
+                                   var2.years=2020:2025,
+                                   scenario1='base',
+                                   intervention.name1=NA,
+                                   scenario2=scenario1,
+                                   intervention.name2=intervention.name1,
+                                   subtract.scenario1=NA,
+                                   subtract.intervention.name1=NA,
+                                   subtract.relative1=T,
+                                   subtract.scenario2='baseline',
+                                   subtract.intervention.name2=NA,
+                                   subtract.relative2=T,
+                                   cor.method='spearman',
+                                   #style arguments
+                                   boxplot.fill='gray',
+                                   label.rho=T,
+                                   label.rho.size=7,
+                                   label.rho.hjust='middle',
+                                   label.rho.vjust='center',
+                                   highlight.labeled=T,
+                                   x.angle=40,
+                                   ylim=c(NA,NA))
+{
+    x.as.pct = (!is.na(subtract.scenario1) && subtract.relative1 ) ||
+        any(var1 == PCT.VARIABLES) ||
+        any(dimnames(params)[['variable']]==var1)
+    x.force.plus.sign = !is.na(subtract.scenario1)
+    y.as.pct = (!is.na(subtract.scenario2) && subtract.relative2 ) ||
+        any(var2 == PCT.VARIABLES) ||
+        any(dimnames(params)[['variable']]==var2)
+    y.force.plus.sign = !is.na(subtract.scenario2)
+    
+    values1 = get.variable(results=results,
+                           locations=locations,
+                           params=params,
+                           var.name = var1,
+                           years=var1.years,
+                           scenario=scenario1,
+                           intervention.name=intervention.name1,
+                           aggregate.locations = aggregate.locations)
+    
+    if (!is.null(subtract.scenario1) && !is.na(subtract.scenario1))
+    {
+        relative.to1 = get.variable(results=results,
+                                    locations=locations,
+                                    params=params,
+                                    var.name = var1,
+                                    years=var1.years,
+                                    scenario=subtract.scenario1,
+                                    intervention.name=subtract.intervention.name1,
+                                    aggregate.locations = aggregate.locations)
+        
+        values1 = values1 - relative.to1
+        if (subtract.relative1)
+            values1 = values1/relative.to1
+    }
+    
+    values2 = get.variable(results=results,
+                           locations=locations,
+                           params=params,
+                           var.name = var2,
+                           years=var2.years,
+                           scenario=scenario2,
+                           intervention.name=intervention.name2,
+                           aggregate.locations = aggregate.locations)
+    
+    if (!is.null(subtract.scenario2) && !is.na(subtract.scenario2))
+    {
+        relative.to2 = get.variable(results=results,
+                                    locations=locations,
+                                    params=params,
+                                    var.name = var2,
+                                    years=var2.years,
+                                    scenario=subtract.scenario2,
+                                    intervention.name=subtract.intervention.name2,
+                                    aggregate.locations = aggregate.locations)
+        
+        values2 = values2 - relative.to2
+        if (subtract.relative2)
+            values2 = values2/relative.to2
+    }
+    
+    range1 = c(var1.bin.width * floor(min(values1) / var1.bin.width),
+               var1.bin.width * ceiling(max(values1) / var1.bin.width))
+    
+    x.n.bins = (range1[2] - range1[1]) / var1.bin.width
+
+    orig.x.uppers = x.uppers = var1.bin.width * (1:x.n.bins)
+    x.lowers = x.uppers - var1.bin.width
+    x.uppers[x.n.bins] = Inf
+
+    x.bins = apply(values1, 1:2, function(x){
+        (1:x.n.bins)[x>=x.lowers & x<x.uppers][1]
+    })
+    
+    alpha1 = (1-interval1.coverage)/2
+    alpha2 = (1-interval2.coverage)/2
+    df = as.data.frame(t(sapply(1:x.n.bins, function(bin){
+        mask = values1 >= x.lowers[bin] & values1<x.uppers[bin]
+        vals2 = values2[mask]
+        
+        rv = quantile(vals2, probs=c(alpha1, 1-alpha1, alpha2, 1-alpha2))
+        names(rv) = c('interval1.lower', 'interval1.upper', 'interval2.lower', 'interval2.upper')
+        rv = c(stat=summary.stat(vals2), rv)
+    })))
+    
+    if (x.as.pct)
+    {
+        x.lowers = paste0(100*x.lowers, '%')
+        x.uppers = paste0(100*orig.x.uppers, '%')
+    }
+    x.bin.names = paste0(x.lowers, ' to ', x.uppers)
+    df$bin = factor(x.bin.names, levels=x.bin.names)
+
+    rv = ggplot(df) + 
+        geom_boxplot(aes(x=bin, middle=stat, group=bin,
+                         lower=interval1.lower, upper=interval1.upper,
+                         ymin=interval2.lower, ymax=interval2.upper),
+                     stat='identity', fill=boxplot.fill) +
+        BLANK.THEME + theme(axis.text.x = element_text(angle=x.angle, hjust=1))
+
+
+    if (label.rho && F)
+    {
+        if (label.rho.hjust=='right')
+            x.fn = max
+        else
+            x.fn = min
+        
+        if (label.rho.vjust=='top')
+            y.fn = max
+        else
+            y.fn = min
+        
+        locations = unique(df$location)
+        rho.df = data.frame(rho=sapply(locations, function(loc){
+                                mask = df$location == loc
+                                cor(df$value1[mask], df$value2[mask], method=cor.method)
+                            }),
+                            x = x.fn(df$value1),
+                            y = y.fn(df$value2)
+        )
+        rho.df$label = paste0("Spearman's rho = ", 100*round(rho.df$rho, 2), "%")
+        
+        rv = rv + geom_text(data=rho.df, aes(x,y,label=label), vjust=label.rho.vjust, hjust=label.rho.hjust, size=label.rho.size)
+        
+    }
+    
+    #-- Axis Label Formatting --#
+    force.plus = function(x){
+        mask = !is.na(x) & x>0
+        x = as.character(x)
+        x[mask] = paste0("+", x[mask])
+        x
+    } 
+    force.plus.percent = function(x){
+        mask = !is.na(x) & x>0
+        x = percent(x)
+        x[mask] = paste0("+", x[mask])
+        x
+    }
+    
+    
+
+    if (y.as.pct && y.force.plus.sign)
+        rv = rv + scale_y_continuous(labels = force.plus.percent, limits=ylim)
+    else if (y.as.pct)
+        rv = rv + scale_y_continuous(labels = percent, limits=ylim)
+    else if (y.force.plus.sign)
+        rv = rv + scale_y_continuous(labels = force.plus, limits=ylim)
+    
+    
+    rv    
+}
+
 
 make.correlation.scatterplot <- function(results=outcomes.arr,
                                          params=parameters,
@@ -401,7 +592,8 @@ make.covid.boxplot <- function(results=outcomes.arr,
         geom_boxplot(aes(x=scenario, fill=scenario,
                          middle=estimate,
                          lower=ci2.lower, upper=ci2.upper,
-                         ymin=ci.lower, ymax=ci.upper), stat='identity') +
+                         ymin=ci.lower, ymax=ci.upper),
+                     stat='identity') +
         scale_fill_manual(values=colors, name='Scenario') + 
         scale_y_continuous(labels=function(y){format(y, big.mark=',')}) +
         theme(axis.text.x=element_text(angle = 45, hjust = 1))
@@ -451,7 +643,9 @@ make.location.boxplot <- function(results=outcomes.arr,
                                   interval2.coverage=0.5,
                                   summary.stat=median,
                                   loc.names=location.names,
-                                  colors=pal_jama()
+                                  colors=pal_jama(),
+                                  box.width=0.5,
+                                  n.spacers=1
                                   #style arguments
                                )
 {
@@ -540,7 +734,7 @@ make.location.boxplot <- function(results=outcomes.arr,
     df = rbind(df, df.total)
     df$location = factor(df$location, levels=location.levels)
     
-    
+
     
     #-- Plot --#
     
@@ -553,6 +747,20 @@ make.location.boxplot <- function(results=outcomes.arr,
     colors = colors[1:length(unique.scenarios)]
     names(colors) = unique.scenarios #COVID.SCENARIO.NAMES[scenarios]
     
+    #-- Add Spacers --#
+    for (i in 1:n.spacers)
+    {
+        spacer = df[df$scenario==df$scenario[1],]
+#        spacer = spacer[dim(spacer)[1],]
+        spacer$scenario = paste0('spacer',i)
+        spacer[,setdiff(names(spacer), c('location','scenario'))] = NaN
+        df = rbind(df, spacer)
+        spacer.color = 'white'
+        names(spacer.color) = paste0('spacer',i)
+        colors = c(colors, spacer.color)
+    }
+    
+    #-- Other Formatting --#
     force.plus = function(x){
         mask = !is.na(x) & x>0
         x = format(x, big.mark=',')
@@ -577,8 +785,13 @@ make.location.boxplot <- function(results=outcomes.arr,
                          ymin=ci.lower, ymax=ci.upper,
                          fill=scenario),
                      stat='identity',
-                     position=position_dodge2(width=0.5, preserve='single')) +
-        scale_fill_manual(values=colors, name='Scenario') + 
+                     position = position_dodge2(box.width, 'single')
+#                     position = position_dodge(width=box.width, preserve='single')
+      #      position=position_dodge2(width=box.width)
+     #   position=position_dodge2(width=box.width, preserve='single')
+        ) +
+        scale_fill_manual(values=colors, name='Scenario:', labels=COVID.SCENARIO.NAMES[names(colors)],
+                          limits=names(colors)[1:(length(colors)-n.spacers)]) + 
         scale_y_continuous(labels=x.label) +
      #   theme(axis.text.x=element_text(angle = 45, hjust = 1)) + 
         coord_flip() 
@@ -625,7 +838,8 @@ make.covid.heat.map <- function(results=outcomes.arr,
                                 bin.width2=bin.width1,
                                 min.change=-0.25,
                                 max.change=0.25,
-                                color.scale.title="Change in Cumulative Incidence")
+                                color.scale.title="Change in Cumulative Incidence",
+                                x.angle=40)
 {
     x.as.pct = correlate.var1 || 
         any(PCT.VARIABLES==var1) ||
@@ -671,7 +885,7 @@ make.covid.heat.map <- function(results=outcomes.arr,
     rv = rv +
         scale_x_continuous(breaks=1:length(x.bin.names), labels=x.bin.names) + 
         scale_y_continuous(breaks=1:length(y.bin.names), labels=y.bin.names) + 
-        theme(axis.text.x=element_text(angle = 45, hjust = 1))
+        theme(axis.text.x=element_text(angle = x.angle, hjust = 1))
 
     force.plus = function(x){
         mask = !is.na(x) & x>0
@@ -752,7 +966,12 @@ make.covid.timeline.plot <- function(results=outcomes.arr,
     { 
         sim.mask = rep(T, dim(results)['sim'])
         #        sim.mask = !is.na(groups)
-        one.df = prepare.timeline.df(results=results[,,,,,sim.mask],
+        sub.results = results[,,,,,sim.mask]
+        sub.dim.names = dimnames(results)
+        sub.dim.names$sim = sub.dim.names$sim[sim.mask]
+        dim(sub.results) = sapply(sub.dim.names, length)
+        dimnames(sub.results) = sub.dim.names
+        one.df = prepare.timeline.df(results=sub.results,
                                      years=years,
                                      locations=locations,
                                      scenarios='baseline',
@@ -784,7 +1003,12 @@ make.covid.timeline.plot <- function(results=outcomes.arr,
         for (group in unique.groups.for.scenario)
         {
             sim.mask = !is.na(gg) & gg == group
-            one.df = prepare.timeline.df(results=results[,,,,,sim.mask],
+            sub.results = results[,,,,,sim.mask]
+            sub.dim.names = dimnames(results)
+            sub.dim.names$sim = sub.dim.names$sim[sim.mask]
+            dim(sub.results) = sapply(sub.dim.names, length)
+            dimnames(sub.results) = sub.dim.names
+            one.df = prepare.timeline.df(results=sub.results,
                                      years=years,
                                      locations=locations,
                                      scenarios=scenario,
@@ -832,7 +1056,8 @@ make.covid.timeline.plot <- function(results=outcomes.arr,
         if (length(line.types) < length(outcomes))
             stop("Not enough line types were supplied to cover all outcomes")
         line.types = line.types[1:length(outcomes)]
-        names(line.types) = outcomes
+        line.type.labels = COVID.OUTCOME.NAMES[outcomes]
+        linetype.name='Outcome'
     }
     else if (linetype.by.group)
     {
@@ -841,6 +1066,8 @@ make.covid.timeline.plot <- function(results=outcomes.arr,
         line.types = line.types[1:length(unique.groups)]
         names(line.types) = unique.groups
         line.types = c(line.types, baseline=baseline.linetype)
+        line.type.labels = unique.groups
+        linetype.name = 'Group'
     }
     else
     {
@@ -851,8 +1078,9 @@ make.covid.timeline.plot <- function(results=outcomes.arr,
             stop("Not enough line types were supplied to cover all scenarios")
         line.types = line.types[1:length(unique.scenarios)]
         names(line.types) = unique.scenarios
+        line.type.labels = unique.scenarios
+        linetype.name = 'Scenario'
     }
-    
     
     if (linetype.by.outcome && length(outcomes)>1)
         rv = ggplot(df, aes(linetype=outcome))
@@ -895,7 +1123,7 @@ make.covid.timeline.plot <- function(results=outcomes.arr,
     
     rv = rv +
         xlab("Year")  + 
-        scale_linetype_manual(values=line.types)
+        scale_linetype_manual(values=line.types, name=linetype.name, labels=line.type.labels)
     
     force.plus.percent = function(x){
         mask = !is.na(x) & x>0
@@ -1229,6 +1457,7 @@ get.variable <- function(results=outcomes.arr,
             outcome = 'prevalence.all'
         
         orig.results = results
+        
         results = results[locations, scenario, intervention.name, as.character(years), outcome, ]
         dim(results) = sapply(dim.names, length)
         dimnames(results) = dim.names
@@ -1286,6 +1515,20 @@ prepare.timeline.df <- function(results=outcomes.arr,
                                 interval.coverage2=0.5,
                                 summary.stat=mean)
 {
+    orig.arr = outcomes.arr
+    new.dim.names = dimnames(outcomes.arr)
+    new.dim.names$outcome = c(new.dim.names$outcome, 'one')
+    default.denominator = 1
+    if (aggregate.locations)
+        default.denominator = 1/length(locations)
+    results = array(default.denominator, dim=sapply(new.dim.names, length), dimnames=new.dim.names)
+    results[,,,,dimnames(orig.arr)$outcome,] = orig.arr
+    
+    outcome.numerators = outcomes
+    outcome.denominators = rep('one', length(outcomes))
+    outcome.numerators[outcomes=='diagnosed'] = 'prevalence.diagnosed'
+    outcome.denominators[outcomes=='diagnosed'] = 'prevalence.all'
+    
     do.subtract = !is.null(subtract.scenario) && !is.na(subtract.scenario)
     intervention.names[is.na(intervention.names)] = 'none'
     
@@ -1306,23 +1549,32 @@ prepare.timeline.df <- function(results=outcomes.arr,
     {   
         if (is.na(subtract.intervention.name))
             subtract.intervention.name = 'none'
-        to.subtract = results[locations, subtract.scenario, subtract.intervention.name, as.character(years), outcomes, ]
+        to.subtract.numerators = results[locations, subtract.scenario, subtract.intervention.name, as.character(years), outcome.numerators, ]
+        to.subtract.denominators = results[locations, subtract.scenario, subtract.intervention.name, as.character(years), outcome.denominators, ]
+        
     }
-    results = results[locations, scenarios, intervention.names, as.character(years), outcomes, ]
+    result.numerators = results[locations, scenarios, intervention.names, as.character(years), outcome.numerators, ]
+    result.denominators = results[locations, scenarios, intervention.names, as.character(years), outcome.denominators, ]
     
-    dim(results) = sapply(dim.names, length)
-    dimnames(results) = dim.names
+    dim(result.numerators) = dim(result.denominators) = sapply(dim.names, length)
+    dimnames(result.numerators) = dimnames(result.denominators) = dim.names
     if (include.baseline)
     {
         for (int.name in intervention.names)
-            results[,'baseline',int.name,,,] = results[,'baseline','none',,,]
+        {
+            result.numerators[,'baseline',int.name,,,] = result.numerators[,'baseline','none',,,]
+            result.denominators[,'baseline',int.name,,,] = result.denominators[,'baseline','none',,,]
+        }
+        
     }
     
     if (do.subtract)
     {
-        results = apply(results, c('location','year','outcome','sim','scenario','intervention'), function(x){x}) - 
-            as.numeric(to.subtract)
-        subtract.keep.dimensions = names(dimnames(to.subtract))
+        result.numerators = apply(result.numerators, c('location','year','outcome','sim','scenario','intervention'), function(x){x}) - 
+            as.numeric(to.subtract.numerators)
+        result.denominators = apply(result.denominators, c('location','year','outcome','sim','scenario','intervention'), function(x){x}) - 
+            as.numeric(to.subtract.denominators)
+        subtract.keep.dimensions = names(dimnames(to.subtract.numerators))
     }
 
     # Aggregate
@@ -1330,29 +1582,36 @@ prepare.timeline.df <- function(results=outcomes.arr,
     if (aggregate.locations)
     {
         keep.dimensions = setdiff(keep.dimensions, 'location')
-        results = apply(results, keep.dimensions, sum)
+        result.numerators = apply(result.numerators, keep.dimensions, sum)
+        result.denominators = apply(result.denominators, keep.dimensions, sum)
         
         if (do.subtract && subtract.relative)
         {
             subtract.keep.dimensions = setdiff(subtract.keep.dimensions, 'location')
-            to.subtract = apply(to.subtract, subtract.keep.dimensions, sum)
+            to.subtract.numerators = apply(to.subtract.numerators, subtract.keep.dimensions, sum)
+            to.subtract.denominators = apply(to.subtract.denominators, subtract.keep.dimensions, sum)
         }
     }
     if (cumulative)
     {
-        results = apply(results, setdiff(keep.dimensions, 'year'), cumsum)
+        result.numerators = apply(result.numerators, setdiff(keep.dimensions, 'year'), cumsum)
+        result.denominators = apply(result.denominators, setdiff(keep.dimensions, 'year'), cumsum)
         dim.names = dim.names[c('year', setdiff(keep.dimensions, 'year'))]
-        dim(results) = sapply(dim.names, length)
-        dimnames(results) = dim.names
+        dim(result.numerators) = dim(result.denominators) = sapply(dim.names, length)
+        dimnames(result.numerators) = dimnames(result.denominators) = dim.names
         
         if (do.subtract && subtract.relative)
         {
-            to.subtract = apply(to.subtract, setdiff(subtract.keep.dimensions, 'year'), cumsum)
-            subtract.dim.names = dimnames(to.subtract)[c('year', setdiff(subtract.keep.dimensions, 'year'))]
-            dim(to.subtract) = sapply(subtract.dim.names, length)
-            dimnames(to.subtract) = subtract.dim.names 
+            to.subtract.numerators = apply(to.subtract.numerators, setdiff(subtract.keep.dimensions, 'year'), cumsum)
+            to.subtract.denominators = apply(to.subtract.denominators, setdiff(subtract.keep.dimensions, 'year'), cumsum)
+            
+            subtract.dim.names = dimnames(to.subtract.numerators)[c('year', setdiff(subtract.keep.dimensions, 'year'))]
+            dim(to.subtract.numerators) = dim(to.subtract.denominators) = sapply(to.subtract.numerators, length)
+            dimnames(to.subtract.numerators) = dimnames(to.subtract.denominators) = subtract.dim.names 
         }
     }
+    
+    results = result.numerators / result.denominators
     
     if (do.subtract && subtract.relative)
             results = results / as.numeric(to.subtract)

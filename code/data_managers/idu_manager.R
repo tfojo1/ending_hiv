@@ -1,3 +1,5 @@
+# TO ACCESS NSHDUH
+# https://pdas.samhsa.gov/saes/substate
 
 #source('../code/data_managers/locale_mappings.R')
 #source('../code/data_managers/census_manager.R')

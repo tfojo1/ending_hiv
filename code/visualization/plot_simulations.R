@@ -39,7 +39,57 @@ DATA.TYPE.UNITS = c(
   testing.rate = 'Tests per year',
   population = 'People',
   testing.period = 'Years between tests',
-  prep = 'Uptake'
+  prep = 'Coverage'
+)
+
+DATA.TYPE.UNIT.DESCRIPTOR = c(
+    incidence = 'infections',
+    new = 'cases',
+    prevalence = 'cases',
+    mortality = 'deaths',
+    suppression = '%',
+    diagnosed = '%',
+    testing.rate = 'tests per year',
+    population = 'teople',
+    testing.period = 'years between tests',
+    prep = '%'
+)
+
+CUMULATIVE.APPLIES.TO.DATA.TYPE = c(
+    incidence = T,
+    new = T,
+    prevalence = F,
+    mortality = T,
+    suppression = F,
+    diagnosed = F,
+    testing.rate = F,
+    population = F,
+    testing.perio = F,
+    prep = F
+)
+
+CHANGE.STATISTIC.IS.RELATIVE = c(
+    time.diff.relative=T,
+    time.diff.absolute=F,
+    cumulative=F,
+    cumulative.diff.absolute=F,
+    cumulative.diff.relative=T
+)
+
+CHANGE.STATISTIC.IS.DELTA = c(
+    time.diff.relative=T,
+    time.diff.absolute=T,
+    cumulative=F,
+    cumulative.diff.absolute=T,
+    cumulative.diff.relative=T
+)
+
+CHANGE.STATISTIC.IS.CUMULATIVE = c(
+    time.diff.relative=F,
+    time.diff.absolute=F,
+    cumulative=T,
+    cumulative.diff.absolute=T,
+    cumulative.diff.relative=T
 )
 
 DIMENSION.NAMES = c(age='Age',
@@ -59,7 +109,8 @@ PRETTY.NAMES = list(age=c("13-24 years"="13-24",
 TRUTH.SHAPES.GGPLOT = c(21,23,22,24,25)
 TRUTH.SHAPES.PLOTLY = c(0,2,1,5,6)
 
-
+# The uppercase Greek Delta symbol
+DELTA.TEXT = intToUtf8(0x0394L)
 
 FRACTION.PROGRESS.SETUP.DF = 0.5
 
@@ -102,14 +153,16 @@ do.plot.simulations <- function(
     label.change=F,
     label.change.ci=T,
     change.years=c(2020,2030),
-    change.decrease.is.positive=T,
+    change.statistic = c('time.diff.relative','time.diff.absolute','cumulative','cumulative.diff.absolute','cumulative.diff.relative')[1],
+    change.decrease.is.positive=F,
+    label.change.abbreviated=F,
     label.change.size=12,
     label.change.nudge.x=0,
     label.alpha = 0.5,
-    label.digits=0,    
+    label.digits=0,     #'auto'
     vline.change.years = F,
 
-    name.interventions.by.number=T,
+    name.interventions.by.number=F,
     hide.legend=F,
     
     ncol=NULL,
@@ -142,7 +195,13 @@ do.plot.simulations <- function(
     wrap.axis.labels = F,
   
     margin.top=NULL,
-    ylim=NULL
+    ylim=NULL,
+  
+    use.simset.names.to.categorize=F, #if this is true, won't look up the simset objects
+    baseline.name = 'Baseline',
+    noint.name = 'No Intervention',
+  
+    post.baseline.year = NA
     )
 {
     keep.dimensions = unique(c('year', facet.by, split.by))
@@ -179,13 +238,21 @@ do.plot.simulations <- function(
     else
         stop("simsets must be either a simset object or a list of simset objects")
     
-    interventions = lapply(simsets, function(ss){attr(ss, 'intervention')})
-    is.baseline = sapply(interventions, is.null)
+    if (use.simset.names.to.categorize)
+    {
+        is.baseline = names(simsets) == baseline.name
+        is.no.intervention = names(simsets) == noint.name
+    }
+    else
+    {
+        interventions = lapply(simsets, function(ss){attr(ss, 'intervention')})
+        is.baseline = sapply(interventions, is.null)
     
-    is.no.intervention = sapply(
-        interventions, is.null.intervention) & !is.baseline
+        is.no.intervention = sapply(
+            interventions, is.null.intervention) & !is.baseline
+    }
     
-    if (name.interventions.by.number)
+    if (name.interventions.by.number || is.null(names(simsets)))
     {
         simset.names = character(length(simsets))
         simset.names[is.baseline] = 'Baseline'
@@ -197,8 +264,8 @@ do.plot.simulations <- function(
         else
             simset.names[non.null.int.mask] = paste0('Intervention ', 1:sum(non.null.int.mask))
     }
-    else if (is.null(names(simsets)))
-            simset.names = sapply(interventions, get.intervention.short.name)
+#    else if (is.null(names(simsets)))
+#        simset.names = sapply(interventions, get.intervention.short.name)
     else
         simset.names = names(simsets)
     
@@ -207,13 +274,24 @@ do.plot.simulations <- function(
     if (any(is.baseline) && any(is.no.intervention))
         simset.names[is.baseline] = simset.names[is.no.intervention][1]
     
-    years.for.simset = lapply(simsets, function(ss){
+    years.for.simset = lapply(1:length(simsets), function(i){
         
+        ss = simsets[[i]]
         simset.years = ss@simulations[[1]]$years
         
-        simset.run.from.year = attr(ss, 'run.from.year')
-        if (!is.null(simset.run.from.year))
-            simset.years = intersect(simset.run.from.year:max(simset.years), simset.years)
+        if (!is.baseline[i] && length(post.baseline.year)>0 && !is.na(post.baseline.year))
+        {
+            simset.years = intersect((post.baseline.year-1):max(simset.years), simset.years)
+              #^ the -1 is because run from = year start, but result years = year end
+        }
+        else
+        {
+            simset.run.from.year = attr(ss, 'run.from.year')
+            if (!is.null(simset.run.from.year))
+                simset.years = intersect((simset.run.from.year-1):max(simset.years), simset.years)
+                  #^ the -1 is because run from = year start, but result years = year end
+        }
+        
         
         intersect(years, simset.years)
     })
@@ -270,6 +348,8 @@ do.plot.simulations <- function(
                     years=years.for.simset[[i]])
         
         dim(rv) = c(length(years.for.simset[[i]]), simsets[[i]]@n.sim)
+        dimnames(rv) = list(year=as.character(years.for.simset[[i]]),
+                            sim=NULL)
         rv
     })
       
@@ -283,7 +363,7 @@ do.plot.simulations <- function(
     
     if (length(simsets)>0)
     {
-        sim.sub.df.pairs = lapply(1:n.sim.dfs, function(i){
+        df.sim.subs = lapply(1:n.sim.dfs, function(i){
             simset.index = ceiling(i/length(data.types))
             data.type.index = (i-1) %% length(data.types) + 1
             
@@ -294,30 +374,25 @@ do.plot.simulations <- function(
                                       dimension.subsets=dimension.subsets,
                                       total.population = total.population.per.simset[[simset.index]],
                                       get.individual.sims = plot.format=='individual.simulations',
-                                      get.change.df=label.change || return.change.data.frame,
+                                   #   get.change.df=label.change || return.change.data.frame,
                                       aggregate.statistic = aggregate.statistic,
-                                      ci.coverage=plot.interval.coverage,
-                                      change.years=change.years,
-                                      change.decrease.is.positive=change.decrease.is.positive)
+                                      ci.coverage=plot.interval.coverage)
+                                    #  change.years=change.years,
+                                   #   change.decrease.is.positive=change.decrease.is.positive)
   
             progress.update(FRACTION.PROGRESS.SETUP.DF * i/n.sim.dfs)
             
-            one.dfs.sim
-        })
-        
-        df.sim.subs = lapply(1:length(sim.sub.df.pairs), function(i){
             
-            pair = sim.sub.df.pairs[[i]]
             simset.index = ceiling(i/length(data.types))
             data.type.index = (i-1) %% length(data.types) + 1
             
-            if (is.null(pair))
+            if (is.null(one.dfs.sim))
                 NULL
             else
             {
-                pair$df.sim$data.type = data.types[data.type.index]#data.type.names[data.types[data.type.index]]
-                pair$df.sim$intervention = simset.names[simset.index]
-                pair$df.sim
+                one.dfs.sim$data.type = data.types[data.type.index]#data.type.names[data.types[data.type.index]]
+                one.dfs.sim$intervention = simset.names[simset.index]
+                one.dfs.sim
             }
         })
         
@@ -328,28 +403,36 @@ do.plot.simulations <- function(
         
         if (label.change || return.change.data.frame)
         {
-            df.change.subs = lapply(1:length(sim.sub.df.pairs), function(i){
+            df.change.subs = lapply(data.types, function(data.type){
                 
-                pair = sim.sub.df.pairs[[i]]
-                simset.index = ceiling(i/length(data.types))
-                data.type.index = (i-1) %% length(data.types) + 1
+                one.df.change = make.change.df(simsets=simsets,
+                                               simset.names = simset.names,
+                                               data.type=data.type,
+                                               data.type.names=data.type.names,
+                                               keep.dimensions=keep.dimensions,
+                                               dimension.subsets=dimension.subsets,
+                                               total.population.per.simset=total.population.per.simset,
+                                               change.statistic=change.statistic,
+                                               change.years=change.years,
+                                               simset.is.baseline=is.baseline,
+                                               simset.is.no.intervention=is.no.intervention,
+                                               change.decrease.is.positive=change.decrease.is.positive,
+                                               aggregate.statistic=aggregate.statistic,
+                                               ci.coverage=plot.interval.coverage,
+                                               year.anchor=c('start','mid','end')[2])
                 
-                if (is.null(pair) || is.null(pair$df.change))
-                    NULL
-                else
-                {
-                    pair$df.change = cbind(intervention = simset.names[simset.index],
-                                           data.type = data.type.names[data.types[data.type.index]],
-                                           pair$df.change)
-                    pair$df.change
-                }
+                one.df.change
             })
             df.change = as.data.frame(rbindlist(df.change.subs))
             if (any(keep.dimensions=='risk') && any(keep.dimensions=='sex'))
                 df.change = df.change[df.change$sex != 'female' | (df.change$risk != 'msm' & df.change$risk != 'msm_idu'),]
+            attr(df.change, 'metric') = change.statistic
             attr(df.change, 'stat') = aggregate.statistic
             attr(df.change, 'interval.coverage') = plot.interval.coverage
             attr(df.change, 'decrease.is.positive') = change.decrease.is.positive
+            attr(df.change, 'pre.change.index') = attr(df.change.subs[[1]], 'pre.change.index')
+            attr(df.change, 'pre.levels.index') = attr(df.change.subs[[1]], 'pre.levels.index')
+            attr(df.change, 'years') = change.years
         }
         else
           df.change = NULL
@@ -498,9 +581,9 @@ do.plot.simulations <- function(
     
     
     
-    #-------------------#
+    #-----------------------#
     #-- SET UP LINE TYPES --#
-    #-------------------#
+    #-----------------------#
     
     if (!is.na(linetype.by))
     {
@@ -945,13 +1028,13 @@ do.plot.simulations <- function(
             yaxis.list$tickformat = ',d'
   #      else
    #         yaxis.list$tickformat = paste0('.', y.axis.digits, 'd') #',d'
-        
+            
         plot = layout(plot,
                       yaxis = yaxis.list,
                       xaxis=list(title='',
                                  automargin=T,
                                  tickfont = list(size=tick.size)))
-            
+          
         if (title.subplots)
         {
             plot = add_annotations(plot,
@@ -993,7 +1076,6 @@ do.plot.simulations <- function(
                     
                     mask = change.facet==ff & change.split==split & df.change$intervention==intervention
                     
-                    
                     if (any(mask))
                     {
                         if (color.by == 'split' && length(split.by)>0)
@@ -1001,120 +1083,233 @@ do.plot.simulations <- function(
                         else
                             color = colors[intervention]
                         
-                        change.name = paste0("change_", change.years[1], "_to_", change.years[2])
+                        #change.name = paste0("change_", change.years[1], "_to_", change.years[2])
+                        change.index = attr(df.change, 'pre.change.index') + 1
+                        ci.lower.index = change.index + 1
+                        ci.upper.index = change.index + 2
+                        
                         if (plot.format=='median.and.interval')
-                        {
                             stat = 'median'
-                            est = round(100*df.change[mask, paste0(change.name, "_median")], digits=label.digits)
-                        }
                         else
-                        {
                             stat = 'mean'
-                            est = round(100*df.change[mask, paste0(change.name, "_mean")], digits=label.digits)
-                        }   
-                        ci.lower = round(100*df.change[mask, paste0(change.name, "_interval_lower")], label.digits)
-                        ci.upper = round(100*df.change[mask, paste0(change.name, "_interval_upper")], label.digits)
                         
-                        label.text = paste0(est, '%')
-                        if (label.change.ci)
-                            label.text = paste0(label.text, 
-                                                " [",
-                                                ci.lower,
-                                                " to ",
-                                                ci.upper,
-                                                "%]")
                         
-                        if (change.decrease.is.positive)
-                            label.text = paste0(label.text, " Reduction")
-
-                        #make hover text
-                        if (change.decrease.is.positive)
+                        
+                        # Make the label text - for both the figure label and the hover
+                        est = df.change[mask, change.index]
+                        if (!is.na(est))
                         {
-                            est = -est
-                            tmp = ci.upper
-                            ci.upper = -ci.lower
-                            ci.lower = -tmp
-                        }
-                        
-                        label.hover = paste0("The ", stat,
-                                             " projected change in ",
-                                             df.change$data.type[mask], 
-                                             "\nfrom ",
-                                             change.years[1], " to ",
-                                             change.years[2], 
-                                             " (across ", df.change$n.sim[mask],
-                                             " simulations)\nunder '",
-                                             df.change$intervention[mask],
-                                             "' is\n<b>", est, "%</b> (",
-                                             100*plot.interval.coverage, "% prediction interval <b>",
-                                             ci.lower, " to ", ci.upper, "%</b>)")
-                        
-                        # Generate the labels (or objects that hold them)
-                        if (!place.labels.to.side)
-                        {
-                            if (plot.format=='median.and.interval')
-                            {
-                                #   y1.name = paste0(change.years[1], "_median")
-                                y2.name = paste0(change.years[2], "_median")
-                            }
+                            ci.lower = df.change[mask, ci.lower.index]
+                            ci.upper = df.change[mask, ci.upper.index]
+                            
+                            if (change.decrease.is.positive)
+                                mult = -1
                             else
+                                mult = 1
+                            
+                            if (CHANGE.STATISTIC.IS.RELATIVE[change.statistic])
                             {
-                                #   y1.name = paste0(change.years[1], "_mean")
-                                y2.name = paste0(change.years[2], "_mean")
-                            }
-                            
-                            list(text=label.text,
-                                 hovertext = label.hover,
-                                 x=change.years[2] + label.change.nudge.x,
-                                 y=df.change[mask, y2.name],
-                                 xanchor = 'left',
-                                 fill=color,
-                                 alpha=label.alpha)
-                        }
-                        else
-                        {
-                            mask.for.all.interventions = df.sim$year == change.years[2] & df.sim$facet == ff & df.sim$split==split 
-                            mask.for.this.intervention = mask.for.all.interventions & df.sim$intervention==intervention
-                            
-                            mean.for.all.interventions = mean(df.sim$value[mask.for.all.interventions])
-                            mean.for.this.interventions = mean(df.sim$value[mask.for.this.intervention])
-                            label.on.top = mean.for.this.interventions >= mean.for.all.interventions
-                            
-                            label.y.alpha = (1-plot.interval.coverage)/2
-                            if (label.on.top)
-                                label.y.alpha = 1-label.y.alpha
-                            
-                            LABEL.YEAR.SPAN = 5
-                            label.y.per.year = sapply(c(change.years[2])-c(0,LABEL.YEAR.SPAN), function(year){
-                                mask = df.sim$year == year & df.sim$facet == ff & df.sim$split==split  & df.sim$intervention==intervention
-                                if (plot.format=='individual.simulations')
-                                    quantile(df.sim$value[mask], label.y.alpha)[1]
-                                else if (label.on.top)
-                                    df.sim$upper[mask][1]
-                                else
-                                    df.sim$lower[mask][1]
-                            })
-                            
-                            if (label.on.top)
-                            {
-                                yanchor = 'bottom'
-                                y.label = max(label.y.per.year)
+                                label.est.unit = label.ci.unit = hover.est.unit = hover.ci.unit = '%'
                                 
+                                est.label = format.plus(100*est, round.digits=label.digits, force.plus=CHANGE.STATISTIC.IS.DELTA[change.statistic])
+                                ci.lower.label = format.plus(100*ci.lower, round.digits=label.digits, force.plus=CHANGE.STATISTIC.IS.DELTA[change.statistic])
+                                ci.upper.label = format.plus(100*ci.upper, round.digits=label.digits, force.plus=CHANGE.STATISTIC.IS.DELTA[change.statistic])
+                                
+                                est.hover = format.plus(100*mult*est, round.digits=label.digits, force.plus=CHANGE.STATISTIC.IS.DELTA[change.statistic])
+                                ci.lower.hover = format.plus(100*mult*ci.lower, round.digits=label.digits, force.plus=CHANGE.STATISTIC.IS.DELTA[change.statistic])
+                                ci.upper.hover = format.plus(100*mult*ci.upper, round.digits=label.digits, force.plus=CHANGE.STATISTIC.IS.DELTA[change.statistic])
                             }
                             else
                             {
-                                yanchor = 'top'
-                                y.label = min(label.y.per.year)
+                                if (DATA.TYPE.UNIT.DESCRIPTOR[data.type]=='%')
+                                {
+                                    unit = '%'
+                                    pct.mult = 100
+                                }
+                                else
+                                {
+                                    unit = paste0(" ", DATA.TYPE.UNIT.DESCRIPTOR[data.type])
+                                    pct.mult = 1
+                                }
+                                
+                                if (label.change.abbreviated)
+                                {
+                                    if (DATA.TYPE.UNIT.DESCRIPTOR[data.type]=='%')
+                                        label.est.unit = '%'
+                                    else
+                                        label.est.unit = ''
+                                }
+                                else
+                                {
+                                    label.est.unit = unit
+                                    
+                                }
+                                
+                                if (DATA.TYPE.UNIT.DESCRIPTOR[data.type]=='%' && !CHANGE.STATISTIC.IS.DELTA[change.statistic])
+                                    label.ci.unit = '%'
+                                else
+                                    label.ci.unit = ''
+                                
+                                if (DATA.TYPE.UNIT.DESCRIPTOR[data.type]=='%' && CHANGE.STATISTIC.IS.DELTA[change.statistic])
+                                    hover.est.unit = hover.ci.unit = ' percentage points'
+                                else
+                                    hover.est.unit = hover.ci.unit = unit
+                                
+                                label.ci.unit = ''
+                                
+                                est.label = format.plus(pct.mult*est, round.digits=label.digits, force.plus = CHANGE.STATISTIC.IS.DELTA[change.statistic])
+                                ci.lower.label = format.plus(pct.mult*ci.lower, round.digits=label.digits, force.plus = CHANGE.STATISTIC.IS.DELTA[change.statistic])
+                                ci.upper.label = format.plus(pct.mult*ci.upper, round.digits=label.digits, force.plus = CHANGE.STATISTIC.IS.DELTA[change.statistic])
+                                
+                                est.hover = format.plus(mult*pct.mult*est, round.digits=label.digits, force.plus = CHANGE.STATISTIC.IS.DELTA[change.statistic])
+                                ci.lower.hover = format.plus(mult*pct.mult*ci.lower, round.digits=label.digits, force.plus = CHANGE.STATISTIC.IS.DELTA[change.statistic])
+                                ci.upper.hover = format.plus(mult*pct.mult*ci.upper, round.digits=label.digits, force.plus = CHANGE.STATISTIC.IS.DELTA[change.statistic])
                             }
                             
-                           list(text=label.text,
-                                hovertext=label.hover,
-                                x=change.years[2],# + label.change.nudge.x,
-                                y=y.label,
-                                xanchor = 'right',
-                                yanchor=yanchor,
-                                fill=color,
-                                alpha=label.alpha)
+                            if (label.change.abbreviated)
+                            {
+                                if (change.statistic=='cumulative') 
+                                    change.label.prefix = '' 
+                                else 
+                                    change.label.prefix = paste0(DELTA.TEXT, ': ')
+                            }
+                            else
+                            {
+                                if (CHANGE.STATISTIC.IS.CUMULATIVE[change.statistic])
+                                {
+                                    if (CHANGE.STATISTIC.IS.DELTA[change.statistic])
+                                        change.label.prefix = paste0('Cumulative Change (', change.years[1], '-', change.years[2], '):\n')
+                                    else
+                                        change.label.prefix = paste0('Cumulative (', change.years[1], '-', change.years[2], '):\n')
+                                }
+                                else
+                                    change.label.prefix = paste0('Change (', change.years[1], '-', change.years[2], '):\n')
+                            }
+                            
+                            if (label.change.ci)
+                                label.text = paste0(change.label.prefix,
+                                                    "<b>", est.label, label.est.unit, "</b>",
+                                                    " [",
+                                                    ci.lower.label,
+                                                    " to ",
+                                                    ci.upper.label, label.ci.unit,
+                                                    "]")
+                            
+                            if (change.decrease.is.positive)
+                                label.text = paste0(label.text, " Reduction")
+    
+                            #make hover text
+                            if (CHANGE.STATISTIC.IS.DELTA[change.statistic])
+                                change.text = 'change in '
+                            else
+                                change.text = ''
+                            
+                            if (CHANGE.STATISTIC.IS.CUMULATIVE[change.statistic])
+                                cumulative.text = 'cumulative '
+                            else
+                                cumulative.text = ''
+                            
+                            if (CHANGE.STATISTIC.IS.CUMULATIVE[change.statistic] &&
+                                CHANGE.STATISTIC.IS.DELTA[change.statistic])
+                            {
+                                if (any(is.no.intervention))
+                                    relative.to.name = simset.names[is.no.intervention]
+                                else if (any(is.baseline))
+                                    relative.to.name = simset.names[is.baseline]
+                                else
+                                    relative.to.name = 'baseline'
+                                
+                                relative.to.text = paste0("(relative to '", relative.to.name, "') ")
+                            }
+                            else
+                                relative.to.text = ''
+                            
+#                            'the mean change in incidence from X to Y is under I is blah cases'
+ #                           'the mean change in incidence from X to Y is under I is blah %'
+  #                          'the mean cumulative incidence from X to Y under I is blah cases'
+   #                         'the mean change (relative to baseline) in cumulative incidence'
+                                
+                            label.hover = paste0("The ", stat,
+                                                 " projected ",
+                                                 change.text, cumulative.text, 
+                                                 tolower(df.change$data.type[mask]), 
+                                                 "\n", relative.to.text, "from ",
+                                                 change.years[1], " to ",
+                                                 change.years[2], 
+                                                 " (across ", df.change$n.sim[mask],
+                                                 " simulations)\nunder '",
+                                                 df.change$intervention[mask],
+                                                 "' is <b>", est.hover, hover.est.unit, "</b>\n(",
+                                                 100*plot.interval.coverage, "% prediction interval <b>",
+                                                 ci.lower.hover, "</b> to <b>", ci.upper.hover, hover.ci.unit, "</b>)")
+                            
+                            # Generate the labels (or objects that hold them)
+                            if (!place.labels.to.side)
+                            {
+                                if (plot.format=='median.and.interval')
+                                {
+                                    #   y1.name = paste0(change.years[1], "_median")
+                                    y2.name = paste0(change.years[2], "_median")
+                                }
+                                else
+                                {
+                                    #   y1.name = paste0(change.years[1], "_mean")
+                                    y2.name = paste0(change.years[2], "_mean")
+                                }
+                                
+                                list(text=label.text,
+                                     hovertext = label.hover,
+                                     x=change.years[2] + label.change.nudge.x,
+                                     y=df.change[mask, y2.name],
+                                     xanchor = 'left',
+                                     fill=color,
+                                     alpha=label.alpha)
+                            }
+                            else
+                            {
+                                mask.for.all.interventions = df.sim$year == change.years[2] & df.sim$facet == ff & df.sim$split==split 
+                                mask.for.this.intervention = mask.for.all.interventions & df.sim$intervention==intervention
+                                
+                                mean.for.all.interventions = mean(df.sim$value[mask.for.all.interventions])
+                                mean.for.this.interventions = mean(df.sim$value[mask.for.this.intervention])
+                                label.on.top = mean.for.this.interventions >= mean.for.all.interventions
+                                
+                                label.y.alpha = (1-plot.interval.coverage)/2
+                                if (label.on.top)
+                                    label.y.alpha = 1-label.y.alpha
+                                
+                                LABEL.YEAR.SPAN = 5
+                                label.y.per.year = sapply(c(change.years[2])-c(0,LABEL.YEAR.SPAN), function(year){
+                                    mask = df.sim$year == year & df.sim$facet == ff & df.sim$split==split  & df.sim$intervention==intervention
+                                    if (plot.format=='individual.simulations')
+                                        quantile(df.sim$value[mask], label.y.alpha)[1]
+                                    else if (label.on.top)
+                                        df.sim$upper[mask][1]
+                                    else
+                                        df.sim$lower[mask][1]
+                                })
+                                
+                                if (label.on.top)
+                                {
+                                    yanchor = 'bottom'
+                                    y.label = max(label.y.per.year)
+                                    
+                                }
+                                else
+                                {
+                                    yanchor = 'top'
+                                    y.label = min(label.y.per.year)
+                                }
+                                
+                               list(text=label.text,
+                                    hovertext=label.hover,
+                                    x=change.years[2],# + label.change.nudge.x,
+                                    y=y.label,
+                                    xanchor = 'right',
+                                    yanchor=yanchor,
+                                    fill=color,
+                                    alpha=label.alpha)
+                            }
                         }
                     }
                 })
@@ -1235,6 +1430,8 @@ do.plot.from.components <- function(plot.components, nrows,
                               shapes = list(vline(x=change.years[1], dash='dot'),
                                             vline(x=change.years[2], dash='dot'))
                 )
+            
+            plot
         })
     }
     else
@@ -1457,18 +1654,15 @@ get.population.from.census <- function(location,
 }
 
 get.sim.dfs <- function(simset,
-                       data.type,
-                       years,
-                       keep.dimensions,
-                       dimension.subsets,
-                       total.population,
-                       get.individual.sims=T,
-                       get.change.df=F,
-                       aggregate.statistic = 'mean',
-                       ci.coverage=0.95,
-                       change.years,
-                       change.decrease.is.positive,
-                       year.anchor=c('start','mid','end')[2])
+                        data.type,
+                        years,
+                        keep.dimensions,
+                        dimension.subsets,
+                        total.population,
+                        get.individual.sims=T,
+                        aggregate.statistic = 'mean',
+                        ci.coverage=0.95,
+                        year.anchor=c('start','mid','end')[2])
 {
     if ((year.anchor=='start' || year.anchor=='mid') &&
         (data.type=='suppression' || data.type=='testing.rate' || data.type=='testing.period' || data.type=='prep'))
@@ -1482,6 +1676,85 @@ get.sim.dfs <- function(simset,
     all.dimensions = union(keep.dimensions, names(dimension.subsets))
     
     #print(paste0('data.type = ', data.type))
+   
+    arr = get.arr.for.data.type(simset,
+                                data.type=data.type,
+                                years=years,
+                                keep.dimensions=keep.dimensions,
+                                dimension.subsets=dimension.subsets,
+                                total.population=total.population,
+                                year.anchor=year.anchor)
+    
+    if (simset@n.sim != sum(simset@weights))
+    {
+        new.dim.names = dimnames(arr)
+        new.dim.names$simulation = 1:sum(simset@weights)
+        
+        dim(arr) = c(everything.else = prod(dim(arr))/simset@n.sim,
+                     simulation=simset@n.sim)
+        flattened.indices = unlist(sapply(1:simset@n.sim, function(i){
+            rep(i, simset@weights[i])
+        }))
+        arr = arr[,flattened.indices]
+        
+        dim(arr) = sapply(new.dim.names, length)
+        dimnames(arr) = new.dim.names
+    }
+    
+    if (get.individual.sims)
+        df.sim = reshape2::melt(arr)
+    
+    #Aggregate to mean/median and CI if requested
+    #Generate the change df if requested
+    sim.years = as.numeric(dimnames(arr)[['year']])
+    if (!get.individual.sims)
+    {
+        n.dim.arr = length(dim(arr))
+        n.sim = dim(arr)['simulation']
+        dim.names.arr = dimnames(arr) 
+        
+        if (aggregate.statistic=='mean')
+            stat = rowMeans(arr, dims = length(keep.dimensions))
+        else if (aggregate.statistic=='median')
+            stat = apply(arr, keep.dimensions, median)
+        else
+            stop("aggregate.statistic must be either 'mean' or 'median'")
+        
+        if (is.null(dim(stat)))
+        {
+            dim(stat) = c(year=length(sim.years))
+            dimnames(stat) = list(year=as.character(sim.years))
+        }
+        else
+        {
+            dim(stat) = sapply(dim.names.arr[-n.dim.arr], length)
+            dimnames(stat) = dim.names.arr[-n.dim.arr]
+        }
+        
+        alpha = (1-ci.coverage)/2
+        arr[is.na(arr)] = 0 #this fixes female msm
+        ci = apply(arr, keep.dimensions, quantile, probs=c(alpha, 1-alpha), na.rm=T)
+        dim(ci) = c(2, dim(ci)[2], prod(dim(ci)[-(1:2)]))
+        
+        df.sim = reshape2::melt(stat, value.name='value')
+        df.sim = cbind(df.sim, 
+                       'lower'=as.numeric(ci[1,,]), 
+                       'upper'=as.numeric(ci[2,,]))
+    }
+    
+    df.sim
+}
+
+get.arr.for.data.type <- function(simset,
+                                  data.type,
+                                  years,
+                                  keep.dimensions,
+                                  dimension.subsets,
+                                  total.population,
+                                  year.anchor)
+{
+    total.population = total.population[as.character(years),]
+    
     if (data.type=='new')
         arr = extract.simset.new.diagnoses(simset,
                                            years = years, 
@@ -1525,9 +1798,9 @@ get.sim.dfs <- function(simset,
                                             year.anchor=year.anchor)
     else if (data.type=='testing.rate')
         arr = extract.simset.testing.rates(simset,
-                                            years = years, 
-                                            all.dimensions = keep.dimensions,
-                                            dimension.subsets = dimension.subsets,
+                                           years = years, 
+                                           all.dimensions = keep.dimensions,
+                                           dimension.subsets = dimension.subsets,
                                            year.anchor=year.anchor)
     else if (data.type=='prep')
         arr = extract.simset.prep.coverage(simset,
@@ -1538,143 +1811,330 @@ get.sim.dfs <- function(simset,
     else
         stop(paste0("'", data.type, "' is not a valid data.type."))
     
-    if (simset@n.sim != sum(simset@weights))
+    arr
+}
+
+##--------------------##
+##-- MAKE CHANGE DF --##
+##--------------------##
+
+
+make.change.df <- function(simsets,
+                           simset.names,
+                           data.type,
+                           data.type.names,
+                           keep.dimensions,
+                           dimension.subsets,
+                           total.population.per.simset,
+                           change.statistic,
+                           change.years,
+                           simset.is.baseline,
+                           simset.is.no.intervention,
+                           change.decrease.is.positive,
+                           aggregate.statistic,
+                           ci.coverage,
+                           year.anchor=c('start','mid','end')[2])
+{
+    alpha = (1-ci.coverage)/2
+    
+    simset.names = simset.names[!simset.is.baseline]
+    simsets = simsets[!simset.is.baseline]
+    simset.is.no.intervention = simset.is.no.intervention[!simset.is.baseline]
+    total.population.per.simset = total.population.per.simset[!simset.is.baseline]
+    
+    #-- Check for errors --#
+    if (!any(simset.is.no.intervention) &&
+            (change.statistic == 'cumulative.diff.absolute' ||
+             change.statistic == 'cumulative.diff.relative'))
+        stop("Cannot calculate a change statistic of 'cumulative.diff.absolute', or 'cumulative.diff.relative' unless a No-Intervention scenario is included")
+
+    
+    #-- Set up logicals and time frame --#
+    diff.by.time = change.statistic == 'time.diff.relative' ||
+                       change.statistic == 'time.diff.absolute'
+    cumulative = !diff.by.time
+    relative = CHANGE.STATISTIC.IS.RELATIVE[change.statistic]
+    
+    if (diff.by.time)
+        years.for.change = change.years
+    else
+        years.for.change = change.years[1]:change.years[2]
+    
+    
+    statistic.doesnt.apply = CHANGE.STATISTIC.IS.CUMULATIVE[change.statistic] &&
+         !CUMULATIVE.APPLIES.TO.DATA.TYPE[data.type]
+
+    
+    #-- Pull the outcome arrays --#
+    arrs = lapply(1:length(simsets), function(i){
+        get.arr.for.data.type(simset=simsets[[i]],
+                              data.type=data.type,
+                              years=years.for.change,
+                              keep.dimensions=keep.dimensions,
+                              dimension.subsets=dimension.subsets,
+                              total.population=total.population.per.simset[[i]],
+                              year.anchor=year.anchor)
+    })
+    
+    #-- Collapse the outcome arrays to three-dimensional values --#
+    dim.names = dimnames(arrs[[1]])
+    non.year.dim.names = dim.names[-1]
+    non.year.non.sim.dim.names = non.year.dim.names[-length(non.year.dim.names)]
+    
+    if (length(non.year.non.sim.dim.names)==0)
+        n.non.year.non.sim = 1
+    else
+        n.non.year.non.sim = prod(sapply(non.year.non.sim.dim.names, length))
+    
+    arrs = lapply(arrs, function(arr){
+        n.sim = dim(arr)['simulation']
+        dim(arr) = c(year=length(years.for.change), 
+                     other=prod(dim(arr))/length(years.for.change)/n.sim,
+                     sim=n.sim)
+        dimnames(arr) = list(year=as.character(years.for.change), 
+                          other=NULL,
+                          sim=NULL)
+        arr
+    })
+    
+    
+    #-- Calculate the statistic --#    
+    if (diff.by.time)
     {
-        new.dim.names = dimnames(arr)
-        new.dim.names$simulation = 1:sum(simset@weights)
-        
-        dim(arr) = c(everything.else = prod(dim(arr))/simset@n.sim,
-                     simulation=simset@n.sim)
-        flattened.indices = unlist(sapply(1:simset@n.sim, function(i){
-            rep(i, simset@weights[i])
-        }))
-        arr = arr[,flattened.indices]
-        
-        dim(arr) = sapply(new.dim.names, length)
-        dimnames(arr) = new.dim.names
+        stat.df.names = paste0('change_', change.years[1], "_to_", change.years[2], "_", 
+                               c(aggregate.statistic, 'interval_lower', 'interval_upper'))
+    }
+    else 
+    {
+        cumulative.names = paste0('cumulative_', change.years[1], "_to_", change.years[2], "_", 
+                                  c(aggregate.statistic, 'interval_lower', 'interval_upper'))
+        if (!relative)
+        {
+            stat.df.names = cumulative.names
+        }
+        else
+        {
+            stat.df.names = paste0('change_in_cumulative_', change.years[1], "_to_", change.years[2], "_", 
+                                   c(aggregate.statistic, 'interval_lower', 'interval_upper'))
+        }
     }
     
-    if (get.individual.sims)
-        df.sim = reshape2::melt(arr)
-    
-    #Aggregate to mean/median and CI if requested
-    #Generate the change df if requested
-    df.change = NULL
-    sim.years = as.numeric(dimnames(arr)[['year']])
-    if (!get.individual.sims || get.change.df)
+    if (!statistic.doesnt.apply)
     {
-        n.dim.arr = length(dim(arr))
-        n.sim = dim(arr)['simulation']
-        dim.names.arr = dimnames(arr) 
-        
-        if (aggregate.statistic=='mean')
-            stat = rowMeans(arr, dims = length(keep.dimensions))
-        else if (aggregate.statistic=='median')
-            stat = apply(arr, keep.dimensions, median)
+        if (change.decrease.is.positive)
+            mult = -1
         else
-            stop("aggregate.statistic must be either 'mean' or 'median'")
+            mult = 1
         
-        if (is.null(dim(stat)))
+        if (diff.by.time)
         {
-            dim(stat) = c(year=length(sim.years))
-            dimnames(stat) = list(year=as.character(sim.years))
-        }
-        else
-        {
-            dim(stat) = sapply(dim.names.arr[-n.dim.arr], length)
-            dimnames(stat) = dim.names.arr[-n.dim.arr]
-        }
-        
-        alpha = (1-ci.coverage)/2
-        arr[is.na(arr)] = 0 #this fixes female msm
-        ci = apply(arr, keep.dimensions, quantile, probs=c(alpha, 1-alpha), na.rm=T)
-        dim(ci) = c(2, dim(ci)[2], prod(dim(ci)[-(1:2)]))
-        
-        if (!get.individual.sims)
-        {
-            df.sim = reshape2::melt(stat, value.name='value')
-            df.sim = cbind(df.sim, 
-                           'lower'=as.numeric(ci[1,,]), 
-                           'upper'=as.numeric(ci[2,,]))
-        }
-        
-        if (get.change.df && any(sim.years==change.years[1]) && any(sim.years==change.years[2]))
-        {
-            year1.index = (1:length(sim.years))[sim.years==change.years[1]]
-            year2.index = (1:length(sim.years))[sim.years==change.years[2]]
+            numerators = lapply(arrs, function(arr){
+                arr[as.character(change.years[2]),,] - arr[as.character(change.years[1]),,]
+            })
             
-            dim(stat) = c(length(sim.years), prod(dim(stat)[-1]))
-            
-            
-            if (n.dim.arr==2)
+            if (relative)
             {
-                change.v = (arr[year2.index,] - arr[year1.index,]) / arr[year1.index,]
-                if (change.decrease.is.positive)
-                    change.v = -change.v
-                
-                if (aggregate.statistic=='mean')
-                    stat.change = mean(change.v)
-                else
-                    stat.change = median(change.v)
-                
-             #   dim(stat.change) = 1
-                
-                change.ci = quantile(change.v, probs=c(alpha,1-alpha))
-                dim(change.ci) = c(2,1)
-                
+                values = lapply(1:length(simsets), function(i){
+                    mult * numerators[[i]] / arrs[[i]][as.character(change.years[1]),,]
+                })
+            }
+            else
+                values = numerators
+        }
+        else #cumulative
+        {
+            cumulative.arrs = lapply(arrs, function(arr){
+                colSums(arr)
+            })
+            
+            if (CHANGE.STATISTIC.IS.DELTA[change.statistic])
+            {
+                ref = cumulative.arrs[simset.is.no.intervention][[1]]
+                values = lapply(cumulative.arrs, function(num){
+                    if (dim(ref)[2] != dim(num)[2])
+                    {
+                        indices = sample(1:dim(ref)[2], size=dim(num)[2], replace=T)
+                        ref = ref[,indices]
+                    }
+                    
+                    if (relative)
+                        (num - ref) / ref
+                    else
+                        num - ref
+                })
+            }
+            else
+                values = cumulative.arrs
+        }
+
+        stat.sub.dfs = lapply(1:length(values), function(i){
+            val = values[[i]]
+            
+            if (simset.is.no.intervention[i] &&
+                (change.statistic == 'cumulative.diff.absolute' || 
+                 change.statistic == 'cumulative.diff.relative') )
+            {
+                rv = data.frame(
+                    statistic = rep(NaN, n.non.year.non.sim),
+                    stat.ci.lower = rep(NaN, n.non.year.non.sim),
+                    stat.ci.upper = rep(NaN, n.non.year.non.sim)
+                )
             }
             else
             {
-                dim(arr) = c(length(sim.years), prod(dim(arr)[-c(1,n.dim.arr)]), n.sim)
-                change.arr = (arr[year2.index,,] - arr[year1.index,,]) / arr[year1.index,,]
-                if (change.decrease.is.positive)
-                    change.arr = -change.arr
-                dim(change.arr) = sapply(dim.names.arr[-1], length)
+                dim(val) = c(other=n.non.year.non.sim,
+                             sim=length(val)/n.non.year.non.sim)
                 
                 if (aggregate.statistic=='mean')
-                    stat.change = rowMeans(change.arr, dims=length(dim(change.arr))-1)
+                    stat.change = rowMeans(val)
                 else
-                    stat.change = apply(change.arr, 1:(length(dim(change.arr))-1), median)
+                    stat.change = apply(val, 1, median)
                 
-                dim(stat.change) = sapply(dim.names.arr[-c(1,n.dim.arr)], length)
-                dimnames(stat.change) = dim.names.arr[-c(1,n.dim.arr)]
-                
-                change.arr[is.na(change.arr)] = 0
-                change.ci = apply(change.arr, 1:(length(dim(change.arr))-1), quantile, probs=c(alpha,1-alpha))
-                dim(change.ci) = c(2,prod(dim(stat.change)))
+                rv = data.frame(
+                    statistic = as.numeric(stat.change),
+                    stat.ci.lower = as.numeric(apply(val, 1, quantile, probs=alpha)),
+                    stat.ci.upper = as.numeric(apply(val, 1, quantile, probs=1-alpha))
+                )
             }
             
-            df.change = reshape2::melt(stat.change, value.name='value')
-            for (d in names(df.change)[names(df.change)!='value'])
-                df.change[,d] = PRETTY.NAMES[[d]][df.change[,d]]
-            names(df.change)[names(df.change)=='value'] = paste0("change_", change.years[1], "_to_", change.years[2], "_", aggregate.statistic)
+            names(rv) = stat.df.names
             
-            df.change = cbind(df.change,
-                              lower=change.ci[1,],
-                              upper=change.ci[2,],
-                              year1=stat[year1.index,],
-                              year1.lower=ci[1,year1.index,],
-                              year1.upper=ci[2,year1.index,],
-                              year2=stat[year2.index,],
-                              year2.lower=ci[1,year2.index,],
-                              year2.upper=ci[2,year2.index,],
-                              n.sim=simset@n.sim)
-            names(df.change)[names(df.change)=='lower'] = paste0("change_", change.years[1], "_to_", change.years[2], "_interval_lower")
-            names(df.change)[names(df.change)=='upper'] = paste0("change_", change.years[1], "_to_", change.years[2], "_interval_upper")
+            # Add in columns for cumulative, if we are doing a change in cumulative
+            if (cumulative && CHANGE.STATISTIC.IS.DELTA[change.statistic])
+            {
+                cum.arr = cumulative.arrs[[i]]
+                if (aggregate.statistic=='mean')
+                    cum.stat = rowMeans(cum.arr)
+                else
+                    cum.stat = apply(cum.arr, 1, median)
+                
+                cum.df = data.frame(
+                    cum.stat = as.numeric(cum.stat),
+                    cum.ci.lower = as.numeric(apply(cum.arr, 1, quantile, probs=alpha)),
+                    cum.ci.upper = as.numeric(apply(cum.arr, 1, quantile, probs=1-alpha))
+                )
+                
+                names(cum.df) = cumulative.names
+                rv = cbind(rv, cum.df)
+            }
             
-            names(df.change)[names(df.change)=='year1'] = paste0(change.years[1], "_", aggregate.statistic)
-            names(df.change)[names(df.change)=='year1.lower'] = paste0(change.years[1], "_interval_lower")
-            names(df.change)[names(df.change)=='year1.upper'] = paste0(change.years[1], "_interval_upper")
+            rv
+        })
+    }
+    else
+        stat.sub.dfs = lapply(1:length(simsets), function(i){
+            rv = data.frame(
+                statistic = rep(NaN, n.non.year.non.sim),
+                stat.ci.lower = rep(NaN, n.non.year.non.sim),
+                stat.ci.upper = rep(NaN, n.non.year.non.sim)
+            )
+            names(rv) = stat.df.names
             
-            names(df.change)[names(df.change)=='year2'] = paste0(change.years[2], "_", aggregate.statistic)
-            names(df.change)[names(df.change)=='year2.lower'] = paste0(change.years[2], "_interval_lower")
-            names(df.change)[names(df.change)=='year2.upper'] = paste0(change.years[2], "_interval_upper")
+            if (cumulative && CHANGE.STATISTIC.IS.DELTA[change.statistic])
+            {
+                cum.df = data.frame(
+                    cum.stat =  rep(NaN, n.non.year.non.sim),
+                    cum.ci.lower =  rep(NaN, n.non.year.non.sim),
+                    cum.ci.upper =  rep(NaN, n.non.year.non.sim)
+                )
+                
+                names(cum.df) = cumulative.names
+                rv = cbind(rv, cum.df)
+            }
+            
+            rv
+        })
+
+    #-- Create Levels DFs --#
+    levels.sub.dfs = lapply(arrs, function(arr){
+        vals1 = arr[as.character(change.years[1]),,]
+        vals2 = arr[as.character(change.years[2]),,]
+        
+        dim(vals1) = dim(vals2) = c(other=n.non.year.non.sim,
+                                    sim=length(vals1)/n.non.year.non.sim)
+        
+        if (aggregate.statistic=='mean')
+        {
+            stat1 = rowMeans(vals1)
+            stat2 = rowMeans(vals2)
         }
+        else
+        {
+            stat1 = apply(vals1, median)
+            stat2 = apply(vals2, median)
+        }
+        
+        rv = data.frame(
+            stat1 = stat1,
+            ci.lower.1 = as.numeric(quantile(vals1, probs=alpha)),
+            ci.upper.1 = as.numeric(quantile(vals1, probs=1-alpha)),
+            stat2 = stat2,
+            ci.lower.2 = as.numeric(quantile(vals2, probs=alpha)),
+            ci.upper.2 = as.numeric(quantile(vals2, probs=1-alpha))
+        )
+        
+        names(rv) = c(
+            paste0(change.years[1], "_", aggregate.statistic),
+            paste0(change.years[1], "_interval_lower"),
+            paste0(change.years[1], "_interval_upper"),
+            paste0(change.years[2], "_", aggregate.statistic),
+            paste0(change.years[2], "_interval_lower"),
+            paste0(change.years[2], "_interval_upper")
+        )
+        
+        rv
+    })
+    
+    #-- Create Subgroup DF --#
+    #   This just puts the category labels in order
+    if (length(non.year.non.sim.dim.names)==0)
+        subgroup.sub.df = NULL
+    else
+    {
+        sub.group.arr = array(0, dim=sapply(non.year.non.sim.dim.names, length),
+                              dimnames = non.year.non.sim.dim.names)
+        
+        subgroup.sub.df = reshape2::melt(sub.group.arr)
+        subgroup.sub.df = subgroup.sub.df[,-ncol(subgroup.sub.df)]
+    }
+        
+    
+    #-- Put the sub-DFs all together --#
+    rv = NULL
+    for (i in 1:length(simsets))
+    {
+        ss.name = simset.names[i]
+        
+        header.df = data.frame(
+            intervention = rep(ss.name, n.non.year.non.sim),
+            data.type = rep(data.type.names[data.type], n.non.year.non.sim))
+        if (!is.null(subgroup.sub.df))
+            header.df = cbind(header.df, subgroup.sub.df)
+        
+        one.df = cbind(
+            header.df,
+            stat.sub.dfs[[i]],
+            levels.sub.dfs[[i]],
+            data.frame(n.sim=rep(simsets[[i]]@n.sim, n.non.year.non.sim))
+        )
+        
+        rv = rbind(rv,
+                   one.df)
     }
     
-    list(df.sim=df.sim,
-         df.change=df.change)
+    # Save where indexing is for future
+    pre.change.index = 2 #intervention + data.type
+    if (!is.null(subgroup.sub.df))
+        pre.change.index = pre.change.index + dim(subgroup.sub.df)[2]
+    attr(rv, 'pre.change.index') = pre.change.index
+    if (cumulative && CHANGE.STATISTIC.IS.DELTA[change.statistic])
+        attr(rv, 'pre.levels.index') = pre.change.index + 6
+    else
+        attr(rv, 'pre.levels.index') = pre.change.index + 3
+    
+    rv
 }
+
 
 ##----------------##
 ##-- ADD LABELS --##
@@ -1758,10 +2218,14 @@ get.nontrivial.dimension.subsets <- function(dimension.subsets,
 }
 
 
-make.pretty.change.data.frame <- function(change.df, data.type.names=DATA.TYPE.NAMES)
+make.pretty.change.data.frame <- function(change.df, data.type.names=DATA.TYPE.NAMES,
+                                          round.digits=0,
+                                          missing.char='-')
 {
     df.names = names(change.df)
-    pre.change.index = (1:length(df.names))[grepl('change',df.names)][1]-1
+#    pre.change.index = (1:length(df.names))[grepl('change',df.names)][1]-1
+    pre.change.index = attr(change.df, 'pre.change.index')
+    pre.levels.index = attr(change.df, 'pre.levels.index')
     stats.description = paste0(",\n", attr(change.df, 'stat'), 
                                " [", round(100*attr(change.df, 'interval.coverage')), "% interval]")
     
@@ -1772,22 +2236,10 @@ make.pretty.change.data.frame <- function(change.df, data.type.names=DATA.TYPE.N
     names(rv)[names(rv)=='risk'] = 'Risk Factor'
     names(rv) = toupper.first(names(rv))
     
-    year1 = substr(df.names[pre.change.index+4],1,4)
-    year2 = substr(df.names[pre.change.index+7],1,4)
-    
-    rv$change = paste0(round(100*change.df[,pre.change.index+1]),
-                          '% [',
-                          round(100*change.df[,pre.change.index+2]), 
-                          ' to ',
-                          round(100*change.df[,pre.change.index+3]),
-                          ']')
-    if (attr(change.df, 'decrease.is.positive'))
-        names(rv)[names(rv)=='change'] = paste0("Reduction ", year1, " to ", year2, 
-                                                 stats.description)
-    else
-        names(rv)[names(rv)=='change'] = paste0("Change ", year1, " to ", year2, 
-                                               stats.description)
-    
+    #year1 = substr(df.names[pre.change.index+4],1,4)
+    #year2 = substr(df.names[pre.change.index+7],1,4)
+    year1 = attr(change.df, 'years')[1]
+    year2 = attr(change.df, 'years')[2]
     
     pct.mask = is.pct.data.type(change.df$data.type, data.type.names)
     mult = rep(1, length(pct.mask))
@@ -1795,26 +2247,114 @@ make.pretty.change.data.frame <- function(change.df, data.type.names=DATA.TYPE.N
     unit = rep('', length(pct.mask))
     unit[pct.mask] = '%'
     
-    rv$year1 = paste0(format(round(mult*change.df[,pre.change.index+4]), big.mark = ','), 
+    change.statistic = attr(change.df, 'metric')
+    if (CHANGE.STATISTIC.IS.RELATIVE[change.statistic])
+    {
+        rv$change = paste0(round(100*change.df[,pre.change.index+1], digits=round.digits),
+                              '% [',
+                              round(100*change.df[,pre.change.index+2], digits=round.digits), 
+                              ' to ',
+                              round(100*change.df[,pre.change.index+3], digits=round.digits),
+                              '%]')
+    }
+    else
+    {
+        rv$change = paste0(format.plus(mult*change.df[,pre.change.index+1], round.digits=round.digits, 
+                                       force.plus=CHANGE.STATISTIC.IS.DELTA[change.statistic]), 
+                          unit,
+                          ' [',
+                          format.plus(mult*change.df[,pre.change.index+2], round.digits=round.digits, 
+                                      force.plus=CHANGE.STATISTIC.IS.DELTA[change.statistic]), 
+                          ' to ',
+                          format.plus(mult*change.df[,pre.change.index+3], round.digits=round.digits, 
+                                      force.plus=CHANGE.STATISTIC.IS.DELTA[change.statistic]), 
+                          ']')
+    }
+    rv$change[is.na(change.df[,pre.change.index+1])] = missing.char
+    
+    if (CHANGE.STATISTIC.IS.CUMULATIVE[change.statistic])
+        cumulative.text = 'Cumulative '
+    else
+        cumulative.text = ''
+    
+    if (CHANGE.STATISTIC.IS.DELTA[change.statistic])
+    {
+        if (attr(change.df, 'decrease.is.positive'))
+            change.text = 'Reduction '
+        else
+            change.text = 'Change '
+    }
+    else
+        change.text = ''
+    
+    names(rv)[names(rv)=='change'] = paste0(cumulative.text, change.text,
+                                            year1, " to ", year2, 
+                                            stats.description)
+    
+    if (CHANGE.STATISTIC.IS.CUMULATIVE[change.statistic] &&
+        CHANGE.STATISTIC.IS.DELTA[change.statistic])
+    {
+        rv$cum = paste0(format(round(mult*change.df[,pre.change.index+4], digits=round.digits), big.mark = ','), 
+                          unit,
+                          ' [',
+                          format(round(mult*change.df[,pre.change.index+5], digits=round.digits), big.mark = ','),
+                          ' to ',
+                          format(round(mult*change.df[,pre.change.index+6], digits=round.digits), big.mark = ','),
+                          ']')
+        rv$cum[is.na(change.df[,pre.change.index+4])] = missing.char
+        
+        names(rv)[names(rv)=='cum'] = paste0("Cumulative ",
+                                             year1, " to ", year2, 
+                                             stats.description)
+    }
+    
+    
+    rv$year1 = paste0(format(round(mult*change.df[,pre.levels.index+1], digits=round.digits), big.mark = ','), 
                       unit,
                       ' [',
-                      format(round(mult*change.df[,pre.change.index+5]), big.mark = ','),
-                      ' - ',
-                      format(round(mult*change.df[,pre.change.index+6]), big.mark = ','),
+                      format(round(mult*change.df[,pre.levels.index+2], digits=round.digits), big.mark = ','),
+                      ' to ',
+                      format(round(mult*change.df[,pre.levels.index+3], digits=round.digits), big.mark = ','),
                       ']')
     names(rv)[names(rv)=='year1'] = paste0(year1, " Level", stats.description)
     
-    rv$year2 = paste0(format(round(mult*change.df[,pre.change.index+7]), big.mark = ','), 
+    rv$year2 = paste0(format(round(mult*change.df[,pre.levels.index+4], digits=round.digits), big.mark = ','), 
                       unit,
                       ' [',
-                      format(round(mult*change.df[,pre.change.index+8]), big.mark = ','),
-                      ' - ',
-                      format(round(mult*change.df[,pre.change.index+9]), big.mark = ','),
+                      format(round(mult*change.df[,pre.levels.index+5], digits=round.digits), big.mark = ','),
+                      ' to ',
+                      format(round(mult*change.df[,pre.levels.index+6], digits=round.digits), big.mark = ','),
                       ']')
     names(rv)[names(rv)=='year2'] = paste0(year2, " Level", stats.description)
     
     rv$n.sim = change.df$n.sim
     names(rv)[names(rv)=='n.sim'] = 'Number of Simulations'
+    
+    rv
+}
+
+# calls format, but if force.plus is TRUE,
+#  prepends a plus sign to positive values
+format.plus <- function(x, 
+                        force.plus=T, 
+                        round.digits=0,
+                        big.mark=',',
+                        ...)
+{
+    x = round(x, digits=round.digits)
+    
+    if (force.plus)
+    {
+        add.plus = x>0
+        x[add.plus] = -x[add.plus]
+    }
+    
+    rv = format(x, nsmall=round.digits, big.mark=big.mark, ...)
+    
+    if (force.plus)
+    {
+        rv[add.plus] = gsub('-', '+', rv[add.plus])
+    }
     
     rv
 }

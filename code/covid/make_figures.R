@@ -18,145 +18,241 @@ names(COLORS) = c('baseline',
 DARK.COLORS = darken(darken(COLORS))
 names(DARK.COLORS) = names(COLORS)
 
-PANEL.WIDTH = 2.5
-PANEL.HEIGHT = 1.75
 PNG.POINT.SIZE = 5
 RES = 600
 
-LINE.SIZE = 1
+LINE.SIZE = .75
 
 THEME = theme(text = element_text(size=8), legend.direction = 'horizontal',
               legend.position = 'none')
+THEME.WITH.LEGEND = theme(text = element_text(size=8), legend.direction = 'horizontal',
+              legend.position = 'bottom')
 CUM.INC.YEARS = 2020:2025
 
 ##-- SOURCE CODE --##
 if (1==2)
 {
-    load('results/covid/covid_4.0_results.Rdata')
+    load('results/covid/covid_4.1_results.Rdata')
     
 }
 
 ALL.COVID.SCENARIOS = c('base','delayed.hiv.care','rebound.sex.delayed.hiv.care')
 YEARS.OF.INTEREST = 2019:2025
 
-NEW.LINE.TYPE = 'longdash'
-##---------------------------##
-##-- OVERVIEW AND TIMELINE --##
-##---------------------------##
+INCIDENCE.LINE.TYPE = 'solid'
+NEW.LINE.TYPE = 'dashed'
+TIMELINE.RIBBON.ALPHA = 0.05
 
-##-- TIMELINE and BOX-PLOTS --##
-TIMELINE.RIBBON.ALPHA = 0.1
-LOCATION.BOXPLOT.PANEL.HEIGHT = 6
-LOCATION.BOXPLOT.PANEL.WIDTH = 6
+
+# Cities
+BOSTON = '14460'
+CHICAGO = '16980'
+SAN.DIEGO = '41740'
+
+# Dimensions
+
+PANEL.WIDTH = 2.5
+PANEL.HEIGHT = 1.75
+
+TIMELINE.WIDTH = 2.75
+TIMELINE.HEIGHT = 1.6
+
+##-- Fig 1 - New vs Inc --##
+
 if (1==2)
-{    
-    #total
-    png(file.path(IMAGE.DIR, 'timelines/all_inc.png'), pointsize=PNG.POINT.SIZE, width=PANEL.WIDTH, height=PANEL.HEIGHT, res=RES, units='in')
-    make.covid.timeline.plot(scenarios=ALL.COVID.SCENARIOS, outcomes='incidence', line.size = LINE.SIZE,
-                             ribbon.alpha = TIMELINE.RIBBON.ALPHA,
-                             colors = COLORS) + THEME
-    dev.off()
-    
-    #total - new
-    png(file.path(IMAGE.DIR, 'timelines/all_new.png'), pointsize=PNG.POINT.SIZE, width=PANEL.WIDTH, height=PANEL.HEIGHT, res=RES, units='in')
-    make.covid.timeline.plot(scenarios=ALL.COVID.SCENARIOS, outcomes='new', line.size = LINE.SIZE,
-                             line.types = NEW.LINE.TYPE, linetype.by.outcome = T, linetype.by.group = F,
-                             ribbon.alpha = TIMELINE.RIBBON.ALPHA,
-                             colors = COLORS) + THEME
-    dev.off()
-    
-    
-    #boston
-    png(file.path(IMAGE.DIR, 'timelines/boston_inc.png'), pointsize=PNG.POINT.SIZE, width=PANEL.WIDTH, height=PANEL.HEIGHT, res=RES, units='in')
-    make.covid.timeline.plot(scenarios=ALL.COVID.SCENARIOS, outcomes='incidence', line.size = LINE.SIZE,
-                             ribbon.alpha = TIMELINE.RIBBON.ALPHA,
-                             colors = COLORS,
-                             locations='14460') + THEME
-    dev.off()
-    
-    #boston - new
-    png(file.path(IMAGE.DIR, 'timelines/boston_new.png'), pointsize=PNG.POINT.SIZE, width=PANEL.WIDTH, height=PANEL.HEIGHT, res=RES, units='in')
-    make.covid.timeline.plot(scenarios=ALL.COVID.SCENARIOS, outcomes='new', line.size = LINE.SIZE,
-                             line.types = NEW.LINE.TYPE, linetype.by.outcome = T, linetype.by.group = F,
-                             ribbon.alpha = TIMELINE.RIBBON.ALPHA,
-                             colors = COLORS,
-                             locations='14460') + THEME
+{
+    #-- Total --#
+    png(file.path(IMAGE.DIR, 'inc_vs_reported/incvnew_base_total.png'), 
+        pointsize=PNG.POINT.SIZE, width=TIMELINE.WIDTH, height=TIMELINE.HEIGHT, res=RES, units='in')
+    make.covid.timeline.plot(scenarios='base',
+                             outcomes = c('incidence','new'),
+                             line.size = LINE.SIZE,
+                             linetype.by.outcome=T,
+                             line.types=c(INCIDENCE.LINE.TYPE,NEW.LINE.TYPE),
+                             ribbon.alpha = TIMELINE.RIBBON.ALPHA, show.baseline.ribbon = F,
+                             show.ribbon.outline = T,
+                             include.baseline = T,
+                             colors=COLORS[c('baseline','base')], 
+                             ylim = c(12000,27000)) +  
+        ylab('Incident or Reported\nCases (n)') + THEME
     dev.off()
     
     
-    
-    #chicago
-    png(file.path(IMAGE.DIR, 'timelines/chicago_inc.png'), pointsize=PNG.POINT.SIZE, width=PANEL.WIDTH, height=PANEL.HEIGHT, res=RES, units='in')
-    make.covid.timeline.plot(scenarios=ALL.COVID.SCENARIOS, outcomes='incidence', line.size = LINE.SIZE,
-                             ribbon.alpha = TIMELINE.RIBBON.ALPHA,
-                             colors = COLORS,
-                             locations='16980') + THEME
-    dev.off()
-    
-    #chicago - new
-    png(file.path(IMAGE.DIR, 'timelines/chicago_new.png'), pointsize=PNG.POINT.SIZE, width=PANEL.WIDTH, height=PANEL.HEIGHT, res=RES, units='in')
-    make.covid.timeline.plot(scenarios=ALL.COVID.SCENARIOS, outcomes='new', line.size = LINE.SIZE,
-                             line.types = NEW.LINE.TYPE, linetype.by.outcome = T, linetype.by.group = F,
-                             ribbon.alpha = TIMELINE.RIBBON.ALPHA,
-                             colors = COLORS,
-                             locations='16980') + THEME
-    
-    dev.off()
-   
-    #sd
-    png(file.path(IMAGE.DIR, 'timelines/sd_inc.png'), pointsize=PNG.POINT.SIZE, width=PANEL.WIDTH, height=PANEL.HEIGHT, res=RES, units='in')
-    make.covid.timeline.plot(scenarios=ALL.COVID.SCENARIOS, outcomes='incidence', line.size = LINE.SIZE,
-                             ribbon.alpha = TIMELINE.RIBBON.ALPHA,
-                             colors = COLORS,
-                             locations='41740') + THEME
-    dev.off()
-    
-    #sd - new
-    png(file.path(IMAGE.DIR, 'timelines/sd_new.png'), pointsize=PNG.POINT.SIZE, width=PANEL.WIDTH, height=PANEL.HEIGHT, res=RES, units='in')
-    make.covid.timeline.plot(scenarios=ALL.COVID.SCENARIOS, outcomes='new', line.size = LINE.SIZE,
-                             line.types = NEW.LINE.TYPE, linetype.by.outcome = T, linetype.by.group = F,
-                             ribbon.alpha = TIMELINE.RIBBON.ALPHA,
-                             colors = COLORS,
-                             locations='41740') + THEME
-    
-    dev.off()
-    
-    png(file.path(IMAGE.DIR, 'timelines/sd_base_delayed_inc.png'), pointsize=PNG.POINT.SIZE, width=PANEL.WIDTH, height=PANEL.HEIGHT, res=RES, units='in')
-    make.covid.timeline.plot(scenarios=c('base','delayed.hiv.care'), outcomes='incidence', line.size = LINE.SIZE,
-                             ribbon.alpha = TIMELINE.RIBBON.ALPHA,
-                             colors = COLORS, locations='41740') + THEME
+    png(file.path(IMAGE.DIR, 'inc_vs_reported/incvnew_delayed_total.png'), 
+        pointsize=PNG.POINT.SIZE, width=TIMELINE.WIDTH, height=TIMELINE.HEIGHT, res=RES, units='in')
+    make.covid.timeline.plot(scenarios='delayed.hiv.care',
+                             outcomes = c('incidence','new'),
+                             line.size = LINE.SIZE,
+                             linetype.by.outcome=T,
+                             line.types=c(INCIDENCE.LINE.TYPE,NEW.LINE.TYPE),
+                             ribbon.alpha = TIMELINE.RIBBON.ALPHA, show.baseline.ribbon = F,
+                             show.ribbon.outline = T,
+                             include.baseline = T,
+                             colors=COLORS[c('baseline','delayed.hiv.care')], 
+                             ylim = c(12000,27000)) + 
+        ylab('Incident or Reported\nCases (n)') + THEME
     dev.off()
     
     
+    #-- Boston --#
     
-    
-    
-    
-    png(file.path(IMAGE.DIR, 'timelines/all_scenarios_new.png'), pointsize=PNG.POINT.SIZE, width=PANEL.WIDTH, height=PANEL.HEIGHT, res=RES, units='in')
-    make.covid.timeline.plot(scenarios=names(COLORS), outcomes='new', line.size = LINE.SIZE,
-                             ribbon.alpha = TIMELINE.RIBBON.ALPHA,
-                             colors = COLORS) + THEME
+    png(file.path(IMAGE.DIR, 'inc_vs_reported/incvnew_base_boston.png'), 
+        pointsize=PNG.POINT.SIZE, width=TIMELINE.WIDTH, height=TIMELINE.HEIGHT, res=RES, units='in')
+    make.covid.timeline.plot(locations = BOSTON,
+                             scenarios='base',
+                             outcomes = c('incidence','new'),
+                             line.size = LINE.SIZE,
+                             linetype.by.outcome=T,
+                             line.types=c(INCIDENCE.LINE.TYPE,NEW.LINE.TYPE),
+                             ribbon.alpha = TIMELINE.RIBBON.ALPHA, show.baseline.ribbon = F,
+                             show.ribbon.outline = T,
+                             include.baseline = T,
+                             colors=COLORS[c('baseline','base')],
+                             ylim=c(200,1000)) + 
+        ylab('Incident or Reported\nCases (n)') + THEME
     dev.off()
     
+    png(file.path(IMAGE.DIR, 'inc_vs_reported/incvnew_delayed_boston.png'), 
+        pointsize=PNG.POINT.SIZE, width=TIMELINE.WIDTH, height=TIMELINE.HEIGHT, res=RES, units='in')
+    make.covid.timeline.plot(location=BOSTON,
+                             scenarios='delayed.hiv.care',
+                             outcomes = c('incidence','new'),
+                             line.size = LINE.SIZE,
+                             linetype.by.outcome=T,
+                             line.types=c(INCIDENCE.LINE.TYPE,NEW.LINE.TYPE),
+                             ribbon.alpha = TIMELINE.RIBBON.ALPHA, show.baseline.ribbon = F,
+                             show.ribbon.outline = T,
+                             include.baseline = T,
+                             colors=COLORS[c('baseline','delayed.hiv.care')],
+                             ylim=c(200,1000)) + 
+        ylab('Incident or Reported\nCases (n)') + THEME
+    dev.off()
+    
+    
+    #-- San Diego --#
+    
+    png(file.path(IMAGE.DIR, 'inc_vs_reported/incvnew_base_sd.png'), 
+        pointsize=PNG.POINT.SIZE, width=TIMELINE.WIDTH, height=TIMELINE.HEIGHT, res=RES, units='in')
+    make.covid.timeline.plot(locations = SAN.DIEGO,
+                             scenarios='base',
+                             outcomes = c('incidence','new'),
+                             line.size = LINE.SIZE,
+                             linetype.by.outcome=T,
+                             line.types=c(INCIDENCE.LINE.TYPE,NEW.LINE.TYPE),
+                             ribbon.alpha = TIMELINE.RIBBON.ALPHA, show.baseline.ribbon = F,
+                             show.ribbon.outline = T,
+                             include.baseline = T,
+                             colors=COLORS[c('baseline','base')],
+                             ylim=c(125,450)) + 
+        ylab('Incident or Reported\nCases (n)') + THEME
+    dev.off()
+    
+    png(file.path(IMAGE.DIR, 'inc_vs_reported/incvnew_delayed_sd.png'), 
+        pointsize=PNG.POINT.SIZE, width=TIMELINE.WIDTH, height=TIMELINE.HEIGHT, res=RES, units='in')
+    make.covid.timeline.plot(location=SAN.DIEGO,
+                             scenarios='delayed.hiv.care',
+                             outcomes = c('incidence','new'),
+                             line.size = LINE.SIZE,
+                             linetype.by.outcome=T,
+                             line.types=c(INCIDENCE.LINE.TYPE,NEW.LINE.TYPE),
+                             ribbon.alpha = TIMELINE.RIBBON.ALPHA, show.baseline.ribbon = F,
+                             show.ribbon.outline = T,
+                             include.baseline = T,
+                             colors=COLORS[c('baseline','delayed.hiv.care')],
+                             ylim=c(125, 450)) + 
+        ylab('Incident or Reported\nCases (n)') + THEME
+    dev.off()
+    
+    
+    #-- Chicago --#
+    
+    png(file.path(IMAGE.DIR, 'inc_vs_reported/incvnew_base_chicago.png'), 
+        pointsize=PNG.POINT.SIZE, width=TIMELINE.WIDTH, height=TIMELINE.HEIGHT, res=RES, units='in')
+    make.covid.timeline.plot(locations = CHICAGO,
+                             scenarios='base',
+                             outcomes = c('incidence','new'),
+                             line.size = LINE.SIZE,
+                             linetype.by.outcome=T,
+                             line.types=c(INCIDENCE.LINE.TYPE,NEW.LINE.TYPE),
+                             ribbon.alpha = TIMELINE.RIBBON.ALPHA, show.baseline.ribbon = F,
+                             show.ribbon.outline = T,
+                             include.baseline = T,
+                             colors=COLORS[c('baseline','base')]) + 
+        ylab('Incident or Reported\nCases (n)') + THEME
+    dev.off()
+    
+    png(file.path(IMAGE.DIR, 'inc_vs_reported/incvnew_delayed_chicago.png'), 
+        pointsize=PNG.POINT.SIZE, width=TIMELINE.WIDTH, height=TIMELINE.HEIGHT, res=RES, units='in')
+    make.covid.timeline.plot(location=CHICAGO,
+                             scenarios='delayed.hiv.care',
+                             outcomes = c('incidence','new'),
+                             line.size = LINE.SIZE,
+                             linetype.by.outcome=T,
+                             line.types=c(INCIDENCE.LINE.TYPE,NEW.LINE.TYPE),
+                             ribbon.alpha = TIMELINE.RIBBON.ALPHA, show.baseline.ribbon = F,
+                             show.ribbon.outline = T,
+                             include.baseline = T,
+                             colors=COLORS[c('baseline','delayed.hiv.care')]) + 
+        ylab('Incident or Reported\nCases (n)') + THEME
+    dev.off()
+    
+    # for label
+    png(file.path(IMAGE.DIR, 'inc_vs_reported/for_legend.png'), 
+        pointsize=PNG.POINT.SIZE, width=TIMELINE.WIDTH, height=TIMELINE.HEIGHT, res=RES, units='in')
+    ggplot() + 
+        geom_hline(yintercept = 2:7,
+                   size=0.5,
+                   linetype=c('solid','dashed','solid','dashed','solid','dashed'),
+                   color=rep(COLORS[c('baseline','base','delayed.hiv.care')], each=2)) +
+        xlim(0,10) + ylim(0,8) +
+        theme(panel.background = element_blank(), 
+              panel.grid.major = element_blank(), panel.grid.minor = element_blank())
+    dev.off()
+}
 
-    
 
+# proportion aware
+if (1==2)
+{
+    #-- Total --#
+    png(file.path(IMAGE.DIR, 'inc_vs_reported/incvnew_base_total.png'), 
+        pointsize=PNG.POINT.SIZE, width=TIMELINE.WIDTH, height=TIMELINE.HEIGHT, res=RES, units='in')
+    make.covid.timeline.plot(scenarios='base',
+                             outcomes = 'diagnosed',
+                             line.size = LINE.SIZE,
+                             linetype.by.outcome=T,
+                             line.types=c(INCIDENCE.LINE.TYPE,NEW.LINE.TYPE),
+                             ribbon.alpha = TIMELINE.RIBBON.ALPHA, show.baseline.ribbon = F,
+                             show.ribbon.outline = T,
+                             include.baseline = T,
+                             colors=COLORS[c('baseline','base')]) + 
+        ylab('Knowledge of Status (%)') + THEME
+    dev.off()
+}
+
+##-- BOX-PLOT --##
+
+LOCATION.BOXPLOT.PANEL.HEIGHT = 7
+LOCATION.BOXPLOT.PANEL.WIDTH = 6
+BOXPLOT.THEME = THEME + theme(legend.position = 'bottom')
+
+if (1==2)
+{
     png(file.path(IMAGE.DIR, 'boxplots/location_estimates_base_delayed.png'), pointsize=PNG.POINT.SIZE, 
         width=LOCATION.BOXPLOT.PANEL.WIDTH, height=LOCATION.BOXPLOT.PANEL.HEIGHT, res=RES, units='in')
     make.location.boxplot(colors=COLORS[-1],
-                          scenarios = c('base','delayed.hiv.care')) + THEME
+                        scenarios = c('base','delayed.hiv.care')) + BOXPLOT.THEME +ylab('Change in Cumulative Incident HIV Infections,\n2020-2025, due to the COVID-19 Pandemic')
     dev.off()
-    
-    
-
 }
 
 
 ##-- HEAT MAPS --##
 
 HEAT.MAP.RANGE = c(-.25,.25)#c(-20000, 20000)
-HEAT.MAP.PANEL.HEIGHT = 2.25
-HEAT.MAP.THEME = THEME + theme(legend.position = 'bottom')
+HEAT.MAP.PANEL.HEIGHT = 1.6
+HEAT.MAP.PANEL.WIDTH = 2.25
+HEAT.MAP.THEME = theme(text = element_text(size=6.5), legend.direction = 'horizontal',
+                      legend.position = 'none')
 
 do.make.covid.heat.map <- function(loc=NULL,
                                    subtract.relative=T,
@@ -176,13 +272,14 @@ do.make.covid.heat.map <- function(loc=NULL,
                         locations = loc, aggregate.locations = aggregate.loc,
                         color.scale.title = " ", #"Change in Cumulative\nIncidence 2020-2025",
                         subtract.relative = subtract.relative) + 
-        xlab("Reduction in Sexual Transmission") + ylab("Reduction in Viral Suppression") + THEME
+        xlab("Reduction in Sexual Transmission") + ylab("Reduction in Suppression") + HEAT.MAP.THEME
 }
 
 if (1==2)
 {
     # For the legend
-    png(file.path(IMAGE.DIR, 'heat_maps/raw_for_legend.png'), pointsize=PNG.POINT.SIZE, width=PANEL.WIDTH, height=HEAT.MAP.PANEL.HEIGHT, res=RES, units='in')
+    png(file.path(IMAGE.DIR, 'heat_maps/raw/raw_for_legend.png'), 
+        pointsize=PNG.POINT.SIZE, width=HEAT.MAP.PANEL.WIDTH, height=HEAT.MAP.PANEL.HEIGHT, res=RES, units='in')
     make.covid.heat.map(var1 = 'sexual.transmission.reduction',
                         var2 = 'suppression.reduction',
                         min.change = HEAT.MAP.RANGE[1],
@@ -195,27 +292,43 @@ if (1==2)
     dev.off()
     
     
-    png(file.path(IMAGE.DIR, 'heat_maps/chicago_base_sex_suppression_raw.png'), pointsize=PNG.POINT.SIZE, width=PANEL.WIDTH, height=HEAT.MAP.PANEL.HEIGHT, res=RES, units='in')
+    png(file.path(IMAGE.DIR, 'heat_maps/raw/total_base_sex_suppression_raw.png'), 
+        pointsize=PNG.POINT.SIZE, width=HEAT.MAP.PANEL.WIDTH, height=HEAT.MAP.PANEL.HEIGHT, res=RES, units='in')
+    do.make.covid.heat.map(NULL)
+    dev.off()
+    
+    png(file.path(IMAGE.DIR, 'heat_maps/raw/total_delayed_sex_suppression_raw.png'), 
+        pointsize=PNG.POINT.SIZE, width=HEAT.MAP.PANEL.WIDTH, height=HEAT.MAP.PANEL.HEIGHT, res=RES, units='in')
+    do.make.covid.heat.map(NULL, scenario='delayed.hiv.care')
+    dev.off()
+    
+    png(file.path(IMAGE.DIR, 'heat_maps/raw/chicago_base_sex_suppression_raw.png'), 
+        pointsize=PNG.POINT.SIZE, width=HEAT.MAP.PANEL.WIDTH, height=HEAT.MAP.PANEL.HEIGHT, res=RES, units='in')
     do.make.covid.heat.map('16980')
     dev.off()
     
-    png(file.path(IMAGE.DIR, 'heat_maps/chicago_delayed_sex_suppression_raw.png'), pointsize=PNG.POINT.SIZE, width=PANEL.WIDTH, height=HEAT.MAP.PANEL.HEIGHT, res=RES, units='in')
+    png(file.path(IMAGE.DIR, 'heat_maps/raw/chicago_delayed_sex_suppression_raw.png'), 
+        pointsize=PNG.POINT.SIZE, width=HEAT.MAP.PANEL.WIDTH, height=HEAT.MAP.PANEL.HEIGHT, res=RES, units='in')
     do.make.covid.heat.map('16980', scenario='delayed.hiv.care')
     dev.off()
     
-    png(file.path(IMAGE.DIR, 'heat_maps/boston_base_sex_suppression_raw.png'), pointsize=PNG.POINT.SIZE, width=PANEL.WIDTH, height=HEAT.MAP.PANEL.HEIGHT, res=RES, units='in')
+    png(file.path(IMAGE.DIR, 'heat_maps/raw/boston_base_sex_suppression_raw.png'), 
+        pointsize=PNG.POINT.SIZE, width=HEAT.MAP.PANEL.WIDTH, height=HEAT.MAP.PANEL.HEIGHT, res=RES, units='in')
     do.make.covid.heat.map('14460')
     dev.off()
     
-    png(file.path(IMAGE.DIR, 'heat_maps/boston_delayed_sex_suppression_raw.png'), pointsize=PNG.POINT.SIZE, width=PANEL.WIDTH, height=HEAT.MAP.PANEL.HEIGHT, res=RES, units='in')
+    png(file.path(IMAGE.DIR, 'heat_maps/raw/boston_delayed_sex_suppression_raw.png'), 
+        pointsize=PNG.POINT.SIZE, width=HEAT.MAP.PANEL.WIDTH, height=HEAT.MAP.PANEL.HEIGHT, res=RES, units='in')
     do.make.covid.heat.map('14460', scenario='delayed.hiv.care')
     dev.off()
     
-    png(file.path(IMAGE.DIR, 'heat_maps/sd_base_sex_suppression_raw.png'), pointsize=PNG.POINT.SIZE, width=PANEL.WIDTH, height=HEAT.MAP.PANEL.HEIGHT, res=RES, units='in')
+    png(file.path(IMAGE.DIR, 'heat_maps/raw/sd_base_sex_suppression_raw.png'), 
+        pointsize=PNG.POINT.SIZE, width=HEAT.MAP.PANEL.WIDTH, height=HEAT.MAP.PANEL.HEIGHT, res=RES, units='in')
     do.make.covid.heat.map('41740')
     dev.off()
     
-    png(file.path(IMAGE.DIR, 'heat_maps/sd_delayed_sex_suppression_raw.png'), pointsize=PNG.POINT.SIZE, width=PANEL.WIDTH, height=HEAT.MAP.PANEL.HEIGHT, res=RES, units='in')
+    png(file.path(IMAGE.DIR, 'heat_maps/raw/sd_delayed_sex_suppression_raw.png'), 
+        pointsize=PNG.POINT.SIZE, width=HEAT.MAP.PANEL.WIDTH, height=HEAT.MAP.PANEL.HEIGHT, res=RES, units='in')
     do.make.covid.heat.map('41740', scenario='delayed.hiv.care')
     dev.off()
     
@@ -230,10 +343,11 @@ CITY.COR.THEME = theme(text = element_text(size=7),
 CITY.COR.PANEL.HEIGHT = 2.5
 if (1==2)
 {
-    png(file.path(IMAGE.DIR, 'msa_scatter/suppression_raw.png'), pointsize=PNG.POINT.SIZE, width=PANEL.WIDTH, height=CITY.COR.PANEL.HEIGHT, res=RES, units='in')
+    png(file.path(IMAGE.DIR, 'msa_scatter/base_suppression_raw.png'), pointsize=PNG.POINT.SIZE, width=PANEL.WIDTH, height=CITY.COR.PANEL.HEIGHT, res=RES, units='in')
     make.correlation.scatterplot(var1='suppression', var1.year=2019, correlate.var1 = F,
                                  var2='suppression.reduction', 
                                  scenario='base',
+                                 point.fill = COLORS['base'],
                                  outcome = 'incidence', outcome.years = CUM.INC.YEARS,
                                  point.size.range = CITY.COR.SIZE.RANGE,
                                  label.locations = character()) + #xlim(0,1) + ylim(0,1) +
@@ -241,11 +355,12 @@ if (1==2)
         xlab("Mean Proportion Suppressed in 2019") + CITY.COR.THEME
     dev.off()
     
-    png(file.path(IMAGE.DIR, 'msa_scatter/transmission_raw.png'), pointsize=PNG.POINT.SIZE, width=PANEL.WIDTH, height=CITY.COR.PANEL.HEIGHT, res=RES, units='in')
+    png(file.path(IMAGE.DIR, 'msa_scatter/base_transmission_raw.png'), pointsize=PNG.POINT.SIZE, width=PANEL.WIDTH, height=CITY.COR.PANEL.HEIGHT, res=RES, units='in')
     make.correlation.scatterplot(var1='incidence.prevalence.ratio', var1.year=2019, correlate.var1 = F,
                                  var2='sexual.transmission.reduction', 
                                  locations = setdiff(names(location.names), '17140'), #minus cincinatti
                                  scenario='base',
+                                 point.fill = COLORS['base'],
                                  outcome = 'incidence', outcome.years = CUM.INC.YEARS,
                                  point.size.range = CITY.COR.SIZE.RANGE,
                                  label.locations = character()) + #xlim(0,1) + ylim(0,1) +
@@ -253,36 +368,11 @@ if (1==2)
         xlab("Incidence/Prevalence Ratio in 2019") + CITY.COR.THEME
     dev.off()
     
-    #For identifying specific cities:
-    location.codes = names(location.names);names(location.codes)=location.codes
-    make.correlation.scatterplot(var1='suppression', var1.year=2019, correlate.var1 = F,
-                                 var2='suppression.reduction', 
-                                 scenario='base',
-                                 outcome = 'incidence', outcome.years = CUM.INC.YEARS,
-                                 point.size.range = CITY.COR.SIZE.RANGE,
-                                 #label.locations=names(location.names))
-                                 locations=c('41740','14460','16980'),
-                                 label.locations=c('41740','14460','16980'),
-                                 loc.names = location.codes) 
-    location.names[c('41740','14460','16980')]
-    make.correlation.scatterplot(var1='incidence.prevalence.ratio', var1.year=2019, correlate.var1 = F,
-                                 var2='sexual.transmission.reduction', 
-                                 scenario='base',
-                                 outcome = 'incidence', outcome.years = CUM.INC.YEARS,
-                                 point.size.range = CITY.COR.SIZE.RANGE,
-                              #   locations=c('41740','14460','16980'),
-                                 label.locations = c('41740','14460','16980')) + #xlim(0,1) + ylim(0,1) +
-        ylab("Correlation Between Reduction in Viral\nSexual Transmission and Incidence 2020-2025") +
-        xlab("Incidence/Prevalence Ratio in 2019") + CITY.COR.THEME
-    
-    
-    
-    
-    # delayed 
-    png(file.path(IMAGE.DIR, 'msa_scatter/suppression_raw.png'), pointsize=PNG.POINT.SIZE, width=PANEL.WIDTH, height=CITY.COR.PANEL.HEIGHT, res=RES, units='in')
+    png(file.path(IMAGE.DIR, 'msa_scatter/delayed_suppression_raw.png'), pointsize=PNG.POINT.SIZE, width=PANEL.WIDTH, height=CITY.COR.PANEL.HEIGHT, res=RES, units='in')
     make.correlation.scatterplot(var1='suppression', var1.year=2019, correlate.var1 = F,
                                  var2='suppression.reduction', 
                                  scenario='delayed.hiv.care',
+                                 point.fill = COLORS['delayed.hiv.care'],
                                  outcome = 'incidence', outcome.years = CUM.INC.YEARS,
                                  point.size.range = CITY.COR.SIZE.RANGE,
                                  label.locations = character()) + #xlim(0,1) + ylim(0,1) +
@@ -290,409 +380,310 @@ if (1==2)
         xlab("Mean Proportion Suppressed in 2019") + CITY.COR.THEME
     dev.off()
     
-    png(file.path(IMAGE.DIR, 'msa_scatter/transmission_raw.png'), pointsize=PNG.POINT.SIZE, width=PANEL.WIDTH, height=CITY.COR.PANEL.HEIGHT, res=RES, units='in')
+    png(file.path(IMAGE.DIR, 'msa_scatter/delayed_transmission_raw.png'), pointsize=PNG.POINT.SIZE, width=PANEL.WIDTH, height=CITY.COR.PANEL.HEIGHT, res=RES, units='in')
     make.correlation.scatterplot(var1='incidence.prevalence.ratio', var1.year=2019, correlate.var1 = F,
                                  var2='sexual.transmission.reduction', 
                                  locations = setdiff(names(location.names), '17140'), #minus cincinatti
                                  scenario='delayed.hiv.care',
+                                 point.fill = COLORS['delayed.hiv.care'],
                                  outcome = 'incidence', outcome.years = CUM.INC.YEARS,
                                  point.size.range = CITY.COR.SIZE.RANGE,
                                  label.locations = character()) + #xlim(0,1) + ylim(0,1) +
         ylab("Correlation Between Reduction in Viral\nSexual Transmission and Incidence 2020-2025") +
         xlab("Incidence/Prevalence Ratio in 2019") + CITY.COR.THEME
     dev.off()
-    
-    #For identifying specific cities:
-    location.codes = names(location.names);names(location.codes)=location.codes
-    make.correlation.scatterplot(var1='suppression', var1.year=2019, correlate.var1 = F,
-                                 var2='suppression.reduction', 
+    #not using
+    png(file.path(IMAGE.DIR, 'msa_scatter/base_testing_raw.png'), pointsize=PNG.POINT.SIZE, width=PANEL.WIDTH, height=CITY.COR.PANEL.HEIGHT, res=RES, units='in')
+    make.correlation.scatterplot(var1='testing', var1.year=2019, correlate.var1 = F,
+                                 var2='testing.reduction', 
                                  scenario='base',
+                                 point.fill = COLORS['base'],
                                  outcome = 'incidence', outcome.years = CUM.INC.YEARS,
                                  point.size.range = CITY.COR.SIZE.RANGE,
-                                 #label.locations=names(location.names))
-                                 locations=c('41740','14460','16980'),
-                                 label.locations=c('41740','14460','16980'),
-                                 loc.names = location.codes) 
-    location.names[c('41740','14460','16980')]
-    make.correlation.scatterplot(var1='incidence.prevalence.ratio', var1.year=2019, correlate.var1 = F,
-                                 var2='sexual.transmission.reduction', 
-                                 scenario='base',
-                                 outcome = 'incidence', outcome.years = CUM.INC.YEARS,
-                                 point.size.range = CITY.COR.SIZE.RANGE,
-                                 #   locations=c('41740','14460','16980'),
-                                 label.locations = c('41740','14460','16980')) + #xlim(0,1) + ylim(0,1) +
-        ylab("Correlation Between Reduction in Viral\nSexual Transmission and Incidence 2020-2025") +
-        xlab("Incidence/Prevalence Ratio in 2019") + CITY.COR.THEME
+                                 label.locations = character()) + #xlim(0,1) + ylim(0,1) +
+        ylab("Correlation Between Reduction in Testing\nRate and Incidence 2020-2025") +
+        xlab("Mean Testing Rate in 2019") + CITY.COR.THEME
+    dev.off()
 }
 
-##-- INCIDENCE vs REPORTED --##
+##-- BINNED BOX-PLOTS for VARIABLES --##
+BINNED.BOXPLOT.THEME = theme(text = element_text(size=7),
+                      axis.title = element_text(size=7),
+                      legend.position = 'none')
+BINNED.BOXPLOT.WIDTH = 2.25
+BINNED.BOXPLOT.HEIGHT = 1.5
+BINNED.BOXPLOT.LIMITS = c(-.5,.5)
 
-QUANTILE.YLIM = c(12000,31000)
 if (1==2)
 {
-    
-    png(file.path(IMAGE.DIR, 'inc_vs_reported/incvnew_base_low.png'), pointsize=PNG.POINT.SIZE, width=PANEL.WIDTH, height=PANEL.HEIGHT, res=RES, units='in')
-    make.quantile.timeline.plot(scenarios='base', outcomes=c('incidence','new'), line.size = LINE.SIZE,
-                                show.quantiles = 1,
-                                line.types=c('solid','dashed'),
-                                ribbon.alpha = TIMELINE.RIBBON.ALPHA, show.baseline.ribbon = F,
-                                show.ribbon.outline = T,
-                                colors = COLORS[c('baseline','base')], color.by.outcome = F,
-                                linetype.by.outcome = T, include.baseline = T,
-                                baseline.outcomes = 'incidence',
-                                ylim=QUANTILE.YLIM) + 
-        ylab('Cases (n): Incident or Reported') + THEME
+    # base
+    png(file.path(IMAGE.DIR, 'binned_boxplots/base_transmission.png'), 
+        pointsize=PNG.POINT.SIZE, width=BINNED.BOXPLOT.WIDTH, height=BINNED.BOXPLOT.HEIGHT, res=RES, units='in')
+    make.covid.binned.boxplot(var1='sexual.transmission.reduction', 
+                              scenario1='base',
+                              boxplot.fill=COLORS['base'],
+                              ylim=BINNED.BOXPLOT.LIMITS,
+                              label.rho.size = SCATTER.FONT.SIZE,
+                              label.rho.hjust = 'left',
+                              label.rho.vjust = 'top',aggregate.locations = F) + 
+        ylab("Change in Incidence,\n2020-2025") +
+        xlab("Reduction in Viral Suppression") +
+        BINNED.BOXPLOT.THEME
     dev.off()
     
-    png(file.path(IMAGE.DIR, 'inc_vs_reported/incvnew_base_high.png'), pointsize=PNG.POINT.SIZE, width=PANEL.WIDTH, height=PANEL.HEIGHT, res=RES, units='in')
-    make.quantile.timeline.plot(scenarios='base', outcomes=c('incidence','new'), line.size = LINE.SIZE,
-                                show.quantiles = 5,
-                                line.types=c('solid','dashed'),
-                                ribbon.alpha = TIMELINE.RIBBON.ALPHA, show.baseline.ribbon = F,
-                                show.ribbon.outline = T,
-                                colors = COLORS[c('baseline','base')], color.by.outcome = F,
-                                linetype.by.outcome = T, include.baseline = T,
-                                baseline.outcomes = 'incidence',
-                                ylim=QUANTILE.YLIM) +
-        ylab('Cases (n): Incident or Reported') + THEME
+    png(file.path(IMAGE.DIR, 'binned_boxplots/base_suppression.png'), 
+        pointsize=PNG.POINT.SIZE, width=BINNED.BOXPLOT.WIDTH, height=BINNED.BOXPLOT.HEIGHT, res=RES, units='in')
+    make.covid.binned.boxplot(var1='suppression.reduction', 
+                              scenario1='base',
+                              boxplot.fill=COLORS['base'],
+                              ylim=BINNED.BOXPLOT.LIMITS,
+                              label.rho.size = SCATTER.FONT.SIZE,
+                              label.rho.hjust = 'left',
+                              label.rho.vjust = 'top',aggregate.locations = F) + 
+        ylab("Change in Incidence,\n2020-2025") +
+        xlab("Reduction in Viral Suppression") +
+        BINNED.BOXPLOT.THEME
     dev.off()
     
-    png(file.path(IMAGE.DIR, 'inc_vs_reported/incvnew_delayed_low.png'), pointsize=PNG.POINT.SIZE, width=PANEL.WIDTH, height=PANEL.HEIGHT, res=RES, units='in')
-    make.quantile.timeline.plot(scenarios='delayed.hiv.care', outcomes=c('incidence','new'), line.size = LINE.SIZE,
-                                show.quantiles = 1,
-                                line.types=c('solid','dashed'),
-                                ribbon.alpha = TIMELINE.RIBBON.ALPHA, show.baseline.ribbon = F,
-                                show.ribbon.outline = T,
-                                colors = COLORS[c('baseline','delayed.hiv.care')], color.by.outcome = F,
-                                linetype.by.outcome = T, include.baseline = T,
-                                baseline.outcomes = 'incidence',
-                                ylim=QUANTILE.YLIM) +
-        ylab('Cases (n): Incident or Reported') + THEME
+    png(file.path(IMAGE.DIR, 'binned_boxplots/base_testing.png'), 
+        pointsize=PNG.POINT.SIZE, width=BINNED.BOXPLOT.WIDTH, height=BINNED.BOXPLOT.HEIGHT, res=RES, units='in')
+    make.covid.binned.boxplot(var1='testing.reduction', 
+                              scenario1='base',
+                              boxplot.fill=COLORS['base'],
+                              ylim=BINNED.BOXPLOT.LIMITS,
+                              label.rho.size = SCATTER.FONT.SIZE,
+                              label.rho.hjust = 'left',
+                              label.rho.vjust = 'top',aggregate.locations = F) + 
+        ylab("Change in Incidence,\n2020-2025") +
+        xlab("Reduction in Viral Suppression") +
+        BINNED.BOXPLOT.THEME
     dev.off()
     
-    png(file.path(IMAGE.DIR, 'inc_vs_reported/incvnew_delayed_high.png'), pointsize=PNG.POINT.SIZE, width=PANEL.WIDTH, height=PANEL.HEIGHT, res=RES, units='in')
-    make.quantile.timeline.plot(scenarios='delayed.hiv.care', outcomes=c('incidence','new'), line.size = LINE.SIZE,
-                                show.quantiles = 5,
-                                line.types=c('solid','dashed'),
-                                ribbon.alpha = TIMELINE.RIBBON.ALPHA, show.baseline.ribbon = F,
-                                show.ribbon.outline = T,
-                                colors = COLORS[c('baseline','delayed.hiv.care')], color.by.outcome = F,
-                                linetype.by.outcome = T, include.baseline = T,
-                                baseline.outcomes = 'incidence',
-                                ylim=QUANTILE.YLIM) +
-        ylab('Cases (n): Incident or Reported') + THEME
+    png(file.path(IMAGE.DIR, 'binned_boxplots/base_prep.png'), 
+        pointsize=PNG.POINT.SIZE, width=BINNED.BOXPLOT.WIDTH, height=BINNED.BOXPLOT.HEIGHT, res=RES, units='in')
+    make.covid.binned.boxplot(var1='prep.reduction', 
+                              scenario1='base',
+                              boxplot.fill=COLORS['base'],
+                              ylim=BINNED.BOXPLOT.LIMITS,
+                              label.rho.size = SCATTER.FONT.SIZE,
+                              label.rho.hjust = 'left',
+                              label.rho.vjust = 'top',aggregate.locations = F) + 
+        ylab("Change in Incidence,\n2020-2025") +
+        xlab("Reduction in Viral Suppression") +
+        BINNED.BOXPLOT.THEME
+    dev.off()
+    
+    # delayed
+    png(file.path(IMAGE.DIR, 'binned_boxplots/delayed_transmission.png'), 
+        pointsize=PNG.POINT.SIZE, width=BINNED.BOXPLOT.WIDTH, height=BINNED.BOXPLOT.HEIGHT, res=RES, units='in')
+    make.covid.binned.boxplot(var1='sexual.transmission.reduction', 
+                              scenario1='delayed.hiv.care',
+                              boxplot.fill=COLORS['delayed.hiv.care'],
+                              ylim=BINNED.BOXPLOT.LIMITS,
+                              label.rho.size = SCATTER.FONT.SIZE,
+                              label.rho.hjust = 'left',
+                              label.rho.vjust = 'top',aggregate.locations = F) + 
+        ylab("Change in Incidence,\n2020-2025") +
+        xlab("Reduction in Viral Suppression") +
+        BINNED.BOXPLOT.THEME
+    dev.off()
+    
+    png(file.path(IMAGE.DIR, 'binned_boxplots/delayed_suppression.png'), 
+        pointsize=PNG.POINT.SIZE, width=BINNED.BOXPLOT.WIDTH, height=BINNED.BOXPLOT.HEIGHT, res=RES, units='in')
+    make.covid.binned.boxplot(var1='suppression.reduction', 
+                              scenario1='delayed.hiv.care',
+                              boxplot.fill=COLORS['delayed.hiv.care'],
+                              ylim=BINNED.BOXPLOT.LIMITS,
+                              label.rho.size = SCATTER.FONT.SIZE,
+                              label.rho.hjust = 'left',
+                              label.rho.vjust = 'top',aggregate.locations = F) + 
+        ylab("Change in Incidence,\n2020-2025") +
+        xlab("Reduction in Viral Suppression") +
+        BINNED.BOXPLOT.THEME
+    dev.off()
+    
+    png(file.path(IMAGE.DIR, 'binned_boxplots/delayed_testing.png'), 
+        pointsize=PNG.POINT.SIZE, width=BINNED.BOXPLOT.WIDTH, height=BINNED.BOXPLOT.HEIGHT, res=RES, units='in')
+    make.covid.binned.boxplot(var1='testing.reduction', 
+                              scenario1='delayed.hiv.care',
+                              boxplot.fill=COLORS['delayed.hiv.care'],
+                              ylim=BINNED.BOXPLOT.LIMITS,
+                              label.rho.size = SCATTER.FONT.SIZE,
+                              label.rho.hjust = 'left',
+                              label.rho.vjust = 'top',aggregate.locations = F) + 
+        ylab("Change in Incidence,\n2020-2025") +
+        xlab("Reduction in Viral Suppression") +
+        BINNED.BOXPLOT.THEME
+    dev.off()
+    
+    png(file.path(IMAGE.DIR, 'binned_boxplots/delayed_prep.png'), 
+        pointsize=PNG.POINT.SIZE, width=BINNED.BOXPLOT.WIDTH, height=BINNED.BOXPLOT.HEIGHT, res=RES, units='in')
+    make.covid.binned.boxplot(var1='prep.reduction', 
+                              scenario1='delayed.hiv.care',
+                              boxplot.fill=COLORS['delayed.hiv.care'],
+                              ylim=BINNED.BOXPLOT.LIMITS,
+                              label.rho.size = SCATTER.FONT.SIZE,
+                              label.rho.hjust = 'left',
+                              label.rho.vjust = 'top',aggregate.locations = F) + 
+        ylab("Change in Incidence,\n2020-2025") +
+        xlab("Reduction in Viral Suppression") +
+        BINNED.BOXPLOT.THEME
     dev.off()
     
     
-    
-    normal.sex.low.supp.mask = parameters[,'sexual.transmission.reduction'] < 0.2 &
-        parameters[,'suppression.reduction'] > 0.2# &
-    # parameters[,'testing.reduction'] > 0.25
-    low.sex.normal.supp.mask = parameters[,'sexual.transmission.reduction'] > 0.3 &
-        parameters[,'suppression.reduction'] < 0.2# &
-    # parameters[,'testing.reduction'] < 0.25
-    
-    groups.high.low = groups.high = groups.low = rep(NA, dim(parameters)[1])
-    groups.high.low[normal.sex.low.supp.mask] = groups.high[normal.sex.low.supp.mask] = 'Normal Sex, Low Suppression'
-    groups.high.low[low.sex.normal.supp.mask] = groups.low[low.sex.normal.supp.mask] = 'Low Sex, Normal Suppression'
-    
-    groups.low.testing = rep(NA, dim(parameters)[1])
-    groups.low.testing[parameters[,'testing.reduction']>.3] = 'Low Testing'
-    groups.high.testing = rep(NA, dim(parameters)[1])
-    groups.high.testing[parameters[,'testing.reduction']<.2] = 'High Testing'
-    
-    
-    png(file.path(IMAGE.DIR, 'inc_vs_reported/incvnew_base_low_parameters.png'), pointsize=PNG.POINT.SIZE, width=PANEL.WIDTH, height=PANEL.HEIGHT, res=RES, units='in')
-    make.covid.timeline.plot(scenarios='base', outcomes=c('incidence','new'), line.size = LINE.SIZE,
-                             line.types=c('solid','dashed'),
-                             groups=groups.low,
-                             ribbon.alpha = TIMELINE.RIBBON.ALPHA, show.baseline.ribbon = F,
-                             show.ribbon.outline = T,
-                             colors = COLORS[c('baseline','base')], color.by.outcome = F,
-                             linetype.by.outcome = T, include.baseline = T,
-                             baseline.outcomes = 'incidence',
-                             ylim=QUANTILE.YLIM) + 
-        ylab('Cases (n): Incident or Reported') + THEME
-    dev.off()
-    
-    
-    png(file.path(IMAGE.DIR, 'inc_vs_reported/incvnew_base_high_parameters.png'), pointsize=PNG.POINT.SIZE, width=PANEL.WIDTH, height=PANEL.HEIGHT, res=RES, units='in')
-    make.covid.timeline.plot(scenarios='base', outcomes=c('incidence','new'), line.size = LINE.SIZE,
-                             line.types=c('solid','dashed'),
-                             groups=groups.high,
-                             ribbon.alpha = TIMELINE.RIBBON.ALPHA, show.baseline.ribbon = F,
-                             show.ribbon.outline = T,
-                             colors = COLORS[c('baseline','base')], color.by.outcome = F,
-                             linetype.by.outcome = T, include.baseline = T,
-                             baseline.outcomes = 'incidence',
-                             ylim=QUANTILE.YLIM) + 
-        ylab('Cases (n): Incident or Reported') + THEME
-    
-    dev.off()
-    
-    
-    png(file.path(IMAGE.DIR, 'inc_vs_reported/incvnew_delayed_low_parameters.png'), pointsize=PNG.POINT.SIZE, width=PANEL.WIDTH, height=PANEL.HEIGHT, res=RES, units='in')
-    make.covid.timeline.plot(scenarios='delayed.hiv.care', outcomes=c('incidence','new'), line.size = LINE.SIZE,
-                             line.types=c('solid','dashed'),
-                             groups=groups.low,
-                             ribbon.alpha = TIMELINE.RIBBON.ALPHA, show.baseline.ribbon = F,
-                             show.ribbon.outline = T,
-                             colors = COLORS[c('baseline','delayed.hiv.care')], color.by.outcome = F,
-                             linetype.by.outcome = T, include.baseline = T,
-                             baseline.outcomes = 'incidence',
-                             ylim=QUANTILE.YLIM) + 
-        ylab('Cases (n): Incident or Reported') + THEME
-    dev.off()
-    
-    
-    png(file.path(IMAGE.DIR, 'inc_vs_reported/incvnew_delayed_high_parameters.png'), pointsize=PNG.POINT.SIZE, width=PANEL.WIDTH, height=PANEL.HEIGHT, res=RES, units='in')
-    make.covid.timeline.plot(scenarios='delayed.hiv.care', outcomes=c('incidence','new'), line.size = LINE.SIZE,
-                             line.types=c('solid','dashed'),
-                             groups=groups.high,
-                             ribbon.alpha = TIMELINE.RIBBON.ALPHA, show.baseline.ribbon = F,
-                             show.ribbon.outline = T,
-                             colors = COLORS[c('baseline','delayed.hiv.care')], color.by.outcome = F,
-                             linetype.by.outcome = T, include.baseline = T,
-                             baseline.outcomes = 'incidence',
-                             ylim=QUANTILE.YLIM) + 
-        ylab('Cases (n): Incident or Reported') + THEME
-    
-    dev.off()
     
     
 }
 
 
-
-
-##-- EXPLORING 2025 Inc instead of Cum Inc --##
-
+##-- SCATTER-PLOTS for VARIABLES --##
+SCATTER.POINT.SIZE = 0.75
+SCATTER.FONT.SIZE = 2
+SCATTER.ALPHA = 0.8
+SCATTER.THEME = theme(text = element_text(size=7),
+                      axis.title = element_text(size=7),
+                      legend.position = 'none')
 if (1==2)
 {
-    aggregated.outcome = get.variable(scenario='base', years = 2025)[1,] - 
-        get.variable(scenario='baseline', years = 2025)[1,]
-    msa.outcome = get.variable(scenario='base', years=2025, aggregate.locations = F) -
-        get.variable(scenario='baseline', years=2025, aggregate.locations = F)
+    png(file.path(IMAGE.DIR, 'scatter/base_suppression.png'), 
+        pointsize=PNG.POINT.SIZE, width=PANEL.WIDTH, height=PANEL.HEIGHT, res=RES, units='in')
+    make.covid.scatterplot(var1='suppression.reduction',
+                           scenario1='base',
+                           point.fill=COLORS['base'],
+                           point.size=SCATTER.POINT.SIZE,
+                           point.alpha=SCATTER.ALPHA,
+                           label.rho.size = SCATTER.FONT.SIZE,
+                           label.rho.hjust = 'left',
+                           label.rho.vjust = 'top') + 
+        ylab("Change in 2020-2025 Incidence,\nBase vs. No COVID") +
+        xlab("Reduction in Viral Suppression") +
+        SCATTER.THEME
+    dev.off()
     
-    apply(parameters, 2, cor, aggregated.outcome, method='spearman')
-    z=apply(parameters, 2, function(pp){
-        apply(msa.outcome, 1, cor, pp, method='spearman')
-    })
-    apply(z, 2, range)
+    png(file.path(IMAGE.DIR, 'scatter/base_transmission.png'), 
+        pointsize=PNG.POINT.SIZE, width=PANEL.WIDTH, height=PANEL.HEIGHT, res=RES, units='in')
+    make.covid.scatterplot(var1='sexual.transmission.reduction',
+                           scenario1='base',
+                           point.fill=COLORS['base'],
+                           point.size=SCATTER.POINT.SIZE,
+                           label.rho.size = SCATTER.FONT.SIZE,
+                           point.alpha=SCATTER.ALPHA,
+                           label.rho.hjust = 'right',
+                           label.rho.vjust = 'top') + 
+        ylab("Change in 2020-2025 Incidence,\nBase vs. No COVID") +
+        xlab("Reduction in Sexual Transmission") +
+        SCATTER.THEME
+    dev.off()
     
+    png(file.path(IMAGE.DIR, 'scatter/base_testing.png'), 
+        pointsize=PNG.POINT.SIZE, width=PANEL.WIDTH, height=PANEL.HEIGHT, res=RES, units='in')
+    make.covid.scatterplot(var1='testing.reduction',
+                           scenario1='base',
+                           point.fill=COLORS['base'],
+                           point.size=SCATTER.POINT.SIZE,
+                           point.alpha=SCATTER.ALPHA,
+                           label.rho.size = SCATTER.FONT.SIZE,
+                           label.rho.hjust = 'right',
+                           label.rho.vjust = 'bottom') + 
+        ylab("Change in 2020-2025 Incidence,\nBase vs. No COVID") +
+        xlab("Reduction in HIV Testing Rate") +
+        SCATTER.THEME
+    dev.off()
     
-    
-    aggregated.cumulative = get.variable(scenario='base', years = CUM.INC.YEARS)[1,] - 
-        get.variable(scenario='baseline', years = CUM.INC.YEARS)[1,]
-    qplot(aggregated.cumulative, aggregated.outcome)
-    
-    
-    msa.cumulative = get.variable(scenario='base', years=CUM.INC.YEARS, aggregate.locations = F) -
-        get.variable(scenario='baseline', years=CUM.INC.YEARS, aggregate.locations = F)
-    qplot(msa.cumulative, msa.outcome)
-}
-
-
-
-##-- MSA-level Correlations --##
-if (1==2)
-{
-    cum.inc.baseline = apply(outcomes.arr[,'baseline','none',as.character(CUM.INC.YEARS),'incidence',], c('location','sim'), sum)
-    cum.inc.base = apply(outcomes.arr[,'base','none',as.character(CUM.INC.YEARS),'incidence',], c('location','sim'), sum) - cum.inc.baseline
-    cum.inc.delayed = apply(outcomes.arr[,'delayed.hiv.care','none',as.character(CUM.INC.YEARS),'incidence',], c('location','sim'), sum) - cum.inc.baseline
-    
-    
-    # Base
-    msa.param.cors.base = sapply(dimnames(parameters)[[2]], function(pp){
-        sapply(names(location.names), function(loc){
-            cor(cum.inc.base[loc,], parameters[,pp], method='spearman')
-        })
-    })
-    
-    round(100*t(apply(msa.param.cors.base, 2, range)))
-    
-    # Base - rank
-    rank.cor.base = t(apply(msa.param.cors.base, 1, function(x){
-        length(x) + 1 - rank(abs(x))
-    }));dimnames(rank.cor.base)=list(location=names(location.names), parameter=dimnames(parameters)[[2]]);rank.cor.base
-    mean(rank.cor.base[,'sexual.transmission.reduction']==1)
-    mean(rank.cor.base[,'suppression.reduction']==2)
-    mean(rank.cor.base[,'testing.reduction']==2)
+    png(file.path(IMAGE.DIR, 'scatter/base_prep.png'), 
+        pointsize=PNG.POINT.SIZE, width=PANEL.WIDTH, height=PANEL.HEIGHT, res=RES, units='in')
+    make.covid.scatterplot(var1='prep.reduction',
+                           scenario1='base',
+                           point.fill=COLORS['base'],
+                           point.size=SCATTER.POINT.SIZE,
+                           point.alpha=SCATTER.ALPHA,
+                           label.rho.size = SCATTER.FONT.SIZE,
+                           label.rho.hjust = 'left',
+                           label.rho.vjust = 'top') + 
+        ylab("Change in 2020-2025 Incidence,\nBase vs. No COVID") +
+        xlab("Reduction in PrEP Coverage") +
+        SCATTER.THEME
+    dev.off()
     
     
     # Delayed
-    msa.param.cors.delayed = sapply(dimnames(parameters)[[2]], function(pp){
-        sapply(names(location.names), function(loc){
-            cor(cum.inc.delayed[loc,], parameters[,pp], method='spearman')
-        })
-    })
+    png(file.path(IMAGE.DIR, 'scatter/delayed_suppression.png'), 
+        pointsize=PNG.POINT.SIZE, width=PANEL.WIDTH, height=PANEL.HEIGHT, res=RES, units='in')
+    make.covid.scatterplot(var1='suppression.reduction',
+                           scenario1='delayed.hiv.care',
+                           point.fill=COLORS['delayed.hiv.care'],
+                           point.size=SCATTER.POINT.SIZE,
+                           point.alpha=SCATTER.ALPHA,
+                           label.rho.size = SCATTER.FONT.SIZE,
+                           label.rho.hjust = 'left',
+                           label.rho.vjust = 'top') + 
+        ylab("Change in 2020-2025 Incidence,\nDelayed Healthcare vs. No COVID") +
+        xlab("Reduction in Viral Suppression") +
+        SCATTER.THEME
+    dev.off()
     
-    round(100*t(apply(msa.param.cors.delayed, 2, range)))
-    rank.cor.delayed = t(apply(msa.param.cors.delayed, 1, function(x){
-        length(x) + 1 - rank(abs(x))
-    }));dimnames(rank.cor.delayed)=list(location=names(location.names), parameter=dimnames(parameters)[[2]]);rank.cor.delayed
-    mean(rank.cor.delayed[,'sexual.transmission.reduction']==1)
-    mean(rank.cor.delayed[,'suppression.reduction']==2)
-    mean(rank.cor.delayed[,'testing.reduction']==2)
+    png(file.path(IMAGE.DIR, 'scatter/delayed_transmission.png'), 
+        pointsize=PNG.POINT.SIZE, width=PANEL.WIDTH, height=PANEL.HEIGHT, res=RES, units='in')
+    make.covid.scatterplot(var1='sexual.transmission.reduction',
+                           scenario1='delayed.hiv.care',
+                           point.fill=COLORS['delayed.hiv.care'],
+                           point.size=SCATTER.POINT.SIZE,
+                           label.rho.size = SCATTER.FONT.SIZE,
+                           point.alpha=SCATTER.ALPHA,
+                           label.rho.hjust = 'right',
+                           label.rho.vjust = 'top') + 
+        ylab("Change in 2020-2025 Incidence,\nDelayed Healthcare vs. No COVID") +
+        xlab("Reduction in Sexual Transmission") +
+        SCATTER.THEME
+    dev.off()
     
-    # Rebound
-    msa.param.cors.rebound = sapply(dimnames(parameters)[[2]], function(pp){
-        sapply(names(location.names), function(loc){
-            cor(cum.inc.rebound[loc,], parameters[,pp], method='spearman')
-        })
-    })
+    png(file.path(IMAGE.DIR, 'scatter/delayed_testing.png'), 
+        pointsize=PNG.POINT.SIZE, width=PANEL.WIDTH, height=PANEL.HEIGHT, res=RES, units='in')
+    make.covid.scatterplot(var1='testing.reduction',
+                           scenario1='delayed.hiv.care',
+                           point.fill=COLORS['delayed.hiv.care'],
+                           point.size=SCATTER.POINT.SIZE,
+                           point.alpha=SCATTER.ALPHA,
+                           label.rho.size = SCATTER.FONT.SIZE,
+                           label.rho.hjust = 'right',
+                           label.rho.vjust = 'bottom') + 
+        ylab("Change in 2020-2025 Incidence,\nDelayed Healthcare vs. No COVID") +
+        xlab("Reduction in HIV Testing Rate") +
+        SCATTER.THEME
+    dev.off()
     
-    round(100*t(apply(msa.param.cors.rebound, 2, range)))
-    rank.cor.rebound = t(apply(msa.param.cors.rebound, 1, function(x){
-        length(x) + 1 - rank(abs(x))
-    }));dimnames(rank.cor.rebound)=list(location=names(location.names), parameter=dimnames(parameters)[[2]]);rank.cor.rebound
-    mean(rank.cor.rebound[,'sexual.transmission.reduction']==1)
-    mean(rank.cor.rebound[,'suppression.reduction']==2)
-    mean(rank.cor.rebound[,'testing.reduction']==2)
-    
-    # Base - New
-    cum.new.baseline = apply(outcomes.arr[,'baseline','none',as.character(CUM.INC.YEARS),'new',], c('location','sim'), sum)
-    cum.new.base = apply(outcomes.arr[,'base','none',as.character(CUM.INC.YEARS),'new',], c('location','sim'), sum) - cum.new.baseline
-    new.2020.baseline = apply(outcomes.arr[,'baseline','none',as.character(2020),'new',], c('location','sim'), sum)
-    new.2020.base = apply(outcomes.arr[,'base','none',as.character(2020),'new',], c('location','sim'), sum) - new.2020.baseline
-    
-    msa.param.cors.base.new = sapply(dimnames(parameters)[[2]], function(pp){
-        sapply(names(location.names), function(loc){
-            #or(cum.new.base[loc,], parameters[,pp], method='spearman')
-            cor(new.2020.base[loc,], parameters[,pp], method='spearman')
-        })
-    })
-    
-    round(100*t(apply(msa.param.cors.base.new, 2, range)))
-    
-    # Base - rank new
-    rank.cor.base = t(apply(msa.param.cors.base, 1, function(x){
-        length(x) + 1 - rank(abs(x))
-    }));dimnames(rank.cor.base)=list(location=names(location.names), parameter=dimnames(parameters)[[2]]);rank.cor.base
-    mean(rank.cor.base[,'sexual.transmission.reduction']==1)
-    mean(rank.cor.base[,'suppression.reduction']==2)
-    mean(rank.cor.base[,'testing.reduction']==2)
-    
-    
-    #Plot sex vs supp
-    msa.supp.cors = msa.param.cors[,'suppression.reduction']
-    names(msa.supp.cors) = location.names
-    sort(msa.supp.cors)
-    
-    msa.sex.cors = msa.param.cors[,'sexual.transmission.reduction']
-    names(msa.sex.cors) = location.names
-    sort(msa.sex.cors)
-    
-    cor.df = data.frame(location=names(location.names),
-                        sex.cor=msa.sex.cors,
-                        supp.cor=msa.supp.cors)
-    ggplot(cor.df, aes(x=sex.cor, y=supp.cor)) + geom_point() +
-        geom_text(aes(label=location))
+    png(file.path(IMAGE.DIR, 'scatter/delayed_prep.png'), 
+        pointsize=PNG.POINT.SIZE, width=PANEL.WIDTH, height=PANEL.HEIGHT, res=RES, units='in')
+    make.covid.scatterplot(var1='prep.reduction',
+                           scenario1='delayed.hiv.care',
+                           point.fill=COLORS['delayed.hiv.care'],
+                           point.size=SCATTER.POINT.SIZE,
+                           point.alpha=SCATTER.ALPHA,
+                           label.rho.size = SCATTER.FONT.SIZE,
+                           label.rho.hjust = 'left',
+                           label.rho.vjust = 'top') + 
+        ylab("Change in 2020-2025 Incidence,\nDelayed Healthcare vs. No COVID") +
+        xlab("Reduction in PrEP Coverage") +
+        SCATTER.THEME
+    dev.off()
 }
 
-
-
-#change by year
-FOCUS.SCENARIOS = c('base','delayed.hiv.care')
 if (1==2)
 {
-    diff.years = 2020:2030
-    n.year = dim(outcomes.arr)['year']
-    delta.outcomes = outcomes.arr[,,,-1,,] - outcomes.arr[,,,-n.year,,]
-    delta.outcomes = delta.outcomes[,,,as.character(diff.years),,]
-    
-    outcomes.minus.2019 = sapply(diff.years, function(year){
-        outcomes.arr[,,,as.character(year),,] - outcomes.arr[,,,'2019',,]
-    })
-    dim.names = c(dimnames(delta.outcomes)[setdiff(names(dimnames(delta.outcomes)), 'year')],
-                  list(year=as.character(diff.years)))
-    dim(outcomes.minus.2019) = sapply(dim.names, length)
-    dimnames(outcomes.minus.2019) = dim.names
-    outcomes.minus.2019 = apply(outcomes.minus.2019, names(dimnames(delta.outcomes)), function(x){x})
-    
-    sc = 'base'
-    int = 'none'
-    non.baseline = FOCUS.SCENARIOS#setdiff(dimnames(delta.outcomes)[['scenario']], 'baseline')
-    delayed.scenarios = 'delayed.hiv.care'#c('delayed.hiv.care', 'rebound.sex.delayed.hiv.care')
-    non.delayed.scenarios = 'base'#c('base','rebound.sexual.transmission')
-    
-    new.decreasing = delta.outcomes[,non.baseline,int,,'new',] < 0
-    inc.decreasing = delta.outcomes[,non.baseline,int,,'incidence',] < 0
-    new.lt.2019 = outcomes.minus.2019[,non.baseline,int,,'new',]<0
-    
-    round(100*apply(delta.outcomes[,'baseline',int,,'new',]<0, c('year'), mean))
-    
-    # round(100*apply(new.decreasing[,'baseline',,], 'year', mean))
-    
-    #top line numbers
-    round(100*apply(new.decreasing, 'year', mean))
-    round(100*apply(inc.decreasing, 'year', mean))
-    round(100*apply(new.decreasing & !inc.decreasing, 'year', sum) / apply(!inc.decreasing, 'year', sum))
-    round(100*apply(!new.decreasing & inc.decreasing, 'year', sum) / apply(inc.decreasing, 'year', sum))
-    round(100*apply(new.lt.2019, 'year', mean))
-    
-    #by scenario and year
-    round(100*apply(new.decreasing, c('scenario','year'), mean))
-    round(100*apply(new.decreasing & !inc.decreasing, c('scenario','year'), sum) / apply(!inc.decreasing, c('scenario','year'), sum))
-    
-    round(100*apply(new.decreasing[,delayed.scenarios,,], c('year'), mean))
-    round(100*apply(new.decreasing[,non.delayed.scenarios,,], c('year'), mean))
-    
-    round(100*apply(new.lt.2019[,delayed.scenarios,,], 'year', mean))
-    round(100*apply(new.lt.2019[,non.delayed.scenarios,,], 'year', mean))
-    
-    round(100*apply(new.decreasing[,delayed.scenarios,,] & !inc.decreasing[,delayed.scenarios,,], 'year', sum) / apply(!inc.decreasing[,delayed.scenarios,,], 'year', sum))
-    round(100*apply(new.decreasing[,non.delayed.scenarios,,] & !inc.decreasing[,non.delayed.scenarios,,], 'year', sum) / apply(!inc.decreasing[,non.delayed.scenarios,,], 'year', sum))
-    
-    
-    #correlation with parameters
-    
-    dim(delta.outcomes)
-    sc='base'
-    year=2022
-    base.delta.2022.cor = sapply(dimnames(parameters)[[2]], function(param){
-        sapply(names(location.names), function(loc){
-            cor(delta.outcomes[loc,sc,'none',as.character(2022),'new',],
-                parameters[,param],
-                method='spearman')
-        })
-    })
-    round(100*base.delta.2022.cor)
-    
-    base.delta.2021.cor = sapply(dimnames(parameters)[[2]], function(param){
-        sapply(names(location.names), function(loc){
-            cor(delta.outcomes[loc,sc,'none',as.character(2021),'new',],
-                parameters[,param],
-                method='spearman')
-        })
-    })
-    round(100*base.delta.2021.cor)
-    
-    
-    round(100*apply(base.delta.2020.cor, 2, range))
-    round(100*apply(base.delta.2021.cor, 2, range))
-    round(100*apply(base.delta.2022.cor, 2, range))
-    
-    base.delta.2021.cor = sapply(dimnames(parameters)[[2]], function(param){
-        sapply(names(location.names), function(loc){
-            cor(delta.outcomes[loc,sc,'none',as.character(2020),'new',],
-                parameters[,param],
-                method='spearman')
-        })
-    })
-    round(100*base.delta.2020.cor)
-    
-    
-    
-    # scatter
-    qplot(delta.outcomes[,sc,int,'2022','incidence',], delta.outcomes[,sc,int,'2022','new',])
-    
-    
-    round(100*apply(delta.outcomes[,sc,int,,outc,]<0, c('year'), mean))
-    
-    aggregate.delta.outcomes = apply(delta.outcomes, setdiff(names(dim(delta.outcomes)), 'location'), sum)
-    apply(aggregate.delta.outcomes[sc,int,,outc,], c('year'), range)
-    
-    qplot(aggregate.delta.outcomes[sc,int,'2020','new',], aggregate.delta.outcomes[sc,int,'2020','incidence',])
+    png(file.path(IMAGE.DIR, 'scatter/base_suppression.png'), 
+        pointsize=PNG.POINT.SIZE, width=PANEL.WIDTH, height=PANEL.HEIGHT, res=RES, units='in')
+    make.covid.scatterplot(var1='sexual.transmission.reduction', 
+                           var2 = 'diagnosed', var2.years = 2025, subtract.scenario2 = NA,
+                           scenario1='base',
+                           point.fill=COLORS['base'],
+                           point.size=SCATTER.POINT.SIZE,
+                           point.alpha=SCATTER.ALPHA,
+                           label.rho.size = SCATTER.FONT.SIZE,
+                           label.rho.hjust = 'left',
+                           label.rho.vjust = 'top') + 
+        ylab("Knowledge of Status (%), 2025") +
+        xlab("Reduction in HIV Testing") +
+        SCATTER.THEME
+    dev.off()
 }
 

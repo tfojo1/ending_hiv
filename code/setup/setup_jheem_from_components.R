@@ -64,18 +64,41 @@ crunch.intervention.rates <- function(components)
     components
 }
 
+# setting aggressive=T will save a lot of memory
+# but it will render the components unable to run further simulations
+# (basically, it keeps just the pre-computed rates for suppression, testing, prep, etc)
 pare.jheem.components <- function(components,
-                            keep.rates.and.times=T)
+                                  keep.rates.and.times=T,
+                                  aggressive=F,
+                                  keep.years=NULL)
 {
     components = unfix.jheem.components(components)
     
-    to.clear = ALL.DEPENDENT.NAMES
+    # Decide what we're going to keep
+    to.keep = character()
     if (keep.rates.and.times)
-        to.clear = to.clear[!grepl('rates.and.times', to.clear)]
+        to.keep = ALL.DEPENDENT.NAMES[grepl('rates.and.times', ALL.DEPENDENT.NAMES)]
+    
+    # Decide what we're going to remove
+    if (aggressive)
+        to.clear = setdiff(names(components), to.keep)
+    else
+        to.clear = setdiff(ALL.DEPENDENT.NAMES, to.keep)
+    
+    # remove
     for (elem in to.clear)
         components[[elem]] = NULL
+
+    # trim years for what we keep
+    if (!is.null(keep.years))
+    {
+        for (elem in to.keep)
+            components[[elem]] = trim.rates.and.times(components[[elem]], keep.times=keep.years)
+    }
     
-    components = do.setup.jheem.skeleton(components)
+    # package and return
+    if (!aggressive)
+        components = do.setup.jheem.skeleton(components)
     
     components
 }
@@ -1199,9 +1222,25 @@ do.setup.continuum.transitions <- function(components)
     components
 }
 
-##-----------------------------##
-##-- SUPPRESSION AND TESTING --##
-##-----------------------------##
+##--------------------------------------------------##
+##-- RATES and TIMES (for suppression, prep, etc) --##
+##--------------------------------------------------##
+
+
+trim.rates.and.times <- function(rates.and.times,
+                                 keep.times)
+{
+    if (length(rates.and.times$times)>0)
+    {
+        mask = sapply(rates.and.times$times, function(time){
+            any(time==keep.times)
+        })
+        rates.and.times$times = rates.and.times$times[mask]
+        rates.and.times$rates = rates.and.times$rates[mask]
+    }
+    
+    rates.and.times
+}
 
 calculate.suppression <- function(components)
 {
@@ -1740,6 +1779,108 @@ suppressed.to.disengaged.rates = calculate.suppressed.to.disengaged.rates(compon
 # disengaged -> engaged/unsuppressed
 components = do.calculate.reengagement.rates(components)
 reengagement.rates = calculate.reengagement.rates(components)
+}
+
+get.background.proportions.multinomial <- function(base.model,
+                                                   years,
+                                                   additional.intercepts,
+                                                   additional.slopes,
+                                                   future.slope=0,
+                                                   future.slope.after.year,
+                                                   idu.applies.to.in.remission=T,
+                                                   idu.applies.to.msm.idu=T,
+                                                   msm.applies.to.msm.idu=T,
+                                                   max.proportion=base.model$max.proportion,
+                                                   transformation = function(x){max.proportion / (1+exp(-x))},
+                                                   jheem,
+                                                   expand.population=c('hiv.positive','hiv.negative','none')[1])
+{
+    x.betas = sapply(1:(base.model$num.outcomes-1), function(k){
+        make.multinomial.x.beta(base.model, k=k)
+    })
+    #this returns an array with a K-1 columns
+    #the rows represent flattened arrays
+
+    p.ref = 1 / (1 + rowSums(exp(x.betas)))
+    p.non.ref = exp(x.betas) * p.ref
+
+    
+    # Set up the dim names
+    dim.names = c(year=as.character(years),
+                  age=jheem$age$labels,
+                  race=jheem$race,
+                  subpopulation=jheem$subpopulations,
+                  sex=jheem$sex,
+                  risk=jheem$risk.strata)
+    
+    # this should return a list of lists
+    # The outer list contains one element for each outcome (1 to K-1)
+    #  for each outcome, there is a list, with one element for each year
+    #  each element for a year is an array of transition probabilities
+    lapply(1:(base.model$num.outcomes-1), function(k){
+        arr = p.non.ref[,k]
+        dim(arr) = sapply(dim.names, length)
+        dimnames(arr) = dim.names
+        
+        lapply(years, function(year){
+            year.rv = arr[as.character(year),,,,,]
+            if (expand.population=='hiv.positive')
+                expand.population.to.hiv.positive(year.rv)
+            else if (expand.population=='hiv.negative')
+                expand.population.to.hiv.negative(year.rv)
+            else
+                year.rv
+        })
+    })
+}
+
+
+get.multinomial.x.betas <- function(intercept.coefficients,
+                                    slope.coefficents,
+                                        risks = c("never_IDU","active_IDU","IDU_in_remission"),
+                                        sexes = c("msm","heterosexual_male","female"),
+                                        subpopulations = 'all',
+                                        races = c("black","hispanic","other"),
+                                        ages = c("13-24 years","25-34 years","35-44 years","45-54 years", "55+ years"),
+                                        years = 2010:2020,
+                                        anchor.year = 2010)
+{
+    sapply(years, function(year){
+        year.beta = intercept.coefficients['year'] * (year-anchor.year)
+        
+        sapply(ages, function(age){
+            age.beta = intercept.coefficients[age]
+            if (is.na(age.beta))
+                age.beta = 0
+            age.year.beta = slope.coefficents[age]
+            if (is.na(age.year.beta))
+                age.year.beta = 0
+            
+            sapply(races, function(race){
+                race.beta = intercept.coefficients[race]
+                if (is.na(race.beta))
+                    race.beta = 0
+                race.year.beta = slope.coefficents[race]
+                if (is.na(race.year.beta))
+                    race.year.beta = 0
+                
+                sapply(subpopulations, function(subpop){
+                    subpop.beta = intercept.coefficients[subpop]
+                    if (is.na(subpop.beta))
+                        subpop.beta = 0
+                    subpop.year.beta = slope.coefficents[subpop]
+                    if (is.na(subpop.year.beta))
+                        subpop.year.beta = 0
+                    
+                    sapply(sexes, function(sex){
+                        sapply(risks, function(risk){
+                            year.beta + age.beta + race.beta + subpop.beta + sex.risk.beta
+                        })
+                    })
+                })
+            })
+        })
+    })
 }
 
 get.background.proportions <- function(base.model,

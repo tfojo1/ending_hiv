@@ -2,7 +2,7 @@
 library(png)
 library(ggsci)
 source('code/visualization/plot_wrappers.R')
-IMAGE.DIR = '../Manuscripts/manuscript_1/Annals Submission/revision 1/images/'
+IMAGE.DIR = '../Manuscripts/manuscript_1/Annals Submission/final fix/images/'
 
 ALPHA = 1#0.2
 LINE.SIZE = 1#0.3#0.4 for intervention
@@ -33,9 +33,10 @@ if (1==2)
     base = simset
     load('mcmc_runs/full_simsets/35620/1.0_35620_noint.Rdata')
     noint = simset
-    load('mcmc_runs/full_simsets/35620/1.0_35620_ybhm.t2x.p25.s80_23.25.Rdata')
+#    load('mcmc_runs/full_simsets/35620/1.0_35620_ybhm.t1x.p10.s80_23.27.Rdata')
+    load('mcmc_runs/full_simsets/35620/1.0_35620_ybhm.t2x.p25.s80_23.27.Rdata')
     int1 = simset
-    load('mcmc_runs/full_simsets/35620/1.0_35620_mi.')
+    load('mcmc_runs/full_simsets/35620/1.0_35620_mi.t2x.p25.s90_23.27.Rdata')
     int2 = simset
 }
 

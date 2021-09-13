@@ -11,7 +11,7 @@ source('code/interventions/systematic_interventions.R')
 source('code/targets/target_msas.R')
 
 
-IMAGE.DIR = '../Manuscripts/manuscript_1/Annals Submission/revision 1/images/'
+IMAGE.DIR = '../Manuscripts/manuscript_1/Annals Submission/final fix/images/'
 library(ggplot2)
 THEME = theme(text = element_text(size=11))
 
@@ -32,6 +32,7 @@ if (1==2)
     
     prccs = get.locationwise.prccs(sensitivity.dfs)
     save(prccs, file='results/full/prccs.Rdata')
+    load(file='results/full/prccs.Rdata')
     
     mean.prccs = rowMeans(prccs); mean.prccs = mean.prccs[order(abs(mean.prccs), decreasing = T)]
     
@@ -60,7 +61,7 @@ if (1==2)
     
     #for text
     get.high.vs.low.outcomes(ranked.out[,1:2,])
-    mean.prccs[1:2]
+    round(100*mean.prccs[1:2])
 #    get.locationwise.outcome.diff(ranked.out, vars.to.show[1:2], stat=mean)
  #   hl=get.locationwise.outcome.diff(ranked.out, vars.to.show, summarize = F)
   #  hl1 = hl[hl$variable==hl$variable[1],]; hl1=hl1[order(hl1$value),]; hl1$location=msa.names(hl1$location);hl1[1:2,]

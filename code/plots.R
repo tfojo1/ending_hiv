@@ -1403,7 +1403,7 @@ get.sim.projections <- function(jheem.results, data.type, years, keep.dimensions
         else if (data.type=='prep')
             numerators = extract.prep.coverage(jheem.results, years=years, keep.dimensions=keep.dimensions,
                                                 per.population = NA, use.cdc.categorizations = use.cdc,
-                                               multiplier = get.prep.indications.estimate(location=location))
+                                               indications.multiplier = get.prep.indications.estimate(location=location))
         else
             stop("data.type must be either 'new', 'prevalence', 'mortality', 'diagnosed', 'incidence', or 'population'")
 

@@ -7,7 +7,7 @@ source('code/process_results/distributed_process_results.R')
 source('code/process_results/make_pretty_table.R')
 
 
-FIGURE.DIR = '../Manuscripts/manuscript_1/Annals Submission/revision 1/tables/'
+FIGURE.DIR = '../Manuscripts/manuscript_1/Annals Submission/final fix/tables/'
 
 TOTAL.ROW = 33
 NOINT.COL = 1
@@ -28,7 +28,102 @@ if (1==2)
     load('results/full/estimates/ests.single.mod.2025.Rdata')
     load('results/full/estimates/ests.single.mod.Rdata')
     load('results/full/estimates/ests.idu.Rdata')
+    load('results/full/estimates/ests.approx959595.3y.new.Rdata')
     
+    
+    # Broad moderate improvement
+    floor(100*range(ests.main$estimates[-TOTAL.ROW, BROAD.MOD.COL], na.rm=T))
+    
+    # Effects of single-modality
+    floor(100*range(ests.main$estimates[-TOTAL.ROW, MAIN.SINGLE.COLS], na.rm=T))
+    
+    # Effects of yhbm
+    floor(100*range(ests.main$estimates[-TOTAL.ROW, YBHM.COLS], na.rm=T))
+    
+    # Effects of mi
+    floor(100*range(ests.main$estimates[-TOTAL.ROW, MI.COLS], na.rm=T))
+    
+    # Effects of all pop
+    floor(100*range(ests.main$estimates[-TOTAL.ROW, ALL.POP.COLS], na.rm=T))
+    
+    
+    
+    #-- How many scenarios achieve target --#
+    
+    # 5y rollout
+    meets.2030.main = ests.main$estimates[-TOTAL.ROW,-NOINT.COL]>=0.9
+    meets.2025.main = ests.main.2025$estimates[-TOTAL.ROW,-NOINT.COL]>=0.75
+    
+    
+    #any city
+    sum(apply(meets.2030.main, 1, any), na.rm=T)
+    
+    sum(meets.2025.main, na.rm=T)
+    
+    
+    # 3y rollout
+    meets.2025.rollout.3y = ests.rollout.3y.2025$estimates[-TOTAL.ROW,-NOINT.COL]>=0.75
+    mean(meets.2025.rollout.3y, na.rm=T)
+    sum(meets.2025.rollout.3y, na.rm=T)
+    sum(apply(meets.2025.rollout.3y, 1, any))
+    sum(meets.2025.rollout.3y[,dim(meets.2025.rollout.3y)[2]])
+    
+    meets.2030.rollout.3y = ests.rollout.3y$estimates[-TOTAL.ROW,-NOINT.COL]>=0.9
+    mean(meets.2030.rollout.3y, na.rm=T)
+    sum(meets.2030.rollout.3y, na.rm=T)
+    
+    # 3 vs 5y rollout
+    sum(meets.2030.main & !meets.2030.rollout.3y, na.rm=T)
+    sum(!meets.2030.main & meets.2030.rollout.3y, na.rm=T)
+    sum(meets.2030.main & meets.2030.rollout.3y, na.rm=T)
+    
+    # IDU
+    cbind(floor(100*(ests.idu$estimates[TOTAL.ROW,] - ests.idu$estimates[TOTAL.ROW, NOINT.COL])),
+          t(floor(100*apply(ests.idu$estimates[-TOTAL.ROW,]-ests.idu$estimates[-TOTAL.ROW,NOINT.COL], 2, range, na.rm=T))))
+    
+    idu = data.frame(noint=ests.idu$estimates[,'noint'],
+                     n25=ests.idu$estimates[,'idu.n25_23.27'])
+    idu$diff = idu$n25 - idu$noint
+    
+    floor(100*idu[order(idu$diff, decreasing=T),])
+    
+    
+    
+    
+    # Tables
+    
+    # main
+    write.systematic.table(ests.main, 
+                           interventions=MAIN.INTERVENTIONS.23.27,
+                           file=file.path(FIGURE.DIR, 'main_table.xlsx'))
+    
+    write.systematic.table(ests.main.2025, 
+                           interventions=MAIN.INTERVENTIONS.23.27,
+                           file=file.path(FIGURE.DIR, 'main_table_2025.xlsx'),
+                           threshold = 0.75)
+    
+    # 3y rollout
+    write.systematic.table(ests.rollout.3y, 
+                           interventions=MAIN.INTERVENTIONS.23.25,
+                           file=file.path(FIGURE.DIR, '3y_rollout_table.xlsx'))
+    
+    write.systematic.table(ests.rollout.3y.2025, 
+                           interventions=MAIN.INTERVENTIONS.23.25,
+                           file=file.path(FIGURE.DIR, '3y_rollout_table_2025.xlsx'),
+                           threshold = 0.75)
+    
+    # Single mod
+    write.systematic.table(ests.single.mod, 
+                           interventions=SINGLE.MODALITY.INTERVENTIONS.23.27,
+                           file=file.path(FIGURE.DIR, 'single_mod_table.xlsx'))
+    
+    # IDU
+    write.systematic.table(ests.idu, 
+                           interventions=IDU.INTERVENTIONS.PLUS.23.27,
+                           file=file.path(FIGURE.DIR, 'idu_table.xlsx'))
+    
+    
+    ##-- OLDER --##
     
     write.systematic.table(ests.main, 
                            interventions=MAIN.INTERVENTIONS.23.27,
@@ -37,11 +132,6 @@ if (1==2)
     msa.names(names(ests.main$estimates[,NOINT.COL])[!is.na(ests.main$estimates[,NOINT.COL]) & ests.main$estimates[,NOINT.COL]==max(ests.main$estimates[,NOINT.COL], na.rm=T)])
     msa.names(names(ests.main$estimates[,NOINT.COL])[!is.na(ests.main$estimates[,NOINT.COL]) & ests.main$estimates[,NOINT.COL]==min(ests.main$estimates[,NOINT.COL], na.rm=T)])
 
-    
-    
-    write.systematic.table(ests.main.new, 
-                           interventions=MAIN.INTERVENTIONS.23.27,
-                           file=file.path(FIGURE.DIR, 'main_table_new.xlsx'))
     
     
     #-- How many scenarios achieve target --#
@@ -59,37 +149,9 @@ if (1==2)
     #any city
     sum(apply(meets.2030.main, 1, any), na.rm=T)
     
-    # 3y rollout
-    meets.2025.rollout.3y = ests.rollout.3y.2025$estimates[-NOINT.COL,-TOTAL.ROW]>=0.75
-    mean(meets.2025.rollout.3y, na.rm=T)
-    sum(meets.2025.rollout.3y, na.rm=T)
-    
-    meets.2030.rollout.3y = ests.rollout.3y$estimates[-NOINT.COL,-TOTAL.ROW]>=0.9
-    mean(meets.2030.rollout.3y, na.rm=T)
-    sum(meets.2030.rollout.3y, na.rm=T)
-    
-    sum(!meets.2025.rollout.3y & meets.2030.rollout.3y, na.rm=T)
-    
-    # 3 vs 5y rollout
-    sum(meets.2030.main & !meets.2030.rollout.3y, na.rm=T)
-    sum(!meets.2030.main & meets.2030.rollout.3y, na.rm=T)
-    sum(meets.2030.main & meets.2030.rollout.3y, na.rm=T)
-    
-    # Effects of single-modality
-    range(ests.main$estimates[-TOTAL.ROW, MAIN.SINGLE.COLS], na.rm=T)
-    
-    # Effects of yhbm
-    range(ests.main$estimates[-TOTAL.ROW, YBHM.COLS], na.rm=T)
 
-    # Effects of mi
-    range(ests.main$estimates[-TOTAL.ROW, MI.COLS], na.rm=T)
-
-    # Effects of all pop
-    range(ests.main$estimates[-TOTAL.ROW, ALL.POP.COLS], na.rm=T)
     
-    # Broad moderate improvement
-    range(ests.main$estimates[-TOTAL.ROW, BROAD.MOD.COL], na.rm=T)
-    
+  
     
     # single-modality interventions
     
@@ -114,6 +176,14 @@ if (1==2)
     cbind(floor(100*(ests.idu$estimates[TOTAL.ROW,-NOINT.COL] - ests.idu$estimates[TOTAL.ROW, 9])),
          t(floor(100*apply(ests.idu$estimates[-TOTAL.ROW,-NOINT.COL]-ests.idu$estimates[-TOTAL.ROW,9], 2, range, na.rm=T))))
     
+    idu = data.frame(noint=ests.idu$estimates[,'noint'],
+                     n25=ests.idu$estimates[,'idu.n25_23.27'])
+    idu$diff = idu$n25 - idu$noint
+    
+    floor(100*idu[order(idu$diff, decreasing=T),])
+    
+    # 95-95-95
+    apply(ests.approx959595.3y.new$estimates, 2, range)
 }
 
 
@@ -122,9 +192,22 @@ if (1==2)
 {
     source('code/process_results/make_pretty_table.R')
     
+    load('results/full/baseline.prep.Rdata')
+    load('results/full/baseline.testing.Rdata')
+    load('results/full/baseline.suppression.Rdata')
+    
+    
+    round(100*range(baseline.prep$estimates[,'msm.2020']))
+    round(100*(range(baseline.prep$estimates[,'msm.2025'])-range(baseline.prep$estimates[,'msm.2020'])),1)
+    
+    round(100*range(baseline.testing$estimates[,'msm.2020']))
+    round(100*(range(baseline.testing$estimates[,'msm.2025'])-range(baseline.testing$estimates[,'msm.2020'])),1)
+    
+    round(100*range(baseline.suppression$estimates[,'msm.2020']))
+    round((range(baseline.suppression$estimates[,'msm.2025'])-range(baseline.suppression$estimates[,'msm.2020'])),2)
+    
     
     #-- PrEP --#
-    load('results/full/baseline.prep.Rdata')
     
     write.shaded.table(x=baseline.prep$estimates,
                        file=file.path(FIGURE.DIR, 'baseline.prep.xlsx'),
@@ -141,7 +224,6 @@ if (1==2)
     
     
     #-- Testing --#
-    load('results/full/baseline.testing.Rdata')
     
     write.shaded.table(x=baseline.testing$estimates,
                        file=file.path(FIGURE.DIR, 'baseline.testing.xlsx'),
@@ -158,7 +240,6 @@ if (1==2)
     
     
     #-- Suppression --#
-    load('results/full/baseline.suppression.Rdata')
     
     write.shaded.table(x=baseline.suppression$estimates,
                        file=file.path(FIGURE.DIR, 'baseline.suppression.xlsx'),
@@ -174,3 +255,5 @@ if (1==2)
     round(100*apply(baseline.suppression$estimates, 2, range, na.rm=T),0)[,5:6]
     
 }
+
+

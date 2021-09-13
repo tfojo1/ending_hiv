@@ -61,6 +61,7 @@ write.shaded.table <- function(x,
                                interval.open='[',
                                interval.close=']',
                                interval.spacer='-',
+                               labels=NULL,
                                label.lower=NULL,
                                min.value=0,
                                max.value=1)
@@ -93,20 +94,22 @@ write.shaded.table <- function(x,
             rv
         }
     
-    
-    if (is.null(lowers) || is.null(uppers))
-        labels = paste0(format.function(x), suffix)
-    else
-        labels = paste0(format.function(x), suffix, " ",
-                        interval.open, format.function(lowers), 
-                        interval.spacer,
-                        format.function(uppers), interval.close)
-            
-    if (!is.null(label.lower))
-        labels[x<label.lower] = paste0("<", format.function(label.lower), suffix)
-    
-    dim(labels) = dim(x)
-    dimnames(labels) = dimnames(x)
+    if (is.null(labels))
+    {
+      if (is.null(lowers) || is.null(uppers))
+          labels = paste0(format.function(x), suffix)
+      else
+          labels = paste0(format.function(x), suffix, " ",
+                          interval.open, format.function(lowers), 
+                          interval.spacer,
+                          format.function(uppers), interval.close)
+              
+      if (!is.null(label.lower))
+          labels[x<label.lower] = paste0("<", format.function(label.lower), suffix)
+      
+      dim(labels) = dim(x)
+      dimnames(labels) = dimnames(x)
+    }
     
 #    labels = apply(x, 1:2, function(val){
  #       if (is.na(val))

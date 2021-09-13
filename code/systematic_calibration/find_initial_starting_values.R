@@ -4,23 +4,28 @@
 source('code/source_code.R')
 source('code/targets/target_msas.R')
 source('code/systematic_calibration/systematic_calibration.R')
-load('mcmc_runs/systematic_initial/12060_1x20K_2020-10-01.Rdata')
-load('mcmc_runs/systematic_initial/19100_1x20K_2020-10-01.Rdata')
-#load('mcmc_runs/test_runs/la.113c_revised.lik.v12_20K_2020-09-20.Rdata')
-pp = mcmc@samples[1,mcmc@n.iter,]
 
-load('mcmc_runs/start_values/31080.Rdata')
-load('mcmc_runs/start_values/35620.Rdata')
-load('mcmc_runs/start_values/12060.Rdata')
-load('mcmc_runs/start_values/26420.Rdata')
-load('mcmc_runs/start_values/19820.Rdata')
-load('mcmc_runs/start_values/29280.Rdata')
-load('mcmc_runs/start_values/32820.Rdata')
-load('mcmc_runs/start_values/41860.Rdata')
-load('mcmc_runs/start_values/12420.Rdata')
-load('mcmc_runs/start_values/41470.Rdata')
-load('mcmc_runs/start_values/18140.Rdata')
-pp = starting.parameters
+
+#load('mcmc_runs/systematic_initial/12060_1x20K_2020-10-01.Rdata')
+#load('mcmc_runs/systematic_initial/19100_1x20K_2020-10-01.Rdata')
+#load('mcmc_runs/test_runs/la.113c_revised.lik.v12_20K_2020-09-20.Rdata')
+#pp = mcmc@samples[1,mcmc@n.iter,]
+
+
+
+load('mcmc_runs/start_values/31080.Rdata'); pp = starting.parameters
+load('mcmc_runs/start_values/35620.Rdata'); pp = starting.parameters
+load('mcmc_runs/start_values/12060.Rdata'); pp = starting.parameters
+load('mcmc_runs/start_values/26420.Rdata'); pp = starting.parameters
+load('mcmc_runs/start_values/19820.Rdata'); pp = starting.parameters
+load('mcmc_runs/start_values/29280.Rdata'); pp = starting.parameters
+load('mcmc_runs/start_values/32820.Rdata'); pp = starting.parameters
+load('mcmc_runs/start_values/41860.Rdata'); pp = starting.parameters
+load('mcmc_runs/start_values/12420.Rdata'); pp = starting.parameters
+load('mcmc_runs/start_values/41470.Rdata'); pp = starting.parameters
+load('mcmc_runs/start_values/18140.Rdata'); pp = starting.parameters
+load('mcmc_runs/start_values/12580.Rdata'); pp = starting.parameters
+
 
 msm.trates = names(pp)[grepl('msm.trate',names(pp))]
 msm.trates.1 = names(pp)[grepl('msm.trate.1',names(pp))]
@@ -55,9 +60,10 @@ set.pp.to.default <- function(pp)
 
 #-- MSA specific --#
 
-msa = BATON.ROUGE.MSA
-pp2 = set.pp.to.default(pp)
+msa = ST.LOUIS.MSA
 run.simulation = create.run.simulation.function(msa, start.values=pp)
+
+pp2 = set.pp.to.default(pp)
 
 #lik = create.msa.likelihood(msa)
 
@@ -67,19 +73,25 @@ plot.calibration.risk(list(sim1,sim2))
 #plot.calibration.risk(list(sim1))#,sim2))
 #plot.calibration.race.risk(sim1)
 
+sim2 = run.simulation(pp2)
+plot.calibration.risk(list(sim2))
 
 pp2 = set.pp.to.default(pp)
-pp2[msm.trates] = pp[msm.trates] *  1.1
-pp2[msm.trates.1] = pp[msm.trates.1] * 1.06 * 1.05
-pp2[msm.trates.2] = pp[msm.trates.2] * 0.8 * 1.05
-pp2[idu.trates] = pp[idu.trates] * 2.2
-pp2[idu.trates.1] = pp[idu.trates.1] * .6
-pp2[idu.trates.2] = pp[idu.trates.2] * .7
-pp2[msm.idu.multipliers] = pp[msm.idu.multipliers] * 5
+pp2[msm.trates] = pp[msm.trates] *  1.33
+pp2[msm.trates.1] = pp[msm.trates.1] * 1.33 / 1.25 * 0.97
+pp2[msm.trates.2] = pp[msm.trates.2] * 1.33 * 1.15
+
+pp2[idu.trates] = pp[idu.trates] * .4
+pp2[idu.trates.1] = pp[idu.trates.1] * .4 * 1.3
+pp2[idu.trates.2] = pp[idu.trates.2] * .4 * 1.3
+
+pp2[het.trates] = pp[het.trates] * 0.88
+pp2[het.trates.1] = pp[het.trates.1] * 0.88 * 1.6
+pp2[het.trates.2] = pp[het.trates.2] * 0.88 * 3
+
+pp2[msm.idu.multipliers] = pp[msm.idu.multipliers] * 1
 pp2['msm.vs.heterosexual.male.idu.susceptibility.rr.2'] = pp['msm.vs.heterosexual.male.idu.susceptibility.rr.2'] * .3
-pp2[het.trates] = pp[het.trates] * 0.67
-pp2[het.trates.1] = pp[het.trates.1] * 0.7
-pp2[het.trates.2] = pp[het.trates.2] * 0.8
+
 
 pp2['msm.incident.idu.multiplier.0'] = pp['msm.incident.idu.multiplier.0'] * 4
 pp2['msm.incident.idu.multiplier.2'] = pp['msm.incident.idu.multiplier.2'] * 4
@@ -89,6 +101,7 @@ sim2 = run.simulation(pp2); plot.calibration.risk(list(sim2))
 plot.calibration.risk(list(sim2), years=2000:2020)
 plot.calibration.total(list(sim1,sim2))
 plot.calibration.race.risk(sim2)
+plot.calibration.risk(sim2)
 
 starting.parameters = pp2; msa.names(msa)
 save(starting.parameters, file=file.path('mcmc_runs/start_values', paste0(msa, '.Rdata')))

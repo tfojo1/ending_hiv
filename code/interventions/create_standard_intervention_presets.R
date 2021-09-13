@@ -34,28 +34,12 @@ register.standard.interventions.annals.revision <- function(start.year=2023,
     NEEDLE.EXCHANGE.10 = create.intervention.unit('needle.exchange', start.year, 0.1, end.year)
     NEEDLE.EXCHANGE.25 = create.intervention.unit('needle.exchange', start.year, 0.25, end.year)
     
-    MOUD.10 = create.proportion.multiplier.intervention.unit('idu.relapse', start.year,
-                                                             proportions=0.1 * BASE_PARAMETER_VALUES['fraction.opioid.of.idu'],
-                                                             multipliers=BASE_PARAMETER_VALUES['moud.relapse.rr'],
-                                                             apply.function = 'multiplier',
-                                                             allow.less.than.otherwise = T,
-                                                             end.year,
-                                                             raw.proportions = 0.1,
-                                                             name.as.pct = T,
-                                                             name.apply.function = 'absolute',
-                                                             name.post.descriptor = ' taking MOUDs',
-                                                             name.category = 'MOUDs')
-    MOUD.25 = create.proportion.multiplier.intervention.unit('idu.relapse', start.year,
-                                                             proportions=0.25 * BASE_PARAMETER_VALUES['fraction.opioid.of.idu'],
-                                                             multipliers=BASE_PARAMETER_VALUES['moud.relapse.rr'],
-                                                             apply.function = 'multiplier',
-                                                             allow.less.than.otherwise = T,
-                                                             end.year,
-                                                             raw.proportions = 0.25,
-                                                             name.as.pct = T,
-                                                             name.apply.function = 'absolute',
-                                                             name.post.descriptor = ' taking MOUDs',
-                                                             name.category = 'MOUDs')
+    MOUD.10 = create.moud.intervention(start.year=start.year,
+                                       coverages=0.1,
+                                       years=end.year)
+    MOUD.25 = create.moud.intervention(start.year=start.year,
+                                       coverages=0.25,
+                                       years=end.year)
     
     ##------------------##
     ##-- TESTING ONLY --##
@@ -910,4 +894,24 @@ original.annals.register.standard.interventions <- function(start.year=2021,
     
     
     INTERVENTION.MANAGER
+}
+
+create.moud.intervention <- function(start.year,
+                                     coverages,
+                                     years,
+                                     fraction.opioid.of.idu=BASE_PARAMETER_VALUES['fraction.opioid.of.idu'],
+                                     moud.relapse.rr=BASE_PARAMETER_VALUES['moud.relapse.rr'])
+{
+    create.proportion.multiplier.intervention.unit('idu.relapse', 
+                                                   start.year=start.year,
+                                                   proportions=coverages * fraction.opioid.of.idu,
+                                                   multipliers=moud.relapse.rr,
+                                                   apply.function = 'multiplier',
+                                                   allow.less.than.otherwise = T,
+                                                   years = years,
+                                                   raw.proportions = coverages,
+                                                   name.as.pct = T,
+                                                   name.apply.function = 'absolute',
+                                                   name.post.descriptor = ' taking MOUDs',
+                                                   name.category = 'MOUDs')
 }
