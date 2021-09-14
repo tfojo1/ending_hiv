@@ -2222,7 +2222,7 @@ make.pretty.change.data.frame <- function(change.df, data.type.names=DATA.TYPE.N
                                           round.digits=0,
                                           missing.char='-')
 {
-    df.names = names(change.df)
+#    df.names = names(change.df)
 #    pre.change.index = (1:length(df.names))[grepl('change',df.names)][1]-1
     pre.change.index = attr(change.df, 'pre.change.index')
     pre.levels.index = attr(change.df, 'pre.levels.index')
@@ -2345,7 +2345,7 @@ format.plus <- function(x,
     
     if (force.plus)
     {
-        add.plus = x>0
+        add.plus = !is.na(x) & x>0
         x[add.plus] = -x[add.plus]
     }
     

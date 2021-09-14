@@ -785,7 +785,7 @@ setup.components.for.intervention <- function(components,
                                           foreground.max = max.rates)
     }
     
-    # PrEP
+    # PrEP Coverage
     if (!is.null(intervention$processed$prep))
     {
         rates = lapply(intervention$processed$prep$rates, expand.population.to.hiv.negative, jheem=components$jheem)
@@ -798,7 +798,7 @@ setup.components.for.intervention <- function(components,
                                                  components$jheem,
                                                  intervention$processed$prep$apply.functions)
         allow.less = expand.population.to.hiv.negative(components$jheem, 
-                                                                  intervention$processed$prep$allow.less.than.otherwise)
+                                                       intervention$processed$prep$allow.less.than.otherwise)
         
         components = set.foreground.rates(components, 'prep',
                                           rates = rates,
@@ -811,6 +811,34 @@ setup.components.for.intervention <- function(components,
                                           foreground.min = min.rates,
                                           foreground.max = max.rates)
     }
+    
+    # PrEP Effectiveness (RR)
+    if (!is.null(intervention$processed$rr.prep))
+    {
+        rates = lapply(intervention$processed$rr.prep$rates, expand.population.to.hiv.negative, jheem=components$jheem)
+        
+        start.times = expand.population.to.hiv.negative(components$jheem, intervention$processed$rr.prep$start.times)
+        end.times = expand.population.to.hiv.negative(components$jheem, intervention$processed$rr.prep$end.times)
+        min.rates = expand.population.to.hiv.negative(components$jheem, intervention$processed$rr.prep$min.rates)
+        max.rates = expand.population.to.hiv.negative(components$jheem, intervention$processed$rr.prep$max.rates)
+        apply.functions = expand.character.array(expand.population.to.hiv.negative,
+                                                 components$jheem,
+                                                 intervention$processed$rr.prep$apply.functions)
+        allow.less = expand.population.to.hiv.negative(components$jheem, 
+                                                       intervention$processed$rr.prep$allow.less.than.otherwise)
+        
+        components = set.foreground.rates(components, 'rr.prep',
+                                          rates = rates,
+                                          years = intervention$processed$rr.prep$times,
+                                          start.years = start.times,
+                                          end.years = end.times,
+                                          apply.functions = apply.functions,
+                                          allow.foreground.less = allow.less,
+                                          overwrite.previous = overwrite.prior.intervention,
+                                          foreground.min = min.rates,
+                                          foreground.max = max.rates)
+    }
+    
   
     # Needle Exchange
     if (!is.null(intervention$processed$needle.exchange))
