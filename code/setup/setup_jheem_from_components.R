@@ -1365,6 +1365,41 @@ calculate.prep.coverage <- function(components)
     components$prep.rates.and.times
 }
 
+calculate.prep.rrs <- function(components)
+{
+    background.rrs = c(msm=components$prep.rr.msm,
+                       idu=components$prep.rr.idu,
+                       heterosexual=components$prep.rr.heterosexual)
+    
+    rv = do.get.rates.from.background.and.foreground(background.rates=list(background.rrs),
+                                                     background.times=2020,
+                                                     foreground = components$foreground.rr.prep,
+                                                     max.background.time = Inf)
+    
+    rv$rates = lapply(rv$rates, function(rates){
+        names(rates) = names(background.rrs)
+        rates
+    })
+    
+    rv
+}
+
+calculate.prep.coverage.and.rrs <- function(components)
+{
+    coverage = calculate.prep.coverage(components)
+    rrs = calculate.prep.rrs(components)
+    
+    rv = merge.rates(coverage$rates,
+                     coverage$times,
+                     rrs$rates,
+                     rrs$times)
+    
+    names(rv)[names(rv)=='rates1'] = 'coverage'
+    names(rv)[names(rv)=='rates2'] = 'rrs'
+    
+    rv
+}
+
 do.calculate.prep.coverage <- function(components)
 {
     #Pull background prep proportions from logistic model
@@ -2301,18 +2336,20 @@ do.setup.susceptibility <- function(components)
     if (components$model.prep)
     {
         components = do.calculate.prep.coverage(components)
-        prep.rates.and.times = calculate.prep.coverage(components)
+        prep.rates.and.times = calculate.prep.coverage.and.rrs(components)
         
-        components$sexual.susceptibility = lapply(prep.rates.and.times$rates, function(prep.coverage){
+        components$sexual.susceptibility = lapply(1:length(prep.rates.and.times$times), function(i){
+            prep.coverage = prep.rates.and.times$coverage[[i]]
+            prep.rrs = prep.rates.and.times$rrs[[i]]
             
             if (is.null(dim(prep.coverage)))
                 prep.coverage = as.numeric(prep.coverage)
             prep.coverage = expand.population.to.hiv.negative(components$jheem, prep.coverage)
             
             non.prep.risk = (1-prep.coverage)
-            prep.risk = prep.coverage * components$prep.rr.heterosexual
-            prep.risk[,,,'msm',,] = prep.coverage[,,,'msm',,] * components$prep.rr.msm
-            prep.risk[,,,,'active_IDU',] = prep.coverage[,,,,'active_IDU',] * components$prep.rr.idu
+            prep.risk = prep.coverage * prep.rrs['heterosexual']
+            prep.risk[,,,'msm',,] = prep.coverage[,,,'msm',,] * prep.rrs['msm']
+            prep.risk[,,,,'active_IDU',] = prep.coverage[,,,,'active_IDU',] * prep.rrs['idu']
             
             susceptibility = non.prep.risk + prep.risk
             susceptibility * base.sexual.susceptibility
@@ -2831,14 +2868,17 @@ do.setup.new.infection.proportions <- function(components)
     }
     else if (components$model.prep)
     {
-        rates.and.times = calculate.prep.coverage(components)
+        rates.and.times = calculate.prep.coverage.and.rrs(components)
         
-        components$new.infection.proportions = lapply(rates.and.times$rates, function(prep.coverage){
+        components$new.infection.proportions = lapply(1:length(rates.and.times$times), function(prep.coverage){
+            
+            prep.coverage = prep.rates.and.times$coverage[[i]]
+            prep.rrs = prep.rates.and.times$rrs[[i]]
             
             non.prep.risk = (1-prep.coverage)
-            prep.risk = prep.coverage * components$prep.rr.heterosexual
-            prep.risk[,,,'msm',,] = prep.coverage[,,,'msm',,] * components$prep.rr.msm
-            prep.risk[,,,,'active_IDU',] = prep.coverage[,,,,'active_IDU',] * components$prep.rr.idu
+            prep.risk = prep.coverage * prep.rrs['heterosexual']
+            prep.risk[,,,'msm',,] = prep.coverage[,,,'msm',,] * prep.rrs['msm']
+            prep.risk[,,,,'active_IDU',] = prep.coverage[,,,,'active_IDU',] * prep.rrs['idu']
             
             new.infection.proportions = get.new.infection.proportions.skeleton(components$jheem)
             
