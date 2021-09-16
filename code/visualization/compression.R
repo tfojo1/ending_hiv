@@ -138,7 +138,8 @@ compress.jheem.array <- function(arr,
                                  sim,
                                  keep.years,
                                  keep.dimensions,
-                                 compress.continuum.to.diagnosed.vs.undiagnosed)
+                                 compress.continuum.to.diagnosed.vs.undiagnosed,
+                                 aggregate.fn = sum)
 {
     dim.names = dimnames(arr)
     
@@ -169,7 +170,7 @@ compress.jheem.array <- function(arr,
     {
         dim.names[compress.dimensions] = 'all'
     
-        arr = apply(arr, non.compress.dimensions, sum)
+        arr = apply(arr, non.compress.dimensions, aggregate.fn)
         dim(arr) = sapply(dim.names, length)
         dimnames(arr) = dim.names
     }
@@ -181,8 +182,8 @@ compress.jheem.array <- function(arr,
         undiagnosed.continuum.states = setdiff(dim.names[['continuum']], sim$diagnosed.continuum.states)
         
         arr = apply(arr, non.continuum.dimensions, function(x){
-            c(undiagnosed=sum(x[undiagnosed.continuum.states]),
-              diagnosed=sum(x[sim$diagnosed.continuum.states])
+            c(undiagnosed=aggregate.fn(x[undiagnosed.continuum.states]),
+              diagnosed=aggregate.fn(x[sim$diagnosed.continuum.states])
               )
         })
         new.dim.names = dimnames(arr)
@@ -209,6 +210,7 @@ compress.jheem.components <- function(components,
         components[[elem]] = trim.rates.and.times(components[[elem]], keep.times=keep.years)
         components[[elem]]$rates = lapply(components[[elem]]$rates, compress.jheem.array,
                                           sim=sim,
+                                          aggregate.fn=mean,
                                           keep.years=keep.years,
                                           keep.dimensions=keep.dimensions,
                                           compress.continuum.to.diagnosed.vs.undiagnosed=compress.continuum.to.diagnosed.vs.undiagnosed)

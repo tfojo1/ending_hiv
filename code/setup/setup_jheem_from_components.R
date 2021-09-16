@@ -571,8 +571,9 @@ DEPENDENCIES = list(seed.rate.per.stratum='initial.population',
                     needle.exchange.rr = 'idu.susceptibility',
                     needle.exchange.remission.rate.ratio = 'idu.transitions',
                     prep.rr.heterosexual='sexual.susceptibility',
-                    prep.rr.msm='sexual.susceptibility',
-                    prep.rr.idu='idu.susceptibility',
+                    prep.rr.msm=c('sexual.susceptibility','new.infection.proportions'),
+                    prep.rr.idu=c('idu.susceptibility','new.infection.proportions'),
+                    foreground.rr.prep=c('sexual.susceptibility','idu.susceptibility','new.infection.proportions'),
                     acute.transmissibility.rr=c('sexual.transmissibilities','idu.transmissibilities'),
                     diagnosed.needle.sharing.rr='idu.transmissibilities',
                     diagnosed.het.male.condomless.rr='sexual.transmissibilities',
@@ -1367,10 +1368,10 @@ calculate.prep.coverage <- function(components)
 
 calculate.prep.rrs <- function(components)
 {
-    background.rrs = c(msm=components$prep.rr.msm,
-                       idu=components$prep.rr.idu,
-                       heterosexual=components$prep.rr.heterosexual)
-    
+    background.rrs = get.hiv.negative.population.skeleton(components$jheem, value=components$prep.rr.heterosexual)
+    background.rrs[,,,'msm',,] = components$prep.rr.msm
+    background.rrs[,,,,'active_IDU',] = components$prep.rr.idu
+
     rv = do.get.rates.from.background.and.foreground(background.rates=list(background.rrs),
                                                      background.times=2020,
                                                      foreground = components$foreground.rr.prep,
@@ -2347,9 +2348,10 @@ do.setup.susceptibility <- function(components)
             prep.coverage = expand.population.to.hiv.negative(components$jheem, prep.coverage)
             
             non.prep.risk = (1-prep.coverage)
-            prep.risk = prep.coverage * prep.rrs['heterosexual']
-            prep.risk[,,,'msm',,] = prep.coverage[,,,'msm',,] * prep.rrs['msm']
-            prep.risk[,,,,'active_IDU',] = prep.coverage[,,,,'active_IDU',] * prep.rrs['idu']
+            prep.risk = prep.coverage * prep.rrs
+#            prep.risk = prep.coverage * prep.rrs['heterosexual']
+ #           prep.risk[,,,'msm',,] = prep.coverage[,,,'msm',,] * prep.rrs['msm']
+  #          prep.risk[,,,,'active_IDU',] = prep.coverage[,,,,'active_IDU',] * prep.rrs['idu']
             
             susceptibility = non.prep.risk + prep.risk
             susceptibility * base.sexual.susceptibility
@@ -2363,15 +2365,23 @@ do.setup.susceptibility <- function(components)
             
             needle.exchange.rates.and.times = calculate.needle.exchange.coverage(components)
             
-            rates.and.times = merge.rates(rates1 = prep.rates.and.times$rates,
+            rates.and.times = merge.rates(rates1 = prep.rates.and.times$coverage,
                                           times1 = prep.rates.and.times$times,
                                           rates2 = needle.exchange.rates.and.times$rates,
                                           times2 = needle.exchange.rates.and.times$times)
             
+            all.prep.coverage = rates.and.times$rates1
+            all.needle.exchange.rates = rates.and.times$rates2
+            all.prep.rrs = interpolate.parameters(values=prep.rates.and.times$rrs, 
+                                              value.times=prep.rates.and.times$times,
+                                              desired.times = rates.and.times$times,
+                                              return.list = T)
+            
             components$idu.susceptibility = lapply(1:length(rates.and.times$times), function(i){
                 
-                prep.coverage = rates.and.times$rates1[[i]]
-                needle.exchange.coverage = rates.and.times$rates2[[i]]
+                prep.coverage =all.prep.coverage[[i]]
+                needle.exchange.coverage = all.needle.exchange.rates[[i]]
+                prep.rrs = all.prep.rrs[[i]]
                 
                 if (is.null(dim(prep.coverage)))
                     prep.coverage = as.numeric(prep.coverage)
@@ -2388,7 +2398,6 @@ do.setup.susceptibility <- function(components)
                 yes.prep.yes.exchange.p = prep.coverage * needle.exchange.coverage
                 
                 # Multiply by RRs to get risk
-                
                 no.prep.no.exchange.risk = no.prep.no.exchange.p
                 
                 no.prep.yes.exchange.risk = no.prep.yes.exchange.p
@@ -2397,13 +2406,12 @@ do.setup.susceptibility <- function(components)
                 
                 yes.prep.no.exchange.risk = yes.prep.no.exchange.p
                 yes.prep.no.exchange.risk[,,,,'active_IDU',] = yes.prep.no.exchange.p[,,,,'active_IDU',] *
-                    components$prep.rr.idu
+                    prep.rrs[,,,,'active_IDU',]
                 
                 yes.prep.yes.exchange.risk = yes.prep.yes.exchange.p
                 yes.prep.yes.exchange.risk[,,,,'active_IDU',] = yes.prep.yes.exchange.p[,,,,'active_IDU',] *
-                    components$prep.rr.idu * components$needle.exchange.rr
-#if (rates.and.times$times[i]>=2027)
- #   browser()
+                    prep.rrs[,,,,'active_IDU',] * components$needle.exchange.rr
+
                 # Add together
                 susceptibility = no.prep.no.exchange.risk + no.prep.yes.exchange.risk +
                     yes.prep.no.exchange.risk + yes.prep.yes.exchange.risk
@@ -2868,17 +2876,18 @@ do.setup.new.infection.proportions <- function(components)
     }
     else if (components$model.prep)
     {
-        rates.and.times = calculate.prep.coverage.and.rrs(components)
+        prep.rates.and.times = calculate.prep.coverage.and.rrs(components)
         
-        components$new.infection.proportions = lapply(1:length(rates.and.times$times), function(prep.coverage){
+        components$new.infection.proportions = lapply(1:length(prep.rates.and.times$times), function(i){
             
             prep.coverage = prep.rates.and.times$coverage[[i]]
             prep.rrs = prep.rates.and.times$rrs[[i]]
             
             non.prep.risk = (1-prep.coverage)
-            prep.risk = prep.coverage * prep.rrs['heterosexual']
-            prep.risk[,,,'msm',,] = prep.coverage[,,,'msm',,] * prep.rrs['msm']
-            prep.risk[,,,,'active_IDU',] = prep.coverage[,,,,'active_IDU',] * prep.rrs['idu']
+            prep.risk = prep.coverage * prep.rrs
+#            prep.risk = prep.coverage * prep.rrs['heterosexual']
+ #           prep.risk[,,,'msm',,] = prep.coverage[,,,'msm',,] * prep.rrs['msm']
+  #          prep.risk[,,,,'active_IDU',] = prep.coverage[,,,,'active_IDU',] * prep.rrs['idu']
             
             new.infection.proportions = get.new.infection.proportions.skeleton(components$jheem)
             
@@ -2892,7 +2901,7 @@ do.setup.new.infection.proportions <- function(components)
             new.infection.proportions
         })
         
-        components$new.infection.proportions.years = rates.and.times$times
+        components$new.infection.proportions.years = prep.rates.and.times$times
     }
     else
     {

@@ -13,8 +13,8 @@ THROW.ERROR.IF.PAST.CHECK.YEAR = T
 #'@param type The specific rates/proportions to which this intervention applies
 #'@param start.year The precise time at which the intervention starts to scale up (ie, the last time prior to which the intervention rates apply)
 #'@param end.year The precise time at which the intervention stops being applied (ie, the first time when the intervention rates no longer apply)
-#'@param rates A numeric vector of rates that will apply going forward
-#'@param years The times at which those rates apply
+#'@param rates The rates that will apply going forward. Either (1) a numeric or character vector or 2) a list, each element of which is a numeric or character vector
+#'@param years The times at which those rates apply. Should be the same length as rates
 #'@param apply.function The character name of the function that applies the intervention rate. Options are 'absolute' (the intervention rate is used as the new rate), 'multiplier' (the intervention rate is multiplied by the old rate), 'odds.ratio' (the intervention rate is treated as an odds ratio, and applied to the old rate, which is treated as a probability), 'additive' (the intervention rate is added to the old rate)
 #'@param allow.less.than.otherwse Whether the relevant rates are allowed to be less than they would have been without the intervention
 #'
@@ -37,27 +37,6 @@ create.intervention.unit <- function(type=c('testing','prep','suppression','need
                                      name.apply.function=apply.function,
                                      name.transformation.function=NULL)
 {
-    #-- Check Years against CHECK.YEAR --#
-    check.year.msg = ''
-    if (start.year > CHECK.YEAR)
-        check.year.msg = paste0("start year (", start.year, ") is > ", CHECK.YEAR, "; ",
-                                check.year.msg)
-    if (end.year > CHECK.YEAR && end.year != Inf)
-        check.year.msg = paste0("end year (", end.year, ") is > ", CHECK.YEAR, "; ",
-                                check.year.msg)
-    if (any(years > CHECK.YEAR))
-        check.year.msg = paste0("some years (", 
-                                paste0(years[years>CHECK.YEAR], collapse=", "),
-                                ") are > ", CHECK.YEAR, "; ",
-                                check.year.msg)
-    if (check.year.msg != '')
-    {
-        if (THROW.ERROR.IF.PAST.CHECK.YEAR)
-            stop(check.year.msg)
-        else
-            print(paste0("**WARNING:** ", check.year.msg))
-    }
-    
     #-- Check Types --#
     if (!is(type, 'character') || !length(type)==1)
         stop("'type' must be a single character value")
@@ -65,22 +44,26 @@ create.intervention.unit <- function(type=c('testing','prep','suppression','need
         stop(paste0("'", type, "' is not a valid value for the 'type' argument. It must be one of: ",
                     paste0("'", INTERVENTION.UNIT.TYPES, "'", collapse=', ')))
     
-    #-- Check rates --#
-    if ((!is(rates, 'numeric') && !is(rates, 'integer')) || length(rates)==0)
-        stop("'rates' must be a numeric vector of length 1 or greater")
-    if (any(is.na(rates)))
-        stop("'rates' cannot contain NA values")
-    
     #-- Check years --#
-    if ((!is(years, 'numeric') && !is(years, 'integer')))
-        stop("'years' must be a numeric or integer vector")
+    check.unit.years(start.year, end.year, years)
+    
+    if ((!is(years, 'numeric') && !is(years, 'integer') && !is(years, 'character')))
+        stop("'years' must be a numeric, integer, or character vector")
     if (any(is.na(years)))
         stop("'years' cannot contain NA values")
+    
+
+    #-- Check rates --#
+    if ((!is(rates, 'numeric') && !is(rates, 'integer') && !is(rates, 'character')) || length(rates)==0)
+        stop("'rates' must be a numeric or character vector of length 1 or greater")
     if (length(years) != length(rates))
         stop("'years' must have the same length as 'rates'")
     
-    if (any(years <= start.year))
-        stop("'start.year' must be prior to ALL elements of 'years'")
+    #-- Check raw rates --#
+    if ((!is(raw.rates, 'numeric') && !is(raw.rates, 'integer') && !is(raw.rates, 'character')) || length(raw.rates)==0)
+        stop("'raw.rates' must be a numeric or character vector of length 1 or greater")
+    if (length(raw.rates) != length(rates))
+        stop("'raw.rates' and 'rates' must have the same length")
     
     #-- Check apply function --#
     ALLOWED.APPLY.FUNCTIONS = c('absolute','multiplier','odds.ratio','additive')
@@ -90,6 +73,16 @@ create.intervention.unit <- function(type=c('testing','prep','suppression','need
     if (all(apply.function != ALLOWED.APPLY.FUNCTIONS))
         stop(paste0("apply.function must be one of: ",
                     paste0("'", ALLOWED.APPLY.FUNCTIONS, "'", collapse=', ')))
+    
+    #-- Set up names to resolve --#
+    
+    to.resolve = unique(c(
+        as.character(start.year[need.to.resolve(start.year)]),
+        as.character(end.year[need.to.resolve(end.year)]),
+        as.character(rates[need.to.resolve(rates)]),
+        as.character(raw.rates[need.to.resolve(raw.rates)]),
+        as.character(years[need.to.resolve(years)])
+    ))
     
     #-- Set up name metadata --#
     
@@ -119,11 +112,14 @@ create.intervention.unit <- function(type=c('testing','prep','suppression','need
               min.rate = min.rate,
               max.rate = max.rate,
               raw.rates = raw.rates,
-              name.metadata = name.metadata)
+              name.metadata = name.metadata,
+              to.resolve=to.resolve)
     
     class(rv) = 'intervention.unit'
     rv
 }
+
+
 
 # Creates an intervention unit where the effect is a multiplier applied to a proportion of the population
 create.proportion.multiplier.intervention.unit <- function(type=c('testing','prep','suppression'),
@@ -168,11 +164,125 @@ create.proportion.multiplier.intervention.unit <- function(type=c('testing','pre
                              )
 }
 
+check.unit.years <- function(start.year, end.year, years)
+{
+    
+    if (!need.to.resolve(start.year))
+    {
+        if (any(!need.to.resolve(years) & years <= start.year))
+            stop("'start.year' must be prior to ALL elements of 'years'")
+        if (!need.to.resolve(end.year) && start.year >= end.year)
+           stop("'start.year' must precede 'end.year'") 
+    }
+    
+    if (!need.to.resolve(end.year) & any(!need.to.resolve(years) & years >= end.year))
+        stop("'end.year' must be after ALL elements of 'years'")
+    
+    #-- Check Years against CHECK.YEAR --#
+    #   This makes sure we didn't accidentally set the year wrong
+    check.year.msg = ''
+    if (!need.to.resolve(start.year) && start.year > CHECK.YEAR)
+        check.year.msg = paste0("start year (", start.year, ") is > ", CHECK.YEAR, "; ",
+                                check.year.msg)
+    if (!need.to.resolve(end.year) && end.year > CHECK.YEAR && end.year != Inf)
+        check.year.msg = paste0("end year (", end.year, ") is > ", CHECK.YEAR, "; ",
+                                check.year.msg)
+    if (any(!need.to.resolve(years) & years > CHECK.YEAR))
+        check.year.msg = paste0("some years (", 
+                                paste0(years[years>CHECK.YEAR], collapse=", "),
+                                ") are > ", CHECK.YEAR, "; ",
+                                check.year.msg)
+    if (check.year.msg != '')
+    {
+        if (THROW.ERROR.IF.PAST.CHECK.YEAR)
+            stop(check.year.msg)
+        else
+            print(paste0("**WARNING:** ", check.year.msg))
+    }
+}
+
+##---------------------------------##
+##-- RESOLVING ELEMENTS of UNITS --##
+##---------------------------------##
+
+
+# Values (for years or rates) in intervention units can be given as character placeholders
+# These functions aid in replacing those placeholders with numeric values
+
+need.to.resolve <- function(vals)
+{
+    if (is.character(vals))
+    {
+        as.num = suppressWarnings(as.numeric(vals))
+        !is.na(vals) & is.na(as.num)
+    }
+    else
+        rep(F, length(vals))
+}
+
+intervention.unit.is.resolved <- function(unit)
+{
+    length(unit$to.resolve) == 0
+}
+
+#parameters is a named, numeric vector
+resolve.intervention.unit <- function(unit, parameters)
+{
+    if (!is.numeric(parameters) && !is.integer(parameters))
+        stop("'parameters' must be a numeric vector")
+    
+    for (param.name in unit$to.resolve)
+    {
+        if (any(names(parameters)==param.name))
+        {
+            param.value = parameters[param.name]
+            if (is.na(param.value))
+                stop("'parameters' cannot contain NA values to resolve")
+        
+            unit$start.year = resolve.element(unit$start.year, param.name=param.name, param.value=param.value)
+            unit$end.year = resolve.element(unit$end.year, param.name=param.name, param.value=param.value)
+            unit$years = resolve.element(unit$years, param.name=param.name, param.value=param.value)
+            
+            unit$raw.rates = resolve.element(unit$raw.rates, param.name=param.name, param.value=param.value)
+            unit$rates = resolve.element(unit$rates, param.name=param.name, param.value=param.value)
+            
+            unit$to.resolve = setdiff(unit$to.resolve, param.name)
+        }
+    }
+    
+    check.unit.years(unit$start.year, unit$end.year, unit$years)
+    
+    o = order(unit$years)
+    unit$years = unit$years[o]
+    unit$rates = unit$rates[o]
+    unit$raw.rates = unit$raw.rates[o]
+    
+    unit
+}
+
+resolve.element <- function(elem, param.name, param.value)
+{
+    if (is.character(elem))
+    {
+        if (any(elem==param.name))
+            elem[elem==param.name] = param.value
+        if (!any(need.to.resolve(elem)))
+            suppressWarnings(as.numeric(elem))
+        else
+            elem
+    }
+    else
+        elem
+}
+
+##----------------##
 ##-- UNIT NAMES --##
+##----------------##
 
 UNIT.NAME.AS.PCT = c(
     testing=F,
     prep=T,
+    rr.prep=F,
     suppression=T,
     needle.exchange=T,
     idu.incidence=F,
@@ -199,6 +309,8 @@ UNIT.NAME.RATE.SUFFIX = c(
     msm.transmission='',
     idu.transmission=''
 )
+if (!setequal(INTERVENTION.UNIT.TYPES, names(UNIT.NAME.RATE.SUFFIX)))
+    stop(paste0("Failed sanity check - UNIT.NAME.RATE.SUFFIX names do not match INTERVENTION.UNIT.TYPES"))
 
 UNIT.NAME.PRE.DESCRIPTOR = c(
     testing='tested ',
@@ -213,6 +325,8 @@ UNIT.NAME.PRE.DESCRIPTOR = c(
     msm.transmission='',
     idu.transmission=''
 )
+if (!setequal(INTERVENTION.UNIT.TYPES, names(UNIT.NAME.PRE.DESCRIPTOR)))
+    stop(paste0("Failed sanity check - UNIT.NAME.PRE.DESCRIPTOR names do not match INTERVENTION.UNIT.TYPES"))
 
 UNIT.NAME.POST.DESCRIPTOR = c(
     testing=' per year',
@@ -227,6 +341,8 @@ UNIT.NAME.POST.DESCRIPTOR = c(
     msm.transmission=' msm transmission',
     idu.transmission=' idu transmission'
 )
+if (!setequal(INTERVENTION.UNIT.TYPES, names(UNIT.NAME.POST.DESCRIPTOR)))
+    stop(paste0("Failed sanity check - UNIT.NAME.POST.DESCRIPTOR names do not match INTERVENTION.UNIT.TYPES"))
 
 UNIT.NAME.CATEGORY = c(
     testing='HIV Testing',
@@ -241,6 +357,8 @@ UNIT.NAME.CATEGORY = c(
     msm.transmission='Male-to-Male Sexual Transmission',
     idu.transmission='IV Transmission'
 )
+if (!setequal(INTERVENTION.UNIT.TYPES, names(UNIT.NAME.CATEGORY)))
+    stop(paste0("Failed sanity check - UNIT.NAME.CATEGORY names do not match INTERVENTION.UNIT.TYPES"))
 
 
 # rate suffix

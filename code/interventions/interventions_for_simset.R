@@ -116,14 +116,45 @@ run.simset.intervention <- function(simset,
                                     keep.years=(run.from.year-1):run.to.year,
                                     save.intervention=T,
                                     verbose=F,
-                                    update.progress=if (verbose) function(n){print(paste0("Running simulation ", n, " of ", simset@n.sim))} else NULL)
+                                    update.progress=if (verbose) function(n){print(paste0("Running simulation ", n, " of ", simset@n.sim))} else NULL,
+                                    seed = 12343)
 {
+    # If we need to add parameters from distributions, do so now
+    if (length(intervention$parameter.distributions)>0)
+    {
+        if (verbose)
+            print("Adding new parameters")
+        new.params = NULL
+        new.param.names = character()
+        for (dist in intervention$parameter.distributions)
+        {
+            new.params = cbind(new.params, generate.random.samples(dist, simset@n.sim))
+            new.param.names = c(new.param.names, dist@var.names)   
+        }
+        
+        bounds = get.support.bounds(dist@support)
+        
+        simset = add.parameters(simset, 
+                                parameters=new.params,
+                                parameter.names = new.param.names,
+                                parameter.lower.bounds = bounds[1,],
+                                parameter.upper.bounds = bounds[2,])
+    }
+    
     if (verbose)
         print(paste0("Running intervention ", get.intervention.name(intervention), " on ", simset@n.sim, " simulations"))
+    
+    need.to.resolve.intervention = !intervention.is.resolved(intervention)
     simset@simulations = lapply(1:simset@n.sim, function(i){
         if (!is.null(update.progress))
             update.progress(i)
-        run.sim.intervention(simset@simulations[[i]], intervention,
+        
+        if (need.to.resolve.intervention)
+            int = resolve.intervention(intervention, simset@parameters[i,])
+        else
+            int = intervention
+        
+        run.sim.intervention(simset@simulations[[i]], int,
                              run.from.year=run.from.year, run.to.year = run.to.year,
                              keep.years = keep.years)
     })

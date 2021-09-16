@@ -13,8 +13,8 @@
 # Each of these is a list with one or more elements corresponding to types of unit interventions (testing, prep, suppression, etc)
 # Each of these lists contains two lists: $target.populations and $unit.interventions
 
-#'@param ... Must be either target.population or unit.intervention objects or lists containing only target.population or unit.intervention objects
-#'@details Creates an intervention object that applies all the unit interventions contained in ... to all the target populations
+#'@param ... Must be either (a) target.population, (b) unit.intervention objects, (c) distribution objects or lists containing only target.population, unit.intervention objects, and distribution objects
+#'@details Creates an intervention object that applies all the unit interventions contained in ... to all the target populations. Distributions are stored against resolving variables in the intervention units in the future
 #'
 #applies the unit interventions to all target populations
 create.intervention <- function(...)
@@ -24,14 +24,20 @@ create.intervention <- function(...)
     
     target.populations = args[sapply(args, is, 'target.population')]
     intervention.units = args[sapply(args, is, 'intervention.unit')]
+    distributions = args[sapply(args, is, 'Distribution')]
     
     # Check  types
-    if ((length(target.populations) + length(intervention.units)) < length(args))
-        stop("The arguments to create.intervention must be either target.population or unit.intervention objects or lists containing only target.population or unit.intervention objects")
+    if ((length(target.populations) + length(intervention.units) + length(distributions)) < length(args))
+        stop("The arguments to create.intervention must be either target.population, unit.intervention objects, Distribution objects, or lists containing only target.population, unit.intervention objects, and Distribution objects")
     if (length(target.populations)==0)
         stop("There must be at least one target population passed as an argument to create.intervention")
     if (length(intervention.units)==0)
         stop("There must be at least one intervention unit passed as an argument to create.intervention")
+    for (dist in distributions)
+    {
+        if (is.null(dist@var.names))
+            stop("Distributions used to construct an intervention must have named variables")
+    }
     
     # Put it into the structure
     unit.types = sapply(intervention.units, function(unit){unit$type})
@@ -50,6 +56,9 @@ create.intervention <- function(...)
         }
     }
     
+    # Store the distributions
+    rv$parameter.distributions = distributions
+    
     intervention.consistency.check(rv)
     
     rv = process.intervention(rv)
@@ -65,6 +74,7 @@ join.interventions <- function(...)
     
     rv = interventions.to.join[[1]]
     rv$processed = NULL
+    rv$parameter.distributions = list()
     if (length(interventions.to.join)>1)
     {
         for (int in interventions.to.join[-1])
@@ -79,8 +89,12 @@ join.interventions <- function(...)
                 rv$raw[[type]]$target.populations = c(rv$raw[[type]]$target.populations, int$raw[[type]]$target.populations)
                 rv$raw[[type]]$intervention.units = c(rv$raw[[type]]$intervention.units, int$raw[[type]]$intervention.units)
             }
+            
+            rv$parameter.distributions = c(rv$parameter.distributions,
+                                           int$parameter.distributions)
         }
     }
+    
     
     intervention.consistency.check(rv)
     rv = process.intervention(rv)
@@ -574,13 +588,20 @@ union.intervention.lists <- function(int.list.1, int.list.2,
 ##-- PROCESS AN INTERVENTION OBJECT --##
 ##------------------------------------##
 
-process.intervention <- function(intervention)
+process.intervention <- function(intervention,
+                                 to.process = names(intervention$raw))
 {
     if (is.null.intervention(intervention))
         intervention$processed = list()
     else
     {
-        intervention$processed = lapply(names(intervention$raw), function(type){
+        all.resolved.by.type = sapply(to.process, function(type){
+            sub.units = intervention$raw[[type]]$intervention.units
+            all(sapply(sub.units, intervention.unit.is.resolved))
+        })
+        
+        to.process = to.process[all.resolved.by.type]
+        intervention$processed = lapply(to.process, function(type){
             sub = intervention$raw[[type]]
             
             dim.names = dimnames(sub$target.populations[[1]])
@@ -625,10 +646,43 @@ process.intervention <- function(intervention)
             rv
         })
         
-        names(intervention$processed) = names(intervention$raw)
+        names(intervention$processed) = to.process
     }
 
     intervention
+}
+
+
+##-----------------------------##
+##-- RESOLVING INTERVENTIONS --##
+##-----------------------------##
+
+resolve.intervention <- function(intervention, parameters)
+{
+    for (type in names(intervention$raw))
+    {
+        for (i in 1:length(intervention$raw[[type]]$intervention.units))
+        {
+            if (!intervention.unit.is.resolved(intervention$raw[[type]]$intervention.units[[i]]))
+                intervention$raw[[type]]$intervention.units[[i]] = resolve.intervention.unit(
+                    unit=intervention$raw[[type]]$intervention.units[[i]],
+                    parameters=parameters
+                )
+        }
+    }
+    
+    intervention = process.intervention(intervention)
+    intervention
+}
+
+intervention.is.resolved <- function(intervention)
+{
+    all.resolved.by.type = sapply(names(intervention$raw), function(type){
+        sub.units = intervention$raw[[type]]$intervention.units
+        all(sapply(sub.units, intervention.unit.is.resolved))
+    })
+    
+    all(all.resolved.by.type)
 }
 
 ##----------------------------------##
@@ -696,6 +750,9 @@ setup.components.for.intervention <- function(components,
 {
     if (is.null(intervention) || is.null.intervention(intervention))
         return (components)
+    
+    if (!intervention.is.resolved(intervention))
+        stop("The given intervention must have all variables resolved prior to running a simulation with it")
     
     # Set up
     idu.states = 'active_IDU'

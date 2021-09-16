@@ -112,7 +112,7 @@ TRUTH.SHAPES.PLOTLY = c(0,2,1,5,6)
 # The uppercase Greek Delta symbol
 DELTA.TEXT = intToUtf8(0x0394L)
 
-FRACTION.PROGRESS.SETUP.DF = 0.5
+FRACTION.PROGRESS.SETUP.DF = 0.8
 
 ##-----------------------##
 ##-- THE MAIN FUNCTION --##
@@ -2095,7 +2095,7 @@ make.change.df <- function(simsets,
                               dimnames = non.year.non.sim.dim.names)
         
         subgroup.sub.df = reshape2::melt(sub.group.arr)
-        subgroup.sub.df = subgroup.sub.df[,-ncol(subgroup.sub.df)]
+   #     subgroup.sub.df = as.data.frame(subgroup.sub.df[,-ncol(subgroup.sub.df)]
     }
         
     
@@ -2109,7 +2109,10 @@ make.change.df <- function(simsets,
             intervention = rep(ss.name, n.non.year.non.sim),
             data.type = rep(data.type.names[data.type], n.non.year.non.sim))
         if (!is.null(subgroup.sub.df))
+        {
             header.df = cbind(header.df, subgroup.sub.df)
+            header.df = header.df[,-dim(header.df)[2]]
+        }
         
         one.df = cbind(
             header.df,
@@ -2125,7 +2128,7 @@ make.change.df <- function(simsets,
     # Save where indexing is for future
     pre.change.index = 2 #intervention + data.type
     if (!is.null(subgroup.sub.df))
-        pre.change.index = pre.change.index + dim(subgroup.sub.df)[2]
+        pre.change.index = pre.change.index + (dim(subgroup.sub.df)[2]-1)
     attr(rv, 'pre.change.index') = pre.change.index
     if (cumulative && CHANGE.STATISTIC.IS.DELTA[change.statistic])
         attr(rv, 'pre.levels.index') = pre.change.index + 6
