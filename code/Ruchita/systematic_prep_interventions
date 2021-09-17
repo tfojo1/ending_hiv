@@ -1,0 +1,66 @@
+
+# Takes an msa code and a desired level of prep coverage
+# loads the baseline simset for the msa from src.dir
+# runs two interventions - one for oral prep and one for long-acting prep, at the given coverage
+# saves the two simsets into dst.dir
+run.systematic.prep <- function(msa, prep.coverage, src.dir='mcmc_runs/quick_simsets', dst.dir='mcmc_runs/prep_simsets')
+{
+    # load the baseline
+    
+    # define the interventions
+    
+    # run the simulations
+    oral.simset
+    inj.simset
+    
+    # save
+    simset = oral.simset
+    save(simset, file=file.path(dst.dir, msa, paste0("prep_", 100*prep.coverage, "_oral.Rdata")
+    
+    simset = inj.simset
+    save(simset, file=file.path(dst.dir, msa, paste0("prep_", 100*prep.coverage, "_inj.Rdata")
+}
+
+# takes a given MSA and level of prep coverage
+# loads the corresponding simsets and extracts incidence for the period "years"
+# returns a vector with three elements - mean, ci.lower, ci.upper
+process.systematic.prep <- function(msa, prep.coverage, dir='mcmc_runs/prep_simsets', 
+                                    years=2020:2030, ci.coverage=0.95)
+{
+    # load the pre-run simsets
+    load(file.path(dir, msa, paste0("prep_", 100*prep.coverage, "_oral.Rdata")
+    oral.simset = simset
+    
+    load(file.path(dir, msa, paste0("prep_", 100*prep.coverage, "_inj.Rdata")
+    inj.simset = simset
+    
+    # Extract the values
+    values #equals something
+    
+    # get the summary statistics
+    alpha = (1-ci.coverage)/2
+    c(mean=mean(values),
+      ci.lower=quantile(values, probs=alpha),
+      ci.upper=quantile(values, probs=1-alpha))
+}
+
+# loop over all the given msas and prep coverages, and run simulations for each
+run.all.systematic.prep <- function(msas=TARGET.MSAS, prep.coverages=c(.1,.2,.3),
+                                    src.dir='mcmc_runs/quick_simsets', dst.dir='mcmc_runs/prep_simsets')
+{
+    # Loop over all combinations of msas and prep.coverages and call run.systematic.prep on each
+}
+
+# returns a data frame
+# one row for each msa
+# one column for each prep coverage
+# the value is the mean [95% CI] delta in cases averted
+make.prep.table <- function(msas=TARGET.MSAS, prep.coverages=c(.1,.2,.3), dir='mcmc_runs/prep_simsets')
+{
+    df # make this the data frame
+    
+    dimnames(df)[1] = msa.names(msas) # this just gives them their names in words
+    dimnames(df)[2] = paste0(100*prep.coverages, '%') # this names them by % prep coverage
+    
+    df
+}
