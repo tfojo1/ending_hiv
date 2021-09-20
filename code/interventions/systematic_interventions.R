@@ -14,9 +14,13 @@ run.systematic.interventions <- function(simset,
                                          save.baseline.and.seed=T,
                                          seed=123415)
 {
+    missing.interventions = sapply(interventions, is.null)
+    if (any(missing.interventions))
+        stop("Cannot run 'NULL' interventions")
+    
     if (!dir.exists(dst.dir))
         dir.create(dst.dir)
-    
+
     if (verbose)
         print("Preparing baseline simset...")
     

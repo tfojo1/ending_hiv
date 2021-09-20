@@ -40,9 +40,9 @@ create.intervention.unit <- function(type=c('testing','prep','suppression','need
     #-- Check Types --#
     if (!is(type, 'character') || !length(type)==1)
         stop("'type' must be a single character value")
-    if (all(type != INTERVENTION.UNIT.TYPES))
+    if (all(type != ALLOWED.INTERVENTION.UNIT.TYPES))
         stop(paste0("'", type, "' is not a valid value for the 'type' argument. It must be one of: ",
-                    paste0("'", INTERVENTION.UNIT.TYPES, "'", collapse=', ')))
+                    paste0("'", ALLOWED.INTERVENTION.UNIT.TYPES, "'", collapse=', ')))
     
     #-- Check years --#
     check.unit.years(start.year, end.year, years)
@@ -293,7 +293,7 @@ UNIT.NAME.AS.PCT = c(
     idu.transmission=F
 )
 
-INTERVENTION.UNIT.TYPES = names(UNIT.NAME.AS.PCT)
+ALLOWED.INTERVENTION.UNIT.TYPES = names(UNIT.NAME.AS.PCT)
 
 
 UNIT.NAME.RATE.SUFFIX = c(
@@ -309,8 +309,8 @@ UNIT.NAME.RATE.SUFFIX = c(
     msm.transmission='',
     idu.transmission=''
 )
-if (!setequal(INTERVENTION.UNIT.TYPES, names(UNIT.NAME.RATE.SUFFIX)))
-    stop(paste0("Failed sanity check - UNIT.NAME.RATE.SUFFIX names do not match INTERVENTION.UNIT.TYPES"))
+if (!setequal(ALLOWED.INTERVENTION.UNIT.TYPES, names(UNIT.NAME.RATE.SUFFIX)))
+    stop(paste0("Failed sanity check - UNIT.NAME.RATE.SUFFIX names do not match ALLOWED.INTERVENTION.UNIT.TYPES"))
 
 UNIT.NAME.PRE.DESCRIPTOR = c(
     testing='tested ',
@@ -325,8 +325,8 @@ UNIT.NAME.PRE.DESCRIPTOR = c(
     msm.transmission='',
     idu.transmission=''
 )
-if (!setequal(INTERVENTION.UNIT.TYPES, names(UNIT.NAME.PRE.DESCRIPTOR)))
-    stop(paste0("Failed sanity check - UNIT.NAME.PRE.DESCRIPTOR names do not match INTERVENTION.UNIT.TYPES"))
+if (!setequal(ALLOWED.INTERVENTION.UNIT.TYPES, names(UNIT.NAME.PRE.DESCRIPTOR)))
+    stop(paste0("Failed sanity check - UNIT.NAME.PRE.DESCRIPTOR names do not match ALLOWED.INTERVENTION.UNIT.TYPES"))
 
 UNIT.NAME.POST.DESCRIPTOR = c(
     testing=' per year',
@@ -341,8 +341,8 @@ UNIT.NAME.POST.DESCRIPTOR = c(
     msm.transmission=' msm transmission',
     idu.transmission=' idu transmission'
 )
-if (!setequal(INTERVENTION.UNIT.TYPES, names(UNIT.NAME.POST.DESCRIPTOR)))
-    stop(paste0("Failed sanity check - UNIT.NAME.POST.DESCRIPTOR names do not match INTERVENTION.UNIT.TYPES"))
+if (!setequal(ALLOWED.INTERVENTION.UNIT.TYPES, names(UNIT.NAME.POST.DESCRIPTOR)))
+    stop(paste0("Failed sanity check - UNIT.NAME.POST.DESCRIPTOR names do not match ALLOWED.INTERVENTION.UNIT.TYPES"))
 
 UNIT.NAME.CATEGORY = c(
     testing='HIV Testing',
@@ -357,8 +357,8 @@ UNIT.NAME.CATEGORY = c(
     msm.transmission='Male-to-Male Sexual Transmission',
     idu.transmission='IV Transmission'
 )
-if (!setequal(INTERVENTION.UNIT.TYPES, names(UNIT.NAME.CATEGORY)))
-    stop(paste0("Failed sanity check - UNIT.NAME.CATEGORY names do not match INTERVENTION.UNIT.TYPES"))
+if (!setequal(ALLOWED.INTERVENTION.UNIT.TYPES, names(UNIT.NAME.CATEGORY)))
+    stop(paste0("Failed sanity check - UNIT.NAME.CATEGORY names do not match ALLOWED.INTERVENTION.UNIT.TYPES"))
 
 
 # rate suffix
