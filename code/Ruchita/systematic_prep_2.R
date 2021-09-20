@@ -8,10 +8,12 @@ source('code/Ruchita/create_prep_interventions.R')
 # RUCHITA - These should correspond to the codes you put in in 'create_prep_interventions'
 ORAL.PREP.INTERVENTION.CODES = c(
     'msm.p10.oral_23_27'
+    # RUCHITA - add other codes here
 )
 
 INJ.PREP.INTERVENTION.CODES = c(
     'msm.p10.inj_23_27'
+    # RUCHITA - and here
 )
 
 ALL.PREP.INTERVENTION.CODES = c(
@@ -50,33 +52,53 @@ run.prep.simulations <- function(msas=TARGET.MSAS,
 
 ##-- FUNCTIONS TO MAKE A TABLE FROM SIMULATIONS --##
 
+
+# Returns a data frame
+# One row for each msa (plus a row for total if include.total=T)
+# One column for each pair of intervention.code[i] x comparison.code[i]
 make.prep.table <- function(msas=TARGET.MSAS,
                             intervention.codes,
-                            comparison.codes,
+                            comparison.codes, #could be null
                             raw.prep.results,
-                            include.totals=T)
+                            include.totals=T,
+                            round.digits=0,
+                            stat=c('abs.diff','relative.diff')[1])
 {
     if (include.totals)
         msas = c(msas, 'total')
     
+    # if there is only one comparison intervention, use that for all intervnetion.codes
     if (length(comparison.codes)==1)
         comparison.codes = rep(comparison.codes, length(intervention.codes))
     
     rv = sapply(1:length(intervention.codes), function(i){
         sapply(1:msas, function(msa){
             int.code = intervention.codes[i]
-            comp.code = comparison.codes[i]
-            
             int.values = raw.prep.results[,msa,int.code]
-            comp.values = raw.prep.results[,msa,comp.code]
+            
+            if (is.null(comparison.codes))
+                comp.values = rep(0, length(int.values))
+            else
+            {            
+                comp.code = comparison.codes[i]
+                comp.values = raw.prep.results[,msa,comp.code]
+            }
             
             # RUCHITA
             # do some math here and format it nicely
             # We want a string that is XX% [YY% to ZZ%]
+            if (stat='abs.diff')
+                diff = int.values - comp.values
+            else
+                diff = (int.values-comp.values) / comp.values
+            
+            quantile(diff, probs=.025)
+            
+            format(10000, big.mark=',')
         })
     })
     
-    rv
+    as.data.frame(rv)
 }
 
 
@@ -93,7 +115,7 @@ aggregate.raw.prep.results <- function(msas=TARGET.MSAS,
             filename = get.simset.filename(location=msa, intervention.code=code)
             load(file.path(dir, msa, filename))
             
-            project.absolute.incidence(sim, keep.dimensions = NULL, years=years)
+            sapply(simset@simulations, project.absolute.incidence, keep.dimensions = NULL, years=years)
         })
     })
     
