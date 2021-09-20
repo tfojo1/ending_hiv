@@ -53,8 +53,12 @@ run.prep.simulations <- function(msas=TARGET.MSAS,
 make.prep.table <- function(msas=TARGET.MSAS,
                             intervention.codes,
                             comparison.codes,
-                            raw.prep.results)
+                            raw.prep.results,
+                            include.totals=T)
 {
+    if (include.totals)
+        msas = c(msas, 'total')
+    
     if (length(comparison.codes)==1)
         comparison.codes = rep(comparison.codes, length(intervention.codes))
     
@@ -81,7 +85,8 @@ make.prep.table <- function(msas=TARGET.MSAS,
 aggregate.raw.prep.results <- function(msas=TARGET.MSAS,
                                        intervention.codes=ALL.PREP.INTERVENTION.CODES,
                                        years=2020:2030,
-                                       dir='prep_simsets')
+                                       dir='prep_simsets',
+                                       calculate.total=T)
 {
     rv = sapply(intervention.codes, function(code){
         sapply(msas, function(msa){
@@ -99,6 +104,15 @@ aggregate.raw.prep.results <- function(msas=TARGET.MSAS,
     
     dim(rv) = sapply(dim.names, length)
     dimnames(rv) = dim.names
+    
+    if (calculate.total)
+    {
+        dim.names$location = c(dim.names$location, 'total')
+        new.rv = array(0, dim=sapply(dim.names, length), dimnames=dim.names)
+        new.rv[,msas,] = rv
+        new.rv[,'total',] = apply(rv, c('sim','intervention'), sum, na.rm=T)
+        rv = new.rv
+    }
     
     rv
 }
