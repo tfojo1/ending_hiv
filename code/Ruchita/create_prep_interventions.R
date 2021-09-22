@@ -9,7 +9,8 @@
 create.prep.interventions <- function(start.year,
                                       implemented.year,
                                       suffix='',
-                                      INTERVENTION.MANAGER=INTERVENTION.MANAGER.1.0)
+                                      INTERVENTION.MANAGER=INTERVENTION.MANAGER.1.0,
+                                      prep.rr.dist=NULL)
 {
     if (suffix != '' && substr(suffix, 1,1)!='_')
         suffix = paste0("_", suffix)
@@ -26,6 +27,10 @@ create.prep.interventions <- function(start.year,
     INJECTABLE.PREP = create.intervention.unit(type = "rr.prep", start.year = start.year, 
                                                rates = .34, years = implemented.year, 
                                                apply.function = "multiplier")
+    
+    INJECTABLE.PREP.VARIABLE = create.intervention.unit(type = "rr.prep", start.year = start.year, 
+                                                        rates = 'inj.rr', years = implemented.year, 
+                                                        apply.function = "multiplier")
 
     
     #-- COMBINE TO MAKE SPECIFIC INTERVENTIONS --#
@@ -43,6 +48,7 @@ create.prep.interventions <- function(start.year,
                                                  allow.intervention.multiple.names = T)
     
     
+<<<<<<< HEAD
     MSM.P25 = create.intervention(ALL.MSM, PREP.25)
     INTERVENTION.MANAGER = register.intervention(MSM.P25, code=paste0('msm.p25.oral', suffix),
                                                  name='25% of MSM on oral PrEP',
@@ -55,6 +61,11 @@ create.prep.interventions <- function(start.year,
                                                  manager = INTERVENTION.MANAGER,
                                                  allow.intervention.multiple.names = T)
     
+=======
+    MSM.IP10.VAR = create.intervention(ALL.MSM, PREP.10, INJECTABLE.PREP.VARIABLE, prep.rr.dist)
+    
+    # RUCHITA - what other interventions based off of PrEP levels do we want
+>>>>>>> d89c1c0c067ca6a16575bb5349a16c68d04cd824
     
     MSM.P50 = create.intervention(ALL.MSM, PREP.50)
     INTERVENTION.MANAGER = register.intervention(MSM.P50, code=paste0('msm.p50.oral', suffix),
