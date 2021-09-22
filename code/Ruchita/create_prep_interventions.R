@@ -18,7 +18,10 @@ create.prep.interventions <- function(start.year,
     
     PREP.10 = create.intervention.unit(type = "prep", start.year = start.year, 
                                        rates = .1, years = implemented.year)
-    # RUCHITA - What other coverage levels do we want to use
+    PREP.25 = create.intervention.unit(type = "prep", start.year = start.year, 
+                                       rates = .25, years = implemented.year)
+    PREP.50 = create.intervention.unit(type = "prep", start.year = start.year, 
+                             rates = .5, years = implemented.year)
     
     INJECTABLE.PREP = create.intervention.unit(type = "rr.prep", start.year = start.year, 
                                                rates = .34, years = implemented.year, 
@@ -26,6 +29,7 @@ create.prep.interventions <- function(start.year,
 
     
     #-- COMBINE TO MAKE SPECIFIC INTERVENTIONS --#
+    
     MSM.P10 = create.intervention(ALL.MSM, PREP.10)
     INTERVENTION.MANAGER = register.intervention(MSM.P10, code=paste0('msm.p10.oral', suffix),
                                                  name='10% of MSM on oral PrEP',
@@ -39,14 +43,38 @@ create.prep.interventions <- function(start.year,
                                                  allow.intervention.multiple.names = T)
     
     
-    # RUCHITA - what other interventions based off of PrEP levels do we want
+    MSM.P25 = create.intervention(ALL.MSM, PREP.25)
+    INTERVENTION.MANAGER = register.intervention(MSM.P25, code=paste0('msm.p25.oral', suffix),
+                                                 name='25% of MSM on oral PrEP',
+                                                 manager = INTERVENTION.MANAGER,
+                                                 allow.intervention.multiple.names = T)
     
+    MSM.IP25 = create.intervention(ALL.MSM, PREP.25, INJECTABLE.PREP)
+    INTERVENTION.MANAGER = register.intervention(MSM.IP25, code=paste0('msm.p25.inj', suffix),
+                                                 name='25% of MSM on long-acting PrEP',
+                                                 manager = INTERVENTION.MANAGER,
+                                                 allow.intervention.multiple.names = T)
+    
+    
+    MSM.P50 = create.intervention(ALL.MSM, PREP.50)
+    INTERVENTION.MANAGER = register.intervention(MSM.P50, code=paste0('msm.p50.oral', suffix),
+                                                 name='50% of MSM on oral PrEP',
+                                                 manager = INTERVENTION.MANAGER,
+                                                 allow.intervention.multiple.names = T)
+    
+    MSM.IP50 = create.intervention(ALL.MSM, PREP.50, INJECTABLE.PREP)
+    INTERVENTION.MANAGER = register.intervention(MSM.IP50, code=paste0('msm.p50.inj', suffix),
+                                                 name='50% of MSM on long-acting PrEP',
+                                                 manager = INTERVENTION.MANAGER,
+                                                 allow.intervention.multiple.names = T)
     #-- RETURN THE INTERVENTION MANAGER --#
     INTERVENTION.MANAGER
 }
 
 
-##-- ACTUALLY CREATE INTERVENTIONS FOR A 2023-2027 time frame --##
+##-- ACTUALLY CREATE INTERVENTIONS FOR A 2023-2027 time frame --## 
+
+#Note: breaks if intervention was already made
 
 INTERVENTION.MANAGER.1.0 = create.prep.interventions(start.year=2023,
                                                      implemented.year=2027,
