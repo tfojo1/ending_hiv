@@ -100,7 +100,10 @@ make.prep.table <- function(msas=TARGET.MSAS,
             }
                 
             
-            paste0(format(mean(diff),big.mark=',')," [",quantile(diff, probs=.025)," to ",quantile(diff, probs=.975),"]")
+            mean_diff = round(mean(diff)*100,3)
+            CI_low = round(quantile(diff, probs=.025)*100,3)
+            CI_high = round(quantile(diff, probs=.975)*100,3)
+            paste0(format(mean_diff,big.mark=',')," [",CI_low," to ",CI_high,"]")
             
   
         })
