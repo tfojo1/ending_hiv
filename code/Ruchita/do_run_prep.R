@@ -19,3 +19,4 @@ table.v2 = make.prep.table(msas=TARGET.MSAS,
                            raw.prep.results=prep.results, include.totals = F,
                            stat='rel.diff')
 
+write.table(mydata, "c:/mydata.txt", sep="\t")
