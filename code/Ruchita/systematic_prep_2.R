@@ -1,7 +1,7 @@
 
 ##-- SOURCE CODE --##
-source('code/source_code.R')
-source('code/Ruchita/create_prep_interventions.R')
+#source('code/source_code.R')
+#source('code/Ruchita/create_prep_interventions.R')
 
 ##-- ORGANIZE the INTERVENTIONS WE CARE ABOUT --##
 
@@ -40,6 +40,7 @@ run.prep.simulations <- function(msas=TARGET.MSAS,
         print(paste0("Running ", length(intervention.codes), " interventions for ", msa.names(msa)))
         full.filename = get.full.filename(location=msa)
         load(file.path(src.dir, full.filename))
+        simset = flatten.simset(simset)
         
         run.systematic.interventions(simset = simset,
                                      interventions = lapply(intervention.codes, intervention.from.code), 
@@ -87,7 +88,7 @@ make.prep.table <- function(msas=TARGET.MSAS,
             # RUCHITA
             # do some math here and format it nicely
             # We want a string that is XX% [YY% to ZZ%]
-            if (stat='abs.diff')
+            if (stat=='abs.diff')
                 diff = int.values - comp.values
             else
                 diff = (int.values-comp.values) / comp.values
@@ -107,13 +108,14 @@ make.prep.table <- function(msas=TARGET.MSAS,
 aggregate.raw.prep.results <- function(msas=TARGET.MSAS,
                                        intervention.codes=ALL.PREP.INTERVENTION.CODES,
                                        years=2020:2030,
-                                       dir='prep_simsets',
+                                       dir='mcmc_runs/prep_simsets',
                                        calculate.total=T)
 {
     rv = sapply(intervention.codes, function(code){
         sapply(msas, function(msa){
             filename = get.simset.filename(location=msa, intervention.code=code)
             load(file.path(dir, msa, filename))
+            simset = flatten.simset(simset)
             
             sapply(simset@simulations, project.absolute.incidence, keep.dimensions = NULL, years=years)
         })
