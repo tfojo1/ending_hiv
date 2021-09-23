@@ -48,7 +48,7 @@ create.prep.interventions <- function(start.year,
                                                  allow.intervention.multiple.names = T)
     
     
-<<<<<<< HEAD
+
     MSM.P25 = create.intervention(ALL.MSM, PREP.25)
     INTERVENTION.MANAGER = register.intervention(MSM.P25, code=paste0('msm.p25.oral', suffix),
                                                  name='25% of MSM on oral PrEP',
@@ -61,11 +61,11 @@ create.prep.interventions <- function(start.year,
                                                  manager = INTERVENTION.MANAGER,
                                                  allow.intervention.multiple.names = T)
     
-=======
+
     MSM.IP10.VAR = create.intervention(ALL.MSM, PREP.10, INJECTABLE.PREP.VARIABLE, prep.rr.dist)
     
     # RUCHITA - what other interventions based off of PrEP levels do we want
->>>>>>> d89c1c0c067ca6a16575bb5349a16c68d04cd824
+
     
     MSM.P50 = create.intervention(ALL.MSM, PREP.50)
     INTERVENTION.MANAGER = register.intervention(MSM.P50, code=paste0('msm.p50.oral', suffix),

@@ -42,6 +42,7 @@ run.prep.simulations <- function(msas=TARGET.MSAS,
         print(paste0("Running ", length(intervention.codes), " interventions for ", msa.names(msa)))
         full.filename = get.full.filename(location=msa)
         load(file.path(src.dir, full.filename))
+        simset = flatten.simset(simset)
         
         run.systematic.interventions(simset = simset,
                                      interventions = lapply(intervention.codes, intervention.from.code), 
@@ -90,14 +91,12 @@ make.prep.table <- function(msas=TARGET.MSAS,
                 comp.values = raw.prep.results[,msa,comp.code]
             }
             
-            # RUCHITA
-            # do some math here and format it nicely
-            # We want a string that is XX% [YY% to ZZ%]
-            if (stat== 'abs.diff')
-                diff = int.values - comp.values
+            if (stat=='abs.diff')
+
+                diff = colSums(int.values[[1]]) - colSums(comp.values[[1]]) #collapse list?
             else 
             {
-              diff = (int.values-comp.values) / comp.values
+              diff = (colSums(int.values[[1]])-colSums(comp.values[[1]])) / colSums(comp.values[[1]])
             }
                 
             
@@ -107,7 +106,10 @@ make.prep.table <- function(msas=TARGET.MSAS,
         })
     })
     
-    as.data.frame(rv)
+    rv = as.data.frame(rv)
+    row.names(rv) = msas
+    colnames(rv) = paste(intervention.codes, comparison.codes) 
+    rv
 }
 
 
@@ -123,15 +125,18 @@ aggregate.raw.prep.results <- function(msas=TARGET.MSAS,
         sapply(msas, function(msa){
             filename = get.simset.filename(location=msa, intervention.code=code)
             load(file.path(dir, msa, filename))
+
+            simset = flatten.simset(simset)
+
             sapply(simset@simulations, project.absolute.incidence, keep.dimensions = NULL, years=years)
     
         })
     })
     
     
-    dim.names = list(sim=1:length(rv)/length(msas)/length(intervention.codes),
+    dim.names = list(sim=1:(length(rv)/length(msas)/length(intervention.codes)), #produces 1? 
                      location=msas,
-                     intervention=intervention.codes)
+                     intervention=intervention.codes) 
     
     dim(rv) = sapply(dim.names, length)
     dimnames(rv) = dim.names
@@ -140,8 +145,8 @@ aggregate.raw.prep.results <- function(msas=TARGET.MSAS,
     {
         dim.names$location = c(dim.names$location, 'total')
         new.rv = array(0, dim=sapply(dim.names, length), dimnames=dim.names)
-        new.rv[,msas,] = rv
-        new.rv[,'total',] = apply(rv, c('sim','intervention'), sum, na.rm=T)
+        new.rv[,msas,] = rv 
+        new.rv[,'total',] = apply(rv, c('intervention'), sum, na.rm=T) 
         rv = new.rv
     }
     
