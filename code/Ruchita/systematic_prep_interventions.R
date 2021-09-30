@@ -56,7 +56,11 @@ process.systematic.prep <- function(msa, prep.coverage, dir='mcmc_runs/prep_sims
     sum_oral = sum(project.absolute.incidence(oral.simset@simulations[[a]], years = years))
     sum_inj = sum(project.absolute.incidence(inj.simset@simulations[[a]], years = years))
     delta_prep[1,a] = sum_inj-sum_oral
-  }
+    }
+    
+    sapply(1:num_sim, function(a){
+      
+    })
     
     # get the summary statistics
     alpha = (1-ci.coverage)/2
