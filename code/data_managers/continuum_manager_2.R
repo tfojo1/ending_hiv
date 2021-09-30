@@ -35,24 +35,18 @@ get.testing.model <- function(cm,
 #    OLD.get.testing.model(cm, location, population)
 }
 
-get.newly.suppressed.model <- function(cm,
-                                       location)
+get.leave.unsuppressed.model <- function(cm,
+                                         location)
 {
-    list(intercept=cm$newly.suppressed$stratified.log.odds.intercept,
-         slope=cm$newly.suppressed$stratified.log.odds.slope,
-         anchor.year = cm$newly.suppressed$anchor.year,
-         max.proportion = cm$newly.suppressed$max.proportion)
+   cm$leave.unsuppressed.model
 }
 
-
-get.unsuppression.model <- function(cm,
-                                       location)
+get.leave.suppressed.model <- function(cm,
+                                         location)
 {
-    list(intercept=cm$unsuppression$stratified.log.odds.intercept,
-         slope=cm$unsuppression$stratified.log.odds.slope,
-         anchor.year = cm$unsuppression$anchor.year,
-         max.proportion = cm$unsuppression$max.proportion)
+    cm$leave.suppressed.model
 }
+
 
 get.linkage.model <- function(cm,
                                        location)
@@ -61,24 +55,6 @@ get.linkage.model <- function(cm,
          slope=cm$linkage$stratified.log.odds.slope,
          anchor.year = cm$linkage$anchor.year,
          max.proportion = cm$linkage$max.proportion)
-}
-
-get.unsuppressed.to.disengaged.model <- function(cm,
-                                    location)
-{
-    list(intercept=cm$unsuppressed.to.disengaged$stratified.log.odds.intercept,
-         slope=cm$unsuppressed.to.disengaged$stratified.log.odds.slope,
-         anchor.year = cm$unsuppressed.to.disengaged$anchor.year,
-         max.proportion = cm$unsuppressed.to.disengaged$max.proportion)
-}
-
-get.suppressed.to.disengaged.model <- function(cm,
-                                                 location)
-{
-    list(intercept=cm$suppressed.to.disengaged$stratified.log.odds.intercept,
-         slope=cm$suppressed.to.disengaged$stratified.log.odds.slope,
-         anchor.year = cm$suppressed.to.disengaged$anchor.year,
-         max.proportion = cm$suppressed.to.disengaged$max.proportion)
 }
 
 
@@ -221,20 +197,29 @@ create.continuum.manager <- function(dir='cleaned_data/',
     
     
     
+    #MELISSA - fill in
     if (verbose)
-        print('Setting up New Suppression')
-    cm = setup.newly.suppressed.model(cm,
-                                      dir=dir,
-                                      anchor.year = newly.suppressed.anchor.year,
-                                      max.newly.suppressed.proportion = max.newly.suppressed.proportion,
-                                      settings=settings)
+        print('Setting up New Suppression and Unsuppressed-to-disengaged')
+    cm$leave.unsuppressed.model = setup.3way.multinomial.model(anchor.year=2010,
+                                                               intercepts1=setup.array.from.coefficients(
+                                                                   age1=-.4
+                                                               ),
+                                                               slopes1,
+                                                               intercepts2,
+                                                               slopes2,
+                                                               outcome.names=c('suppress','disengage','remain'))
+    
+    #MELISSA - fill in
     if (verbose)
-        print('Setting up Unsuppression')
-    cm = setup.unsuppression.model(cm,
-                                      dir=dir,
-                                      anchor.year = unsuppression.anchor.year,
-                                      max.unsuppressed.proportion = max.unsuppressed.proportion,
-                                      settings=settings)
+        print('Setting up Unsuppression and Suppressed-to-disengaged')
+    cm$leave.suppressed.model = setup.3way.multinomial.model(anchor.year=2010,
+                                                               intercepts1=setup.array.from.coefficients(
+                                                                   age1=-.4
+                                                               ),
+                                                               slopes1,
+                                                               intercepts2,
+                                                               slopes2,
+                                                               outcome.names=c('unsuppress','disengage','remain'))
     
     if (verbose)
         print('Reading Linkage')
@@ -243,22 +228,6 @@ create.continuum.manager <- function(dir='cleaned_data/',
                                  anchor.year = linkage.anchor.year,
                                  max.linked.proportion = max.linked.proportion,
                                  settings=settings)
-    
-    if (verbose)
-        print('Reading unsuppressed.to.disengaged')
-    cm = setup.unsuppressed.to.disengaged.model(cm,
-                                 dir=dir,
-                                 anchor.year = unsuppressed.to.disengaged.anchor.year,
-                                 max.unsuppressed.to.disengaged.proportion = max.unsuppressed.to.disengaged.proportion,
-                                 settings=settings)
-    
-    if (verbose)
-        print('Reading suppressed.to.disengaged')
-    cm = setup.suppressed.to.disengaged.model(cm,
-                                                dir=dir,
-                                                anchor.year = suppressed.to.disengaged.anchor.year,
-                                                max.suppressed.to.disengaged.proportion = max.suppressed.to.disengaged.proportion,
-                                                settings=settings)
     
     if (verbose)
         print('Reading reengagement')
@@ -972,6 +941,100 @@ setup.retention <- function(cm,
     
     # return
     cm
+}
+
+##-----------------------------##
+##-- HELPER FOR MULTINOMIALS --##
+##-----------------------------##
+
+# Has elements
+# $num.outcomes
+# $anchor.year
+# $intercepts - a list of length num.outcomes-1, where each element is a [age,race,sex,risk] array of intercepts
+# $slopes - a list of length num.outcomes-1, where each element is a [age,race,sex,risk] array of slopes
+setup.3way.multinomial.model <- function(anchor.year,
+                                         intercepts1,
+                                         slopes1,
+                                         intercepts2,
+                                         slopes2,
+                                         outcome.names)
+{
+    rv = list(
+        outcome.names = outcome.names,
+        num.outcomes=3,
+        anchor.year=anchor.year,
+        intercepts=list(intercepts1, intercepts2),
+        slopes=list(slopes1,slopes2))
+    
+    names(rv$intercepts) = outcome.names[1:2]
+    names(rv$slopes) = outcome.names[1:2]
+    
+    rv
+}
+
+setup.array.from.coefficients <- function(base=0,
+                                          
+                                          age1,
+                                          age2,
+                                          age3=0,
+                                          age4,
+                                          age5,
+                                          
+                                          black,
+                                          hispanic,
+                                          other=0,
+                                          
+                                          heterosexual.male,
+                                          heterosexual.male.idu,
+                                          msm=0,
+                                          msm.idu,
+                                          female,
+                                          female.idu,
+                                          
+                                          ages=c('13-24 years',
+                                                 '25-34 years',
+                                                 '35-44 years',
+                                                 '45-54 years',
+                                                 '55+ years'),
+                                          races=c('black',
+                                                  'hispanic',
+                                                  'other'),
+                                          sex=c('heterosexual_male','msm','female'),
+                                          risk=c('never_IDU','active_IDU','IDU_in_remission'),
+                                          idu.in.remission.is.idu=T)
+{
+    dim.names = list(age = ages, race=races, sex=sexes, risk=risks)
+    rv = array(base, dim=sapply(dim.names, length), dimnames=dim.names)
+
+    # Age
+    rv[1,,,] = rv[1,,,] + age1
+    rv[2,,,] = rv[2,,,] + age1
+    rv[3,,,] = rv[3,,,] + age1
+    rv[4,,,] = rv[4,,,] + age1
+    rv[5,,,] = rv[5,,,] + age1
+    
+    # Race
+    rv[,'black',,] = rv[,'black',,] + black
+    rv[,'hispanic',,] = rv[,'hispanic',,] + hispanic
+    rv[,'other',,] = rv[,'other',,] + other
+    
+    # Sex/Risk
+    non.idu.states = 'never_IDU'
+    if (!idu.in.remission.is.idu)
+        non.idu.states = c(non.idu.states, 'IDU_in_remission')
+    idu.states = setdiff(risk, non.idu.states)
+    
+    rv[,,'heterosexual_male',non.idu.states] = rv[,,'heterosexual_male',non.idu.states] + heterosexual.male
+    rv[,,'heterosexual_male',idu.states] = rv[,,'heterosexual_male',idu.states] + heterosexual.male.idu
+    
+    rv[,,'msm',non.idu.states] = rv[,,'msm',non.idu.states] + msm
+    rv[,,'msm',idu.states] = rv[,,'msm',idu.states] + msm
+    
+    rv[,,'female',non.idu.states] = rv[,,'female',non.idu.states] + female
+    rv[,,'female',idu.states] = rv[,,'female',idu.states] + female.idu
+    
+    # Return
+    rv
 }
 
 ##-- SET UP TESTING --##
