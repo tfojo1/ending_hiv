@@ -4,7 +4,11 @@
 run.prep.simulations(msas = TARGET.MSAS)
 
 # Make the aggregate result
-prep.results = aggregate.raw.prep.results()
+prep.results = aggregate.raw.prep.results(msas=TARGET.MSAS,
+                                          intervention.codes = ALL.PREP.INTERVENTION.CODES,
+                                          years=2020:2030,
+                                          dir='mcmc_runs/prep_simsets',
+                                          calculate.total=T)
 
 # Make tables
 # Oral vs Inj
@@ -23,13 +27,15 @@ table.v2 = make.prep.table(msas=TARGET.MSAS,
                            stat='no.comparison')
 
 
-write.table(table.v2, "/Users/Ruchita/Documents/JHU/HIV Compartmental Model/ending_hiv/code/Ruchita/table.v2.txt",col.names = TRUE, row.names = TRUE, sep="\t")
-
+write.table(table.v2, "/Users/Ruchita/Documents/JHU/HIV Compartmental Model/ending_hiv/code/Ruchita/table.v3.txt",col.names = TRUE, row.names = TRUE, sep="\t")
 
 
 #Sensitivity Analysis
 
 run.prep.simulations(msas = TARGET.MSAS, intervention.codes = VAR.PREP.INTERVENTION.CODES)
 
-prep.results = aggregate.raw.prep.results(msas = TARGET.MSAS, intervention.codes = VAR.ORAL.PREP.INTERVENTION.CODES)
+prep.results = aggregate.raw.prep.results(msas = TARGET.MSAS, intervention.codes = VAR.ORAL.PREP.INTERVENTIONS.CODES)
 
+sensitivity.plots = make.sensitivity.plot()
+
+correlation.table = correlations()

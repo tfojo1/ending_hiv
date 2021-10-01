@@ -25,13 +25,22 @@ VAR.PREP.INTERVENTION.CODES = c(
   'msm.p50.inj.variable_23_27'
 )
 
+INJ.VAR.PREP.INTERVENTION.CODES = c(
+  'msm.p10.inj.variable_23_27',
+  'msm.p25.inj.variable_23_27',
+  'msm.p50.inj.variable_23_27',
+  'msm.p10.inj_23_27',
+  'msm.p25.inj_23_27',
+  'msm.p50.inj_23_27'
+)
+
 ALL.PREP.INTERVENTION.CODES = c(
     'noint',
     ORAL.PREP.INTERVENTION.CODES,
     INJ.PREP.INTERVENTION.CODES
 )
 
-VAR.ORAL.PREP.INTERVENTIONS = c(
+VAR.ORAL.PREP.INTERVENTIONS.CODES = c(
   ORAL.PREP.INTERVENTION.CODES,
   VAR.PREP.INTERVENTION.CODES
 )
@@ -43,7 +52,7 @@ STAGGERED.ORAL.INJ.PREP.CODES[2*(1:length(INJ.PREP.INTERVENTION.CODES))] = INJ.P
 ##-- FUNCTION TO RUN INTERVENTIONS --##
 
 run.prep.simulations <- function(msas=TARGET.MSAS, 
-                                 intervention.codes=VAR.PREP.INTERVENTION.CODES,
+                                 intervention.codes=INJ.VAR.PREP.INTERVENTION.CODES,
                                  dst.dir = 'mcmc_runs/prep_simsets',
                                  src.dir = 'mcmc_runs/quick_simsets',
                                  run.to.year=2030,
@@ -120,7 +129,7 @@ make.prep.table <- function(msas=TARGET.MSAS,
               CI_high = round(quantile(diff, probs=.975),3)
               paste0(format(mean_diff,big.mark=','),"% [",CI_low,"% to ",CI_high,"%]")  
             }
-            else 
+            else if (stat == 'no.comparison')
             {
               diff = colSums(int.values[[1]])
               mean_diff = round(mean(diff),0)
@@ -128,9 +137,18 @@ make.prep.table <- function(msas=TARGET.MSAS,
               CI_high = round(quantile(diff, probs=.975),0)
               paste0(format(mean_diff,big.mark=',')," [",CI_low," to ",CI_high,"]")
             }
+            else if (stat == 'diff')
+            {
+              diff = (int.values[[1]][dim(int.values[[1]])[1],]-int.values[[1]][1,])/int.values[[1]][1,]
+              mean_diff = round(mean(diff),0)
+              CI_low = round(quantile(diff, probs=.025),0)
+              CI_high = round(quantile(diff, probs=.975),0)
+              paste0(format(mean_diff,big.mark=',')," [",CI_low," to ",CI_high,"]")
+              
+            }
      
            
-            
+          
   
         })
     })
@@ -147,8 +165,17 @@ make.sensitivity.plot <- function(msas=TARGET.MSAS,
                                   raw.prep.results = prep.results,
                                   include.totals = F,
                                   dir = 'mcmc_runs/prep_simsets',
-                                  round.digits=0,
-                                  stat = 'rel.diff'){
+                                  round.digits=0){
+  
+  
+  
+  filename = get.simset.filename(location=msas[1], intervention.code=intervention.codes[1])
+  load(file.path(dir, msas[1], filename))
+  
+  simset = flatten.simset(simset)
+  sims = simset@parameters
+  sims = as.data.frame(sims)
+  inj = sims$inj.rr
   
   
   if (include.totals){
@@ -160,57 +187,106 @@ make.sensitivity.plot <- function(msas=TARGET.MSAS,
   if (length(comparison.codes)==1){
     comparison.codes = rep(comparison.codes, length(intervention.codes))
   }
+ 
   
-  
-  sapply(1:length(intervention.codes), function(i){
-    sapply(1:length(msas), function(msa){
+  for(i in 1:length(intervention.codes)){
+    
+    
+    int = sapply(1:length(msas), function(msa){
       int.code = intervention.codes[i]
       int.values = raw.prep.results[,msa,int.code]
-  
-      filename = get.simset.filename(location=msa, intervention.code=int.code)
-      load(file.path(dir, msa, filename))
-          
-      simset = flatten.simset(simset)
-      sims = simset@parameters
-      sims = as.data.frame(sims)
-      inj = sims$inj.rr
-      
-          
-      
-      if (is.null(comparison.codes)){
-        comp.values = rep(0, length(int.values))
-      }
-      else
-      {            
-        comp.code = comparison.codes[i]
-        comp.values = raw.prep.results[,msa,comp.code]
-      }
-      
-      if (stat=='abs.diff') {
-        diff = colSums(int.values[[1]]) - colSums(comp.values[[1]]) #collapse list?
-      
-      }
-      else if (stat == 'rel.diff')
-      {
-        diff = ((colSums(int.values[[1]])-colSums(comp.values[[1]])) / colSums(comp.values[[1]]))*100
-      
-      }
-      else 
-      {
-        diff = colSums(int.values[[1]])
-
-      }
-      
-  sensitivity_plot = cbind(diff,inj)
-  sensitivity_plot = as.data.frame(sensitivity_plot)
-  
-  plot = ggplot(sensitivity_plot,aes(x = 'inj',y='diff')) + geom_point() 
-  plot + ylim((min(sensitivity_plot$diff)),(max(sensitivity_plot$diff))) + xlim((min(sensitivity_plot$inj)),(max(sensitivity_plot$inj)))
+      colSums(int.values[[1]])
       
     })
+    
+    comp = sapply(1:length(msas), function(msa){
+        
+        if (is.null(comparison.codes)){
+          comp.values = rep(0, length(int.values))
+        }
+        else
+        {            
+          comp.code = comparison.codes[i]
+          comp.values = raw.prep.results[,msa,comp.code]
+        }
+        
+        colSums(comp.values[[1]])
+      })
+    
+    int_collapse = do.call(rbind.data.frame, int)
+    int_collapse = int_collapse[,-dim(int_collapse)[2]]
+    comp_collapse = do.call(rbind.data.frame, comp)
+    comp_collapse = comp_collapse[,-dim(comp_collapse)[2]]
+    sensitivity_plot = ((colSums(int_collapse)-colSums(comp_collapse))/(colSums(comp_collapse)))*100
+    sensitivity_plot = cbind(sensitivity_plot,inj)
+    rownames(sensitivity_plot) <- NULL
+    colnames(sensitivity_plot) <- c("Relative Difference","Efficacy")
+    sensitivity_plot = as.data.frame(sensitivity_plot)
+    dev.off()
+    ggplot(sensitivity_plot, aes(x =`Efficacy`, y = `Relative Difference`)) + geom_point() +ggtitle(paste0("Sensitivity Plot ",intervention.codes[i]))
+    
+
+  
+  }
+
+
+  
+}
+
+correlations <- function(msas=TARGET.MSAS,
+                         intervention.codes = VAR.PREP.INTERVENTION.CODES,
+                         comparison.codes = ORAL.PREP.INTERVENTION.CODES, 
+                         raw.prep.results = prep.results,
+                         include.totals = F,
+                         dir = 'mcmc_runs/prep_simsets',
+                         round.digits=0){
+
+  
+  filename = get.simset.filename(location=msas[1], intervention.code=intervention.codes[1])
+  load(file.path(dir, msas[1], filename))
+  
+  simset = flatten.simset(simset)
+  sims = simset@parameters
+  sims = as.data.frame(sims)
+  inj = sims$inj.rr
+  
+  cor.table = vector("list", length = length(intervention.codes))
+  
+for(i in 1:length(intervention.codes)){
+  rv_cor = sapply(1:length(msas), function(msa){
+    
+    
+    int.code = intervention.codes[i]
+    int.values = raw.prep.results[,msa,int.code]
+    
+    
+    if (is.null(comparison.codes)){
+      comp.values = rep(0, length(int.values))
+    }
+    else
+    {            
+      comp.code = comparison.codes[i]
+      comp.values = raw.prep.results[,msa,comp.code]
+    }
+    
+    
+    ((colSums(int.values[[1]])-colSums(comp.values[[1]])) / colSums(comp.values[[1]]))*100
+    
+    
   })
   
+  cor = lapply(rv_cor,function(x){cbind(x,inj)})
+  correlations = lapply(cor, function(x){cor(x[,1],x[,2],method = "spearman")})
+  correlations = do.call(rbind.data.frame, correlations)
+  correlations = cbind(names(msas), correlations)
+  colnames(correlations) = c("City","Correlation Coefficient")
+  cor.table[[i]] = correlations
   
+}
+ 
+
+ names(cor.table) = intervention.codes
+ return(cor.table)
 
   
 }
@@ -220,7 +296,7 @@ make.sensitivity.plot <- function(msas=TARGET.MSAS,
 #returns a three-dimensional array
 #indexed [simulation, msa, intervention.code]
 aggregate.raw.prep.results <- function(msas=TARGET.MSAS,
-                                       intervention.codes=VAR.ORAL.PREP.INTERVENTIONS,
+                                       intervention.codes,
                                        years=2020:2030,
                                        dir='mcmc_runs/prep_simsets',
                                        calculate.total=T)
@@ -240,7 +316,7 @@ aggregate.raw.prep.results <- function(msas=TARGET.MSAS,
     })
     
     
-    dim.names = list(sim=1:(length(rv)/length(msas)/length(intervention.codes)), #produces 1? 
+    dim.names = list(sim=1:(length(rv)/length(msas)/length(intervention.codes)),
                      location=msas,
                      intervention=intervention.codes) 
     
