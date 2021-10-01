@@ -341,21 +341,26 @@ CITY.COR.THEME = theme(text = element_text(size=7),
                        axis.title = element_text(size=7),
                        legend.position = 'none')
 CITY.COR.PANEL.HEIGHT = 2.5
+CITY.COR.PANEL.WIDTH = 3
 if (1==2)
 {
-    png(file.path(IMAGE.DIR, 'msa_scatter/base_suppression_raw.png'), pointsize=PNG.POINT.SIZE, width=PANEL.WIDTH, height=CITY.COR.PANEL.HEIGHT, res=RES, units='in')
+    TO.LABEL = c('14460','41740','16980')
+    TO.LABEL = character()
+    
+    png(file.path(IMAGE.DIR, 'msa_scatter/base_suppression_raw.png'), pointsize=PNG.POINT.SIZE, width=CITY.COR.PANEL.WIDTH, height=CITY.COR.PANEL.HEIGHT, res=RES, units='in')
     make.correlation.scatterplot(var1='suppression', var1.year=2019, correlate.var1 = F,
                                  var2='suppression.reduction', 
                                  scenario='base',
                                  point.fill = COLORS['base'],
                                  outcome = 'incidence', outcome.years = CUM.INC.YEARS,
-                                 point.size.range = CITY.COR.SIZE.RANGE,
-                                 label.locations = character()) + #xlim(0,1) + ylim(0,1) +
+                                 label.locations = TO.LABEL,
+                                 ylim=c(.15,.6),
+                                 point.size.range = CITY.COR.SIZE.RANGE) + 
         ylab("Correlation Between Reduction in Viral\nSuppression and Incidence 2020-2025") +
         xlab("Mean Proportion Suppressed in 2019") + CITY.COR.THEME
     dev.off()
     
-    png(file.path(IMAGE.DIR, 'msa_scatter/base_transmission_raw.png'), pointsize=PNG.POINT.SIZE, width=PANEL.WIDTH, height=CITY.COR.PANEL.HEIGHT, res=RES, units='in')
+    png(file.path(IMAGE.DIR, 'msa_scatter/base_transmission_raw.png'), pointsize=PNG.POINT.SIZE, width=CITY.COR.PANEL.WIDTH, height=CITY.COR.PANEL.HEIGHT, res=RES, units='in')
     make.correlation.scatterplot(var1='incidence.prevalence.ratio', var1.year=2019, correlate.var1 = F,
                                  var2='sexual.transmission.reduction', 
                                  locations = setdiff(names(location.names), '17140'), #minus cincinatti
@@ -363,37 +368,41 @@ if (1==2)
                                  point.fill = COLORS['base'],
                                  outcome = 'incidence', outcome.years = CUM.INC.YEARS,
                                  point.size.range = CITY.COR.SIZE.RANGE,
-                                 label.locations = character()) + #xlim(0,1) + ylim(0,1) +
+                                 ylim=c(-.7,-.3),
+                                 label.locations = TO.LABEL) +
         ylab("Correlation Between Reduction in Viral\nSexual Transmission and Incidence 2020-2025") +
         xlab("Incidence/Prevalence Ratio in 2019") + CITY.COR.THEME
     dev.off()
     
-    png(file.path(IMAGE.DIR, 'msa_scatter/delayed_suppression_raw.png'), pointsize=PNG.POINT.SIZE, width=PANEL.WIDTH, height=CITY.COR.PANEL.HEIGHT, res=RES, units='in')
+    png(file.path(IMAGE.DIR, 'msa_scatter/delayed_suppression_raw.png'), pointsize=PNG.POINT.SIZE, width=CITY.COR.PANEL.WIDTH, height=CITY.COR.PANEL.HEIGHT, res=RES, units='in')
     make.correlation.scatterplot(var1='suppression', var1.year=2019, correlate.var1 = F,
                                  var2='suppression.reduction', 
                                  scenario='delayed.hiv.care',
                                  point.fill = COLORS['delayed.hiv.care'],
                                  outcome = 'incidence', outcome.years = CUM.INC.YEARS,
                                  point.size.range = CITY.COR.SIZE.RANGE,
-                                 label.locations = character()) + #xlim(0,1) + ylim(0,1) +
+                                 ylim=c(.15,.6),
+                                 label.locations = TO.LABEL) + #xlim(0,1) + ylim(0,1) +
         ylab("Correlation Between Reduction in Viral\nSuppression and Incidence 2020-2025") +
         xlab("Mean Proportion Suppressed in 2019") + CITY.COR.THEME
     dev.off()
     
-    png(file.path(IMAGE.DIR, 'msa_scatter/delayed_transmission_raw.png'), pointsize=PNG.POINT.SIZE, width=PANEL.WIDTH, height=CITY.COR.PANEL.HEIGHT, res=RES, units='in')
+    png(file.path(IMAGE.DIR, 'msa_scatter/delayed_transmission_raw.png'), pointsize=PNG.POINT.SIZE, width=CITY.COR.PANEL.WIDTH, height=CITY.COR.PANEL.HEIGHT, res=RES, units='in')
     make.correlation.scatterplot(var1='incidence.prevalence.ratio', var1.year=2019, correlate.var1 = F,
                                  var2='sexual.transmission.reduction', 
                                  locations = setdiff(names(location.names), '17140'), #minus cincinatti
                                  scenario='delayed.hiv.care',
                                  point.fill = COLORS['delayed.hiv.care'],
+                                 ylim=c(-.7,-.3),
                                  outcome = 'incidence', outcome.years = CUM.INC.YEARS,
                                  point.size.range = CITY.COR.SIZE.RANGE,
-                                 label.locations = character()) + #xlim(0,1) + ylim(0,1) +
+                                 label.locations = TO.LABEL) + #xlim(0,1) + ylim(0,1) +
         ylab("Correlation Between Reduction in Viral\nSexual Transmission and Incidence 2020-2025") +
         xlab("Incidence/Prevalence Ratio in 2019") + CITY.COR.THEME
     dev.off()
+    
     #not using
-    png(file.path(IMAGE.DIR, 'msa_scatter/base_testing_raw.png'), pointsize=PNG.POINT.SIZE, width=PANEL.WIDTH, height=CITY.COR.PANEL.HEIGHT, res=RES, units='in')
+    png(file.path(IMAGE.DIR, 'msa_scatter/base_testing_raw.png'), pointsize=PNG.POINT.SIZE, width=CITY.COR.PANEL.WIDTH, height=CITY.COR.PANEL.HEIGHT, res=RES, units='in')
     make.correlation.scatterplot(var1='testing', var1.year=2019, correlate.var1 = F,
                                  var2='testing.reduction', 
                                  scenario='base',
@@ -401,6 +410,7 @@ if (1==2)
                                  outcome = 'incidence', outcome.years = CUM.INC.YEARS,
                                  point.size.range = CITY.COR.SIZE.RANGE,
                                  label.locations = character()) + #xlim(0,1) + ylim(0,1) +
+     #   ylim(-.75,-.35) +
         ylab("Correlation Between Reduction in Testing\nRate and Incidence 2020-2025") +
         xlab("Mean Testing Rate in 2019") + CITY.COR.THEME
     dev.off()
@@ -478,7 +488,7 @@ if (1==2)
         pointsize=PNG.POINT.SIZE, width=BINNED.BOXPLOT.WIDTH, height=BINNED.BOXPLOT.HEIGHT, res=RES, units='in')
     make.covid.binned.boxplot(var1='sexual.transmission.reduction', 
                               scenario1='delayed.hiv.care',
-                              boxplot.fill=COLORS['delayed.hiv.care'],
+                              boxplot.fill=COLORS['delayed.hiv.care'],y
                               ylim=BINNED.BOXPLOT.LIMITS,
                               label.rho.size = SCATTER.FONT.SIZE,
                               label.rho.hjust = 'left',

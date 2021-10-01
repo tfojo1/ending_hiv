@@ -414,7 +414,8 @@ make.correlation.scatterplot <- function(results=outcomes.arr,
                                          label.locations=character(),
                                          point.size.range=c(2,10),
                                          label.size=5,
-                                         highlight.labeled=T)
+                                         highlight.labeled=T,
+                                         ylim=c(NA,NA))
 {
     x.as.pct = correlate.var1 || 
         any(PCT.VARIABLES==var1) ||
@@ -513,7 +514,7 @@ make.correlation.scatterplot <- function(results=outcomes.arr,
     if (x.as.pct)
         rv = rv + scale_x_continuous(labels=percent)
     if (y.as.pct)
-        rv = rv + scale_y_continuous(labels=percent)
+        rv = rv + scale_y_continuous(labels=percent, limits = ylim)
     
     rv
 }
@@ -1459,19 +1460,23 @@ get.variable <- function(results=outcomes.arr,
         orig.results = results
         
         results = results[locations, scenario, intervention.name, as.character(years), outcome, ]
+        
         dim(results) = sapply(dim.names, length)
         dimnames(results) = dim.names
         
-        results = apply(results, c('location','sim'), sum)
+        keep.dimensions = c('location','year','sim')[c(T,!aggregate.years,T)]
+        results = apply(results, keep.dimensions, sum)
         
         if (aggregate.locations)
         {
             dim.names = list(location='Total',
-                             sim=dimnames(results)[['sim']])
-            results = apply(results, 'sim', sum)
+                             year=as.character(years),
+                             sim=dimnames(results)[['sim']])[c(T,!aggregate.years,T)]
+            results = apply(results, setdiff(names(dim.names), 'location'), sum)
             dim(results) = sapply(dim.names, length)
             dimnames(results) = dim.names
         }
+        
         if (aggregate.years)
         {
             dim.names = dimnames(results)[setdiff(names(dimnames(results)), 'year')]
