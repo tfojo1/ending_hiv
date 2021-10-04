@@ -38,9 +38,6 @@ rv =  sapply(risks, function(risk){
             x[paste0("sex.riskidu_male:",k)] = 1
           if(risk!="never_IDU" && sex=="female")
             x[paste0("sex.riskidu_female:",k)] = 1
-         # if()
-          #  x[paste0("sex.riskother",k)] = 1
-           # not sure what to do for other
             
             sapply(races, function(race){
               if(race=="black") 
@@ -53,9 +50,9 @@ rv =  sapply(risks, function(risk){
                   x[paste0("age.category13-25:",k)] = 1
                 if(age=="25-34 years") 
                   x[paste0("age.category25-35:",k)] = 1
-                if(age=="55+ years") 
+                if(age=="45-54 years") 
                   x[paste0("age.category45-55:",k)] = 1
-                if(age=="13-24 years") 
+                if(age=="55+ years") 
                   x[paste0("age.category55+:",k)] = 1
                 
                 sapply(years, function(year){
