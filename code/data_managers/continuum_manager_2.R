@@ -169,19 +169,14 @@ get.proportion.ever.tested.in.states <- function(cm,
 ##------------------------------------##
 
 create.continuum.manager <- function(dir='cleaned_data/', 
+                                     expanded.continuum.file = 'cleaned_data/continuum/cnics_regression.Rdata',
                                      settings = SETTINGS,
                                      national.surveillance = national.surveillance,
                                      
                                      suppression.anchor.year = 2020,
                                      testing.anchor.year = 2010,
                                      linkage.anchor.year = 2020,
-                                     newly.suppressed.anchor.year = 2020,
-                                     unsuppression.anchor.year = 2020,
-                                     unsuppressed.to.disengaged.anchor.year = 2020,
-                                     suppressed.to.disengaged.anchor.year = 2020,
-                                     reengagement.anchor.year = 2020,
-                                     
-                                     
+
                                      max.tested.proportion = 0.9,
                                      max.suppressed.proportion = 0.9,
                                      max.linked.proportion = 0.95,
@@ -195,7 +190,7 @@ create.continuum.manager <- function(dir='cleaned_data/',
 {
     cm = list()
     
-    
+    # load(expanded.continuum.file)
     
     #MELISSA - fill in
     if (verbose)
@@ -258,6 +253,7 @@ create.continuum.manager <- function(dir='cleaned_data/',
     #MELISSA - fill in
     if (verbose)
         print('Setting up Unsuppression and Suppressed-to-disengaged')
+    # For Melissa change anchor year to come from CNICS file
     cm$leave.suppressed.model = setup.3way.multinomial.model(anchor.year=2010,
                                                              intercepts1=setup.array.from.coefficients(
                                                                  age1=0.7883763716,
@@ -311,7 +307,7 @@ create.continuum.manager <- function(dir='cleaned_data/',
                                                                  black=0,
                                                                  hispanic=0
                                                              ),
-                                                             outcome.names=c('suppress','disengage','remain'))
+                                                             outcome.names=c('unsuppress','disengage','remain'))
     
     if (verbose)
         print('Reading Linkage')
@@ -325,8 +321,10 @@ create.continuum.manager <- function(dir='cleaned_data/',
         print('Reading reengagement')
     cm = setup.reengagement.model(cm,
                                   dir=dir,
-                                  anchor.year = reengagement.anchor.year,
-                                  max.reengaged.proportion = max.reengaged.proportion,
+                                  #for melissa
+#                                  coefficients = xx
+                                  anchor.year = 2000, #for melissa - change to come from CNICS file
+                                  max.reengaged.proportion = 1,#max.reengaged.proportion,
                                   settings=settings)
     
     
@@ -462,6 +460,7 @@ setup.suppressed.to.disengaged.model <- function(cm,
 
 setup.reengagement.model <- function(cm,
                                      dir,
+                                     coefficients=NULL,
                                      anchor.year,
                                      max.reengaged.proportion,
                                      settings)
@@ -471,13 +470,27 @@ setup.reengagement.model <- function(cm,
         anchor.year = anchor.year
     ) 
     
-    
+
+    #for melissa - delete the code that runs in the first block
+    if (1==1)
+    {
     dim.names = list(age=settings$AGES$labels, race=settings$RACES, sex=settings$SEXES, risk=settings$RISK_STRATA)
     
     print("FOR NOW WE ARE USING DUMMY UNSUPPRESSED TO DISENGAGED MODEL")
     cm$reengagement$stratified.log.odds.intercept = array(logit(.02), dim=sapply(dim.names, length), dimnames=dim.names)
     cm$reengagement$stratified.log.odds.slope = array(0, dim=sapply(dim.names, length), dimnames=dim.names)
-    
+    }
+    else
+    {
+        # for melissa - fill in here
+        cm$reengagement$stratified.log.odds.intercept = setup.array.from.coefficients(
+            
+        )
+        
+        cm$reengagement$stratified.log.odds.slope = setup.array.from.coefficients(
+            
+        )
+    }
     
     cm
 }
@@ -1064,7 +1077,7 @@ setup.3way.multinomial.model <- function(anchor.year,
     rv
 }
 
-setup.array.from.coefficients <- function(base=0,
+setup.array.from.coefficients <- function(all=0,
                                           
                                           age1,
                                           age2,
@@ -1091,12 +1104,12 @@ setup.array.from.coefficients <- function(base=0,
                                           races=c('black',
                                                   'hispanic',
                                                   'other'),
-                                          sex=c('heterosexual_male','msm','female'),
-                                          risk=c('never_IDU','active_IDU','IDU_in_remission'),
+                                          sexes=c('heterosexual_male','msm','female'),
+                                          risks=c('never_IDU','active_IDU','IDU_in_remission'),
                                           idu.in.remission.is.idu=T)
 {
     dim.names = list(age = ages, race=races, sex=sexes, risk=risks)
-    rv = array(base, dim=sapply(dim.names, length), dimnames=dim.names)
+    rv = array(all, dim=sapply(dim.names, length), dimnames=dim.names)
 
     # Age
     rv[1,,,] = rv[1,,,] + age1
@@ -1114,7 +1127,7 @@ setup.array.from.coefficients <- function(base=0,
     non.idu.states = 'never_IDU'
     if (!idu.in.remission.is.idu)
         non.idu.states = c(non.idu.states, 'IDU_in_remission')
-    idu.states = setdiff(risk, non.idu.states)
+    idu.states = setdiff(risks, non.idu.states)
     
     rv[,,'heterosexual_male',non.idu.states] = rv[,,'heterosexual_male',non.idu.states] + heterosexual.male
     rv[,,'heterosexual_male',idu.states] = rv[,,'heterosexual_male',idu.states] + heterosexual.male.idu

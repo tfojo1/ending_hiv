@@ -1471,10 +1471,13 @@ setup.background.leave.unsuppressed <- function(components,
     
     components$background.leave.unsuppressed$years = years
     components$background.leave.unsuppressed$model = get.leave.unsuppressed.model(continuum.manager, 
-                                                                                  location=location)
+                                                                       location=location)
+    
     components = clear.dependent.values(components, 
-                                        'background.newly.suppressed',
-                                        'background.unsuppressed.to.disengaged')
+                                        c('background.newly.suppressed',
+                                          'background.unsuppressed.to.disengaged'))
+    
+    components
 }
 
 setup.background.newly.suppressed <- function(components,
@@ -1653,6 +1656,11 @@ setup.background.leave.suppressed <- function(components,
     components$background.leave.suppressed$years = years
     components$background.leave.suppressed$model = get.leave.suppressed.model(continuum.manager, 
                                                                            location=location)
+    components = clear.dependent.values(components, 
+                                        c('background.unsuppression',
+                                          'background.suppressed.to.disengaged'))
+    
+    components
 }
 
 setup.background.unsuppression <- function(components,

@@ -272,7 +272,7 @@ setup.components.for.msa <- function(msa,
         comps = setup.background.leave.unsuppressed(comps,
                                                     continuum.manager = data.managers$continuum,
                                                     location=msa,
-                                                    years=years=smooth.from.year:(smooth.to.year+1))
+                                                    years=smooth.from.year:(smooth.to.year+1))
         
         comps = setup.background.newly.suppressed(comps,
                                                   continuum.manager=data.managers$continuum,
