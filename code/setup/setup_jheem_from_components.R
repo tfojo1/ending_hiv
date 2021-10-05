@@ -609,8 +609,6 @@ DEPENDENCIES = c(DEPENDENCIES,
 clear.dependent.values <- function(components,
                                    dependent.on)
 {
-
-    
     #An internal check
     missing.from.all = sapply(unlist(DEPENDENCIES), function(dep){
         !any(ALL.DEPENDENT.NAMES==dep)
@@ -1116,7 +1114,7 @@ do.setup.continuum.transitions <- function(components)
             
             # engaged/suppressed -> engaged/unsuppressed
             # engaged/suppressed -> disengaged
-            components = do.calculate.leave.unsuppressed.rates(components)
+            components = do.calculate.leave.suppressed.rates(components)
             unsuppression.rates = calculate.unsuppression.rates(components)
             suppressed.to.disengaged.rates = calculate.suppressed.to.disengaged.rates(components)
             
@@ -1547,7 +1545,7 @@ do.calculate.leave.unsuppressed.rates <- function(components)
                                                                    suppress=log(components$background.newly.suppressed$future.slope.or),
                                                                    disengage=log(components$background.unsuppressed.to.disengaged$future.slope.or)
                                                                ),
-                                                               future.slope.after.year=background.leave.unsuppressed$future.slope.after.year,
+                                                               future.slope.after.year=components$background.leave.unsuppressed$future.slope.after.year,
                                                                idu.applies.to.in.remission = T,
                                                                jheem=components$jheem
                                                                )
@@ -1564,7 +1562,6 @@ do.calculate.leave.unsuppressed.rates <- function(components)
             p[,,,,,doesnt.apply,,] = 0
             -log(1-p)
         })
-        
         
         background.unsuppressed.to.disengaged.years = c(components$background.unsuppressed.to.disengaged$unsuppressed.to.disengaged.ramp.year, 
                                                         components$background.leave.unsuppressed$years)
@@ -1594,7 +1591,7 @@ do.calculate.leave.unsuppressed.rates <- function(components)
             p[,,,,,non.engaged.suppressed.states,,] = 0
             -log(1-p)
         })
-        
+
         #Overlay foreground suppression
         suppression = do.get.rates.from.background.and.foreground(background.rates = background.rates,
                                                                   background.times = background.suppression.years,
@@ -1650,7 +1647,7 @@ do.calculate.leave.suppressed.rates <- function(components)
                                                                    unsuppress=log(components$background.unsuppression$future.slope.or),
                                                                    disengage=log(components$background.suppressed.to.disengaged$future.slope.or)
                                                                ),
-                                                               future.slope.after.year=background.leave.suppressed$future.slope.after.year,
+                                                               future.slope.after.year=components$background.leave.suppressed$future.slope.after.year,
                                                                idu.applies.to.in.remission = T,
                                                                jheem=components$jheem
         )
@@ -1667,7 +1664,6 @@ do.calculate.leave.suppressed.rates <- function(components)
             p[,,,,,doesnt.apply,,] = 0
             -log(1-p)
         })
-        
         
         background.suppressed.to.disengaged.years = c(components$background.suppressed.to.disengaged$suppressed.to.disengaged.ramp.year, 
                                                         components$background.leave.suppressed$years)
@@ -1820,7 +1816,7 @@ get.background.proportions.multinomial <- function(base.model,
             x.betas = intercepts + slopes * (year-base.model$anchor.year)
             if (year > future.slope.after.year)
                 x.betas = x.betas + future.slope * (year-future.slope.after.year)
-            year.rv = exp(x.betas[,,,,k]) / (1 + rowSums(x.betas, dims=4))
+            year.rv = exp(x.betas[,,,,k]) / (1 + rowSums(exp(x.betas), dims=4))
                 #**potential optimization - pre-crunch the rowSums
             
             if (expand.population=='hiv.positive')

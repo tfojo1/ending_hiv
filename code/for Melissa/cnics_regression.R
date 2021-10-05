@@ -1,5 +1,5 @@
-MELISSAS.FILE = "~/Dropbox/Documents_local/Hopkins/PhD/Dissertation/EHE/CNICS/synthetic_fixed_2021-08-06.Rdata"
-TODDS.FILE = '../../CNICS/cleaned_datasets/arch68/cnics_fixed_2021-08-06.Rdata'
+MELISSAS.FILE = "~/Dropbox/Documents_local/Hopkins/PhD/Dissertation/EHE/CNICS/synthetic_fixed_2021-10-04.Rdata"
+TODDS.FILE = '../../CNICS/cleaned_datasets/arch68/cnics_fixed_2021-10-04.Rdata'
 if (file.exists(MELISSAS.FILE))
 {
     load(MELISSAS.FILE)
@@ -53,6 +53,34 @@ for (i in 1:nrow(dataset)) {
         dataset$sex.risk[i]="missing"
 }
 
+## Defining engagement criteria; disengagement time ##
+print("Defining engagement criteria and disengagement time")
+for (i in 1:nrow(dataset)) {
+    if(dataset$vl.now[i]==TRUE && dataset$visits.now[i]==TRUE)  {
+        dataset$engaged.now[i]=TRUE
+ 
+    } else 
+        dataset$engaged.now[i]=FALSE
+    
+}
+
+for (i in 1:nrow(dataset)) {
+    if(dataset$vl.future[i]==TRUE && dataset$visits.future[i]==TRUE)  {
+        dataset$engaged.future[i]=TRUE
+        
+    } else 
+        dataset$engaged.future[i]=FALSE
+    
+}
+
+for (i in 1:nrow(dataset)) {
+    if(!is.na(dataset$years.since.vl.and.visit[i]) && dataset$years.since.vl.and.visit[i]<1)  {
+        dataset$disengaged.category[i] = "0-1"
+        
+    } else 
+        dataset$disengaged.category[i]=">1"
+    
+}
 
 
 ##------------------------------------##
@@ -146,7 +174,7 @@ model.engaged.suppressed <- nomLORgee(future.state ~ age.category + sex.risk + r
 ##------------------------------------##
 
 print("Preparing Dataset for disengaged")
-disengaged <-dataset[dataset$engaged.now==FALSE,]
+disengaged <-dataset[dataset$engaged.now==FALSE & dataset$disengaged.category=="0-1",]
 
 for (i in 1:nrow(disengaged)) {
     if(!is.na(disengaged$engaged.future[i]) && disengaged$engaged.future[i]==FALSE)  {
