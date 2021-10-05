@@ -1,5 +1,5 @@
 MELISSAS.FILE = "~/Dropbox/Documents_local/Hopkins/PhD/Dissertation/EHE/CNICS/synthetic_fixed_2021-10-04.Rdata"
-TODDS.FILE = '../../CNICS/cleaned_datasets/arch68/cnics_fixed_2021-08-06.Rdata'
+TODDS.FILE = '../../CNICS/cleaned_datasets/arch68/cnics_fixed_2021-10-04.Rdata'
 if (file.exists(MELISSAS.FILE))
 {
     load(MELISSAS.FILE)
@@ -74,7 +74,7 @@ for (i in 1:nrow(dataset)) {
 }
 
 for (i in 1:nrow(dataset)) {
-    if(dataset$years.since.vl.and.visit[i]<1)  {
+    if(!is.na(dataset$years.since.vl.and.visit[i]) && dataset$years.since.vl.and.visit[i]<1)  {
         dataset$disengaged.category[i] = "0-1"
         
     } else 
