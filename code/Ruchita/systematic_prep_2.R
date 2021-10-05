@@ -41,8 +41,18 @@ ALL.PREP.INTERVENTION.CODES = c(
 )
 
 VAR.ORAL.PREP.INTERVENTIONS.CODES = c(
-  ORAL.PREP.INTERVENTION.CODES,
-  VAR.PREP.INTERVENTION.CODES
+  VAR.PREP.INTERVENTION.CODES,
+  ORAL.PREP.INTERVENTION.CODES
+)
+
+ALL.VAR.ORAL.PREP.INTERVENTIONS.CODES = c(
+  'noint',
+  'msm.p10.oral_23_27',
+  'msm.p25.oral_23_27',
+  'msm.p50.oral_23_27',
+  'msm.p10.inj.variable_23_27',
+  'msm.p25.inj.variable_23_27',
+  'msm.p50.inj.variable_23_27'
 )
 
 STAGGERED.ORAL.INJ.PREP.CODES = character(2*length(ORAL.PREP.INTERVENTION.CODES))
@@ -67,7 +77,7 @@ run.prep.simulations <- function(msas=TARGET.MSAS,
         
         run.systematic.interventions(simset = simset,
                                      interventions = lapply(intervention.codes, intervention.from.code), 
-                                     dst.dir = dst.dir, overwrite = F, compress = T, 
+                                     dst.dir = dst.dir, overwrite = T, compress = T, 
                                      run.to.year = run.to.year, verbose = T, 
                                      save.baseline.and.seed = F
                                      )
@@ -139,11 +149,21 @@ make.prep.table <- function(msas=TARGET.MSAS,
             }
             else if (stat == 'diff')
             {
-              diff = (int.values[[1]][dim(int.values[[1]])[1],]-int.values[[1]][1,])/int.values[[1]][1,]
+              diff = ((int.values[[1]][dim(int.values[[1]])[1],]-int.values[[1]][1,])/int.values[[1]][1,])*100
               mean_diff = round(mean(diff),0)
               CI_low = round(quantile(diff, probs=.025),0)
               CI_high = round(quantile(diff, probs=.975),0)
-              paste0(format(mean_diff,big.mark=',')," [",CI_low," to ",CI_high,"]")
+              paste0(format(mean_diff,big.mark=','),"% [",CI_low,"% to ",CI_high,"%]")
+              
+            }
+            else if (stat == "percent.diff"){
+              int_diff = ((int.values[[1]][dim(int.values[[1]])[1],]-int.values[[1]][1,])/int.values[[1]][1,])*100
+              comp_diff = ((comp.values[[1]][dim(comp.values[[1]])[1],]-comp.values[[1]][1,])/comp.values[[1]][1,])*100
+              diff = int_diff - comp_diff
+              mean_diff = round(mean(diff),0)
+              CI_low = round(quantile(diff, probs=.025),0)
+              CI_high = round(quantile(diff, probs=.975),0)
+              paste0(format(mean_diff,big.mark=','),"% [",CI_low,"% to ",CI_high,"%]")
               
             }
      
@@ -192,14 +212,21 @@ make.sensitivity.plot <- function(msas=TARGET.MSAS,
   for(i in 1:length(intervention.codes)){
     
     
-    int = sapply(1:length(msas), function(msa){
+    int_2020 = sapply(1:length(msas), function(msa){
       int.code = intervention.codes[i]
       int.values = raw.prep.results[,msa,int.code]
-      colSums(int.values[[1]])
-      
+      int.values[[1]][1,]
     })
     
-    comp = sapply(1:length(msas), function(msa){
+    int_2030 = sapply(1:length(msas), function(msa){
+      int.code = intervention.codes[i]
+      int.values = raw.prep.results[,msa,int.code]
+      int.values[[1]][dim(int.values[[1]])[1],]
+    })
+    
+    
+    
+    comp_2020 = sapply(1:length(msas), function(msa){
         
         if (is.null(comparison.codes)){
           comp.values = rep(0, length(int.values))
@@ -210,22 +237,40 @@ make.sensitivity.plot <- function(msas=TARGET.MSAS,
           comp.values = raw.prep.results[,msa,comp.code]
         }
         
-        colSums(comp.values[[1]])
+        comp.values[[1]][1,]
       })
     
-    int_collapse = do.call(rbind.data.frame, int)
-    int_collapse = int_collapse[,-dim(int_collapse)[2]]
-    comp_collapse = do.call(rbind.data.frame, comp)
-    comp_collapse = comp_collapse[,-dim(comp_collapse)[2]]
-    sensitivity_plot = ((colSums(int_collapse)-colSums(comp_collapse))/(colSums(comp_collapse)))*100
+    comp_2030 = sapply(1:length(msas), function(msa){
+      
+      if (is.null(comparison.codes)){
+        comp.values = rep(0, length(int.values))
+      }
+      else
+      {            
+        comp.code = comparison.codes[i]
+        comp.values = raw.prep.results[,msa,comp.code]
+      }
+      comp.values[[1]][dim(comp.values[[1]])[1],]
+    })
+    
+    int_2020_collapse = do.call(rbind.data.frame, int_2020)
+    int_2020_collapse = int_2020_collapse[,-dim(int_2020_collapse)[2]]
+    int_2030_collapse = do.call(rbind.data.frame, int_2030)
+    int_2030_collapse = int_2030_collapse[,-dim(int_2030_collapse)[2]]
+    comp_2020_collapse = do.call(rbind.data.frame, comp_2020)
+    comp_2020_collapse = comp_2020_collapse[,-dim(comp_2020_collapse)[2]]
+    comp_2030_collapse = do.call(rbind.data.frame, comp_2030)
+    comp_2030_collapse = comp_2030_collapse[,-dim(comp_2030_collapse)[2]]
+    
+    sensitivity_plot = ((colSums(int_2030_collapse)-colSums(int_2020_collapse))/(colSums(int_2020_collapse)))*100 - ((colSums(comp_2030_collapse)-colSums(comp_2020_collapse))/(colSums(comp_2020_collapse)))*100
     sensitivity_plot = cbind(sensitivity_plot,inj)
     rownames(sensitivity_plot) <- NULL
-    colnames(sensitivity_plot) <- c("Relative Difference","Efficacy")
+    colnames(sensitivity_plot) <- c("Absolute Difference","Efficacy")
     sensitivity_plot = as.data.frame(sensitivity_plot)
     dev.off()
-    ggplot(sensitivity_plot, aes(x =`Efficacy`, y = `Relative Difference`)) + geom_point() +ggtitle(paste0("Sensitivity Plot ",intervention.codes[i]))
+    ggplot(sensitivity_plot, aes(x =`Efficacy`, y = `Absolute Difference`)) + geom_point() +ggtitle(paste0("Sensitivity Plot ",intervention.codes[i]))
     
-
+    cor(sensitivity_plot, method = "spearman")
   
   }
 
