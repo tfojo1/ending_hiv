@@ -1,5 +1,9 @@
 load("~/Dropbox/Documents_local/Hopkins/PhD/Dissertation/EHE/Ending_HIV/ending_hiv/code/for Melissa/CNICS analysis/multinomial_output_real_2021-10-04")
 
+##-------------------------------------##
+##---------- For CNICS RRRs -----------##
+##-------------------------------------##
+
 ## Engaged unsuppressed
 covariates.EU = names(output$engaged.unsuppressed.coefficients[1:(length(output$engaged.unsuppressed.coefficients)/2)])
 future.states.EU = c("suppress","lost") 

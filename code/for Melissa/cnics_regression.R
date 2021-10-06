@@ -13,13 +13,21 @@ if (file.exists(TODDS.FILE))
     dataset.type='real'
 }
 
+library(nnet)
+library(multgee)
+library(gee)
+
+analysis = 'jheem.model'
+# analysis = 'CNICS'
+
+##----------------------------------##
+##---------- Data cleaning----------##
+##----------------------------------##
+
 #A quick fix to the mis-named age.category field
 # (the synthetic dataset erroneously labels this 'age.category.randomized')
 if (any(names(dataset)=='age.category.randomized'))
     names(dataset)[names(dataset)=='age.category.randomized'] = 'age.category'
-
-library(nnet)
-library(multgee)
 
 dataset <- dataset[dataset$sex!="Intersexed",]
 dataset <- dataset[dataset$age.category!="0-13",]
@@ -27,6 +35,7 @@ dataset <- dataset[dataset$age.category!="0-13",]
 anchor.year = 2010
 dataset$relative.year <- dataset$date - anchor.year
 
+## Creating sex.risk categories ##
 for (i in 1:nrow(dataset)) {
     if(dataset$risk[i]=="msm")  {
         dataset$sex.risk[i]="msm"
@@ -118,14 +127,22 @@ engaged.unsuppressed$sex.risk <- factor(engaged.unsuppressed$sex.risk, levels = 
                                                                                   "heterosexual_male","heterosexual_female",
                                                                                   "idu_male","idu_female","other"))
 
+if (analysis=='CNICS')
+{
+    print("Fitting Model for engaged-unsuppressed, CNICS version (all coefficients)")
+    model.engaged.unsuppressed <- nomLORgee(future.state ~ age.category + sex.risk + race + relative.year
+                                            + site + art.naive + years.in.care + aids.defining.illness
+                                            + age.category*relative.year + sex.risk*relative.year + race*relative.year,
+                                            data=engaged.unsuppressed, id=id)
+}
 
-print("Fitting Model for engaged-unsuppressed")
-model.engaged.unsuppressed <- nomLORgee(future.state ~ age.category + sex.risk + race + relative.year
-                                        + site + art.naive + years.in.care + aids.defining.illness,
-                                        data=engaged.unsuppressed, id=id)
-
-# exp(model.engaged.unsuppressed$coefficients[grepl('beta',names(model.engaged.unsuppressed$coefficients))])
-# table(engaged.unsuppressed$future.state)
+if (analysis=='jheem.model')
+{
+    print("Fitting Model for engaged-unsuppressed, JHEEM model version (model coefficients only)")
+    model.engaged.unsuppressed <- nomLORgee(future.state ~ age.category + sex.risk + race + relative.year
+                                            + age.category*relative.year + sex.risk*relative.year + race*relative.year,
+                                            data=engaged.unsuppressed, id=id)
+}
 
 
 ##------------------------------------##
@@ -163,10 +180,22 @@ engaged.suppressed$sex.risk <- factor(engaged.suppressed$sex.risk, levels = c("m
                                                                               "heterosexual_male","heterosexual_female",
                                                                               "idu_male","idu_female","other"))
 
-print("Fitting Model for engaged-suppressed")
-model.engaged.suppressed <- nomLORgee(future.state ~ age.category + sex.risk + race + relative.year
-                                      + site + art.naive + years.in.care + aids.defining.illness,
-                                      data=engaged.suppressed, id=id)
+if (analysis=='CNICS')
+{
+    print("Fitting Model for engaged-suppressed, CNICS version (all coefficients)")
+    model.engaged.suppressed <- nomLORgee(future.state ~ age.category + sex.risk + race + relative.year
+                                            + site + art.naive + years.in.care + aids.defining.illness
+                                            + age.category*relative.year + sex.risk*relative.year + race*relative.year,
+                                            data=engaged.suppressed, id=id)
+}
+
+if (analysis=='jheem.model')
+{
+    print("Fitting Model for engaged-suppressed, JHEEM model version (model coefficients only)")
+    model.engaged.suppressed <- nomLORgee(future.state ~ age.category + sex.risk + race + relative.year
+                                            + age.category*relative.year + sex.risk*relative.year + race*relative.year,
+                                            data=engaged.suppressed, id=id)
+}
 
 
 ##------------------------------------##
@@ -193,21 +222,58 @@ for (i in 1:nrow(disengaged)) {
     
 }
 
-disengaged <-disengaged[disengaged$future.state!="missing",]
-disengaged$future.state <- factor(disengaged$future.state, levels = c("reengage.unsuppress","reengage.suppress", "remain"))
-disengaged$age.category <- factor(disengaged$age.category, levels = c("35-45","13-25","25-35","45-55","55+"))
-disengaged$sex <- factor(disengaged$sex, levels = c("Male","Female"))
-disengaged$race <- factor(disengaged$race, levels = c("other","black","hispanic"))
-disengaged$risk <- factor(disengaged$risk, levels = c("heterosexual","idu","msm","msm_idu","other"))
-disengaged$sex.risk <- factor(disengaged$sex.risk, levels = c("msm","msm_idu",
-                                                              "heterosexual_male","heterosexual_female",
-                                                              "idu_male","idu_female","other"))
+if (analysis=='jheem.model')
+{
+    print("Removing reengagement into suppressed")
+    disengaged <- disengaged[disengaged$future.state!="reengage.suppress",]
+    
+    disengaged <-disengaged[disengaged$future.state!="missing",]
+    
+    for(i in 1:nrow(disengaged)){
+        if(disengaged$future.state[i]=="reengage.unsuppress") {
+            disengaged$reengage[i]==1
+        
+            } else
+                disengaged$reengage[i]=0
+    }
+    
+    disengaged$future.state <- factor(disengaged$future.state, levels = c("reengage.unsuppress","remain"))
+    disengaged$age.category <- factor(disengaged$age.category, levels = c("35-45","13-25","25-35","45-55","55+"))
+    disengaged$sex <- factor(disengaged$sex, levels = c("Male","Female"))
+    disengaged$race <- factor(disengaged$race, levels = c("other","black","hispanic"))
+    disengaged$risk <- factor(disengaged$risk, levels = c("heterosexual","idu","msm","msm_idu","other"))
+    disengaged$sex.risk <- factor(disengaged$sex.risk, levels = c("msm","msm_idu",
+                                                                  "heterosexual_male","heterosexual_female",
+                                                                  "idu_male","idu_female","other"))
+    
+    
+    print("Fitting LOGISTIC Model for disengaged, JHEEM model version (model coefficients only)")
+    model.disengaged <- gee(reengage ~ age.category + sex.risk + race + relative.year 
+                            + age.category*relative.year + sex.risk*relative.year + race*relative.year,
+                            data=disengaged, id=id, family = binomial, corstr = "exchangeable")
+    
+    
+}
 
-
-print("Fitting Model for disengaged")
-model.disengaged <- nomLORgee(future.state ~ age.category + sex.risk + race + relative.year 
-                              + site + art.naive + years.in.care + aids.defining.illness,
-                              data=disengaged, id=id)
+if (analysis=='CNICS')
+{
+    disengaged <-disengaged[disengaged$future.state!="missing",]
+    disengaged$future.state <- factor(disengaged$future.state, levels = c("reengage.unsuppress","reengage.suppress", "remain"))
+    disengaged$age.category <- factor(disengaged$age.category, levels = c("35-45","13-25","25-35","45-55","55+"))
+    disengaged$sex <- factor(disengaged$sex, levels = c("Male","Female"))
+    disengaged$race <- factor(disengaged$race, levels = c("other","black","hispanic"))
+    disengaged$risk <- factor(disengaged$risk, levels = c("heterosexual","idu","msm","msm_idu","other"))
+    disengaged$sex.risk <- factor(disengaged$sex.risk, levels = c("msm","msm_idu",
+                                                                  "heterosexual_male","heterosexual_female",
+                                                                  "idu_male","idu_female","other"))
+    
+    
+    print("Fitting MULTINOMIAL Model for disengaged, CNICS version (all coefficients)")
+    model.disengaged <- nomLORgee(future.state ~ age.category + sex.risk + race + relative.year 
+                                  + site + art.naive + years.in.care + aids.defining.illness,
+                                  + age.category*relative.year + sex.risk*relative.year + race*relative.year,
+                                  data=disengaged, id=id)  
+}
 
 
 ##------------------------------------##
@@ -219,37 +285,10 @@ output <- list(engaged.unsuppressed.coefficients=model.engaged.unsuppressed$coef
                engaged.suppressed.coefficients=model.engaged.suppressed$coefficients,
                engaged.suppressed.variance=model.engaged.suppressed$robust.variance,
                disengaged.coefficients=model.disengaged$coefficients,
-               disengaged.variance=model.disengaged$robust.variance)
+               disengaged.variance=model.disengaged$robust.variance,
+               anchor.year=anchor.year)
 
 print("Done - saving output")
 save(output, file=file.path('code','for Melissa', 'CNICS analysis', 
-                            paste0('multinomial_output_', dataset.type, '_', Sys.Date())))
+                            paste0('multinomial_output_', dataset.type, '_', analysis, '_', Sys.Date())))
 
-### Old way of doing this
-# engaged.unsuppressed$remain = as.numeric(engaged.unsuppressed$engaged.future==TRUE 
-#                                          & engaged.unsuppressed$suppressed.future==FALSE)
-# engaged.unsuppressed$suppress = as.numeric(engaged.unsuppressed$engaged.future==TRUE 
-#                                            & engaged.unsuppressed$suppressed.future==TRUE)
-# engaged.unsuppressed$lost = as.numeric(engaged.unsuppressed$engaged.future==FALSE)
-# 
-# for (i in 1:nrow(engaged.unsuppressed)) {
-#     if(engaged.unsuppressed$remain[i]==1 && !is.na(engaged.unsuppressed$remain[i])) {
-#         engaged.unsuppressed$future.state[i]="remain"
-#         
-#     } else if(engaged.unsuppressed$suppress[i]==1 && !is.na(engaged.unsuppressed$suppress[i])){
-#         engaged.unsuppressed$future.state[i]="suppress"
-#         
-#     } else if(engaged.unsuppressed$lost[i]==1 && !is.na(engaged.unsuppressed$lost[i])){
-#         engaged.unsuppressed$future.state[i]="lost"
-#         
-#     } else 
-#         engaged.unsuppressed$future.state[i]="NA"
-#     
-# }
-# 
-# 
-# engaged.suppressed$remain = as.numeric(engaged.suppressed$engaged.future==TRUE 
-#                                        & engaged.suppressed$suppressed.future==TRUE)
-# engaged.suppressed$unsuppress = as.numeric(engaged.suppressed$engaged.future==TRUE 
-#                                            & engaged.unsuppressed$suppressed.future==FALSE)
-# engaged.suppressed$lost = as.numeric(engaged.suppressed$engaged.future==FALSE)

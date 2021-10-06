@@ -195,58 +195,62 @@ create.continuum.manager <- function(dir='cleaned_data/',
     #MELISSA - fill in
     if (verbose)
         print('Setting up New Suppression and Unsuppressed-to-disengaged')
-    cm$leave.unsuppressed.model = setup.3way.multinomial.model(anchor.year=2010,
+    cm$leave.unsuppressed.model = setup.3way.multinomial.model(anchor.year=output$anchor.year,
                                                                intercepts1=setup.array.from.coefficients(
-                                                                   age1=-0.198898198,
-                                                                   age2=-0.110291039,
-                                                                   age4=0.157456704,
-                                                                   age5=0.404868748,
-                                                                   heterosexual.male=-0.147833208,
-                                                                   heterosexual.male.idu=-0.064208323,
-                                                                   msm.idu=0.070934551,
-                                                                   female=-0.207155055,
-                                                                   female.idu=-0.193665677,
-                                                                   black=-0.254777575,
-                                                                   hispanic=0.037179742
+                                                                   all=output$engaged.unsuppressed.coefficients["beta10"],
+                                                                   age1=output$engaged.unsuppressed.coefficients["age.category13-25:1"],
+                                                                   age2=output$engaged.unsuppressed.coefficients["age.category25-35:1"],
+                                                                   age4=output$engaged.unsuppressed.coefficients["age.category45-55:1"],
+                                                                   age5=output$engaged.unsuppressed.coefficients["age.category55+:1"],
+                                                                   heterosexual.male=output$engaged.unsuppressed.coefficients["sex.riskheterosexual_male:1"],
+                                                                   heterosexual.male.idu=output$engaged.unsuppressed.coefficients["sex.riskidu_male:1"],
+                                                                   msm.idu=output$engaged.unsuppressed.coefficients["sex.riskmsm_idu:1"],
+                                                                   female=output$engaged.unsuppressed.coefficients["sex.riskheterosexual_female:1"],
+                                                                   female.idu=output$engaged.unsuppressed.coefficients["sex.riskidu_female:1"],
+                                                                   black=output$engaged.unsuppressed.coefficients["raceblack:1"],
+                                                                   hispanic=black=output$engaged.unsuppressed.coefficients["racehispanic:1"]
                                                                ),
                                                                slopes1=setup.array.from.coefficients(
-                                                                   age1=0,
-                                                                   age2=0,
-                                                                   age4=0,
-                                                                   age5=0,
-                                                                   heterosexual.male=0,
-                                                                   heterosexual.male.idu=0,
-                                                                   msm.idu=0,
-                                                                   female=0,
-                                                                   female.idu=0,
-                                                                   black=0,
-                                                                   hispanic=0
+                                                                   all=output$engaged.unsuppressed.coefficients["relative.year:1"],
+                                                                   age1=output$engaged.unsuppressed.coefficients["age.category13-25:relative.year:1"],
+                                                                   age2=output$engaged.unsuppressed.coefficients["age.category25-35:relative.year:1"],
+                                                                   age4=output$engaged.unsuppressed.coefficients["age.category45-55:relative.year:1"],
+                                                                   age5=output$engaged.unsuppressed.coefficients["age.category55+:relative.year:1"],
+                                                                   heterosexual.male=output$engaged.unsuppressed.coefficients["sex.riskheterosexual_male:relative.year:1"],
+                                                                   heterosexual.male.idu=output$engaged.unsuppressed.coefficients["sex.riskidu_male:relative.year:1"],
+                                                                   msm.idu=output$engaged.unsuppressed.coefficients["sex.riskmsm_idu:relative.year:1"],
+                                                                   female=output$engaged.unsuppressed.coefficients["sex.riskheterosexual_female:relative.year:1"],
+                                                                   female.idu=output$engaged.unsuppressed.coefficients["sex.riskidu_female:relative.year:1"],
+                                                                   black=output$engaged.unsuppressed.coefficients["raceblack:relative.year:1"],
+                                                                   hispanic=black=output$engaged.unsuppressed.coefficients["racehispanic:relative.year:1"]
                                                                ),
                                                                intercepts2=setup.array.from.coefficients(
-                                                                   age1=0.070208320,
-                                                                   age2=-0.012290709,
-                                                                   age4=-0.108816542,
-                                                                   age5=0.067824222,
-                                                                   heterosexual.male=-0.115985572,
-                                                                   heterosexual.male.idu=0.176035056,
-                                                                   msm.idu=0.276978169,
-                                                                   female=-0.278969372,
-                                                                   female.idu=-0.143002353,
-                                                                   black=-0.244145567,
-                                                                   hispanic=-0.285625060
+                                                                   all=output$engaged.unsuppressed.coefficients["beta20"],
+                                                                   age1=output$engaged.unsuppressed.coefficients["age.category13-25:2"],
+                                                                   age2=output$engaged.unsuppressed.coefficients["age.category25-35:2"],
+                                                                   age4=output$engaged.unsuppressed.coefficients["age.category45-55:2"],
+                                                                   age5=output$engaged.unsuppressed.coefficients["age.category55+:2"],
+                                                                   heterosexual.male=output$engaged.unsuppressed.coefficients["sex.riskheterosexual_male:2"],
+                                                                   heterosexual.male.idu=output$engaged.unsuppressed.coefficients["sex.riskidu_male:2"],
+                                                                   msm.idu=output$engaged.unsuppressed.coefficients["sex.riskmsm_idu:2"],
+                                                                   female=output$engaged.unsuppressed.coefficients["sex.riskheterosexual_female:2"],
+                                                                   female.idu=output$engaged.unsuppressed.coefficients["sex.riskidu_female:2"],
+                                                                   black=output$engaged.unsuppressed.coefficients["raceblack:2"],
+                                                                   hispanic=black=output$engaged.unsuppressed.coefficients["racehispanic:2"]
                                                                ),
                                                                slopes2=setup.array.from.coefficients(
-                                                                   age1=0,
-                                                                   age2=0,
-                                                                   age4=0,
-                                                                   age5=0,
-                                                                   heterosexual.male=0,
-                                                                   heterosexual.male.idu=0,
-                                                                   msm.idu=0,
-                                                                   female=0,
-                                                                   female.idu=0,
-                                                                   black=0,
-                                                                   hispanic=0
+                                                                   all=output$engaged.unsuppressed.coefficients["relative.year:2"],
+                                                                   age1=output$engaged.unsuppressed.coefficients["age.category13-25:relative.year:2"],
+                                                                   age2=output$engaged.unsuppressed.coefficients["age.category25-35:relative.year:2"],
+                                                                   age4=output$engaged.unsuppressed.coefficients["age.category45-55:relative.year:2"],
+                                                                   age5=output$engaged.unsuppressed.coefficients["age.category55+:relative.year:2"],
+                                                                   heterosexual.male=output$engaged.unsuppressed.coefficients["sex.riskheterosexual_male:relative.year:2"],
+                                                                   heterosexual.male.idu=output$engaged.unsuppressed.coefficients["sex.riskidu_male:relative.year:2"],
+                                                                   msm.idu=output$engaged.unsuppressed.coefficients["sex.riskmsm_idu:relative.year:2"],
+                                                                   female=output$engaged.unsuppressed.coefficients["sex.riskheterosexual_female:relative.year:2"],
+                                                                   female.idu=output$engaged.unsuppressed.coefficients["sex.riskidu_female:relative.year:2"],
+                                                                   black=output$engaged.unsuppressed.coefficients["raceblack:relative.year:2"],
+                                                                   hispanic=black=output$engaged.unsuppressed.coefficients["racehispanic:relative.year:2"]
                                                                ),
                                                                outcome.names=c('suppress','disengage','remain'))
     
@@ -254,58 +258,62 @@ create.continuum.manager <- function(dir='cleaned_data/',
     if (verbose)
         print('Setting up Unsuppression and Suppressed-to-disengaged')
     # For Melissa change anchor year to come from CNICS file
-    cm$leave.suppressed.model = setup.3way.multinomial.model(anchor.year=2010,
+    cm$leave.suppressed.model = setup.3way.multinomial.model(anchor.year=output$anchor.year,
                                                              intercepts1=setup.array.from.coefficients(
-                                                                 age1=0.7883763716,
-                                                                 age2=0.2725916674,
-                                                                 age4=-0.2441923470,
-                                                                 age5=-0.7783033728,
-                                                                 heterosexual.male=0.3008780848,
-                                                                 heterosexual.male.idu=0.6903465268,
-                                                                 msm.idu=0.6337235742,
-                                                                 female=0.1877497870,
-                                                                 female.idu=0.7003245513,
-                                                                 black=0.5061137697,
-                                                                 hispanic=-0.0319166549
+                                                                 all=output$engaged.suppressed.coefficients["beta10"],
+                                                                 age1=output$engaged.suppressed.coefficients["age.category13-25:1"],
+                                                                 age2=output$engaged.suppressed.coefficients["age.category25-35:1"],
+                                                                 age4=output$engaged.suppressed.coefficients["age.category45-55:1"],
+                                                                 age5=output$engaged.suppressed.coefficients["age.category55+:1"],
+                                                                 heterosexual.male=output$engaged.suppressed.coefficients["sex.riskheterosexual_male:1"],
+                                                                 heterosexual.male.idu=output$engaged.suppressed.coefficients["sex.riskidu_male:1"],
+                                                                 msm.idu=output$engaged.suppressed.coefficients["sex.riskmsm_idu:1"],
+                                                                 female=output$engaged.suppressed.coefficients["sex.riskheterosexual_female:1"],
+                                                                 female.idu=output$engaged.suppressed.coefficients["sex.riskidu_female:1"],
+                                                                 black=output$engaged.suppressed.coefficients["raceblack:1"],
+                                                                 hispanic=black=output$engaged.suppressed.coefficients["racehispanic:1"]
                                                              ),
                                                              slopes1=setup.array.from.coefficients(
-                                                                 age1=0,
-                                                                 age2=0,
-                                                                 age4=0,
-                                                                 age5=0,
-                                                                 heterosexual.male=0,
-                                                                 heterosexual.male.idu=0,
-                                                                 msm.idu=0,
-                                                                 female=0,
-                                                                 female.idu=0,
-                                                                 black=0,
-                                                                 hispanic=0
+                                                                 all=output$engaged.suppressed.coefficients["relative.year:1"],
+                                                                 age1=output$engaged.suppressed.coefficients["age.category13-25:relative.year:1"],
+                                                                 age2=output$engaged.suppressed.coefficients["age.category25-35:relative.year:1"],
+                                                                 age4=output$engaged.suppressed.coefficients["age.category45-55:relative.year:1"],
+                                                                 age5=output$engaged.suppressed.coefficients["age.category55+:relative.year:1"],
+                                                                 heterosexual.male=output$engaged.suppressed.coefficients["sex.riskheterosexual_male:relative.year:1"],
+                                                                 heterosexual.male.idu=output$engaged.suppressed.coefficients["sex.riskidu_male:relative.year:1"],
+                                                                 msm.idu=output$engaged.suppressed.coefficients["sex.riskmsm_idu:relative.year:1"],
+                                                                 female=output$engaged.suppressed.coefficients["sex.riskheterosexual_female:relative.year:1"],
+                                                                 female.idu=output$engaged.suppressed.coefficients["sex.riskidu_female:relative.year:1"],
+                                                                 black=output$engaged.suppressed.coefficients["raceblack:relative.year:1"],
+                                                                 hispanic=black=output$engaged.suppressed.coefficients["racehispanic:relative.year:1"]
                                                              ),
                                                              intercepts2=setup.array.from.coefficients(
-                                                                 age1=0.1311871316,
-                                                                 age2=0.2093109953,
-                                                                 age4=-0.2295284437,
-                                                                 age5=-0.3692545452,
-                                                                 heterosexual.male=0.0960773547,
-                                                                 heterosexual.male.idu=0.2025023770,
-                                                                 msm.idu=0.2246561195,
-                                                                 female=-0.0631125677,
-                                                                 female.idu= -0.0278654251,
-                                                                 black=-0.2370085202,
-                                                                 hispanic=-0.4135980646
+                                                                 all=output$engaged.suppressed.coefficients["beta20"],
+                                                                 age1=output$engaged.suppressed.coefficients["age.category13-25:2"],
+                                                                 age2=output$engaged.suppressed.coefficients["age.category25-35:2"],
+                                                                 age4=output$engaged.suppressed.coefficients["age.category45-55:2"],
+                                                                 age5=output$engaged.suppressed.coefficients["age.category55+:2"],
+                                                                 heterosexual.male=output$engaged.suppressed.coefficients["sex.riskheterosexual_male:2"],
+                                                                 heterosexual.male.idu=output$engaged.suppressed.coefficients["sex.riskidu_male:2"],
+                                                                 msm.idu=output$engaged.suppressed.coefficients["sex.riskmsm_idu:2"],
+                                                                 female=output$engaged.suppressed.coefficients["sex.riskheterosexual_female:2"],
+                                                                 female.idu=output$engaged.suppressed.coefficients["sex.riskidu_female:2"],
+                                                                 black=output$engaged.suppressed.coefficients["raceblack:2"],
+                                                                 hispanic=black=output$engaged.suppressed.coefficients["racehispanic:2"]
                                                              ),
                                                              slopes2=setup.array.from.coefficients(
-                                                                 age1=0,
-                                                                 age2=0,
-                                                                 age4=0,
-                                                                 age5=0,
-                                                                 heterosexual.male=0,
-                                                                 heterosexual.male.idu=0,
-                                                                 msm.idu=0,
-                                                                 female=0,
-                                                                 female.idu=0,
-                                                                 black=0,
-                                                                 hispanic=0
+                                                                 all=output$engaged.suppressed.coefficients["relative.year:2"],
+                                                                 age1=output$engaged.suppressed.coefficients["age.category13-25:relative.year:2"],
+                                                                 age2=output$engaged.suppressed.coefficients["age.category25-35:relative.year:2"],
+                                                                 age4=output$engaged.suppressed.coefficients["age.category45-55:relative.year:2"],
+                                                                 age5=output$engaged.suppressed.coefficients["age.category55+:relative.year:2"],
+                                                                 heterosexual.male=output$engaged.suppressed.coefficients["sex.riskheterosexual_male:relative.year:2"],
+                                                                 heterosexual.male.idu=output$engaged.suppressed.coefficients["sex.riskidu_male:relative.year:2"],
+                                                                 msm.idu=output$engaged.suppressed.coefficients["sex.riskmsm_idu:relative.year:2"],
+                                                                 female=output$engaged.suppressed.coefficients["sex.riskheterosexual_female:relative.year:2"],
+                                                                 female.idu=output$engaged.suppressed.coefficients["sex.riskidu_female:relative.year:2"],
+                                                                 black=output$engaged.suppressed.coefficients["raceblack:relative.year:2"],
+                                                                 hispanic=black=output$engaged.suppressed.coefficients["racehispanic:relative.year:2"]
                                                              ),
                                                              outcome.names=c('unsuppress','disengage','remain'))
     
@@ -323,7 +331,7 @@ create.continuum.manager <- function(dir='cleaned_data/',
                                   dir=dir,
                                   #for melissa
 #                                  coefficients = xx
-                                  anchor.year = 2000, #for melissa - change to come from CNICS file
+                                  anchor.year = output$anchor.year, #for melissa - change to come from CNICS file
                                   max.reengaged.proportion = 1,#max.reengaged.proportion,
                                   settings=settings)
     
@@ -484,11 +492,33 @@ setup.reengagement.model <- function(cm,
     {
         # for melissa - fill in here
         cm$reengagement$stratified.log.odds.intercept = setup.array.from.coefficients(
-            
-        )
+            all=output$disengaged.coefficients["(Intercept)"],
+            age1=output$disengaged.coefficients["age.category13-25"],
+            age2=output$disengaged.coefficients["age.category25-35"],
+            age4=output$disengaged.coefficients["age.category45-55"],
+            age5=output$disengaged.coefficients["age.category55+"],
+            heterosexual.male=output$disengaged.coefficients["sex.riskheterosexual_male"],
+            heterosexual.male.idu=output$disengaged.coefficients["sex.riskidu_male"],
+            msm.idu=output$disengaged.coefficients["sex.riskmsm_idu"],
+            female=output$disengaged.coefficients["sex.riskheterosexual_female"],
+            female.idu=output$disengaged.coefficients["sex.riskidu_female"],
+            black=output$disengaged.coefficients["raceblack"],
+            hispanic=black=output$disengaged.coefficients["racehispanic"]
+            )
         
         cm$reengagement$stratified.log.odds.slope = setup.array.from.coefficients(
-            
+            all=output$disengaged.coefficients["relative.year"],
+            age1=output$disengaged.coefficients["age.category13-25:relative.year"],
+            age2=output$disengaged.coefficients["age.category25-35:relative.year"],
+            age4=output$disengaged.coefficients["age.category45-55:relative.year"],
+            age5=output$disengaged.coefficients["age.category55+:relative.year"],
+            heterosexual.male=output$disengaged.coefficients["sex.riskheterosexual_male:relative.year"],
+            heterosexual.male.idu=output$disengaged.coefficients["sex.riskidu_male:relative.year"],
+            msm.idu=output$disengaged.coefficients["sex.riskmsm_idu:relative.year"],
+            female=output$disengaged.coefficients["sex.riskheterosexual_female:relative.year"],
+            female.idu=output$disengaged.coefficients["sex.riskidu_female:relative.year"],
+            black=output$disengaged.coefficients["raceblack:relative.year"],
+            hispanic=black=output$disengaged.coefficients["racehispanic:relative.year"]
         )
     }
     
