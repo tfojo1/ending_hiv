@@ -186,11 +186,19 @@ create.continuum.manager <- function(dir='cleaned_data/',
                                      max.suppressed.to.disengaged.proportion = 0.5,
                                      max.reengaged.proportion = 0.5,
                                      
-                                     verbose=T)
+                                     verbose=T,
+                                    test=FALSE
+)
+
+
 {
     cm = list()
     
-    # load(expanded.continuum.file)
+    
+    if (test)
+        expanded.continuum.file = "code/for Melissa/CNICS analysis/multinomial_output_real_jheem.model_2021-10-06"
+    
+    load(expanded.continuum.file)
     
     #MELISSA - fill in
     if (verbose)
@@ -208,7 +216,7 @@ create.continuum.manager <- function(dir='cleaned_data/',
                                                                    female=output$engaged.unsuppressed.coefficients["sex.riskheterosexual_female:1"],
                                                                    female.idu=output$engaged.unsuppressed.coefficients["sex.riskidu_female:1"],
                                                                    black=output$engaged.unsuppressed.coefficients["raceblack:1"],
-                                                                   hispanic=black=output$engaged.unsuppressed.coefficients["racehispanic:1"]
+                                                                   hispanic=output$engaged.unsuppressed.coefficients["racehispanic:1"]
                                                                ),
                                                                slopes1=setup.array.from.coefficients(
                                                                    all=output$engaged.unsuppressed.coefficients["relative.year:1"],
@@ -222,7 +230,7 @@ create.continuum.manager <- function(dir='cleaned_data/',
                                                                    female=output$engaged.unsuppressed.coefficients["sex.riskheterosexual_female:relative.year:1"],
                                                                    female.idu=output$engaged.unsuppressed.coefficients["sex.riskidu_female:relative.year:1"],
                                                                    black=output$engaged.unsuppressed.coefficients["raceblack:relative.year:1"],
-                                                                   hispanic=black=output$engaged.unsuppressed.coefficients["racehispanic:relative.year:1"]
+                                                                   hispanic=output$engaged.unsuppressed.coefficients["racehispanic:relative.year:1"]
                                                                ),
                                                                intercepts2=setup.array.from.coefficients(
                                                                    all=output$engaged.unsuppressed.coefficients["beta20"],
@@ -236,7 +244,7 @@ create.continuum.manager <- function(dir='cleaned_data/',
                                                                    female=output$engaged.unsuppressed.coefficients["sex.riskheterosexual_female:2"],
                                                                    female.idu=output$engaged.unsuppressed.coefficients["sex.riskidu_female:2"],
                                                                    black=output$engaged.unsuppressed.coefficients["raceblack:2"],
-                                                                   hispanic=black=output$engaged.unsuppressed.coefficients["racehispanic:2"]
+                                                                   hispanic=output$engaged.unsuppressed.coefficients["racehispanic:2"]
                                                                ),
                                                                slopes2=setup.array.from.coefficients(
                                                                    all=output$engaged.unsuppressed.coefficients["relative.year:2"],
@@ -250,7 +258,7 @@ create.continuum.manager <- function(dir='cleaned_data/',
                                                                    female=output$engaged.unsuppressed.coefficients["sex.riskheterosexual_female:relative.year:2"],
                                                                    female.idu=output$engaged.unsuppressed.coefficients["sex.riskidu_female:relative.year:2"],
                                                                    black=output$engaged.unsuppressed.coefficients["raceblack:relative.year:2"],
-                                                                   hispanic=black=output$engaged.unsuppressed.coefficients["racehispanic:relative.year:2"]
+                                                                   hispanic=output$engaged.unsuppressed.coefficients["racehispanic:relative.year:2"]
                                                                ),
                                                                outcome.names=c('suppress','disengage','remain'))
     
@@ -271,7 +279,7 @@ create.continuum.manager <- function(dir='cleaned_data/',
                                                                  female=output$engaged.suppressed.coefficients["sex.riskheterosexual_female:1"],
                                                                  female.idu=output$engaged.suppressed.coefficients["sex.riskidu_female:1"],
                                                                  black=output$engaged.suppressed.coefficients["raceblack:1"],
-                                                                 hispanic=black=output$engaged.suppressed.coefficients["racehispanic:1"]
+                                                                 hispanic=output$engaged.suppressed.coefficients["racehispanic:1"]
                                                              ),
                                                              slopes1=setup.array.from.coefficients(
                                                                  all=output$engaged.suppressed.coefficients["relative.year:1"],
@@ -285,7 +293,7 @@ create.continuum.manager <- function(dir='cleaned_data/',
                                                                  female=output$engaged.suppressed.coefficients["sex.riskheterosexual_female:relative.year:1"],
                                                                  female.idu=output$engaged.suppressed.coefficients["sex.riskidu_female:relative.year:1"],
                                                                  black=output$engaged.suppressed.coefficients["raceblack:relative.year:1"],
-                                                                 hispanic=black=output$engaged.suppressed.coefficients["racehispanic:relative.year:1"]
+                                                                 hispanic=output$engaged.suppressed.coefficients["racehispanic:relative.year:1"]
                                                              ),
                                                              intercepts2=setup.array.from.coefficients(
                                                                  all=output$engaged.suppressed.coefficients["beta20"],
@@ -299,7 +307,7 @@ create.continuum.manager <- function(dir='cleaned_data/',
                                                                  female=output$engaged.suppressed.coefficients["sex.riskheterosexual_female:2"],
                                                                  female.idu=output$engaged.suppressed.coefficients["sex.riskidu_female:2"],
                                                                  black=output$engaged.suppressed.coefficients["raceblack:2"],
-                                                                 hispanic=black=output$engaged.suppressed.coefficients["racehispanic:2"]
+                                                                 hispanic=output$engaged.suppressed.coefficients["racehispanic:2"]
                                                              ),
                                                              slopes2=setup.array.from.coefficients(
                                                                  all=output$engaged.suppressed.coefficients["relative.year:2"],
@@ -313,153 +321,51 @@ create.continuum.manager <- function(dir='cleaned_data/',
                                                                  female=output$engaged.suppressed.coefficients["sex.riskheterosexual_female:relative.year:2"],
                                                                  female.idu=output$engaged.suppressed.coefficients["sex.riskidu_female:relative.year:2"],
                                                                  black=output$engaged.suppressed.coefficients["raceblack:relative.year:2"],
-                                                                 hispanic=black=output$engaged.suppressed.coefficients["racehispanic:relative.year:2"]
+                                                                 hispanic=output$engaged.suppressed.coefficients["racehispanic:relative.year:2"]
                                                              ),
                                                              outcome.names=c('unsuppress','disengage','remain'))
-    
-    if (verbose)
-        print('Reading Linkage')
-    cm = run.linkage.regressions(cm,
-                                 dir=dir,
-                                 anchor.year = linkage.anchor.year,
-                                 max.linked.proportion = max.linked.proportion,
-                                 settings=settings)
     
     if (verbose)
         print('Reading reengagement')
     cm = setup.reengagement.model(cm,
                                   dir=dir,
-                                  #for melissa
-#                                  coefficients = xx
-                                  anchor.year = output$anchor.year, #for melissa - change to come from CNICS file
+                                  output=output,
+                                  anchor.year = output$anchor.year, 
                                   max.reengaged.proportion = 1,#max.reengaged.proportion,
                                   settings=settings)
     
-    
-    if (verbose)
-        print("Reading Suppression")
-    cm = run.suppression.regressions(cm,
-                                     national.surveillance = national.surveillance,
-                                     max.suppressed.proportion=max.suppressed.proportion,
-                                     anchor.year=suppression.anchor.year,
+    if(!test){  
+        if (verbose)
+        print('Reading Linkage')
+        cm = run.linkage.regressions(cm,
+                                     dir=dir,
+                                     anchor.year = linkage.anchor.year,
+                                     max.linked.proportion = max.linked.proportion,
                                      settings=settings)
-    
-    if (verbose)
-        print("Reading Testing")
-    cm = run.testing.regressions(cm,
-                                 dir=dir,
-                                 verbose=verbose,
-                                 max.tested.proportion=max.tested.proportion,
-                                 anchor.year = testing.anchor.year,
-                                 settings=settings)
-    cm$state.testing = read.brfss.state(file = file.path(dir, 'continuum/state/BRFSS_state.csv'))
-    
+        
+        
+        if (verbose)
+            print("Reading Suppression")
+        cm = run.suppression.regressions(cm,
+                                         national.surveillance = national.surveillance,
+                                         max.suppressed.proportion=max.suppressed.proportion,
+                                         anchor.year=suppression.anchor.year,
+                                         settings=settings)
+        
+        if (verbose)
+            print("Reading Testing")
+        cm = run.testing.regressions(cm,
+                                     dir=dir,
+                                     verbose=verbose,
+                                     max.tested.proportion=max.tested.proportion,
+                                     anchor.year = testing.anchor.year,
+                                     settings=settings)
+        cm$state.testing = read.brfss.state(file = file.path(dir, 'continuum/state/BRFSS_state.csv'))
+        
+        
+        }
     cm
-}
-
-##-----------------------------------##
-##-- SET UP NEWLY SUPPRESSED MODEL --##
-##-----------------------------------##
-
-setup.newly.suppressed.model <- function(cm,
-                                         dir,
-                                         anchor.year,
-                                         max.newly.suppressed.proportion,
-                                         settings)
-{
-    cm$newly.suppressed = list(
-        max.proportion = max.newly.suppressed.proportion,
-        anchor.year = anchor.year
-    ) 
-    
-    
-    dim.names = list(age=settings$AGES$labels, race=settings$RACES, sex=settings$SEXES, risk=settings$RISK_STRATA)
-
-    print("FOR NOW WE ARE USING DUMMY NEWLY SUPPRESSED MODEL")
-    cm$newly.suppressed$stratified.log.odds.intercept = array(logit(.8), dim=sapply(dim.names, length), dimnames=dim.names)
-    cm$newly.suppressed$stratified.log.odds.slope = array(0, dim=sapply(dim.names, length), dimnames=dim.names)
-    
-    
-    cm
-}
-
-##--------------------------------##
-##-- SET UP UNSUPPRESSION MODEL --##
-##--------------------------------##
-
-setup.unsuppression.model <- function(cm,
-                                         dir,
-                                         anchor.year,
-                                         max.unsuppressed.proportion,
-                                         settings)
-{
-    cm$unsuppression = list(
-        max.proportion = max.unsuppressed.proportion,
-        anchor.year = anchor.year
-    ) 
-    
-    
-    dim.names = list(age=settings$AGES$labels, race=settings$RACES, sex=settings$SEXES, risk=settings$RISK_STRATA)
-    
-    print("FOR NOW WE ARE USING DUMMY UNSUPPRESSED MODEL")
-    cm$unsuppression$stratified.log.odds.intercept = array(logit(.02), dim=sapply(dim.names, length), dimnames=dim.names)
-    cm$unsuppression$stratified.log.odds.slope = array(0, dim=sapply(dim.names, length), dimnames=dim.names)
-    
-    
-    cm
-}
-
-
-##---------------------------------------------##
-##-- SET UP UNSUPPRESSED TO DISENGAGED MODEL --##
-##---------------------------------------------##
-
-setup.unsuppressed.to.disengaged.model <- function(cm,
-                                      dir,
-                                      anchor.year,
-                                      max.unsuppressed.to.disengaged.proportion,
-                                      settings)
-{
-    cm$unsuppressed.to.disengaged = list(
-        max.proportion = max.unsuppressed.to.disengaged.proportion,
-        anchor.year = anchor.year
-    ) 
-    
-    
-    dim.names = list(age=settings$AGES$labels, race=settings$RACES, sex=settings$SEXES, risk=settings$RISK_STRATA)
-    
-    print("FOR NOW WE ARE USING DUMMY UNSUPPRESSED TO DISENGAGED MODEL")
-    cm$unsuppressed.to.disengaged$stratified.log.odds.intercept = array(logit(.25), dim=sapply(dim.names, length), dimnames=dim.names)
-    cm$unsuppressed.to.disengaged$stratified.log.odds.slope = array(0, dim=sapply(dim.names, length), dimnames=dim.names)
-    
-    
-    cm
-}
-
-##---------------------------------------------##
-##-- SET UP SUPPRESSED TO DISENGAGED MODEL --##
-##---------------------------------------------##
-
-setup.suppressed.to.disengaged.model <- function(cm,
-                                                   dir,
-                                                   anchor.year,
-                                                   max.suppressed.to.disengaged.proportion,
-                                                   settings)
-{
-    cm$suppressed.to.disengaged = list(
-        max.proportion = max.suppressed.to.disengaged.proportion,
-        anchor.year = anchor.year
-    ) 
-    
-    
-    dim.names = list(age=settings$AGES$labels, race=settings$RACES, sex=settings$SEXES, risk=settings$RISK_STRATA)
-    
-    print("FOR NOW WE ARE USING DUMMY SUPPRESSED TO DISENGAGED MODEL")
-    cm$suppressed.to.disengaged$stratified.log.odds.intercept = array(logit(.10), dim=sapply(dim.names, length), dimnames=dim.names)
-    cm$suppressed.to.disengaged$stratified.log.odds.slope = array(0, dim=sapply(dim.names, length), dimnames=dim.names)
-    
-    
-    cm
+  
 }
 
 ##-------------------------------##
@@ -468,7 +374,7 @@ setup.suppressed.to.disengaged.model <- function(cm,
 
 setup.reengagement.model <- function(cm,
                                      dir,
-                                     coefficients=NULL,
+                                     output=NULL,
                                      anchor.year,
                                      max.reengaged.proportion,
                                      settings)
@@ -479,17 +385,7 @@ setup.reengagement.model <- function(cm,
     ) 
     
 
-    #for melissa - delete the code that runs in the first block
-    if (1==1)
-    {
-    dim.names = list(age=settings$AGES$labels, race=settings$RACES, sex=settings$SEXES, risk=settings$RISK_STRATA)
-    
-    print("FOR NOW WE ARE USING DUMMY UNSUPPRESSED TO DISENGAGED MODEL")
-    cm$reengagement$stratified.log.odds.intercept = array(logit(.02), dim=sapply(dim.names, length), dimnames=dim.names)
-    cm$reengagement$stratified.log.odds.slope = array(0, dim=sapply(dim.names, length), dimnames=dim.names)
-    }
-    else
-    {
+
         # for melissa - fill in here
         cm$reengagement$stratified.log.odds.intercept = setup.array.from.coefficients(
             all=output$disengaged.coefficients["(Intercept)"],
@@ -503,7 +399,7 @@ setup.reengagement.model <- function(cm,
             female=output$disengaged.coefficients["sex.riskheterosexual_female"],
             female.idu=output$disengaged.coefficients["sex.riskidu_female"],
             black=output$disengaged.coefficients["raceblack"],
-            hispanic=black=output$disengaged.coefficients["racehispanic"]
+            hispanic=output$disengaged.coefficients["racehispanic"]
             )
         
         cm$reengagement$stratified.log.odds.slope = setup.array.from.coefficients(
@@ -518,9 +414,9 @@ setup.reengagement.model <- function(cm,
             female=output$disengaged.coefficients["sex.riskheterosexual_female:relative.year"],
             female.idu=output$disengaged.coefficients["sex.riskidu_female:relative.year"],
             black=output$disengaged.coefficients["raceblack:relative.year"],
-            hispanic=black=output$disengaged.coefficients["racehispanic:relative.year"]
+            hispanic=output$disengaged.coefficients["racehispanic:relative.year"]
         )
-    }
+    
     
     cm
 }
@@ -1143,10 +1039,10 @@ setup.array.from.coefficients <- function(all=0,
 
     # Age
     rv[1,,,] = rv[1,,,] + age1
-    rv[2,,,] = rv[2,,,] + age1
-    rv[3,,,] = rv[3,,,] + age1
-    rv[4,,,] = rv[4,,,] + age1
-    rv[5,,,] = rv[5,,,] + age1
+    rv[2,,,] = rv[2,,,] + age2
+    rv[3,,,] = rv[3,,,] + age3
+    rv[4,,,] = rv[4,,,] + age4
+    rv[5,,,] = rv[5,,,] + age5
     
     # Race
     rv[,'black',,] = rv[,'black',,] + black
