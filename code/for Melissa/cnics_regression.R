@@ -16,6 +16,7 @@ if (file.exists(TODDS.FILE))
 library(nnet)
 library(multgee)
 library(gee)
+library(geepack)
 
 analysis = 'jheem.model'
 # analysis = 'CNICS'
@@ -229,14 +230,16 @@ if (analysis=='jheem.model')
     
     disengaged <-disengaged[disengaged$future.state!="missing",]
     
-    for(i in 1:nrow(disengaged)){
-        if(disengaged$future.state[i]=="reengage.unsuppress") {
-            disengaged$reengage[i]==1
-        
-            } else
-                disengaged$reengage[i]=0
-    }
-    
+#    for(i in 1:nrow(disengaged)){
+#        if(disengaged$future.state[i]=="reengage.unsuppress") {
+#            disengaged$reengage[i]==1
+#        
+#            } else
+#                disengaged$reengage[i]=0
+#    }
+ 
+    disengaged$reengage = as.numeric(disengaged$future.state=='reengage.unsuppress')
+       
     disengaged$future.state <- factor(disengaged$future.state, levels = c("reengage.unsuppress","remain"))
     disengaged$age.category <- factor(disengaged$age.category, levels = c("35-45","13-25","25-35","45-55","55+"))
     disengaged$sex <- factor(disengaged$sex, levels = c("Male","Female"))
@@ -248,7 +251,12 @@ if (analysis=='jheem.model')
     
     
     print("Fitting LOGISTIC Model for disengaged, JHEEM model version (model coefficients only)")
-    model.disengaged <- gee(reengage ~ age.category + sex.risk + race + relative.year 
+ #   model.disengaged <- gee(reengage ~ age.category + sex.risk + race + relative.year 
+  #                          + age.category*relative.year + sex.risk*relative.year + race*relative.year,
+   #                         data=disengaged, id=id, family = binomial, corstr = "exchangeable")
+    
+    
+    model.disengaged <- geeglm(reengage ~ age.category + sex.risk + race + relative.year 
                             + age.category*relative.year + sex.risk*relative.year + race*relative.year,
                             data=disengaged, id=id, family = binomial, corstr = "exchangeable")
     
