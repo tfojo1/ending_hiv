@@ -10,7 +10,8 @@ create.prep.interventions <- function(start.year,
                                       implemented.year,
                                       suffix='',
                                       INTERVENTION.MANAGER=INTERVENTION.MANAGER.1.0,
-                                      prep.rr.dist=NULL)
+                                      injectable.prep.rr.dist=INJ.PREP.RR.DIST,
+                                      oral.prep.rr.dist=ORAL.PREP.RR.DIST)
 {
     if (suffix != '' && substr(suffix, 1,1)!='_')
         suffix = paste0("_", suffix)
@@ -32,13 +33,15 @@ create.prep.interventions <- function(start.year,
                                                         rates = 'inj.rr', years = implemented.year, 
                                                         apply.function = "multiplier", allow.less.than.otherwise = T)
     
-    ci.lower = log(.18)
-    ci.upper = log(.62)
+    # Ruchita - use these two intervention blocks to build variable interventions
+    ORAL.PREP.VARIABLE = create.intervention.unit(type='rr.prep', start.year=2014,
+                                                  rates = 'oral.rr', years=2014.00001,
+                                                  apply.function='multiplier', allow.less.than.otherwise = T)
+    INJECTABLE.ORAL.PREP.VARIABLE = create.intervention.unit(type='rr.prep', start.year = 2014,
+                                                             rates=c('oral.rr','oral.rr','inj.rr'), 
+                                                             years=c(2014.00001, start.year, implemented.year),
+                                                             apply.function='multiplier', allow.less.than.otherwise = T)
     
-    log.sd = (ci.upper - ci.lower) / 2 / 1.96
-    log.mean = (ci.lower + ci.upper)/2
-    
-    prep.rr.dist = Lognormal.Distribution(meanlog = log.mean, sdlog = log.sd, var.name = 'inj.rr')
     
     #-- COMBINE TO MAKE SPECIFIC INTERVENTIONS --#
     
@@ -81,7 +84,7 @@ create.prep.interventions <- function(start.year,
     
     
     
-    MSM.IP10v = create.intervention(ALL.MSM, PREP.10, INJECTABLE.PREP.VARIABLE,prep.rr.dist)
+    MSM.IP10v = create.intervention(ALL.MSM, PREP.10, INJECTABLE.PREP.VARIABLE,oral.prep.rr.dist)
     INTERVENTION.MANAGER = register.intervention(MSM.IP10v, code=paste0('msm.p10.inj.variable', suffix),
                                                  name='10% of MSM on long-acting PrEP variable',
                                                  manager = INTERVENTION.MANAGER,
@@ -91,14 +94,14 @@ create.prep.interventions <- function(start.year,
     
 
    
-    MSM.IP25v = create.intervention(ALL.MSM, PREP.25, INJECTABLE.PREP.VARIABLE,prep.rr.dist)
+    MSM.IP25v = create.intervention(ALL.MSM, PREP.25, INJECTABLE.PREP.VARIABLE,oral.prep.rr.dist)
     INTERVENTION.MANAGER = register.intervention(MSM.IP25v, code=paste0('msm.p25.inj.variable', suffix),
                                                  name='25% of MSM on long-acting PrEP var',
                                                  manager = INTERVENTION.MANAGER,
                                                  allow.intervention.multiple.names = T)
 
     
-    MSM.IP50v = create.intervention(ALL.MSM, PREP.50, INJECTABLE.PREP.VARIABLE,prep.rr.dist)
+    MSM.IP50v = create.intervention(ALL.MSM, PREP.50, INJECTABLE.PREP.VARIABLE,oral.prep.rr.dist)
     INTERVENTION.MANAGER = register.intervention(MSM.IP50v, code=paste0('msm.p50.inj.variable', suffix),
                                                  name='50% of MSM on long-acting PrEP variable',
                                                  manager = INTERVENTION.MANAGER,
@@ -111,6 +114,36 @@ create.prep.interventions <- function(start.year,
     INTERVENTION.MANAGER
 }
 
+
+##-- DEFINE THE DISTRIBUTIONS TO USE FOR INJECTABLE and ORAL PREP EFFICACY --##
+
+# INJECTABLE PREP, from:
+# 
+inj.ci.lower = log(.18)
+inj.ci.upper = log(.62)
+
+inj.log.sd = (inj.ci.upper - inj.ci.lower) / 2 / 1.96
+inj.log.mean = (inj.ci.lower + inj.ci.upper)/2
+
+INJ.PREP.RR.DIST = Lognormal.Distribution(meanlog = inj.log.mean, sdlog = inj.log.sd, var.name = 'inj.rr')
+
+
+# ORAL PREP, from:
+# https://pubmed.ncbi.nlm.nih.gov/26364263/
+# (PROUD Study in MSM)
+
+oral.efficacy.est = 0.86
+oral.efficacy.lower = 0.64
+oral.efficacy.upper = 0.96
+
+#these are the ci relative to the estimate - ie log(bound/estimate) = log(bound) - log(estimate)
+oral.ci.lower = log(1-oral.efficacy.upper) - log(1-oral.efficacy.est)
+oral.ci.upper = log(1-oral.efficacy.lower) - log(1-oral.efficacy.est)
+
+oral.log.sd = (oral.ci.upper - oral.ci.lower) / 2 / 1.96
+
+ORAL.PREP.RR.DIST = Lognormal.Distribution(meanlog = 0, sdlog = oral.log.sd, var.name = 'oral.rr')
+#^This is an RR relative to the already existing estimate
 
 ##-- ACTUALLY CREATE INTERVENTIONS FOR A 2023-2027 time frame --## 
 
