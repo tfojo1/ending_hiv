@@ -30,7 +30,7 @@ create.prep.interventions <- function(start.year,
     
     INJECTABLE.PREP.VARIABLE = create.intervention.unit(type = "rr.prep", start.year = start.year, 
                                                         rates = 'inj.rr', years = implemented.year, 
-                                                        apply.function = "multiplier")
+                                                        apply.function = "multiplier", allow.less.than.otherwise = T)
     
     ci.lower = log(.18)
     ci.upper = log(.62)
