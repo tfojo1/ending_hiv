@@ -5,7 +5,7 @@ run.prep.simulations(msas = TARGET.MSAS)
 
 # Make the aggregate result
 prep.results = aggregate.raw.prep.results(msas=TARGET.MSAS,
-                                          intervention.codes = VAR.ORAL.PREP.INTERVENTIONS.CODES,
+                                          intervention.codes = ALL.VAR.ORAL.PREP.INTERVENTIONS.CODES,
                                           years=2020:2030,
                                           dir='mcmc_runs/prep_simsets',
                                           calculate.total=F)
