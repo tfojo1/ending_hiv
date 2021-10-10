@@ -65,6 +65,7 @@ run.prep.simulations <- function(msas=TARGET.MSAS,
                                  intervention.codes=INJ.VAR.PREP.INTERVENTION.CODES,
                                  dst.dir = 'mcmc_runs/prep_simsets',
                                  src.dir = 'mcmc_runs/quick_simsets',
+                                 run.from.year=2014,
                                  run.to.year=2030,
                                  keep.years=2018:2030)
 {
@@ -78,6 +79,7 @@ run.prep.simulations <- function(msas=TARGET.MSAS,
         run.systematic.interventions(simset = simset,
                                      interventions = lapply(intervention.codes, intervention.from.code), 
                                      dst.dir = dst.dir, overwrite = T, compress = T, 
+                                     run.from.year = run.from.year,
                                      run.to.year = run.to.year, verbose = T, 
                                      save.baseline.and.seed = F
                                      )
