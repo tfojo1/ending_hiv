@@ -84,11 +84,11 @@ for (i in 1:nrow(dataset)) {
 }
 
 for (i in 1:nrow(dataset)) {
-    if(!is.na(dataset$years.since.vl.and.visit[i]) && dataset$years.since.vl.and.visit[i]<1)  {
-        dataset$disengaged.category[i] = "0-1"
+    if(!is.na(dataset$years.since.vl.and.visit[i]) && dataset$years.since.vl.and.visit[i]<=2)  {
+        dataset$disengaged.category[i] = "0-2"
         
     } else 
-        dataset$disengaged.category[i]=">1"
+        dataset$disengaged.category[i]=">2"
     
 }
 
@@ -128,19 +128,19 @@ engaged.unsuppressed$sex.risk <- factor(engaged.unsuppressed$sex.risk, levels = 
                                                                                   "heterosexual_male","heterosexual_female",
                                                                                   "idu_male","idu_female","other"))
 
+if (analysis=='jheem.model')
+{
+    print("Fitting Model for engaged-unsuppressed, JHEEM model version (model coefficients only)")
+    model.engaged.unsuppressed <- nomLORgee(future.state ~ age.category + sex.risk + race + relative.year
+                                            + age.category*relative.year + sex.risk*relative.year + race*relative.year,
+                                            data=engaged.unsuppressed, id=id)
+}
+
 if (analysis=='CNICS')
 {
     print("Fitting Model for engaged-unsuppressed, CNICS version (all coefficients)")
     model.engaged.unsuppressed <- nomLORgee(future.state ~ age.category + sex.risk + race + relative.year
                                             + site + art.naive + years.in.care + aids.defining.illness
-                                            + age.category*relative.year + sex.risk*relative.year + race*relative.year,
-                                            data=engaged.unsuppressed, id=id)
-}
-
-if (analysis=='jheem.model')
-{
-    print("Fitting Model for engaged-unsuppressed, JHEEM model version (model coefficients only)")
-    model.engaged.unsuppressed <- nomLORgee(future.state ~ age.category + sex.risk + race + relative.year
                                             + age.category*relative.year + sex.risk*relative.year + race*relative.year,
                                             data=engaged.unsuppressed, id=id)
 }
@@ -181,14 +181,7 @@ engaged.suppressed$sex.risk <- factor(engaged.suppressed$sex.risk, levels = c("m
                                                                               "heterosexual_male","heterosexual_female",
                                                                               "idu_male","idu_female","other"))
 
-if (analysis=='CNICS')
-{
-    print("Fitting Model for engaged-suppressed, CNICS version (all coefficients)")
-    model.engaged.suppressed <- nomLORgee(future.state ~ age.category + sex.risk + race + relative.year
-                                            + site + art.naive + years.in.care + aids.defining.illness
-                                            + age.category*relative.year + sex.risk*relative.year + race*relative.year,
-                                            data=engaged.suppressed, id=id)
-}
+
 
 if (analysis=='jheem.model')
 {
@@ -198,14 +191,22 @@ if (analysis=='jheem.model')
                                             data=engaged.suppressed, id=id)
 }
 
+if (analysis=='CNICS')
+{
+    print("Fitting Model for engaged-suppressed, CNICS version (all coefficients)")
+    model.engaged.suppressed <- nomLORgee(future.state ~ age.category + sex.risk + race + relative.year
+                                          + site + art.naive + years.in.care + aids.defining.illness
+                                          + age.category*relative.year + sex.risk*relative.year + race*relative.year,
+                                          data=engaged.suppressed, id=id)
+}
+
 
 ##------------------------------------##
 ##------- DATASET 3: Disengaged ------##
 ##------------------------------------##
 
 print("Preparing Dataset for disengaged")
-disengaged <-dataset[dataset$engaged.now==FALSE & dataset$disengaged.category=="0-1",]
-disengaged <- dataset[!dataset$engaged.now & !is.na(dataset$years.since.vl.and.visit) & dataset$years.since.vl.and.visit<=2,]
+disengaged <-dataset[dataset$engaged.now==FALSE & dataset$disengaged.category=="0-2",]
 
 for (i in 1:nrow(disengaged)) {
     if(!is.na(disengaged$engaged.future[i]) && disengaged$engaged.future[i]==FALSE)  {
@@ -221,16 +222,19 @@ for (i in 1:nrow(disengaged)) {
         
     } else 
         disengaged$future.state[i]="missing"
-
-    disengaged$age.category <- factor(disengaged$age.category, levels = c("35-45","13-25","25-35","45-55","55+"))
-    disengaged$sex <- factor(disengaged$sex, levels = c("Male","Female"))
-    disengaged$race <- factor(disengaged$race, levels = c("other","black","hispanic"))
-    disengaged$risk <- factor(disengaged$risk, levels = c("heterosexual","idu","msm","msm_idu","other"))
-    disengaged$sex.risk <- factor(disengaged$sex.risk, levels = c("msm","msm_idu",
-                                                                  "heterosexual_male","heterosexual_female",
-                                                                  "idu_male","idu_female","other"))
-    
 }
+
+
+disengaged <-disengaged[disengaged$future.state!="missing",]
+disengaged$future.state <- factor(disengaged$future.state, levels = c("reengage.unsuppress","reengage.suppress", "remain"))
+disengaged$age.category <- factor(disengaged$age.category, levels = c("35-45","13-25","25-35","45-55","55+"))
+disengaged$sex <- factor(disengaged$sex, levels = c("Male","Female"))
+disengaged$race <- factor(disengaged$race, levels = c("other","black","hispanic"))
+disengaged$risk <- factor(disengaged$risk, levels = c("heterosexual","idu","msm","msm_idu","other"))
+disengaged$sex.risk <- factor(disengaged$sex.risk, levels = c("msm","msm_idu",
+                                                              "heterosexual_male","heterosexual_female",
+                                                              "idu_male","idu_female","other"))
+
 
 #for fitting the probability of true disengage
 disengaged.for.weights = disengaged[!is.na(disengaged$future.state) & (disengaged$future.state=='reengage.suppress' | disengaged$future.state=='reengage.unsuppress'),]
@@ -244,66 +248,24 @@ disengaged$p.truly.disengaged = expit(predict.glm(model.truly.disengaged, newdat
 disengaged$p.truly.disengaged[disengaged$future.state=='reengage.unsuppress'] = 1
 disengaged$p.truly.disengaged[disengaged$future.state=='reengage.suppress'] = 0
 
+
 if (analysis=='jheem.model')
 {
     print("Removing reengagement into suppressed")
     disengaged <- disengaged[disengaged$future.state!="reengage.suppress",]
-    
-    disengaged <-disengaged[disengaged$future.state!="missing",]
-    
-#    for(i in 1:nrow(disengaged)){
-#        if(disengaged$future.state[i]=="reengage.unsuppress") {
-#            disengaged$reengage[i]==1
-#        
-#            } else
-#                disengaged$reengage[i]=0
-#    }
- 
     disengaged$reengage = as.numeric(disengaged$future.state=='reengage.unsuppress')
-    
     disengaged$future.state <- factor(disengaged$future.state, levels = c("reengage.unsuppress","remain"))
     
-    
-    print("Fitting LOGISTIC Model for disengaged, JHEEM model version (model coefficients only)")
- #   model.disengaged <- gee(reengage ~ age.category + sex.risk + race + relative.year 
-  #                          + age.category*relative.year + sex.risk*relative.year + race*relative.year,
-   #                         data=disengaged, id=id, family = binomial, corstr = "exchangeable")
-    
-    
-    model1 <- geeglm(reengage ~ age.category + sex.risk + race + relative.year 
+    print("Fitting LOGISTIC Model for disengaged, JHEEM model version (model coefficients only), with disengagement weights")
+    model.disengaged <- geeglm(reengage ~ age.category + sex.risk + race + relative.year 
                                + age.category*relative.year + sex.risk*relative.year + race*relative.year,
-                               data=disengaged, id=id, family = binomial, corstr = "exchangeable")
-    
-    model2 = model.disengaged <- geeglm(reengage ~ age.category + sex.risk + race + relative.year 
-                            + age.category*relative.year + sex.risk*relative.year + race*relative.year,
-                            data=disengaged, id=id, family = binomial, corstr = "exchangeable",
-                            weights = disengaged$p.truly.disengaged)
-    
-    
-    qplot(model1$fitted.values)
-    qplot(model2$fitted.values)
-    
-    round(exp(cbind(model1$coefficients, model2$coefficients)),2)
-    
-    round(exp(cbind(model1$coefficients, model2$coefficients)),2)[c(2:5,15:18),]
-    round(exp(cbind(model1$coefficients, model2$coefficients)),2)[4+c(2:6,15:19),]
-    round(exp(cbind(model1$coefficients, model2$coefficients)),2)[4+6+c(2:3,15:16),]
+                               data=disengaged, id=id, family = binomial, corstr = "exchangeable",
+                               weights = disengaged$p.truly.disengaged)
     
 }
 
 if (analysis=='CNICS')
 {
-    disengaged <-disengaged[disengaged$future.state!="missing",]
-    disengaged$future.state <- factor(disengaged$future.state, levels = c("reengage.unsuppress","reengage.suppress", "remain"))
-    disengaged$age.category <- factor(disengaged$age.category, levels = c("35-45","13-25","25-35","45-55","55+"))
-    disengaged$sex <- factor(disengaged$sex, levels = c("Male","Female"))
-    disengaged$race <- factor(disengaged$race, levels = c("other","black","hispanic"))
-    disengaged$risk <- factor(disengaged$risk, levels = c("heterosexual","idu","msm","msm_idu","other"))
-    disengaged$sex.risk <- factor(disengaged$sex.risk, levels = c("msm","msm_idu",
-                                                                  "heterosexual_male","heterosexual_female",
-                                                                  "idu_male","idu_female","other"))
-    
-    
     print("Fitting MULTINOMIAL Model for disengaged, CNICS version (all coefficients)")
     model.disengaged <- nomLORgee(future.state ~ age.category + sex.risk + race + relative.year 
                                   + site + art.naive + years.in.care + aids.defining.illness,

@@ -222,18 +222,18 @@ parameters.prior = join.distributions(
     age5.proportion.linked.slope.or = Lognormal.Distribution(0, 0.5*log(2)/5),
 
     #-- ADHERENCE --#
-    heterosexual.proportion.adherent.or = Lognormal.Distribution(0, log(2)),
-    msm.proportion.adherent.or = Lognormal.Distribution(0, log(2)),
-    idu.proportion.adherent.or = Lognormal.Distribution(0, log(2)),
-    msm.idu.proportion.adherent.or = Lognormal.Distribution(0, log(2)),
+    heterosexual.proportion.adherent.or = Lognormal.Distribution(0, 0.5*log(2)),
+    msm.proportion.adherent.or = Lognormal.Distribution(0, 0.5*log(2)),
+    idu.proportion.adherent.or = Lognormal.Distribution(0, 0.5*log(2)),
+    msm.idu.proportion.adherent.or = Lognormal.Distribution(0, 0.5*log(2)),
     
-    black.proportion.adherent.or = Lognormal.Distribution(0, log(2)),
-    hispanic.proportion.adherent.or = Lognormal.Distribution(0, log(2)),
+    black.proportion.adherent.or = Lognormal.Distribution(0, 0.5*log(2)),
+    hispanic.proportion.adherent.or = Lognormal.Distribution(0, 0.5*log(2)),
     
-    age1.proportion.adherent.or = Lognormal.Distribution(0, log(2)),
-    age2.proportion.adherent.or = Lognormal.Distribution(0, log(2)),
-    age4.proportion.adherent.or = Lognormal.Distribution(0, log(2)),
-    age5.proportion.adherent.or = Lognormal.Distribution(0, log(2)),
+    age1.proportion.adherent.or = Lognormal.Distribution(0, 0.5*log(2)),
+    age2.proportion.adherent.or = Lognormal.Distribution(0, 0.5*log(2)),
+    age4.proportion.adherent.or = Lognormal.Distribution(0, 0.5*log(2)),
+    age5.proportion.adherent.or = Lognormal.Distribution(0, 0.5*log(2)),
     
     heterosexual.proportion.adherent.slope.or = Lognormal.Distribution(0, 0.5*log(2)/5),
     msm.proportion.adherent.slope.or = Lognormal.Distribution(0, 0.5*log(2)/5),
@@ -248,22 +248,22 @@ parameters.prior = join.distributions(
     age4.proportion.adherent.slope.or = Lognormal.Distribution(0, 0.5*log(2)/5),
     age5.proportion.adherent.slope.or = Lognormal.Distribution(0, 0.5*log(2)/5),
 
-    # (plus a term for which direction suppression/loss of suppression) - I don't actually know what values we would use here
+    # (plus a term for which direction suppression/loss of suppression)
     suppressed.vs.nonsuppressed.proportion.adherent.or = Lognormal.Distribution(0, 0.5*log(2)),
 
     #-- DISENGAGEMENT/REENGAGEMENT --#
-    heterosexual.proportion.lost.or = Lognormal.Distribution(0, log(2)),
-    msm.proportion.lost.or = Lognormal.Distribution(0, log(2)),
-    idu.proportion.lost.or = Lognormal.Distribution(0, log(2)),
-    msm.idu.proportion.lost.or = Lognormal.Distribution(0, log(2)),
+    heterosexual.proportion.lost.or = Lognormal.Distribution(0, 0.5*log(2)),
+    msm.proportion.lost.or = Lognormal.Distribution(0, 0.5*log(2)),
+    idu.proportion.lost.or = Lognormal.Distribution(0, 0.5*log(2)),
+    msm.idu.proportion.lost.or = Lognormal.Distribution(0, 0.5*log(2)),
     
-    black.proportion.lost.or = Lognormal.Distribution(0, log(2)),
-    hispanic.proportion.lost.or = Lognormal.Distribution(0, log(2)),
+    black.proportion.lost.or = Lognormal.Distribution(0, 0.5*log(2)),
+    hispanic.proportion.lost.or = Lognormal.Distribution(0, 0.5*log(2)),
     
-    age1.proportion.lost.or = Lognormal.Distribution(0, log(2)),
-    age2.proportion.lost.or = Lognormal.Distribution(0, log(2)),
-    age4.proportion.lost.or = Lognormal.Distribution(0, log(2)),
-    age5.proportion.lost.or = Lognormal.Distribution(0, log(2)),
+    age1.proportion.lost.or = Lognormal.Distribution(0, 0.5*log(2)),
+    age2.proportion.lost.or = Lognormal.Distribution(0, 0.5*log(2)),
+    age4.proportion.lost.or = Lognormal.Distribution(0, 0.5*log(2)),
+    age5.proportion.lost.or = Lognormal.Distribution(0, 0.5*log(2)),
     
     heterosexual.proportion.lost.slope.or = Lognormal.Distribution(0, 0.5*log(2)/5),
     msm.proportion.lost.slope.or = Lognormal.Distribution(0, 0.5*log(2)/5),
@@ -278,7 +278,7 @@ parameters.prior = join.distributions(
     age4.proportion.lost.slope.or = Lognormal.Distribution(0, 0.5*log(2)/5),
     age5.proportion.lost.slope.or = Lognormal.Distribution(0, 0.5*log(2)/5),
 
-    # (plus a term for from suppressed or from unsuppressed) - I don't actually know what values we would use here
+    # (plus a term for from suppressed or from unsuppressed) 
     suppressed.vs.nonsuppressed.proportion.lost.or = Lognormal.Distribution(0, 0.5*log(2)),
     already.lost.vs.nonsuppressed.proportion.lost.or = Lognormal.Distribution(0, 0.5*log(2)),
 
