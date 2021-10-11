@@ -37,7 +37,7 @@ create.prep.interventions <- function(start.year,
     ORAL.PREP.VARIABLE = create.intervention.unit(type='rr.prep', start.year=2014,
                                                   rates = 'oral.rr', years=2014.00001,
                                                   apply.function='multiplier', allow.less.than.otherwise = T)
-    INJECTABLE.ORAL.PREP.VARIABLE = create.intervention.unit(type='rr.prep', start.year = 2014,
+    INJECTABLE.ORAL.PREP.VARIABLE = create.intervention.unit(type='rr.prep', start.year = 2014, #what is this supposed to be?
                                                              rates=c('oral.rr','oral.rr','inj.rr'), 
                                                              years=c(2014.00001, start.year, implemented.year),
                                                              apply.function='multiplier', allow.less.than.otherwise = T)
@@ -83,31 +83,65 @@ create.prep.interventions <- function(start.year,
                                                  allow.intervention.multiple.names = T)
     
     
+    #Original: create.intervention(ALL.MSM, PREP.10, INJECTABLE.PREP.VARIABLE, oral.prep.rr.dist) incorrect?
     
-    MSM.IP10v = create.intervention(ALL.MSM, PREP.10, INJECTABLE.PREP.VARIABLE,oral.prep.rr.dist)
+    
+    MSM.IP10v = create.intervention(ALL.MSM, PREP.10, INJECTABLE.PREP.VARIABLE,inj.prep.rr.dist)
     INTERVENTION.MANAGER = register.intervention(MSM.IP10v, code=paste0('msm.p10.inj.variable', suffix),
                                                  name='10% of MSM on long-acting PrEP variable',
                                                  manager = INTERVENTION.MANAGER,
                                                  allow.intervention.multiple.names = T)
     
-  
-    
-
-   
-    MSM.IP25v = create.intervention(ALL.MSM, PREP.25, INJECTABLE.PREP.VARIABLE,oral.prep.rr.dist)
+    MSM.IP25v = create.intervention(ALL.MSM, PREP.25, INJECTABLE.PREP.VARIABLE,inj.prep.rr.dist)
     INTERVENTION.MANAGER = register.intervention(MSM.IP25v, code=paste0('msm.p25.inj.variable', suffix),
                                                  name='25% of MSM on long-acting PrEP var',
                                                  manager = INTERVENTION.MANAGER,
                                                  allow.intervention.multiple.names = T)
-
     
-    MSM.IP50v = create.intervention(ALL.MSM, PREP.50, INJECTABLE.PREP.VARIABLE,oral.prep.rr.dist)
+    
+    MSM.IP50v = create.intervention(ALL.MSM, PREP.50, INJECTABLE.PREP.VARIABLE,inj.prep.rr.dist)
     INTERVENTION.MANAGER = register.intervention(MSM.IP50v, code=paste0('msm.p50.inj.variable', suffix),
                                                  name='50% of MSM on long-acting PrEP variable',
                                                  manager = INTERVENTION.MANAGER,
                                                  allow.intervention.multiple.names = T)
     
+   
+    MSM.P10v = create.intervention(ALL.MSM, PREP.10, ORAL.PREP.VARIABLE,oral.prep.rr.dist)
+    INTERVENTION.MANAGER = register.intervention(MSM.P10v, code=paste0('msm.p10.oral.variable', suffix),
+                                                 name='10% of MSM on oral PrEP variable',
+                                                 manager = INTERVENTION.MANAGER,
+                                                 allow.intervention.multiple.names = T)
     
+    MSM.P25v = create.intervention(ALL.MSM, PREP.25, ORAL.PREP.VARIABLE,oral.prep.rr.dist)
+    INTERVENTION.MANAGER = register.intervention(MSM.P25v, code=paste0('msm.p25.oral.variable', suffix),
+                                                 name='25% of MSM on oral PrEP variable',
+                                                 manager = INTERVENTION.MANAGER,
+                                                 allow.intervention.multiple.names = T)
+      
+    MSM.P50v = create.intervention(ALL.MSM, PREP.50, ORAL.PREP.VARIABLE,oral.prep.rr.dist)
+    INTERVENTION.MANAGER = register.intervention(MSM.P50v, code=paste0('msm.p50.oral.variable', suffix),
+                                                 name='50% of MSM on oral PrEP variable',
+                                                 manager = INTERVENTION.MANAGER,
+                                                 allow.intervention.multiple.names = T)
+    
+    
+    MSM.IPO10v = create.intervention(ALL.MSM, PREP.10,  INJECTABLE.ORAL.PREP.VARIABLE,c(oral.prep.rr.dist,oral.prep.rr.dist,injectable.prep.rr.dist))
+    INTERVENTION.MANAGER = register.intervention(MSM.IPO10v, code=paste0('msm.p10.oral.inj.variable', suffix),
+                                                 name='10% of MSM on oral/injectable PrEP variable',
+                                                 manager = INTERVENTION.MANAGER,
+                                                 allow.intervention.multiple.names = T)
+    
+    MSM.IPO25v = create.intervention(ALL.MSM, PREP.25,  INJECTABLE.ORAL.PREP.VARIABLE,c(oral.prep.rr.dist,oral.prep.rr.dist,injectable.prep.rr.dist))
+    INTERVENTION.MANAGER = register.intervention(MSM.IPO25v, code=paste0('msm.p25.oral.inj.variable', suffix),
+                                                 name='25% of MSM on oral/injectable PrEP variable',
+                                                 manager = INTERVENTION.MANAGER,
+                                                 allow.intervention.multiple.names = T)
+    
+    MSM.IPO50v = create.intervention(ALL.MSM, PREP.50,  INJECTABLE.ORAL.PREP.VARIABLE,c(oral.prep.rr.dist,oral.prep.rr.dist,injectable.prep.rr.dist))
+    INTERVENTION.MANAGER = register.intervention(MSM.IPO50v, code=paste0('msm.p50.oral.inj.variable', suffix),
+                                                 name='50% of MSM on oral/injectable PrEP variable',
+                                                 manager = INTERVENTION.MANAGER,
+                                                 allow.intervention.multiple.names = T)
   
  
     #-- RETURN THE INTERVENTION MANAGER --#
@@ -143,7 +177,8 @@ oral.ci.upper = log(1-oral.efficacy.lower) - log(1-oral.efficacy.est)
 oral.log.sd = (oral.ci.upper - oral.ci.lower) / 2 / 1.96
 
 ORAL.PREP.RR.DIST = Lognormal.Distribution(meanlog = 0, sdlog = oral.log.sd, var.name = 'oral.rr')
-#^This is an RR relative to the already existing estimate
+#^This is an RR relative to the already existing estimate 
+#need to figure this out 
 
 ##-- ACTUALLY CREATE INTERVENTIONS FOR A 2023-2027 time frame --## 
 

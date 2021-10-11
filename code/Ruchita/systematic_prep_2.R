@@ -12,6 +12,17 @@ ORAL.PREP.INTERVENTION.CODES = c(
     'msm.p50.oral_23_27'
 )
 
+ORAL.VAR.PREP.INTERVENTION.CODES = c(
+  'msm.p10.oral.variable_23_27',
+  'msm.p25.oral.variable_23_27',
+  'msm.p50.oral.variable_23_27'
+)
+INJ.ORAL.VAR.PREP.INTERVENTION.CODES = c(
+  'msm.p10.oral.inj.variable_23_27',
+  'msm.p25.oral.inj.variable_23_27',
+  'msm.p50.oral.inj.variable_23_27'
+)
+
 INJ.PREP.INTERVENTION.CODES = c(
     'msm.p10.inj_23_27',
     'msm.p25.inj_23_27',
@@ -62,7 +73,7 @@ STAGGERED.ORAL.INJ.PREP.CODES[2*(1:length(INJ.PREP.INTERVENTION.CODES))] = INJ.P
 ##-- FUNCTION TO RUN INTERVENTIONS --##
 
 run.prep.simulations <- function(msas=TARGET.MSAS, 
-                                 intervention.codes=INJ.VAR.PREP.INTERVENTION.CODES,
+                                 intervention.codes=INJ.ORAL.VAR.PREP.INTERVENTION.CODES,
                                  dst.dir = 'mcmc_runs/prep_simsets',
                                  src.dir = 'mcmc_runs/quick_simsets',
                                  run.from.year=2014,
@@ -79,7 +90,7 @@ run.prep.simulations <- function(msas=TARGET.MSAS,
         run.systematic.interventions(simset = simset,
                                      interventions = lapply(intervention.codes, intervention.from.code), 
                                      dst.dir = dst.dir, overwrite = T, compress = T, 
-                                     run.from.year = run.from.year,
+                                     #run.from.year = run.from.year,
                                      run.to.year = run.to.year, verbose = T, 
                                      save.baseline.and.seed = F
                                      )
