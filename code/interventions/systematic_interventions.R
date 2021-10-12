@@ -9,6 +9,7 @@ run.systematic.interventions <- function(simset,
                                          interventions=ALL.INTERVENTIONS,
                                          overwrite=F,
                                          compress=T,
+                                         run.from.year=NULL,
                                          run.to.year=2030,
                                          verbose=T,
                                          save.baseline.and.seed=T,
@@ -29,7 +30,11 @@ run.systematic.interventions <- function(simset,
     base.simset = prepare.simset.for.interventions(simset)
     
     location = attr(base.simset@simulations[[1]], 'location')
-    run.from.year=attr(base.simset, 'run.from.year')
+    if (is.null(run.from.year))
+        run.from.year=attr(base.simset, 'run.from.year')
+    else
+        run.from.year = min(run.from.year, attr(base.simset, 'run.from.year'))
+    
     keep.years=min(run.from.year, MAX.FIRST.KEEP.YEAR):run.to.year
     
     if (save.baseline.and.seed)
