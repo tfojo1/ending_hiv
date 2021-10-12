@@ -86,20 +86,20 @@ create.prep.interventions <- function(start.year,
     #Original: create.intervention(ALL.MSM, PREP.10, INJECTABLE.PREP.VARIABLE, oral.prep.rr.dist) incorrect?
     
     
-    MSM.IP10v = create.intervention(ALL.MSM, PREP.10, INJECTABLE.PREP.VARIABLE,inj.prep.rr.dist)
+    MSM.IP10v = create.intervention(ALL.MSM, PREP.10, INJECTABLE.PREP.VARIABLE,injectable.prep.rr.dist)
     INTERVENTION.MANAGER = register.intervention(MSM.IP10v, code=paste0('msm.p10.inj.variable', suffix),
                                                  name='10% of MSM on long-acting PrEP variable',
                                                  manager = INTERVENTION.MANAGER,
                                                  allow.intervention.multiple.names = T)
     
-    MSM.IP25v = create.intervention(ALL.MSM, PREP.25, INJECTABLE.PREP.VARIABLE,inj.prep.rr.dist)
+    MSM.IP25v = create.intervention(ALL.MSM, PREP.25, INJECTABLE.PREP.VARIABLE,injectable.prep.rr.dist)
     INTERVENTION.MANAGER = register.intervention(MSM.IP25v, code=paste0('msm.p25.inj.variable', suffix),
                                                  name='25% of MSM on long-acting PrEP var',
                                                  manager = INTERVENTION.MANAGER,
                                                  allow.intervention.multiple.names = T)
     
     
-    MSM.IP50v = create.intervention(ALL.MSM, PREP.50, INJECTABLE.PREP.VARIABLE,inj.prep.rr.dist)
+    MSM.IP50v = create.intervention(ALL.MSM, PREP.50, INJECTABLE.PREP.VARIABLE,injectable.prep.rr.dist)
     INTERVENTION.MANAGER = register.intervention(MSM.IP50v, code=paste0('msm.p50.inj.variable', suffix),
                                                  name='50% of MSM on long-acting PrEP variable',
                                                  manager = INTERVENTION.MANAGER,
