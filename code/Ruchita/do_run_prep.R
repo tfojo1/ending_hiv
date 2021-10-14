@@ -4,7 +4,7 @@
 run.prep.simulations(msas = NEW.ORLEANS.MSA,intervention.codes = INJ.ORAL.2020.INTERVENTIONS.CODES)
 
 # Make the aggregate result
-prep.results = aggregate.raw.prep.results(msas=ATLANTA.MSAS,
+prep.results = aggregate.raw.prep.results(msas=ATLANTA.MSA,
                                           intervention.codes = INJ.ORAL.2020.INTERVENTIONS.CODES,
                                           years=2020:2030,
                                           dir='mcmc_runs/prep_simsets',
