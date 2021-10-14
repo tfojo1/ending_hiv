@@ -182,6 +182,11 @@ ORAL.PREP.RR.DIST = Lognormal.Distribution(meanlog = 0, sdlog = oral.log.sd, var
 
 #Note: breaks if intervention was already made
 
+INTERVENTION.MANAGER.1.0 = create.prep.interventions(start.year=2023,
+                                                     implemented.year=2027,
+                                                     suffix='23_27',
+                                                     INTERVENTION.MANAGER=INTERVENTION.MANAGER.1.0)
+
 INTERVENTION.MANAGER.1.0 = create.prep.interventions(start.year=2015,
                                                      implemented.year=2015.0001,
                                                      suffix='15_15',

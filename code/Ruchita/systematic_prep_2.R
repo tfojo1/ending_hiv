@@ -401,16 +401,16 @@ aggregate.raw.prep.results <- function(msas=ATLANTA.MSA,
             load(file.path(dir, msa, filename))
 
             simset = flatten.simset(simset)
-
-            sapply(simset@simulations, project.absolute.incidence, keep.dimensions = NULL, years=years, risks = c("msm","msm_idu"))
+            sapply(simset@simulations, project.absolute.incidence, 
+                   keep.dimensions = 'year', years=years, risks = c("msm","msm_idu"))
           
             
     
         })
     })
     
-    
-    dim.names = list(sim=1:(length(rv)/length(msas)/length(intervention.codes)),
+    dim.names = list(year=years,
+                     sim=1:(length(rv)/length(msas)/length(intervention.codes)/length(years)),
                      location=msas,
                      intervention=intervention.codes) 
     
@@ -421,8 +421,8 @@ aggregate.raw.prep.results <- function(msas=ATLANTA.MSA,
     {
         dim.names$location = c(dim.names$location, 'total')
         new.rv = array(0, dim=sapply(dim.names, length), dimnames=dim.names)
-        new.rv[,msas,] = rv 
-        new.rv[,'total',] = apply(rv, c('intervention'), sum, na.rm=T) 
+        new.rv[,,msas,] = rv 
+        new.rv[,,'total',] = apply(rv, c(1,2,4), sum, na.rm=T) 
         rv = new.rv
     }
     

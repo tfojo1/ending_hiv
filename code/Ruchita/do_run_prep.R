@@ -1,11 +1,15 @@
 
+QUICK.TEST.CODES = c('noint',
+                     'msm.p50.inj_23_27',
+                     'msm.p50.inj.variable_23_27')
 
 # Run the Interventions
-run.prep.simulations(msas = NEW.ORLEANS.MSA,intervention.codes = INJ.ORAL.2020.INTERVENTIONS.CODES)
+run.prep.simulations(msas = BALTIMORE.MSA,
+                     intervention.codes = QUICK.TEST.CODES)
 
 # Make the aggregate result
-prep.results = aggregate.raw.prep.results(msas=ATLANTA.MSAS,
-                                          intervention.codes = INJ.ORAL.2020.INTERVENTIONS.CODES,
+prep.results = aggregate.raw.prep.results(msas=BALTIMORE.MSA,
+                                          intervention.codes = QUICK.TEST.CODES,
                                           years=2020:2030,
                                           dir='mcmc_runs/prep_simsets',
                                           calculate.total=F)

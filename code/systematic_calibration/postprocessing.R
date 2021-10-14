@@ -872,47 +872,100 @@ extract.suppression <- function(sim,
     }
     else
     {
-        if (is.null(continuum))
-            continuum = sim$continuum
-        suppressed.states = intersect(components$settings$SUPPRESSED_STATES, continuum)
-        if (length(suppressed.states)==0)
-            stop(paste0("None of the specified continuum states (",
-                        paste0("'", continuum, "'", collapse=', '),
-                        ") are suppressed states"))
-        
-        numerators = do.extract.population.subset(results=sim,
-                                                  years=years,
-                                                  ages=ages,
-                                                  races=races,
-                                                  subpopulations=subpopulations,
-                                                  sexes=sexes,
-                                                  risks=risks,
-                                                  continuum=suppressed.states,
-                                                  cd4s=cd4,
-                                                  hiv.subsets=hiv.subsets,
-                                                  include.hiv.positive=T,
-                                                  include.hiv.negative=F,
-                                                  keep.dimensions=keep.dimensions,
-                                                  per.population=NA,
-                                                  use.cdc.categorizations=use.cdc.categorizations)
-        
-        denominators = do.extract.population.subset(results=sim,
-                                                    years=years,
-                                                    ages=ages,
-                                                    races=races,
-                                                    subpopulations=subpopulations,
-                                                    sexes=sexes,
-                                                    risks=risks,
-                                                    continuum=continuum,
-                                                    cd4s=cd4,
-                                                    hiv.subsets=hiv.subsets,
-                                                    include.hiv.positive=T,
-                                                    include.hiv.negative=F,
-                                                    keep.dimensions=keep.dimensions,
-                                                    per.population=NA,
-                                                    use.cdc.categorizations=use.cdc.categorizations)
-        
-        numerators / denominators
+        if (year.anchor=='end')
+        {
+            if (is.null(continuum))
+                continuum = sim$continuum
+            suppressed.states = intersect(components$settings$SUPPRESSED_STATES, continuum)
+            if (length(suppressed.states)==0)
+                stop(paste0("None of the specified continuum states (",
+                            paste0("'", continuum, "'", collapse=', '),
+                            ") are suppressed states"))
+            
+            numerators = do.extract.population.subset(results=sim,
+                                                      years=years,
+                                                      ages=ages,
+                                                      races=races,
+                                                      subpopulations=subpopulations,
+                                                      sexes=sexes,
+                                                      risks=risks,
+                                                      continuum=suppressed.states,
+                                                      cd4s=cd4,
+                                                      hiv.subsets=hiv.subsets,
+                                                      include.hiv.positive=T,
+                                                      include.hiv.negative=F,
+                                                      keep.dimensions=keep.dimensions,
+                                                      per.population=NA,
+                                                      use.cdc.categorizations=use.cdc.categorizations)
+            
+            denominators = do.extract.population.subset(results=sim,
+                                                        years=years,
+                                                        ages=ages,
+                                                        races=races,
+                                                        subpopulations=subpopulations,
+                                                        sexes=sexes,
+                                                        risks=risks,
+                                                        continuum=continuum,
+                                                        cd4s=cd4,
+                                                        hiv.subsets=hiv.subsets,
+                                                        include.hiv.positive=T,
+                                                        include.hiv.negative=F,
+                                                        keep.dimensions=keep.dimensions,
+                                                        per.population=NA,
+                                                        use.cdc.categorizations=use.cdc.categorizations)
+            
+            numerators / denominators
+        }
+        else if (year.anchor=='start')
+        {
+            rename.year.dim.with.offset(extract.suppression(sim,
+                                                            years=years-1,
+                                                            keep.dimensions=keep.dimensions,
+                                                            per.population=per.population,
+                                                            ages=ages,
+                                                            races=races,
+                                                            subpopulations=subpopulations,
+                                                            sexes=sexes,
+                                                            risks=risks,
+                                                            continuum=sim$diagnosed.continuum.states,
+                                                            cd4=cd4,
+                                                            hiv.subsets=hiv.subsets,
+                                                            use.cdc.categorizations=use.cdc.categorizations,
+                                                            year.anchor='end'),
+                                        keep.dimensions = keep.dimensions,
+                                        offset=1)
+        }
+        else #mid
+        {
+            (extract.suppression(sim,
+                                 years=years,
+                                 keep.dimensions=keep.dimensions,
+                                 per.population=per.population,
+                                 ages=ages,
+                                 races=races,
+                                 subpopulations=subpopulations,
+                                 sexes=sexes,
+                                 risks=risks,
+                                 continuum=sim$diagnosed.continuum.states,
+                                 cd4=cd4,
+                                 hiv.subsets=hiv.subsets,
+                                 use.cdc.categorizations=use.cdc.categorizations,
+                                 year.anchor='start') +
+                 extract.suppression(sim,
+                                     years=years,
+                                     keep.dimensions=keep.dimensions,
+                                     per.population=per.population,
+                                     ages=ages,
+                                     races=races,
+                                     subpopulations=subpopulations,
+                                     sexes=sexes,
+                                     risks=risks,
+                                     continuum=sim$diagnosed.continuum.states,
+                                     cd4=cd4,
+                                     hiv.subsets=hiv.subsets,
+                                     use.cdc.categorizations=use.cdc.categorizations,
+                                     year.anchor='end')) / 2
+        }
     }
 }
 
@@ -1650,12 +1703,17 @@ sum.arr.to.cdc <- function(arr,
             }
         }
     }
-    if (all(keep.dimensions!='sex')) #risk only
+    else if (all(keep.dimensions!='sex')) #risk only
     {
         if (any(sexes=='male'))
         {
             if (any(risks=='msm'))
-                access(rv, risk='msm') = access(arr, sex='msm', risk='never_IDU')
+            {
+                if (any(names(dimnames(rv))=='risk'))
+                    access(rv, risk='msm') = access(arr, sex='msm', risk='never_IDU')
+                else
+                    rv = access(arr, sex='msm', risk='never_IDU')
+            }
             if (any(risks=='msm_idu'))
             {
                 if (length(non.risk.non.sex.dimensions)==0)
