@@ -17,11 +17,7 @@ ORAL.VAR.PREP.INTERVENTION.CODES = c(
   'msm.p25.oral.variable_23_27',
   'msm.p50.oral.variable_23_27'
 )
-INJ.ORAL.VAR.PREP.INTERVENTION.CODES = c(
-  'msm.p10.oral.inj.variable_23_27',
-  'msm.p25.oral.inj.variable_23_27',
-  'msm.p50.oral.inj.variable_23_27'
-)
+
 
 INJ.PREP.INTERVENTION.CODES = c(
     'msm.p10.inj_23_27',
@@ -66,19 +62,57 @@ ALL.VAR.ORAL.PREP.INTERVENTIONS.CODES = c(
   'msm.p50.inj.variable_23_27'
 )
 
+ORAL.INJ.COMB.INTERVENTIONS.CODES = c(
+  'msm.p10.oralinj.variable_23_27',
+  'msm.p25.oralinj.variable_23_27',
+  'msm.p50.oralinj.variable_23_27'
+)
+
+ALL.ORAL.INJ.COMB.INTERVENTIONS.CODES = c(
+  'noint',
+  'msm.p10.oral.variable_23_27',
+  'msm.p25.oral.variable_23_27',
+  'msm.p50.oral.variable_23_27',
+  'msm.p10.oralinj.variable_23_27',
+  'msm.p25.oralinj.variable_23_27',
+  'msm.p50.oralinj.variable_23_27'
+)
+
+INJ.ORAL.2020.INTERVENTIONS.CODES = c(
+  'msm.p10.oral.variable_20_20',
+  'msm.p25.oral.variable_20_20',
+  'msm.p50.oral.variable_20_20',
+  'msm.p10.oralinj.variable_20_20',
+  'msm.p25.oralinj.variable_20_20',
+  'msm.p50.oralinj.variable_20_20'
+)
+
+ORAL.2020.INTERVENTIONS.CODES = c(
+  'msm.p10.oral.variable_20_20',
+  'msm.p25.oral_20_20',
+  'msm.p50.oral_20_20'
+)
+
+INJ.2020.INTERVENTIONS.CODES = c(
+  'msm.p10.inj.variable_20_20',
+  'msm.p25.inj.variable_20_20',
+  'msm.p50.inj.variable_20_20'
+)
+
+
 STAGGERED.ORAL.INJ.PREP.CODES = character(2*length(ORAL.PREP.INTERVENTION.CODES))
 STAGGERED.ORAL.INJ.PREP.CODES[2*(1:length(ORAL.PREP.INTERVENTION.CODES))-1] = ORAL.PREP.INTERVENTION.CODES
 STAGGERED.ORAL.INJ.PREP.CODES[2*(1:length(INJ.PREP.INTERVENTION.CODES))] = INJ.PREP.INTERVENTION.CODES
 
 ##-- FUNCTION TO RUN INTERVENTIONS --##
 
-run.prep.simulations <- function(msas=TARGET.MSAS, 
-                                 intervention.codes=INJ.ORAL.VAR.PREP.INTERVENTION.CODES,
+run.prep.simulations <- function(msas, 
+                                 intervention.codes,
                                  dst.dir = 'mcmc_runs/prep_simsets',
                                  src.dir = 'mcmc_runs/quick_simsets',
                                  run.from.year=2014,
                                  run.to.year=2030,
-                                 keep.years=2018:2030)
+                                 keep.years=2014:2030)
 {
     for (msa in msas)
     {
@@ -89,8 +123,8 @@ run.prep.simulations <- function(msas=TARGET.MSAS,
         
         run.systematic.interventions(simset = simset,
                                      interventions = lapply(intervention.codes, intervention.from.code), 
-                                     dst.dir = dst.dir, overwrite = T, compress = T, 
-                                     #run.from.year = run.from.year,
+                                     dst.dir = dst.dir, overwrite = F, compress = T, 
+                                     run.from.year = run.from.year,
                                      run.to.year = run.to.year, verbose = T, 
                                      save.baseline.and.seed = F
                                      )
@@ -193,8 +227,8 @@ make.prep.table <- function(msas=TARGET.MSAS,
 }
 
 make.sensitivity.plot <- function(msas=TARGET.MSAS,
-                                  intervention.codes = VAR.PREP.INTERVENTION.CODES,
-                                  comparison.codes = ORAL.PREP.INTERVENTION.CODES, 
+                                  intervention.codes,
+                                  comparison.codes, 
                                   raw.prep.results = prep.results,
                                   include.totals = F,
                                   dir = 'mcmc_runs/prep_simsets',
@@ -355,7 +389,7 @@ for(i in 1:length(intervention.codes)){
 
 #returns a three-dimensional array
 #indexed [simulation, msa, intervention.code]
-aggregate.raw.prep.results <- function(msas=TARGET.MSAS,
+aggregate.raw.prep.results <- function(msas=ATLANTA.MSA,
                                        intervention.codes,
                                        years=2020:2030,
                                        dir='mcmc_runs/prep_simsets',
@@ -368,7 +402,7 @@ aggregate.raw.prep.results <- function(msas=TARGET.MSAS,
 
             simset = flatten.simset(simset)
 
-            sapply(simset@simulations, project.absolute.incidence, keep.dimensions = NULL, years=years)
+            sapply(simset@simulations, project.absolute.incidence, keep.dimensions = NULL, years=years, risks = c("msm","msm_idu"))
           
             
     
