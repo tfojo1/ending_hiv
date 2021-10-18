@@ -89,8 +89,8 @@ INJ.ORAL.2020.INTERVENTIONS.CODES = c(
 
 ORAL.2020.INTERVENTIONS.CODES = c(
   'msm.p10.oral.variable_20_20',
-  'msm.p25.oral_20_20',
-  'msm.p50.oral_20_20'
+  'msm.p25.oral.variable_20_20',
+  'msm.p50.oral.variable_20_20'
 )
 
 INJ.2020.INTERVENTIONS.CODES = c(
@@ -99,6 +99,18 @@ INJ.2020.INTERVENTIONS.CODES = c(
   'msm.p50.inj.variable_20_20'
 )
 
+
+
+ORAL.2015.INTERVENTIONS.CODES = 'msm.p35.oral.variable_15_15'
+
+INJ.2015.INTERVENTIONS.CODES = 'msm.p35.oralinj.variable_15_15'
+
+
+INJ.ORAL.2015.INTERVENTIONS.CODES = c(
+  INJ.2015.INTERVENTIONS.CODES,
+  ORAL.2015.INTERVENTIONS.CODES
+)
+  
 
 STAGGERED.ORAL.INJ.PREP.CODES = character(2*length(ORAL.PREP.INTERVENTION.CODES))
 STAGGERED.ORAL.INJ.PREP.CODES[2*(1:length(ORAL.PREP.INTERVENTION.CODES))-1] = ORAL.PREP.INTERVENTION.CODES
@@ -158,7 +170,7 @@ make.prep.table <- function(msas=TARGET.MSAS,
     rv = sapply(1:length(intervention.codes), function(i){
         sapply(1:length(msas), function(msa){
             int.code = intervention.codes[i]
-            int.values = raw.prep.results[,msa,int.code]
+            int.values = raw.prep.results[msa,int.code]
             
             if (is.null(comparison.codes)){
               comp.values = rep(0, length(int.values))
@@ -166,7 +178,7 @@ make.prep.table <- function(msas=TARGET.MSAS,
             else
             {            
                 comp.code = comparison.codes[i]
-                comp.values = raw.prep.results[,msa,comp.code]
+                comp.values = raw.prep.results[msa,comp.code]
             }
             
             if (stat=='abs.diff') {
@@ -214,9 +226,6 @@ make.prep.table <- function(msas=TARGET.MSAS,
               
             }
      
-           
-          
-  
         })
     })
     
@@ -227,8 +236,8 @@ make.prep.table <- function(msas=TARGET.MSAS,
 }
 
 make.sensitivity.plot <- function(msas=TARGET.MSAS,
-                                  intervention.codes,
-                                  comparison.codes, 
+                                  intervention.codes = ORAL.INJ.COMB.INTERVENTIONS.CODES,
+                                  comparison.codes = ORAL.VAR.PREP.INTERVENTION.CODES, 
                                   raw.prep.results = prep.results,
                                   include.totals = F,
                                   dir = 'mcmc_runs/prep_simsets',
@@ -258,16 +267,17 @@ make.sensitivity.plot <- function(msas=TARGET.MSAS,
   
   for(i in 1:length(intervention.codes)){
     
-    
-    int_2020 = sapply(1:length(msas), function(msa){
+ 
+  int_2020 = sapply(1:length(msas), function(msa){
       int.code = intervention.codes[i]
-      int.values = raw.prep.results[,msa,int.code]
+      int.values = raw.prep.results[msa,int.code]
       int.values[[1]][1,]
     })
     
-    int_2030 = sapply(1:length(msas), function(msa){
+  
+  int_2030 = sapply(1:length(msas), function(msa){
       int.code = intervention.codes[i]
-      int.values = raw.prep.results[,msa,int.code]
+      int.values = raw.prep.results[msa,int.code]
       int.values[[1]][dim(int.values[[1]])[1],]
     })
     
@@ -281,12 +291,13 @@ make.sensitivity.plot <- function(msas=TARGET.MSAS,
         else
         {            
           comp.code = comparison.codes[i]
-          comp.values = raw.prep.results[,msa,comp.code]
+          comp.values = raw.prep.results[msa,comp.code]
         }
         
         comp.values[[1]][1,]
       })
     
+
     comp_2030 = sapply(1:length(msas), function(msa){
       
       if (is.null(comparison.codes)){
@@ -295,7 +306,7 @@ make.sensitivity.plot <- function(msas=TARGET.MSAS,
       else
       {            
         comp.code = comparison.codes[i]
-        comp.values = raw.prep.results[,msa,comp.code]
+        comp.values = raw.prep.results[msa,comp.code]
       }
       comp.values[[1]][dim(comp.values[[1]])[1],]
     })
@@ -315,7 +326,7 @@ make.sensitivity.plot <- function(msas=TARGET.MSAS,
     colnames(sensitivity_plot) <- c("Absolute Difference","Efficacy")
     sensitivity_plot = as.data.frame(sensitivity_plot)
     dev.off()
-    ggplot(sensitivity_plot, aes(x =`Efficacy`, y = `Absolute Difference`)) + geom_point() +ggtitle(paste0("Sensitivity Plot ",intervention.codes[i]))
+    ggplot(sensitivity_plot, aes(x =`Efficacy`, y = `Absolute Difference`)) + geom_point() +ggtitle(paste0("Sensitivity Plot "))
     
     cor(sensitivity_plot, method = "spearman")
   
@@ -387,9 +398,9 @@ for(i in 1:length(intervention.codes)){
 
 
 
-#returns a three-dimensional array
+#returns a four-dimensional array
 #indexed [simulation, msa, intervention.code]
-aggregate.raw.prep.results <- function(msas=ATLANTA.MSA,
+aggregate.raw.prep.results <- function(msas,
                                        intervention.codes,
                                        years=2020:2030,
                                        dir='mcmc_runs/prep_simsets',
@@ -401,16 +412,16 @@ aggregate.raw.prep.results <- function(msas=ATLANTA.MSA,
             load(file.path(dir, msa, filename))
 
             simset = flatten.simset(simset)
-
-            sapply(simset@simulations, project.absolute.incidence, keep.dimensions = NULL, years=years, risks = c("msm","msm_idu"))
+            sapply(simset@simulations, project.absolute.incidence, 
+                   keep.dimensions = 'year', years=years, risks = c("msm","msm_idu"))
           
             
     
         })
     })
     
-    
-    dim.names = list(sim=1:(length(rv)/length(msas)/length(intervention.codes)),
+    dim.names = list(year=years,
+                     sim=1:(length(rv)/length(msas)/length(intervention.codes)/length(years)),
                      location=msas,
                      intervention=intervention.codes) 
     
@@ -421,8 +432,8 @@ aggregate.raw.prep.results <- function(msas=ATLANTA.MSA,
     {
         dim.names$location = c(dim.names$location, 'total')
         new.rv = array(0, dim=sapply(dim.names, length), dimnames=dim.names)
-        new.rv[,msas,] = rv 
-        new.rv[,'total',] = apply(rv, c('intervention'), sum, na.rm=T) 
+        new.rv[,,msas,] = rv 
+        new.rv[,,'total',] = apply(rv, c(1,2,4), sum, na.rm=T) 
         rv = new.rv
     }
     

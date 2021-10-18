@@ -22,6 +22,8 @@ create.prep.interventions <- function(start.year,
                                        rates = .1, years = implemented.year)
     PREP.25 = create.intervention.unit(type = "prep", start.year = start.year, 
                                        rates = .25, years = implemented.year)
+    PREP.35 = create.intervention.unit(type = "prep", start.year = start.year, 
+                                       rates = .35, years = implemented.year)
     PREP.50 = create.intervention.unit(type = "prep", start.year = start.year, 
                              rates = .5, years = implemented.year)
     
@@ -45,7 +47,6 @@ create.prep.interventions <- function(start.year,
     
     #-- COMBINE TO MAKE SPECIFIC INTERVENTIONS --#
   
-    
     MSM.P10 = create.intervention(ALL.MSM, PREP.10)
     INTERVENTION.MANAGER = register.intervention(MSM.P10, code=paste0('msm.p10.oral', suffix),
                                                  name='Immediate 10% of MSM on oral PrEP',
@@ -123,6 +124,8 @@ create.prep.interventions <- function(start.year,
                                                  manager = INTERVENTION.MANAGER,
                                                  allow.intervention.multiple.names = T)
     
+    
+    
     MSM.OIP10v = create.intervention(ALL.MSM, PREP.10,  INJECTABLE.ORAL.PREP.VARIABLE,oral.prep.rr.dist,injectable.prep.rr.dist)
     INTERVENTION.MANAGER = register.intervention(MSM.OIP10v, code=paste0('msm.p10.oralinj.variable', suffix),
                                                  name='Immediate 10% of MSM on oral/injectable PrEP variable',
@@ -140,7 +143,19 @@ create.prep.interventions <- function(start.year,
                                                  name='Immediate 50% of MSM on oral/injectable PrEP variable',
                                                  manager = INTERVENTION.MANAGER,
                                                  allow.intervention.multiple.names = T)
+   
   
+    MSM.OIP35v = create.intervention(ALL.MSM, PREP.35,  INJECTABLE.ORAL.PREP.VARIABLE,oral.prep.rr.dist,injectable.prep.rr.dist)
+    INTERVENTION.MANAGER = register.intervention(MSM.OIP35v, code=paste0('msm.p35.oralinj.variable', suffix),
+                                                 name='Immediate 35% of MSM on oral/injectable PrEP variable',
+                                                 manager = INTERVENTION.MANAGER,
+                                                 allow.intervention.multiple.names = T)
+    MSM.P35v = create.intervention(ALL.MSM, PREP.35, ORAL.PREP.VARIABLE,oral.prep.rr.dist)
+    INTERVENTION.MANAGER = register.intervention(MSM.P35v, code=paste0('msm.p35.oral.variable', suffix),
+                                                 name='Immediate 35% of MSM on oral PrEP variable',
+                                                 manager = INTERVENTION.MANAGER,
+                                                 allow.intervention.multiple.names = T)
+    
  
     #-- RETURN THE INTERVENTION MANAGER --#
     INTERVENTION.MANAGER
@@ -176,11 +191,16 @@ oral.log.sd = (oral.ci.upper - oral.ci.lower) / 2 / 1.96
 
 ORAL.PREP.RR.DIST = Lognormal.Distribution(meanlog = 0, sdlog = oral.log.sd, var.name = 'oral.rr')
 #^This is an RR relative to the already existing estimate 
-#need to figure this out 
+
 
 ##-- ACTUALLY CREATE INTERVENTIONS FOR A 2023-2027 time frame --## 
 
 #Note: breaks if intervention was already made
+
+INTERVENTION.MANAGER.1.0 = create.prep.interventions(start.year=2023,
+                                                     implemented.year=2027,
+                                                     suffix='23_27',
+                                                     INTERVENTION.MANAGER=INTERVENTION.MANAGER.1.0)
 
 INTERVENTION.MANAGER.1.0 = create.prep.interventions(start.year=2015,
                                                      implemented.year=2015.0001,
