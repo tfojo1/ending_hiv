@@ -41,11 +41,51 @@ create.prep.interventions <- function(start.year,
     MSM.OIP10v = create.intervention(ALL.MSM, PREP.10, 
                                      ORAL.PREP.VARIABLE, INJECTABLE.PREP.VARIABLE,
                                      oral.prep.msm.rr.dist,injectable.prep.rr.dist)
-    INTERVENTION.MANAGER = register.intervention(MSM.OIP10v, code=paste0('msm.p10.oralinj.variable', suffix),
-                                                 name='Immediate 10% of MSM on oral/injectable PrEP variable',
+    INTERVENTION.MANAGER = register.intervention(MSM.OIP10v, code=paste0('msm.p10.oralinj.variable.new', suffix),
+                                                 name='10% of MSM on oral/injectable PrEP variable new',
                                                  manager = INTERVENTION.MANAGER,
                                                  allow.intervention.multiple.names = T)
     
+    MSM.OIP25v = create.intervention(ALL.MSM, PREP.25, 
+                                     ORAL.PREP.VARIABLE, INJECTABLE.PREP.VARIABLE,
+                                     oral.prep.msm.rr.dist,injectable.prep.rr.dist)
+    INTERVENTION.MANAGER = register.intervention(MSM.OIP25v, code=paste0('msm.p25.oralinj.variable.new', suffix),
+                                                 name='25% of MSM on oral/injectable PrEP variable new',
+                                                 manager = INTERVENTION.MANAGER,
+                                                 allow.intervention.multiple.names = T)
+    
+    MSM.OIP50v = create.intervention(ALL.MSM, PREP.50, 
+                                     ORAL.PREP.VARIABLE, INJECTABLE.PREP.VARIABLE,
+                                     oral.prep.msm.rr.dist,injectable.prep.rr.dist)
+    INTERVENTION.MANAGER = register.intervention(MSM.OIP50v, code=paste0('msm.p50.oralinj.variable.new', suffix),
+                                                 name='50% of MSM on oral/injectable PrEP variable new',
+                                                 manager = INTERVENTION.MANAGER,
+                                                 allow.intervention.multiple.names = T)
+    
+    MSM.OP10v = create.intervention(ALL.MSM, PREP.10, 
+                                     ORAL.PREP.VARIABLE,
+                                     oral.prep.msm.rr.dist)
+    INTERVENTION.MANAGER = register.intervention(MSM.OP10v, code=paste0('msm.p10.oral.variable.new', suffix),
+                                                 name='10% of MSM on oral PrEP variable new',
+                                                 manager = INTERVENTION.MANAGER,
+                                                 allow.intervention.multiple.names = T)
+    
+    MSM.OP25v = create.intervention(ALL.MSM, PREP.25, 
+                                    ORAL.PREP.VARIABLE,
+                                    oral.prep.msm.rr.dist)
+    INTERVENTION.MANAGER = register.intervention(MSM.OP25v, code=paste0('msm.p25.oral.variable.new', suffix),
+                                                 name='25% of MSM on oral PrEP variable new',
+                                                 manager = INTERVENTION.MANAGER,
+                                                 allow.intervention.multiple.names = T)
+    
+    
+    MSM.OP50v = create.intervention(ALL.MSM, PREP.50, 
+                                    ORAL.PREP.VARIABLE,
+                                    oral.prep.msm.rr.dist)
+    INTERVENTION.MANAGER = register.intervention(MSM.OP50v, code=paste0('msm.p50.oral.variable.new', suffix),
+                                                 name='50% of MSM on oral PrEP variable new',
+                                                 manager = INTERVENTION.MANAGER,
+                                                 allow.intervention.multiple.names = T)
     #-- RETURN THE INTERVENTION MANAGER --#
     INTERVENTION.MANAGER
 }
@@ -196,6 +236,7 @@ OLD.create.prep.interventions <- function(start.year,
                                                  name='Immediate 35% of MSM on oral/injectable PrEP variable',
                                                  manager = INTERVENTION.MANAGER,
                                                  allow.intervention.multiple.names = T)
+    
     MSM.P35v = create.intervention(ALL.MSM, PREP.35, ORAL.PREP.VARIABLE,oral.prep.rr.dist)
     INTERVENTION.MANAGER = register.intervention(MSM.P35v, code=paste0('msm.p35.oral.variable', suffix),
                                                  name='Immediate 35% of MSM on oral PrEP variable',

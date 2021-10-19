@@ -99,6 +99,12 @@ INJ.2020.INTERVENTIONS.CODES = c(
   'msm.p50.inj.variable_20_20'
 )
 
+COVERAGE.25.INTERVENTIONS.CODES = c(
+  'msm.p25.oralinj.variable_23_27',
+  'msm.p25.oral.variable_23_27',
+  'noint'
+)
+
 
 
 ORAL.2015.INTERVENTIONS.CODES = 'msm.p35.oral.variable_15_15'
@@ -110,7 +116,16 @@ INJ.ORAL.2015.INTERVENTIONS.CODES = c(
   INJ.2015.INTERVENTIONS.CODES,
   ORAL.2015.INTERVENTIONS.CODES
 )
+
+INJ.ORAL.VARIABLE.NEW.INTERVENTIONS.CODES = c(
+  'msm.p10.oralinj.variable.new_23_27',
+  'msm.p25.oralinj.variable.new_23_27',
+  'msm.p50.oralinj.variable.new_23_27',
+  'msm.p10.oral.variable.new_23_27',
+  'msm.p25.oral.variable.new_23_27',
+  'msm.p50.oral.variable.new_23_27'
   
+)
 
 STAGGERED.ORAL.INJ.PREP.CODES = character(2*length(ORAL.PREP.INTERVENTION.CODES))
 STAGGERED.ORAL.INJ.PREP.CODES[2*(1:length(ORAL.PREP.INTERVENTION.CODES))-1] = ORAL.PREP.INTERVENTION.CODES
@@ -135,7 +150,7 @@ run.prep.simulations <- function(msas,
         
         run.systematic.interventions(simset = simset,
                                      interventions = lapply(intervention.codes, intervention.from.code), 
-                                     dst.dir = dst.dir, overwrite = F, compress = T, 
+                                     dst.dir = dst.dir, overwrite = T, compress = T, 
                                      run.from.year = run.from.year,
                                      run.to.year = run.to.year, verbose = T, 
                                      save.baseline.and.seed = F
@@ -439,3 +454,38 @@ aggregate.raw.prep.results <- function(msas,
     
     rv
 }
+
+make.figure <- function(msas=TARGET.MSAS,intervention.codes = COVERAGE.25.INTERVENTIONS.CODES, raw.prep.results = prep.results,round.digits=0){
+ 
+  plots = vector("list", length= length(intervention.codes))
+  for(i in 1:length(intervention.codes)){
+    rv = sapply(1:11, function(j){
+      int.code = intervention.codes[i]
+      int.values = raw.prep.results[,int.code]
+      int_collapse = do.call(cbind, (lapply(int.values, function(x) x[j,1:50])))
+      rowSums(int_collapse)
+    })
+    
+    mean_diff = round(colMeans(rv),0)
+    CI_low = round(apply(rv,2,function(x) quantile(x, probs = .025)),0)
+    CI_high = round(apply(rv,2,function(x) quantile(x, probs = .975)),0)
+    
+    rv = rbind(mean_diff,CI_low,CI_high)
+    rv = as.data.frame(rv)
+    rv = cbind(t(rv),2020:2030,intervention.codes[i])
+    colnames(rv) = c("Incidence","CI Low", "CI High", "Year","Intervention")
+    
+    plots[[i]] = rv
+
+    
+  }
+  
+  plots = do.call(rbind.data.frame,plots)
+  plots$Incidence = as.numeric(as.character((plots$Incidence)))
+  plots$`CI Low` = as.numeric(as.character((plots$`CI Low`)))
+  plots$`CI High` = as.numeric(as.character((plots$`CI High`)))                            
+  ggplot(plots, aes(x=Year,y=Incidence,group=Intervention)) +
+    geom_ribbon(aes(ymin=`CI Low`,ymax=`CI High`, fill= Intervention), alpha = .3) +
+    geom_line(aes(colour=Intervention))
+}
+
