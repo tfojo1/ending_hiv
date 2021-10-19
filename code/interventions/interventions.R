@@ -132,35 +132,58 @@ intervention.consistency.check <- function(intervention, allow.multiple.interven
 
 interventions.equal <- function(int1, int2)
 {
-    if (!length(int1$raw) == length(int2$raw))
+    # Test that overall lengths match
+    if (length(int1$raw) != length(int2$raw) ||
+        length(int1$static.settings) != length(int2$static.settings) || 
+        length(int1$parameter.distributions) != length(int2$parameter.distributions))
         return (F)
     
-    if (length(setdiff(names(int1$raw), names(int2$raw)))>0)
+    if (length(int1$raw)>0 && length(setdiff(names(int1$raw), names(int2$raw)))>0)
         return (F)
+
+    # Test static settings for equality    
+    if (length(int1$static.settings)>0)
+    {
+        static.settings.equality.matrix = sapply(1:length(int1$static.settings), function(i){
+            sapply(1:length(int2$static.settings), function(j){
+                static.settings.equal(int1$static.settings[[i]], int2$static.settings[[j]])
+            })
+        })
+        if (any(rowSums(static.settings.equality.matrix)!=1) ||
+            any(colSums(static.settings.equality.matrix)!=1))
+            return (F)
+    }
     
-    if (any(!sapply(names(int1$raw), function(type){
-            t1 = int1$raw[[type]]
-            t2 = int2$raw[[type]]
-            
-            if (length(t1$target.populations) != length(t2$target.populations))
-                return (F)
-            if (length(t1$intervention.units) != length(t2$intervention.units))
-                return (F)
-            
-            if (any(!sapply(1:length(t1$target.populations), function(i){
-                    target.populations.equal(t1$target.populations[[i]], t2$target.populations[[i]])
-                })))
-                return (F)
-            
-            if (any(!sapply(1:length(t1$intervention.units), function(i){
-                    intervention.units.equal(t1$intervention.units[[i]], t2$intervention.units[[i]])
-                })))
-                return (F)
-            
-            return(T)
-        })))
-        return (F)
+    # Test Distributions for equality
     
+    # Test intervention units/target populations for equality
+    if (length(int1$raw)>0)
+    {
+        if (any(!sapply(names(int1$raw), function(type){
+                t1 = int1$raw[[type]]
+                t2 = int2$raw[[type]]
+                
+                if (length(t1$target.populations) != length(t2$target.populations))
+                    return (F)
+                if (length(t1$intervention.units) != length(t2$intervention.units))
+                    return (F)
+                
+                if (any(!sapply(1:length(t1$target.populations), function(i){
+                        target.populations.equal(t1$target.populations[[i]], t2$target.populations[[i]])
+                    })))
+                    return (F)
+                
+                if (any(!sapply(1:length(t1$intervention.units), function(i){
+                        intervention.units.equal(t1$intervention.units[[i]], t2$intervention.units[[i]])
+                    })))
+                    return (F)
+                
+                return(T)
+            })))
+            return (F)
+    }
+    
+    # Return true if we haven't flagged anything up to now
     return (T)
 }
 
@@ -697,7 +720,9 @@ intervention.is.resolved <- function(intervention)
         all(sapply(sub.units, intervention.unit.is.resolved))
     })
     
-    all(all.resolved.by.type)
+    static.settings.resolved = sapply(intervention$static.settings, static.settings.is.resolved)
+    
+    all(all.resolved.by.type) && all(static.settings.resolved)
 }
 
 ##----------------------------------##
