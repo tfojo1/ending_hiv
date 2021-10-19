@@ -149,6 +149,7 @@ interventions.equal <- function(int1, int2)
                 static.settings.equal(int1$static.settings[[i]], int2$static.settings[[j]])
             })
         })
+        dim(static.settings.equality.matrix) = rep(length(int1$static.settings),2)
         if (any(rowSums(static.settings.equality.matrix)!=1) ||
             any(colSums(static.settings.equality.matrix)!=1))
             return (F)
