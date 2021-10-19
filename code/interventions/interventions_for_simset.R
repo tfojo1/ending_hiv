@@ -204,9 +204,11 @@ run.sim.intervention <- function(sim,
     for (int in intervention)
         components = setup.components.for.intervention(components, int, overwrite.prior.intervention=F)
     
-    run.jheem.from.components(components, start.year=run.from.year, end.year=run.to.year,
+    sim = run.jheem.from.components(components, start.year=run.from.year, end.year=run.to.year,
                               prior.results = sim, keep.components = T, keep.years=keep.years,
                               pare.components = T)
+    
+    sim
 }
 
 run.multiple.simset.interventions <- function(simset,

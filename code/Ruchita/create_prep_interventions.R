@@ -11,6 +11,50 @@ create.prep.interventions <- function(start.year,
                                       suffix='',
                                       INTERVENTION.MANAGER=INTERVENTION.MANAGER.1.0,
                                       injectable.prep.rr.dist=INJ.PREP.RR.DIST,
+                                      oral.prep.msm.rr.dist=ORAL.PREP.MSM.RR.DIST) #@ruchita - note the name change to oral.prep.**MSM**.rr.dist
+{
+    if (suffix != '' && substr(suffix, 1,1)!='_')
+        suffix = paste0("_", suffix)
+    
+    #-- DEFINE THE INTERVENTION UNITS --#
+    
+    PREP.10 = create.intervention.unit(type = "prep", start.year = start.year, 
+                                       rates = .1, years = implemented.year)
+    PREP.25 = create.intervention.unit(type = "prep", start.year = start.year, 
+                                       rates = .25, years = implemented.year)
+    PREP.35 = create.intervention.unit(type = "prep", start.year = start.year, 
+                                       rates = .35, years = implemented.year)
+    PREP.50 = create.intervention.unit(type = "prep", start.year = start.year, 
+                                       rates = .5, years = implemented.year)
+    
+    INJECTABLE.PREP.VARIABLE = create.intervention.unit(type = "rr.prep", start.year = start.year, 
+                                                        rates = 'inj.rr', years = implemented.year, 
+                                                        apply.function = "multiplier", allow.less.than.otherwise = T)
+    
+    ORAL.PREP.VARIABLE = create.intervention.static.settings(name.chain='prep.rr.msm',
+                                                             value='oral.rr')
+    
+    
+    #-- COMBINE TO MAKE SPECIFIC INTERVENTIONS --#
+    
+    #@ruchita - now you have to pass BOTH the injectable AND oral distributions    
+    MSM.OIP10v = create.intervention(ALL.MSM, PREP.10, 
+                                     ORAL.PREP.VARIABLE, INJECTABLE.PREP.VARIABLE,
+                                     oral.prep.msm.rr.dist,injectable.prep.rr.dist)
+    INTERVENTION.MANAGER = register.intervention(MSM.OIP10v, code=paste0('msm.p10.oralinj.variable', suffix),
+                                                 name='Immediate 10% of MSM on oral/injectable PrEP variable',
+                                                 manager = INTERVENTION.MANAGER,
+                                                 allow.intervention.multiple.names = T)
+    
+    #-- RETURN THE INTERVENTION MANAGER --#
+    INTERVENTION.MANAGER
+}
+
+OLD.create.prep.interventions <- function(start.year,
+                                      implemented.year,
+                                      suffix='',
+                                      INTERVENTION.MANAGER=INTERVENTION.MANAGER.1.0,
+                                      injectable.prep.rr.dist=INJ.PREP.RR.DIST,
                                       oral.prep.rr.dist=ORAL.PREP.RR.DIST)
 {
     if (suffix != '' && substr(suffix, 1,1)!='_')
@@ -39,11 +83,13 @@ create.prep.interventions <- function(start.year,
     ORAL.PREP.VARIABLE = create.intervention.unit(type='rr.prep', start.year=2014,
                                                   rates = 'oral.rr', years=2014.00001,
                                                   apply.function='multiplier', allow.less.than.otherwise = T)
+    
+    # @Ruchita
+    # Don't use this anymore - instead you have to pass injectable and oral as separate intervention units
     INJECTABLE.ORAL.PREP.VARIABLE = create.intervention.unit(type='rr.prep', start.year = 2014, 
                                                              rates=c('oral.rr','oral.rr','inj.rr'), 
                                                              years=c(2014.00001, start.year, implemented.year),
                                                              apply.function='multiplier', allow.less.than.otherwise = T)
-    
     
     #-- COMBINE TO MAKE SPECIFIC INTERVENTIONS --#
   
@@ -125,8 +171,8 @@ create.prep.interventions <- function(start.year,
                                                  allow.intervention.multiple.names = T)
     
     
-    
-    MSM.OIP10v = create.intervention(ALL.MSM, PREP.10,  INJECTABLE.ORAL.PREP.VARIABLE,oral.prep.rr.dist,injectable.prep.rr.dist)
+#@ruchita - now you have to pass BOTH the injectable AND oral distributions    
+    MSM.OIP10v = create.intervention(ALL.MSM, PREP.10,  INJECTABLE.PREP.VARIABLE,oral.prep.rr.dist,injectable.prep.rr.dist)
     INTERVENTION.MANAGER = register.intervention(MSM.OIP10v, code=paste0('msm.p10.oralinj.variable', suffix),
                                                  name='Immediate 10% of MSM on oral/injectable PrEP variable',
                                                  manager = INTERVENTION.MANAGER,
@@ -184,12 +230,13 @@ oral.efficacy.lower = 0.64
 oral.efficacy.upper = 0.96
 
 #these are the ci relative to the estimate - ie log(bound/estimate) = log(bound) - log(estimate)
-oral.ci.lower = log(1-oral.efficacy.upper) - log(1-oral.efficacy.est)
-oral.ci.upper = log(1-oral.efficacy.lower) - log(1-oral.efficacy.est)
+oral.ci.lower = log(1-oral.efficacy.upper)# - log(1-oral.efficacy.est)
+oral.ci.upper = log(1-oral.efficacy.lower)# - log(1-oral.efficacy.est)
 
 oral.log.sd = (oral.ci.upper - oral.ci.lower) / 2 / 1.96
 
-ORAL.PREP.RR.DIST = Lognormal.Distribution(meanlog = 0, sdlog = oral.log.sd, var.name = 'oral.rr')
+ORAL.PREP.MSM.RR.DIST = Lognormal.Distribution(meanlog = (oral.ci.upper+oral.ci.lower)/2, 
+                                               sdlog = oral.log.sd, var.name = 'oral.rr')
 #^This is an RR relative to the already existing estimate 
 
 

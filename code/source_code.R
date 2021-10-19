@@ -11,6 +11,8 @@ library(ggplot2)
 load('cached/DEFAULT.LOCALE.MAPPING.Rdata')
 load('cached/SUBSTATE.TO.COUNTY.MAPPING.Rdata')
 
+source('code/calibration/version_manager.R')
+
 source('code/data_managers/locale_mappings.R')
 source('code/data_managers/census_manager.R')
 source('code/data_managers/census_totals.R')
@@ -22,11 +24,11 @@ source('code/data_managers/prep_manager_2.R')
 source('code/data_managers/continuum_manager_2.R')
 source('code/data_managers/hiv_surveillance_manager.R')
 
-source('code/calibration/version_manager.R')
 source('code/targets/target_msas.R')
 
 #-- Load cached data managers --#
 load('cached/msa.surveillance.Rdata')
+load('cached/county.surveillance.Rdata')
 load('cached/state.surveillance.Rdata')
 load('cached/national.surveillance.Rdata')
 load('cached/ALL.DATA.MANAGERS.Rdata')
@@ -47,7 +49,10 @@ source('code/setup/setup_initial_components.R')
 source('code/calibration/calibrated_parameters_113_helpers.R')
 source('code/calibration/calibrated_parameters_117g.R')
 source('code/estimate_cdc_errors.R')
+
 source('code/calibration/likelihoods_2.R')
+source('code/calibration/likelihoods_nested_location.R')
+source('code/calibration/likelihood_master.R')
 
 #-- Systematic --#
 source('code/systematic_calibration/systematic_settings.R')
@@ -62,6 +67,7 @@ source('code/time_text.R') #from commoncode
 source('code/interventions/target_population.R')
 source('code/interventions/interventions.R')
 source('code/interventions/intervention_units.R')
+source('code/interventions/intervention_static_settings.R')
 source('code/interventions/create_standard_intervention_presets.R')
 source('code/interventions/intervention_presets.R')
 source('code/interventions/interventions_for_simset.R')

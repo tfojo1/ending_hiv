@@ -24,15 +24,18 @@ create.intervention <- function(...)
     
     target.populations = args[sapply(args, is, 'target.population')]
     intervention.units = args[sapply(args, is, 'intervention.unit')]
+    static.settings = args[sapply(args, is, 'static.settings')]
     distributions = args[sapply(args, is, 'Distribution')]
     
     # Check  types
-    if ((length(target.populations) + length(intervention.units) + length(distributions)) < length(args))
-        stop("The arguments to create.intervention must be either target.population, unit.intervention objects, Distribution objects, or lists containing only target.population, unit.intervention objects, and Distribution objects")
-    if (length(target.populations)==0)
-        stop("There must be at least one target population passed as an argument to create.intervention")
+    if ((length(target.populations) + length(intervention.units) + length(distributions) + length(static.settings)) < length(args))
+        stop("The arguments to create.intervention must be either target.population, unit.intervention objects, static.settings objects, Distribution objects, or lists containing only target.population, unit.intervention objects, and Distribution objects")
+    if (length(static.settings)==0 && length(intervention.units)==0)
+        stop("An intervention must contain at least one intervention.unit or static.settings")
+    if (length(target.populations)==0 && (length(static.settings) + length(distributions))<length(args))
+        stop("Unless an intervention consists of only static settings, there must be at least one target population passed as an argument to create.intervention")
     if (length(intervention.units)==0)
-        stop("There must be at least one intervention unit passed as an argument to create.intervention")
+        stop("Unless an intervention consists of only static settings there must be at least one intervention unit passed as an argument to create.intervention")
     for (dist in distributions)
     {
         if (is.null(dist@var.names))
@@ -55,6 +58,9 @@ create.intervention <- function(...)
             rv$raw[[unit$type]]$intervention.units = c(rv$raw[[unit$type]]$intervention.units, list(unit))
         }
     }
+    
+    # Store static settings
+    rv$static.settings = static.settings
     
     # Store the distributions
     rv$parameter.distributions = distributions
@@ -90,6 +96,8 @@ join.interventions <- function(...)
                 rv$raw[[type]]$intervention.units = c(rv$raw[[type]]$intervention.units, int$raw[[type]]$intervention.units)
             }
             
+            rv$static.settings = c(rv$static.settings,
+                                   int$static.set)
             rv$parameter.distributions = c(rv$parameter.distributions,
                                            int$parameter.distributions)
         }
@@ -110,12 +118,12 @@ create.null.intervention <- function()
     rv
 }
 
-intervention.consistency.check <- function(intervention)
+intervention.consistency.check <- function(intervention, allow.multiple.interventions=T)
 {
     sapply(names(intervention$raw), function(type){
         bucket = intervention$raw[[type]]
         pop.hashes = sapply(bucket$target.populations, logical.to.6.bit)
-        if (max(table(pop.hashes))>1)
+        if (!allow.multiple.interventions && max(table(pop.hashes))>1)
             stop("An intervention can only have one sub-intervention per population, but the intervention has more than one sub-intervention of type ", type,
                  " for certain sub-populatfions")
     })
@@ -459,10 +467,12 @@ get.intervention.name <- function(int, manager=INTERVENTION.MANAGER.1.0,
     })
     if (any(mask))
     {
-        if (sum(mask)>1 && throw.error.if.multiple.names)
+        int.names = unique(manager$name[mask])
+        
+        if (length(int.names)>1 && throw.error.if.multiple.names)
             stop(paste0("More than one name for the given intervention has been registered: ",
                         paste0("'", manager$name[mask], "'", collapse=", ")))
-        as.character(manager$name[mask])
+        as.character(int.names)
     }
     else
         NULL
@@ -671,6 +681,11 @@ resolve.intervention <- function(intervention, parameters)
         }
     }
     
+    intervention$static.settings = lapply(intervention$static.settings, function(ss){
+        resolve.intervention.static.settings(static.settings=ss,
+                                parameters=parameters)
+    })
+    
     intervention = process.intervention(intervention)
     intervention
 }
@@ -744,6 +759,7 @@ flatten.list <- function(...)
 ##-- SETUP COMPONENTS --##
 ##----------------------##
 
+
 setup.components.for.intervention <- function(components,
                                               intervention,
                                               overwrite.prior.intervention=F)
@@ -753,6 +769,14 @@ setup.components.for.intervention <- function(components,
     
     if (!intervention.is.resolved(intervention))
         stop("The given intervention must have all variables resolved prior to running a simulation with it")
+    
+    # Apply static settings
+    for (ss in intervention$static.settings)
+    {
+        components = set.components.to.static.settings(components, ss$name.chain, ss$value)
+        if (length(ss$dependencies)>0)
+            components = clear.dependent.values(components, ss$dependencies)
+    }
     
     # Set up
     idu.states = 'active_IDU'
@@ -1065,6 +1089,22 @@ setup.components.for.intervention <- function(components,
                                           foreground.max = max.rates)
     }
     
+    
+    components
+}
+
+
+
+set.components.to.static.settings <- function(components, 
+                                              name.chain,
+                                              value)
+{
+    if (length(name.chain)==1)
+        components[[name.chain]] = value
+    else
+        components = set.components.to.static.settings(components[[ name.chain[1] ]],
+                                          name.chain=name.chain[-1],
+                                          value=value)
     
     components
 }
