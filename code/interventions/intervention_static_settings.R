@@ -19,6 +19,40 @@ static.settings.is.resolved <- function(static.settings)
     length(static.settings$to.resolve) == 0    
 }
 
+static.settings.equal <- function(ss1, ss2)
+{
+    if (length(ss1$name.chain)!=length(ss2$name.chain) || !all(ss1$name.chain==ss2$name.chain))
+        return (F)
+    
+    if (!setequal(ss1$dependencies, ss2$dependencies) ||
+        !setequal(ss1$to.resolve, ss2$to.resolve))
+        return (F)
+    
+    if (!recursive.lists.equal(ss1$value, ss2$value))
+        return (F)
+    
+    T
+}
+
+recursive.lists.equal <- function(l1, l2)
+{
+    if (is(l1, 'list') && is(l2, 'list')) #recurse
+    {
+        if (length(l1) != length(l2))
+            F
+        else
+            all(sapply(1:length(l1), function(i){
+                recursive.lists.equal(l1[[i]], l2[[i]])
+            }))
+    }
+    else if (any(class(l1) != class(l2)))
+        F
+    else if (length(l1) != length(l2))
+        F
+    else
+        all(l1==l2)
+}
+
 resolve.intervention.static.settings <- function(static.settings,
                                                  parameters)
 {
