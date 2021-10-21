@@ -553,15 +553,17 @@ DEPENDENCIES = list(seed.rate.per.stratum='initial.population',
                     background.suppression=c('suppression.rates.and.times','hiv.mortality.rates','sexual.transmissibilities','idu.transmissibilities'),
                     foreground.suppression=c('suppression.rates.and.times','hiv.mortality.rates','sexual.transmissibilities','idu.transmissibilities'),
                     background.newly.suppressed=c('newly.suppressed.rates.and.times','unsuppressed.to.disengaged.rates.and.times','continuum.transitions'),
-                    foreground.newly.suppressed=c('newly.suppressed.rates.and.times','continuum.transitions'),
+                    foreground.art.adherence.unsuppressed=c('newly.suppressed.rates.and.times','continuum.transitions'),
                     background.unsuppression=c('unsuppression.rates.and.times','suppressed.to.disengaged.rates.and.times','continuum.transitions'),
-                    foreground.unsuppression=c('unsuppression.rates.and.times','continuum.transitions'),
+                    foreground.art.adherence.suppressed=c('unsuppression.rates.and.times','continuum.transitions'),
+                    gain.of.suppression.rate=c('newly.suppressed.rates.and.times','continuum.transitions'),
+                    loss.of.suppression.rate=c('unsuppression.rates.and.times','continuum.transitions'),
                     background.linkage=c('linkage.rates.and.times','continuum.transitions'),
                     foreground.linkage=c('linkage.rates.and.times','continuum.transitions'),
                     background.unsuppressed.to.disengaged=c('unsuppressed.to.disengaged.rates.and.times','newly.suppressed.rates.and.times','continuum.transitions'),
-                    foreground.unsuppressed.to.disengaged=c('unsuppressed.to.disengaged.rates.and.times','continuum.transitions'),
+                    foreground.retention.unsuppressed=c('unsuppressed.to.disengaged.rates.and.times','continuum.transitions'),
                     background.suppressed.to.disengaged=c('suppressed.to.disengaged.rates.and.times','unsuppression.rates.and.times','continuum.transitions'),
-                    foreground.suppressed.to.disengaged=c('suppressed.to.disengaged.rates.and.times','continuum.transitions'),
+                    foreground.retention.suppressed=c('suppressed.to.disengaged.rates.and.times','continuum.transitions'),
                     background.reengagement=c('reengagement.rates.and.times','continuum.transitions'),
                     foreground.reengagement=c('reengagement.rates.and.times','continuum.transitions'),
                     background.prep=c('prep.rates.and.times','idu.susceptibility','sexual.susceptibility','new.infection.proportions','new.infection.proportions.years'),
@@ -1493,11 +1495,13 @@ do.calculate.linkage <- function(components)
             r
         })
         
+        
         #Overlay foreground linkage
         linkage = do.get.rates.from.background.and.foreground(background.rates = background.linkage,
                                                               background.times = background.linkage.years,
                                                               foreground = components$foreground.linkage,
-                                                              max.background.time = components$background.change.to.years$linkage)
+                                                              max.background.time = components$background.change.to.years$linkage,
+                                                              type='linkage')
         
 
         components$linkage.rates.and.times = linkage
@@ -1555,27 +1559,36 @@ do.calculate.leave.unsuppressed.rates <- function(components)
         background.p = background.ps[['disengage']]
         
         #Add in ramp
-        
         unsuppressed.states = 'engaged_unsuppressed'
         doesnt.apply = setdiff(components$settings$CONTINUUM_OF_CARE, unsuppressed.states)
-        background.rates = lapply(background.p, function(p){
-            p[,,,,,doesnt.apply,,] = 0
-            -log(1-p)
-        })
         
         background.unsuppressed.to.disengaged.years = c(components$background.unsuppressed.to.disengaged$unsuppressed.to.disengaged.ramp.year, 
                                                         components$background.leave.unsuppressed$years)
-        background.rates = c(list(components$background.unsuppressed.to.disengaged$unsuppressed.to.disengaged.ramp.multiplier * background.rates[[1]]),
-                             background.rates)
+        background.p = c(list(components$background.unsuppressed.to.disengaged$unsuppressed.to.disengaged.ramp.multiplier * background.p[[1]]),
+                         background.p)
         
-        #Overlay foreground unsuppressed.to.disengaged
-        unsuppressed.to.disengaged = do.get.rates.from.background.and.foreground(background.rates = background.rates,
-                                                                                 background.times = background.unsuppressed.to.disengaged.years,
-                                                                                 foreground = components$foreground.unsuppressed.to.disengaged,
-                                                                                 max.background.time = components$background.change.to.years$unsuppressed.to.disengaged)
+        # Convert to p retained
+        background.p.retained = lapply(background.p, function(p){
+            p[,,,,,doesnt.apply,,] = 1
+            1-p
+        })
         
+        #Overlay foreground suppressed.to.disengaged
+        unsuppressed.to.disengaged = do.get.rates.from.background.and.foreground(background.rates = background.p.retained,
+                                                                               background.times = background.unsuppressed.to.disengaged.years,
+                                                                               foreground = components$foreground.retention.unsuppressed,
+                                                                               max.background.time = components$background.change.to.years$unsuppressed.to.disengaged,
+                                                                               type='unsuppressed.to.disengaged')
+
+        # Convert back to p disengaged, and from there, to a rate
+        unsuppressed.to.disengaged$rates = lapply(unsuppressed.to.disengaged$rates, function(p){
+            r=-log(p)
+            r[,,,,,doesnt.apply,,] = 0
+            r
+        })
         
         components$unsuppressed.to.disengaged.rates.and.times = unsuppressed.to.disengaged
+        
         
         #-- Process Newly Suppressed --#
         background.p = background.ps[['suppress']]
@@ -1586,17 +1599,31 @@ do.calculate.leave.unsuppressed.rates <- function(components)
                                          components$background.leave.unsuppressed$years)
         background.p = c(list(0 * background.p[[1]]), background.p)
         
+        # Convert to p adherent
         non.engaged.suppressed.states = setdiff(dimnames(background.p[[1]])[['continuum']], 'engaged_unsuppressed')
-        background.rates = lapply(background.p, function(p){
-            p[,,,,,non.engaged.suppressed.states,,] = 0
-            -log(1-p)
-        })
+#        background.rates = lapply(background.p, function(p){
+ #           p[,,,,,non.engaged.suppressed.states,,] = 0
+  #          -log(1-p)
+   #     })
 
+        background.p.adherent = lapply(background.p, function(p){
+            p[,,,,,non.engaged.suppressed.states,,] = 0
+            r = -log(1-p)
+            r/components$gain.of.suppression.rate
+        })
+        
         #Overlay foreground suppression
-        suppression = do.get.rates.from.background.and.foreground(background.rates = background.rates,
+        suppression = do.get.rates.from.background.and.foreground(background.rates = background.p.adherent,
                                                                   background.times = background.suppression.years,
-                                                                  foreground = components$foreground.newly.suppressed,
+                                                                  foreground = components$foreground.art.adherence.unsuppressed,
                                                                   max.background.time = components$background.change.to.years$newly.suppressed)
+        
+        # Convert back to rates
+        suppression$rates = lapply(suppression$rates, function(p){
+            r = p*components$gain.of.suppression.rate
+            r[,,,,,non.engaged.suppressed.states,,] = 0
+            r
+        })
         
         components$newly.suppressed.rates.and.times = suppression
         
@@ -1657,51 +1684,73 @@ do.calculate.leave.suppressed.rates <- function(components)
         background.p = background.ps[['disengage']]
         
         #Add in ramp
-        
         suppressed.states = 'engaged_suppressed'
         doesnt.apply = setdiff(components$settings$CONTINUUM_OF_CARE, suppressed.states)
-        background.rates = lapply(background.p, function(p){
-            p[,,,,,doesnt.apply,,] = 0
-            -log(1-p)
-        })
         
         background.suppressed.to.disengaged.years = c(components$background.suppressed.to.disengaged$suppressed.to.disengaged.ramp.year, 
-                                                        components$background.leave.suppressed$years)
-        background.rates = c(list(components$background.suppressed.to.disengaged$suppressed.to.disengaged.ramp.multiplier * background.rates[[1]]),
-                             background.rates)
+                                                      components$background.leave.suppressed$years)
+        background.p = c(list(components$background.suppressed.to.disengaged$suppressed.to.disengaged.ramp.multiplier * background.p[[1]]),
+                         background.p)
+        
+        # Convert to p retained
+        background.p.retained = lapply(background.p, function(p){
+            p[,,,,,doesnt.apply,,] = 0
+            1-p
+        })
+        
+
         
         #Overlay foreground suppressed.to.disengaged
-        suppressed.to.disengaged = do.get.rates.from.background.and.foreground(background.rates = background.rates,
+        suppressed.to.disengaged = do.get.rates.from.background.and.foreground(background.rates = background.p.retained,
                                                                                background.times = background.suppressed.to.disengaged.years,
-                                                                               foreground = components$foreground.suppressed.to.disengaged,
+                                                                               foreground = components$foreground.retention.suppressed,
                                                                                max.background.time = components$background.change.to.years$suppressed.to.disengaged)
         
+        # Convert back to p disengaged, and from there, to a rate
+        suppressed.to.disengaged$rates = lapply(suppressed.to.disengaged$rates, function(p){
+            r=-log(p)
+            r[,,,,,doesnt.apply,,] = 0
+            r
+        })
         
         components$suppressed.to.disengaged.rates.and.times = suppressed.to.disengaged
         
         #-- Process unsuppression --#
         background.p = background.ps[['unsuppress']]
         
-        #Add in ramp
-        
+        # Convert to p adherent to ART
         suppressed.states = components$settings$SUPPRESSED_STATES
         unsuppression.doesnt.apply = setdiff(components$settings$CONTINUUM_OF_CARE, suppressed.states)
-        background.rates = lapply(background.p, function(p){
+ #       background.rates = lapply(background.p, function(p){
+  #          p[,,,,,unsuppression.doesnt.apply,,] = 0
+   #         -log(1-p)
+    #    })
+        background.p.adherent = lapply(background.p, function(p){
             p[,,,,,unsuppression.doesnt.apply,,] = 0
-            -log(1-p)
+            r=-log(1-p)
+            1-r/components$loss.of.suppression.rate
         })
         
+        #Add in ramp
         background.unsuppression.years = c(components$background.unsuppression$unsuppression.ramp.year, 
                                            components$background.leave.suppressed$years)
-        background.rates = c(list(components$background.unsuppression$unsuppression.ramp.multiplier * background.rates[[1]]),
-                             background.rates)
+     #   background.rates = c(list(components$background.unsuppression$unsuppression.ramp.multiplier * background.rates[[1]]),
+      #                       background.rates)
+        background.p.adherent = c(list(components$background.unsuppression$unsuppression.ramp.multiplier * background.p.adherent[[1]]),
+                              background.p.adherent)
         
         #Overlay foreground unsuppression
-        unsuppression = do.get.rates.from.background.and.foreground(background.rates = background.rates,
+        unsuppression = do.get.rates.from.background.and.foreground(background.rates = background.p.adherent,
                                                                     background.times = background.unsuppression.years,
-                                                                    foreground = components$foreground.unsuppression,
+                                                                    foreground = components$foreground.art.adherence.suppressed,
                                                                     max.background.time = components$background.change.to.years$unsuppression)
         
+        
+        unsuppression$rates = lapply(unsuppression$rates, function(p){
+            r = (1-p)*components$loss.of.suppression.rate
+            r[,,,,,unsuppression.doesnt.apply,,] = 0
+            r
+        })
         
         components$unsuppression.rates.and.times = unsuppression
         
@@ -2836,7 +2885,10 @@ do.setup.new.infection.proportions <- function(components)
 do.get.rates.from.background.and.foreground <- function(background.rates,
                                                         background.times,
                                                         foreground,
-                                                        max.background.time)
+                                                        max.background.time,
+                                                        transform.foreground.rates=function(x){x},
+                                                        type='unspecified' #for debugging
+                                                        )
 {
    get.rates.from.background.and.foreground(background.rates = background.rates,
                                             background.times = background.times,
@@ -2848,7 +2900,8 @@ do.get.rates.from.background.and.foreground <- function(background.rates,
                                             max.background.time = max.background.time,
                                             allow.foreground.less = foreground$allow.foreground.less,
                                             foreground.min = foreground$foreground.min,
-                                            foreground.max = foreground$foreground.max)
+                                            foreground.max = foreground$foreground.max,
+                                            type=type)
 }
 
 #allows multiple foreground settings by recursing on this lists in foreground.rates, foreground.times, etc
@@ -2862,7 +2915,9 @@ get.rates.from.background.and.foreground <- function(background.rates,
                                                      allow.foreground.less,
                                                      foreground.functions,
                                                      foreground.min,
-                                                     foreground.max)
+                                                     foreground.max,
+                                                     type='unspecified' #for debugging
+                                                     )
 {
     if (is.null(foreground.times) || length(foreground.times)==0)
         list(rates=background.rates[background.times<=max.background.time],
