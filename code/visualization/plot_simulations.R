@@ -352,7 +352,7 @@ do.plot.simulations <- function(
                             sim=NULL)
         rv
     })
-      
+    
     #-- Individual Simulations --#
     n.sim.dfs = length(simsets) * length(data.types)
     
@@ -374,11 +374,8 @@ do.plot.simulations <- function(
                                       dimension.subsets=dimension.subsets,
                                       total.population = total.population.per.simset[[simset.index]],
                                       get.individual.sims = plot.format=='individual.simulations',
-                                   #   get.change.df=label.change || return.change.data.frame,
                                       aggregate.statistic = aggregate.statistic,
                                       ci.coverage=plot.interval.coverage)
-                                    #  change.years=change.years,
-                                   #   change.decrease.is.positive=change.decrease.is.positive)
   
             progress.update(FRACTION.PROGRESS.SETUP.DF * i/n.sim.dfs)
             
@@ -400,7 +397,7 @@ do.plot.simulations <- function(
         
         if (any(keep.dimensions=='risk') && any(keep.dimensions=='sex'))
             df.sim = df.sim[df.sim$sex != 'female' | (df.sim$risk != 'msm' & df.sim$risk != 'msm_idu'),]
-        
+     
         if (label.change || return.change.data.frame)
         {
             df.change.subs = lapply(data.types, function(data.type){
@@ -1754,6 +1751,9 @@ get.arr.for.data.type <- function(simset,
                                   year.anchor)
 {
     total.population = total.population[as.character(years),]
+    dim(total.population) = c(year=length(years), sim=length(total.population)/length(years))
+    dimnames(total.population) = list(year=as.character(years),
+                                      sim=NULL)
     
     if (data.type=='new')
         arr = extract.simset.new.diagnoses(simset,
@@ -1837,10 +1837,13 @@ make.change.df <- function(simsets,
 {
     alpha = (1-ci.coverage)/2
     
-    simset.names = simset.names[!simset.is.baseline]
-    simsets = simsets[!simset.is.baseline]
-    simset.is.no.intervention = simset.is.no.intervention[!simset.is.baseline]
-    total.population.per.simset = total.population.per.simset[!simset.is.baseline]
+    if (any(simset.is.no.intervention))
+    {
+        simset.names = simset.names[!simset.is.baseline]
+        simsets = simsets[!simset.is.baseline]
+        simset.is.no.intervention = simset.is.no.intervention[!simset.is.baseline]
+        total.population.per.simset = total.population.per.simset[!simset.is.baseline]
+    }
     
     #-- Check for errors --#
     if (!any(simset.is.no.intervention) &&
@@ -1867,6 +1870,12 @@ make.change.df <- function(simsets,
     
     #-- Pull the outcome arrays --#
     arrs = lapply(1:length(simsets), function(i){
+        
+        if (length(setdiff(years.for.change, dimnames(total.population.per.simset[[1]])$year)>0))
+            stop(paste0("Cannot calculate a change: year(s) ",
+                        setdiff(years.for.change, dimnames(total.population.per.simset[[1]])$year),
+                        " not in the simulations"))
+        
         get.arr.for.data.type(simset=simsets[[i]],
                               data.type=data.type,
                               years=years.for.change,

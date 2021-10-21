@@ -21,12 +21,14 @@ get.surveillance.data <- function(surv=msa.surveillance,
                                   aggregate.years=F,
                                   throw.error.if.missing.years=F,
                                   throw.error.if.missing.data=T,
-                                  na.rm=F)
+                                  na.rm=F,
+                                  include.source=F)
 {
     #Check the data.type argument
     
     if (all(data.type!=ALLOWED.DATA.TYPES))
-        stop(paste0("data.type must be one of: ",
+        stop(paste0("Invalid data type ('", data.type, "'). " ,
+                    "data.type must be one of: ",
                     paste0(paste0("'", ALLOWED.DATA.TYPES, "'"), collapse=", ")))
     
     if (class(data.type) != 'character' || length(data.type)>1)
@@ -36,13 +38,13 @@ get.surveillance.data <- function(surv=msa.surveillance,
     categories = c('sex','age','race','risk')[c(sex, age, race, risk)]
     
     #If there is a master array with all the data, pull from there
-    if (!is.null(surv[[paste0(data.type, '.master')]]))
-    {
-        data = surv[[paste0(data.type, '.master')]]
-        from.master = T
-    }
-    else #pull data type and categories together into a name
-    {
+ #   if (!is.null(surv[[paste0(data.type, '.master')]]))
+  #  {
+   #     data = surv[[paste0(data.type, '.master')]]
+    #    from.master = T
+    #}
+    #else #pull data type and categories together into a name
+    #{
         data.suffix = paste0(categories, collapse='.')
         if (data.suffix=='')
             data.suffix  = 'all'
@@ -70,7 +72,7 @@ get.surveillance.data <- function(surv=msa.surveillance,
         }
         
         from.master = F
-    }
+   # }
     
     #check to make sure all location codes are present in the data
     missing.code = sapply(location.codes, function(code){

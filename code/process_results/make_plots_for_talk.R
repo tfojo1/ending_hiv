@@ -2,10 +2,11 @@
 library(png)
 library(ggsci)
 source('code/visualization/plot_wrappers.R')
-IMAGE.DIR = '../presentations/Main Talk May 2021/plots'
+msa = BALTIMORE.MSA
+IMAGE.DIR = paste0('../../../Talks/Ending HIV Model v1/Talks post Annals/plots/', msa)
 
-ALPHA = 0.2
-LINE.SIZE = 0.3#0.4 for intervention
+ALPHA = 0.3
+LINE.SIZE = 1#0.4 for intervention
 COLORS = pal_jama()
 WIDTH = 3
 HEIGHT = 1.75
@@ -25,30 +26,93 @@ LABEL.ALPHA = 0.25
 #load('mcmc_runs/visualization_simsets/35620/1.0_35620_baseline.Rdata')
 
 
+THIN.TO = 100
 
 
-#INTERVENTIONS
+#RUN ON DESKTOP - to save interventions
 if (1==2)
 {
-   # load('mcmc_runs/full_simsets/35620/1.0_35620_baseline.Rdata')
-    load('mcmc_runs/full_simsets/1.0_12580_full.Rdata')
-    base = simset
-    load('mcmc_runs/full_simsets/12580/1.0_12580_noint.Rdata')
-    noint = simset
-    load('mcmc_runs/full_simsets/12580/1.0_12580_ybhm.6m.25.80.3y.Rdata')
-    int1 = simset
-    load('mcmc_runs/full_simsets/12580/1.0_12580_mi.6m.50.90.ybh.high6.3y.Rdata')
-    int2 = simset
+    source('code/targets/target_msas.R')
+    msa = NYC.MSA
+    
+    load(paste0('Q:/Ending_HIV/full_runs_from_annals/mcmc_runs/full_simsets/1.0_',msa,'_full.Rdata'))
+    base = subset.simset(thin.simset(simset, floor(simset@n.sim/THIN.TO)), 1:THIN.TO)
+    
+    load(paste0('Q:/Ending_HIV/full_runs_from_annals/mcmc_runs/full_simsets/',msa,'/1.0_',msa,'_noint.Rdata'))
+    noint = subset.simset(thin.simset(simset, floor(simset@n.sim/THIN.TO)), 1:THIN.TO)
+    
+    load(paste0('Q:/Ending_HIV/full_runs_from_annals/mcmc_runs/full_simsets/',msa,'/1.0_',msa,'_ybhm.t1x.p10.s80_23.27.Rdata'))
+    int1 = subset.simset(thin.simset(simset, floor(simset@n.sim/THIN.TO)), 1:THIN.TO)
+    
+    load(paste0('Q:/Ending_HIV/full_runs_from_annals/mcmc_runs/full_simsets/',msa,'/1.0_',msa,'_mi.t2x.p25.s90_23.27.Rdata'))
+    int2 = subset.simset(thin.simset(simset, floor(simset@n.sim/THIN.TO)), 1:THIN.TO)
+    
+    save(base, noint, int1, int2, file=paste0('tmp/simsets_for_talk_plots_',msa,'.Rdata'))
 }
 
+#RUN ON LAPTOP - for making plots
+if (!exists('base'))
+{
+    msa = NYC.MSA
+    load(file=paste0('tmp/simsets_for_talk_plots_',msa,'.Rdata'))
+}
+
+##-- GENERATE TEXT for LABELS --##
+if (1==2)
+{
+    inc.reduction = function(sim){
+        inc = get.sim.absolute.incidence(sim, years=c(2020,2030))
+        (inc[2]-inc[1])/inc[1]
+    }
+    
+    dist.noint = extract.simset.distribution(noint, inc.reduction)
+    floor(100*c(get.means(dist.noint), rev(get.intervals(dist.noint))))
+    
+    dist.int1 = extract.simset.distribution(int1, inc.reduction)
+    floor(100*c(get.means(dist.int1), rev(get.intervals(dist.int1))))
+    
+    dist.int2= extract.simset.distribution(int2, inc.reduction)
+    floor(100*c(get.means(dist.int2), rev(get.intervals(dist.int2))))
+}
+
+##-- RENDER A PLOTLY TO PNG WITH A SPECIFIC RESOLUTION --#
+do.save.plot <- function(plot,
+                         file,
+                         width,
+                         height,
+                         resolution=300)
+{
+    if (!grepl('\\.png$', file))
+        file = paste0(file, '.png')
+    
+    cat(paste0("Saving figure ", file, '...', sep=''))   
+    orca(plot,
+         file = file,
+         width = width*resolution, 
+         height = height*resolution)
+    
+    # Re-render at desired resolution    
+    img<-readPNG(file)
+    
+    
+    png(file, width=width, height=height, res=resolution, units='in')
+    par(mar=c(0,0,0,0), xpd=NA, mgp=c(0,0,0), oma=c(0,0,0,0), ann=F)
+    plot.new()
+    plot.window(0:1, 0:1)
+    usr<-par("usr")    
+    rasterImage(img, usr[1], usr[3], usr[2], usr[4])
+    dev.off()
+    cat("DONE\n")
+}
 
 
 # EG for calibration
 if (1==2)
 {
-    one.sim.simset = subset.simset(base, 1:2) 
+    one.sim.simset = subset.simset(base, 1:100)
     one.sim.simset@n.sim=as.integer(1)
     one.sim.simset@simulations = one.sim.simset@simulations[1]
+    one.sim.simset@weights = 1
     
     plot = plot.simulations.flex(list(one.sim.simset), data.type='new', years=2010:2020,
                                  color.by='intervention', colors=INTERVENTION.COLORS[1:2],
@@ -56,7 +120,7 @@ if (1==2)
                                  simulation.alpha=1, truth.point.size=POINT.SIZE,
                                  simulation.line.size=5,
                                  text.size=TEXT.SIZE*.9, legend.text.size = LEGEND.TEXT.SIZE*.9,
-                                 return.change.data.frame=T,
+                                 return.change.data.frame=F,
                                  y.axis.title.function = function(d){paste0("Total ", DATA.TYPE.AXIS.LABELS[d])}
                                  ); plot
     
@@ -64,33 +128,12 @@ if (1==2)
     do.save.plot(plot, file.path(IMAGE.DIR, 'eg_single_sim'),
                  width=WIDTH, height=HEIGHT, resolution = 300)
     
-    pp = one.sim.simset@parameters[1,]
-    run.simulation = create.run.simulation.function(BALTIMORE.MSA, pp)
     
-    sim = one.sim.simset@simulations[[1]]
-   # to.add = rep(.5 + 10 * (1:51)/51, dim(sim$new.diagnoses)['year'])
-  #  names(to.add) = dimnames(sim$new.diagnoses['year'])
-   # to.add = expand.population(to.add, target.dim.names = dimnames(sim$new.diagnoses))
-   # sim$new.diagnoses = sim$new.diagnoses + to.add
-    sim$new.diagnoses[,1,1,1,1,1,1,1,1,1] = sim$new.diagnoses[,1,1,1,1,1,1,1,1,1] + 300 * (1 * (1:51 - 40)/11)
-    bad.sim.simset = one.sim.simset; bad.sim.simset@simulations[[1]] = sim
-   attr(bad.sim.simset, 'intervention') = attr(int1, 'intervention')
-    
-    
-    plot = plot.simulations.flex(list(bad.sim.simset), data.type='new', years=2010:2020,
-                                 color.by='intervention', colors=INTERVENTION.COLORS[c(1,3)],
-                                 title.subplots=F, hide.legend=T,
-                                 simulation.alpha=1, truth.point.size=POINT.SIZE,
-                                 simulation.line.size=5,
-                                 text.size=TEXT.SIZE, legend.text.size = LEGEND.TEXT.SIZE,
-                                 return.change.data.frame=T,
-                                 y.axis.title.function = function(d){paste0("Total ", DATA.TYPE.AXIS.LABELS[d])}
-    ); plot
 }
 
 INTERVENTION.COLORS = pal_jama()(4)
-DO.INTERVENTIONS = F
-DO.CALIBRATION = F
+DO.INTERVENTIONS = T
+DO.CALIBRATION = T
 if (DO.INTERVENTIONS)
 {
     
@@ -145,7 +188,7 @@ if (DO.INTERVENTIONS)
                                           return.change.data.frame=T,
                                           y.axis.title.function = function(d){paste0("Total ", DATA.TYPE.AXIS.LABELS[d])}
     ); y.i$plot
-    do.save.plot(y.i$plot, file.path(IMAGE.DIR, 'projection_inc_int1xx'),
+    do.save.plot(y.i$plot, file.path(IMAGE.DIR, 'projection_inc_int1'),
                  width=WIDTH, height=HEIGHT, resolution = 300)
     
     
@@ -519,28 +562,12 @@ if (DO.CALIBRATION)
     do.save.plot(plot, file.path(IMAGE.DIR, 'calibration_new_het_race'), width=WIDTH, height=HEIGHT)
 }
 
-##-_ RENDER A PLOTLY TO PNG WITH A SPECIFIC RESOLUTION --#
-do.save.plot <- function(plot,
-                         file,
-                         width,
-                         height,
-                         resolution=300)
-{
-    
-    orca(plot,
-         file = file,
-         width = width*resolution, 
-         height = height*resolution)
 
-    # Re-render at desired resolution    
-    img<-readPNG(file)
+## for labels
+if (1==2)
+{
+    floor(-100*x.i$change.df[1,3:5])
+    floor(-100*y.i$change.df[2,3:5])
+    floor(-100*z.i$change.df[2,3:5])
     
-    
-    png(file, width=width, height=height, res=resolution, units='in')
-    par(mar=c(0,0,0,0), xpd=NA, mgp=c(0,0,0), oma=c(0,0,0,0), ann=F)
-    plot.new()
-    plot.window(0:1, 0:1)
-    usr<-par("usr")    
-    rasterImage(img, usr[1], usr[3], usr[2], usr[4])
-    dev.off()
 }
