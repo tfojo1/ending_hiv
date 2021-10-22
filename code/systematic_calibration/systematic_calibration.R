@@ -472,11 +472,15 @@ create.run.simulation.function <- function(msa,
     #-- Run Function --#
     
     if (catch.errors)
-      run.simulation <- function(parameters)
+      run.simulation <- function(parameters, 
+                                 start.year=1970, end.year=2020, keep.years=start.year:end.year)
       {
           tryCatch({
               components = get.components.fn(parameters, init.components)
-              sim = run.jheem.from.components(components, max.run.time.seconds = max.sim.time)
+              sim = run.jheem.from.components(components,
+                                              start.year=start.year, end.year=end.year,
+                                              keep.years=keep.years,
+                                              max.run.time.seconds = max.sim.time)
               
               if (sum(sapply(sim, function(x){sum(is.na(x))}))>0)
                   stop("NA values in simulation")
@@ -503,10 +507,13 @@ create.run.simulation.function <- function(msa,
           })
       }
     else
-        run.simulation <- function(parameters)
+        run.simulation <- function(parameters, 
+                                   start.year=1970, end.year=2020, keep.years=start.year:end.year)
         {
             components = get.components.fn(parameters, init.components)
-            sim = run.jheem.from.components(components, max.run.time.seconds = max.sim.time)
+            sim = run.jheem.from.components(components, max.run.time.seconds = max.sim.time,
+                                            start.year=start.year, end.year=end.year,
+                                            keep.years=keep.years)
             
             if (sum(sapply(sim, function(x){sum(is.na(x))}))>0)
               stop("NA values in simulation")

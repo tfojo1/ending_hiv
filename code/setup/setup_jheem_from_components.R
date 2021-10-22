@@ -1617,7 +1617,7 @@ do.calculate.leave.unsuppressed.rates <- function(components)
                                                                   background.times = background.suppression.years,
                                                                   foreground = components$foreground.art.adherence.unsuppressed,
                                                                   max.background.time = components$background.change.to.years$newly.suppressed)
-        
+
         # Convert back to rates
         suppression$rates = lapply(suppression$rates, function(p){
             r = p*components$gain.of.suppression.rate
@@ -1745,7 +1745,7 @@ do.calculate.leave.suppressed.rates <- function(components)
                                                                     foreground = components$foreground.art.adherence.suppressed,
                                                                     max.background.time = components$background.change.to.years$unsuppression)
         
-        
+
         unsuppression$rates = lapply(unsuppression$rates, function(p){
             r = (1-p)*components$loss.of.suppression.rate
             r[,,,,,unsuppression.doesnt.apply,,] = 0

@@ -46,6 +46,7 @@ initialize.jheem.components <- function(settings,
     components = setup.fertility(components, data.managers)
     components = setup.aging(components)
     components = setup.idu.age1.aging(components)
+    components = set.gain.and.loss.of.suppression.rates(components)
     
     components = setup.global.trates(components, global.sexual.trate = 1, global.idu.trate = 1)
     
@@ -1832,8 +1833,8 @@ set.background.unsuppression.ors <- function(components,
 }
 
 set.gain.and.loss.of.suppression.rates <- function(components,
-                                                   gain.of.suppression.rate,
-                                                   loss.of.suppression.rate)
+                                                   gain.of.suppression.rate=12/3,
+                                                   loss.of.suppression.rate=12/1)
 {
     components$gain.of.suppression.rate = gain.of.suppression.rate
     components$loss.of.suppression.rate = loss.of.suppression.rate
