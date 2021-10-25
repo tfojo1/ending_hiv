@@ -93,6 +93,46 @@ for (i in 1:nrow(dataset)) {
 }
 
 
+
+print("Preparing Dataset for disengaged, for fitting the probability of true disengage")
+disengaged <-dataset[dataset$engaged.now==FALSE & dataset$disengaged.category=="0-2",]
+
+for (i in 1:nrow(disengaged)) {
+    if(!is.na(disengaged$engaged.future[i]) && disengaged$engaged.future[i]==FALSE)  {
+        disengaged$future.state[i]="remain"
+        
+    } else if(!is.na(disengaged$engaged.future[i]) && !is.na(disengaged$suppressed.future[i]) &&
+              disengaged$engaged.future[i]==TRUE && disengaged$suppressed.future[i]==FALSE)  {
+        disengaged$future.state[i]="reengage.unsuppress"
+        
+    } else if(!is.na(disengaged$engaged.future[i]) && !is.na(disengaged$suppressed.future[i]) &&
+              disengaged$engaged.future[i]==TRUE && disengaged$suppressed.future[i]==TRUE)  {
+        disengaged$future.state[i]="reengage.suppress"
+        
+    } else 
+        disengaged$future.state[i]="missing"
+}
+
+
+disengaged <-disengaged[disengaged$future.state!="missing",]
+disengaged$future.state <- factor(disengaged$future.state, levels = c("reengage.unsuppress","reengage.suppress", "remain"))
+disengaged$age.category <- factor(disengaged$age.category, levels = c("35-45","13-25","25-35","45-55","55+"))
+disengaged$sex <- factor(disengaged$sex, levels = c("Male","Female"))
+disengaged$race <- factor(disengaged$race, levels = c("other","black","hispanic"))
+disengaged$risk <- factor(disengaged$risk, levels = c("heterosexual","idu","msm","msm_idu","other"))
+disengaged$sex.risk <- factor(disengaged$sex.risk, levels = c("msm","msm_idu",
+                                                              "heterosexual_male","heterosexual_female",
+                                                              "idu_male","idu_female","other"))
+
+disengaged.for.weights = disengaged[!is.na(disengaged$future.state) & (disengaged$future.state=='reengage.suppress' | disengaged$future.state=='reengage.unsuppress'),]
+disengaged.for.weights$truly.disengaged = as.numeric(disengaged.for.weights$future.state=='reengage.unsuppress')
+
+model.truly.disengaged <- geeglm(truly.disengaged ~ age.category + sex.risk + race,
+                                 data=disengaged.for.weights, id=id, family = binomial, corstr = "exchangeable")
+
+expit = function(lo){1/(1+exp(-lo))}
+
+
 ##------------------------------------##
 ##-- DATASET 1: Engaged unsuppressed--##
 ##------------------------------------##
@@ -128,12 +168,33 @@ engaged.unsuppressed$sex.risk <- factor(engaged.unsuppressed$sex.risk, levels = 
                                                                                   "heterosexual_male","heterosexual_female",
                                                                                   "idu_male","idu_female","other"))
 
+
+engaged.unsuppressed$p.truly.disengaged = expit(predict.glm(model.truly.disengaged, newdata=engaged.unsuppressed))
+engaged.unsuppressed$p.truly.disengaged[engaged.unsuppressed$future.state=='remain'] = 1
+engaged.unsuppressed$p.truly.disengaged[engaged.unsuppressed$future.state=='suppress'] = 1
+
+
+include.EU.1=rbinom(n=length(engaged.unsuppressed$p.truly.disengaged), size=1, prob=engaged.unsuppressed$p.truly.disengaged)
+engaged.unsuppressed.1 = engaged.unsuppressed[include.EU.1==1,]
+
+include.EU.2=rbinom(n=length(engaged.unsuppressed$p.truly.disengaged), size=1, prob=engaged.unsuppressed$p.truly.disengaged)
+engaged.unsuppressed.2 = engaged.unsuppressed[include.EU.2==1,]
+
+include.EU.3=rbinom(n=length(engaged.unsuppressed$p.truly.disengaged), size=1, prob=engaged.unsuppressed$p.truly.disengaged)
+engaged.unsuppressed.3 = engaged.unsuppressed[include.EU.3==1,]
+
+include.EU.4=rbinom(n=length(engaged.unsuppressed$p.truly.disengaged), size=1, prob=engaged.unsuppressed$p.truly.disengaged)
+engaged.unsuppressed.4 = engaged.unsuppressed[include.EU.4==1,]
+
+engaged.unsuppressed.weights = rbind(engaged.unsuppressed.1,engaged.unsuppressed.2,engaged.unsuppressed.3,engaged.unsuppressed.4)
+
+
 if (analysis=='jheem.model')
 {
-    print("Fitting Model for engaged-unsuppressed, JHEEM model version (model coefficients only)")
+    print("Fitting Model for engaged-unsuppressed, JHEEM model version (model coefficients only), with disengagement weights")
     model.engaged.unsuppressed <- nomLORgee(future.state ~ age.category + sex.risk + race + relative.year
                                             + age.category*relative.year + sex.risk*relative.year + race*relative.year,
-                                            data=engaged.unsuppressed, id=id)
+                                            data=engaged.unsuppressed.weights, id=id)
 }
 
 if (analysis=='CNICS')
@@ -182,13 +243,32 @@ engaged.suppressed$sex.risk <- factor(engaged.suppressed$sex.risk, levels = c("m
                                                                               "idu_male","idu_female","other"))
 
 
+engaged.suppressed$p.truly.disengaged = expit(predict.glm(model.truly.disengaged, newdata=engaged.suppressed))
+engaged.suppressed$p.truly.disengaged[engaged.suppressed$future.state=='remain'] = 1
+engaged.suppressed$p.truly.disengaged[engaged.suppressed$future.state=='unsuppress'] = 1
+
+
+include.ES.1=rbinom(n=length(engaged.suppressed$p.truly.disengaged), size=1, prob=engaged.suppressed$p.truly.disengaged)
+engaged.suppressed.1 = engaged.suppressed[include.ES.1==1,]
+
+include.ES.2=rbinom(n=length(engaged.suppressed$p.truly.disengaged), size=1, prob=engaged.suppressed$p.truly.disengaged)
+engaged.suppressed.2 = engaged.suppressed[include.ES.2==1,]
+
+include.ES.3=rbinom(n=length(engaged.suppressed$p.truly.disengaged), size=1, prob=engaged.suppressed$p.truly.disengaged)
+engaged.suppressed.3 = engaged.suppressed[include.ES.3==1,]
+
+include.ES.4=rbinom(n=length(engaged.suppressed$p.truly.disengaged), size=1, prob=engaged.suppressed$p.truly.disengaged)
+engaged.suppressed.4 = engaged.suppressed[include.ES.4==1,]
+
+engaged.suppressed.weights = rbind(engaged.suppressed.1,engaged.suppressed.2,engaged.suppressed.3,engaged.suppressed.4)
+
 
 if (analysis=='jheem.model')
 {
-    print("Fitting Model for engaged-suppressed, JHEEM model version (model coefficients only)")
+    print("Fitting Model for engaged-suppressed, JHEEM model version (model coefficients only), with disengagement weights")
     model.engaged.suppressed <- nomLORgee(future.state ~ age.category + sex.risk + race + relative.year
                                             + age.category*relative.year + sex.risk*relative.year + race*relative.year,
-                                            data=engaged.suppressed, id=id)
+                                            data=engaged.suppressed.weights, id=id)
 }
 
 if (analysis=='CNICS')
@@ -205,45 +285,7 @@ if (analysis=='CNICS')
 ##------- DATASET 3: Disengaged ------##
 ##------------------------------------##
 
-print("Preparing Dataset for disengaged")
-disengaged <-dataset[dataset$engaged.now==FALSE & dataset$disengaged.category=="0-2",]
 
-for (i in 1:nrow(disengaged)) {
-    if(!is.na(disengaged$engaged.future[i]) && disengaged$engaged.future[i]==FALSE)  {
-        disengaged$future.state[i]="remain"
-        
-    } else if(!is.na(disengaged$engaged.future[i]) && !is.na(disengaged$suppressed.future[i]) &&
-              disengaged$engaged.future[i]==TRUE && disengaged$suppressed.future[i]==FALSE)  {
-        disengaged$future.state[i]="reengage.unsuppress"
-        
-    } else if(!is.na(disengaged$engaged.future[i]) && !is.na(disengaged$suppressed.future[i]) &&
-              disengaged$engaged.future[i]==TRUE && disengaged$suppressed.future[i]==TRUE)  {
-        disengaged$future.state[i]="reengage.suppress"
-        
-    } else 
-        disengaged$future.state[i]="missing"
-}
-
-
-disengaged <-disengaged[disengaged$future.state!="missing",]
-disengaged$future.state <- factor(disengaged$future.state, levels = c("reengage.unsuppress","reengage.suppress", "remain"))
-disengaged$age.category <- factor(disengaged$age.category, levels = c("35-45","13-25","25-35","45-55","55+"))
-disengaged$sex <- factor(disengaged$sex, levels = c("Male","Female"))
-disengaged$race <- factor(disengaged$race, levels = c("other","black","hispanic"))
-disengaged$risk <- factor(disengaged$risk, levels = c("heterosexual","idu","msm","msm_idu","other"))
-disengaged$sex.risk <- factor(disengaged$sex.risk, levels = c("msm","msm_idu",
-                                                              "heterosexual_male","heterosexual_female",
-                                                              "idu_male","idu_female","other"))
-
-
-#for fitting the probability of true disengage
-disengaged.for.weights = disengaged[!is.na(disengaged$future.state) & (disengaged$future.state=='reengage.suppress' | disengaged$future.state=='reengage.unsuppress'),]
-disengaged.for.weights$truly.disengaged = as.numeric(disengaged.for.weights$future.state=='reengage.unsuppress')
-
-model.truly.disengaged <- geeglm(truly.disengaged ~ age.category + sex.risk + race,
-                           data=disengaged.for.weights, id=id, family = binomial, corstr = "exchangeable")
-
-expit = function(lo){1/(1+exp(-lo))}
 disengaged$p.truly.disengaged = expit(predict.glm(model.truly.disengaged, newdata=disengaged))
 disengaged$p.truly.disengaged[disengaged$future.state=='reengage.unsuppress'] = 1
 disengaged$p.truly.disengaged[disengaged$future.state=='reengage.suppress'] = 0
