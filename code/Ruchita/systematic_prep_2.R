@@ -1,7 +1,7 @@
 
 ##-- SOURCE CODE --##
-source('code/source_code.R')
-source('code/Ruchita/create_prep_interventions.R')
+source("/code/source_code.R")
+source("/code/Ruchita/create_prep_interventions.R")
 
 ##-- ORGANIZE the INTERVENTIONS WE CARE ABOUT --##
 
@@ -150,7 +150,7 @@ run.prep.simulations <- function(msas,
         
         run.systematic.interventions(simset = simset,
                                      interventions = lapply(intervention.codes, intervention.from.code), 
-                                     dst.dir = dst.dir, overwrite = T, compress = T, 
+                                     dst.dir = dst.dir, overwrite = F, compress = T, 
                                      run.from.year = run.from.year,
                                      run.to.year = run.to.year, verbose = T, 
                                      save.baseline.and.seed = F
