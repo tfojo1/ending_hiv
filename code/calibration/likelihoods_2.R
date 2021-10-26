@@ -386,7 +386,7 @@ create.suppressed.likelihood <- function(location,
         #Pull rates from the simulation
         rates = extract.suppression(sim,
                                     years=years,
-                                    continuum='diagnosed',
+                                    continuum=sim$diagnosed.continuum.states,
                                     keep.dimensions=c('year','age','race','sex','risk'))
         if (!consider.decreasing.on.marginals)
             is.decreasing = as.numeric(rates[length(years),,,,] < rates[1,,,,])
@@ -397,7 +397,7 @@ create.suppressed.likelihood <- function(location,
         # to get our denominators
         denominators = extract.prevalence(sim,
                                           years=years,
-                                          continuum='diagnosed',
+                                          continuum=sim$diagnosed.continuum.states,
                                           keep.dimensions = c('year','age','race','sex','risk'),
                                           per.population=NA)
         denominators = as.numeric(denominators / rowSums(denominators) * total.prevalence)
@@ -437,22 +437,22 @@ create.suppressed.likelihood <- function(location,
             {
                 rates.age  = extract.suppression(sim,
                                                  years=years,
-                                                 continuum='diagnosed',
+                                                 continuum=sim$diagnosed.continuum.states,
                                                  keep.dimensions=c('year','age'),
                                                  use.cdc.categorizations = T)
                 rates.race = extract.suppression(sim,
                                                  years=years,
-                                                 continuum='diagnosed',
+                                                 continuum=sim$diagnosed.continuum.states,
                                                  keep.dimensions=c('year','race'),
                                                  use.cdc.categorizations = T)
                 rates.sex = extract.suppression(sim,
                                                 years=years,
-                                                continuum='diagnosed',
+                                                continuum=sim$diagnosed.continuum.states,
                                                 keep.dimensions=c('year','sex'),
                                                 use.cdc.categorizations = T)
                 rates.risk = extract.suppression(sim,
                                                  years=years,
-                                                 continuum='diagnosed',
+                                                 continuum=sim$diagnosed.continuum.states,
                                                  keep.dimensions=c('year','risk'),
                                                  use.cdc.categorizations = T)
                 is.decreasing = c(as.numeric(rates.age[length(years),] < rates.age[1,]),
@@ -654,7 +654,7 @@ create.knowledge.of.status.likelihood <- function(location,
         load('cached/knowledge_of_status_regressions.Rdata')
     
     #-- Set up for totals --#
-    total.knowledge = get.surveillance.data(surv, location.codes = location, data.type='diagnosed', 
+    total.knowledge = get.surveillance.data(surv, location.codes = location, data.type=sim$diagnosed.continuum.states, 
                                             years=years, throw.error.if.missing.data = F)
     if (is.null(total.knowledge))
     {
@@ -714,7 +714,7 @@ create.knowledge.of.status.likelihood <- function(location,
         # to get our denominators
         denominators = extract.prevalence(sim,
                                           years=years,
-                                          continuum='diagnosed',
+                                          continuum=sim$diagnosed.continuum.states,
                                           keep.dimensions = c('year','age','race','sex','risk'),
                                           per.population=NA)
         denominators = as.numeric(denominators / rowSums(denominators) * total.prevalence.for.ors)
@@ -723,7 +723,7 @@ create.knowledge.of.status.likelihood <- function(location,
         if (use.stratified.ors)
         {
             sim.diagnosed.prevalence = extract.prevalence(sim, years=years,
-                                                          continuum='diagnosed',
+                                                          continuum=sim$diagnosed.continuum.states,
                                                           keep.dimensions = c('year','age','race','sex','risk'),
                                                           per.population = NA)
             sim.prevalence = extract.prevalence(sim, years=years,
@@ -792,7 +792,7 @@ create.knowledge.of.status.likelihood <- function(location,
         
         #-- Calculate the likelihood for total --#
         
-        p = extract.prevalence(sim, years=total.years, keep.dimensions = 'year', continuum='diagnosed') /
+        p = extract.prevalence(sim, years=total.years, keep.dimensions = 'year', continuum=sim$diagnosed.continuum.states) /
             extract.prevalence(sim, years=total.years, keep.dimensions = 'year')
         
         cov.mat = make.compound.symmetry.matrix(n.total * total.sds, rho=total.rho) +
@@ -1406,7 +1406,7 @@ create.cumulative.mortality.likelihood <- function(years=1981:2000,
     function(sim, log=T)
     {
         numerators = do.extract.overall.hiv.mortality(sim, years=years, keep.dimensions = c('race','sex','risk'),
-                                                      continuum = 'diagnosed',
+                                                      continuum = sim$diagnosed.continuum.states,
                                                       use.cdc.categorizations = T, per.population = NA)
         
         denominator = do.extract.population.subset(sim, years=years, keep.dimensions = character(),
@@ -1676,7 +1676,7 @@ pull.simulations.rates <- function(jheem.results,
                                            keep.dimensions = c('year', 'age','race','sex','risk'),
                                            per.population = NA)
     else if (data.type=='prevalence')
-        numerators = extract.prevalence(jheem.results, continuum='diagnosed',
+        numerators = extract.prevalence(jheem.results, continuum=jheem.results$diagnosed.continuum.states,
                                         years=years,
                                         keep.dimensions = c('year', 'age','race','sex','risk'),
                                         per.population = NA)
@@ -1687,7 +1687,7 @@ pull.simulations.rates <- function(jheem.results,
                                                    per.population = NA)
     else if (data.type=='aware')
         numerators = extract.prevalence(jheem.results, years=years,
-                                        continuum = 'diagnosed',
+                                        continuum = jheem.results$diagnosed.continuum.states,
                                         keep.dimensions = c('year', 'age','race','sex','risk'),
                                         per.population = NA)
     else if (data.type=='prep')
@@ -1729,7 +1729,7 @@ pull.simulations.rates.per.total.population <- function(jheem.results,
                                            keep.dimensions = c('year', 'age','race','sex','risk'),
                                            per.population = NA)
     else if (data.type=='prevalence')
-        numerators = extract.prevalence(jheem.results, continuum='diagnosed',
+        numerators = extract.prevalence(jheem.results, continuum=jheem.results$diagnosed.continuum.states,
                                         years=years,
                                         keep.dimensions = c('year', 'age','race','sex','risk'),
                                         per.population = NA)
@@ -1902,7 +1902,6 @@ likelihood.sub <- function(pre.transformation.rates,
                                             log=log)))
     }
     
-#    browser()
     dmvnorm(x=as.numeric(response.vector),
             mean=as.numeric(mean.vector),
             sigma=covar.mat,

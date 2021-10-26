@@ -849,7 +849,41 @@ setup.components.for.intervention <- function(components,
                                           foreground.max = max.rates)
     }
     
-   
+    # Linkage
+    components = do.set.foreground.for.hiv.positive(components=components,
+                                                    intervention=intervention,
+                                                    element.name='linkage',
+                                                    applies.to.continuum.states='unengaged',
+                                                    overwrite.prior.intervention=overwrite.prior.intervention,
+                                                    not.applies.value = 0)
+    
+    # Retention
+    components = do.set.foreground.for.hiv.positive(components=components,
+                                                    intervention=intervention,
+                                                    element.name='retention.unsuppressed',
+                                                    applies.to.continuum.states='engaged_unsuppressed',
+                                                    overwrite.prior.intervention=overwrite.prior.intervention,
+                                                    not.applies.value = 0)
+    components = do.set.foreground.for.hiv.positive(components=components,
+                                                    intervention=intervention,
+                                                    element.name='retention.suppressed',
+                                                    applies.to.continuum.states='engaged_suppressed',
+                                                    overwrite.prior.intervention=overwrite.prior.intervention,
+                                                    not.applies.value = 0)
+    
+    # ART Adherence
+    components = do.set.foreground.for.hiv.positive(components=components,
+                                                    intervention=intervention,
+                                                    element.name='art.adherence.unsuppressed',
+                                                    applies.to.continuum.states='engaged_unsuppressed',
+                                                    overwrite.prior.intervention=overwrite.prior.intervention,
+                                                    not.applies.value = 0)
+    components = do.set.foreground.for.hiv.positive(components=components,
+                                                    intervention=intervention,
+                                                    element.name='art.adherence.suppressed',
+                                                    applies.to.continuum.states='engaged_suppressed',
+                                                    overwrite.prior.intervention=overwrite.prior.intervention,
+                                                    not.applies.value = 0)
     
     # Suppression
     if (!is.null(intervention$processed$suppression))
@@ -1119,7 +1153,56 @@ setup.components.for.intervention <- function(components,
     components
 }
 
-
+do.set.foreground.for.hiv.positive <- function(components,
+                                               intervention,
+                                               element.name,
+                                               applies.to.continuum.states,
+                                               overwrite.prior.intervention,
+                                               not.applies.value = 0)
+{
+    not.applies.states = setdiff(components$settings$CONTINUUM_OF_CARE, applies.to.continuum.states)
+    if (!is.null(intervention$processed[[element.name]]))
+    {
+        rates = lapply(intervention$processed[[element.name]]$rates, function(r)
+        {
+            r = expand.population.to.hiv.positive(components$jheem, r)
+            r[,,,,,not.applies.states,,] = not.applies.value
+            
+            r
+        })
+        
+        start.times = expand.population.to.hiv.positive(components$jheem, intervention$processed[[element.name]]$start.times)
+        start.times[,,,,,not.applies.states,,] = Inf
+        end.times = expand.population.to.hiv.positive(components$jheem, intervention$processed[[element.name]]$end.times)
+        end.times[,,,,,not.applies.states,,] = Inf
+        
+        min.rates = expand.population.to.hiv.positive(components$jheem, intervention$processed[[element.name]]$min.rates)
+        min.rates[,,,,,not.applies.states,,] = -Inf
+        max.rates = expand.population.to.hiv.positive(components$jheem, intervention$processed[[element.name]]$max.rates)
+        max.rates[,,,,,not.applies.states,,] = -Inf
+        
+        apply.functions = expand.character.array(expand.population.to.hiv.positive,
+                                                 components$jheem,
+                                                 intervention$processed[[element.name]]$apply.functions)
+        apply.functions[,,,,,not.applies.states,,] = NA
+        allow.less = expand.population.to.hiv.positive(components$jheem, 
+                                                       intervention$processed[[element.name]]$allow.less.than.otherwise)
+        
+        
+        components = set.foreground.rates(components, element.name,
+                                          rates = rates,
+                                          years = intervention$processed[[element.name]]$times,
+                                          start.years = start.times,
+                                          end.years = end.times,
+                                          apply.functions = apply.functions,
+                                          allow.foreground.less = allow.less,
+                                          overwrite.previous = overwrite.prior.intervention,
+                                          foreground.min = min.rates,
+                                          foreground.max = max.rates)
+    }
+    
+    components
+}
 
 set.components.to.static.settings <- function(components, 
                                               name.chain,

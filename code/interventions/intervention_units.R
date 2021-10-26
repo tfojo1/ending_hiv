@@ -290,7 +290,12 @@ UNIT.NAME.AS.PCT = c(
     idu.relapse=F,
     heterosexual.transmission=F,
     msm.transmission=F,
-    idu.transmission=F
+    idu.transmission=F,
+    linkage=T,
+    retention.suppressed=T,
+    retention.unsuppressed=T,
+    art.adherence.suppressed=T,
+    art.adherence.unsuppressed=T
 )
 
 ALLOWED.INTERVENTION.UNIT.TYPES = names(UNIT.NAME.AS.PCT)
@@ -307,7 +312,12 @@ UNIT.NAME.RATE.SUFFIX = c(
     idu.relapse='',
     heterosexual.transmission='',
     msm.transmission='',
-    idu.transmission=''
+    idu.transmission='',
+    linkage='',
+    retention.suppressed='',
+    retention.unsuppressed='',
+    art.adherence.suppressed='',
+    art.adherence.unsuppressed=''
 )
 if (!setequal(ALLOWED.INTERVENTION.UNIT.TYPES, names(UNIT.NAME.RATE.SUFFIX)))
     stop(paste0("Failed sanity check - UNIT.NAME.RATE.SUFFIX names do not match ALLOWED.INTERVENTION.UNIT.TYPES"))
@@ -323,7 +333,12 @@ UNIT.NAME.PRE.DESCRIPTOR = c(
     idu.relapse='',
     heterosexual.transmission='',
     msm.transmission='',
-    idu.transmission=''
+    idu.transmission='',
+    linkage='',
+    retention.suppressed='',
+    retention.unsuppressed='',
+    art.adherence.suppressed='',
+    art.adherence.unsuppressed=''
 )
 if (!setequal(ALLOWED.INTERVENTION.UNIT.TYPES, names(UNIT.NAME.PRE.DESCRIPTOR)))
     stop(paste0("Failed sanity check - UNIT.NAME.PRE.DESCRIPTOR names do not match ALLOWED.INTERVENTION.UNIT.TYPES"))
@@ -339,7 +354,12 @@ UNIT.NAME.POST.DESCRIPTOR = c(
     idu.relapse=' IDU relapse',
     heterosexual.transmission=' heterosexual transmission',
     msm.transmission=' msm transmission',
-    idu.transmission=' idu transmission'
+    idu.transmission=' idu transmission',
+    linkage=' linked',
+    retention.suppressed=' retained',
+    retention.unsuppressed=' retained',
+    art.adherence.suppressed=' adherent',
+    art.adherence.unsuppressed=' adherent'
 )
 if (!setequal(ALLOWED.INTERVENTION.UNIT.TYPES, names(UNIT.NAME.POST.DESCRIPTOR)))
     stop(paste0("Failed sanity check - UNIT.NAME.POST.DESCRIPTOR names do not match ALLOWED.INTERVENTION.UNIT.TYPES"))
@@ -355,7 +375,12 @@ UNIT.NAME.CATEGORY = c(
     idu.relapse='IDU Relapse',
     heterosexual.transmission='Heterosexual Transmission',
     msm.transmission='Male-to-Male Sexual Transmission',
-    idu.transmission='IV Transmission'
+    idu.transmission='IV Transmission',
+    linkage='Linkage',
+    retention.suppressed='Retention',
+    retention.unsuppressed='Retention',
+    art.adherence.suppressed='ART Adherence',
+    art.adherence.unsuppressed='ART Adherence'
 )
 if (!setequal(ALLOWED.INTERVENTION.UNIT.TYPES, names(UNIT.NAME.CATEGORY)))
     stop(paste0("Failed sanity check - UNIT.NAME.CATEGORY names do not match ALLOWED.INTERVENTION.UNIT.TYPES"))

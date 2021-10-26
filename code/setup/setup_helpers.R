@@ -313,3 +313,38 @@ recategorize.to.cdc.risk.strata <- function(population)
     #return
     rv
 }
+
+recategorize.to.jheem.risk.strata <- function(population,
+                                              proportion.idu.in.remission = 3/4,
+                                              proportion.idu.active = 1-proportion.idu.in.remission)
+{
+    JHEEM.RISK = c('never_IDU','active_IDU','IDU_in_remission')
+    JHEEM.SEX = c('heterosexual_male','msm','female')
+    
+    dim.names = dimnames(population)
+    dim.names[['sex']] = JHEEM.SEX
+    dim.names[['risk']] = JHEEM.RISK
+    
+    rv = array(0, dim=sapply(dim.names, length), dimnames=dim.names)
+    
+    #pull msm
+    access(rv, sex='msm', risk='never_IDU') = access(population, sex='male', risk='msm')
+
+    #pull idu
+    access(rv, sex='female', risk='active_IDU') = access(population, sex='female', risk='idu') * proportion.idu.active
+    access(rv, sex='female', risk='IDU_in_remission') = access(population, sex='female', risk='idu') * proportion.idu.in.remission
+
+    access(rv, sex='heterosexual_male', risk='active_IDU') = access(population, sex='male', risk='idu') * proportion.idu.active
+    access(rv, sex='heterosexual_male', risk='IDU_in_remission') = access(population, sex='male', risk='idu') * proportion.idu.in.remission
+    
+    #pull msm+idu
+    access(rv, sex='msm', risk='active_IDU') = access(population, sex='female', risk='msm_idu') * proportion.idu.active
+    access(rv, sex='msm', risk='IDU_in_remission') = access(population, sex='female', risk='msm_idu') * proportion.idu.in.remission
+    
+    #pull heterosexual
+    access(rv, sex='female', risk='never_IDU') = access(population, sex='female', risk='heterosexual')
+    access(rv, sex='heterosexual_male', risk='never_IDU') = access(population, sex='male', risk='heterosexual')
+    
+    #return
+    rv
+}

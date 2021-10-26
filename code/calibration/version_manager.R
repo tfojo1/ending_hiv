@@ -2,11 +2,28 @@
 
 create.version.manager <- function()
 {
-    list(get.components.functions=list(),
+    list(settings=list(),
+         get.components.functions=list(),
          parameters.priors=list(),
          parameter.sampling.blocks=list())
 }
 
+register.settings <- function(version.manager,
+                                             settings,
+                                             version)
+{
+    to.add = list(settings)
+    names(to.add) = version
+    version.manager$settings = c(version.manager$settings,
+                                                 to.add)
+    
+    version.manager
+}
+
+get.settings.for.version <- function(version.manager, version)
+{
+    version.manager$settings[[version]]
+}
 
 register.get.components.function <- function(version.manager,
                                              fn,

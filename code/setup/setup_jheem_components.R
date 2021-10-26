@@ -46,6 +46,7 @@ initialize.jheem.components <- function(settings,
     components = setup.fertility(components, data.managers)
     components = setup.aging(components)
     components = setup.idu.age1.aging(components)
+    components = set.gain.and.loss.of.suppression.rates(components)
     
     components = setup.global.trates(components, global.sexual.trate = 1, global.idu.trate = 1)
     
@@ -1831,6 +1832,18 @@ set.background.unsuppression.ors <- function(components,
     components
 }
 
+set.gain.and.loss.of.suppression.rates <- function(components,
+                                                   gain.of.suppression.rate=12/3,
+                                                   loss.of.suppression.rate=12/1)
+{
+    components$gain.of.suppression.rate = gain.of.suppression.rate
+    components$loss.of.suppression.rate = loss.of.suppression.rate
+    
+    components = clear.dependent.values(components, c('gain.of.suppression.rate','loss.of.suppression.rate'))
+    
+    components
+}
+
 
 
 #-- LINKAGE --#
@@ -2032,25 +2045,64 @@ set.background.change.to.years <- function(components,
                                            suppressed.to.disengaged.change.to.year=NA,
                                            reengagement.change.to.year=NA)
 {
-    components$background.change.to.years = list(testing=testing.change.to.year,
-                                                 suppression=suppression.change.to.year,
-                                                 prep=prep.change.to.year,
-                                                 newly.suppressed=newly.suppressed.change.to.year,
-                                                 unsuppression=unsuppression.change.to.year,
-                                                 linkage=linkage.change.to.year,
-                                                 unsuppressed.to.disengaged=unsuppressed.to.disengaged.change.to.year,
-                                                 suppressed.to.disengaged.change.to.year=suppressed.to.disengaged.change.to.year,
-                                                 reengagement.change.to.year=reengagement.change.to.year)
+    if (is.null(components$background.change.to.years))
+        components$background.change.to.years = list()
     
-    components = clear.dependent.values(components, c('background.prep',
-                                                      'background.testing',
-                                                      'background.suppression',
-                                                      'background.newly.suppressed',
-                                                      'background.unsuppression',
-                                                      'background.linkage',
-                                                      'background.unsuppressed.to.disengaged',
-                                                      'background.suppressed.to.disengaged',
-                                                      'background.reengagement'))
+    if (!is.na(testing.change.to.year))
+    {
+        components$background.change.to.years$testing=testing.change.to.year
+        components = clear.dependent.values(components, 'background.testing')
+    }
+    
+    if (!is.na(suppression.change.to.year))
+    {
+        components$background.change.to.years$suppression = suppression.change.to.year
+        components = clear.dependent.values(components, 'background.suppression')
+    }
+    
+    if (!is.na(prep.change.to.year))
+    {
+        components$background.change.to.years$prep = prep.change.to.year
+        components = clear.dependent.values(components, 'background.prep')
+    }
+    
+    
+    if (!is.na(newly.suppressed.change.to.year))
+    {
+        components$background.change.to.years$newly.suppressed = newly.suppressed.change.to.year
+        components = clear.dependent.values(components, 'background.newly.suppressed')
+    }
+    
+    if (!is.na(unsuppression.change.to.year))
+    {
+        components$background.change.to.years$unsuppression = unsuppression.change.to.year
+        components = clear.dependent.values(components, 'background.unsuppression')
+    }
+    
+    if (!is.na(linkage.change.to.year))
+    {
+        components$background.change.to.years$linkage = linkage.change.to.year
+        components = clear.dependent.values(components, 'background.linkage')
+    }
+    
+    if (!is.na(unsuppressed.to.disengaged.change.to.year))
+    {
+        components$background.change.to.years$unsuppressed.to.disengaged = unsuppressed.to.disengaged.change.to.year
+        components = clear.dependent.values(components, 'background.unsuppressed.to.disengaged')
+    }
+    
+    if (!is.na(suppressed.to.disengaged.change.to.year))
+    {
+        components$background.change.to.years$suppressed.to.disengaged = suppressed.to.disengaged.change.to.year
+        components = clear.dependent.values(components, 'background.suppressed.to.disengaged')
+    }
+    
+    if (!is.na(reengagement.change.to.year))
+    {
+        components$background.change.to.years$reengagement = reengagement.change.to.year
+        components = clear.dependent.values(components, 'background.reengagement')
+    }
+    
     components
 }
 

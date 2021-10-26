@@ -72,9 +72,16 @@ calculate.change.ratios.two.logistic <- function(r1,r2,
     
     if (r1==0 && r2==0)
         r1.to.2 = 1
+    else if (r0==0)
+    {
+        if (r1==0 && r2==0)
+            r1.to.2 = 0
+        else
+            r1.to.2 = r2/r1
+    }
     else
         r1.to.2 = r0.to.2 / r0.to.1
-
+    
     if (r0.to.1 == 1 && r1.to.2 == 1)
     {
         model.1 = model.2 = get.no.change.logistic.model(r0)

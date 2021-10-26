@@ -502,30 +502,86 @@ PARAMETER.VAR.BLOCKS.1 = list(
   
   testing.ramp.up = 'testing.ramp.up.vs.current.rr',
   
-  msm.suppression = c('msm.suppressed.or',
-                      'msm.suppressed.slope.or',
-                      'msm.idu.suppressed.or',
-                      'msm.idu.suppressed.slope.or'),
+  msm.suppression = c('msm.proportion.linked.or',
+                      'msm.proportion.linked.slope.or',
+                      'msm.idu.proportion.linked.or',
+                      'msm.idu.proportion.linked.slope.or'),
   
-  idu.heterosexual.suppression = c('idu.suppressed.or',
-                                   'idu.suppressed.slope.or',
-                                   'heterosexual.suppressed.or',
-                                   'heterosexual.suppressed.slope.or'),
+  idu.heterosexual.suppression = c('idu.proportion.linked.or',
+                                   'idu.proportion.linked.slope.or',
+                                   'heterosexual.proportion.linked.or',
+                                   'heterosexual.proportion.linked.slope.or'),
   
-  suppression.by.race = c('black.suppressed.or',
-                          'black.suppressed.slope.or',
-                          'hispanic.suppressed.or',
-                          'hispanic.suppressed.slope.or'),
+  linked.by.race = c('black.proportion.linked.or',
+                          'black.proportion.linked.slope.or',
+                          'hispanic.proportion.linked.or',
+                          'hispanic.proportion.linked.slope.or'),
   
-  young.suppression = c('age1.suppressed.or',
-                        'age1.suppressed.slope.or',
-                        'age2.suppressed.or',
-                        'age2.suppressed.slope.or'),
+  young.linked = c('age1.proportion.linked.or',
+                        'age1.proportion.linked.slope.or',
+                        'age2.proportion.linked.or',
+                        'age2.proportion.linked.slope.or'),
   
-  old.suppression = c('age4.suppressed.or',
-                      'age4.suppressed.slope.or',
-                      'age5.suppressed.or',
-                      'age5.suppressed.slope.or'),
+  old.linked = c('age4.proportion.linked.or',
+                      'age4.proportion.linked.slope.or',
+                      'age5.proportion.linked.or',
+                      'age5.proportion.linked.slope.or'),
+  
+  
+  msm.adherence = c('msm.proportion.adherent.or',
+                      'msm.proportion.adherent.slope.or',
+                      'msm.idu.proportion.adherent.or',
+                      'msm.idu.proportion.adherent.slope.or'),
+  
+  idu.heterosexual.adherence = c('idu.proportion.adherent.or',
+                                   'idu.proportion.adherent.slope.or',
+                                   'heterosexual.proportion.adherent.or',
+                                   'heterosexual.proportion.adherent.slope.or'),
+  
+  adherence.by.race = c('black.proportion.adherent.or',
+                          'black.proportion.adherent.slope.or',
+                          'hispanic.proportion.adherent.or',
+                          'hispanic.proportion.adherent.slope.or'),
+  
+  young.adherence = c('age1.proportion.adherent.or',
+                        'age1.proportion.adherent.slope.or',
+                        'age2.proportion.adherent.or',
+                        'age2.proportion.adherent.slope.or'),
+  
+  old.adherence = c('age4.proportion.adherent.or',
+                      'age4.proportion.adherent.slope.or',
+                      'age5.proportion.adherent.or',
+                      'age5.proportion.adherent.slope.or'),
+  
+  
+  msm.loss = c('msm.proportion.lost.or',
+                      'msm.proportion.lost.slope.or',
+                      'msm.idu.proportion.lost.or',
+                      'msm.idu.proportion.lost.slope.or'),
+  
+  idu.heterosexual.loss = c('idu.proportion.lost.or',
+                                   'idu.proportion.lost.slope.or',
+                                   'heterosexual.proportion.lost.or',
+                                   'heterosexual.proportion.lost.slope.or'),
+  
+  loss.by.race = c('black.proportion.lost.or',
+                          'black.proportion.lost.slope.or',
+                          'hispanic.proportion.lost.or',
+                          'hispanic.proportion.lost.slope.or'),
+  
+  young.loss = c('age1.proportion.lost.or',
+                        'age1.proportion.lost.slope.or',
+                        'age2.proportion.lost.or',
+                        'age2.proportion.lost.slope.or'),
+  
+  old.loss = c('age4.proportion.lost.or',
+                      'age4.proportion.lost.slope.or',
+                      'age5.proportion.lost.or',
+                      'age5.proportion.lost.slope.or'),
+  
+  suppressed.vs.nonsuppressed.continuum = c('suppressed.vs.nonsuppressed.proportion.adherent.or',
+                                            'suppressed.vs.nonsuppressed.proportion.lost.or',
+                                            'already.lost.vs.nonsuppressed.proportion.lost.or'),
   
   msm.prep = c('msm.prep.intercept.or',
                         'msm.prep.slope.or'),

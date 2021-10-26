@@ -73,6 +73,15 @@ read.state.surveillance.manager <- function(dir='cleaned_data/hiv_surveillance/s
                               verbose=verbose)
 }
 
+read.county.surveillance.manager <- function(dir='cleaned_data/hiv_surveillance/county/',
+                                             verbose=T)
+{
+    read.surveillance.manager(dir=dir,
+                              location.field='FIPS',
+                              location.mapping.fn = function(x){x},
+                              verbose=verbose)
+}
+
 ##---------------------------------##
 ##-- MAPPINGS and DATA CONSTANTS --##
 ##---------------------------------##
@@ -330,7 +339,7 @@ read.surveillance.file.to.manager <- function(file,
         else
         {
             suffix.components = DIMENSION.ORDER[sapply(DIMENSION.ORDER, function(catg){
-                !is.na(marginal.by.dim[catg]) && marginal.by.dim[catg]
+                !is.na(marginal.by.dim[catg]) && !marginal.by.dim[catg]
             })]
             arr.suffix = paste0(suffix.components, collapse='.')
         }
