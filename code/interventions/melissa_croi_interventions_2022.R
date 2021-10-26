@@ -16,8 +16,8 @@ RETENTION.UNSUPP.80 = create.intervention.unit(type = "retention.unsuppressed", 
 RETENTION.SUPP.90 = create.intervention.unit(type = "retention.suppressed", rates = .9, start.year = 2023, years = 2027)
 RETENTION.UNSUPP.90 = create.intervention.unit(type = "retention.unsuppressed", rates = .9, start.year = 2023, years = 2027)
 
-ANNUAL.SUPP.90 = create.intervention.unit(type = "annual.suppression", rates = .9, start.year = 2023, years = 2027)
-ANNUAL.SUPP.95 = create.intervention.unit(type = "annual.suppression", rates = .95, start.year = 2023, years = 2027)
+ANNUAL.SUPP.90 = create.intervention.unit(type = "gain.of.suppression", rates = .9, start.year = 2023, years = 2027)
+ANNUAL.SUPP.95 = create.intervention.unit(type = "gain.of.suppression", rates = .95, start.year = 2023, years = 2027)
 
 
 
@@ -139,29 +139,29 @@ INTERVENTION.MANAGER.1.0 = register.intervention(WHOLEPOP.AS95, code = "wholepop
                                                  name = 'All MSM, IDU, and heterosexual 95% annual suppression')
 
 # Combined
-YBHMSM.C.LOW = join.interventions(YBHMSM.L90, YBHMSM.R80, YBHMSM.A90)
+YBHMSM.C.LOW = join.interventions(YBHMSM.L90, YBHMSM.R80, YBHMSM.AS90)
 INTERVENTION.MANAGER.1.0 = register.intervention(YBHMSM.C.LOW, code = "ybhmsm.c.low",
-                                                 name = 'Young Black and Hispanic MSM combined linkage/retention/adherence, low')
+                                                 name = 'Young Black and Hispanic MSM combined linkage/retention/suppression, low')
 
-YBHMSM.C.HIGH = join.interventions(YBHMSM.L95, YBHMSM.R90, YBHMSM.A95)
+YBHMSM.C.HIGH = join.interventions(YBHMSM.L95, YBHMSM.R90, YBHMSM.AS95)
 INTERVENTION.MANAGER.1.0 = register.intervention(YBHMSM.C.HIGH, code = "ybhmsm.c.high",
-                                                 name = 'Young Black and Hispanic MSM combined linkage/retention/adherence, high')
+                                                 name = 'Young Black and Hispanic MSM combined linkage/retention/suppression, high')
 
-MSMIDU.C.LOW = join.interventions(MSMIDU.L90, MSMIDU.R80, MSMIDU.A90)
+MSMIDU.C.LOW = join.interventions(MSMIDU.L90, MSMIDU.R80, MSMIDU.AS90)
 INTERVENTION.MANAGER.1.0 = register.intervention(MSMIDU.C.LOW, code = "msmidu.c.low",
-                                                 name = 'All MSM and IDU combined linkage/retention/adherence, low')
+                                                 name = 'All MSM and IDU combined linkage/retention/suppression, low')
 
-MSMIDU.C.HIGH = join.interventions(MSMIDU.L95, MSMIDU.R90, MSMIDU.A95)
+MSMIDU.C.HIGH = join.interventions(MSMIDU.L95, MSMIDU.R90, MSMIDU.AS95)
 INTERVENTION.MANAGER.1.0 = register.intervention(MSMIDU.C.HIGH, code = "msmidu.c.high",
-                                                 name = 'All MSM and IDU combined linkage/retention/adherence, high')
+                                                 name = 'All MSM and IDU combined linkage/retention/suppression, high')
 
-WHOLEPOP.C.LOW = join.interventions(WHOLEPOP.L90, WHOLEPOP.R80, WHOLEPOP.A90)
+WHOLEPOP.C.LOW = join.interventions(WHOLEPOP.L90, WHOLEPOP.R80, WHOLEPOP.AS90)
 INTERVENTION.MANAGER.1.0 = register.intervention(WHOLEPOP.C.LOW, code = "wholepop.c.low",
-                                                 name = 'All MSM, IDU, and heterosexual combined linkage/retention/adherence, low')
+                                                 name = 'All MSM, IDU, and heterosexual combined linkage/retention/suppression, low')
 
-WHOLEPOP.C.HIGH = join.interventions(WHOLEPOP.L95, WHOLEPOP.R90, WHOLEPOP.A95)
+WHOLEPOP.C.HIGH = join.interventions(WHOLEPOP.L95, WHOLEPOP.R90, WHOLEPOP.AS95)
 INTERVENTION.MANAGER.1.0 = register.intervention(WHOLEPOP.C.HIGH, code = "wholepop.c.high",
-                                                 name = 'All MSM, IDU, and heterosexual combined linkage/retention/adherence, high')
+                                                 name = 'All MSM, IDU, and heterosexual combined linkage/retention/suppression, high')
 
 MELISSA.CROI.INTERVENTIONS.2022 = list(YBHMSM.P10, YBHMSM.P25, MSMIDU.P10, MSMIDU.P25, WHOLEPOP.P10, WHOLEPOP.P25,
                                        YBHMSM.L90, YBHMSM.L95, MSMIDU.L90, MSMIDU.L95, WHOLEPOP.L90, WHOLEPOP.L95,
