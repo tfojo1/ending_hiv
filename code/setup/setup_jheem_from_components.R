@@ -554,6 +554,7 @@ DEPENDENCIES = list(seed.rate.per.stratum='initial.population',
                     foreground.suppression=c('suppression.rates.and.times','hiv.mortality.rates','sexual.transmissibilities','idu.transmissibilities'),
                     background.newly.suppressed=c('newly.suppressed.rates.and.times','unsuppressed.to.disengaged.rates.and.times','continuum.transitions'),
                     foreground.art.adherence.unsuppressed=c('newly.suppressed.rates.and.times','continuum.transitions'),
+                    foreground.gain.of.suppression=c('newly.suppressed.rates.and.times','continuum.transitions'),
                     background.unsuppression=c('unsuppression.rates.and.times','suppressed.to.disengaged.rates.and.times','continuum.transitions'),
                     foreground.art.adherence.suppressed=c('unsuppression.rates.and.times','continuum.transitions'),
                     gain.of.suppression.rate=c('newly.suppressed.rates.and.times','continuum.transitions'),
@@ -1599,31 +1600,49 @@ do.calculate.leave.unsuppressed.rates <- function(components)
                                          components$background.leave.unsuppressed$years)
         background.p = c(list(0 * background.p[[1]]), background.p)
         
-        # Convert to p adherent
         non.engaged.suppressed.states = setdiff(dimnames(background.p[[1]])[['continuum']], 'engaged_unsuppressed')
-#        background.rates = lapply(background.p, function(p){
- #           p[,,,,,non.engaged.suppressed.states,,] = 0
-  #          -log(1-p)
-   #     })
-
-        background.p.adherent = lapply(background.p, function(p){
-            p[,,,,,non.engaged.suppressed.states,,] = 0
-            r = -log(1-p)
-            r/components$gain.of.suppression.rate
-        })
         
-        #Overlay foreground suppression
-        suppression = do.get.rates.from.background.and.foreground(background.rates = background.p.adherent,
-                                                                  background.times = background.suppression.years,
-                                                                  foreground = components$foreground.art.adherence.unsuppressed,
-                                                                  max.background.time = components$background.change.to.years$newly.suppressed)
+        if (!is.null(components$foreground.art.adherence.unsuppressed))
+        {
+            # Convert to p adherent
+            background.p.adherent = lapply(background.p, function(p){
+                p[,,,,,non.engaged.suppressed.states,,] = 0
+                r = -log(1-p)
+                r/components$gain.of.suppression.rate
+            })
+            
+            #Overlay foreground suppression
+            suppression = do.get.rates.from.background.and.foreground(background.rates = background.p.adherent,
+                                                                      background.times = background.suppression.years,
+                                                                      foreground = components$foreground.art.adherence.unsuppressed,
+                                                                      max.background.time = components$background.change.to.years$newly.suppressed)
+            
+            # Convert back to rates
+            suppression$rates = lapply(suppression$rates, function(p){
+                r = p*components$gain.of.suppression.rate
+                r[,,,,,non.engaged.suppressed.states,,] = 0
+                r
+            })
+        }
+        else
+        {
+#            background.rates = lapply(background.p, function(p){
+#                p[,,,,,non.engaged.suppressed.states,,] = 0
+#                -log(1-p)
+#            })
 
-        # Convert back to rates
-        suppression$rates = lapply(suppression$rates, function(p){
-            r = p*components$gain.of.suppression.rate
-            r[,,,,,non.engaged.suppressed.states,,] = 0
-            r
-        })
+            suppression = do.get.rates.from.background.and.foreground(background.rates = background.p,
+                                                                      background.times = background.suppression.years,
+                                                                      foreground = components$foreground.gain.of.suppression,
+                                                                      max.background.time = components$background.change.to.years$newly.suppressed)
+       
+            suppression$rates = lapply(suppression$rates, function(p){
+                r = -log(1-p)
+                r[,,,,,non.engaged.suppressed.states,,] = 0
+                r
+            })
+        }
+       
         
         components$newly.suppressed.rates.and.times = suppression
         

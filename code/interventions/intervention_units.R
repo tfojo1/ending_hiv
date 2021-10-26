@@ -295,7 +295,8 @@ UNIT.NAME.AS.PCT = c(
     retention.suppressed=T,
     retention.unsuppressed=T,
     art.adherence.suppressed=T,
-    art.adherence.unsuppressed=T
+    art.adherence.unsuppressed=T,
+    gain.of.suppression=T
 )
 
 ALLOWED.INTERVENTION.UNIT.TYPES = names(UNIT.NAME.AS.PCT)
@@ -317,7 +318,8 @@ UNIT.NAME.RATE.SUFFIX = c(
     retention.suppressed='',
     retention.unsuppressed='',
     art.adherence.suppressed='',
-    art.adherence.unsuppressed=''
+    art.adherence.unsuppressed='',
+    gain.of.suppression=''
 )
 if (!setequal(ALLOWED.INTERVENTION.UNIT.TYPES, names(UNIT.NAME.RATE.SUFFIX)))
     stop(paste0("Failed sanity check - UNIT.NAME.RATE.SUFFIX names do not match ALLOWED.INTERVENTION.UNIT.TYPES"))
@@ -338,7 +340,8 @@ UNIT.NAME.PRE.DESCRIPTOR = c(
     retention.suppressed='',
     retention.unsuppressed='',
     art.adherence.suppressed='',
-    art.adherence.unsuppressed=''
+    art.adherence.unsuppressed='',
+    gain.of.suppression = ''
 )
 if (!setequal(ALLOWED.INTERVENTION.UNIT.TYPES, names(UNIT.NAME.PRE.DESCRIPTOR)))
     stop(paste0("Failed sanity check - UNIT.NAME.PRE.DESCRIPTOR names do not match ALLOWED.INTERVENTION.UNIT.TYPES"))
@@ -359,7 +362,8 @@ UNIT.NAME.POST.DESCRIPTOR = c(
     retention.suppressed=' retained',
     retention.unsuppressed=' retained',
     art.adherence.suppressed=' adherent',
-    art.adherence.unsuppressed=' adherent'
+    art.adherence.unsuppressed=' adherent',
+    gain.of.suppression = ' per year'
 )
 if (!setequal(ALLOWED.INTERVENTION.UNIT.TYPES, names(UNIT.NAME.POST.DESCRIPTOR)))
     stop(paste0("Failed sanity check - UNIT.NAME.POST.DESCRIPTOR names do not match ALLOWED.INTERVENTION.UNIT.TYPES"))
@@ -380,7 +384,8 @@ UNIT.NAME.CATEGORY = c(
     retention.suppressed='Retention',
     retention.unsuppressed='Retention',
     art.adherence.suppressed='ART Adherence',
-    art.adherence.unsuppressed='ART Adherence'
+    art.adherence.unsuppressed='ART Adherence',
+    gain.of.suppression='Gain Suppression'
 )
 if (!setequal(ALLOWED.INTERVENTION.UNIT.TYPES, names(UNIT.NAME.CATEGORY)))
     stop(paste0("Failed sanity check - UNIT.NAME.CATEGORY names do not match ALLOWED.INTERVENTION.UNIT.TYPES"))
