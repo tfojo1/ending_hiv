@@ -885,6 +885,14 @@ setup.components.for.intervention <- function(components,
                                                     overwrite.prior.intervention=overwrite.prior.intervention,
                                                     not.applies.value = 0)
     
+    # Gain of Suppression
+    components = do.set.foreground.for.hiv.positive(components=components,
+                                                    intervention=intervention,
+                                                    element.name='gain.of.suppression',
+                                                    applies.to.continuum.states='engaged_unsuppressed',
+                                                    overwrite.prior.intervention=overwrite.prior.intervention,
+                                                    not.applies.value = 0)
+    
     # Suppression
     if (!is.null(intervention$processed$suppression))
     {
