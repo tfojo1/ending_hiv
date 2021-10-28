@@ -170,45 +170,34 @@ engaged.unsuppressed$sex.risk <- factor(engaged.unsuppressed$sex.risk, levels = 
                                                                                   "heterosexual_male","heterosexual_female",
                                                                                   "idu_male","idu_female","other"))
 
-model.suppressed.if.not.truly.disengaged <- geeglm(suppressed.future ~ age.category + sex.risk + race +
-                                                                   relative.year + relative.year:age.category + relative.year:sex.risk + relative.year:race,
-                                     data=engaged.unsuppressed[engaged.unsuppressed$future.state!='lost',], id=id, family = binomial, corstr = "exchangeable")
+model.suppressed.if.not.truly.disengaged.EU <- geeglm(suppressed.future ~ age.category + sex.risk + race +
+                                                       relative.year + relative.year:age.category + relative.year:sex.risk + relative.year:race,
+                                                   data=engaged.unsuppressed[engaged.unsuppressed$future.state!='lost',], id=id, family = binomial, corstr = "exchangeable")
 
 
-p.truly.disengaged = expit(predict.glm(model.truly.disengaged, newdata=engaged.unsuppressed))
-p.truly.disengaged[engaged.unsuppressed$future.state=='remain'] = 0
-p.truly.disengaged[engaged.unsuppressed$future.state=='suppress'] = 0
+p.truly.disengaged.EU = expit(predict.glm(model.truly.disengaged, newdata=engaged.unsuppressed))
+p.truly.disengaged.EU[engaged.unsuppressed$future.state=='remain'] = 0
+p.truly.disengaged.EU[engaged.unsuppressed$future.state=='suppress'] = 0
 
-p.suppressed.if.not.truly.disengaged = expit(predict.glm(model.suppressed.if.not.truly.disengaged, newdata=engaged.unsuppressed))
-p.suppressed.if.not.truly.disengaged[engaged.unsuppressed$future.state=='remain'] = 0
-p.suppressed.if.not.truly.disengaged[engaged.unsuppressed$future.state=='suppress'] = 1
+p.suppressed.if.not.truly.disengaged.EU = expit(predict.glm(model.suppressed.if.not.truly.disengaged.EU, newdata=engaged.unsuppressed))
+p.suppressed.if.not.truly.disengaged.EU[engaged.unsuppressed$future.state=='remain'] = 0
+p.suppressed.if.not.truly.disengaged.EU[engaged.unsuppressed$future.state=='suppress'] = 1
 
 N.IMPUTATIONS = 4
 imputed.engaged.unsuppressed = NULL
 
 for (i in 1:N.IMPUTATIONS)
 {
-    simulated.lost.EU.1=rbinom(n=length(p.truly.disengaged), size=1, prob=p.truly.disengaged)
-    simulated.suppressed.EU.1=rbinom(n=length(p.suppressed.if.not.truly.disengaged), size=1, prob=p.suppressed.if.not.truly.disengaged)
+    simulated.lost.EU=rbinom(n=length(p.truly.disengaged.EU), size=1, prob=p.truly.disengaged.EU)
+    simulated.suppressed.EU=rbinom(n=length(p.suppressed.if.not.truly.disengaged.EU), size=1, prob=p.suppressed.if.not.truly.disengaged.EU)
     
     engaged.unsuppressed.sim = engaged.unsuppressed
-    engaged.unsuppressed.sim$future.state[simulated.lost.EU.1==1] = 'lost'
-    engaged.unsuppressed.sim$future.state[simulated.lost.EU.1==0 & simulated.suppressed.EU.1==1] = 'suppress'
-    engaged.unsuppressed.sim$future.state[simulated.lost.EU.1==0 & simulated.suppressed.EU.1==0] = 'remain'
+    engaged.unsuppressed.sim$future.state[simulated.lost.EU==1] = 'lost'
+    engaged.unsuppressed.sim$future.state[simulated.lost.EU==0 & simulated.suppressed.EU==1] = 'suppress'
+    engaged.unsuppressed.sim$future.state[simulated.lost.EU==0 & simulated.suppressed.EU==0] = 'remain'
 
     imputed.engaged.unsuppressed = rbind(imputed.engaged.unsuppressed, engaged.unsuppressed.sim)   
 }
-
-include.EU.2=rbinom(n=length(engaged.unsuppressed$p.truly.disengaged), size=1, prob=engaged.unsuppressed$p.truly.disengaged)
-engaged.unsuppressed.2 = engaged.unsuppressed[include.EU.2==1,]
-
-include.EU.3=rbinom(n=length(engaged.unsuppressed$p.truly.disengaged), size=1, prob=engaged.unsuppressed$p.truly.disengaged)
-engaged.unsuppressed.3 = engaged.unsuppressed[include.EU.3==1,]
-
-include.EU.4=rbinom(n=length(engaged.unsuppressed$p.truly.disengaged), size=1, prob=engaged.unsuppressed$p.truly.disengaged)
-engaged.unsuppressed.4 = engaged.unsuppressed[include.EU.4==1,]
-
-engaged.unsuppressed.weights = rbind(engaged.unsuppressed.1,engaged.unsuppressed.2,engaged.unsuppressed.3,engaged.unsuppressed.4)
 
 
 if (analysis=='jheem.model')
@@ -216,7 +205,7 @@ if (analysis=='jheem.model')
     print("Fitting Model for engaged-unsuppressed, JHEEM model version (model coefficients only), with disengagement weights")
     model.engaged.unsuppressed <- nomLORgee(future.state ~ age.category + sex.risk + race + relative.year
                                             + age.category*relative.year + sex.risk*relative.year + race*relative.year,
-                                            data=engaged.unsuppressed.weights, id=id)
+                                            data=imputed.engaged.unsuppressed, id=id)
 }
 
 if (analysis=='CNICS')
@@ -265,24 +254,35 @@ engaged.suppressed$sex.risk <- factor(engaged.suppressed$sex.risk, levels = c("m
                                                                               "idu_male","idu_female","other"))
 
 
-engaged.suppressed$p.truly.disengaged = expit(predict.glm(model.truly.disengaged, newdata=engaged.suppressed))
-engaged.suppressed$p.truly.disengaged[engaged.suppressed$future.state=='remain'] = 1
-engaged.suppressed$p.truly.disengaged[engaged.suppressed$future.state=='unsuppress'] = 1
+model.suppressed.if.not.truly.disengaged.ES <- geeglm(suppressed.future ~ age.category + sex.risk + race +
+                                                       relative.year + relative.year:age.category + relative.year:sex.risk + relative.year:race,
+                                                   data=engaged.suppressed[engaged.suppressed$future.state!='lost',], id=id, family = binomial, corstr = "exchangeable")
 
 
-include.ES.1=rbinom(n=length(engaged.suppressed$p.truly.disengaged), size=1, prob=engaged.suppressed$p.truly.disengaged)
-engaged.suppressed.1 = engaged.suppressed[include.ES.1==1,]
+p.truly.disengaged.ES = expit(predict.glm(model.truly.disengaged, newdata=engaged.suppressed))
+p.truly.disengaged.ES[engaged.suppressed$future.state=='remain'] = 0
+p.truly.disengaged.ES[engaged.suppressed$future.state=='unsuppress'] = 0
 
-include.ES.2=rbinom(n=length(engaged.suppressed$p.truly.disengaged), size=1, prob=engaged.suppressed$p.truly.disengaged)
-engaged.suppressed.2 = engaged.suppressed[include.ES.2==1,]
+p.suppressed.if.not.truly.disengaged.ES = expit(predict.glm(model.suppressed.if.not.truly.disengaged.ES, newdata=engaged.suppressed))
+p.suppressed.if.not.truly.disengaged.ES[engaged.suppressed$future.state=='remain'] = 1
+p.suppressed.if.not.truly.disengaged.ES[engaged.suppressed$future.state=='unsuppress'] = 0
 
-include.ES.3=rbinom(n=length(engaged.suppressed$p.truly.disengaged), size=1, prob=engaged.suppressed$p.truly.disengaged)
-engaged.suppressed.3 = engaged.suppressed[include.ES.3==1,]
+N.IMPUTATIONS = 4
+imputed.engaged.suppressed = NULL
 
-include.ES.4=rbinom(n=length(engaged.suppressed$p.truly.disengaged), size=1, prob=engaged.suppressed$p.truly.disengaged)
-engaged.suppressed.4 = engaged.suppressed[include.ES.4==1,]
+for (i in 1:N.IMPUTATIONS)
+{
+    simulated.lost.ES=rbinom(n=length(p.truly.disengaged.ES), size=1, prob=p.truly.disengaged.ES)
+    simulated.suppressed.ES=rbinom(n=length(p.suppressed.if.not.truly.disengaged.ES), size=1, prob=p.suppressed.if.not.truly.disengaged.ES)
+    
+    engaged.suppressed.sim = engaged.suppressed
+    engaged.suppressed.sim$future.state[simulated.lost.ES==1] = 'lost'
+    engaged.suppressed.sim$future.state[simulated.lost.ES==0 & simulated.suppressed.ES==1] = 'suppress'
+    engaged.suppressed.sim$future.state[simulated.lost.ES==0 & simulated.suppressed.ES==0] = 'remain'
+    
+    imputed.engaged.suppressed = rbind(imputed.engaged.suppressed, engaged.suppressed.sim)   
+}
 
-engaged.suppressed.weights = rbind(engaged.suppressed.1,engaged.suppressed.2,engaged.suppressed.3,engaged.suppressed.4)
 
 
 if (analysis=='jheem.model')
