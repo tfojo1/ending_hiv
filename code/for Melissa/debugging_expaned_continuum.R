@@ -2,17 +2,23 @@
 source('code/source_code.R')
 source('code/calibration/calibrated_parameters_expanded_1.R')
 source('code/plots.R')
-load('mcmc_runs/baltimore_initial_simset.Rdata')
+load('mcmc_runs/baltimore_initial_simset_v2.Rdata')
 
 pp = simset@parameters[simset@n.sim,]
-
+pp[grepl('.or$', names(pp))] = 1
 
 run.simulation = create.run.simulation.function(msa=BALTIMORE.MSA, start.values=pp, 
                                                 version = 'expanded_1.0', fix.components=F, catch.errors = F)
 
 sim = run.simulation(pp, end.year=2030, keep.years=2010:2030)
 
-plot.calibration.total(sim, data.types=c('engagement','suppression'), years=2011:2030)
+plot.calibration.total(sim, data.types=c('engagement','suppression','suppression.of.engaged'), years=2011:2030)
+
+
+
+
+
+
 plot.calibration(sim, data.types=c('engagement','suppression'), years=2011:2030)
 
 plot.calibration(sim, data.types=c('engagement','suppression'), years=2011:2030, facet.by = 'race')
