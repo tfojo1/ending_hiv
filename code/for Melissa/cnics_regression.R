@@ -128,7 +128,7 @@ disengaged.for.weights = disengaged[!is.na(disengaged$future.state) & (disengage
 disengaged.for.weights$truly.disengaged = as.numeric(disengaged.for.weights$future.state=='reengage.unsuppress')
 
 #@MELISSA - put year back in here
-model.truly.disengaged <- geeglm(truly.disengaged ~ age.category + sex.risk + race 
+model.truly.disengaged <- geeglm(truly.disengaged ~ age.category + sex.risk + race, 
        #                              relative.year + relative.year:age.category + relative.year:sex.risk + relative.year:race,
                                  data=disengaged.for.weights, id=id, family = binomial, corstr = "exchangeable")
 
