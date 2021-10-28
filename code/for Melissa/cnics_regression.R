@@ -277,8 +277,8 @@ for (i in 1:N.IMPUTATIONS)
     
     engaged.suppressed.sim = engaged.suppressed
     engaged.suppressed.sim$future.state[simulated.lost.ES==1] = 'lost'
-    engaged.suppressed.sim$future.state[simulated.lost.ES==0 & simulated.suppressed.ES==1] = 'suppress'
-    engaged.suppressed.sim$future.state[simulated.lost.ES==0 & simulated.suppressed.ES==0] = 'remain'
+    engaged.suppressed.sim$future.state[simulated.lost.ES==0 & simulated.suppressed.ES==1] = 'remain'
+    engaged.suppressed.sim$future.state[simulated.lost.ES==0 & simulated.suppressed.ES==0] = 'unsuppress'
     
     imputed.engaged.suppressed = rbind(imputed.engaged.suppressed, engaged.suppressed.sim)   
 }
