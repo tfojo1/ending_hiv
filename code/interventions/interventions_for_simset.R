@@ -11,6 +11,7 @@ prepare.simset.for.interventions <- function(simset,
                                              total.future.suppressed.slope.or.dist = TOTAL.FUTURE.SLOPE.OR.DIST,
                                              future.slope.after.year=2020,
                                              crunch.components=F,
+                                             max.run.from.year=2018,
                                              redo.needle.exchange=T)
 {
     #-- Flatten it out --#
@@ -103,7 +104,8 @@ prepare.simset.for.interventions <- function(simset,
                                         future.slope.after.year,
                                         testing.gains.end.by.bounds[1],
                                         prep.gains.end.by.bounds[1],
-                                        suppression.gains.end.by.bounds[1])
+                                        suppression.gains.end.by.bounds[1],
+                                        max.run.from.year)
 
     simset
 }

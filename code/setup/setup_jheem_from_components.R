@@ -1600,6 +1600,7 @@ do.calculate.leave.unsuppressed.rates <- function(components)
                                          components$background.leave.unsuppressed$years)
         background.p = c(list(0 * background.p[[1]]), background.p)
         
+        
         non.engaged.suppressed.states = setdiff(dimnames(background.p[[1]])[['continuum']], 'engaged_unsuppressed')
         
         if (!is.null(components$foreground.art.adherence.unsuppressed))

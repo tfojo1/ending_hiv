@@ -33,6 +33,9 @@ if (any(names(dataset)=='age.category.randomized'))
 dataset <- dataset[dataset$sex!="Intersexed",]
 dataset <- dataset[dataset$age.category!="0-13",]
 
+dataset$age.category <- factor(dataset$age.category, levels = c("35-45","13-25","25-35","45-55","55+"))
+dataset$sex <- factor(dataset$sex, levels = c("Male","Female"))
+
 anchor.year = 2010
 dataset$relative.year <- dataset$date - anchor.year
 
@@ -125,15 +128,35 @@ disengaged$sex.risk <- factor(disengaged$sex.risk, levels = c("msm","msm_idu",
                                                               "idu_male","idu_female","other"))
 
 disengaged.for.weights = disengaged[!is.na(disengaged$future.state) & (disengaged$future.state=='reengage.suppress' | disengaged$future.state=='reengage.unsuppress'),]
-disengaged.for.weights$truly.disengaged = as.numeric(disengaged.for.weights$future.state=='reengage.unsuppress')
-
-#@MELISSA - put year back in here
-model.truly.disengaged <- geeglm(truly.disengaged ~ age.category + sex.risk + race, 
-       #                              relative.year + relative.year:age.category + relative.year:sex.risk + relative.year:race,
-                                 data=disengaged.for.weights, id=id, family = binomial, corstr = "exchangeable")
 
 expit = function(lo){1/(1+exp(-lo))}
+model.suppressed.if.engaged = geeglm(suppressed.now ~ age.category + sex.risk + race +
+                                         relative.year + relative.year:age.category + relative.year:sex.risk + relative.year:race,
+                                     data=dataset[dataset$engaged.now,], id=id, family = binomial, corstr = "exchangeable")
 
+# to map prob unsuppressed if engaged to prop lost if unsuppressed:
+# P(lost | unsupp) = p(unsupp | lost) * p(lost) / [p(unsupp | lost) * p(lost) + p(unsupp | engaged) * p(engaged)]
+# given P(unsupp|lost) = 1
+# P(lost | unsupp) = P(lost) / [P(lost) + (1-P(supp | engaged)) * (1-P(lost)) ]
+
+prior.p.lost = 0.25 #nationally from HIV data
+
+p.suppressed.if.engaged.for.disengaged = expit(predict.glm(model.suppressed.if.engaged, newdata=disengaged.for.weights))
+disengaged.for.weights$truly.disengaged = prior.p.lost /
+    (prior.p.lost + (1-prior.p.lost) * (1-p.suppressed.if.engaged.for.disengaged))
+disengaged.for.weights$truly.disengaged[disengaged.for.weights$future.state=='reengage.suppress'] = 0
+
+model.truly.disengaged <- geeglm(truly.disengaged ~ age.category + sex.risk + race + 
+                                     relative.year + relative.year:age.category + relative.year:sex.risk + relative.year:race,
+                                 data=disengaged.for.weights, id=id, family = binomial, corstr = "exchangeable")
+
+if (1==2)
+{
+    qplot(jitter(disengaged.for.weights$relative.year), jitter(disengaged.for.weights$truly.disengaged)) + geom_smooth()
+    sapply(sort(unique(disengaged.for.weights$relative.year)), function(year){
+        mean(disengaged.for.weights$truly.disengaged[disengaged.for.weights$relative.year==year])
+    })
+}
 
 ##------------------------------------##
 ##-- DATASET 1: Engaged unsuppressed--##
