@@ -3,6 +3,7 @@
 source('code/source_code.R')
 source('code/Ruchita/create_prep_interventions.R')
 
+
 ##-- ORGANIZE the INTERVENTIONS WE CARE ABOUT --##
 
 #can add the variable PrEP if needed
@@ -105,6 +106,36 @@ COVERAGE.25.INTERVENTIONS.CODES = c(
   'noint'
 )
 
+COVERAGE.10.INTERVENTIONS.CODES = c(
+  'msm.p10.oralinj.variable_23_27',
+  'msm.p10.oral.variable_23_27',
+  'noint'
+)
+
+
+COVERAGE.50.INTERVENTIONS.CODES = c(
+  'msm.p50.oralinj.variable_23_27',
+  'msm.p50.oral.variable_23_27',
+  'noint'
+)
+
+COVERAGE.10.NEW.INTERVENTIONS.CODES = c(
+  'msm.p10.oralinj.variable.new_23_27',
+  'msm.p10.oral.variable.new_23_27',
+  'noint'
+)
+
+COVERAGE.25.NEW.INTERVENTIONS.CODES = c(
+  'msm.p25.oralinj.variable.new_23_27',
+  'msm.p25.oral.variable.new_23_27',
+  'noint'
+)
+
+COVERAGE.50.NEW.INTERVENTIONS.CODES = c(
+  'msm.p50.oralinj.variable.new_23_27',
+  'msm.p50.oral.variable.new_23_27',
+  'noint'
+)
 
 
 ORAL.2015.INTERVENTIONS.CODES = 'msm.p35.oral.variable_15_15'
@@ -118,12 +149,28 @@ INJ.ORAL.2015.INTERVENTIONS.CODES = c(
 )
 
 INJ.ORAL.VARIABLE.NEW.INTERVENTIONS.CODES = c(
+  'noint',
   'msm.p10.oralinj.variable.new_23_27',
   'msm.p25.oralinj.variable.new_23_27',
   'msm.p50.oralinj.variable.new_23_27',
   'msm.p10.oral.variable.new_23_27',
   'msm.p25.oral.variable.new_23_27',
   'msm.p50.oral.variable.new_23_27'
+  
+)
+
+
+ORAL.VARIABLE.NEW.INTERVENTIONS.CODES = c(
+  'msm.p10.oral.variable.new_23_27',
+  'msm.p25.oral.variable.new_23_27',
+  'msm.p50.oral.variable.new_23_27'
+  
+)
+
+INJ.VARIABLE.NEW.INTERVENTIONS.CODES = c(
+  'msm.p10.oralinj.variable.new_23_27',
+  'msm.p25.oralinj.variable.new_23_27',
+  'msm.p50.oralinj.variable.new_23_27'
   
 )
 
@@ -150,7 +197,7 @@ run.prep.simulations <- function(msas,
         
         run.systematic.interventions(simset = simset,
                                      interventions = lapply(intervention.codes, intervention.from.code), 
-                                     dst.dir = dst.dir, overwrite = T, compress = T, 
+                                     dst.dir = dst.dir, overwrite = F, compress = T, 
                                      run.from.year = run.from.year,
                                      run.to.year = run.to.year, verbose = T, 
                                      save.baseline.and.seed = F
@@ -168,7 +215,7 @@ make.prep.table <- function(msas=TARGET.MSAS,
                             intervention.codes,
                             comparison.codes, #could be null
                             raw.prep.results,
-                            include.totals,
+                            include.totals = F,
                             round.digits=0,
                             stat){
     if (include.totals){
@@ -416,10 +463,10 @@ for(i in 1:length(intervention.codes)){
 #returns a four-dimensional array
 #indexed [simulation, msa, intervention.code]
 aggregate.raw.prep.results <- function(msas,
-                                       intervention.codes,
+                                       intervention.codes = COVERAGE.50.INTERVENTIONS.CODES,
                                        years=2020:2030,
                                        dir='mcmc_runs/prep_simsets',
-                                       calculate.total=T)
+                                       calculate.total=F)
 {
     rv = sapply(intervention.codes, function(code){
         sapply(msas, function(msa){
@@ -455,9 +502,11 @@ aggregate.raw.prep.results <- function(msas,
     rv
 }
 
-make.figure <- function(msas=TARGET.MSAS,intervention.codes = COVERAGE.25.INTERVENTIONS.CODES, raw.prep.results = prep.results,round.digits=0){
+make.figure <- function(msas=TARGET.MSAS,intervention.codes = COVERAGE.50.INTERVENTIONS.CODES, raw.prep.results = prep.results,round.digits=0){
  
   plots = vector("list", length= length(intervention.codes))
+  mean_reduction =  vector("list", length= length(intervention.codes))
+  reduction = vector("list", length= length(intervention.codes))
   for(i in 1:length(intervention.codes)){
     rv = sapply(1:11, function(j){
       int.code = intervention.codes[i]
@@ -465,6 +514,15 @@ make.figure <- function(msas=TARGET.MSAS,intervention.codes = COVERAGE.25.INTERV
       int_collapse = do.call(cbind, (lapply(int.values, function(x) x[j,1:50])))
       rowSums(int_collapse)
     })
+    
+    red = (rv[,1]-rv[,11])/(rv[,1])*100
+  
+    mean_red = mean(red)
+    mean_red_low = quantile(red, probs = .025)
+    mean_red_high = quantile(red, probs = .975)
+    
+    mean_reduction[[i]] = paste0(round(mean_red,0),"% [",round(mean_red_low,0),"% to ",round(mean_red_high,0),"%]")
+    reduction[[i]] = red
     
     mean_diff = round(colMeans(rv),0)
     CI_low = round(apply(rv,2,function(x) quantile(x, probs = .025)),0)
@@ -480,12 +538,21 @@ make.figure <- function(msas=TARGET.MSAS,intervention.codes = COVERAGE.25.INTERV
     
   }
   
+  
+  mean_red_diff = round(mean(reduction[[1]]-reduction[[2]]),0)
+  mean_red_low = round(quantile(reduction[[1]]-reduction[[2]], probs = .025),0)
+  mean_red_high = round(quantile(reduction[[1]]-reduction[[2]], probs = .975),0)
+  paste0(mean_red_diff,"% [",mean_red_low,"% to ",mean_red_high,"%]")
+  
+  
   plots = do.call(rbind.data.frame,plots)
   plots$Incidence = as.numeric(as.character((plots$Incidence)))
   plots$`CI Low` = as.numeric(as.character((plots$`CI Low`)))
   plots$`CI High` = as.numeric(as.character((plots$`CI High`)))                            
-  ggplot(plots, aes(x=Year,y=Incidence,group=Intervention)) +
-    geom_ribbon(aes(ymin=`CI Low`,ymax=`CI High`, fill= Intervention), alpha = .3) +
-    geom_line(aes(colour=Intervention))
+  p = ggplot(plots, aes(x=Year,y=Incidence,group=Intervention)) +
+    geom_ribbon(aes(ymin=`CI Low`,ymax=`CI High`, fill= Intervention), alpha = .09) +
+    geom_line(aes(colour=Intervention))+scale_y_continuous(labels = scales::comma)
+  p + theme_bw()
 }
+
 
