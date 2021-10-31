@@ -1,183 +1,4 @@
 
-##-- SOURCE CODE --##
-source('code/source_code.R')
-source('code/Ruchita/create_prep_interventions.R')
-
-
-##-- ORGANIZE the INTERVENTIONS WE CARE ABOUT --##
-
-#can add the variable PrEP if needed
-ORAL.PREP.INTERVENTION.CODES = c(
-    'msm.p10.oral_23_27',
-    'msm.p25.oral_23_27',
-    'msm.p50.oral_23_27'
-)
-
-ORAL.VAR.PREP.INTERVENTION.CODES = c(
-  'msm.p10.oral.variable_23_27',
-  'msm.p25.oral.variable_23_27',
-  'msm.p50.oral.variable_23_27'
-)
-
-
-INJ.PREP.INTERVENTION.CODES = c(
-    'msm.p10.inj_23_27',
-    'msm.p25.inj_23_27',
-    'msm.p50.inj_23_27'
-   
-)
-
-VAR.PREP.INTERVENTION.CODES = c(
-  'msm.p10.inj.variable_23_27',
-  'msm.p25.inj.variable_23_27',
-  'msm.p50.inj.variable_23_27'
-)
-
-INJ.VAR.PREP.INTERVENTION.CODES = c(
-  'msm.p10.inj.variable_23_27',
-  'msm.p25.inj.variable_23_27',
-  'msm.p50.inj.variable_23_27',
-  'msm.p10.inj_23_27',
-  'msm.p25.inj_23_27',
-  'msm.p50.inj_23_27'
-)
-
-ALL.PREP.INTERVENTION.CODES = c(
-    'noint',
-    ORAL.PREP.INTERVENTION.CODES,
-    INJ.PREP.INTERVENTION.CODES
-)
-
-VAR.ORAL.PREP.INTERVENTIONS.CODES = c(
-  VAR.PREP.INTERVENTION.CODES,
-  ORAL.PREP.INTERVENTION.CODES
-)
-
-ALL.VAR.ORAL.PREP.INTERVENTIONS.CODES = c(
-  'noint',
-  'msm.p10.oral_23_27',
-  'msm.p25.oral_23_27',
-  'msm.p50.oral_23_27',
-  'msm.p10.inj.variable_23_27',
-  'msm.p25.inj.variable_23_27',
-  'msm.p50.inj.variable_23_27'
-)
-
-ORAL.INJ.COMB.INTERVENTIONS.CODES = c(
-  'msm.p10.oralinj.variable_23_27',
-  'msm.p25.oralinj.variable_23_27',
-  'msm.p50.oralinj.variable_23_27'
-)
-
-ALL.ORAL.INJ.COMB.INTERVENTIONS.CODES = c(
-  'noint',
-  'msm.p10.oral.variable_23_27',
-  'msm.p25.oral.variable_23_27',
-  'msm.p50.oral.variable_23_27',
-  'msm.p10.oralinj.variable_23_27',
-  'msm.p25.oralinj.variable_23_27',
-  'msm.p50.oralinj.variable_23_27'
-)
-
-INJ.ORAL.2020.INTERVENTIONS.CODES = c(
-  'msm.p10.oral.variable_20_20',
-  'msm.p25.oral.variable_20_20',
-  'msm.p50.oral.variable_20_20',
-  'msm.p10.oralinj.variable_20_20',
-  'msm.p25.oralinj.variable_20_20',
-  'msm.p50.oralinj.variable_20_20'
-)
-
-ORAL.2020.INTERVENTIONS.CODES = c(
-  'msm.p10.oral.variable_20_20',
-  'msm.p25.oral.variable_20_20',
-  'msm.p50.oral.variable_20_20'
-)
-
-INJ.2020.INTERVENTIONS.CODES = c(
-  'msm.p10.inj.variable_20_20',
-  'msm.p25.inj.variable_20_20',
-  'msm.p50.inj.variable_20_20'
-)
-
-COVERAGE.25.INTERVENTIONS.CODES = c(
-  'msm.p25.oralinj.variable_23_27',
-  'msm.p25.oral.variable_23_27',
-  'noint'
-)
-
-COVERAGE.10.INTERVENTIONS.CODES = c(
-  'msm.p10.oralinj.variable_23_27',
-  'msm.p10.oral.variable_23_27',
-  'noint'
-)
-
-
-COVERAGE.50.INTERVENTIONS.CODES = c(
-  'msm.p50.oralinj.variable_23_27',
-  'msm.p50.oral.variable_23_27',
-  'noint'
-)
-
-COVERAGE.10.NEW.INTERVENTIONS.CODES = c(
-  'msm.p10.oralinj.variable.new_23_27',
-  'msm.p10.oral.variable.new_23_27',
-  'noint'
-)
-
-COVERAGE.25.NEW.INTERVENTIONS.CODES = c(
-  'msm.p25.oralinj.variable.new_23_27',
-  'msm.p25.oral.variable.new_23_27',
-  'noint'
-)
-
-COVERAGE.50.NEW.INTERVENTIONS.CODES = c(
-  'msm.p50.oralinj.variable.new_23_27',
-  'msm.p50.oral.variable.new_23_27',
-  'noint'
-)
-
-
-ORAL.2015.INTERVENTIONS.CODES = 'msm.p35.oral.variable_15_15'
-
-INJ.2015.INTERVENTIONS.CODES = 'msm.p35.oralinj.variable_15_15'
-
-
-INJ.ORAL.2015.INTERVENTIONS.CODES = c(
-  INJ.2015.INTERVENTIONS.CODES,
-  ORAL.2015.INTERVENTIONS.CODES
-)
-
-INJ.ORAL.VARIABLE.NEW.INTERVENTIONS.CODES = c(
-  'noint',
-  'msm.p10.oralinj.variable.new_23_27',
-  'msm.p25.oralinj.variable.new_23_27',
-  'msm.p50.oralinj.variable.new_23_27',
-  'msm.p10.oral.variable.new_23_27',
-  'msm.p25.oral.variable.new_23_27',
-  'msm.p50.oral.variable.new_23_27'
-  
-)
-
-
-ORAL.VARIABLE.NEW.INTERVENTIONS.CODES = c(
-  'msm.p10.oral.variable.new_23_27',
-  'msm.p25.oral.variable.new_23_27',
-  'msm.p50.oral.variable.new_23_27'
-  
-)
-
-INJ.VARIABLE.NEW.INTERVENTIONS.CODES = c(
-  'msm.p10.oralinj.variable.new_23_27',
-  'msm.p25.oralinj.variable.new_23_27',
-  'msm.p50.oralinj.variable.new_23_27'
-  
-)
-
-STAGGERED.ORAL.INJ.PREP.CODES = character(2*length(ORAL.PREP.INTERVENTION.CODES))
-STAGGERED.ORAL.INJ.PREP.CODES[2*(1:length(ORAL.PREP.INTERVENTION.CODES))-1] = ORAL.PREP.INTERVENTION.CODES
-STAGGERED.ORAL.INJ.PREP.CODES[2*(1:length(INJ.PREP.INTERVENTION.CODES))] = INJ.PREP.INTERVENTION.CODES
-
 ##-- FUNCTION TO RUN INTERVENTIONS --##
 
 run.prep.simulations <- function(msas, 
@@ -466,11 +287,14 @@ aggregate.raw.prep.results <- function(msas,
                                        intervention.codes = COVERAGE.50.INTERVENTIONS.CODES,
                                        years=2020:2030,
                                        dir='mcmc_runs/prep_simsets',
-                                       calculate.total=F)
+                                       calculate.total=F,
+                                       verbose=T)
 {
     rv = sapply(intervention.codes, function(code){
         sapply(msas, function(msa){
             filename = get.simset.filename(location=msa, intervention.code=code)
+            if (verbose)
+                print(paste0("Loading ", filename))
             load(file.path(dir, msa, filename))
 
             simset = flatten.simset(simset)

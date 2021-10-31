@@ -4,7 +4,7 @@ source('code/covid/covid_plots.R')
 library(colorspace)
 
 ##-- SET-UP --##
-IMAGE.DIR = '../Manuscripts/covid_manuscript/images'
+IMAGE.DIR = '../CROI/CROI 2022 JHEEM-COVID'
 library(ggsci)
 PALETTE = pal_jama()
 COLORS = PALETTE(6)[-5]#[c(1,2,5,3,4)]
@@ -416,6 +416,8 @@ if (1==2)
     dev.off()
 }
 
+
+
 ##-- BINNED BOX-PLOTS for VARIABLES --##
 BINNED.BOXPLOT.THEME = theme(text = element_text(size=7),
                       axis.title = element_text(size=7),
@@ -488,7 +490,7 @@ if (1==2)
         pointsize=PNG.POINT.SIZE, width=BINNED.BOXPLOT.WIDTH, height=BINNED.BOXPLOT.HEIGHT, res=RES, units='in')
     make.covid.binned.boxplot(var1='sexual.transmission.reduction', 
                               scenario1='delayed.hiv.care',
-                              boxplot.fill=COLORS['delayed.hiv.care'],y
+                              boxplot.fill=COLORS['delayed.hiv.care'],
                               ylim=BINNED.BOXPLOT.LIMITS,
                               label.rho.size = SCATTER.FONT.SIZE,
                               label.rho.hjust = 'left',

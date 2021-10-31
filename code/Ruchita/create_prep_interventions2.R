@@ -48,7 +48,8 @@ oral.persistence.mean = .56
 oral.prep.persistence.ci.upper = oral.persistence.mean + 1.96*sqrt((oral.persistence.mean*(1-oral.persistence.mean))/7148)
 oral.prep.persistence.ci.lower = oral.persistence.mean-1.96*sqrt((oral.persistence.mean*(1-oral.persistence.mean))/7148) 
 
-oral.persistence.sd = (oral.prep.persistence.ci.upper - oral.prep.persistence.ci.lower) /3.92
+#oral.persistence.sd = (oral.prep.persistence.ci.upper - oral.prep.persistence.ci.lower) /3.92
+oral.persistence.sd = .21 / 2 / 1.96
 ORAL.PREP.PERSISTENCE.DIST = Normal.Distribution(mean=oral.persistence.mean,
                                                  sd=oral.persistence.sd,
                                                  lower=0,
@@ -70,6 +71,8 @@ create.prep.interventions.v2 <- function(start.year=2023,
                                          inj.vs.oral.discontinuation.rr.dist = INJ.VS.ORAL.DISCONTINUATION.RR.DIST, #inj.vs.oral.discontinuation.rr
                                          INTERVENTION.MANAGER = INTERVENTION.MANAGER.1.0)
 {
+    if (suffix != '' && substr(suffix, 1,1)!='_')
+        suffix = paste0("_", suffix)
     
     # UPTAKE INTERVENTION UNITS
     PREP.PLUS.10.ORAL = create.intervention.unit(type='prep', start.year=start.year,
@@ -144,6 +147,12 @@ create.prep.interventions.v2 <- function(start.year=2023,
     
     # PUT THEM TOGETHER INTO INTERVENTIONS
     
+    
+    BASELINE.ORAL = create.intervention(ALL.MSM, ORAL.PREP.EFFICACY, oral.prep.rr.dist)
+    INTERVENTION.MANAGER = register.intervention(BASELINE.ORAL, code=paste0('baseline.oral.variable.efficacy'),
+                                                 name='No Intervention',
+                                                 manager = INTERVENTION.MANAGER,
+                                                 allow.intervention.multiple.names = T)
     
     MSM.10.ORAL = create.intervention(ALL.MSM,
                                       PREP.PLUS.10.ORAL,
@@ -220,7 +229,8 @@ create.prep.interventions.v2 <- function(start.year=2023,
                                                  name='50/50 25% uptake oral/injectable PrEP on MSM',
                                                  manager = INTERVENTION.MANAGER,
                                                  allow.intervention.multiple.names = F)
-    
+
+    INTERVENTION.MANAGER    
    
 }
 

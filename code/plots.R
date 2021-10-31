@@ -1137,6 +1137,134 @@ plot.calibration <- function(sims,
 
  
 
+get.truth.df.for.plot <- function(surv,
+                                  location,
+                                  data.type,
+                                  years,
+                                  all.dimensions,
+                                  all.plus.denominator.dimensions,
+                                  split.by,
+                                  facet.by,
+                                  cdc.label,
+                                  plot.cdc.new.with.incidence,
+                                  plot.cdc.aids.with.new,
+                                  population)
+{
+    truth.type = NULL
+    if (data.type=='population')
+    {
+        years.for.population = intersect(dimnames(population)['year'], as.character(years))
+        if (length(years.for.population)>0)
+        {
+            truth.numerators = apply(access(population, year=as.character(years)), all.dimensions, sum)
+            if (!is.null(truth.numerators) && is.null(dim(truth.numerators)))
+            {
+                dim.names = list(names(truth.numerators))
+                names(dim.names) = all.dimensions
+                truth.numerators = array(truth.numerators, dim=sapply(dim.names, length), dimnames=dim.names)
+            }
+            
+            if (is.null(dim(truth.numerators))) 
+                truth.denominators = truth.numerators
+            else if (length(facet.by)==0)
+                truth.denominators = sum(truth.numerators)
+            else
+                truth.denominators = apply(truth.numerators, facet.by, sum)
+            truth.denominators = expand.population(truth.denominators, target.dim.names=dimnames(truth.numerators))
+            truth.numerators = truth.numerators/truth.denominators
+            truth.type = cdc.label
+        }
+        else
+            truth.numerators = truth.denominators = NULL
+    }
+    else if (data.type=='cumulative.mortality')
+    {
+        truth.numerators = get.surveillance.data(surv, location.codes=location,
+                                                 data.type='cumulative.aids.mortality',
+                                                 age=F, race=T, sex=T, risk=T,
+                                                 years=max(years), aggregate.locations=T,
+                                                 throw.error.if.missing.data=F) / (0.9)
+        dim.names = dimnames(truth.numerators)[intersect(all.dimensions, names(dimnames(truth.numerators)))]
+        truth.numerators = apply(truth.numerators, intersect(all.dimensions, names(dimnames(truth.numerators))), sum)
+        dim(truth.numerators) = sapply(dim.names, length)
+        dimnames(truth.numerators) = dim.names
+        truth.type = cdc.label
+    }
+    else
+    {
+        if (data.type=='incidence')
+        {
+            if (plot.cdc.new.with.incidence)
+                data.type.for.surveillance = 'new'
+            else
+                data.type.for.surveillance = NULL
+        }
+        else if (data.type=='testing')
+            data.type.for.surveillance = NULL
+        else
+            data.type.for.surveillance = data.type
+        
+        if (!is.null(data.type.for.surveillance))
+        {
+            truth.numerators = get.surveillance.data(surv, location.codes=location, data.type=data.type.for.surveillance,
+                                                     age=any(all.dimensions=='age'), race=any(all.dimensions=='race'),
+                                                     sex=any(all.dimensions=='sex'), risk=any(all.dimensions=='risk'),
+                                                     aggregate.locations = T, aggregate.years = F,
+                                                     throw.error.if.missing.data = F)
+            
+        }
+        else
+            truth.numerators = NULL
+        
+        if (!is.null(truth.numerators))
+        {
+            truth.years = intersect(years, as.numeric(dimnames(truth.numerators)[['year']]))
+            
+            truth.numerators = access(truth.numerators, year=as.character(truth.years), collapse.length.one.dimensions = F)
+            truth.numerators = apply(truth.numerators, all.plus.denominator.dimensions, function(x){x})
+            truth.type = rep(cdc.label, length(truth.years))
+            
+            if (plot.cdc.aids.with.new && data.type.for.surveillance=='new' && 
+                length(split.by)==0 && length(facet.by)==0)
+            {
+                aids.numerators = get.surveillance.data(surv, location.codes=location, 
+                                                        data.type='aids.diagnoses',
+                                                        aggregate.locations = T, aggregate.years = F,
+                                                        throw.error.if.missing.data = F)
+                
+                aids.years = setdiff(intersect(years, attr(aids.numerators, 'years')), truth.years[!is.na(truth.numerators)])
+                if (length(aids.years)>0)
+                {
+                    aids.numerators = aids.numerators[as.character(aids.years)]
+                    
+                    truth.numerators = c(aids.numerators, truth.numerators)
+                    truth.years = c(aids.years, truth.years)
+                    truth.type = c(rep(paste0(cdc.label, ": AIDS Diagnoses"), length(aids.years)),
+                                   truth.type)
+                    
+                    o = order(truth.years)
+                    truth.numerators = truth.numerators[o]
+                    truth.years = truth.years[o]
+                    truth.type = truth.type[o]
+                }
+            }
+            
+        }
+    }
+    
+    if (!is.null(truth.numerators) &&  is.null(dim(truth.numerators)))
+    {
+        truth.num.names = names(truth.numerators)
+        dim(truth.numerators) = c(year=length(truth.numerators))
+        dimnames(truth.numerators) = list(year=truth.num.names)
+    }
+    
+    #?truth type
+    list(
+        numerators = truth.numerators,
+        type = truth.type
+    )
+}
 
 int.breaks <- function(x)
 {

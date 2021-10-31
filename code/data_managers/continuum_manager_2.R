@@ -1,6 +1,7 @@
 
 if (1==2)
 {
+    # source this file AFTER sourcing source_code
     cm = create.continuum.manager(national.surveillance = national.surveillance,
                                   suppression.anchor.year = 2020,
                                   testing.anchor.year = 2010)
@@ -180,11 +181,15 @@ create.continuum.manager <- function(dir='cleaned_data/',
                                      max.tested.proportion = 0.9,
                                      max.suppressed.proportion = 0.9,
                                      max.linked.proportion = 0.95,
-                                     max.newly.suppressed.proportion = 0.95,
-                                     max.unsuppressed.proportion = 0.25,
+                                     max.newly.suppressed.proportion = 0.9,
+                                     min.lose.suppression.proportion = 0.02,
+#                                     max.unsuppressed.proportion = 0.25,
                                      max.unsuppressed.to.disengaged.proportion = 0.5,
                                      max.suppressed.to.disengaged.proportion = 0.5,
                                      max.reengaged.proportion = 0.5,
+                                     
+                                     max.unsuppressed.retention = 0.95,
+                                     max.suppressed.retention = 0.95,
                                      
                                      verbose=T,
                                     test=FALSE
@@ -204,6 +209,8 @@ create.continuum.manager <- function(dir='cleaned_data/',
     if (verbose)
         print('Setting up New Suppression and Unsuppressed-to-disengaged')
     cm$leave.unsuppressed.model = setup.3way.multinomial.model(anchor.year=output$anchor.year,
+                                                               max.retention = max.unsuppressed.retention,
+                                                               max.non.retention.proportion = max.newly.suppressed.proportion,
                                                                intercepts1=setup.array.from.coefficients(
                                                                    all=output$engaged.unsuppressed.coefficients["beta10"],
                                                                    age1=output$engaged.unsuppressed.coefficients["age.category13-25:1"],
@@ -267,6 +274,8 @@ create.continuum.manager <- function(dir='cleaned_data/',
         print('Setting up Unsuppression and Suppressed-to-disengaged')
     # For Melissa change anchor year to come from CNICS file
     cm$leave.suppressed.model = setup.3way.multinomial.model(anchor.year=output$anchor.year,
+                                                             max.retention = max.suppressed.retention,
+                                                             min.non.retention.proportion = min.lose.suppression.proportion,
                                                              intercepts1=setup.array.from.coefficients(
                                                                  all=output$engaged.suppressed.coefficients["beta10"],
                                                                  age1=output$engaged.suppressed.coefficients["age.category13-25:1"],
@@ -984,6 +993,9 @@ setup.retention <- function(cm,
 # $intercepts - a list of length num.outcomes-1, where each element is a [age,race,sex,risk] array of intercepts
 # $slopes - a list of length num.outcomes-1, where each element is a [age,race,sex,risk] array of slopes
 setup.3way.multinomial.model <- function(anchor.year,
+                                         max.retention,
+                                         min.non.retention.proportion=0,
+                                         max.non.retention.proportion=1,
                                          intercepts1,
                                          slopes1,
                                          intercepts2,
@@ -994,6 +1006,9 @@ setup.3way.multinomial.model <- function(anchor.year,
         outcome.names = outcome.names,
         num.outcomes=3,
         anchor.year=anchor.year,
+        max.retention=max.retention,
+        min.non.retention.proportion=min.non.retention.proportion,
+        max.non.retention.proportion=max.non.retention.proportion,
         intercepts=list(intercepts1, intercepts2),
         slopes=list(slopes1,slopes2))
     

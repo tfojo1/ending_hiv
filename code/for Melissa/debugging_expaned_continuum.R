@@ -17,6 +17,40 @@ plot.calibration.total(sim, data.types=c('engagement','suppression','suppression
 
 
 
+pp2 = pp
+pp2['heterosexual.proportion.lost.slope.or'] = 
+    pp2['msm.proportion.lost.slope.or'] = 
+    pp2['msm.idu.proportion.lost.slope.or'] = 
+    pp2['idu.proportion.lost.slope.or'] = 1.05
+
+pp2['heterosexual.proportion.adherent.slope.or'] = 
+    pp2['msm.proportion.adherent.slope.or'] = 
+    pp2['msm.idu.proportion.adherent.slope.or'] = 
+    pp2['idu.proportion.adherent.slope.or'] = 1.1
+
+sim2 = run.simulation(pp2, end.year=2030, keep.years=2010:2030)
+
+plot.calibration.total(list(sim,sim2), data.types=c('engagement','suppression','suppression.of.engaged'), years=2011:2030)
+
+
+
+
+source('code/interventions/melissa_croi_interventions_2022.R')
+
+sim2.int = run.sim.intervention(sim2, WHOLEPOP.R95, run.from.year = 2018, run.to.year = 2030)
+plot.calibration.total(list(sim2,sim2.int), data.types=c('engagement','suppression','suppression.of.engaged','incidence'), years=2011:2030)
+
+sim2.inc = project.absolute.incidence(sim2, years=c(2020,2030))
+(sim2.inc[1]-sim2.inc[2])/sim2.inc[1]
+sim2.int.inc = project.absolute.incidence(sim2.int, years=c(2020,2030))
+(sim2.int.inc[1]-sim2.int.inc[2])/sim2.int.inc[1]
+
+
+
+sim2.int = run.sim.intervention(sim2, WHOLEPOP.AS95, run.from.year = 2018, run.to.year = 2030)
+plot.calibration.total(list(sim2,sim2.int), data.types=c('engagement','suppression','suppression.of.engaged','incidence'), years=2011:2030)
+
+
 
 
 plot.calibration(sim, data.types=c('engagement','suppression'), years=2011:2030)

@@ -15,6 +15,8 @@ RETENTION.SUPP.80 = create.intervention.unit(type = "retention.suppressed", rate
 RETENTION.UNSUPP.80 = create.intervention.unit(type = "retention.unsuppressed", rates = .8, start.year = 2023, years = 2027)
 RETENTION.SUPP.90 = create.intervention.unit(type = "retention.suppressed", rates = .9, start.year = 2023, years = 2027)
 RETENTION.UNSUPP.90 = create.intervention.unit(type = "retention.unsuppressed", rates = .9, start.year = 2023, years = 2027)
+RETENTION.SUPP.95 = create.intervention.unit(type = "retention.suppressed", rates = .95, start.year = 2023, years = 2027)
+RETENTION.UNSUPP.95 = create.intervention.unit(type = "retention.unsuppressed", rates = .95, start.year = 2023, years = 2027)
 
 ANNUAL.SUPP.90 = create.intervention.unit(type = "gain.of.suppression", rates = .9, start.year = 2023, years = 2027)
 ANNUAL.SUPP.95 = create.intervention.unit(type = "gain.of.suppression", rates = .95, start.year = 2023, years = 2027)
@@ -100,6 +102,8 @@ MSMIDU.R90 = join.interventions(MSMIDU.RS90, MSMIDU.RU90)
 INTERVENTION.MANAGER.1.0 = register.intervention(MSMIDU.R90, code = "msmidu.r90",
                                                  name = 'All MSM and IDU 90% retention')
 
+
+
 WHOLEPOP.RS80 = create.intervention(WHOLE.POPULATION, RETENTION.SUPP.80)
 WHOLEPOP.RU80 = create.intervention(WHOLE.POPULATION, RETENTION.UNSUPP.80)
 WHOLEPOP.R80 = join.interventions(WHOLEPOP.RS80, WHOLEPOP.RU80)
@@ -111,6 +115,14 @@ WHOLEPOP.RU90 = create.intervention(WHOLE.POPULATION, RETENTION.UNSUPP.90)
 WHOLEPOP.R90 = join.interventions(WHOLEPOP.RS90, WHOLEPOP.RU90)
 INTERVENTION.MANAGER.1.0 = register.intervention(WHOLEPOP.R90, code = "wholepop.r90",
                                                  name = 'All MSM, IDU, and heterosexual 90% retention')
+
+
+
+WHOLEPOP.RS95 = create.intervention(WHOLE.POPULATION, RETENTION.SUPP.95)
+WHOLEPOP.RU95 = create.intervention(WHOLE.POPULATION, RETENTION.UNSUPP.95)
+WHOLEPOP.R95 = join.interventions(WHOLEPOP.RS95, WHOLEPOP.RU95)
+INTERVENTION.MANAGER.1.0 = register.intervention(WHOLEPOP.R95, code = "wholepop.r95",
+                                                 name = 'All MSM, IDU, and heterosexual 95% retention')
 
 
 # Adherence (combining suppressed/unsuppressed retention)
