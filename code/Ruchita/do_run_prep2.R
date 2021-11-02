@@ -5,7 +5,7 @@ source('code/source_code.R')
 source('code/Ruchita/create_prep_interventions2.R')
 source('code/Ruchita/systematic_prep_2.R')
 
-MSAs = TARGET.MSAS[2 + (0:7)*4]
+MSAs = TARGET.MSAS[4 + (0:7)*4]
 
 INTERVENTION.CODES.TO.RUN = c(
     'baseline.oral.variable.efficacy',
@@ -15,9 +15,13 @@ INTERVENTION.CODES.TO.RUN = c(
         'msm.combined.10.uptake',
         'msm.oral.25.uptake',
         'msm.inj.25.uptake',
-        'msm.combined.25.uptake'
+        'msm.combined.25.uptake',
+        'msm.oral.35.uptake',
+        'msm.inj.35.uptake',
+        'msm.combined.35.uptake'
     ), '_23_27')
 )
+INTERVENTION.CODES.TO.RUN = INTERVENTION.CODES.TO.RUN[8:10]
 
 
 run.prep.simulations(msas = MSAs,

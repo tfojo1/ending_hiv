@@ -252,8 +252,7 @@ create.prep.interventions.v2 <- function(start.year=2023,
                                                  name='50/50 25% uptake oral/injectable PrEP on MSM',
                                                  manager = INTERVENTION.MANAGER,
                                                  allow.intervention.multiple.names = F)
-<<<<<<< HEAD
-    
+
     MSM.35.ORAL = create.intervention(ALL.MSM,
                                       PREP.PLUS.35.ORAL,
                                       ORAL.PREP.EFFICACY,
@@ -275,7 +274,7 @@ create.prep.interventions.v2 <- function(start.year=2023,
                                      inj.vs.oral.hr.dist,
                                      oral.prep.persistence.dist,
                                      inj.vs.oral.discontinuation.rr.dist)
-    INTERVENTION.MANAGER = register.intervention(MSM.25.INJ, code=paste0('msm.inj.35.uptake', suffix),
+    INTERVENTION.MANAGER = register.intervention(MSM.35.INJ, code=paste0('msm.inj.35.uptake', suffix),
                                                  name='35% uptake injectable PrEP on MSM',
                                                  manager = INTERVENTION.MANAGER,
                                                  allow.intervention.multiple.names = F)
@@ -292,11 +291,9 @@ create.prep.interventions.v2 <- function(start.year=2023,
                                                  manager = INTERVENTION.MANAGER,
                                                  allow.intervention.multiple.names = F)
     
-=======
 
     INTERVENTION.MANAGER    
->>>>>>> 205de9b225cec035ffc50f52ceb900ee233ad066
-   
+
 }
 
 
