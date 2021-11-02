@@ -526,9 +526,9 @@ output$engaged.unsuppressed.coefficients = adjust.coefficients.for.disengagement
                                                                                  prior.weight=0.3)
 
 output$engaged.suppressed.coefficients = adjust.slope.coefficients(output$engaged.suppressed.coefficients,
-                                                                   prior.weight=0.5)
+                                                                   prior.weight=0.4)
 output$engaged.unsuppressed.coefficients = adjust.slope.coefficients(output$engaged.unsuppressed.coefficients,
-                                                                   prior.weight=0.5)
+                                                                   prior.weight=0.4)
 
 
 print("Done - saving output")

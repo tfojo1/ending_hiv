@@ -47,6 +47,9 @@ if (1==2)
     simset = extract.simset(mcmc, additional.burn=594, additional.thin=2);simset@n.sim
     save(simset, file='mcmc_runs/baltimore_initial_simset_FINAL_FOR_CROI.Rdata')
     
+    
+    plot.calibration(simset)
+    plot.calibration.total(simset, data.types=c('engagedment','suppression','suppression.of.engaged'))
 }
 
 # to resume
