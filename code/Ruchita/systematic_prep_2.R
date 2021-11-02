@@ -326,6 +326,49 @@ aggregate.raw.prep.results <- function(msas,
     rv
 }
 
+aggregate.prep.coverage <- function(msas,
+                                       intervention.codes = baseline.oral.variable.efficacy,
+                                       years=2020:2030,
+                                       dir='mcmc_runs/prep_simsets',
+                                    calculate.total=F,
+                                       verbose=T)
+{
+    rv = sapply(intervention.codes, function(code){
+        sapply(msas, function(msa){
+            filename = get.simset.filename(location=msa, intervention.code=code)
+            if (verbose)
+                print(paste0("Loading ", filename))
+            load(file.path(dir, msa, filename))
+            
+            simset = flatten.simset(simset)
+            sapply(simset@simulations, extract.prep.coverage, 
+                   keep.dimensions = 'year', years=years, sexes='msm',
+                   per.population=1)
+            
+        })
+    })
+    
+    dim.names = list(year=years,
+                     sim=1:(length(rv)/length(msas)/length(intervention.codes)/length(years)),
+                     location=msas,
+                     intervention=intervention.codes) 
+    
+    dim(rv) = sapply(dim.names, length)
+    dimnames(rv) = dim.names
+    
+    if (calculate.total)
+    {
+        dim.names$location = c(dim.names$location, 'total')
+        new.rv = array(0, dim=sapply(dim.names, length), dimnames=dim.names)
+        new.rv[,,msas,] = rv 
+        new.rv[,,'total',] = apply(rv, c(1,2,4), mean, na.rm=T) 
+        rv = new.rv
+    }
+    
+    rv
+}
+
+
 make.figure <- function(msas=TARGET.MSAS,intervention.codes = COVERAGE.50.INTERVENTIONS.CODES, raw.prep.results = prep.results,round.digits=0){
  
   plots = vector("list", length= length(intervention.codes))
