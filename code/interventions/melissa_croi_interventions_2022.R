@@ -15,8 +15,6 @@ RETENTION.SUPP.80 = create.intervention.unit(type = "retention.suppressed", rate
 RETENTION.UNSUPP.80 = create.intervention.unit(type = "retention.unsuppressed", rates = .8, start.year = 2023, years = 2027)
 RETENTION.SUPP.90 = create.intervention.unit(type = "retention.suppressed", rates = .9, start.year = 2023, years = 2027)
 RETENTION.UNSUPP.90 = create.intervention.unit(type = "retention.unsuppressed", rates = .9, start.year = 2023, years = 2027)
-RETENTION.SUPP.95 = create.intervention.unit(type = "retention.suppressed", rates = .95, start.year = 2023, years = 2027)
-RETENTION.UNSUPP.95 = create.intervention.unit(type = "retention.unsuppressed", rates = .95, start.year = 2023, years = 2027)
 
 ANNUAL.SUPP.90 = create.intervention.unit(type = "gain.of.suppression", rates = .9, start.year = 2023, years = 2027)
 ANNUAL.SUPP.95 = create.intervention.unit(type = "gain.of.suppression", rates = .95, start.year = 2023, years = 2027)
@@ -54,7 +52,7 @@ INTERVENTION.MANAGER.1.0 = register.intervention(WHOLEPOP.P25, code = "wholepop.
 # Linkage
 YBHMSM.L90 = create.intervention(YOUNG.BLACK.HISPANIC.MSM, LINKAGE.90)
 INTERVENTION.MANAGER.1.0 = register.intervention(YBHMSM.L90, code = "ybhmsm.l90",
-                                                 name = 'Young Black and Hispanic MSM 90% linkage')
+                                 name = 'Young Black and Hispanic MSM 90% linkage')
 
 YBHMSM.L95 = create.intervention(YOUNG.BLACK.HISPANIC.MSM, LINKAGE.95)
 INTERVENTION.MANAGER.1.0 = register.intervention(YBHMSM.L95, code = "ybhmsm.l95",
@@ -90,12 +88,6 @@ YBHMSM.R90 = join.interventions(YBHMSM.RS90, YBHMSM.RU90)
 INTERVENTION.MANAGER.1.0 = register.intervention(YBHMSM.R90, code = "ybhmsm.r90",
                                                  name = 'Young Black and Hispanic MSM 90% retention')
 
-YBHMSM.RS95 = create.intervention(YOUNG.BLACK.HISPANIC.MSM, RETENTION.SUPP.95)
-YBHMSM.RU95 = create.intervention(YOUNG.BLACK.HISPANIC.MSM, RETENTION.UNSUPP.95)
-YBHMSM.R95 = join.interventions(YBHMSM.RS95, YBHMSM.RU95)
-INTERVENTION.MANAGER.1.0 = register.intervention(YBHMSM.R95, code = "ybhmsm.r95",
-                                                 name = 'Young Black and Hispanic MSM 95% retention')
-
 MSMIDU.RS80 = create.intervention(ALL.MSM.AND.IDU, RETENTION.SUPP.80)
 MSMIDU.RU80 = create.intervention(ALL.MSM.AND.IDU, RETENTION.UNSUPP.80)
 MSMIDU.R80 = join.interventions(MSMIDU.RS80, MSMIDU.RU80)
@@ -107,12 +99,6 @@ MSMIDU.RU90 = create.intervention(ALL.MSM.AND.IDU, RETENTION.UNSUPP.90)
 MSMIDU.R90 = join.interventions(MSMIDU.RS90, MSMIDU.RU90)
 INTERVENTION.MANAGER.1.0 = register.intervention(MSMIDU.R90, code = "msmidu.r90",
                                                  name = 'All MSM and IDU 90% retention')
-
-MSMIDU.RS95 = create.intervention(ALL.MSM.AND.IDU, RETENTION.SUPP.95)
-MSMIDU.RU95 = create.intervention(ALL.MSM.AND.IDU, RETENTION.UNSUPP.95)
-MSMIDU.R95 = join.interventions(MSMIDU.RS95, MSMIDU.RU95)
-INTERVENTION.MANAGER.1.0 = register.intervention(MSMIDU.R95, code = "msmidu.r95",
-                                                 name = 'All MSM and IDU 95% retention')
 
 WHOLEPOP.RS80 = create.intervention(WHOLE.POPULATION, RETENTION.SUPP.80)
 WHOLEPOP.RU80 = create.intervention(WHOLE.POPULATION, RETENTION.UNSUPP.80)
@@ -126,14 +112,8 @@ WHOLEPOP.R90 = join.interventions(WHOLEPOP.RS90, WHOLEPOP.RU90)
 INTERVENTION.MANAGER.1.0 = register.intervention(WHOLEPOP.R90, code = "wholepop.r90",
                                                  name = 'All MSM, IDU, and heterosexual 90% retention')
 
-WHOLEPOP.RS95 = create.intervention(WHOLE.POPULATION, RETENTION.SUPP.95)
-WHOLEPOP.RU95 = create.intervention(WHOLE.POPULATION, RETENTION.UNSUPP.95)
-WHOLEPOP.R95 = join.interventions(WHOLEPOP.RS95, WHOLEPOP.RU95)
-INTERVENTION.MANAGER.1.0 = register.intervention(WHOLEPOP.R95, code = "wholepop.r95",
-                                                 name = 'All MSM, IDU, and heterosexual 95% retention')
 
-
-# Suppression (combining suppressed/unsuppressed)
+# Adherence (combining suppressed/unsuppressed retention)
 YBHMSM.AS90 = create.intervention(YOUNG.BLACK.HISPANIC.MSM, ANNUAL.SUPP.90)
 INTERVENTION.MANAGER.1.0 = register.intervention(YBHMSM.AS90, code = "ybhmsm.as90",
                                                  name = 'Young Black and Hispanic MSM 90% annual suppression')
@@ -159,34 +139,36 @@ INTERVENTION.MANAGER.1.0 = register.intervention(WHOLEPOP.AS95, code = "wholepop
                                                  name = 'All MSM, IDU, and heterosexual 95% annual suppression')
 
 # Combined
-YBHMSM.C.LOW = join.interventions(YBHMSM.L90, YBHMSM.R90, YBHMSM.AS90)
+YBHMSM.C.LOW = join.interventions(YBHMSM.L90, YBHMSM.R80, YBHMSM.AS90)
 INTERVENTION.MANAGER.1.0 = register.intervention(YBHMSM.C.LOW, code = "ybhmsm.c.low",
                                                  name = 'Young Black and Hispanic MSM combined linkage/retention/suppression, low')
 
-YBHMSM.C.HIGH = join.interventions(YBHMSM.L95, YBHMSM.R95, YBHMSM.AS95)
+YBHMSM.C.HIGH = join.interventions(YBHMSM.L95, YBHMSM.R90, YBHMSM.AS95)
 INTERVENTION.MANAGER.1.0 = register.intervention(YBHMSM.C.HIGH, code = "ybhmsm.c.high",
                                                  name = 'Young Black and Hispanic MSM combined linkage/retention/suppression, high')
 
-MSMIDU.C.LOW = join.interventions(MSMIDU.L90, MSMIDU.R90, MSMIDU.AS90)
+MSMIDU.C.LOW = join.interventions(MSMIDU.L90, MSMIDU.R80, MSMIDU.AS90)
 INTERVENTION.MANAGER.1.0 = register.intervention(MSMIDU.C.LOW, code = "msmidu.c.low",
                                                  name = 'All MSM and IDU combined linkage/retention/suppression, low')
 
-MSMIDU.C.HIGH = join.interventions(MSMIDU.L95, MSMIDU.R95, MSMIDU.AS95)
+MSMIDU.C.HIGH = join.interventions(MSMIDU.L95, MSMIDU.R90, MSMIDU.AS95)
 INTERVENTION.MANAGER.1.0 = register.intervention(MSMIDU.C.HIGH, code = "msmidu.c.high",
                                                  name = 'All MSM and IDU combined linkage/retention/suppression, high')
 
-WHOLEPOP.C.LOW = join.interventions(WHOLEPOP.L90, WHOLEPOP.R90, WHOLEPOP.AS90)
+WHOLEPOP.C.LOW = join.interventions(WHOLEPOP.L90, WHOLEPOP.R80, WHOLEPOP.AS90)
 INTERVENTION.MANAGER.1.0 = register.intervention(WHOLEPOP.C.LOW, code = "wholepop.c.low",
                                                  name = 'All MSM, IDU, and heterosexual combined linkage/retention/suppression, low')
 
-WHOLEPOP.C.HIGH = join.interventions(WHOLEPOP.L95, WHOLEPOP.R95, WHOLEPOP.AS95)
+WHOLEPOP.C.HIGH = join.interventions(WHOLEPOP.L95, WHOLEPOP.R90, WHOLEPOP.AS95)
 INTERVENTION.MANAGER.1.0 = register.intervention(WHOLEPOP.C.HIGH, code = "wholepop.c.high",
                                                  name = 'All MSM, IDU, and heterosexual combined linkage/retention/suppression, high')
 
-
 MELISSA.CROI.INTERVENTIONS.2022 = list(YBHMSM.P10, YBHMSM.P25, MSMIDU.P10, MSMIDU.P25, WHOLEPOP.P10, WHOLEPOP.P25,
                                        YBHMSM.L90, YBHMSM.L95, MSMIDU.L90, MSMIDU.L95, WHOLEPOP.L90, WHOLEPOP.L95,
-                                       YBHMSM.R90, YBHMSM.R95, MSMIDU.R90, MSMIDU.R95, WHOLEPOP.R90, WHOLEPOP.R95,
+                                       YBHMSM.R80, YBHMSM.R90, MSMIDU.R80, MSMIDU.R90, WHOLEPOP.R80, WHOLEPOP.R90,
                                        YBHMSM.AS90, YBHMSM.AS95, MSMIDU.AS90, MSMIDU.AS95, WHOLEPOP.AS90, WHOLEPOP.AS95,
                                        YBHMSM.C.LOW, YBHMSM.C.HIGH, MSMIDU.C.LOW, MSMIDU.C.HIGH, WHOLEPOP.C.LOW, WHOLEPOP.C.HIGH,
                                        NO.INTERVENTION)
+
+
+

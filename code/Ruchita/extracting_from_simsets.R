@@ -24,3 +24,6 @@ sapply(simset@simulations, function(sim){
 sapply(simset@simulations, function(sim){
     project.absolute.new.diagnoses(sim, years=2014:2030, sex='msm')
 })
+
+library(ggsci)
+pal_jama()

@@ -85,7 +85,7 @@ rv =  sapply(risks, function(risk){
                     x[paste0("sex.riskidu_female:relative.year:",k)] = year - anchor.year
                   }
                   
-                    sum(x[names(coefficients)]*coefficients)
+                    sum(x*coefficients)
                         })
                 })
             })

@@ -42,7 +42,6 @@ make.covid.scatterplot <- function(results=outcomes.arr,
                                    params=parameters,
                                    locations=dimnames(results)[['location']],
                                    aggregate.locations = T,
-                                   aggregate.simulations.fn = NULL,
                                    var1='suppression.reduction',
                                    var2='incidence',
                                    var1.years=2020:2025,
@@ -58,24 +57,16 @@ make.covid.scatterplot <- function(results=outcomes.arr,
                                    subtract.intervention.name2=NA,
                                    subtract.relative2=T,
                                    cor.method='spearman',
-                                   #size by
-                                   size.by=NULL,
-                                   size.by.years=2019,
-                                   size.by.scenario='baseline',
-                                   size.by.intervention.name=NA,
                                    #style arguments
                                    point.size=5,
-                                   point.size.range=c(2,10),
                                    point.fill='gray',
                                    point.alpha=0.4,
                                    label.rho=T,
                                    label.rho.size=7,
                                    label.rho.hjust='middle',
                                    label.rho.vjust='center',
-                                   label.locations=F,
                                    add.smoother = T,
-                                   highlight.labeled=T,
-                                   print.df=F)
+                                   highlight.labeled=T)
 {
     x.as.pct = (!is.na(subtract.scenario1) && subtract.relative1 ) ||
         any(var1 == PCT.VARIABLES) ||
@@ -136,58 +127,15 @@ make.covid.scatterplot <- function(results=outcomes.arr,
             values2 = values2/relative.to2
     }
     
-    if (!is.null(size.by))
-    {
-        size.by.values = get.variable(results=results,
-                                      locations=locations,
-                                      params=params,
-                                      var.name = size.by,
-                                      years=size.by.years,
-                                      scenario=size.by.scenario,
-                                      intervention.name=size.by.intervention.name,
-                                      aggregate.locations=aggregate.locations)
-    }
-    else
-        size.by.values = NULL
-    
-    if (is.null(aggregate.simulations.fn))
-    {
-        df = melt(values1, value.name = 'value1')
-        df$value2 = as.numeric(values2)
-        
-        if (!is.null(size.by.values))
-            df$size.by = as.numeric(size.by.values)
-    }
-    else
-    {
-        df = data.frame(
-            location = dimnames(values1)$location,
-            value1 = apply(values1, 'location', aggregate.simulations.fn),
-            value2 = apply(values2, 'location', aggregate.simulations.fn)
-        )
-        
-        if (!is.null(size.by.values))
-            df$size.by = apply(size.by.values, 'location', aggregate.simulations.fn)
-    }
-    
-    
-    if (print.df)
-    {
-        o = order(df$value2)
-        print(df[o,])
-    }
-    
-    if (is.null(size.by))
-      rv = ggplot(df, aes(value1, value2)) +
-            geom_point(size=point.size, shape=21, fill=point.fill, alpha=point.alpha)
-    else
-      rv = ggplot(df, aes(value1, value2, size=size.by)) +
-            geom_point(shape=21, fill=point.fill, alpha=point.alpha) +
-            scale_size_continuous(range=point.size.range) + BLANK.THEME
-    
-     rv = rv + BLANK.THEME
+    df = melt(values1, value.name = 'value1')
+    df$value2 = as.numeric(values2)
 
-    if (!aggregate.locations && is.null(aggregate.simulations.fn) && length(locations)>1)    
+
+    rv = ggplot(df, aes(value1, value2)) +
+        geom_point(size=point.size, shape=21, fill=point.fill, alpha=point.alpha) +
+        BLANK.THEME
+
+    if (!aggregate.locations && length(locations)>1)    
         rv = rv + facet_wrap(~location)
     
     if (add.smoother)
@@ -219,9 +167,6 @@ make.covid.scatterplot <- function(results=outcomes.arr,
         rv = rv + geom_text(data=rho.df, aes(x,y,label=label), vjust=label.rho.vjust, hjust=label.rho.hjust, size=label.rho.size)
         
     }
-     
-     if (label.locations)
-         rv = rv + geom_text(aes(label=location), hjust=0)
     
     #-- Axis Label Formatting --#
     force.plus = function(x){
@@ -533,15 +478,9 @@ make.correlation.scatterplot <- function(results=outcomes.arr,
             mean(values1[loc,])
         })
         
-    if (correlate.var2)
-        correlations.2 = sapply(locations, function(loc){
-            cor(outcome[loc,], values2[loc,], method=cor.method)
-        })
-    else
-        correlations.2 = sapply(locations, function(loc){
-            mean(values2[loc,])
-        })
-    
+    correlations.2 = sapply(locations, function(loc){
+        cor(outcome[loc,], values2[loc,], method=cor.method)
+    })
     mean.outcome = sapply(locations, function(loc){
         mean(outcome[loc,])
     })
@@ -707,9 +646,7 @@ make.location.boxplot <- function(results=outcomes.arr,
                                   loc.names=location.names,
                                   colors=pal_jama(),
                                   box.width=0.5,
-                                  n.spacers=1,
-                                  vertical=T,
-                                  outcome.axis.name=NULL
+                                  n.spacers=1
                                   #style arguments
                                )
 {
@@ -792,15 +729,10 @@ make.location.boxplot <- function(results=outcomes.arr,
     mean.estimate = sapply(loc.names, function(loc){
         mean(df$estimate[df$location==loc])
     })
+    location.levels = rev(c(loc.names[locations][order(mean.estimate, decreasing = T)],
+                            'Total'))
     
-    if (include.total)
-        location.levels = rev(c(loc.names[locations][order(mean.estimate, decreasing = T)],
-                                'Total'))
-    else
-        location.levels = rev(loc.names[locations][order(mean.estimate, decreasing = T)])
-    
-    if (include.total)
-        df = rbind(df, df.total)
+    df = rbind(df, df.total)
     df$location = factor(df$location, levels=location.levels)
     
 
@@ -855,18 +787,20 @@ make.location.boxplot <- function(results=outcomes.arr,
                          fill=scenario),
                      stat='identity',
                      position = position_dodge2(box.width, 'single')
+#                     position = position_dodge(width=box.width, preserve='single')
+      #      position=position_dodge2(width=box.width)
+     #   position=position_dodge2(width=box.width, preserve='single')
         ) +
         scale_fill_manual(values=colors, name='Scenario:', labels=COVID.SCENARIO.NAMES[names(colors)],
                           limits=names(colors)[1:(length(colors)-n.spacers)]) + 
-        scale_y_continuous(labels=x.label, name = outcome.axis.name)
-     
-    if (vertical)
-        rv = rv + coord_flip() 
+        scale_y_continuous(labels=x.label) +
+     #   theme(axis.text.x=element_text(angle = 45, hjust = 1)) + 
+        coord_flip() 
    
     if (!is.null(subtract.scenario) && !is.na(subtract.scenario))
         rv = rv + geom_hline(yintercept = 0, linetype='dashed')
     
-    rv = rv + BLANK.THEME# + theme(axis.title.y = element_blank())
+    rv = rv + BLANK.THEME + theme(axis.title.y = element_blank())
     
     rv
 }

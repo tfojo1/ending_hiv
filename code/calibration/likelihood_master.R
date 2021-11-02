@@ -126,13 +126,13 @@ create.msa.likelihood <- function(msa,
     #-- Elements for Engagement --#
     ENGAGEMENT.OBS.ERROR.SD = function(...){ENGAGEMENT.SD}
     ENGAGEMENT.SD.INFLATION = 1/sqrt(ENGAGEMENT.WEIGHT)/sqrt(EVERYTHING.WEIGHT)
-    PROBABILITY.ENGAGEMENT.DECREASING = 0.05
+    PROBABILITY.ENGAGEMENT.DECREASING = NA
     
     
     #-- Elements for Linkage --#
     LINKAGE.OBS.ERROR.SD = function(...){LINKAGE.SD}
     LINKAGE.SD.INFLATION = 1/sqrt(LINKAGE.WEIGHT)/sqrt(EVERYTHING.WEIGHT)
-    PROBABILITY.LINKAGE.DECREASING = 0.05
+    PROBABILITY.LINKAGE.DECREASING = NA
     
     
     #-- Elements for PrEP --#

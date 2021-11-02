@@ -119,6 +119,29 @@ create.prep.interventions.v2 <- function(start.year=2023,
                                                      years=implemented.year,
                                                      apply.function='additive',
                                                      max.rate = 1)
+    
+    
+    PREP.PLUS.35.ORAL = create.intervention.unit(type='prep', start.year=start.year,
+                                                 rates=expression(0.35 * persistence.to.coverage.fraction(oral.prep.persistence)),
+                                                 years=implemented.year,
+                                                 apply.function='additive',
+                                                 max.rate = 1)
+    
+    PREP.PLUS.35.INJ = create.intervention.unit(type='prep', start.year=start.year,
+                                                rates=expression(0.35 * persistence.to.coverage.fraction(1-(1-oral.prep.persistence)*inj.vs.oral.discontinuation.rr)),
+                                                years=implemented.year,
+                                                apply.function='additive',
+                                                max.rate = 1)
+    
+    
+    PREP.PLUS.35.COMBINED = create.intervention.unit(type='prep', start.year=start.year,
+                                                     rates=expression(0.35 * (
+                                                       0.5 * persistence.to.coverage.fraction(oral.prep.persistence) +
+                                                         0.5 * persistence.to.coverage.fraction(1-(1-oral.prep.persistence)*inj.vs.oral.discontinuation.rr
+                                                         ))),
+                                                     years=implemented.year,
+                                                     apply.function='additive',
+                                                     max.rate = 1)
     # EFFICACY INTERVENTION UNITS
     
     ORAL.PREP.EFFICACY = create.intervention.unit(type='rr.prep', start.year=2000,
@@ -229,8 +252,50 @@ create.prep.interventions.v2 <- function(start.year=2023,
                                                  name='50/50 25% uptake oral/injectable PrEP on MSM',
                                                  manager = INTERVENTION.MANAGER,
                                                  allow.intervention.multiple.names = F)
+<<<<<<< HEAD
+    
+    MSM.35.ORAL = create.intervention(ALL.MSM,
+                                      PREP.PLUS.35.ORAL,
+                                      ORAL.PREP.EFFICACY,
+                                      oral.prep.rr.dist,
+                                      inj.vs.oral.hr.dist,
+                                      oral.prep.persistence.dist,
+                                      inj.vs.oral.discontinuation.rr.dist)
+    INTERVENTION.MANAGER = register.intervention(MSM.35.ORAL, code=paste0('msm.oral.35.uptake', suffix),
+                                                 name='35% uptake oral PrEP on MSM',
+                                                 manager = INTERVENTION.MANAGER,
+                                                 allow.intervention.multiple.names = T)
+    
+    
+    
+    MSM.35.INJ = create.intervention(ALL.MSM,
+                                     PREP.PLUS.35.INJ,
+                                     INJ.PREP.EFFICACY,
+                                     oral.prep.rr.dist,
+                                     inj.vs.oral.hr.dist,
+                                     oral.prep.persistence.dist,
+                                     inj.vs.oral.discontinuation.rr.dist)
+    INTERVENTION.MANAGER = register.intervention(MSM.25.INJ, code=paste0('msm.inj.35.uptake', suffix),
+                                                 name='35% uptake injectable PrEP on MSM',
+                                                 manager = INTERVENTION.MANAGER,
+                                                 allow.intervention.multiple.names = F)
+    
+    MSM.35.COMBINED = create.intervention(ALL.MSM,
+                                          PREP.PLUS.35.COMBINED,
+                                          COMBINED.50.50.PREP.EFFICACY,
+                                          oral.prep.rr.dist,
+                                          inj.vs.oral.hr.dist,
+                                          oral.prep.persistence.dist,
+                                          inj.vs.oral.discontinuation.rr.dist)
+    INTERVENTION.MANAGER = register.intervention(MSM.35.COMBINED, code=paste0('msm.combined.35.uptake', suffix),
+                                                 name='50/50 35% uptake oral/injectable PrEP on MSM',
+                                                 manager = INTERVENTION.MANAGER,
+                                                 allow.intervention.multiple.names = F)
+    
+=======
 
     INTERVENTION.MANAGER    
+>>>>>>> 205de9b225cec035ffc50f52ceb900ee233ad066
    
 }
 

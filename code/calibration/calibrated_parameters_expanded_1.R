@@ -1194,34 +1194,44 @@ get.components.for.calibrated.parameters <- function(parameters, components,
   )
   
   
+  #-- Suppression --#
+  
+  components = set.background.suppression.ors(components,
+                                              msm.or.intercept=parameters['msm.suppressed.or'],
+                                              heterosexual.or.intercept=parameters['heterosexual.suppressed.or'],
+                                              idu.or.intercept=parameters['idu.suppressed.or'],
+                                              msm.idu.or.intercept=parameters['msm.idu.suppressed.or'],
+                                              black.or.intercept=parameters['black.suppressed.or'],
+                                              hispanic.or.intercept=parameters['hispanic.suppressed.or'],
+                                              age1.or.intercept=parameters['age1.suppressed.or'],
+                                              age2.or.intercept=parameters['age2.suppressed.or'],
+                                              age4.or.intercept=parameters['age4.suppressed.or'],
+                                              age5.or.intercept=parameters['age5.suppressed.or'],
+                                              
+                                              msm.or.slope=parameters['msm.suppressed.slope.or'],
+                                              heterosexual.or.slope=parameters['heterosexual.suppressed.slope.or'],
+                                              idu.or.slope=parameters['idu.suppressed.slope.or'],
+                                              msm.idu.or.slope=parameters['msm.idu.suppressed.slope.or'],
+                                              black.or.slope=parameters['black.suppressed.slope.or'],
+                                              hispanic.or.slope=parameters['hispanic.suppressed.slope.or'],
+                                              age1.or.slope=parameters['age1.suppressed.slope.or'],
+                                              age2.or.slope=parameters['age2.suppressed.slope.or'],
+                                              age4.or.slope=parameters['age4.suppressed.slope.or'],
+                                              age5.or.slope=parameters['age5.suppressed.slope.or'])
   
   #-- Smoothing Years --#
   
   if (any(grepl('gains\\.end\\.by\\.year', names(parameters))))
       components = set.background.change.to.years(components,
                                                   testing.change.to.year=parameters['testing.gains.end.by.year'],
-                                                  prep.change.to.year=parameters['prep.gains.end.by.year'],
-                                                  suppression.change.to.year = parameters['suppression.gains.end.by.year'],
-                                                  newly.suppressed.change.to.year = parameters['suppression.gains.end.by.year'],
-                                                  unsuppression.change.to.year = parameters['suppression.gains.end.by.year'],
-                                                  
-                                                  linkage.change.to.year = parameters['linkage.gains.end.by.year'],
-                                                  unsuppressed.to.disengaged.change.to.year = parameters['retention.gains.end.by.year'],
-                                                  suppressed.to.disengaged.change.to.year = parameters['retention.gains.end.by.year'],
-                                                  reengagement.change.to.year = parameters['reengagement.gains.end.by.year']
-                                                  )
+                                                  suppression.change.to.year=parameters['suppression.gains.end.by.year'],
+                                                  prep.change.to.year=parameters['prep.gains.end.by.year'])
   
   if (any(grepl('total\\.future.*slope\\.or', names(parameters))))
       components = set.future.background.slopes(components,
                                                 future.testing.slope.or = parameters['total.future.testing.slope.or'],
                                                 future.prep.slope.or = parameters['total.future.prep.slope.or'],
                                                 future.supression.slope.or = parameters['total.future.suppressed.slope.or'],
-                                                future.newly.suppressed.slope.or = parameters['total.future.suppressed.slope.or'],
-                                                future.unsuppression.slope.or = parameters['total.future.unsuppression.slope.or'],
-                                                future.linkage.slope.or = parameters['total.future.linkage.slope.or'],
-                                                future.unsuppressed.to.disengaged.slope.or = parameters['total.future.disengagement.slope.or'],
-                                                future.suppressed.to.disengaged.slope.or = parameters['total.future.disengagement.slope.or'],
-                                                future.reengagement.slope.or = parameters['total.future.reengagement.slope.or'],
                                                 after.year = parameters['future.slope.after.year'])
 
   #-- Return --#

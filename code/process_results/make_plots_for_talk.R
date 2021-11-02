@@ -1,8 +1,33 @@
-source('code/process_results/for_talks/talk_plot_settings.R')
 
-DO.INTERVENTIONS = T
-DO.CALIBRATION = T
-DO.STRATIFIED.INTERVENTIONS = F
+library(png)
+library(ggsci)
+source('code/visualization/plot_wrappers.R')
+msa = BALTIMORE.MSA
+IMAGE.DIR = paste0('../../../Talks/Ending HIV Model v1/Talks post Annals/plots/', msa)
+
+ALPHA = 0.3
+LINE.SIZE = 1#0.4 for intervention
+COLORS = pal_jama()
+WIDTH = 3
+HEIGHT = 1.75
+POINT.SIZE = 15
+THEME = theme(legend.position='bottom', axis.title.x = element_blank(), 
+              legend.margin=margin(t=-.125, r=0, b=-0.075, l=0, unit="in"),
+            #  legend.text=element_text(size=7),
+              legend.direction = 'horizontal',
+              legend.spacing.x = unit(0, 'in'))#,
+          #    legend.text = element_text(size=8))
+TEXT.SIZE = 36
+LEGEND.TEXT.SIZE = TEXT.SIZE * 0.75
+
+LABEL.SIZE = 26
+LABEL.ALPHA = 0.25
+
+#load('mcmc_runs/visualization_simsets/35620/1.0_35620_baseline.Rdata')
+
+
+THIN.TO = 100
+
 
 #RUN ON DESKTOP - to save interventions
 if (1==2)
@@ -28,7 +53,7 @@ if (1==2)
 #RUN ON LAPTOP - for making plots
 if (!exists('base'))
 {
-    msa = BALTIMORE.MSA
+    msa = NYC.MSA
     load(file=paste0('tmp/simsets_for_talk_plots_',msa,'.Rdata'))
 }
 
@@ -48,23 +73,37 @@ if (1==2)
     
     dist.int2= extract.simset.distribution(int2, inc.reduction)
     floor(100*c(get.means(dist.int2), rev(get.intervals(dist.int2))))
-    
-    
-    inc.reduction.race = function(sim){
-        inc = get.sim.absolute.incidence(sim, years=c(2020,2030), keep.dimensions=c('year','race'))
-        (inc[2,]-inc[1,])/inc[1,]
-    }
-    
-    dist.race.noint = extract.simset.distribution(noint, inc.reduction.race)
-    floor(100*cbind(get.means(dist.race.noint), t(get.intervals(dist.race.noint))[,c(2,1)]))
-    
-    dist.race.int1 = extract.simset.distribution(int1, inc.reduction.race)
-    floor(100*cbind(get.means(dist.race.int1), t(get.intervals(dist.race.int1))[,c(2,1)]))
-    
-    dist.race.int2 = extract.simset.distribution(int2, inc.reduction.race)
-    floor(100*cbind(get.means(dist.race.int2), t(get.intervals(dist.race.int2))[,c(2,1)]))
 }
 
+##-- RENDER A PLOTLY TO PNG WITH A SPECIFIC RESOLUTION --#
+do.save.plot <- function(plot,
+                         file,
+                         width,
+                         height,
+                         resolution=300)
+{
+    if (!grepl('\\.png$', file))
+        file = paste0(file, '.png')
+    
+    cat(paste0("Saving figure ", file, '...', sep=''))   
+    orca(plot,
+         file = file,
+         width = width*resolution, 
+         height = height*resolution)
+    
+    # Re-render at desired resolution    
+    img<-readPNG(file)
+    
+    
+    png(file, width=width, height=height, res=resolution, units='in')
+    par(mar=c(0,0,0,0), xpd=NA, mgp=c(0,0,0), oma=c(0,0,0,0), ann=F)
+    plot.new()
+    plot.window(0:1, 0:1)
+    usr<-par("usr")    
+    rasterImage(img, usr[1], usr[3], usr[2], usr[4])
+    dev.off()
+    cat("DONE\n")
+}
 
 
 # EG for calibration
@@ -92,6 +131,9 @@ if (1==2)
     
 }
 
+INTERVENTION.COLORS = pal_jama()(4)
+DO.INTERVENTIONS = T
+DO.CALIBRATION = T
 if (DO.INTERVENTIONS)
 {
     
@@ -371,24 +413,6 @@ if (DO.INTERVENTIONS)
     do.save.plot(plot2, file.path(IMAGE.DIR, 'interventions/Figure 3c.png'),
                  width=WIDTH, height=HEIGHT, resolution = 300)
     
-}
-
-#STRATIFIED INTERVENTIONS
-if (DO.STRATIFIED.INTERVENTIONS)
-{
-    x.i = panel.b = plot.simulations.flex(list(base, noint), data.type='incidence', years=2010:2030,
-                                          race='black',
-                                          color.by='intervention', colors=INTERVENTION.COLORS[1:3],
-                                          title.subplots=F, hide.legend=T,
-                                          simulation.alpha=ALPHA, truth.point.size=POINT.SIZE,
-                                          simulation.line.size=LINE.SIZE,
-                                          text.size=TEXT.SIZE, legend.text.size = LEGEND.TEXT.SIZE,
-                                          return.change.data.frame=T,
-                                          y.axis.title.function = function(d){paste0("Total ", DATA.TYPE.AXIS.LABELS[d])}
-    ); x.i$plot
-    
-    do.save.plot(x.i$plot, file.path(IMAGE.DIR, 'projection_inc_noint'),
-                 width=WIDTH, height=HEIGHT, resolution = 300)
 }
 
 #CALIBRATION 
