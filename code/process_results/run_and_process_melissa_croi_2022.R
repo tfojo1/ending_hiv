@@ -8,7 +8,7 @@ source('code/interventions/synthesize_interventions.R')
 if (1==2)
 {
     location = BALTIMORE.MSA
-    load(file.path('mcmc_runs', "baltimore_initial_simset_FINAL_FOR_CROI.Rdata"))
+    load(file.path('mcmc_runs', "baltimore_initial_simset_v2.Rdata"))
     
     run.systematic.interventions(simset,
                                  dst.dir = 'mcmc_runs/quick_simsets',
