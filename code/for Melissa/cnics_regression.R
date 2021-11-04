@@ -297,8 +297,7 @@ if (analysis=='jheem.model')
     if (just.do.multinomial)
     {
         print("Fitting simple multinomial Model for engaged-unsuppressed, JHEEM model version (model coefficients only), with disengagement weights")
-        model.engaged.unsuppressed <- shoehorn.fit.multinom(future.state ~ age.category + sex.risk + race + relative.year
-                                                + age.category*relative.year + sex.risk*relative.year + race*relative.year,
+        model.engaged.unsuppressed <- shoehorn.fit.multinom(future.state ~ age.category + sex.risk + race + relative.year,
                                                 df=imputed.engaged.unsuppressed)
     }
     else
@@ -393,8 +392,7 @@ if (analysis=='jheem.model')
     {
         
         print("Fitting Simple Multinomial Model for engaged-suppressed, JHEEM model version (model coefficients only), with disengagement weights")
-        model.engaged.suppressed <- shoehorn.fit.multinom(future.state ~ age.category + sex.risk + race + relative.year
-                                              + age.category*relative.year + sex.risk*relative.year + race*relative.year,
+        model.engaged.suppressed <- shoehorn.fit.multinom(future.state ~ age.category + sex.risk + race + relative.year,
                                               df=imputed.engaged.suppressed)
     }
     else
@@ -434,8 +432,7 @@ if (analysis=='jheem.model')
     disengaged$future.state <- factor(disengaged$future.state, levels = c("reengage.unsuppress","remain"))
     
     print("Fitting LOGISTIC Model for disengaged, JHEEM model version (model coefficients only), with disengagement weights")
-    model.disengaged <- geeglm(reengage ~ age.category + sex.risk + race + relative.year 
-                               + age.category*relative.year + sex.risk*relative.year + race*relative.year,
+    model.disengaged <- geeglm(reengage ~ age.category + sex.risk + race + relative.year,
                                data=disengaged, id=id, family = binomial, corstr = "exchangeable",
                                weights = disengaged$p.truly.disengaged)
     model.disengaged.noslope <- geeglm(reengage ~ age.category + sex.risk + race,
