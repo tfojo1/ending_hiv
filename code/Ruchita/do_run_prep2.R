@@ -34,15 +34,5 @@ if (1==2)
                                               calculate.total=F)
     
     
-    save(prep.results, file='results/prep/raw_prep_results_1K.Rdata')
-    
-    baseline.prep = aggregate.prep.coverage(msas=TARGET.MSAS,
-                                            intervention.codes = INTERVENTION.CODES.TO.RUN[1],
-                                            years=2020:2030,
-                                            dir='Q:/Ending_HIV/mcmc_runs/prep_simsets')
-    
-    load('Q:/Ending_HIV/mcmc_runs/prep_simsets/12580/1.0_12580_msm.oral.25.uptake_23_27.Rdata')
-    parameters = simset@parameters[,simset@n.parameters-0:3]
-    
-    save(baseline.prep, parameters, file='results/prep/baseline_prep_and_parameters_1K.Rdata')
+    save(noint.results, just.prep.results, file='code/Ruchita/raw_prep_results_1K.Rdata')
 }

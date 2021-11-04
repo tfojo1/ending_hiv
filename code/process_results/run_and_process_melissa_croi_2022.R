@@ -22,9 +22,15 @@ if (1==2)
     
     location = BALTIMORE.MSA
     
+<<<<<<< HEAD
     intervention.code.table = matrix(c('noint', 'ybhmsm.p10', 'ybhmsm.p25', 'ybhmsm.l90', 'ybhmsm.l95', 'ybhmsm.r90', 'ybhmsm.r95', 'ybhmsm.as90', 'ybhmsm.as95', 'ybhmsm.c.low', 'ybhmsm.c.high',
                                        'noint', 'msmidu.p10', 'msmidu.p25', 'msmidu.l90', 'msmidu.l95', 'msmidu.r90', 'msmidu.r95', 'msmidu.as90', 'msmidu.as95','msmidu.c.low', 'msmidu.c.high',
                                        'noint', 'wholepop.p10', 'wholepop.p25', 'wholepop.l90', 'wholepop.l95', 'wholepop.r90', 'wholepop.r95', 'wholepop.as90', 'wholepop.as95', 'wholepop.c.low','wholepop.c.high'),
+=======
+    intervention.code.table = matrix(c('noint', 'ybhmsm.p10', 'ybhmsm.p25', 'ybhmsm.l90', 'ybhmsm.l95', 'ybhmsm.r90', 'ybhmsm.r95', 'ybhmsm.as90', 'ybhmsm.as95', 'ybhmsm.c.p.low', 'ybhmsm.c.p.high',
+                                       'noint', 'msmidu.p10', 'msmidu.p25', 'msmidu.l90', 'msmidu.l95', 'msmidu.r90', 'msmidu.r95', 'msmidu.as90', 'msmidu.as95','msmidu.c.p.low', 'msmidu.c.p.high',
+                                       'noint', 'wholepop.p10', 'wholepop.p25', 'wholepop.l90', 'wholepop.l95', 'wholepop.r90', 'wholepop.r95', 'wholepop.as90', 'wholepop.as95', 'wholepop.c.p.low','wholepop.c.p.high'),
+>>>>>>> 166565b24966c965ff152d94027d580e0e62d684
                                      nrow = 3, ncol=11, byrow = T)
     
     tab = get.estimates.for.interventions(intervention.codes=intervention.code.table,

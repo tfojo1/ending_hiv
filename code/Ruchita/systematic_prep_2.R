@@ -1,4 +1,5 @@
 
+<<<<<<< HEAD
 
 ##-- SOURCE CODE --##
 source('code/source_code.R')
@@ -195,6 +196,8 @@ STAGGERED.ORAL.INJ.PREP.CODES[2*(1:length(ORAL.PREP.INTERVENTION.CODES))-1] = OR
 STAGGERED.ORAL.INJ.PREP.CODES[2*(1:length(INJ.PREP.INTERVENTION.CODES))] = INJ.PREP.INTERVENTION.CODES
 
 
+=======
+>>>>>>> 166565b24966c965ff152d94027d580e0e62d684
 ##-- FUNCTION TO RUN INTERVENTIONS --##
 
 run.prep.simulations <- function(msas, 
@@ -214,7 +217,7 @@ run.prep.simulations <- function(msas,
         
         run.systematic.interventions(simset = simset,
                                      interventions = lapply(intervention.codes, intervention.from.code), 
-                                     dst.dir = dst.dir, overwrite = T, compress = T, 
+                                     dst.dir = dst.dir, overwrite = F, compress = T, 
                                      run.from.year = run.from.year,
                                      run.to.year = run.to.year, verbose = T, 
                                      save.baseline.and.seed = F
@@ -249,7 +252,7 @@ make.prep.table <- function(msas=TARGET.MSAS,
     rv = sapply(1:length(intervention.codes), function(i){
         sapply(1:length(msas), function(msa){
             int.code = intervention.codes[i]
-            int.values = raw.prep.results[,,msa,int.code]
+            int.values = raw.prep.results[msa,int.code]
             
             if (is.null(comparison.codes)){
               comp.values = rep(0, length(int.values))
@@ -257,7 +260,7 @@ make.prep.table <- function(msas=TARGET.MSAS,
             else
             {            
                 comp.code = comparison.codes[i]
-                comp.values = raw.prep.results[,,msa,comp.code]
+                comp.values = raw.prep.results[msa,comp.code]
             }
             
             if (stat=='abs.diff') {
@@ -287,7 +290,7 @@ make.prep.table <- function(msas=TARGET.MSAS,
             }
             else if (stat == 'diff')
             {
-              diff = ((int.values[dim(int.values)[1],]-int.values[1,])/int.values[1,])*100
+              diff = ((int.values[[1]][dim(int.values[[1]])[1],]-int.values[[1]][1,])/int.values[[1]][1,])*100
               mean_diff = round(mean(diff),0)
               CI_low = round(quantile(diff, probs=.025),0)
               CI_high = round(quantile(diff, probs=.975),0)
@@ -295,8 +298,8 @@ make.prep.table <- function(msas=TARGET.MSAS,
               
             }
             else if (stat == "percent.diff"){
-              int_diff = ((int.values[dim(int.values)[1],]-int.values[1,])/int.values[1,])*100
-              comp_diff = ((comp.values[dim(comp.values)[1],]-comp.values[1,])/comp.values[1,])*100
+              int_diff = ((int.values[[1]][dim(int.values[[1]])[1],]-int.values[[1]][1,])/int.values[[1]][1,])*100
+              comp_diff = ((comp.values[[1]][dim(comp.values[[1]])[1],]-comp.values[[1]][1,])/comp.values[[1]][1,])*100
               diff = int_diff - comp_diff
               mean_diff = round(mean(diff),0)
               CI_low = round(quantile(diff, probs=.025),0)
@@ -492,6 +495,7 @@ aggregate.raw.prep.results <- function(msas,
     rv
 }
 
+<<<<<<< HEAD
 
 make.figure <- function(msas=TARGET.MSAS,intervention.codes = UPTAKE.INTERVENTIONS.CODES, raw.prep.results = prep.results,round.digits=0){
 
@@ -540,25 +544,26 @@ aggregate.prep.coverage <- function(msas,
 
 make.figure <- function(msas=TARGET.MSAS,intervention.codes = COVERAGE.50.INTERVENTIONS.CODES, raw.prep.results = prep.results,round.digits=0){
 
+=======
+make.figure <- function(msas=TARGET.MSAS,intervention.codes = COVERAGE.50.INTERVENTIONS.CODES, raw.prep.results = prep.results,round.digits=0){
+ 
+>>>>>>> 166565b24966c965ff152d94027d580e0e62d684
   plots = vector("list", length= length(intervention.codes))
   mean_reduction =  vector("list", length= length(intervention.codes))
   reduction = vector("list", length= length(intervention.codes))
   for(i in 1:length(intervention.codes)){
     rv = sapply(1:11, function(j){
-      int.code = intervention.codes[6]
-      int.values = raw.prep.results[j,,,int.code]
-      rowSums(int.values)
+      int.code = intervention.codes[i]
+      int.values = raw.prep.results[,int.code]
+      int_collapse = do.call(cbind, (lapply(int.values, function(x) x[j,1:50])))
+      rowSums(int_collapse)
     })
     
-    red = (rv[,11]-rv[,1])/(rv[,1])*100
+    red = (rv[,1]-rv[,11])/(rv[,1])*100
   
     mean_red = mean(red)
     mean_red_low = quantile(red, probs = .025)
     mean_red_high = quantile(red, probs = .975)
-    mean_red
-    mean_red_low
-    mean_red_high
-    
     
     mean_reduction[[i]] = paste0(round(mean_red,0),"% [",round(mean_red_low,0),"% to ",round(mean_red_high,0),"%]")
     reduction[[i]] = red
@@ -593,18 +598,5 @@ make.figure <- function(msas=TARGET.MSAS,intervention.codes = COVERAGE.50.INTERV
     geom_line(aes(colour=Intervention))+scale_y_continuous(labels = scales::comma)
   p + theme_bw()
 }
-
-baseline.coverage <- function(msas = TARGET.MSAS, parameter = parameters, baseline = baseline.prep){
-  
-  rv = sapply(1:length(msas), function(msa){
-    coverage = baseline[,,msa,1]
-    uptake = coverage/parameter[,2]
-    
-  })
-  
-  colMeans(rv)
-  
-}
-
 
 
