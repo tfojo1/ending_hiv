@@ -1580,7 +1580,7 @@ do.calculate.leave.unsuppressed.rates <- function(components)
                                                                                foreground = components$foreground.retention.unsuppressed,
                                                                                max.background.time = components$background.change.to.years$unsuppressed.to.disengaged,
                                                                                type='unsuppressed.to.disengaged')
-
+        
         # Convert back to p disengaged, and from there, to a rate
         unsuppressed.to.disengaged$rates = lapply(unsuppressed.to.disengaged$rates, function(p){
             r=-log(p)
@@ -1617,7 +1617,7 @@ do.calculate.leave.unsuppressed.rates <- function(components)
                                                                       background.times = background.suppression.years,
                                                                       foreground = components$foreground.art.adherence.unsuppressed,
                                                                       max.background.time = components$background.change.to.years$newly.suppressed)
-            
+           
             # Convert back to rates
             suppression$rates = lapply(suppression$rates, function(p){
                 r = p*components$gain.of.suppression.rate
@@ -1636,7 +1636,7 @@ do.calculate.leave.unsuppressed.rates <- function(components)
                                                                       background.times = background.suppression.years,
                                                                       foreground = components$foreground.gain.of.suppression,
                                                                       max.background.time = components$background.change.to.years$newly.suppressed)
-       
+#browser()
             suppression$rates = lapply(suppression$rates, function(p){
                 r = -log(1-p)
                 r[,,,,,non.engaged.suppressed.states,,] = 0
@@ -1741,36 +1741,46 @@ do.calculate.leave.suppressed.rates <- function(components)
         # Convert to p adherent to ART
         suppressed.states = components$settings$SUPPRESSED_STATES
         unsuppression.doesnt.apply = setdiff(components$settings$CONTINUUM_OF_CARE, suppressed.states)
- #       background.rates = lapply(background.p, function(p){
-  #          p[,,,,,unsuppression.doesnt.apply,,] = 0
-   #         -log(1-p)
-    #    })
-        background.p.adherent = lapply(background.p, function(p){
-            p[,,,,,unsuppression.doesnt.apply,,] = 0
-            r=-log(1-p)
-            1-r/components$loss.of.suppression.rate
-        })
         
-        #Add in ramp
         background.unsuppression.years = c(components$background.unsuppression$unsuppression.ramp.year, 
                                            components$background.leave.suppressed$years)
-     #   background.rates = c(list(components$background.unsuppression$unsuppression.ramp.multiplier * background.rates[[1]]),
-      #                       background.rates)
-        background.p.adherent = c(list(components$background.unsuppression$unsuppression.ramp.multiplier * background.p.adherent[[1]]),
-                              background.p.adherent)
         
-        #Overlay foreground unsuppression
-        unsuppression = do.get.rates.from.background.and.foreground(background.rates = background.p.adherent,
-                                                                    background.times = background.unsuppression.years,
-                                                                    foreground = components$foreground.art.adherence.suppressed,
-                                                                    max.background.time = components$background.change.to.years$unsuppression)
+        background.p = c(list(components$background.unsuppression$unsuppression.ramp.multiplier * background.p[[1]]),
+                                  background.p)
         
-
-        unsuppression$rates = lapply(unsuppression$rates, function(p){
-            r = (1-p)*components$loss.of.suppression.rate
-            r[,,,,,unsuppression.doesnt.apply,,] = 0
-            r
-        })
+        if (is.null(components$foreground.art.adherence.suppressed))
+        {
+            unsuppression = do.get.rates.from.background.and.foreground(background.rates = background.p,
+                                                                        background.times = background.unsuppression.years,
+                                                                        foreground = NULL,
+                                                                        max.background.time = components$background.change.to.years$unsuppression)
+      #    browser() 
+            unsuppression$rates = lapply(unsuppression$rates, function(p){
+                p[,,,,,unsuppression.doesnt.apply,,] = 0
+                -log(1-p)
+            })
+        }
+        else
+        {
+            background.p.adherent = lapply(background.p, function(p){
+                p[,,,,,unsuppression.doesnt.apply,,] = 0
+                r=-log(1-p)
+                1-r/components$loss.of.suppression.rate
+            })
+        
+        
+            #Overlay foreground unsuppression
+            unsuppression = do.get.rates.from.background.and.foreground(background.rates = background.p.adherent,
+                                                                        background.times = background.unsuppression.years,
+                                                                        foreground = components$foreground.art.adherence.suppressed,
+                                                                        max.background.time = components$background.change.to.years$unsuppression)
+        
+            unsuppression$rates = lapply(unsuppression$rates, function(p){
+                r = (1-p)*components$loss.of.suppression.rate
+                r[,,,,,unsuppression.doesnt.apply,,] = 0
+                r
+            })
+        }
         
         components$unsuppression.rates.and.times = unsuppression
         
@@ -1830,7 +1840,7 @@ do.calculate.reengagement.rates <- function(components)
                                                                    foreground = components$foreground.reengagement,
                                                                    max.background.time = components$background.change.to.years$reengagement)
         
-        
+  
         components$reengagement.rates.and.times = reengagement
         components
     }
@@ -1841,11 +1851,14 @@ do.calculate.reengagement.rates <- function(components)
     }
 }
 
+logit = function(p){log(p) - log(1-p)}
+expit = function(lo){1/(1+exp(-lo))}
 
 get.background.proportions.multinomial <- function(base.model,
                                                    years,
                                                    additional.intercepts,
                                                    additional.slopes,
+                                                   add.additional.after.multinomial=T,
                                                    future.slope=0,
                                                    future.slope.after.year,
                                                    idu.applies.to.in.remission=T,
@@ -1854,19 +1867,34 @@ get.background.proportions.multinomial <- function(base.model,
                                                    jheem,
                                                    expand.population=c('hiv.positive','hiv.negative','none')[1])
 {
-    intercepts = sapply(base.model$outcome.names[1:(base.model$num.outcomes-1)], function(outcome){
-        add.additional.betas.to.array(arr = base.model$intercepts[[outcome]],
-                                      additional.betas = additional.intercepts[[outcome]],
-                                      idu.applies.to.in.remission = idu.applies.to.in.remission)
-    })
-    slopes = sapply(base.model$outcome.names[1:(base.model$num.outcomes-1)], function(outcome){
-        add.additional.betas.to.array(arr = base.model$slopes[[outcome]],
-                                      additional.betas = additional.slopes[[outcome]],
-                                      idu.applies.to.in.remission = idu.applies.to.in.remission)
-    })
-    future.slope = sapply(base.model$outcome.names[1:(base.model$num.outcomes-1)], function(outcome){
-        rep(future.slope[outcome], length(base.model$slopes[[1]]))
-    })
+    if (add.additional.after.multinomial)
+    {
+        intercepts = sapply(base.model$outcome.names[1:(base.model$num.outcomes-1)], function(outcome){
+            base.model$intercepts[[outcome]]
+        })
+        slopes = sapply(base.model$outcome.names[1:(base.model$num.outcomes-1)], function(outcome){
+            base.model$slopes[[outcome]]
+        })
+        future.slope = sapply(base.model$outcome.names[1:(base.model$num.outcomes-1)], function(outcome){
+            rep(0, length(base.model$slopes[[1]]))
+        })
+    }
+    else
+    {
+        intercepts = sapply(base.model$outcome.names[1:(base.model$num.outcomes-1)], function(outcome){
+            add.additional.betas.to.array(arr = base.model$intercepts[[outcome]],
+                                          additional.betas = additional.intercepts[[outcome]],
+                                          idu.applies.to.in.remission = idu.applies.to.in.remission)
+        })
+        slopes = sapply(base.model$outcome.names[1:(base.model$num.outcomes-1)], function(outcome){
+            add.additional.betas.to.array(arr = base.model$slopes[[outcome]],
+                                          additional.betas = additional.slopes[[outcome]],
+                                          idu.applies.to.in.remission = idu.applies.to.in.remission)
+        })
+        future.slope = sapply(base.model$outcome.names[1:(base.model$num.outcomes-1)], function(outcome){
+            rep(future.slope[outcome], length(base.model$slopes[[1]]))
+        })
+    }
     
     dim.names = c(dimnames(base.model$intercepts[[1]]),
                   outcome=list(base.model$outcome.names[1:(base.model$num.outcomes-1)]))
@@ -1888,6 +1916,37 @@ get.background.proportions.multinomial <- function(base.model,
             year.rv = exp(x.betas[,,,,k]) / (1 + rowSums(exp(x.betas), dims=4))
                 #**potential optimization - pre-crunch the rowSums
             
+            outcome = base.model$outcome.names[k]
+            if (add.additional.after.multinomial)
+            {
+                logit.year.rv = add.additional.betas.to.array(arr = logit(year.rv),
+                                                              additional.betas = additional.intercepts[[outcome]],
+                                                              idu.applies.to.in.remission = idu.applies.to.in.remission)
+                logit.year.rv = add.additional.betas.to.array(arr = logit.year.rv,
+                                                               additional.betas = additional.slopes[[outcome]] * (year-base.model$anchor.year),
+                                                               idu.applies.to.in.remission = idu.applies.to.in.remission)
+                
+                if (year > future.slope.after.year)
+                    logit.year.rv = logit.year.rv + future.slope[,,,,k] * (year-future.slope.after.year)
+                
+                year.rv = expit(logit.year.rv)
+                
+                if (outcome=='disengage')
+                    year.rv = 1 - (1-year.rv)*base.model$max.retention
+                else 
+                {
+                    year.rv = base.model$min.non.retention.proportion + 
+                        year.rv * (base.model$max.non.retention.proportion - base.model$min.non.retention.proportion)
+                }
+            }
+            else if (any(base.model$outcome.names=='disengage'))
+            {
+                if (base.model$outcome.names[k]=='disengage')
+                    year.rv = (1-base.model$max.retention) + base.model$max.retention*year.rv
+                else
+                    year.rv = base.model$max.retention * year.rv
+            }   
+            
             if (expand.population=='hiv.positive')
                 expand.population.to.hiv.positive(jheem, year.rv)
             else if (expand.population=='hiv.negative')
@@ -1898,6 +1957,14 @@ get.background.proportions.multinomial <- function(base.model,
     })
     
     names(rv) = base.model$outcome.names[1:(base.model$num.outcomes-1)]
+    
+    if (add.additional.after.multinomial)
+    {
+        for (outcome in names(rv))
+        {
+            rv
+        }
+    }
     
     rv
 }

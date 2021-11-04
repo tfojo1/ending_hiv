@@ -5,6 +5,7 @@
 ALLOWED.DATA.TYPES = c('prevalence','new','mortality',
                        'diagnosed','diagnosed.ci.lower','diagnosed.ci.upper',
                        'suppression','suppression.ci.lower','suppression.ci.upper', 'prevalence.for.continuum',
+                       'suppression.of.engaged',
                        'estimated.prevalence', 'estimated.prevalence.ci.lower','estimated.prevalence.ci.upper', 'estimated.prevalence.rse',
                        'cumulative.aids.mortality', 'aids.diagnoses',
                        'linkage','engagement','new.for.continuum', 'prep')
@@ -34,6 +35,37 @@ get.surveillance.data <- function(surv=msa.surveillance,
     if (class(data.type) != 'character' || length(data.type)>1)
         stop("data.type must be a character of length one")
     
+    if (data.type=='suppression.of.engaged')
+    {
+        return(get.surveillance.data(surv=surv,
+                                     location.codes=location.codes,
+                                     data.type='suppression',
+                                     years=years,
+                                     age=age,
+                                     race=race,
+                                     sex=sex,
+                                     risk=risk,
+                                     aggregate.locations=aggregate.locations,
+                                     aggregate.years=aggregate.years,
+                                     throw.error.if.missing.years=throw.error.if.missing.years,
+                                     throw.error.if.missing.data=throw.error.if.missing.data,
+                                     na.rm=na.rm,
+                                     include.source=include.source) /
+                   get.surveillance.data(surv=surv,
+                                         location.codes=location.codes,
+                                         data.type='engagement',
+                                         years=years,
+                                         age=age,
+                                         race=race,
+                                         sex=sex,
+                                         risk=risk,
+                                         aggregate.locations=aggregate.locations,
+                                         aggregate.years=aggregate.years,
+                                         throw.error.if.missing.years=throw.error.if.missing.years,
+                                         throw.error.if.missing.data=throw.error.if.missing.data,
+                                         na.rm=na.rm,
+                                         include.source=include.source))
+    }
     
     categories = c('sex','age','race','risk')[c(sex, age, race, risk)]
     

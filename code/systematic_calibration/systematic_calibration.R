@@ -76,6 +76,12 @@ setup.initial.mcmc.for.msa <- function(msa,
     matching.names = intersect(names(starting.parameters), names(starting.parameters.to.use))
     starting.parameters.to.use[matching.names] = starting.parameters[matching.names]
     
+ #   print("HACKING START VALUES FOR CROI 2022 FOR MELISSA")
+ #   starting.parameters.to.use['heterosexual.proportion.adherent.slope.or'] = 
+ #       starting.parameters.to.use['msm.proportion.adherent.slope.or'] = 
+ #       starting.parameters.to.use['msm.idu.proportion.adherent.slope.or'] = 
+ #       starting.parameters.to.use['idu.proportion.adherent.slope.or'] = 1.1
+    
     start.value.generator = function(n){
         if (n==1)
             starting.parameters.to.use

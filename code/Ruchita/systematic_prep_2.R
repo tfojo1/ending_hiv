@@ -1,4 +1,5 @@
 
+
 ##-- SOURCE CODE --##
 source('code/source_code.R')
 source('code/Ruchita/create_prep_interventions2.R')
@@ -193,6 +194,7 @@ STAGGERED.ORAL.INJ.PREP.CODES = character(2*length(ORAL.PREP.INTERVENTION.CODES)
 STAGGERED.ORAL.INJ.PREP.CODES[2*(1:length(ORAL.PREP.INTERVENTION.CODES))-1] = ORAL.PREP.INTERVENTION.CODES
 STAGGERED.ORAL.INJ.PREP.CODES[2*(1:length(INJ.PREP.INTERVENTION.CODES))] = INJ.PREP.INTERVENTION.CODES
 
+
 ##-- FUNCTION TO RUN INTERVENTIONS --##
 
 run.prep.simulations <- function(msas, 
@@ -312,106 +314,76 @@ make.prep.table <- function(msas=TARGET.MSAS,
     rv
 }
 
-make.sensitivity.plot <- function(msas=TARGET.MSAS,
-                                  intervention.codes = ORAL.INJ.COMB.INTERVENTIONS.CODES,
-                                  comparison.codes = ORAL.VAR.PREP.INTERVENTION.CODES, 
+city.correlations <- function(msas=TARGET.MSAS,
+                                  intervention.codes = "msm.combined.25.uptake_23_27",
                                   raw.prep.results = prep.results,
+                                  parameters = parameter,
                                   include.totals = F,
                                   dir = 'mcmc_runs/prep_simsets',
                                   round.digits=0){
   
+  int.code = intervention.codes 
+  correlations = matrix(nrow = length(msas),ncol = 4)
+  colnames(correlations) = colnames(parameters)
+  rownames(correlations) = names(msas)
   
-  
-  filename = get.simset.filename(location=msas[1], intervention.code=intervention.codes[1])
-  load(file.path(dir, msas[1], filename))
-  
-  simset = flatten.simset(simset)
-  sims = simset@parameters
-  sims = as.data.frame(sims)
-  inj = sims$inj.rr
-  
-  
-  if (include.totals){
-    msas = c(msas, 'total')
-  }
-  
-  
-  # if there is only one comparison intervention, use that for all intervention.codes
-  if (length(comparison.codes)==1){
-    comparison.codes = rep(comparison.codes, length(intervention.codes))
-  }
- 
-  
-  for(i in 1:length(intervention.codes)){
-    
- 
-  int_2020 = sapply(1:length(msas), function(msa){
-      int.code = intervention.codes[i]
-      int.values = raw.prep.results[msa,int.code]
-      int.values[[1]][1,]
-    })
-    
-  
-  int_2030 = sapply(1:length(msas), function(msa){
-      int.code = intervention.codes[i]
-      int.values = raw.prep.results[msa,int.code]
-      int.values[[1]][dim(int.values[[1]])[1],]
-    })
-    
-    
-    
-    comp_2020 = sapply(1:length(msas), function(msa){
-        
-        if (is.null(comparison.codes)){
-          comp.values = rep(0, length(int.values))
-        }
-        else
-        {            
-          comp.code = comparison.codes[i]
-          comp.values = raw.prep.results[msa,comp.code]
-        }
-        
-        comp.values[[1]][1,]
-      })
-    
-
-    comp_2030 = sapply(1:length(msas), function(msa){
+  for(a in 1: dim(parameters)[2]){
+    p = as.numeric(parameters[,a])
+   
+    for(b in 1: length(msas)){
       
-      if (is.null(comparison.codes)){
-        comp.values = rep(0, length(int.values))
-      }
-      else
-      {            
-        comp.code = comparison.codes[i]
-        comp.values = raw.prep.results[msa,comp.code]
-      }
-      comp.values[[1]][dim(comp.values[[1]])[1],]
-    })
+      int.values = raw.prep.results[,,b,int.code]
+      inj.values = (int.values[11,]-int.values[1,])/int.values[1,]
+      cor_matrix = cbind(p,inj.values)
+      correlations[b,a] = cor(cor_matrix, method = "spearman")[2,1]
+    }
     
-    int_2020_collapse = do.call(rbind.data.frame, int_2020)
-    int_2020_collapse = int_2020_collapse[,-dim(int_2020_collapse)[2]]
-    int_2030_collapse = do.call(rbind.data.frame, int_2030)
-    int_2030_collapse = int_2030_collapse[,-dim(int_2030_collapse)[2]]
-    comp_2020_collapse = do.call(rbind.data.frame, comp_2020)
-    comp_2020_collapse = comp_2020_collapse[,-dim(comp_2020_collapse)[2]]
-    comp_2030_collapse = do.call(rbind.data.frame, comp_2030)
-    comp_2030_collapse = comp_2030_collapse[,-dim(comp_2030_collapse)[2]]
     
-    sensitivity_plot = ((colSums(int_2030_collapse)-colSums(int_2020_collapse))/(colSums(int_2020_collapse)))*100 - ((colSums(comp_2030_collapse)-colSums(comp_2020_collapse))/(colSums(comp_2020_collapse)))*100
-    sensitivity_plot = cbind(sensitivity_plot,inj)
-    rownames(sensitivity_plot) <- NULL
-    colnames(sensitivity_plot) <- c("Absolute Difference","Efficacy")
-    sensitivity_plot = as.data.frame(sensitivity_plot)
-    dev.off()
-    ggplot(sensitivity_plot, aes(x =`Efficacy`, y = `Absolute Difference`)) + geom_point() +ggtitle(paste0("Sensitivity Plot "))
-    
-    cor(sensitivity_plot, method = "spearman")
-  
   }
 
+  }
 
+make.sensitivity.plot <- function(msas=TARGET.MSAS,
+                              intervention.codes = "msm.combined.25.uptake_23_27",
+                              raw.prep.results = prep.results,
+                              parameter = parameters,
+                              include.totals = F,
+                              dir = 'mcmc_runs/prep_simsets',
+                              round.digits=0){
+  
+  int.code = intervention.codes 
+  
+  for(a in 1: dim(parameters)[2]){
+    p = as.numeric(as.character(parameters[,a]))
+    
+    inj.values = vector("list", length = length(msas))
+    for( b in 1:length(msas)){
+      int.values = raw.prep.results[,,b,int.code]
+      inj.values[[b]] = ((int.values[11,]-int.values[1,])/int.values[1,])*100   
+      }
+    
+    inj.values = lapply(inj.values, function(x) cbind(p,x))
+    inj.values = do.call(rbind.data.frame, inj.values)
+    
+    colnames(inj.values) = c("Parameter","Incidence Reduction")
+    
+    inj.values = as.data.frame(inj.values)
+    inj.values = inj.values[sort(inj.values$Parameter),]
+    groups = 
+    inj.bins = split(inj.values, findInterval(inj.values$Parameter, floor(min(inj.values$Parameter)):10))
+    
+
+    
+    correlation = round(cor(inj.values, method = "spearman")[2,1],3)
+    ggplot(inj.values, aes(x=`Parameter`, y=`Incidence Reduction`)) +
+      geom_point() + ggtitle(paste0("Parameter: ",colnames(parameters)[a], " R = ", correlation))
+  }
+  
   
 }
+
+  
+
 
 #Fix Correaltions As Well 
 
@@ -481,11 +453,14 @@ aggregate.raw.prep.results <- function(msas,
                                        intervention.codes = COVERAGE.50.INTERVENTIONS.CODES,
                                        years=2020:2030,
                                        dir='mcmc_runs/prep_simsets',
-                                       calculate.total=F)
+                                       calculate.total=F,
+                                       verbose=T)
 {
     rv = sapply(intervention.codes, function(code){
         sapply(msas, function(msa){
             filename = get.simset.filename(location=msa, intervention.code=code)
+            if (verbose)
+                print(paste0("Loading ", filename))
             load(file.path(dir, msa, filename))
 
             simset = flatten.simset(simset)
@@ -517,8 +492,54 @@ aggregate.raw.prep.results <- function(msas,
     rv
 }
 
+
 make.figure <- function(msas=TARGET.MSAS,intervention.codes = UPTAKE.INTERVENTIONS.CODES, raw.prep.results = prep.results,round.digits=0){
- 
+
+aggregate.prep.coverage <- function(msas,
+                                       intervention.codes = baseline.oral.variable.efficacy,
+                                       years=2020:2030,
+                                       dir='mcmc_runs/prep_simsets',
+                                    calculate.total=F,
+                                       verbose=T)
+{
+    rv = sapply(intervention.codes, function(code){
+        sapply(msas, function(msa){
+            filename = get.simset.filename(location=msa, intervention.code=code)
+            if (verbose)
+                print(paste0("Loading ", filename))
+            load(file.path(dir, msa, filename))
+            
+            simset = flatten.simset(simset)
+            sapply(simset@simulations, extract.prep.coverage, 
+                   keep.dimensions = 'year', years=years, sexes='msm',
+                   per.population=1)
+            
+        })
+    })
+    
+    dim.names = list(year=years,
+                     sim=1:(length(rv)/length(msas)/length(intervention.codes)/length(years)),
+                     location=msas,
+                     intervention=intervention.codes) 
+    
+    dim(rv) = sapply(dim.names, length)
+    dimnames(rv) = dim.names
+    
+    if (calculate.total)
+    {
+        dim.names$location = c(dim.names$location, 'total')
+        new.rv = array(0, dim=sapply(dim.names, length), dimnames=dim.names)
+        new.rv[,,msas,] = rv 
+        new.rv[,,'total',] = apply(rv, c(1,2,4), mean, na.rm=T) 
+        rv = new.rv
+    }
+    
+    rv
+}
+
+
+make.figure <- function(msas=TARGET.MSAS,intervention.codes = COVERAGE.50.INTERVENTIONS.CODES, raw.prep.results = prep.results,round.digits=0){
+
   plots = vector("list", length= length(intervention.codes))
   mean_reduction =  vector("list", length= length(intervention.codes))
   reduction = vector("list", length= length(intervention.codes))

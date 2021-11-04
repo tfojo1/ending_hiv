@@ -20,6 +20,7 @@ library(geepack)
 
 analysis = 'jheem.model'
 # analysis = 'CNICS'
+just.do.multinomial = T
 
 ##----------------------------------##
 ##---------- Data cleaning----------##
@@ -158,6 +159,34 @@ if (1==2)
     })
 }
 
+##-- A FUNCTION TO SHOEHORN A STANDARD MULTINOMIAL FIT INSTEAD OF OUR GEE LOR --##
+shoehorn.fit.multinom <- function(ff, df)
+{
+    new.levels = c('remain', setdiff(levels(df$future.state), 'remain'))
+    df$future.state = factor(df$future.state, new.levels)
+    
+    fit = multinom(ff, data=df)
+    
+    coefs = coef(fit)
+    
+    shoehorned.coefs = c(
+        beta10=coefs[1,1],
+        beta20=coefs[2,1]
+    )
+
+    for (cname in dimnames(coefs)[[2]][-1])
+    {
+        shoehorned.coefs[paste0(cname, ":1")] = coefs[1,cname]
+        shoehorned.coefs[paste0(cname, ":2")] = coefs[2,cname]
+    }
+    
+    
+    list(
+        coefficients = shoehorned.coefs,
+        robust.variance = NULL
+    )
+}
+
 ##------------------------------------##
 ##-- DATASET 1: Engaged unsuppressed--##
 ##------------------------------------##
@@ -222,15 +251,65 @@ for (i in 1:N.IMPUTATIONS)
     imputed.engaged.unsuppressed = rbind(imputed.engaged.unsuppressed, engaged.unsuppressed.sim)   
 }
 
-
-if (analysis=='jheem.model')
+# Check
+if (1==2)
 {
-    print("Fitting Model for engaged-unsuppressed, JHEEM model version (model coefficients only), with disengagement weights")
-    model.engaged.unsuppressed <- nomLORgee(future.state ~ age.category + sex.risk + race + relative.year
-                                            + age.category*relative.year + sex.risk*relative.year + race*relative.year,
-                                            data=imputed.engaged.unsuppressed, id=id)
+    sapply(sort(unique(imputed.engaged.unsuppressed$relative.year)), function(year){
+        mask = imputed.engaged.unsuppressed$relative.year==year
+        mean(imputed.engaged.unsuppressed$future.state[mask]=='suppress')
+    })
+    sapply(sort(unique(imputed.engaged.unsuppressed$relative.year)), function(year){
+        mask = imputed.engaged.unsuppressed$relative.year==year
+        mean(imputed.engaged.unsuppressed$future.state[mask]=='remain')
+    })
+    sapply(sort(unique(engaged.unsuppressed$relative.year)), function(year){
+        mask = engaged.unsuppressed$relative.year==year
+        mean(engaged.unsuppressed$future.state[mask]=='lost')
+    })
+    
+    
+    sapply(sort(unique(engaged.unsuppressed$relative.year)), function(year){
+        mask = engaged.unsuppressed$relative.year==year
+        mean(engaged.unsuppressed$future.state[mask]=='suppress')
+    })
+    
+    
+    
+    sapply(sort(unique(imputed.engaged.suppressed$relative.year)), function(year){
+        mask = imputed.engaged.suppressed$relative.year==year
+        mean(imputed.engaged.suppressed$future.state[mask]=='remain')
+    })
+    sapply(sort(unique(imputed.engaged.suppressed$relative.year)), function(year){
+        mask = imputed.engaged.suppressed$relative.year==year
+        mean(imputed.engaged.suppressed$future.state[mask]=='unsuppress')
+    })
+    sapply(sort(unique(imputed.engaged.suppressed$relative.year)), function(year){
+        mask = imputed.engaged.suppressed$relative.year==year
+        mean(imputed.engaged.suppressed$future.state[mask]=='lost')
+    })
 }
 
+{
+    
+}
+if (analysis=='jheem.model')
+{
+    if (just.do.multinomial)
+    {
+        print("Fitting simple multinomial Model for engaged-unsuppressed, JHEEM model version (model coefficients only), with disengagement weights")
+        model.engaged.unsuppressed <- shoehorn.fit.multinom(future.state ~ age.category + sex.risk + race + relative.year
+                                                + age.category*relative.year + sex.risk*relative.year + race*relative.year,
+                                                df=imputed.engaged.unsuppressed)
+    }
+    else
+    {
+        print("Fitting Model for engaged-unsuppressed, JHEEM model version (model coefficients only), with disengagement weights")
+        model.engaged.unsuppressed <- nomLORgee(future.state ~ age.category + sex.risk + race + relative.year
+                                                + age.category*relative.year + sex.risk*relative.year + race*relative.year,
+                                                data=imputed.engaged.unsuppressed, id=id)
+    }
+   
+}
 if (analysis=='CNICS')
 {
     print("Fitting Model for engaged-unsuppressed, CNICS version (all coefficients)")
@@ -310,10 +389,21 @@ for (i in 1:N.IMPUTATIONS)
 
 if (analysis=='jheem.model')
 {
-    print("Fitting Model for engaged-suppressed, JHEEM model version (model coefficients only), with disengagement weights")
-    model.engaged.suppressed <- nomLORgee(future.state ~ age.category + sex.risk + race + relative.year
-                                            + age.category*relative.year + sex.risk*relative.year + race*relative.year,
-                                            data=engaged.suppressed.weights, id=id)
+    if (just.do.multinomial)
+    {
+        
+        print("Fitting Simple Multinomial Model for engaged-suppressed, JHEEM model version (model coefficients only), with disengagement weights")
+        model.engaged.suppressed <- shoehorn.fit.multinom(future.state ~ age.category + sex.risk + race + relative.year
+                                              + age.category*relative.year + sex.risk*relative.year + race*relative.year,
+                                              df=imputed.engaged.suppressed)
+    }
+    else
+    {
+        print("Fitting Model for engaged-suppressed, JHEEM model version (model coefficients only), with disengagement weights")
+        model.engaged.suppressed <- nomLORgee(future.state ~ age.category + sex.risk + race + relative.year
+                                                + age.category*relative.year + sex.risk*relative.year + race*relative.year,
+                                                data=imputed.engaged.suppressed, id=id)
+    }
 }
 
 if (analysis=='CNICS')
@@ -348,6 +438,17 @@ if (analysis=='jheem.model')
                                + age.category*relative.year + sex.risk*relative.year + race*relative.year,
                                data=disengaged, id=id, family = binomial, corstr = "exchangeable",
                                weights = disengaged$p.truly.disengaged)
+    model.disengaged.noslope <- geeglm(reengage ~ age.category + sex.risk + race,
+                               data=disengaged, id=id, family = binomial, corstr = "exchangeable",
+                               weights = disengaged$p.truly.disengaged)
+    
+    model.disengaged$coefficients[] = 0
+    model.disengaged$coefficients[names(model.disengaged.noslope$coefficients)] = model.disengaged.noslope$coefficients
+    
+    #model.disengaged.simple <- glm(reengage ~ age.category + sex.risk + race + relative.year 
+     #                          + age.category*relative.year + sex.risk*relative.year + race*relative.year,
+      #                         data=disengaged, family = binomial, 
+       #                        weights = disengaged$p.truly.disengaged)
     
 }
 
@@ -360,6 +461,52 @@ if (analysis=='CNICS')
                                   data=disengaged, id=id)  
 }
 
+##----------------------------##
+##-- ADJUST P DISENGAGEMENT --##
+##----------------------------##
+
+adjust.coefficients.for.disengagement <- function(coefficients,
+                                                  prior.estimate=1-mean(c(.89,.74)), #from https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4334738/ 
+                                                  prior.weight=0.5,
+                                                  data.weight = 1-prior.weight,
+                                                  disengaged.k = 2)
+{
+    x.betas = coefficients[c('beta10','beta20')]
+    p.ref = 1/(1+sum(exp(x.betas)))
+    p.data = exp(x.betas[disengaged.k]) * p.ref
+    
+    p.post = prior.weight * prior.estimate + data.weight * p.data
+    
+    rr.post = p.post / p.ref
+    coefficients[paste0('beta',disengaged.k,'0')] = log(rr.post)
+    
+#    x.betas.new = coefficients[c('beta10','beta20')]
+#    p.ref.new = 1/(1+sum(exp(x.betas.new)))
+#    p.data.new = exp(x.betas[disengaged.k]) * p.ref.new
+    
+#    x.betas.for.slope = coefficients[c('beta10','beta20')] + coefficients[c('relative.year:1','relative.year:2')]
+#    p.ref.for.slope = 1/(1+sum(exp(x.betas.for.slope)))
+#    p.data.for.slope = exp(x.betas.for.slope[disengaged.k]) * p.ref.for.slope
+    
+#    p.post.for.slope = prior.weight * prior.estimate + data.weight * p.data.for.slope
+#    rrr.post = p.post.for.slope / p.post / (p.ref.for.slope / p.ref.new)
+    
+#    coefficients[paste0('relative.year:',disengaged.k)] = log(rrr.post)
+    
+    coefficients
+    
+}
+
+adjust.slope.coefficients <- function(coefficients,
+                          prior.estimate=0,
+                          prior.weight=0.5,
+                          data.weight=1-prior.weight)
+{
+    mask = grepl('.+relative\\.year', names(coefficients))
+    coefficients[mask] = prior.weight * prior.estimate + data.weight * coefficients[mask]
+    coefficients
+}
+    
 
 ##------------------------------------##
 ##------------- Output ---------------##
@@ -373,7 +520,20 @@ output <- list(engaged.unsuppressed.coefficients=model.engaged.unsuppressed$coef
                disengaged.variance=model.disengaged$robust.variance,
                anchor.year=anchor.year)
 
+output$engaged.suppressed.coefficients = adjust.coefficients.for.disengagement(output$engaged.suppressed.coefficients,
+                                                                               prior.weight=0.3)
+output$engaged.unsuppressed.coefficients = adjust.coefficients.for.disengagement(output$engaged.unsuppressed.coefficients,
+                                                                                 prior.weight=0.3)
+
+output$engaged.suppressed.coefficients = adjust.slope.coefficients(output$engaged.suppressed.coefficients,
+                                                                   prior.weight=0.5)
+output$engaged.unsuppressed.coefficients = adjust.slope.coefficients(output$engaged.unsuppressed.coefficients,
+                                                                   prior.weight=0.5)
+
+
 print("Done - saving output")
 save(output, file=file.path('code','for Melissa', 'CNICS analysis', 
-                            paste0('multinomial_output_', dataset.type, '_', analysis, '_', Sys.Date())))
+                            paste0('multinomial_output_adj_', dataset.type, '_', analysis, '_', Sys.Date())))
 
+if (dataset.type=='real')
+    save(output, file='cleaned_data/continuum/cnics_regression.Rdata')
