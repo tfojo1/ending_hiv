@@ -5,12 +5,12 @@ load('mcmc_runs/prep_simsets/47900/1.0_47900_full.Rdata')
 
 #Incidence Pre
 rv_1_pre = sapply(simset@simulations, function(sim){
-    project.absolute.incidence(sim, years=2010:2013, sex='msm')
+    project.absolute.incidence(sim, years=2010:2013, sex='msm', use.cdc.categorizations = F)
 })
 
 #Diagnoses Pre
 rv_2_pre = sapply(simset@simulations, function(sim){
-    project.absolute.new.diagnoses(sim,use.cdc.categorizations = F,years=2010:2013, sex='msm')
+    project.absolute.new.diagnoses(sim,use.cdc.categorizations = F,years=2010:2013, sex='msm', use.cdc.categorizations = F)
 })
 
 truth = get.surveillance.data(msa.surveillance, location=DC.MSA, years=2010:2020, data.type='new', risk=T)
@@ -20,7 +20,7 @@ truth = c(truth[,1],rep(NA,10))
 #Incidence Future 
 load('mcmc_runs/prep_simsets/47900/1.0_47900_baseline.oral.variable.efficacy.Rdata')
 rv_1_post = sapply(simset@simulations, function(sim){
-    project.absolute.incidence(sim, years=2014:2030, sex='msm')
+    project.absolute.incidence(sim, years=2014:2030, sex='msm', use.cdc.categorizations = F)
 })
 
 #Diagnoses Future
@@ -34,7 +34,7 @@ load('mcmc_runs/prep_simsets/47900/1.0_47900_msm.combined.25.uptake_23_27.Rdata'
 #Incidence 25% Uptake
 
 Incidence_25 = sapply(simset@simulations, function(sim){
-  project.absolute.incidence(sim,keep.dimensions = 'year', years=2020:2030, sex='msm')
+  project.absolute.incidence(sim,keep.dimensions = 'year', years=2020:2030, sex='msm', use.cdc.categorizations = F)
 })
 
 #Diagnoses 25% Uptake
