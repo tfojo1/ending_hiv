@@ -10,7 +10,7 @@ rv_1_pre = sapply(simset@simulations, function(sim){
 
 #Diagnoses Pre
 rv_2_pre = sapply(simset@simulations, function(sim){
-    project.absolute.new.diagnoses(sim, years=2010:2013, sex='msm')
+    project.absolute.new.diagnoses(sim,use.cdc.categorizations = F,years=2010:2013, sex='msm')
 })
 
 truth = get.surveillance.data(msa.surveillance, location=DC.MSA, years=2010:2020, data.type='new', risk=T)
@@ -25,7 +25,7 @@ rv_1_post = sapply(simset@simulations, function(sim){
 
 #Diagnoses Future
 rv_2_post = sapply(simset@simulations, function(sim){
-    project.absolute.new.diagnoses(sim, years=2014:2030, sex='msm')
+    project.absolute.new.diagnoses(sim,use.cdc.categorizations = F, years=2014:2030, sex='msm')
 })
 
 
@@ -39,7 +39,7 @@ Incidence_25 = sapply(simset@simulations, function(sim){
 
 #Diagnoses 25% Uptake
 Diagnoses_25 = sapply(simset@simulations, function(sim){
-  project.absolute.new.diagnoses(sim, years=2020:2030, sex='msm')
+  project.absolute.new.diagnoses(sim,use.cdc.categorizations = F, years=2020:2030, sex='msm')
 })
 
 load('mcmc_runs/prep_simsets/47900/1.0_47900_msm.oral.10.uptake_23_27.Rdata')
@@ -51,7 +51,7 @@ Incidence_10 = sapply(simset@simulations, function(sim){
 
 #Diagnoses 10% Uptake
 Diagnoses_10 = sapply(simset@simulations, function(sim){
-  project.absolute.new.diagnoses(sim, years=2020:2030, sex='msm')
+  project.absolute.new.diagnoses(sim,use.cdc.categorizations = F, years=2020:2030, sex='msm')
 })
 
 
@@ -115,13 +115,13 @@ plots_2$Actual = as.numeric(as.character(plots_2$Actual))
 
 p = ggplot(plots_1, aes(x=Year,y=Incidence,group=Intervention)) +
   geom_ribbon(aes(ymin=`CI Low`,ymax=`CI High`, fill= Intervention), alpha = .09) +
-  geom_line(aes(colour=Intervention))
+  geom_line(aes(colour=Intervention)) +  theme(text = element_text(size=20),axis.text.x = element_text(angle = 45,vjust = 0.5, hjust=.5))
 p + theme_bw()
 
 
 p = ggplot(plots_2, aes(x=Year,y=Diagnoses,group=Intervention)) +
   geom_ribbon(aes(ymin=`CI Low`,ymax=`CI High`, fill= Intervention), alpha = .09) +
-  geom_line(aes(colour=Intervention))  + geom_point(aes(x = Year, y =Actual))
+  geom_line(aes(colour=Intervention)) +  theme(text = element_text(size=20),axis.text.x = element_text(angle = 45,vjust = 0.5, hjust=.5))+ geom_point(aes(x = Year, y =Actual))
 p + theme_bw()
 
 

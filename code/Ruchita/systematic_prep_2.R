@@ -1,5 +1,5 @@
 
-<<<<<<< HEAD
+
 
 ##-- SOURCE CODE --##
 source('code/source_code.R')
@@ -196,8 +196,7 @@ STAGGERED.ORAL.INJ.PREP.CODES[2*(1:length(ORAL.PREP.INTERVENTION.CODES))-1] = OR
 STAGGERED.ORAL.INJ.PREP.CODES[2*(1:length(INJ.PREP.INTERVENTION.CODES))] = INJ.PREP.INTERVENTION.CODES
 
 
-=======
->>>>>>> 166565b24966c965ff152d94027d580e0e62d684
+
 ##-- FUNCTION TO RUN INTERVENTIONS --##
 
 run.prep.simulations <- function(msas, 
@@ -352,34 +351,82 @@ make.sensitivity.plot <- function(msas=TARGET.MSAS,
                               parameter = parameters,
                               include.totals = F,
                               dir = 'mcmc_runs/prep_simsets',
+                              cities = "separated",
                               round.digits=0){
   
   int.code = intervention.codes 
   
-  for(a in 1: dim(parameters)[2]){
+  if(cities = "separated") {
+    for(a in 1: dim(parameters)[2]){
+      p = as.numeric(as.character(parameters[,a]))
+      
+      inj.values = vector("list", length = length(msas))
+      for( b in 1:length(msas)){
+        int.values = raw.prep.results[,,b,int.code]
+        inj.values[[b]] = ((int.values[11,]-int.values[1,])/int.values[1,])*100   
+      }
+      
+      inj.values = lapply(inj.values, function(x) cbind(p,x))
+      inj.values = do.call(rbind.data.frame, inj.values)
+      
+      colnames(inj.values) = c("Parameter","Incidence Reduction")
+      
+      inj.values = as.data.frame(inj.values)
+      inj.values = inj.values[order(inj.values$Parameter),]
+      groups = split(inj.values, cut(inj.values$Parameter, 10))
+      groups = Filter(NROW, groups)
+      
+      ID = sapply(groups, function(x) paste0(round(min(x$Parameter, na.rm=TRUE),2)," to ",round(max(x$Parameter, na.rm=TRUE),2)))
+      groups <- mapply(cbind, groups, "Parameter Group"=ID, SIMPLIFY=F)
+      groups = do.call(rbind.data.frame, groups)
+      
+      ggplot(groups, aes(x =`Parameter Group`, y =`Incidence Reduction`)) +          
+        geom_boxplot() +  theme(axis.text.x = element_text(angle = 45,vjust = 0.5, hjust=.5)) + ggtitle(paste0("Parameter: ",colnames(parameters)[a]))
+      
+      #correlation = round(cor(inj.values, method = "spearman")[2,1],3)
+      #ggplot(inj.values, aes(x=`Parameter`, y=`Incidence Reduction`)) +
+      # geom_point() + ggtitle(paste0("Parameter: ",colnames(parameters)[a], " R = ", correlation))
+    }
+    
+  }
+  
+  if (cities == "combined") {
+    for(a in 1: dim(parameters)[2]){
+    
     p = as.numeric(as.character(parameters[,a]))
     
     inj.values = vector("list", length = length(msas))
-    for( b in 1:length(msas)){
-      int.values = raw.prep.results[,,b,int.code]
-      inj.values[[b]] = ((int.values[11,]-int.values[1,])/int.values[1,])*100   
-      }
     
-    inj.values = lapply(inj.values, function(x) cbind(p,x))
-    inj.values = do.call(rbind.data.frame, inj.values)
+    int_2020 = sapply(msas, function(msa){
+      int.values = raw.prep.results[,,msa,int.code]
+      int.values[1,]
+    })
+    int_2020 = rowSums(int_2020)
     
-    colnames(inj.values) = c("Parameter","Incidence Reduction")
+    int_2030 = sapply(msas, function(msa){
+      int.values = raw.prep.results[,,msa,int.code]
+      int.values[11,]
+    })
+    int_2030 = rowSums(int_2030)
+    
+    inj.values = ((int_2030-int_2020)/int_2020)*100
+    inj.values = cbind(inj.values,p)
+    colnames(inj.values) = c("Incidence Reduction","Parameter")
     
     inj.values = as.data.frame(inj.values)
-    inj.values = inj.values[sort(inj.values$Parameter),]
-    groups = 
-    inj.bins = split(inj.values, findInterval(inj.values$Parameter, floor(min(inj.values$Parameter)):10))
+    inj.values = inj.values[order(inj.values$Parameter),]
+    groups = split(inj.values, cut(inj.values$Parameter, 10))
+    groups = Filter(NROW, groups)
     
-
+    ID = sapply(groups, function(x) paste0(round(min(x$Parameter, na.rm=TRUE),2)," to ",round(max(x$Parameter, na.rm=TRUE),2)))
+    groups <- mapply(cbind, groups, "Parameter Group"=ID, SIMPLIFY=F)
+    groups = do.call(rbind.data.frame, groups)
     
-    correlation = round(cor(inj.values, method = "spearman")[2,1],3)
-    ggplot(inj.values, aes(x=`Parameter`, y=`Incidence Reduction`)) +
-      geom_point() + ggtitle(paste0("Parameter: ",colnames(parameters)[a], " R = ", correlation))
+    ggplot(groups, aes(x =`Parameter Group`, y =`Incidence Reduction`)) +          
+      geom_boxplot() +  theme(text = element_text(size=20),axis.text.x = element_text(angle = 45,vjust = 0.5, hjust=.5)) + ggtitle(paste0("Parameter: ",colnames(parameters)[a])) + theme_bw()
+    
+    
+    }
   }
   
   
@@ -495,7 +542,7 @@ aggregate.raw.prep.results <- function(msas,
     rv
 }
 
-<<<<<<< HEAD
+
 
 make.figure <- function(msas=TARGET.MSAS,intervention.codes = UPTAKE.INTERVENTIONS.CODES, raw.prep.results = prep.results,round.digits=0){
 
@@ -542,12 +589,11 @@ aggregate.prep.coverage <- function(msas,
 }
 
 
-make.figure <- function(msas=TARGET.MSAS,intervention.codes = COVERAGE.50.INTERVENTIONS.CODES, raw.prep.results = prep.results,round.digits=0){
 
-=======
+
 make.figure <- function(msas=TARGET.MSAS,intervention.codes = COVERAGE.50.INTERVENTIONS.CODES, raw.prep.results = prep.results,round.digits=0){
  
->>>>>>> 166565b24966c965ff152d94027d580e0e62d684
+
   plots = vector("list", length= length(intervention.codes))
   mean_reduction =  vector("list", length= length(intervention.codes))
   reduction = vector("list", length= length(intervention.codes))
@@ -597,6 +643,7 @@ make.figure <- function(msas=TARGET.MSAS,intervention.codes = COVERAGE.50.INTERV
     geom_ribbon(aes(ymin=`CI Low`,ymax=`CI High`, fill= Intervention), alpha = .09) +
     geom_line(aes(colour=Intervention))+scale_y_continuous(labels = scales::comma)
   p + theme_bw()
+  
 }
 
 
