@@ -43,6 +43,17 @@ write.systematic.table <- function(estimates,
 ##-- MAKING SHADED EXCEL TABLES --##
 ##--------------------------------##
 
+#'
+#'@description Writes a table to a MS Excel file with shading based on the values of the table. Uses two color scales - one for below a threshold value, and another before it
+#'
+#'@param x - A table-like R object (matrix, 2d array, data frame)
+#'@param file - the name of the file where the xls file should be written
+#'@param threshold - the numeric value below which the "below.threshold" color gradient is applied, and above which the "above.threshold" color gradient applies
+#'@param below.threshold.min.color,below.threshold.max.color The colors for the endpoints of the gradient applied to values below the threshold value
+#'@param above.threshold.min.color,above.threshold.max.color The colors for the endpoints of the gradient applied to values above the threshold value
+#'@param min.value The value at which below.threshold.min.color applies (lower values also get shaded this same color)
+#'@param max.value The value at which above.threshold.min.color applies (higher values also get shaded this same color)
+#'@param as.pct Whether to format values as percentages
 write.shaded.table <- function(x,
                                file,
                                threshold=0.9,

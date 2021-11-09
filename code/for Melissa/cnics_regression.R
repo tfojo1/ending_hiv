@@ -162,6 +162,13 @@ if (1==2)
 ##-- A FUNCTION TO SHOEHORN A STANDARD MULTINOMIAL FIT INSTEAD OF OUR GEE LOR --##
 shoehorn.fit.multinom <- function(ff, df)
 {
+    coef.names = c(
+        paste0(names(model.truly.disengaged$coefficients)[-1], ':1'),
+        paste0(names(model.truly.disengaged$coefficients)[-1], ':2')
+    )
+    shoehorned.coefs = numeric(length(coef.names))
+    names(shoehorned.coefs) = coef.names
+    
     new.levels = c('remain', setdiff(levels(df$future.state), 'remain'))
     df$future.state = factor(df$future.state, new.levels)
     
@@ -171,7 +178,8 @@ shoehorn.fit.multinom <- function(ff, df)
     
     shoehorned.coefs = c(
         beta10=coefs[1,1],
-        beta20=coefs[2,1]
+        beta20=coefs[2,1],
+        shoehorned.coefs
     )
 
     for (cname in dimnames(coefs)[[2]][-1])
