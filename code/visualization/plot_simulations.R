@@ -13,7 +13,9 @@ DATA.TYPE.NAMES = c(new='Reported Cases',
                     incidence='Incidence',
                     population='Population Size',
                     testing.period='HIV Testing Frequency',
-                    prep='PrEP Uptake')
+                    prep='PrEP Uptake',
+                    engagement='Engagement',
+                    suppression.of.engaged='Suppression among Engaged PWH')
 
 
 DATA.TYPE.AXIS.LABELS = c(
@@ -1536,9 +1538,10 @@ get.truth.df <- function(location,
                          data.type,
                          years,
                          keep.dimensions,
-                         dimension.subsets)
+                         dimension.subsets,
+                         surv=msa.surveillance,
+                         pull.from.state=T)
 {
-    surv = msa.surveillance
     dimension.subsets = get.nontrivial.dimension.subsets(dimension.subsets,
                                                          data.type=data.type,
                                                          surv=surv)
@@ -1572,7 +1575,7 @@ get.truth.df <- function(location,
                                                  age=any(all.dimensions=='age'), race=any(all.dimensions=='race'),
                                                  sex=any(all.dimensions=='sex'), risk=any(all.dimensions=='risk'))
       
-      if (data.type=='diagnosed' && is.null(rv) && length(all.dimensions)==1 && all.dimensions=='year')
+      if (pull.from.state && data.type=='diagnosed' && is.null(rv) && length(all.dimensions)==1 && all.dimensions=='year')
       {
           rv = get.state.averaged.knowledge.of.status(location,
                                                       state.surveillance,
@@ -1586,7 +1589,8 @@ get.truth.df <- function(location,
           dim(rv) = c(year=length(years))
           dimnames(rv) = list(year = as.character(years))
       }
-      else if (data.type=='suppression' && is.null(rv) &&
+      else if (pull.from.state &&
+               data.type=='suppression' && is.null(rv) &&
                is.null(get.surveillance.data(surv, location.codes=location, data.type='suppression', throw.error.if.missing.data=F)))
       {
           states = states.for.msa(location)
@@ -1606,8 +1610,8 @@ get.truth.df <- function(location,
           }
       }
       
-      if (is.null(rv))
-          rv
+      if (is.null(rv) || length(rv)==0)
+          NULL
       else
       {
           if (length(dimension.subsets)>0)
@@ -1785,6 +1789,25 @@ get.arr.for.data.type <- function(simset,
                                          all.dimensions = keep.dimensions,
                                          dimension.subsets = dimension.subsets,
                                          year.anchor=year.anchor)
+    else if (data.type=='engagement')
+        arr = extract.simset.engagement(simset,
+                                         years = years, 
+                                         all.dimensions = keep.dimensions,
+                                         dimension.subsets = dimension.subsets,
+                                         year.anchor=year.anchor)
+    else if (data.type=='suppression.of.engaged')
+    {
+        arr = extract.simset.suppression(simset,
+                                         years = years, 
+                                         all.dimensions = keep.dimensions,
+                                         dimension.subsets = dimension.subsets,
+                                         year.anchor=year.anchor) / 
+              extract.simset.engagement(simset,
+                                            years = years, 
+                                            all.dimensions = keep.dimensions,
+                                            dimension.subsets = dimension.subsets,
+                                            year.anchor=year.anchor)
+    }
     else if (data.type=='diagnosed')
         arr = extract.simset.knowledge.of.status(simset,
                                                  years = years, 
@@ -2506,7 +2529,7 @@ extract.simset.prevalence <- function(simset, years, all.dimensions,
                                subpopulations=dimension.subsets[['subpopulation']],
                                sexes=dimension.subsets[['sex']],
                                risks=dimension.subsets[['risk']],
-                               continuum='diagnosed',
+                               continuum=simset@simulations[[1]]$diagnosed.continuum.states,
                                cd4s=NULL,
                                hiv.subsets=NULL,
                                use.cdc.categorizations=T)
@@ -2522,7 +2545,7 @@ extract.simset.prevalence <- function(simset, years, all.dimensions,
                                            subpopulations=dimension.subsets[['subpopulation']],
                                            sexes=dimension.subsets[['sex']],
                                            risks=dimension.subsets[['risk']],
-                                           continuum='diagnosed',
+                                           continuum=simset@simulations[[1]]$diagnosed.continuum.states,
                                            cd4s=NULL,
                                            hiv.subsets=NULL,
                                            use.cdc.categorizations=T)
@@ -2557,7 +2580,7 @@ extract.simset.hiv.mortality <- function(simset, years, all.dimensions,
                                           subpopulations=dimension.subsets[['subpopulation']],
                                           sexes=dimension.subsets[['sex']],
                                           risks=dimension.subsets[['risk']],
-                                          continuum='diagnosed',
+                                          continuum=simset@simulations[[1]]$diagnosed.continuum.states,
                                           cd4s=NULL,
                                           hiv.subsets=NULL,
                                           use.cdc.categorizations=T)
@@ -2573,7 +2596,7 @@ extract.simset.hiv.mortality <- function(simset, years, all.dimensions,
                                                       subpopulations=dimension.subsets[['subpopulation']],
                                                       sexes=dimension.subsets[['sex']],
                                                       risks=dimension.subsets[['risk']],
-                                                      continuum='diagnosed',
+                                                      continuum=simset@simulations[[1]]$diagnosed.continuum.states,
                                                       cd4s=NULL,
                                                       hiv.subsets=NULL,
                                                       use.cdc.categorizations=T)
@@ -2608,7 +2631,7 @@ extract.simset.suppression <- function(simset, years, all.dimensions,
                              subpopulations=dimension.subsets[['subpopulation']],
                              sexes=dimension.subsets[['sex']],
                              risks=dimension.subsets[['risk']],
-                             continuum='diagnosed',
+                             continuum=simset@simulations[[1]]$diagnosed.continuum.states,
                              cd4=NULL,
                              hiv.subsets=NULL,
                              use.cdc.categorizations=T,
@@ -2622,11 +2645,57 @@ extract.simset.suppression <- function(simset, years, all.dimensions,
                 subpopulations=dimension.subsets[['subpopulation']],
                 sexes=dimension.subsets[['sex']],
                 risks=dimension.subsets[['risk']],
-                continuum='diagnosed',
+                continuum=simset@simulations[[1]]$diagnosed.continuum.states,
                 cd4=NULL,
                 hiv.subsets=NULL,
                 use.cdc.categorizations=T,
                 year.anchor=year.anchor)
+    
+    if (is.null(dim(eg)))
+    {
+        dim.names = list(names(eg), 1:simset@n.sim)
+        names(dim.names) = c(all.dimensions, 'simulation')
+    }
+    else
+        dim.names = c(dimnames(eg), list(simulation=1:simset@n.sim))
+    
+    dim(rv) = sapply(dim.names, length)
+    dimnames(rv) = dim.names
+    
+    rv
+}
+
+extract.simset.engagement<- function(simset, years, all.dimensions,
+                                       dimension.subsets, year.anchor)
+{
+    eg = do.extract.engagement(simset@simulations[[1]],
+                             years=years, 
+                             keep.dimensions=all.dimensions,
+                             per.population=1,
+                             ages=dimension.subsets[['age']],
+                             races=dimension.subsets[['race']],
+                             subpopulations=dimension.subsets[['subpopulation']],
+                             sexes=dimension.subsets[['sex']],
+                             risks=dimension.subsets[['risk']],
+                             continuum=simset@simulations[[1]]$diagnosed.continuum.states,
+                             cd4=NULL,
+                             hiv.subsets=NULL,
+                             use.cdc.categorizations=T)
+#                             year.anchor=year.anchor)
+    rv = sapply(simset@simulations, do.extract.engagement,
+                years=years, 
+                keep.dimensions=all.dimensions,
+                per.population=1,
+                ages=dimension.subsets[['age']],
+                races=dimension.subsets[['race']],
+                subpopulations=dimension.subsets[['subpopulation']],
+                sexes=dimension.subsets[['sex']],
+                risks=dimension.subsets[['risk']],
+                continuum=simset@simulations[[1]]$diagnosed.continuum.states,
+                cd4=NULL,
+                hiv.subsets=NULL,
+                use.cdc.categorizations=T)
+#                year.anchor=year.anchor)
     
     if (is.null(dim(eg)))
     {
