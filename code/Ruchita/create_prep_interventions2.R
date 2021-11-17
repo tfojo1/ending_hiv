@@ -42,7 +42,7 @@ inj.log.mean = (inj.ci.lower + inj.ci.upper)/2
 INJ.PREP.HR.DIST = Lognormal.Distribution(meanlog = inj.log.mean, sdlog = inj.log.sd, var.name = 'inj.vs.oral.hr')
 
 
-# @Ruchita - find a better evidence-based mean and sd
+# @Ruchita - find a better evidence-based mean and sd https://onlinelibrary.wiley.com/doi/full/10.1002/jia2.25252
 
 oral.persistence.mean = .56
 oral.prep.persistence.ci.upper = oral.persistence.mean + 1.96*sqrt((oral.persistence.mean*(1-oral.persistence.mean))/7148)

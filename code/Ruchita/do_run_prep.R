@@ -1,4 +1,7 @@
 
+load("code/Ruchita/baseline_prep_and_parameters_1K.Rdata")
+load("code/Ruchita/raw_prep_results_1K.Rdata")
+load("code/Ruchita/prep_results_and_parameters_1K_2021-11-09.Rdata")
 
 # Run the Interventions
 run.prep.simulations(msas = TARGET.MSAS,
@@ -35,8 +38,8 @@ write.table(table.v1, "/Users/Ruchita/Documents/JHU/HIV Compartmental Model/endi
 
 #Reduction in Incidence for All Interventions
 table.v2 = make.prep.table(msas=TARGET.MSAS,
-                           intervention.codes=INJ.ORAL.VARIABLE.NEW.INTERVENTIONS.CODES,
-                           comparison.codes='noint',
+                           intervention.codes=UPTAKE.INTERVENTIONS.CODES,
+                           comparison.codes="baseline.oral.variable.efficacy",
                            raw.prep.results=prep.results, include.totals = F,
                            stat='diff')
 
@@ -72,8 +75,8 @@ write.table(table.v1, "/Users/Ruchita/Documents/JHU/HIV Compartmental Model/endi
 
 #Reduction in Incidence for All Interventions
 table.v2 = make.prep.table(msas=TARGET.MSAS,
-                           intervention.codes=INJ.ORAL.VARIABLE.NEW.INTERVENTIONS.CODES,
-                           comparison.codes='noint',
+                           intervention.codes=UPTAKE.INTERVENTIONS.CODES,
+                           comparison.codes=UPTAKE.INTERVENTIONS.CODES[1],
                            raw.prep.results=prep.results, include.totals = F,
                            stat='diff')
 
@@ -109,8 +112,8 @@ write.table(table.v1, "/Users/Ruchita/Documents/JHU/HIV Compartmental Model/endi
 
 #Reduction in Incidence for All Interventions
 table.v2 = make.prep.table(msas=TARGET.MSAS,
-                           intervention.codes=INJ.ORAL.VARIABLE.NEW.INTERVENTIONS.CODES,
-                           comparison.codes='noint',
+                           intervention.codes=UPTAKE.INTERVENTIONS.CODES,
+                           comparison.codes="baseline.oral.variable.efficacy",
                            raw.prep.results=prep.results, include.totals = F,
                            stat='diff')
 
@@ -127,3 +130,6 @@ write.table(table.v2, "/Users/Ruchita/Documents/JHU/HIV Compartmental Model/endi
 sensitivity.plots = make.sensitivity.plot()
 
 correlation.table = correlations()
+
+
+source("code/process_results/make_pretty_table.R")

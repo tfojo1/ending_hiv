@@ -1,7 +1,7 @@
 library(xlsx)
 
-write.systematic.table <- function(estimates,
-                                   file,
+write.systematic.table <- function(estimates = table.v2,
+                                   file = "/Users/Ruchita/Documents/JHU/HIV Compartmental Model/ending_hiv/code/Ruchita",
                                    interventions,
                                    include.interval=F,
                                    below.threshold.min.color='red',
@@ -54,8 +54,8 @@ write.systematic.table <- function(estimates,
 #'@param min.value The value at which below.threshold.min.color applies (lower values also get shaded this same color)
 #'@param max.value The value at which above.threshold.min.color applies (higher values also get shaded this same color)
 #'@param as.pct Whether to format values as percentages
-write.shaded.table <- function(x,
-                               file,
+write.shaded.table <- function(x = table.v2,
+                               file = "/Users/Ruchita/Documents/JHU/HIV Compartmental Model/ending_hiv/code/Ruchita",
                                threshold=0.9,
                                below.threshold.min.color='red',
                                below.threshold.max.color='yellow2',

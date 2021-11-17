@@ -46,7 +46,7 @@ load('mcmc_runs/prep_simsets/47900/1.0_47900_msm.oral.10.uptake_23_27.Rdata')
 
 #Incidence 10% Uptake
 Incidence_10 = sapply(simset@simulations, function(sim){
-  project.absolute.incidence(sim,keep.dimensions = 'year', years=2020:2030, sex='msm')
+  project.absolute.incidence(sim,keep.dimensions = 'year', years=2020:2030, sex='msm', use.cdc.categorizations = F)
 })
 
 #Diagnoses 10% Uptake
@@ -83,6 +83,21 @@ plots_1$Incidence = as.numeric(as.character(plots_1$Incidence))
 plots_1$`CI Low` = as.numeric(as.character(plots_1$`CI Low`))
 plots_1$`CI High` = as.numeric(as.character(plots_1$`CI High`))
 
+plots_1_25 = rbind(plots_no,plots_i_25)
+colnames(plots_1_25) = c("Incidence","CI Low", "CI High", "Year", "Intervention")
+plots_1_25 = as.data.frame(plots_1_25)
+plots_1_10 = rbind(plots_no,plots_i_10)
+colnames(plots_1_10) = c("Incidence","CI Low", "CI High", "Year", "Intervention")
+plots_1_10 = as.data.frame(plots_1_10)
+
+plots_1_25$Incidence = as.numeric(as.character(plots_1_25$Incidence))
+plots_1_25$`CI Low` = as.numeric(as.character(plots_1_25$`CI Low`))
+plots_1_25$`CI High` = as.numeric(as.character(plots_1_25$`CI High`))
+
+plots_1_10$Incidence = as.numeric(as.character(plots_1_10$Incidence))
+plots_1_10$`CI Low` = as.numeric(as.character(plots_1_10$`CI Low`))
+plots_1_10$`CI High` = as.numeric(as.character(plots_1_10$`CI High`))
+
 
 
 
@@ -113,20 +128,58 @@ plots_2$`CI Low` = as.numeric(as.character(plots_2$`CI Low`))
 plots_2$`CI High` = as.numeric(as.character(plots_2$`CI High`))
 plots_2$Actual = as.numeric(as.character(plots_2$Actual))
 
+plots_2_25 = rbind(plots_no,plots_d_25)
+colnames(plots_2_25) = c("Diagnoses","CI Low", "CI High", "Year", "Intervention","Actual")
+plots_2_25 = as.data.frame(plots_2_25)
+plots_2_10 = rbind(plots_no,plots_d_10)
+colnames(plots_2_10) = c("Diagnoses","CI Low", "CI High", "Year", "Intervention","Actual")
+plots_2_10 = as.data.frame(plots_2_10)
+
+plots_2_25$Diagnoses = as.numeric(as.character(plots_2_25$Diagnoses))
+plots_2_25$`CI Low` = as.numeric(as.character(plots_2_25$`CI Low`))
+plots_2_25$`CI High` = as.numeric(as.character(plots_2_25$`CI High`))
+plots_2_25$Actual = as.numeric(as.character(plots_2_25$Actual))
+
+plots_2_10$Diagnoses = as.numeric(as.character(plots_2_10$Diagnoses))
+plots_2_10$`CI Low` = as.numeric(as.character(plots_2_10$`CI Low`))
+plots_2_10$`CI High` = as.numeric(as.character(plots_2_10$`CI High`))
+plots_2_10$Actual = as.numeric(as.character(plots_2_10$Actual))
+
+
+
 p = ggplot(plots_1, aes(x=Year,y=Incidence,group=Intervention)) +
   geom_ribbon(aes(ymin=`CI Low`,ymax=`CI High`, fill= Intervention), alpha = .09) +
-  geom_line(aes(colour=Intervention)) +  theme(text = element_text(size=20),axis.text.x = element_text(angle = 45,vjust = 0.5, hjust=.5))
-p + theme_bw()
+  geom_line(aes(colour=Intervention))
+p + theme_bw() + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())  +  theme(text = element_text(size=30),axis.text.x = element_text(angle = 45,vjust = 0.5, hjust=.5))
+
+
+p = ggplot(plots_1_10, aes(x=Year,y=Incidence,group=Intervention)) +
+  geom_ribbon(aes(ymin=`CI Low`,ymax=`CI High`, fill= Intervention), alpha = .09) +
+  geom_line(aes(colour=Intervention))
+p + theme_bw() + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())  +  theme(text = element_text(size=30),axis.text.x = element_text(angle = 45,vjust = 0.5, hjust=.5)) + scale_color_manual(values=c("red", "light blue")) + scale_fill_manual(values = c("red", "light blue")) 
+
+
+p = ggplot(plots_1_25, aes(x=Year,y=Incidence,group=Intervention)) +
+  geom_ribbon(aes(ymin=`CI Low`,ymax=`CI High`, fill= Intervention), alpha = .09) +
+  geom_line(aes(colour=Intervention))
+p + theme_bw() + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())  +  theme(text = element_text(size=30),axis.text.x = element_text(angle = 45,vjust = 0.5, hjust=.5)) + scale_color_manual(values=c("light green", "light blue")) + scale_fill_manual(values = c("light green", "light blue")) 
+
 
 
 p = ggplot(plots_2, aes(x=Year,y=Diagnoses,group=Intervention)) +
   geom_ribbon(aes(ymin=`CI Low`,ymax=`CI High`, fill= Intervention), alpha = .09) +
-  geom_line(aes(colour=Intervention)) +  theme(text = element_text(size=20),axis.text.x = element_text(angle = 45,vjust = 0.5, hjust=.5))+ geom_point(aes(x = Year, y =Actual))
-p + theme_bw()
+  geom_line(aes(colour=Intervention)) + geom_point(aes(x = Year, y =Actual, size = 10))
+p + theme_bw() + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())  +  theme(text = element_text(size=30),axis.text.x = element_text(angle = 45,vjust = 0.5, hjust=.5))
 
+p = ggplot(plots_2_10, aes(x=Year,y=Diagnoses,group=Intervention)) +
+  geom_ribbon(aes(ymin=`CI Low`,ymax=`CI High`, fill= Intervention), alpha = .09) +
+  geom_line(aes(colour=Intervention)) + geom_point(aes(x = Year, y =Actual, size = 10))
+p + theme_bw() + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())  +  theme(text = element_text(size=30),axis.text.x = element_text(angle = 45,vjust = 0.5, hjust=.5)) + scale_color_manual(values=c("red", "light blue")) + scale_fill_manual(values = c("red", "light blue")) 
 
-
-
+p = ggplot(plots_2_25, aes(x=Year,y=Diagnoses,group=Intervention)) +
+  geom_ribbon(aes(ymin=`CI Low`,ymax=`CI High`, fill= Intervention), alpha = .09) +
+  geom_line(aes(colour=Intervention)) + geom_point(aes(x = Year, y =Actual, size = 10))
+p + theme_bw() + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank())  +  theme(text = element_text(size=30),axis.text.x = element_text(angle = 45,vjust = 0.5, hjust=.5)) + scale_color_manual(values=c("light green", "light blue")) + scale_fill_manual(values = c("light green", "light blue")) 
 
 
 
