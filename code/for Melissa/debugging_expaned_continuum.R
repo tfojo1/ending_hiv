@@ -7,6 +7,12 @@ load('mcmc_runs/baltimore_initial_simset_v2.Rdata')
 pp = simset@parameters[simset@n.sim,]
 pp[grepl('.or$', names(pp))] = 1
 
+
+pp = get.medians(parameters.prior)
+load('mcmc_runs/start_values/12580.Rdata')
+to.copy = intersect(names(pp), names(starting.parameters))
+pp[to.copy] = starting.parameters[to.copy]
+
 run.simulation = create.run.simulation.function(msa=BALTIMORE.MSA, start.values=pp, 
                                                 version = 'expanded_1.0', fix.components=F, catch.errors = F)
 
@@ -18,6 +24,10 @@ plot.calibration.total(sim, data.types=c('engagement','suppression','suppression
 
 
 pp2 = pp
+pp2['heterosexual.proportion.lost.or'] = 
+    pp2['msm.proportion.lost.or'] = 
+    pp2['msm.idu.proportion.lost.or'] = 
+    pp2['idu.proportion.lost.or'] = 2
 pp2['heterosexual.proportion.lost.slope.or'] = 
     pp2['msm.proportion.lost.slope.or'] = 
     pp2['msm.idu.proportion.lost.slope.or'] = 

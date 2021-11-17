@@ -9,7 +9,6 @@ THROW.ERROR.IF.PAST.CHECK.YEAR = T
 ##-- INTERVENTION UNITS --##
 ##------------------------##
 
-
 #'@param type The specific rates/proportions to which this intervention applies
 #'@param start.year The precise time at which the intervention starts to scale up (ie, the last time prior to which the intervention rates apply)
 #'@param end.year The precise time at which the intervention stops being applied (ie, the first time when the intervention rates no longer apply)
@@ -46,26 +45,9 @@ create.intervention.unit <- function(type=c('testing','prep','suppression','need
     
     #-- Check years --#
     check.unit.years(start.year, end.year, years, resolved.bindings=numeric())
-    
-    if ((!is(years, 'numeric') && !is(years, 'integer') && !is(years, 'character')))
-        stop("'years' must be a numeric, integer, character, or expression vector")
-    if (any(is.na(years)))
-        stop("'years' cannot contain NA values")
-    
 
-    #-- Check rates --#
-    if ((!is(rates, 'numeric') && !is(rates, 'integer') && !is(rates, 'character') && !is(rates, 'expression')) ||
-        length(rates)==0)
-        stop("'rates' must be a numeric or character vector of length 1 or greater")
-    if (length(years) != length(rates))
-        stop("'years' must have the same length as 'rates'")
-    
-    #-- Check raw rates --#
-    if ((!is(raw.rates, 'numeric') && !is(raw.rates, 'integer') && !is(raw.rates, 'character') && !is(raw.rates, 'expression')) ||
-         length(raw.rates)==0)
-        stop("'raw.rates' must be a numeric, character, or expression vector of length 1 or greater")
-    if (length(raw.rates) != length(rates))
-        stop("'raw.rates' and 'rates' must have the same length")
+    #-- Check rates and raw.rates --#
+    check.unit.rates(rates=rates, raw.rates=raw.rates, years=year, resolved.bindings=numeric())
     
     #-- Check apply function --#
     ALLOWED.APPLY.FUNCTIONS = c('absolute','multiplier','odds.ratio','additive')
@@ -76,15 +58,6 @@ create.intervention.unit <- function(type=c('testing','prep','suppression','need
         stop(paste0("apply.function must be one of: ",
                     paste0("'", ALLOWED.APPLY.FUNCTIONS, "'", collapse=', ')))
     
-    #-- Set up names to resolve --#
-    
-    to.resolve = unique(c(
-        get.names.to.resolve(start.year),
-        get.names.to.resolve(end.year),
-        get.names.to.resolve(rates),
-        get.names.to.resolve(raw.rates),
-        get.names.to.resolve(years)
-    ))
     
     #-- Set up name metadata --#
     
@@ -99,10 +72,6 @@ create.intervention.unit <- function(type=c('testing','prep','suppression','need
     )
     
     #-- Sort by year --#
-    o = order(years)
-    years = years[o]
-    rates = rates[o]
-    raw.rates = raw.rates[o]
     
     rv = list(type=type,
               start.year=start.year,
@@ -115,9 +84,13 @@ create.intervention.unit <- function(type=c('testing','prep','suppression','need
               max.rate = max.rate,
               raw.rates = raw.rates,
               name.metadata = name.metadata,
-              to.resolve=to.resolve,
               resolved.bindings=list())
+
+    #-- Set up names to resolve --#
     
+    rv = index.unit.to.resolve(rv)
+    
+        
     class(rv) = 'intervention.unit'
     rv
 }
@@ -167,9 +140,91 @@ create.proportion.multiplier.intervention.unit <- function(type=c('testing','pre
                              )
 }
 
-check.unit.years <- function(start.year, end.year, years,
-                             resolved.bindings)
+
+##------------------------##
+##-- CHECKING FUNCTIONS --##
+##------------------------##
+
+check.intervention.unit.argument <- function(values,
+                                             arg.name=deparse(substitute(value)),
+                                             allowed.classes=c('numeric',
+                                                               'integer',
+                                                               'character',
+                                                               'expression',
+                                                               'function'),
+                                             length=NA,
+                                             min.length=if (is.na(length)) 1 else length,
+                                             max.length=length,
+                                             error.prefix='')
 {
+    if (!any(sapply(allowed.classes, is, object=values)))
+        stop(paste0(error.prefix, "'", arg.name, "' must be one of the following classes: ", 
+                    paste0(allowed.classes, collapse=', ')))
+    
+    if (!is(values, 'function') && !is(values, 'expression') && any(is.na(values)))
+        stop(paste0(error.prefix, "'", arg.name, "' cannot contain NA values"))
+    
+    if (is(values, 'expression'))
+    {
+        if (min.length>0 && length(values)==0)
+            stop(paste0(error.prefix, "'", arg.name, "' must have at least one element"))
+    }
+    else if (!is(values, 'function'))
+    {
+        if ((!is.na(min.length) && length(values) < min.length) || 
+            (!is.na(max.length) && length(values) > max.length))
+        {
+            if (min.length==max.length)
+                stop(paste0(error.prefix, "'", arg.name, "' must have length ", min.length))
+            else if (is.infinite(max.length))
+                stop(paste0(error.prefix, "'", arg.name, "' must have length ", min.length, " or greater"))
+            else
+                stop(paste0(error.prefix, "'", arg.name, "' must have a length between ", min.length, " and ", max.length))
+        }
+    }
+}
+
+
+check.unit.rates <- function(rates, raw.rates, years,
+                             resolved.bindings,
+                             error.prefix='')
+{
+    check.intervention.unit.argument(rates,
+                                     arg.name = 'rates',
+                                     error.prefix=error.prefix)
+    check.intervention.unit.argument(raw.rates,
+                                     arg.name = 'raw.rates',
+                                     error.prefix=error.prefix)
+    check.intervention.unit.argument(years,
+                                     arg.name = 'years',
+                                     error.prefix=error.prefix)
+    
+    if (!is(rates, 'function') && !is(rates, 'expression') &&
+        !is(years, 'function') && !is(years, 'expression') &&
+        length(years) != length(rates))
+        stop("'years' must have the same length as 'rates'")
+    
+    if (!is(rates, 'function') && !is(raw.rates, 'function') && length(raw.rates) != length(rates))
+        stop("'raw.rates' and 'rates' must have the same length")
+    
+}
+
+check.unit.years <- function(start.year, end.year, years,
+                             resolved.bindings,
+                             error.prefix='')
+{
+    check.intervention.unit.argument(start.year,
+                                     arg.name = 'start.year',
+                                     length=1,
+                                     error.prefix=error.prefix)
+    check.intervention.unit.argument(end.year,
+                                     arg.name = 'end.year',
+                                     length=1,
+                                     error.prefix=error.prefix)
+    check.intervention.unit.argument(years,
+                                     arg.name = 'years',
+                                     error.prefix=error.prefix)
+    
     
     if (!need.to.resolve(start.year, resolved.bindings))
     {
@@ -209,6 +264,28 @@ check.unit.years <- function(start.year, end.year, years,
 ##-- RESOLVING ELEMENTS of UNITS --##
 ##---------------------------------##
 
+# Makes a list of what still needs to be resolved
+index.unit.to.resolve <- function(unit)
+{
+    unit$to.resolve = unique(c(
+        get.names.to.resolve(unit$start.year),
+        get.names.to.resolve(unit$end.year),
+        get.names.to.resolve(unit$rates),
+        get.names.to.resolve(unit$raw.rates),
+        get.names.to.resolve(unit$years)
+    ))
+    
+    unit$unresolved = c(
+        start.year = any(need.to.resolve(unit$start.year, resolved.bindings=list())),
+        end.year = any(need.to.resolve(unit$end.year, resolved.bindings=list())),
+        rates = any(need.to.resolve(unit$rates, resolved.bindings=list())),
+        raw.rates = any(need.to.resolve(unit$raw.rates, resolved.bindings=list())),
+        years = any(need.to.resolve(unit$years, resolved.bindings=list()))
+    )
+    
+    
+    unit
+}
 
 # Values (for years or rates) in intervention units can be given as character placeholders
 # These functions aid in replacing those placeholders with numeric values
@@ -216,7 +293,9 @@ check.unit.years <- function(start.year, end.year, years,
 need.to.resolve <- function(vals,
                             resolved.bindings)
 {
-    if (is.character(vals) || is.expression(vals))
+    if (is(vals, 'function'))
+        T
+    else if (is.character(vals) || is.expression(vals))
     {
         names.per = lapply(vals, get.names.to.resolve, resolved.bindings=resolved.bindings)
         sapply(names.per, length) > 0
@@ -246,7 +325,8 @@ get.names.to.resolve <- function(vals,
 
 intervention.unit.is.resolved <- function(unit)
 {
-    length(unit$to.resolve) == 0
+    all(!unit$unresolved)
+    #length(unit$to.resolve) == 0
 }
 
 #parameters is a named, numeric vector
@@ -256,21 +336,24 @@ resolve.intervention.unit <- function(unit, parameters)
         stop("'parameters' must be a numeric vector")
     
     to.bind = intersect(unit$to.resolve, names(parameters))
-    unit$resolved.bindings = parameters[to.bind]
+    unit$resolved.bindings[to.bind] = parameters[to.bind]
     unit$to.resolve = setdiff(unit$to.resolve, to.bind)
     
     if (any(is.na(unit$resolved.bindings)))
         stop("'parameters' cannot contain NA values to resolve")
         
-    unit$start.year = resolve.element(unit$start.year, resolved.bindings = unit$resolved.bindings)
-    unit$end.year = resolve.element(unit$end.year, resolved.bindings = unit$resolved.bindings)
-    unit$years = resolve.element(unit$years, resolved.bindings = unit$resolved.bindings)
+    unit$start.year = resolve.element(unit$start.year, resolved.bindings = unit$resolved.bindings, parameters = parameters)
+    unit$end.year = resolve.element(unit$end.year, resolved.bindings = unit$resolved.bindings, parameters = parameters)
+    unit$years = resolve.element(unit$years, resolved.bindings = unit$resolved.bindings, parameters = parameters)
+    unit$raw.rates = resolve.element(unit$raw.rates, resolved.bindings = unit$resolved.bindings, parameters = parameters)
+    unit$rates = resolve.element(unit$rates, resolved.bindings = unit$resolved.bindings, parameters = parameters)
     
-    unit$raw.rates = resolve.element(unit$raw.rates, resolved.bindings = unit$resolved.bindings)
-    unit$rates = resolve.element(unit$rates, resolved.bindings = unit$resolved.bindings)
+    unit = index.unit.to.resolve(unit)
+    check.unit.years(start.year = unit$start.year, end.year = unit$end.year, years = unit$years,
+                     resolved.bindings = unit$resolved.bindings)
+    check.unit.rates(rates = unit$rates, raw.rates = unit$raw.rates, years = unit$years,
+                     resolved.bindings = unit$resolved.bindings)
     
-
-
     if (intervention.unit.is.resolved(unit))
     {
         to.check = c('start.year','end.year','years','raw.rates','rates')
@@ -298,14 +381,22 @@ resolve.intervention.unit <- function(unit, parameters)
     unit
 }
 
-resolve.element <- function(elem, resolved.bindings)
+resolve.element <- function(elem, resolved.bindings, parameters)
 {
-    if (is.character(elem))
+    if (is(elem, 'function')){
+        pp.for.fn = as.numeric(resolved.bindings)
+        pp.for.fn[names(parameters)] = parameters
+        rv = elem(pp.for.fn)
+        
+        # A recursive call, in case the function returned things that need further resolving
+        resolve.element(rv, resolved.bindings, parameters)
+    }
+    else if (is.character(elem))
     {
         for (param.name in names(resolved.bindings))
         {
             if (any(elem==param.name))
-                elem[elem==param.name] = resolved.bindings[param.name]
+                elem[elem==param.name] = resolved.bindings[[param.name]]
         }
         
         if (!any(need.to.resolve(elem, resolved.bindings=resolved.bindings)))
@@ -322,19 +413,17 @@ resolve.element <- function(elem, resolved.bindings)
                 one.val
         })
         
-        if (any(sapply(elem.resolved, length) != 1))
-            stop("Expressions in intervention units must resolve to a length=1 vector")
         elem.resolved = unlist(elem.resolved)
+        if (is(elem.resolved, 'list'))
+            stop("Unable to resolve multiple expressions in intervention unit")
         
-        if (is.character(elem.resolved))
-            resolve.element(elem.resolved, resolved.bindings=resolved.bindings)
-                                #a recursive call, in case some expressions resolve
-                                # to characters that need to be resolved in themselves
-        else
-            elem.resolved
+        # A recursive call, in case the function returned things that need further resolving
+        resolve.element(elem.resolved, resolved.bindings, parameters)
     }
+    else if (is(elem, 'numeric') || is(elem, 'integer'))
+        as.numeric(elem)
     else
-        elem
+        stop("Error resolving intervention unit: expressions and functions must resolve to numeric values")
 }
 
 ##----------------##

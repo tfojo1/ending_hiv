@@ -20,7 +20,6 @@ library(geepack)
 
 analysis = 'jheem.model'
 # analysis = 'CNICS'
-just.do.multinomial = T
 
 ##----------------------------------##
 ##---------- Data cleaning----------##
@@ -62,7 +61,7 @@ for (i in 1:nrow(dataset)) {
         
     } else if(dataset$risk[i]=="other")  {
         dataset$sex.risk[i]="other"
-            
+        
     } else 
         dataset$sex.risk[i]="missing"
 }
@@ -72,7 +71,7 @@ print("Defining engagement criteria and disengagement time")
 for (i in 1:nrow(dataset)) {
     if(dataset$vl.now[i]==TRUE && dataset$visits.now[i]==TRUE)  {
         dataset$engaged.now[i]=TRUE
- 
+        
     } else 
         dataset$engaged.now[i]=FALSE
     
@@ -159,42 +158,6 @@ if (1==2)
     })
 }
 
-##-- A FUNCTION TO SHOEHORN A STANDARD MULTINOMIAL FIT INSTEAD OF OUR GEE LOR --##
-shoehorn.fit.multinom <- function(ff, df)
-{
-    coef.names = c(
-        paste0(names(model.truly.disengaged$coefficients)[-1], ':1'),
-        paste0(names(model.truly.disengaged$coefficients)[-1], ':2')
-    )
-    shoehorned.coefs = numeric(length(coef.names))
-    names(shoehorned.coefs) = coef.names
-    
-    new.levels = c('remain', setdiff(levels(df$future.state), 'remain'))
-    df$future.state = factor(df$future.state, new.levels)
-    
-    fit = multinom(ff, data=df)
-    
-    coefs = coef(fit)
-    
-    shoehorned.coefs = c(
-        beta10=coefs[1,1],
-        beta20=coefs[2,1],
-        shoehorned.coefs
-    )
-
-    for (cname in dimnames(coefs)[[2]][-1])
-    {
-        shoehorned.coefs[paste0(cname, ":1")] = coefs[1,cname]
-        shoehorned.coefs[paste0(cname, ":2")] = coefs[2,cname]
-    }
-    
-    
-    list(
-        coefficients = shoehorned.coefs,
-        robust.variance = NULL
-    )
-}
-
 ##------------------------------------##
 ##-- DATASET 1: Engaged unsuppressed--##
 ##------------------------------------##
@@ -204,7 +167,7 @@ engaged.unsuppressed <-dataset[dataset$engaged.now==TRUE & dataset$suppressed.no
 
 for (i in 1:nrow(engaged.unsuppressed)) {
     if(!is.na(engaged.unsuppressed$engaged.future[i]) && !is.na(engaged.unsuppressed$suppressed.future[i]) &&
-        engaged.unsuppressed$engaged.future[i]==TRUE && engaged.unsuppressed$suppressed.future[i]==FALSE)  {
+       engaged.unsuppressed$engaged.future[i]==TRUE && engaged.unsuppressed$suppressed.future[i]==FALSE)  {
         engaged.unsuppressed$future.state[i]="remain"
         
     } else if(!is.na(engaged.unsuppressed$engaged.future[i]) && !is.na(engaged.unsuppressed$suppressed.future[i]) &&
@@ -220,6 +183,8 @@ for (i in 1:nrow(engaged.unsuppressed)) {
     
 }
 
+
+
 engaged.unsuppressed <-engaged.unsuppressed[engaged.unsuppressed$future.state!="missing",]
 engaged.unsuppressed$future.state <- factor(engaged.unsuppressed$future.state, levels = c("suppress","lost", "remain"))
 engaged.unsuppressed$age.category <- factor(engaged.unsuppressed$age.category, levels = c("35-45","13-25","25-35","45-55","55+"))
@@ -231,8 +196,8 @@ engaged.unsuppressed$sex.risk <- factor(engaged.unsuppressed$sex.risk, levels = 
                                                                                   "idu_male","idu_female","other"))
 
 model.suppressed.if.not.truly.disengaged.EU <- geeglm(suppressed.future ~ age.category + sex.risk + race +
-                                                       relative.year + relative.year:age.category + relative.year:sex.risk + relative.year:race,
-                                                   data=engaged.unsuppressed[engaged.unsuppressed$future.state!='lost',], id=id, family = binomial, corstr = "exchangeable")
+                                                          relative.year + relative.year:age.category + relative.year:sex.risk + relative.year:race,
+                                                      data=engaged.unsuppressed[engaged.unsuppressed$future.state!='lost',], id=id, family = binomial, corstr = "exchangeable")
 
 
 p.truly.disengaged.EU = expit(predict.glm(model.truly.disengaged, newdata=engaged.unsuppressed))
@@ -255,7 +220,7 @@ for (i in 1:N.IMPUTATIONS)
     engaged.unsuppressed.sim$future.state[simulated.lost.EU==1] = 'lost'
     engaged.unsuppressed.sim$future.state[simulated.lost.EU==0 & simulated.suppressed.EU==1] = 'suppress'
     engaged.unsuppressed.sim$future.state[simulated.lost.EU==0 & simulated.suppressed.EU==0] = 'remain'
-
+    
     imputed.engaged.unsuppressed = rbind(imputed.engaged.unsuppressed, engaged.unsuppressed.sim)   
 }
 
@@ -297,36 +262,32 @@ if (1==2)
     })
 }
 
-{
-    
-}
-if (analysis=='jheem.model')
-{
-    if (just.do.multinomial)
-    {
-        print("Fitting simple multinomial Model for engaged-unsuppressed, JHEEM model version (model coefficients only), with disengagement weights")
-        model.engaged.unsuppressed <- shoehorn.fit.multinom(future.state ~ age.category + sex.risk + race + relative.year,
-                                                df=imputed.engaged.unsuppressed)
-    }
-    else
-    {
-        print("Fitting Model for engaged-unsuppressed, JHEEM model version (model coefficients only), with disengagement weights")
-        model.engaged.unsuppressed <- nomLORgee(future.state ~ age.category + sex.risk + race + relative.year
-                                                + age.category*relative.year + sex.risk*relative.year + race*relative.year,
-                                                data=imputed.engaged.unsuppressed, id=id)
-    }
-   
-}
-if (analysis=='CNICS')
-{
-    print("Fitting Model for engaged-unsuppressed, CNICS version (all coefficients)")
-    model.engaged.unsuppressed <- nomLORgee(future.state ~ age.category + sex.risk + race + relative.year
-                                            + site + art.naive + years.in.care + aids.defining.illness
-                                            + age.category*relative.year + sex.risk*relative.year + race*relative.year,
-                                            data=engaged.unsuppressed, id=id)
-}
 
+imputed.engaged.unsuppressed$suppressed.future = as.numeric(imputed.engaged.unsuppressed$future.state=='suppress')
+imputed.engaged.unsuppressed$lost.future = as.numeric(imputed.engaged.unsuppressed$future.state=='lost')
 
+#### Logistic models for Engaged-Unsuppressed ####
+## --> Suppress
+print("Fitting logistic model for engaged-unsuppressed --> engaged-suppressed, WITH individual slopes")
+model.unsupp.to.supp.slopes <- geeglm(suppressed.future ~ age.category + sex.risk + race + relative.year
+                                                   + age.category*relative.year + sex.risk*relative.year + race*relative.year,
+                                                   data=imputed.engaged.unsuppressed, id=id, family=binomial, corstr="exchangeable")
+
+print("Fitting logistic model for engaged-unsuppressed --> engaged-suppressed, WITHOUT individual slopes")
+model.unsupp.to.supp.noslopes <- geeglm(suppressed.future ~ age.category + sex.risk + race + relative.year,
+                                                   data=imputed.engaged.unsuppressed, id=id, family=binomial, corstr="exchangeable")
+
+## --> Lost
+print("Fitting logistic model for engaged-unsuppressed --> lost, WITH individual slopes")
+model.unsupp.to.lost.slopes <- geeglm(lost.future ~ age.category + sex.risk + race + relative.year
+                                                   + age.category*relative.year + sex.risk*relative.year + race*relative.year,
+                                                   data=imputed.engaged.unsuppressed, id=id, family=binomial, corstr="exchangeable")
+
+print("Fitting logistic model for engaged-unsuppressed --> lost, WITHOUT individual slopes")
+model.unsupp.to.lost.noslopes <- geeglm(lost.future ~ age.category + sex.risk + race + relative.year,
+                                                   data=imputed.engaged.unsuppressed, id=id, family=binomial, corstr="exchangeable")
+
+        
 ##------------------------------------##
 ##--- DATASET 2: Engaged suppressed---##
 ##------------------------------------##
@@ -364,8 +325,8 @@ engaged.suppressed$sex.risk <- factor(engaged.suppressed$sex.risk, levels = c("m
 
 
 model.suppressed.if.not.truly.disengaged.ES <- geeglm(suppressed.future ~ age.category + sex.risk + race +
-                                                       relative.year + relative.year:age.category + relative.year:sex.risk + relative.year:race,
-                                                   data=engaged.suppressed[engaged.suppressed$future.state!='lost',], id=id, family = binomial, corstr = "exchangeable")
+                                                          relative.year + relative.year:age.category + relative.year:sex.risk + relative.year:race,
+                                                      data=engaged.suppressed[engaged.suppressed$future.state!='lost',], id=id, family = binomial, corstr = "exchangeable")
 
 
 p.truly.disengaged.ES = expit(predict.glm(model.truly.disengaged, newdata=engaged.suppressed))
@@ -393,78 +354,61 @@ for (i in 1:N.IMPUTATIONS)
 }
 
 
+imputed.engaged.suppressed$suppressed.future = as.numeric(imputed.engaged.suppressed$future.state=='unsuppress')
+imputed.engaged.suppressed$lost.future = as.numeric(imputed.engaged.suppressed$future.state=='lost')
 
-if (analysis=='jheem.model')
-{
-    if (just.do.multinomial)
-    {
-        
-        print("Fitting Simple Multinomial Model for engaged-suppressed, JHEEM model version (model coefficients only), with disengagement weights")
-        model.engaged.suppressed <- shoehorn.fit.multinom(future.state ~ age.category + sex.risk + race + relative.year,
-                                              df=imputed.engaged.suppressed)
-    }
-    else
-    {
-        print("Fitting Model for engaged-suppressed, JHEEM model version (model coefficients only), with disengagement weights")
-        model.engaged.suppressed <- nomLORgee(future.state ~ age.category + sex.risk + race + relative.year
-                                                + age.category*relative.year + sex.risk*relative.year + race*relative.year,
-                                                data=imputed.engaged.suppressed, id=id)
-    }
-}
+#### Logistic models for Engaged-Suppressed ####
+## --> Unsuppress
+print("Fitting logistic model for engaged-suppressed --> engaged-unsuppressed, WITH individual slopes")
+model.supp.to.unsupp.slopes <- geeglm(suppressed.future ~ age.category + sex.risk + race + relative.year
+                                                   + age.category*relative.year + sex.risk*relative.year + race*relative.year,
+                                                   data=imputed.engaged.suppressed, id=id, family=binomial, corstr="exchangeable")
 
-if (analysis=='CNICS')
-{
-    print("Fitting Model for engaged-suppressed, CNICS version (all coefficients)")
-    model.engaged.suppressed <- nomLORgee(future.state ~ age.category + sex.risk + race + relative.year
-                                          + site + art.naive + years.in.care + aids.defining.illness
-                                          + age.category*relative.year + sex.risk*relative.year + race*relative.year,
-                                          data=engaged.suppressed, id=id)
-}
+print("Fitting logistic model for engaged-suppressed --> engaged-suppressed, WITHOUT individual slopes")
+model.supp.to.unsupp.noslopes <- geeglm(suppressed.future ~ age.category + sex.risk + race + relative.year,
+                                                   data=imputed.engaged.suppressed, id=id, family=binomial, corstr="exchangeable")
+
+## --> Lost
+print("Fitting logistic model for engaged-suppressed --> lost, WITH individual slopes")
+model.supp.to.lost.slopes <- geeglm(lost.future ~ age.category + sex.risk + race + relative.year
+                                                   + age.category*relative.year + sex.risk*relative.year + race*relative.year,
+                                                   data=imputed.engaged.suppressed, id=id, family=binomial, corstr="exchangeable")
+
+print("Fitting logistic model for engaged-suppressed --> lost, WITHOUT individual slopes")
+model.supp.to.lost.noslopes <- geeglm(lost.future ~ age.category + sex.risk + race + relative.year,
+                                                   data=imputed.engaged.suppressed, id=id, family=binomial, corstr="exchangeable")
+
 
 
 ##------------------------------------##
 ##------- DATASET 3: Disengaged ------##
 ##------------------------------------##
 
-
 disengaged$p.truly.disengaged = expit(predict.glm(model.truly.disengaged, newdata=disengaged))
 disengaged$p.truly.disengaged[disengaged$future.state=='reengage.unsuppress'] = 1
 disengaged$p.truly.disengaged[disengaged$future.state=='reengage.suppress'] = 0
 
 
-if (analysis=='jheem.model')
-{
-    print("Removing reengagement into suppressed")
-    disengaged <- disengaged[disengaged$future.state!="reengage.suppress",]
-    disengaged$reengage = as.numeric(disengaged$future.state=='reengage.unsuppress')
-    disengaged$future.state <- factor(disengaged$future.state, levels = c("reengage.unsuppress","remain"))
-    
-    print("Fitting LOGISTIC Model for disengaged, JHEEM model version (model coefficients only), with disengagement weights")
-    model.disengaged <- geeglm(reengage ~ age.category + sex.risk + race + relative.year,
-                               data=disengaged, id=id, family = binomial, corstr = "exchangeable",
-                               weights = disengaged$p.truly.disengaged)
-    model.disengaged.noslope <- geeglm(reengage ~ age.category + sex.risk + race,
-                               data=disengaged, id=id, family = binomial, corstr = "exchangeable",
-                               weights = disengaged$p.truly.disengaged)
-    
-    model.disengaged$coefficients[] = 0
-    model.disengaged$coefficients[names(model.disengaged.noslope$coefficients)] = model.disengaged.noslope$coefficients
-    
-    #model.disengaged.simple <- glm(reengage ~ age.category + sex.risk + race + relative.year 
-     #                          + age.category*relative.year + sex.risk*relative.year + race*relative.year,
-      #                         data=disengaged, family = binomial, 
-       #                        weights = disengaged$p.truly.disengaged)
-    
-}
+print("Removing reengagement into suppressed")
+disengaged <- disengaged[disengaged$future.state!="reengage.suppress",]
+disengaged$reengage = as.numeric(disengaged$future.state=='reengage.unsuppress')
+disengaged$future.state <- factor(disengaged$future.state, levels = c("reengage.unsuppress","remain"))
 
-if (analysis=='CNICS')
-{
-    print("Fitting MULTINOMIAL Model for disengaged, CNICS version (all coefficients)")
-    model.disengaged <- nomLORgee(future.state ~ age.category + sex.risk + race + relative.year 
-                                  + site + art.naive + years.in.care + aids.defining.illness,
+
+#### Logistic models for Disengaged ####
+print("Fitting LOGISTIC Model for disengaged, JHEEM model version (model coefficients only), with disengagement weights")
+model.disengaged.slopes <- geeglm(reengage ~ age.category + sex.risk + race + relative.year
                                   + age.category*relative.year + sex.risk*relative.year + race*relative.year,
-                                  data=disengaged, id=id)  
-}
+                                  data=disengaged, id=id, family = binomial, corstr = "exchangeable",
+                                  weights = disengaged$p.truly.disengaged)
+model.disengaged.noslopes <- geeglm(reengage ~ age.category + sex.risk + race + relative.year,
+                                    data=disengaged, id=id, family = binomial, corstr = "exchangeable",
+                                    weights = disengaged$p.truly.disengaged)
+
+#model.disengaged$coefficients[] = 0
+#model.disengaged$coefficients[names(model.disengaged.noslope$coefficients)] = model.disengaged.noslope$coefficients
+
+
 
 ##----------------------------##
 ##-- ADJUST P DISENGAGEMENT --##
@@ -485,65 +429,74 @@ adjust.coefficients.for.disengagement <- function(coefficients,
     rr.post = p.post / p.ref
     coefficients[paste0('beta',disengaged.k,'0')] = log(rr.post)
     
-#    x.betas.new = coefficients[c('beta10','beta20')]
-#    p.ref.new = 1/(1+sum(exp(x.betas.new)))
-#    p.data.new = exp(x.betas[disengaged.k]) * p.ref.new
+    #    x.betas.new = coefficients[c('beta10','beta20')]
+    #    p.ref.new = 1/(1+sum(exp(x.betas.new)))
+    #    p.data.new = exp(x.betas[disengaged.k]) * p.ref.new
     
-#    x.betas.for.slope = coefficients[c('beta10','beta20')] + coefficients[c('relative.year:1','relative.year:2')]
-#    p.ref.for.slope = 1/(1+sum(exp(x.betas.for.slope)))
-#    p.data.for.slope = exp(x.betas.for.slope[disengaged.k]) * p.ref.for.slope
+    #    x.betas.for.slope = coefficients[c('beta10','beta20')] + coefficients[c('relative.year:1','relative.year:2')]
+    #    p.ref.for.slope = 1/(1+sum(exp(x.betas.for.slope)))
+    #    p.data.for.slope = exp(x.betas.for.slope[disengaged.k]) * p.ref.for.slope
     
-#    p.post.for.slope = prior.weight * prior.estimate + data.weight * p.data.for.slope
-#    rrr.post = p.post.for.slope / p.post / (p.ref.for.slope / p.ref.new)
+    #    p.post.for.slope = prior.weight * prior.estimate + data.weight * p.data.for.slope
+    #    rrr.post = p.post.for.slope / p.post / (p.ref.for.slope / p.ref.new)
     
-#    coefficients[paste0('relative.year:',disengaged.k)] = log(rrr.post)
+    #    coefficients[paste0('relative.year:',disengaged.k)] = log(rrr.post)
     
     coefficients
     
 }
 
 adjust.slope.coefficients <- function(coefficients,
-                          prior.estimate=0,
-                          prior.weight=0.5,
-                          data.weight=1-prior.weight)
+                                      prior.estimate=0,
+                                      prior.weight=0.5,
+                                      data.weight=1-prior.weight)
 {
     mask = grepl('.+relative\\.year', names(coefficients))
     coefficients[mask] = prior.weight * prior.estimate + data.weight * coefficients[mask]
     coefficients
 }
-    
+
 
 ##------------------------------------##
 ##------------- Output ---------------##
 ##------------------------------------##
 
-#just to have zero terms for the disengaged coefficients
-disengaged.coefficients = model.truly.disengaged$coefficients
-disengaged.coefficients[] = 0
-disengaged.coefficients[names(model.disengaged$coefficients)] = model.disengaged$coefficients
-
-output <- list(engaged.unsuppressed.coefficients=model.engaged.unsuppressed$coefficients,
-               engaged.unsuppressed.variance=model.engaged.unsuppressed$robust.variance,
-               engaged.suppressed.coefficients=model.engaged.suppressed$coefficients,
-               engaged.suppressed.variance=model.engaged.suppressed$robust.variance,
-               disengaged.coefficients=disengaged.coefficients,
-               disengaged.variance=model.disengaged$robust.variance,
+output <- list(#Unsuppressed, coefficients
+               unsuppressed.to.suppressed.slopes.coefficients=model.unsupp.to.supp.slopes$coefficients,
+               unsuppressed.to.suppressed.noslopes.coefficients=model.unsupp.to.supp.noslopes$coefficients,
+               unsuppressed.to.lost.slopes.coefficients=model.unsupp.to.lost.slopes$coefficients,
+               unsuppressed.to.lost.noslopes.coefficients=model.unsupp.to.lost.noslopes$coefficients,
+               
+               #Unsuppressed, variance
+               unsuppressed.to.suppressed.slopes.variance=model.unsupp.to.supp.slopes$robust.variance,
+               unsuppressed.to.suppressed.noslopes.variance=model.unsupp.to.supp.noslopes$robust.variance,
+               unsuppressed.to.lost.slopes.variance=model.unsupp.to.lost.slopes$robust.variance,
+               unsuppressed.to.lost.noslopes.variance=model.unsupp.to.lost.noslopes$robust.variance,
+               
+               #Suppressed, coefficients
+               suppressed.to.unsuppressed.slopes.coefficients=model.supp.to.unsupp.slopes$coefficients,
+               suppressed.to.unsuppressed.noslopes.coefficients=model.supp.to.unsupp.noslopes$coefficients,
+               suppressed.to.lost.slopes.coefficients=model.supp.to.lost.slopes$coefficients,
+               suppressed.to.lost.noslopes.coefficients=model.supp.to.lost.noslopes$coefficients,
+               
+               #Suppressed, coefficients
+               suppressed.to.unsuppressed.slopes.variance=model.supp.to.unsupp.slopes$robust.variance,
+               suppressed.to.unsuppressed.noslopes.variance=model.supp.to.unsupp.noslopes$robust.variance,
+               suppressed.to.lost.slopes.variance=model.supp.to.lost.slopes$robust.variance,
+               suppressed.to.lost.noslopes.variance=model.supp.to.lost.noslopes$robust.coefficients,
+               
+               # Disengaged
+               disengaged.slopes.coefficients=model.disengaged.slopes$coefficients,
+               disengaged.slopes.variance=model.disengaged.slopes$robust.variance,
+               disengaged.noslopes.coefficients=model.disengaged.noslopes$coefficients,
+               disengaged.noslopes.variance=model.disengaged.noslopes$robust.variance,
+               
                anchor.year=anchor.year)
-
-output$engaged.suppressed.coefficients = adjust.coefficients.for.disengagement(output$engaged.suppressed.coefficients,
-                                                                               prior.weight=0.3)
-output$engaged.unsuppressed.coefficients = adjust.coefficients.for.disengagement(output$engaged.unsuppressed.coefficients,
-                                                                                 prior.weight=0.3)
-
-output$engaged.suppressed.coefficients = adjust.slope.coefficients(output$engaged.suppressed.coefficients,
-                                                                   prior.weight=0.5)
-output$engaged.unsuppressed.coefficients = adjust.slope.coefficients(output$engaged.unsuppressed.coefficients,
-                                                                   prior.weight=0.5)
 
 
 print("Done - saving output")
 save(output, file=file.path('code','for Melissa', 'CNICS analysis', 
-                            paste0('multinomial_output_adj_', dataset.type, '_', analysis, '_', Sys.Date())))
+                            paste0('logistic_output_adj_', dataset.type, '_', analysis, '_', Sys.Date())))
 
 if (dataset.type=='real')
     save(output, file='cleaned_data/continuum/cnics_regression.Rdata')
