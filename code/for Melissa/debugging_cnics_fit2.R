@@ -24,18 +24,35 @@ get.ref.stratum = function(arr){
 
 test.pred = function(fit=NULL,
                      fn=mean,#get.ref.stratum,
+                     use.counts=F,
+                     dataset=imputed.engaged.unsuppressed,
                      coefs=fit$coefficients)
 {
     ps = generate.probs(coefs)
     
-    print("REF: ")
-    print(apply(ps$p.ref, 'year', fn))
-    
-    print("Outcome 1:")
-    print(apply(ps$p.1, 'year', fn))
-    
-    print("Outcome 2:")
-    print(apply(ps$p.2, 'year', fn))
+    if (use.counts)
+    {
+        counts = make.df.counts(df=dataset)
+        print("REF: ")
+        print(apply(ps$p.ref*counts, 'year', sum) / apply(counts, 'year', sum))
+        
+        print("Outcome 1:")
+        print(apply(ps$p.1*counts, 'year', sum) / apply(counts, 'year', sum))
+        
+        print("Outcome 2:")
+        print(apply(ps$p.2*counts, 'year', sum) / apply(counts, 'year', sum))
+    }
+    else
+    {
+        print("REF: ")
+        print(apply(ps$p.ref, 'year', fn))
+        
+        print("Outcome 1:")
+        print(apply(ps$p.1, 'year', fn))
+        
+        print("Outcome 2:")
+        print(apply(ps$p.2, 'year', fn))
+    }
 }
 
 model.engaged.suppressed <- nomLORgee(future.state ~ age.category + sex.risk + race + relative.year

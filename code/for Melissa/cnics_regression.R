@@ -517,11 +517,16 @@ adjust.slope.coefficients <- function(coefficients,
 ##------------- Output ---------------##
 ##------------------------------------##
 
+#just to have zero terms for the disengaged coefficients
+disengaged.coefficients = model.truly.disengaged$coefficients
+disengaged.coefficients[] = 0
+disengaged.coefficients[names(model.disengaged$coefficients)] = model.disengaged$coefficients
+
 output <- list(engaged.unsuppressed.coefficients=model.engaged.unsuppressed$coefficients,
                engaged.unsuppressed.variance=model.engaged.unsuppressed$robust.variance,
                engaged.suppressed.coefficients=model.engaged.suppressed$coefficients,
                engaged.suppressed.variance=model.engaged.suppressed$robust.variance,
-               disengaged.coefficients=model.disengaged$coefficients,
+               disengaged.coefficients=disengaged.coefficients,
                disengaged.variance=model.disengaged$robust.variance,
                anchor.year=anchor.year)
 

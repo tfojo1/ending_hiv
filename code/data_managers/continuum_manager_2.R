@@ -189,7 +189,7 @@ create.continuum.manager <- function(dir='cleaned_data/',
                                      max.reengaged.proportion = 0.5,
                                      
                                      max.unsuppressed.retention = 0.95,
-                                     max.suppressed.retention = 0.95,
+                                     max.suppressed.retention = 0.98,
                                      
                                      verbose=T,
                                     test=FALSE

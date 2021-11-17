@@ -814,6 +814,43 @@ pretty.format.strata.values <- function(vals)
     rv
 }
 
+
+test.palette <- function(pal, n.colors = NA,
+                         colors=NULL)
+{
+  if (is.null(colors))
+  {
+    if (is.na(n.colors))
+    {
+      n.colors = 2
+      done = F
+      while (!done)
+      {
+        print(paste0("Trying ", n.colors, " colors"))
+        colors = suppressWarnings(pal(n.colors))
+        if (any(is.na(colors)))
+        {
+          done = T
+          n.colors = n.colors-1
+        }
+        else 
+          n.colors = n.colors + 1
+      }
+    }
+    colors = pal(n.colors)
+  }
+  
+  df = data.frame(
+    x = 1:length(colors),
+    y = 10 + 1:length(colors),
+    group = colors
+  )
+  
+  names(colors)=colors
+  ggplot(df) + geom_bar(aes(x, y, fill=group), stat='identity') + 
+    scale_fill_manual(values=colors)
+}
+
 ##------------------##
 ##-- HELPER CLASS --##
 ##------------------##
