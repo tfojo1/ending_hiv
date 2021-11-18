@@ -19,6 +19,7 @@ library(gee)
 library(geepack)
 
 analysis = 'jheem.model'
+use.gee = F
 # analysis = 'CNICS'
 
 ##----------------------------------##
@@ -267,26 +268,49 @@ imputed.engaged.unsuppressed$suppressed.future = as.numeric(imputed.engaged.unsu
 imputed.engaged.unsuppressed$lost.future = as.numeric(imputed.engaged.unsuppressed$future.state=='lost')
 
 #### Logistic models for Engaged-Unsuppressed ####
-## --> Suppress
-print("Fitting logistic model for engaged-unsuppressed --> engaged-suppressed, WITH individual slopes")
-model.unsupp.to.supp.slopes <- geeglm(suppressed.future ~ age.category + sex.risk + race + relative.year
-                                                   + age.category*relative.year + sex.risk*relative.year + race*relative.year,
-                                                   data=imputed.engaged.unsuppressed, id=id, family=binomial, corstr="exchangeable")
-
-print("Fitting logistic model for engaged-unsuppressed --> engaged-suppressed, WITHOUT individual slopes")
-model.unsupp.to.supp.noslopes <- geeglm(suppressed.future ~ age.category + sex.risk + race + relative.year,
-                                                   data=imputed.engaged.unsuppressed, id=id, family=binomial, corstr="exchangeable")
-
-## --> Lost
-print("Fitting logistic model for engaged-unsuppressed --> lost, WITH individual slopes")
-model.unsupp.to.lost.slopes <- geeglm(lost.future ~ age.category + sex.risk + race + relative.year
-                                                   + age.category*relative.year + sex.risk*relative.year + race*relative.year,
-                                                   data=imputed.engaged.unsuppressed, id=id, family=binomial, corstr="exchangeable")
-
-print("Fitting logistic model for engaged-unsuppressed --> lost, WITHOUT individual slopes")
-model.unsupp.to.lost.noslopes <- geeglm(lost.future ~ age.category + sex.risk + race + relative.year,
-                                                   data=imputed.engaged.unsuppressed, id=id, family=binomial, corstr="exchangeable")
-
+if (use.gee==T)
+{
+    ## --> Suppress
+    print("Fitting logistic model for engaged-unsuppressed --> engaged-suppressed, WITH individual slopes")
+    model.unsupp.to.supp.slopes <- geeglm(suppressed.future ~ age.category + sex.risk + race + relative.year
+                                          + age.category*relative.year + sex.risk*relative.year + race*relative.year,
+                                          data=imputed.engaged.unsuppressed, id=id, family=binomial, corstr="exchangeable")
+    
+    print("Fitting logistic model for engaged-unsuppressed --> engaged-suppressed, WITHOUT individual slopes")
+    model.unsupp.to.supp.noslopes <- geeglm(suppressed.future ~ age.category + sex.risk + race + relative.year,
+                                            data=imputed.engaged.unsuppressed, id=id, family=binomial, corstr="exchangeable")
+    
+    ## --> Lost
+    print("Fitting logistic model for engaged-unsuppressed --> lost, WITH individual slopes")
+    model.unsupp.to.lost.slopes <- geeglm(lost.future ~ age.category + sex.risk + race + relative.year
+                                          + age.category*relative.year + sex.risk*relative.year + race*relative.year,
+                                          data=imputed.engaged.unsuppressed, id=id, family=binomial, corstr="exchangeable")
+    
+    print("Fitting logistic model for engaged-unsuppressed --> lost, WITHOUT individual slopes")
+    model.unsupp.to.lost.noslopes <- geeglm(lost.future ~ age.category + sex.risk + race + relative.year,
+                                            data=imputed.engaged.unsuppressed, id=id, family=binomial, corstr="exchangeable")
+} else
+{
+    ## --> Suppress
+    print("Fitting logistic model for engaged-unsuppressed --> engaged-suppressed, WITH individual slopes, no GEE")
+    model.unsupp.to.supp.slopes <- glm(suppressed.future ~ age.category + sex.risk + race + relative.year
+                                          + age.category*relative.year + sex.risk*relative.year + race*relative.year,
+                                          data=imputed.engaged.unsuppressed, family=binomial)
+    
+    print("Fitting logistic model for engaged-unsuppressed --> engaged-suppressed, WITHOUT individual slopes, no GEE")
+    model.unsupp.to.supp.noslopes <- glm(suppressed.future ~ age.category + sex.risk + race + relative.year,
+                                            data=imputed.engaged.unsuppressed, family=binomial)
+    
+    ## --> Lost
+    print("Fitting logistic model for engaged-unsuppressed --> lost, WITH individual slopes, no GEE")
+    model.unsupp.to.lost.slopes <- glm(lost.future ~ age.category + sex.risk + race + relative.year
+                                          + age.category*relative.year + sex.risk*relative.year + race*relative.year,
+                                          data=imputed.engaged.unsuppressed, family=binomial)
+    
+    print("Fitting logistic model for engaged-unsuppressed --> lost, WITHOUT individual slopes, no GEE")
+    model.unsupp.to.lost.noslopes <- glm(lost.future ~ age.category + sex.risk + race + relative.year,
+                                            data=imputed.engaged.unsuppressed, family=binomial)
+}  
         
 ##------------------------------------##
 ##--- DATASET 2: Engaged suppressed---##
@@ -358,26 +382,51 @@ imputed.engaged.suppressed$suppressed.future = as.numeric(imputed.engaged.suppre
 imputed.engaged.suppressed$lost.future = as.numeric(imputed.engaged.suppressed$future.state=='lost')
 
 #### Logistic models for Engaged-Suppressed ####
-## --> Unsuppress
-print("Fitting logistic model for engaged-suppressed --> engaged-unsuppressed, WITH individual slopes")
-model.supp.to.unsupp.slopes <- geeglm(suppressed.future ~ age.category + sex.risk + race + relative.year
-                                                   + age.category*relative.year + sex.risk*relative.year + race*relative.year,
-                                                   data=imputed.engaged.suppressed, id=id, family=binomial, corstr="exchangeable")
-
-print("Fitting logistic model for engaged-suppressed --> engaged-suppressed, WITHOUT individual slopes")
-model.supp.to.unsupp.noslopes <- geeglm(suppressed.future ~ age.category + sex.risk + race + relative.year,
-                                                   data=imputed.engaged.suppressed, id=id, family=binomial, corstr="exchangeable")
-
-## --> Lost
-print("Fitting logistic model for engaged-suppressed --> lost, WITH individual slopes")
-model.supp.to.lost.slopes <- geeglm(lost.future ~ age.category + sex.risk + race + relative.year
-                                                   + age.category*relative.year + sex.risk*relative.year + race*relative.year,
-                                                   data=imputed.engaged.suppressed, id=id, family=binomial, corstr="exchangeable")
-
-print("Fitting logistic model for engaged-suppressed --> lost, WITHOUT individual slopes")
-model.supp.to.lost.noslopes <- geeglm(lost.future ~ age.category + sex.risk + race + relative.year,
-                                                   data=imputed.engaged.suppressed, id=id, family=binomial, corstr="exchangeable")
-
+if (use.gee==T)
+{
+    ## --> Unsuppress
+    print("Fitting logistic model for engaged-suppressed --> engaged-unsuppressed, WITH individual slopes")
+    model.supp.to.unsupp.slopes <- geeglm(suppressed.future ~ age.category + sex.risk + race + relative.year
+                                          + age.category*relative.year + sex.risk*relative.year + race*relative.year,
+                                          data=imputed.engaged.suppressed, id=id, family=binomial, corstr="exchangeable")
+    
+    print("Fitting logistic model for engaged-suppressed --> engaged-suppressed, WITHOUT individual slopes")
+    model.supp.to.unsupp.noslopes <- geeglm(suppressed.future ~ age.category + sex.risk + race + relative.year,
+                                            data=imputed.engaged.suppressed, id=id, family=binomial, corstr="exchangeable")
+    
+    ## --> Lost
+    print("Fitting logistic model for engaged-suppressed --> lost, WITH individual slopes")
+    model.supp.to.lost.slopes <- geeglm(lost.future ~ age.category + sex.risk + race + relative.year
+                                        + age.category*relative.year + sex.risk*relative.year + race*relative.year,
+                                        data=imputed.engaged.suppressed, id=id, family=binomial, corstr="exchangeable")
+    
+    print("Fitting logistic model for engaged-suppressed --> lost, WITHOUT individual slopes")
+    model.supp.to.lost.noslopes <- geeglm(lost.future ~ age.category + sex.risk + race + relative.year,
+                                          data=imputed.engaged.suppressed, id=id, family=binomial, corstr="exchangeable")
+} else
+{
+    ## --> Unsuppress
+    print("Fitting logistic model for engaged-suppressed --> engaged-unsuppressed, WITH individual slopes, no GEE")
+    model.supp.to.unsupp.slopes <- glm(suppressed.future ~ age.category + sex.risk + race + relative.year
+                                          + age.category*relative.year + sex.risk*relative.year + race*relative.year,
+                                          data=imputed.engaged.suppressed, family=binomial)
+    
+    print("Fitting logistic model for engaged-suppressed --> engaged-suppressed, WITHOUT individual slopes, no GEE")
+    model.supp.to.unsupp.noslopes <- glm(suppressed.future ~ age.category + sex.risk + race + relative.year,
+                                            data=imputed.engaged.suppressed, family=binomial)
+    
+    ## --> Lost
+    print("Fitting logistic model for engaged-suppressed --> lost, WITH individual slopes, no GEE")
+    model.supp.to.lost.slopes <- glm(lost.future ~ age.category + sex.risk + race + relative.year
+                                        + age.category*relative.year + sex.risk*relative.year + race*relative.year,
+                                        data=imputed.engaged.suppressed, family=binomial)
+    
+    print("Fitting logistic model for engaged-suppressed --> lost, WITHOUT individual slopes, no GEE")
+    model.supp.to.lost.noslopes <- glm(lost.future ~ age.category + sex.risk + race + relative.year,
+                                          data=imputed.engaged.suppressed, family=binomial)
+    
+}
+    
 
 
 ##------------------------------------##
@@ -396,18 +445,30 @@ disengaged$future.state <- factor(disengaged$future.state, levels = c("reengage.
 
 
 #### Logistic models for Disengaged ####
-print("Fitting LOGISTIC Model for disengaged, JHEEM model version (model coefficients only), with disengagement weights")
-model.disengaged.slopes <- geeglm(reengage ~ age.category + sex.risk + race + relative.year
-                                  + age.category*relative.year + sex.risk*relative.year + race*relative.year,
-                                  data=disengaged, id=id, family = binomial, corstr = "exchangeable",
-                                  weights = disengaged$p.truly.disengaged)
-model.disengaged.noslopes <- geeglm(reengage ~ age.category + sex.risk + race + relative.year,
-                                    data=disengaged, id=id, family = binomial, corstr = "exchangeable",
-                                    weights = disengaged$p.truly.disengaged)
-
-#model.disengaged$coefficients[] = 0
-#model.disengaged$coefficients[names(model.disengaged.noslope$coefficients)] = model.disengaged.noslope$coefficients
-
+if (use.gee==T)
+{
+    print("Fitting LOGISTIC Model for disengaged, JHEEM model version (model coefficients only), with disengagement weights")
+    model.disengaged.slopes <- geeglm(reengage ~ age.category + sex.risk + race + relative.year
+                                      + age.category*relative.year + sex.risk*relative.year + race*relative.year,
+                                      data=disengaged, id=id, family = binomial, corstr = "exchangeable",
+                                      weights = disengaged$p.truly.disengaged)
+    model.disengaged.noslopes <- geeglm(reengage ~ age.category + sex.risk + race + relative.year,
+                                        data=disengaged, id=id, family = binomial, corstr = "exchangeable",
+                                        weights = disengaged$p.truly.disengaged)
+    
+    #model.disengaged$coefficients[] = 0
+    #model.disengaged$coefficients[names(model.disengaged.noslope$coefficients)] = model.disengaged.noslope$coefficients
+} else
+{
+    print("Fitting LOGISTIC Model for disengaged, JHEEM model version (model coefficients only), with disengagement weights, no GEE")
+    model.disengaged.slopes <- glm(reengage ~ age.category + sex.risk + race + relative.year
+                                      + age.category*relative.year + sex.risk*relative.year + race*relative.year,
+                                      data=disengaged, family = binomial,
+                                      weights = disengaged$p.truly.disengaged)
+    model.disengaged.noslopes <- glm(reengage ~ age.category + sex.risk + race + relative.year,
+                                        data=disengaged, family = binomial,
+                                        weights = disengaged$p.truly.disengaged)
+}
 
 
 ##----------------------------##
