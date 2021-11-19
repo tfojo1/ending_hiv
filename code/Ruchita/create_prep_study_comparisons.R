@@ -60,8 +60,8 @@ INJ.VS.ORAL.DISCONTINUATION.RR.DIST = Uniform.Distribution(min=.25,
                                                            var.name='inj.vs.oral.discontinuation.rr')
 
 
-create.prep.interventions.v2 <- function(start.year=2023,
-                                         implemented.year=2027,
+create.prep.interventions.v2 <- function(start.year,
+                                         implemented.year,
                                          suffix='',
                                          oral.prep.rr.dist = ORAL.PREP.MSM.RR.DIST, #oral.prep.rr
                                          inj.vs.oral.hr.dist = INJ.PREP.HR.DIST, #inj.vs.oral.hr
@@ -72,187 +72,96 @@ create.prep.interventions.v2 <- function(start.year=2023,
   if (suffix != '' && substr(suffix, 1,1)!='_')
     suffix = paste0("_", suffix)
   
-  # UPTAKE INTERVENTION UNITS
+  # COVERAGE INTERVENTION UNITS
   
-  PREP.BASELINE.MARSHALL = create.intervention.unit(type = "prep", start.year = 2015, 
-                                              rates = 0, years = 2024,apply.function ="absolute")
   
-  PREP.35.MARSHALL = create.intervention.unit(type = "prep", start.year = 2015, 
-                                     rates = .35, years = 2024,apply.function ="absolute")
+  #Assume immediate implementation
+  PREP.BASELINE.MARSHALL = create.intervention.unit(type='prep', start.year=2015,
+                                           rates=0,
+                                           years=2015.001,
+                                           apply.function='absolute',
+                                           max.rate = 1)
   
-  INJECTABLE.PREP.VARIABLE = create.intervention.unit(type = "rr.prep", start.year = 2015, 
-                                                      rates = 'inj.rr', years = 2024, 
+  PREP.35.MARSHALL = create.intervention.unit(type='prep', start.year=2015,
+                                              rates=.35,
+                                              years=2015.001,
+                                              apply.function='absolute',
+                                              max.rate = 1)
+  
+  PREP.BASELINE.MALONEY = create.intervention.unit(type='prep', start.year=2018,
+                                                    rates=0,
+                                                    years=2018.001,
+                                                    apply.function='absolute',
+                                                    max.rate = 1)
+  
+  PREP.15.MALONEY = create.intervention.unit(type='prep', start.year=2018,
+                                              rates=.15,
+                                              years=2018.001,
+                                              apply.function='absolute',
+                                              max.rate = 1)
+  
+ 
+  #Injectable and Oral Variables 
+  
+  INJECTABLE.PREP.VARIABLE.MARSHALL = create.intervention.unit(type = "rr.prep", start.year = 2018, 
+                                                               rates = 'inj.vs.oral.hr', years = 2018.001, 
+                                                               apply.function = "multiplier", allow.less.than.otherwise = T)
+  
+  INJECTABLE.PREP.VARIABLE.MALONEY = create.intervention.unit(type = "rr.prep", start.year = 2018, 
+                                                      rates = 'inj.vs.oral.hr', years = 2018.001, 
                                                       apply.function = "multiplier", allow.less.than.otherwise = T)
   
   
-  
-  
-  PREP.PLUS.10.ORAL = create.intervention.unit(type='prep', start.year=start.year,
-                                               rates=expression(0.10 * persistence.to.coverage.fraction(oral.prep.persistence)),
-                                               years=implemented.year,
-                                               apply.function='additive',
-                                               max.rate = 1)
-  
-  PREP.PLUS.10.INJ = create.intervention.unit(type='prep', start.year=start.year,
-                                              rates=expression(0.10 * persistence.to.coverage.fraction(1-(1-oral.prep.persistence)*inj.vs.oral.discontinuation.rr)),
-                                              years=implemented.year,
-                                              apply.function='additive',
-                                              max.rate = 1)
-  
-  
-  PREP.PLUS.10.COMBINED = create.intervention.unit(type='prep', start.year=start.year,
-                                                   rates=expression(0.10 * (
-                                                     0.5 * persistence.to.coverage.fraction(oral.prep.persistence) +
-                                                       0.5 * persistence.to.coverage.fraction(1-(1-oral.prep.persistence)*inj.vs.oral.discontinuation.rr
-                                                       ))),
-                                                   years=implemented.year,
-                                                   apply.function='additive',
-                                                   max.rate = 1)
-  
-  
-  PREP.PLUS.25.ORAL = create.intervention.unit(type='prep', start.year=start.year,
-                                               rates=expression(0.25 * persistence.to.coverage.fraction(oral.prep.persistence)),
-                                               years=implemented.year,
-                                               apply.function='additive',
-                                               max.rate = 1)
-  
-  PREP.PLUS.25.INJ = create.intervention.unit(type='prep', start.year=start.year,
-                                              rates=expression(0.25 * persistence.to.coverage.fraction(1-(1-oral.prep.persistence)*inj.vs.oral.discontinuation.rr)),
-                                              years=implemented.year,
-                                              apply.function='additive',
-                                              max.rate = 1)
-  
-  
-  PREP.PLUS.25.COMBINED = create.intervention.unit(type='prep', start.year=start.year,
-                                                   rates=expression(0.25 * (
-                                                     0.5 * persistence.to.coverage.fraction(oral.prep.persistence) +
-                                                       0.5 * persistence.to.coverage.fraction(1-(1-oral.prep.persistence)*inj.vs.oral.discontinuation.rr
-                                                       ))),
-                                                   years=implemented.year,
-                                                   apply.function='additive',
-                                                   max.rate = 1)
-  # EFFICACY INTERVENTION UNITS
-  
-  ORAL.PREP.EFFICACY = create.intervention.unit(type='rr.prep', start.year=2000,
-                                                rates='oral.prep.rr',
-                                                years=2000.001,
-                                                allow.less.than.otherwise = T)
-  
-  
-  INJ.PREP.EFFICACY = create.intervention.unit(type='rr.prep', start.year=2000,
-                                               rates=c('oral.prep.rr',
-                                                       'oral.prep.rr',
-                                                       expression(oral.prep.rr * inj.vs.oral.hr)),
-                                               years=c(2000.001, start.year, implemented.year),
-                                               allow.less.than.otherwise = T)
-  
-  
-  COMBINED.50.50.PREP.EFFICACY = create.intervention.unit(type='rr.prep', start.year=2000,
-                                                          rates=c('oral.prep.rr',
-                                                                  'oral.prep.rr',
-                                                                  expression(0.5 * oral.prep.rr * persistence.to.coverage.fraction(oral.prep.persistence) +
-                                                                               0.5 * oral.prep.rr * inj.vs.oral.hr * persistence.to.coverage.fraction(1 - (1-oral.prep.persistence) * inj.vs.oral.discontinuation.rr))),
-                                                          years=c(2000.001, start.year, implemented.year),
-                                                          allow.less.than.otherwise = T)
-  
+  ORAL.PREP.VARIABLE = create.intervention.unit(type='rr.prep', start.year=2014,
+                                                rates = 'oral.prep.rr', years=2014.001,
+                                                apply.function='multiplier', allow.less.than.otherwise = T)
   
   
   # PUT THEM TOGETHER INTO INTERVENTIONS
   
-  
-  BASELINE.ORAL = create.intervention(ALL.MSM, ORAL.PREP.EFFICACY, oral.prep.rr.dist)
-  INTERVENTION.MANAGER = register.intervention(BASELINE.ORAL, code=paste0('baseline.oral.variable.efficacy'),
-                                               name='No Intervention',
+  BASELINE.MARSHALL = create.intervention(ALL.MSM,PREP.BASELINE.MARSHALL)
+  INTERVENTION.MANAGER = register.intervention(BASELINE.MARSHALL, code=paste0('baseline.marshall'),
+                                               name='baseline marshall',
                                                manager = INTERVENTION.MANAGER,
                                                allow.intervention.multiple.names = T)
   
-  MSM.10.ORAL = create.intervention(ALL.MSM,
-                                    PREP.PLUS.10.ORAL,
-                                    ORAL.PREP.EFFICACY,
-                                    oral.prep.rr.dist,
-                                    inj.vs.oral.hr.dist,
-                                    oral.prep.persistence.dist,
-                                    inj.vs.oral.discontinuation.rr.dist)
-  INTERVENTION.MANAGER = register.intervention(MSM.10.ORAL, code=paste0('msm.oral.10.uptake', suffix),
-                                               name='10% uptake oral PrEP on MSM',
+  BASELINE.MALONEY = create.intervention(ALL.MSM,PREP.BASELINE.MALONEY)
+  INTERVENTION.MANAGER = register.intervention(BASELINE.MALONEY, code=paste0('baseline.maloney'),
+                                               name='baseline maloney',
                                                manager = INTERVENTION.MANAGER,
                                                allow.intervention.multiple.names = T)
   
-  MSM.10.INJ = create.intervention(ALL.MSM,
-                                   PREP.PLUS.10.INJ,
-                                   INJ.PREP.EFFICACY,
-                                   oral.prep.rr.dist,
-                                   inj.vs.oral.hr.dist,
-                                   oral.prep.persistence.dist,
-                                   inj.vs.oral.discontinuation.rr.dist)
-  INTERVENTION.MANAGER = register.intervention(MSM.10.INJ, code=paste0('msm.inj.10.uptake', suffix),
-                                               name='10% uptake injectable PrEP on MSM',
+  ORAL.MARSHALL = create.intervention(ALL.MSM,PREP.35.MARSHALL,ORAL.PREP.VARIABLE, oral.prep.rr.dist, inj.vs.oral.hr.dist)
+  INTERVENTION.MANAGER = register.intervention(ORAL.MARSHALL, code=paste0('oral.marshall'),
+                                               name='35% all oral marshall',
                                                manager = INTERVENTION.MANAGER,
                                                allow.intervention.multiple.names = T)
   
-  MSM.10.COMBINED = create.intervention(ALL.MSM,
-                                        PREP.PLUS.10.COMBINED,
-                                        COMBINED.50.50.PREP.EFFICACY,
-                                        oral.prep.rr.dist,
-                                        inj.vs.oral.hr.dist,
-                                        oral.prep.persistence.dist,
-                                        inj.vs.oral.discontinuation.rr.dist)
-  INTERVENTION.MANAGER = register.intervention(MSM.10.COMBINED, code=paste0('msm.combined.10.uptake', suffix),
-                                               name='50/50 10% uptake oral/injectable PrEP on MSM',
+  ORAL.MALONEY = create.intervention(ALL.MSM,PREP.15.MALONEY,ORAL.PREP.VARIABLE, oral.prep.rr.dist, inj.vs.oral.hr.dist)
+  INTERVENTION.MANAGER = register.intervention(ORAL.MALONEY, code=paste0('oral.maloney'),
+                                               name='15% all oral maloney',
                                                manager = INTERVENTION.MANAGER,
                                                allow.intervention.multiple.names = T)
   
-  
-  
-  MSM.25.ORAL = create.intervention(ALL.MSM,
-                                    PREP.PLUS.25.ORAL,
-                                    ORAL.PREP.EFFICACY,
-                                    oral.prep.rr.dist,
-                                    inj.vs.oral.hr.dist,
-                                    oral.prep.persistence.dist,
-                                    inj.vs.oral.discontinuation.rr.dist)
-  INTERVENTION.MANAGER = register.intervention(MSM.25.ORAL, code=paste0('msm.oral.25.uptake', suffix),
-                                               name='25% uptake oral PrEP on MSM',
+  INJ.MARSHALL = create.intervention(ALL.MSM,PREP.35.MARSHALL,INJECTABLE.PREP.VARIABLE.MARSHALL, oral.prep.rr.dist, inj.vs.oral.hr.dist)
+  INTERVENTION.MANAGER = register.intervention(INJ.MARSHALL, code=paste0('inj.marshall'),
+                                               name='35% all injectable marshall',
                                                manager = INTERVENTION.MANAGER,
                                                allow.intervention.multiple.names = T)
   
-  
-  
-  MSM.25.INJ = create.intervention(ALL.MSM,
-                                   PREP.PLUS.25.INJ,
-                                   INJ.PREP.EFFICACY,
-                                   oral.prep.rr.dist,
-                                   inj.vs.oral.hr.dist,
-                                   oral.prep.persistence.dist,
-                                   inj.vs.oral.discontinuation.rr.dist)
-  INTERVENTION.MANAGER = register.intervention(MSM.25.INJ, code=paste0('msm.inj.25.uptake', suffix),
-                                               name='25% uptake injectable PrEP on MSM',
+  INJ.MALONEY = create.intervention(ALL.MSM,PREP.15.MALONEY,INJECTABLE.PREP.VARIABLE.MALONEY, oral.prep.rr.dist, inj.vs.oral.hr.dist)
+  INTERVENTION.MANAGER = register.intervention(INJ.MALONEY, code=paste0('inj.marshall'),
+                                               name='15% all injectable maloney',
                                                manager = INTERVENTION.MANAGER,
-                                               allow.intervention.multiple.names = F)
+                                               allow.intervention.multiple.names = T)
   
-  MSM.25.COMBINED = create.intervention(ALL.MSM,
-                                        PREP.PLUS.25.COMBINED,
-                                        COMBINED.50.50.PREP.EFFICACY,
-                                        oral.prep.rr.dist,
-                                        inj.vs.oral.hr.dist,
-                                        oral.prep.persistence.dist,
-                                        inj.vs.oral.discontinuation.rr.dist)
-  INTERVENTION.MANAGER = register.intervention(MSM.25.COMBINED, code=paste0('msm.combined.25.uptake', suffix),
-                                               name='50/50 25% uptake oral/injectable PrEP on MSM',
-                                               manager = INTERVENTION.MANAGER,
-                                               allow.intervention.multiple.names = F)
-  
-  INTERVENTION.MANAGER    
-  
+
 }
 
 
-
-
-
-INTERVENTION.MANAGER.1.0 = create.prep.interventions.v2(start.year=2023,
-                                                        implemented.year=2027,
-                                                        suffix='23_27',
+INTERVENTION.MANAGER.1.0 = create.prep.interventions.v2(start.year,
+                                                        implemented.year,
+                                                        suffix,
                                                         oral.prep.rr.dist = ORAL.PREP.MSM.RR.DIST, #oral.prep.rr
                                                         inj.vs.oral.hr.dist = INJ.PREP.HR.DIST, #inj.vs.oral.hr
                                                         oral.prep.persistence.dist = ORAL.PREP.PERSISTENCE.DIST, #oral.prep.persistence
