@@ -8,14 +8,15 @@
 ##-- LIBRARY CALLS --##
 library(ggplot2)
 library(data.table)
-source('code/visualization/plot_simulations.R')
+library(ggsci)
+source('code/processing/visualization/plot_simulations.R')
 
-source('code/systematic_calibration//postprocessing.R')
-source('code/setup/setup_jheem_from_components.R')
-source('code/data_managers/census_totals.R')
-source('code/data_managers/locale_mappings.R')
-source('code/setup/interpolating.R')
-source('code/data_managers/hiv_surveillance_manager.R')
+source('code/processing/postprocessing.R')
+source('code/core_code/setup/setup_jheem_from_components.R')
+source('code/core_code/data_managers/census_totals.R')
+source('code/core_code/data_managers/locale_mappings.R')
+source('code/core_code/setup/interpolating.R')
+source('code/core_code/data_managers/hiv_surveillance_manager.R')
 
 ##-- CONSTANTS --##
 
