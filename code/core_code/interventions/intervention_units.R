@@ -47,7 +47,7 @@ create.intervention.unit <- function(type=c('testing','prep','suppression','need
     check.unit.years(start.year, end.year, years, resolved.bindings=numeric())
 
     #-- Check rates and raw.rates --#
-    check.unit.rates(rates=rates, raw.rates=raw.rates, years=year, resolved.bindings=numeric())
+    check.unit.rates(rates=rates, raw.rates=raw.rates, years=years, resolved.bindings=numeric())
     
     #-- Check apply function --#
     ALLOWED.APPLY.FUNCTIONS = c('absolute','multiplier','odds.ratio','additive')
@@ -283,7 +283,6 @@ index.unit.to.resolve <- function(unit)
         years = any(need.to.resolve(unit$years, resolved.bindings=list()))
     )
     
-    
     unit
 }
 
@@ -297,8 +296,7 @@ need.to.resolve <- function(vals,
         T
     else if (is.character(vals) || is.expression(vals))
     {
-        names.per = lapply(vals, get.names.to.resolve, resolved.bindings=resolved.bindings)
-        sapply(names.per, length) > 0
+        length(get.names.to.resolve(vals, resolved.bindings=resolved.bindings)) > 0
     }
     else
         rep(F, length(vals))
@@ -316,7 +314,7 @@ get.names.to.resolve <- function(vals,
     }
     else if (is.expression(vals))
     {
-        need.to.resolve.names = unique(unlist(sapply(vals, all.vars)))
+        need.to.resolve.names = as.character(unique(unlist(sapply(vals, all.vars))))
         setdiff(need.to.resolve.names, names(resolved.bindings))
     }
     else
@@ -349,6 +347,7 @@ resolve.intervention.unit <- function(unit, parameters)
     unit$rates = resolve.element(unit$rates, resolved.bindings = unit$resolved.bindings, parameters = parameters)
     
     unit = index.unit.to.resolve(unit)
+
     check.unit.years(start.year = unit$start.year, end.year = unit$end.year, years = unit$years,
                      resolved.bindings = unit$resolved.bindings)
     check.unit.rates(rates = unit$rates, raw.rates = unit$raw.rates, years = unit$years,
@@ -381,6 +380,16 @@ resolve.intervention.unit <- function(unit, parameters)
     unit
 }
 
+get.intervention.unit.unresolved.elements <- function(unit)
+{
+    names(unit$unresolved[unit$unresolved])
+}
+
+get.intervention.unit.unresolved.var.names <- function(unit)
+{
+    setdiff(unit$to.resolve, names(unit$resolved.bindings))
+}
+
 resolve.element <- function(elem, resolved.bindings, parameters)
 {
     if (is(elem, 'function')){
@@ -406,19 +415,26 @@ resolve.element <- function(elem, resolved.bindings, parameters)
     }
     else if (is.expression(elem))
     {
-        elem.resolved = lapply(elem, function(one.val){
-            if (length(setdiff(all.vars(one.val), names(resolved.bindings)))==0)
-                eval(one.val, envir=list2env(as.list(resolved.bindings)))
-            else
-                one.val
+        resolvable = sapply(elem, function(one.val){
+            length(setdiff(all.vars(one.val), names(resolved.bindings)))==0
         })
         
-        elem.resolved = unlist(elem.resolved)
-        if (is(elem.resolved, 'list'))
-            stop("Unable to resolve multiple expressions in intervention unit")
-        
-        # A recursive call, in case the function returned things that need further resolving
-        resolve.element(elem.resolved, resolved.bindings, parameters)
+        if (all(resolvable))
+        {
+            elem.resolved = lapply(elem, function(one.val){
+                eval(one.val, envir=list2env(as.list(resolved.bindings)))
+            })
+            
+            elem.resolved = unlist(elem.resolved)
+            
+            if (is(elem.resolved, 'list'))
+                stop("Unable to resolve multiple expressions in intervention unit")
+            
+            # A recursive call, in case the function returned things that need further resolving
+            resolve.element(elem.resolved, resolved.bindings, parameters)
+        }
+        else
+            elem
     }
     else if (is(elem, 'numeric') || is(elem, 'integer'))
         as.numeric(elem)

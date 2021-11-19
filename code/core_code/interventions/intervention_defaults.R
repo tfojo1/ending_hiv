@@ -48,7 +48,12 @@ TARGET.POPULATION.MANAGER.1.0 = add.target.population(WHOLE.POPULATION, code='wh
 ##-- INTERVENTIONS --##
 ##-------------------##
 
-INTERVENTION.MANAGER.1.0 = create.intervention.manager()
+if (!file.exists('INTERVENTION.MANAGER.1.0'))
+{
+    print("Creating Intervention Manager")
 
-NO.INTERVENTION = create.null.intervention()
-INTERVENTION.MANAGER.1.0 = register.intervention(NO.INTERVENTION, code='noint', name='No Intervention')
+    INTERVENTION.MANAGER.1.0 = create.intervention.manager()
+
+    NO.INTERVENTION = create.null.intervention()
+    INTERVENTION.MANAGER.1.0 = register.intervention(NO.INTERVENTION, code='noint', name='No Intervention')
+}

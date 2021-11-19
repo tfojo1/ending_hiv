@@ -8,8 +8,15 @@ run.simset.intervention <- function(simset,
                                     update.progress=if (verbose) function(n){print(paste0("Running simulation ", n, " of ", simset@n.sim))} else NULL,
                                     seed = 12343)
 {
+    # If we need to prepare intervention, do so
+    original.intervention = intervention
+    intervention = prepare.intervention.for.simset(intervention, simset)
+    
+    if (!is.null.intervention(intervention) && !is(intervention, 'standard_intervention'))
+        stop("intervention must be converted to a 'standard_intervention' before running on simulations")
+    
     # If we need to add parameters from distributions, do so now
-    if (length(intervention$parameter.distributions)>0)
+    if (!is.null.intervention(intervention) && length(intervention@parameter.distributions)>0)
     {
         if (verbose)
             print("Adding new parameters")
@@ -19,9 +26,9 @@ run.simset.intervention <- function(simset,
         
         new.params = NULL
         new.param.names = character()
-        for (i in 1:length(intervention$parameter.distributions))
+        for (i in 1:length(intervention@parameter.distributions))
         {
-            dist = intervention$parameter.distributions[[i]]
+            dist = intervention@parameter.distributions[[i]]
             if (!is.null(seed))
             {
                 dist.names = paste0(dist@var.names, collapse=',')
@@ -73,7 +80,7 @@ run.simset.intervention <- function(simset,
         print("Done")
     
     if (save.intervention)
-        attr(simset, 'intervention') = intervention
+        attr(simset, 'intervention') = original.intervention
     
     simset
 }
@@ -97,4 +104,564 @@ run.sim.intervention <- function(sim,
                                     pare.components = T)
     
     sim
+}
+
+
+
+##----------------------##
+##-- SETUP COMPONENTS --##
+##----------------------##
+
+
+setup.components.for.intervention <- function(components,
+                                              intervention,
+                                              overwrite.prior.intervention=F)
+{
+    if (is.null(intervention) || is.null.intervention(intervention))
+        return (components)
+    
+    if (!intervention.is.resolved(intervention))
+    {
+        msg = "The given intervention must have all variables resolved prior to running a simulation with it"
+        unresolved.var.names = get.intervention.unresolved.var.names(intervention)
+        if (length(unresolved.var.names)>0)
+            msg = paste0(msg, ". Missing the following variable(s): ",
+                         paste0("'", unresolved.var.names, "'", collapse=', '))
+        stop(msg)
+    }
+    
+    if (!intervention.is.processed(intervention))
+        intervention = process.intervention(intervention)
+    if (!intervention.is.processed(intervention))
+        stop("Unable to process intervention")
+    
+    # Apply static settings
+    for (ss in intervention@static.settings)
+    {
+        components = set.components.to.static.settings(components, ss$name.chain, ss$value)
+        if (length(ss$dependencies)>0)
+            components = clear.dependent.values(components, ss$dependencies)
+    }
+    
+    # Set up
+    idu.states = 'active_IDU'
+    
+    # Testing
+    if (!is.null(intervention@processed$testing))
+    {
+        diagnosed.states = components$settings$DIAGNOSED_STATES
+        rates = lapply(intervention@processed$testing$rates, function(r)
+        {
+            r = expand.population.to.hiv.positive(components$jheem, r)
+            r[,,,,,diagnosed.states,,] = 0
+            
+            r
+        })
+        
+        start.times = expand.population.to.hiv.positive(components$jheem, intervention@processed$testing$start.times)
+        start.times[,,,,,diagnosed.states,,] = Inf
+        end.times = expand.population.to.hiv.positive(components$jheem, intervention@processed$testing$end.times)
+        end.times[,,,,,diagnosed.states,,] = Inf
+        
+        min.rates = expand.population.to.hiv.positive(components$jheem, intervention@processed$testing$min.rates)
+        min.rates[,,,,,diagnosed.states,,] = -Inf
+        max.rates = expand.population.to.hiv.positive(components$jheem, intervention@processed$testing$max.rates)
+        max.rates[,,,,,diagnosed.states,,] = -Inf
+        
+        apply.functions = expand.character.array(expand.population.to.hiv.positive,
+                                                 components$jheem,
+                                                 intervention@processed$testing$apply.functions)
+        apply.functions[,,,,,diagnosed.states,,] = NA
+        allow.less = expand.population.to.hiv.positive(components$jheem, 
+                                                       intervention@processed$testing$allow.less.than.otherwise)
+        
+        
+        components = set.foreground.rates(components, 'testing',
+                                          rates = rates,
+                                          years = intervention@processed$testing$times,
+                                          start.years = start.times,
+                                          end.years = end.times,
+                                          apply.functions = apply.functions,
+                                          allow.foreground.less = allow.less,
+                                          overwrite.previous = overwrite.prior.intervention,
+                                          foreground.min = min.rates,
+                                          foreground.max = max.rates)
+    }
+    
+    # Linkage
+    components = do.set.foreground.for.hiv.positive(components=components,
+                                                    intervention=intervention,
+                                                    element.name='linkage',
+                                                    applies.to.continuum.states='unengaged',
+                                                    overwrite.prior.intervention=overwrite.prior.intervention,
+                                                    not.applies.value = 0)
+    
+    # Retention
+    components = do.set.foreground.for.hiv.positive(components=components,
+                                                    intervention=intervention,
+                                                    element.name='retention.unsuppressed',
+                                                    applies.to.continuum.states='engaged_unsuppressed',
+                                                    overwrite.prior.intervention=overwrite.prior.intervention,
+                                                    not.applies.value = 0)
+    components = do.set.foreground.for.hiv.positive(components=components,
+                                                    intervention=intervention,
+                                                    element.name='retention.suppressed',
+                                                    applies.to.continuum.states='engaged_suppressed',
+                                                    overwrite.prior.intervention=overwrite.prior.intervention,
+                                                    not.applies.value = 0)
+    
+    # ART Adherence
+    components = do.set.foreground.for.hiv.positive(components=components,
+                                                    intervention=intervention,
+                                                    element.name='art.adherence.unsuppressed',
+                                                    applies.to.continuum.states='engaged_unsuppressed',
+                                                    overwrite.prior.intervention=overwrite.prior.intervention,
+                                                    not.applies.value = 0)
+    components = do.set.foreground.for.hiv.positive(components=components,
+                                                    intervention=intervention,
+                                                    element.name='art.adherence.suppressed',
+                                                    applies.to.continuum.states='engaged_suppressed',
+                                                    overwrite.prior.intervention=overwrite.prior.intervention,
+                                                    not.applies.value = 0)
+    
+    # Gain of Suppression
+    components = do.set.foreground.for.hiv.positive(components=components,
+                                                    intervention=intervention,
+                                                    element.name='gain.of.suppression',
+                                                    applies.to.continuum.states='engaged_unsuppressed',
+                                                    overwrite.prior.intervention=overwrite.prior.intervention,
+                                                    not.applies.value = 0)
+    
+    # Suppression
+    if (!is.null(intervention@processed$suppression))
+    {
+        undiagnosed.states = setdiff(components$settings$CONTINUUM_OF_CARE, components$settings$DIAGNOSED_STATES) #setdiff(dimnames(start.times)[['continuum']], 'diagnosed')
+        suppressed.proportions = lapply(intervention@processed$suppression$rates, function(r)
+        {
+            r = expand.population.to.hiv.positive(components$jheem, r)
+            r[,,,,,undiagnosed.states,,] = 0
+            
+            r
+        })
+        
+        start.times = expand.population.to.hiv.positive(components$jheem, intervention@processed$suppression$start.times)
+        start.times[,,,,,undiagnosed.states,,] = Inf
+        end.times = expand.population.to.hiv.positive(components$jheem, intervention@processed$suppression$end.times)
+        end.times[,,,,,undiagnosed.states,,] = Inf
+        
+        min.rates = expand.population.to.hiv.positive(components$jheem, intervention@processed$suppression$min.rates)
+        min.rates[,,,,,undiagnosed.states,,] = -Inf
+        max.rates = expand.population.to.hiv.positive(components$jheem, intervention@processed$suppression$max.rates)
+        max.rates[,,,,,undiagnosed.states,,] = -Inf
+        
+        apply.functions = expand.character.array(expand.population.to.hiv.positive,
+                                                 components$jheem,
+                                                 intervention@processed$suppression$apply.functions)
+        apply.functions[,,,,,undiagnosed.states,,] = NA
+        allow.less = expand.population.to.hiv.positive(components$jheem, 
+                                                       intervention@processed$suppression$allow.less.than.otherwise)
+        
+        components = set.foreground.rates(components, 'suppression',
+                                          rates = suppressed.proportions,
+                                          years = intervention@processed$suppression$times,
+                                          start.years = start.times,
+                                          end.years = end.times,
+                                          apply.functions = apply.functions,
+                                          allow.foreground.less = allow.less,
+                                          overwrite.previous = overwrite.prior.intervention,
+                                          foreground.min = min.rates,
+                                          foreground.max = max.rates)
+    }
+    
+    # PrEP Coverage
+    if (!is.null(intervention@processed$prep))
+    {
+        rates = lapply(intervention@processed$prep$rates, expand.population.to.hiv.negative, jheem=components$jheem)
+        
+        start.times = expand.population.to.hiv.negative(components$jheem, intervention@processed$prep$start.times)
+        end.times = expand.population.to.hiv.negative(components$jheem, intervention@processed$prep$end.times)
+        min.rates = expand.population.to.hiv.negative(components$jheem, intervention@processed$prep$min.rates)
+        max.rates = expand.population.to.hiv.negative(components$jheem, intervention@processed$prep$max.rates)
+        apply.functions = expand.character.array(expand.population.to.hiv.negative,
+                                                 components$jheem,
+                                                 intervention@processed$prep$apply.functions)
+        allow.less = expand.population.to.hiv.negative(components$jheem, 
+                                                       intervention@processed$prep$allow.less.than.otherwise)
+        
+        components = set.foreground.rates(components, 'prep',
+                                          rates = rates,
+                                          years = intervention@processed$prep$times,
+                                          start.years = start.times,
+                                          end.years = end.times,
+                                          apply.functions = apply.functions,
+                                          allow.foreground.less = allow.less,
+                                          overwrite.previous = overwrite.prior.intervention,
+                                          foreground.min = min.rates,
+                                          foreground.max = max.rates)
+    }
+    
+    # PrEP Effectiveness (RR)
+    if (!is.null(intervention@processed$rr.prep))
+    {
+        rates = lapply(intervention@processed$rr.prep$rates, expand.population.to.hiv.negative, jheem=components$jheem)
+        
+        start.times = expand.population.to.hiv.negative(components$jheem, intervention@processed$rr.prep$start.times)
+        end.times = expand.population.to.hiv.negative(components$jheem, intervention@processed$rr.prep$end.times)
+        min.rates = expand.population.to.hiv.negative(components$jheem, intervention@processed$rr.prep$min.rates)
+        max.rates = expand.population.to.hiv.negative(components$jheem, intervention@processed$rr.prep$max.rates)
+        apply.functions = expand.character.array(expand.population.to.hiv.negative,
+                                                 components$jheem,
+                                                 intervention@processed$rr.prep$apply.functions)
+        allow.less = expand.population.to.hiv.negative(components$jheem, 
+                                                       intervention@processed$rr.prep$allow.less.than.otherwise)
+        
+        components = set.foreground.rates(components, 'rr.prep',
+                                          rates = rates,
+                                          years = intervention@processed$rr.prep$times,
+                                          start.years = start.times,
+                                          end.years = end.times,
+                                          apply.functions = apply.functions,
+                                          allow.foreground.less = allow.less,
+                                          overwrite.previous = overwrite.prior.intervention,
+                                          foreground.min = min.rates,
+                                          foreground.max = max.rates)
+    }
+    
+    
+    # Needle Exchange
+    if (!is.null(intervention@processed$needle.exchange))
+    {
+        rates = lapply(intervention@processed$needle.exchange$rates, function(r){
+            expand.population.to.general(jheem=components$jheem, r)[,,,,idu.states]
+        })
+        
+        start.times = expand.population.to.general(components$jheem, intervention@processed$needle.exchange$start.times)[,,,,idu.states]
+        end.times = expand.population.to.general(components$jheem, intervention@processed$needle.exchange$end.times)[,,,,idu.states]
+        min.rates = expand.population.to.general(components$jheem, intervention@processed$needle.exchange$min.rates)[,,,,idu.states]
+        max.rates = expand.population.to.general(components$jheem, intervention@processed$needle.exchange$max.rates)[,,,,idu.states]
+        apply.functions = expand.character.array(expand.population.to.general,
+                                                 components$jheem,
+                                                 intervention@processed$needle.exchange$apply.functions)[,,,,idu.states]
+        allow.less = expand.population.to.general(components$jheem, 
+                                                  intervention@processed$needle.exchange$allow.less.than.otherwise)[,,,,idu.states]
+        
+        components = set.foreground.rates(components, 'needle.exchange',
+                                          rates = rates,
+                                          years = intervention@processed$needle.exchange$times,
+                                          start.years = start.times,
+                                          end.years = end.times,
+                                          apply.functions = apply.functions,
+                                          allow.foreground.less = allow.less,
+                                          overwrite.previous = overwrite.prior.intervention,
+                                          foreground.min = min.rates,
+                                          foreground.max = max.rates)
+    }
+    
+    # IDU Transitions
+    for (idu.trans in c('idu.incidence','idu.remission','idu.relapse'))
+    {
+        state.for.trans = c(idu.incidence='never_idu',
+                            idu.remission='active_IDU',
+                            idu.relapse='IDU_in_remission'
+        )[idu.trans]
+        if (!is.null(intervention@processed[[idu.trans]]))
+        {
+            rates = lapply(intervention@processed[[idu.trans]]$rates, function(r){
+                expand.population.to.general(jheem=components$jheem, r)[,,,,state.for.trans]
+            })
+            
+            start.times = expand.population.to.general(components$jheem, intervention@processed[[idu.trans]]$start.times)[,,,,state.for.trans]
+            end.times = expand.population.to.general(components$jheem, intervention@processed[[idu.trans]]$end.times)[,,,,state.for.trans]
+            min.rates = expand.population.to.general(components$jheem, intervention@processed[[idu.trans]]$min.rates)[,,,,state.for.trans]
+            max.rates = expand.population.to.general(components$jheem, intervention@processed[[idu.trans]]$max.rates)[,,,,state.for.trans]
+            apply.functions = expand.character.array(expand.population.to.general,
+                                                     components$jheem,
+                                                     intervention@processed[[idu.trans]]$apply.functions)[,,,,state.for.trans]
+            allow.less = expand.population.to.general(components$jheem, 
+                                                      intervention@processed[[idu.trans]]$allow.less.than.otherwise)[,,,,state.for.trans]
+            
+            components = set.foreground.rates(components, idu.trans,
+                                              rates = rates,
+                                              years = intervention@processed[[idu.trans]]$times,
+                                              start.years = start.times,
+                                              end.years = end.times,
+                                              apply.functions = apply.functions,
+                                              allow.foreground.less = allow.less,
+                                              overwrite.previous = overwrite.prior.intervention,
+                                              foreground.min = min.rates,
+                                              foreground.max = max.rates)
+        }
+    }
+    
+    # Sexual Transmission
+    if (!is.null(intervention@processed$heterosexual.transmission) ||
+        !is.null(intervention@processed$msm.transmission))
+    {
+        if (!is.null(intervention@processed$heterosexual.transmission) &&
+            any(intervention@processed$heterosexual.transmission$apply.functions=='absolute', na.rm=T))
+            stop("'absolute' apply.function cannot be used for heterosexual.transmission")
+        
+        if (!is.null(intervention@processed$msm.transmission) &&
+            any(intervention@processed$msm.transmission$apply.functions=='absolute', na.rm=T))
+            stop("'absolute' apply.function cannot be used for msm.transmission")
+        
+        merged.times = union(intervention@processed$heterosexual.transmission$times,
+                             intervention@processed$msm.transmission$times)
+        rates = lapply(merged.times, function(time){
+            r.het = r.msm = NULL
+            if (!is.null(intervention@processed$heterosexual.transmission) && 
+                any(intervention@processed$heterosexual.transmission$times==time))
+            {
+                i = (1:length(intervention@processed$heterosexual.transmission$times))[intervention@processed$heterosexual.transmission$times==time][1]
+                r.het = intervention@processed$heterosexual.transmission$rates[[i]]
+            }
+            
+            if (!is.null(intervention@processed$msm.transmission) && 
+                any(intervention@processed$msm.transmission$times==time))
+            {
+                i = (1:length(intervention@processed$msm.transmission$times))[intervention@processed$msm.transmission$times==time][1]
+                r.msm = intervention@processed$msm.transmission$rates[[i]]
+            }
+            
+            merge.heterosexual.and.msm.transmission.arrays(jheem=components$jheem,
+                                                           heterosexual.arr = r.het,
+                                                           msm.arr = r.msm,
+                                                           default.value = NaN)
+        })
+        
+        start.times = merge.heterosexual.and.msm.transmission.arrays(jheem=components$jheem,
+                                                                     heterosexual.arr = intervention@processed$heterosexual.transmission$start.times,
+                                                                     msm.arr = intervention@processed$msm.transmission$start.times,
+                                                                     default.value = Inf)
+        end.times = merge.heterosexual.and.msm.transmission.arrays(jheem=components$jheem,
+                                                                   heterosexual.arr = intervention@processed$heterosexual.transmission$end.times,
+                                                                   msm.arr = intervention@processed$msm.transmission$end.times,
+                                                                   default.value = Inf)
+        min.rates = merge.heterosexual.and.msm.transmission.arrays(jheem=components$jheem,
+                                                                   heterosexual.arr = intervention@processed$heterosexual.transmission$min.rates,
+                                                                   msm.arr = intervention@processed$msm.transmission$min.rates,
+                                                                   default.value = -Inf)
+        max.rates = merge.heterosexual.and.msm.transmission.arrays(jheem=components$jheem,
+                                                                   heterosexual.arr = intervention@processed$heterosexual.transmission$max.rates,
+                                                                   msm.arr = intervention@processed$msm.transmission$max.rates,
+                                                                   default.value = Inf)
+        character.na = character(); character.na[1] = NA
+        apply.functions = merge.heterosexual.and.msm.transmission.arrays(jheem=components$jheem,
+                                                                         heterosexual.arr = intervention@processed$heterosexual.transmission$apply.functions,
+                                                                         msm.arr = intervention@processed$msm.transmission$apply.functions,
+                                                                         default.value = character.na)
+        allow.less = merge.heterosexual.and.msm.transmission.arrays(jheem=components$jheem,
+                                                                    heterosexual.arr = intervention@processed$heterosexual.transmission$allow.less.than.otherwise,
+                                                                    msm.arr = intervention@processed$msm.transmission$allow.less.than.otherwise,
+                                                                    default.value = F)
+        
+        components = set.foreground.rates(components, 'sexual.transmission',
+                                          rates = rates,
+                                          years = merged.times,
+                                          start.years = start.times,
+                                          end.years = end.times,
+                                          apply.functions = apply.functions,
+                                          allow.foreground.less = allow.less,
+                                          overwrite.previous = overwrite.prior.intervention,
+                                          foreground.min = min.rates,
+                                          foreground.max = max.rates)
+    }
+    
+    # IDU Transmission
+    if (!is.null(intervention@processed$idu.transmission))
+    {
+        if (any(intervention@processed$idu.transmission$apply.functions=='absolute', na.rm=T))
+            stop("'absolute' apply.function cannot be used for idu.transmission")
+        
+        rates = lapply(intervention@processed$idu.transmission$rates, function(r){
+            expand.array.to.contact(r[,,,idu.states])
+        })
+        
+        start.times = expand.array.to.contact(intervention@processed$idu.transmission$start.times[,,,idu.states])
+        end.times = expand.array.to.contact(intervention@processed$idu.transmission$end.times[,,,idu.states])
+        min.rates = expand.array.to.contact(intervention@processed$idu.transmission$min.rates[,,,idu.states])
+        max.rates = expand.array.to.contact(intervention@processed$idu.transmission$max.rates[,,,idu.states])
+        apply.functions = expand.array.to.contact(intervention@processed$idu.transmission$apply.functions[,,,idu.states])
+        allow.less = expand.array.to.contact(intervention@processed$idu.transmission$allow.less.than.otherwise[,,,idu.states])
+        
+        components = set.foreground.rates(components, 'idu.transmission',
+                                          rates = rates,
+                                          years = intervention@processed$idu.transmission$times,
+                                          start.years = start.times,
+                                          end.years = end.times,
+                                          apply.functions = apply.functions,
+                                          allow.foreground.less = allow.less,
+                                          overwrite.previous = overwrite.prior.intervention,
+                                          foreground.min = min.rates,
+                                          foreground.max = max.rates)
+    }
+    
+    
+    components
+}
+
+do.set.foreground.for.hiv.positive <- function(components,
+                                               intervention,
+                                               element.name,
+                                               applies.to.continuum.states,
+                                               overwrite.prior.intervention,
+                                               not.applies.value = 0)
+{
+    not.applies.states = setdiff(components$settings$CONTINUUM_OF_CARE, applies.to.continuum.states)
+    if (!is.null(intervention@processed[[element.name]]))
+    {
+        rates = lapply(intervention@processed[[element.name]]$rates, function(r)
+        {
+            r = expand.population.to.hiv.positive(components$jheem, r)
+            r[,,,,,not.applies.states,,] = not.applies.value
+            
+            r
+        })
+        
+        start.times = expand.population.to.hiv.positive(components$jheem, intervention@processed[[element.name]]$start.times)
+        start.times[,,,,,not.applies.states,,] = Inf
+        end.times = expand.population.to.hiv.positive(components$jheem, intervention@processed[[element.name]]$end.times)
+        end.times[,,,,,not.applies.states,,] = Inf
+        
+        min.rates = expand.population.to.hiv.positive(components$jheem, intervention@processed[[element.name]]$min.rates)
+        min.rates[,,,,,not.applies.states,,] = -Inf
+        max.rates = expand.population.to.hiv.positive(components$jheem, intervention@processed[[element.name]]$max.rates)
+        max.rates[,,,,,not.applies.states,,] = -Inf
+        
+        apply.functions = expand.character.array(expand.population.to.hiv.positive,
+                                                 components$jheem,
+                                                 intervention@processed[[element.name]]$apply.functions)
+        apply.functions[,,,,,not.applies.states,,] = NA
+        allow.less = expand.population.to.hiv.positive(components$jheem, 
+                                                       intervention@processed[[element.name]]$allow.less.than.otherwise)
+        
+        
+        components = set.foreground.rates(components, element.name,
+                                          rates = rates,
+                                          years = intervention@processed[[element.name]]$times,
+                                          start.years = start.times,
+                                          end.years = end.times,
+                                          apply.functions = apply.functions,
+                                          allow.foreground.less = allow.less,
+                                          overwrite.previous = overwrite.prior.intervention,
+                                          foreground.min = min.rates,
+                                          foreground.max = max.rates)
+    }
+    
+    components
+}
+
+set.components.to.static.settings <- function(components, 
+                                              name.chain,
+                                              value)
+{
+    if (length(name.chain)==1)
+        components[[name.chain]] = value
+    else
+        components = set.components.to.static.settings(components[[ name.chain[1] ]],
+                                                       name.chain=name.chain[-1],
+                                                       value=value)
+    
+    components
+}
+
+##------------##
+##-- NAMING --##
+##------------##
+
+
+
+get.intervention.filename <- function(int)
+{
+    name = get.intervention.name(int)
+    gsub(' ', '_', name)
+}
+
+##-------------##
+##-- HELPERS --##
+##-------------##
+
+expand.character.array <- function(expand.fn, jheem, arr)
+{
+    char.values = unique(as.character(arr))
+    value.indices = 1:length(char.values)
+    names(value.indices) = char.values
+    
+    int.arr = value.indices[arr]
+    dim(int.arr) = dim(arr)
+    dimnames(int.arr) = dimnames(arr)
+    
+    int.expanded = expand.fn(jheem, int.arr)
+    
+    rv = char.values[int.expanded]
+    dim(rv) = dim(int.expanded)
+    dimnames(rv) = dimnames(int.expanded)
+    rv
+}
+
+merge.heterosexual.and.msm.transmission.arrays <- function(jheem, heterosexual.arr, msm.arr,
+                                                           default.value=NaN)
+{
+    rv = get.contact.array.skeleton(jheem, value=default.value,
+                                    age=T, race=T, sex=T, risk=T)
+    
+    if (!is.null(heterosexual.arr))
+    {
+        heterosexual.arr = expand.array.to.contact(heterosexual.arr)
+        
+        male = c('heterosexual_male','msm')
+        rv[,,'female',,,,male,] = heterosexual.arr[,,'female',,,,male,]
+        rv[,,male,,,,'female',] = heterosexual.arr[,,male,,,,'female',]
+    }
+    
+    if (!is.null(msm.arr))
+    {
+        msm.arr = expand.array.to.contact(msm.arr)
+        rv[,,'msm',,,,'msm',] = msm.arr[,,'msm',,,,'msm',]
+    }
+    
+    rv
+}
+
+expand.array.to.contact <- function(arr)
+{
+    from.dimnames = to.dimnames = dimnames(arr)
+    names(from.dimnames) = paste0(names(from.dimnames), '.from')
+    names(to.dimnames) = paste0(names(to.dimnames), '.to')
+    
+    dim(arr) = sapply(to.dimnames, length)
+    dimnames(arr) = to.dimnames
+    
+    target.dimnames = c(from.dimnames, to.dimnames)
+    
+    was.logical = is(arr[1], 'logical')
+    was.character = is(arr[1], 'character')
+    
+    if (was.logical)
+        arr[] = as.numeric(arr)
+    
+    if (was.character)
+    {
+        index.to.char = unique(arr)
+        char.to.index = (1:length(index.to.char))
+        names(char.to.index) = index.to.char
+        
+        arr = as.integer(char.to.index[arr])
+        dim(arr) = sapply(from.dimnames, length)
+        dimnames(arr) = from.dimnames
+    }
+    
+    rv = expand.population(source.population = arr,
+                           target.dim.names = target.dimnames)
+    
+    if (was.logical)
+        rv[] = as.logical(rv)
+    if (was.character)
+    {
+        rv = as.character(index.to.char[rv])
+        dim(rv) = sapply(target.dimnames, length)
+        dimnames(rv) = target.dimnames
+    }
+    
+    rv
 }
