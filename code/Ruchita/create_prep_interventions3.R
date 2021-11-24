@@ -87,6 +87,7 @@ create.prep.interventions.v2 <- function(start.year=2023,
                                                 years=implemented.year,
                                                 apply.function='additive',
                                                 max.rate = 1)
+    # EFFICACY INTERVENTION UNITS
     
     ORAL.PREP.EFFICACY = create.intervention.unit(type='rr.prep', start.year=2000,
                                                   rates='oral.prep.rr',
@@ -102,6 +103,43 @@ create.prep.interventions.v2 <- function(start.year=2023,
                                                             rates=expression(oral.prep.rr * inj.vs.oral.hr),
                                                             years=2000.001,
                                                             allow.less.than.otherwise = T)
+    
+    
+    #STORE IN INTERVENTION MANAGER 
+    
+    BASELINE.ALL.ORAL = create.intervention(ALL.MSM, ORAL.PREP.EFFICACY, oral.prep.rr.dist)
+    INTERVENTION.MANAGER = register.intervention(BASELINE.ALL.ORAL, code=paste0('baseline.alloral.variable.efficacy'),
+                                                 name='No Intervention Oral',
+                                                 manager = INTERVENTION.MANAGER,
+                                                 allow.intervention.multiple.names = T)
+    
+    MSM.10.ALL.INJ = create.intervention(ALL.MSM,
+                                     PREP.PLUS.10.INJ,
+                                     INJ.PREP.EFFICACY,
+                                     oral.prep.rr.dist,
+                                     inj.vs.oral.hr.dist,
+                                     oral.prep.persistence.dist,
+                                     inj.vs.oral.discontinuation.rr.dist)
+    INTERVENTION.MANAGER = register.intervention(MSM.10.ALL.INJ, code=paste0('msm.allinj.10.uptake', suffix),
+                                                 name='10% uptake all injectable PrEP on MSM',
+                                                 manager = INTERVENTION.MANAGER,
+                                                 allow.intervention.multiple.names = T)
+    
+    
+    MSM.10.ORAL.INJ = create.intervention(ALL.MSM,
+                                         PREP.PLUS.10.INJ,
+                                         CONVERT.ORAL.TO.INJ.EFFICACY,
+                                         oral.prep.rr.dist,
+                                         inj.vs.oral.hr.dist,
+                                         oral.prep.persistence.dist,
+                                         inj.vs.oral.discontinuation.rr.dist)
+    INTERVENTION.MANAGER = register.intervention(MSM.10.ORAL.INJ, code=paste0('msm.alloralinj.10.uptake', suffix),
+                                                 name='10% uptake all oral to injectable PrEP on MSM',
+                                                 manager = INTERVENTION.MANAGER,
+                                                 allow.intervention.multiple.names = T)
+    
+    
+    
     
     
 
