@@ -189,7 +189,7 @@ intervention.consistency.check <- function(intervention, allow.multiple.interven
 setGeneric('interventions.equal',
            def=function(int1,int2){standardGeneric('interventions.equal')})
 setMethod('interventions.equal',
-          signature = 'standard_intervention',
+          signature = 'null_intervention',
 def = function(int1, int2)
 {
     is(int2, 'null_intervention')

@@ -1399,22 +1399,59 @@ do.calculate.testing.rates <- function(components)
     components
 }
 
-calculate.prep.coverage <- function(components)
+
+#-- PrEP --#
+
+calculate.prep.coverage <- function(components, type='prep')
 {
     if (is.null(components$prep.rates.and.times))
         components = do.calculate.prep.coverage(components)
-    components$prep.rates.and.times
+    
+    if (type=='prep')
+        components$prep.rates.and.times
+    else
+        components$additional.prep[[type]]$rates.and.times
 }
 
-calculate.prep.rrs <- function(components)
+calculate.prep.rrs <- function(components, type='prep')
 {
-    background.rrs = get.hiv.negative.population.skeleton(components$jheem, value=components$prep.rr.heterosexual)
-    background.rrs[,,,'msm',,] = components$prep.rr.msm
-    background.rrs[,,,,'active_IDU',] = components$prep.rr.idu
+    if (type=='prep')
+        components$prep.rrs.and.times
+    else
+        components$additional.prep[[type]]$rrs.and.times
+}
+
+do.calculate.prep.rrs <- function(components, type='prep')
+{
+    if (type=='prep')
+    {
+        rr.het = components$prep.rr.heterosexual
+        rr.msm = components$prep.rr.msm
+        rr.idu = components$prep.rr.idu
+        foreground = components$foreground.rr.prep
+    }
+    else
+    {
+        rr.het = components$additional.prep[[type]]$rr.heterosexual
+        rr.msm = components$additional.prep[[type]]$rr.msm
+        rr.idu = components$additional.prep[[type]]$rr.idu
+        foreground = components[[paste0('foreground.rr.', type)]]
+        
+        if (is.null(rr.het))
+            rr.het = components$prep.rr.heterosexual
+        if (is.null(rr.msm))
+            rr.msm = components$prep.rr.msm
+        if (is.null(rr.idu))
+            rr.idu = components$prep.rr.idu
+    }
+    
+    background.rrs = get.hiv.negative.population.skeleton(components$jheem, value=rr.het)
+    background.rrs[,,,'msm',,] = rr.msm
+    background.rrs[,,,,'active_IDU',] = rr.idu
 
     rv = do.get.rates.from.background.and.foreground(background.rates=list(background.rrs),
                                                      background.times=2020,
-                                                     foreground = components$foreground.rr.prep,
+                                                     foreground = foreground,
                                                      max.background.time = Inf)
     
     rv$rates = lapply(rv$rates, function(rates){
@@ -1425,24 +1462,43 @@ calculate.prep.rrs <- function(components)
     rv
 }
 
-calculate.prep.coverage.and.rrs <- function(components)
+
+#added here
+calculate.aggregate.prep.coverage.and.risk <- function(components)
 {
-    coverage = calculate.prep.coverage(components)
-    rrs = calculate.prep.rrs(components)
+    prep.types = get.prep.types(components)
     
-    rv = merge.rates(coverage$rates,
-                     coverage$times,
-                     rrs$rates,
-                     rrs$times)
+    coverages = lapply(prep.types, calculate.prep.coverage, components=components)
+    rrs = lapply(prep.types, calculate.prep.rrs, components=components)
     
-    names(rv)[names(rv)=='rates1'] = 'coverage'
-    names(rv)[names(rv)=='rates2'] = 'rrs'
+    rv = list(
+        coverage = coverages[[1]]$rates,
+        risk = lapply(1:length(coverages[[1]]$rates), function(j){
+            coverages[[1]]$rates[[j]] * rrs[[1]]$rates[[j]]
+        }),
+        times = coverages[[1]]$times
+    )
+    
+    if (length(prep.types)>1)
+    {
+        for (i in 2:length(prep.types))
+        {
+            rv$coverage = lapply(1:length(rv$coverage), function(j){
+                rv$coverage[[j]] + coverages[[i]]$rates[[j]]
+            })
+            
+            rv$risk = lapply(1:length(rv$risk), function(j){
+                rv$risk[[j]] + coverages[[i]]$rates[[j]] * rrs[[i]]$rates[[j]]
+            })
+        }
+    }
     
     rv
 }
 
 do.calculate.prep.coverage <- function(components)
 {
+    #-- Baseline PrEP --#
     #Pull background prep proportions from logistic model
     if (!is.null(components$background.prep$max.proportion.ors))
     {
@@ -1480,6 +1536,69 @@ do.calculate.prep.coverage <- function(components)
                                                                                   foreground = components$foreground.prep,
                                                                                   max.background.time = components$background.change.to.years$prep)
     
+    
+    #-- Baseline PrEP RRs --#
+    components$prep.rrs.and.times = do.calculate.prep.rrs(components)
+
+    all.times = sort(unique(c(components$prep.rates.and.times$times,
+                              components$prep.rrs.and.times$times)))
+    
+    #-- Other Types of PrEP --#
+    if (length(get.prep.types(components))>1)
+    {
+        for (type in setdiff(get.prep.types(components), 'prep'))
+        {
+            components$additional.prep[[type]]$rates.and.times = 
+                do.get.rates.from.background.and.foreground(background.rates = background.prep[1], #a zero array
+                                                            background.times = background.prep.years[1],
+                                                            foreground = components[[paste0('foreground.',type)]],
+                                                            max.background.time = components$background.change.to.years$prep)
+            
+            components$additional.prep[[type]]$rrs.and.times = do.calculate.prep.rrs(components, type=type)
+            
+            all.times = sort(unique(c(all.times,
+                                      components$additional.prep[[type]]$rates.and.times$times,
+                                      components$additional.prep[[type]]$rrs.and.times$times)))
+        }
+    }
+    
+    
+    
+    #-- Interpolate --#
+    
+    components$prep.rates.and.times$rates = interpolate.parameters(values=components$prep.rates.and.times$rates,
+                                                                   value.times=components$prep.rates.and.times$times,
+                                                                   desired.times=all.times,
+                                                                   return.list=T)
+    components$prep.rrs.and.times$rates = interpolate.parameters(values=components$prep.rrs.and.times$rates,
+                                                                   value.times=components$prep.rrs.and.times$times,
+                                                                   desired.times=all.times,
+                                                                   return.list=T)
+    components$prep.rates.and.times$times = components$prep.rrs.and.times$times = all.times
+    
+    
+    if (length(get.prep.types(components))>1)
+    {
+        for (type in setdiff(get.prep.types(components), 'prep'))
+        {
+            components$additional.prep[[type]]$rates.and.times$rates = 
+                interpolate.parameters(values=components$additional.prep[[type]]$rates.and.times$rates,
+                                       value.times=components$additional.prep[[type]]$rates.and.times$times,
+                                       desired.times=all.times,
+                                       return.list=T)
+            
+            components$additional.prep[[type]]$rrs.and.times$rates = 
+                interpolate.parameters(values=components$additional.prep[[type]]$rrs.and.times$rates,
+                                       value.times=components$additional.prep[[type]]$rrs.and.times$times,
+                                       desired.times=all.times,
+                                       return.list=T)
+            
+            components$additional.prep[[type]]$rates.and.times$times =
+                components$additional.prep[[type]]$rrs.and.times$times = all.times
+        }
+    }
+    
+    #-- Return --#
     components
 }
 
@@ -2427,22 +2546,22 @@ do.setup.susceptibility <- function(components)
         base.sexual.susceptibility[age,,,'msm',,] = base.sexual.susceptibility[age,,,'msm',,] *
             components$msm.sexual.susceptibility.rr.by.age[age]
     
-    
     if (components$model.prep)
     {
-        components = do.calculate.prep.coverage(components)
-        prep.rates.and.times = calculate.prep.coverage.and.rrs(components)
+        if (is.null(components$prep.rates.and.times))
+            components = do.calculate.prep.coverage(components)
+        
+        prep.rates.and.times = calculate.aggregate.prep.coverage.and.risk(components)
         
         components$sexual.susceptibility = lapply(1:length(prep.rates.and.times$times), function(i){
             prep.coverage = prep.rates.and.times$coverage[[i]]
-            prep.rrs = prep.rates.and.times$rrs[[i]]
+            prep.risk = prep.rates.and.times$risk[[i]]
             
             if (is.null(dim(prep.coverage)))
                 prep.coverage = as.numeric(prep.coverage)
             prep.coverage = expand.population.to.hiv.negative(components$jheem, prep.coverage)
             
             non.prep.risk = (1-prep.coverage)
-            prep.risk = prep.coverage * prep.rrs
 #            prep.risk = prep.coverage * prep.rrs['heterosexual']
  #           prep.risk[,,,'msm',,] = prep.coverage[,,,'msm',,] * prep.rrs['msm']
   #          prep.risk[,,,,'active_IDU',] = prep.coverage[,,,,'active_IDU',] * prep.rrs['idu']
@@ -2466,7 +2585,7 @@ do.setup.susceptibility <- function(components)
             
             all.prep.coverage = rates.and.times$rates1
             all.needle.exchange.rates = rates.and.times$rates2
-            all.prep.rrs = interpolate.parameters(values=prep.rates.and.times$rrs, 
+            all.prep.risks = interpolate.parameters(values=prep.rates.and.times$risk, 
                                               value.times=prep.rates.and.times$times,
                                               desired.times = rates.and.times$times,
                                               return.list = T)
@@ -2475,7 +2594,9 @@ do.setup.susceptibility <- function(components)
                 
                 prep.coverage =all.prep.coverage[[i]]
                 needle.exchange.coverage = all.needle.exchange.rates[[i]]
-                prep.rrs = all.prep.rrs[[i]]
+                
+                prep.rrs = all.prep.risks[[i]] / prep.coverage
+                prep.rrs[prep.coverage==0] = 0
                 
                 if (is.null(dim(prep.coverage)))
                     prep.coverage = as.numeric(prep.coverage)
@@ -2961,6 +3082,8 @@ get.idu.transmission.arrays <- function(components)
     idu.transmission.arrays
 }
 
+
+
 do.setup.new.infection.proportions <- function(components)
 {
     if (!components$model.hiv.transmission)
@@ -2970,15 +3093,18 @@ do.setup.new.infection.proportions <- function(components)
     }
     else if (components$model.prep)
     {
-        prep.rates.and.times = calculate.prep.coverage.and.rrs(components)
+        if (is.null(components$prep.rates.and.times))
+            components = do.calculate.prep.coverage(components)
         
+        prep.rates.and.times = calculate.aggregate.prep.coverage.and.risk(components)
+
         components$new.infection.proportions = lapply(1:length(prep.rates.and.times$times), function(i){
             
             prep.coverage = prep.rates.and.times$coverage[[i]]
-            prep.rrs = prep.rates.and.times$rrs[[i]]
+            prep.risk = prep.rates.and.times$risk[[i]]
             
             non.prep.risk = (1-prep.coverage)
-            prep.risk = prep.coverage * prep.rrs
+          #  prep.risk = prep.coverage * prep.rrs
 #            prep.risk = prep.coverage * prep.rrs['heterosexual']
  #           prep.risk[,,,'msm',,] = prep.coverage[,,,'msm',,] * prep.rrs['msm']
   #          prep.risk[,,,,'active_IDU',] = prep.coverage[,,,,'active_IDU',] * prep.rrs['idu']

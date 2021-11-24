@@ -95,11 +95,7 @@ project.absolute.new.diagnoses <- function(sim,
                                           keep.dimensions=keep.dimensions,
                                           include.hiv.positive.in.denominator=T,
                                           use.cdc.categorizations=use.cdc.categorizations)
-    
-    print("HELLO")
-    print(numerators)
-    print("DONE")
-    
+
     do.project.absolute(sim=sim,
                         numerators=numerators,
                         years=years,

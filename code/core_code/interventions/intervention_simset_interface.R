@@ -274,59 +274,67 @@ setup.components.for.intervention <- function(components,
     }
     
     # PrEP Coverage
-    if (!is.null(intervention@processed$prep))
+    for(prep.type in c('prep',ADDITIONAL.PREP.TYPES))
     {
-        rates = lapply(intervention@processed$prep$rates, expand.population.to.hiv.negative, jheem=components$jheem)
+#        if (!is.null(intervention@processed[[prep.type]]))
+        if (any(names(intervention@processed)==prep.type))
+        {
+            rates = lapply(intervention@processed[[prep.type]]$rates, expand.population.to.hiv.negative, jheem=components$jheem)
+            
+            start.times = expand.population.to.hiv.negative(components$jheem, intervention@processed[[prep.type]]$start.times)
+            end.times = expand.population.to.hiv.negative(components$jheem, intervention@processed[[prep.type]]$end.times)
+            min.rates = expand.population.to.hiv.negative(components$jheem, intervention@processed[[prep.type]]$min.rates)
+            max.rates = expand.population.to.hiv.negative(components$jheem, intervention@processed[[prep.type]]$max.rates)
+            apply.functions = expand.character.array(expand.population.to.hiv.negative,
+                                                     components$jheem,
+                                                     intervention@processed[[prep.type]]$apply.functions)
+            allow.less = expand.population.to.hiv.negative(components$jheem, 
+                                                           intervention@processed[[prep.type]]$allow.less.than.otherwise)
+            
+            components = register.prep.type(components, prep.type)
+            components = set.foreground.rates(components, prep.type,
+                                              rates = rates,
+                                              years = intervention@processed[[prep.type]]$times,
+                                              start.years = start.times,
+                                              end.years = end.times,
+                                              apply.functions = apply.functions,
+                                              allow.foreground.less = allow.less,
+                                              overwrite.previous = overwrite.prior.intervention,
+                                              foreground.min = min.rates,
+                                              foreground.max = max.rates)
+        }
         
-        start.times = expand.population.to.hiv.negative(components$jheem, intervention@processed$prep$start.times)
-        end.times = expand.population.to.hiv.negative(components$jheem, intervention@processed$prep$end.times)
-        min.rates = expand.population.to.hiv.negative(components$jheem, intervention@processed$prep$min.rates)
-        max.rates = expand.population.to.hiv.negative(components$jheem, intervention@processed$prep$max.rates)
-        apply.functions = expand.character.array(expand.population.to.hiv.negative,
-                                                 components$jheem,
-                                                 intervention@processed$prep$apply.functions)
-        allow.less = expand.population.to.hiv.negative(components$jheem, 
-                                                       intervention@processed$prep$allow.less.than.otherwise)
         
-        components = set.foreground.rates(components, 'prep',
-                                          rates = rates,
-                                          years = intervention@processed$prep$times,
-                                          start.years = start.times,
-                                          end.years = end.times,
-                                          apply.functions = apply.functions,
-                                          allow.foreground.less = allow.less,
-                                          overwrite.previous = overwrite.prior.intervention,
-                                          foreground.min = min.rates,
-                                          foreground.max = max.rates)
-    }
-    
-    # PrEP Effectiveness (RR)
-    if (!is.null(intervention@processed$rr.prep))
-    {
-        rates = lapply(intervention@processed$rr.prep$rates, expand.population.to.hiv.negative, jheem=components$jheem)
-        
-        start.times = expand.population.to.hiv.negative(components$jheem, intervention@processed$rr.prep$start.times)
-        end.times = expand.population.to.hiv.negative(components$jheem, intervention@processed$rr.prep$end.times)
-        min.rates = expand.population.to.hiv.negative(components$jheem, intervention@processed$rr.prep$min.rates)
-        max.rates = expand.population.to.hiv.negative(components$jheem, intervention@processed$rr.prep$max.rates)
-        apply.functions = expand.character.array(expand.population.to.hiv.negative,
-                                                 components$jheem,
-                                                 intervention@processed$rr.prep$apply.functions)
-        allow.less = expand.population.to.hiv.negative(components$jheem, 
-                                                       intervention@processed$rr.prep$allow.less.than.otherwise)
-        
-        components = set.foreground.rates(components, 'rr.prep',
-                                          rates = rates,
-                                          years = intervention@processed$rr.prep$times,
-                                          start.years = start.times,
-                                          end.years = end.times,
-                                          apply.functions = apply.functions,
-                                          allow.foreground.less = allow.less,
-                                          overwrite.previous = overwrite.prior.intervention,
-                                          foreground.min = min.rates,
-                                          foreground.max = max.rates)
-    }
-    
+        # PrEP Effectiveness (RR)
+#        if (!is.null(intervention@processed$rr.prep))
+        rr.type = paste0('rr.',prep.type)
+        if (any(names(intervention@processed)==rr.type))
+        {
+            rates = lapply(intervention@processed[[rr.type]]$rates, expand.population.to.hiv.negative, jheem=components$jheem)
+            
+            start.times = expand.population.to.hiv.negative(components$jheem, intervention@processed[[rr.type]]$start.times)
+            end.times = expand.population.to.hiv.negative(components$jheem, intervention@processed[[rr.type]]$end.times)
+            min.rates = expand.population.to.hiv.negative(components$jheem, intervention@processed[[rr.type]]$min.rates)
+            max.rates = expand.population.to.hiv.negative(components$jheem, intervention@processed[[rr.type]]$max.rates)
+            apply.functions = expand.character.array(expand.population.to.hiv.negative,
+                                                     components$jheem,
+                                                     intervention@processed[[rr.type]]$apply.functions)
+            allow.less = expand.population.to.hiv.negative(components$jheem, 
+                                                           intervention@processed[[rr.type]]$allow.less.than.otherwise)
+            
+            components = register.prep.type(components, prep.type)
+            components = set.foreground.rates(components, rr.type,
+                                              rates = rates,
+                                              years = intervention@processed[[rr.type]]$times,
+                                              start.years = start.times,
+                                              end.years = end.times,
+                                              apply.functions = apply.functions,
+                                              allow.foreground.less = allow.less,
+                                              overwrite.previous = overwrite.prior.intervention,
+                                              foreground.min = min.rates,
+                                              foreground.max = max.rates)
+        }
+    }    
     
     # Needle Exchange
     if (!is.null(intervention@processed$needle.exchange))

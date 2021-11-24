@@ -446,6 +446,10 @@ resolve.element <- function(elem, resolved.bindings, parameters)
 ##-- UNIT NAMES --##
 ##----------------##
 
+ADDITIONAL.PREP.TYPES = c(
+    'lai.prep'
+)
+
 UNIT.NAME.AS.PCT = c(
     testing=F,
     prep=T,
@@ -463,8 +467,11 @@ UNIT.NAME.AS.PCT = c(
     retention.unsuppressed=T,
     art.adherence.suppressed=T,
     art.adherence.unsuppressed=T,
-    gain.of.suppression=T
+    gain.of.suppression=T,
+    sapply(ADDITIONAL.PREP.TYPES, function(type){T}),
+    sapply(paste0('rr.',ADDITIONAL.PREP.TYPES), function(type){F})
 )
+
 
 ALLOWED.INTERVENTION.UNIT.TYPES = names(UNIT.NAME.AS.PCT)
 
@@ -486,7 +493,9 @@ UNIT.NAME.RATE.SUFFIX = c(
     retention.unsuppressed='',
     art.adherence.suppressed='',
     art.adherence.unsuppressed='',
-    gain.of.suppression=''
+    gain.of.suppression='',
+    sapply(ADDITIONAL.PREP.TYPES, function(type){''}),
+    sapply(paste0('rr.',ADDITIONAL.PREP.TYPES), function(type){'-fold'})
 )
 if (!setequal(ALLOWED.INTERVENTION.UNIT.TYPES, names(UNIT.NAME.RATE.SUFFIX)))
     stop(paste0("Failed sanity check - UNIT.NAME.RATE.SUFFIX names do not match ALLOWED.INTERVENTION.UNIT.TYPES"))
@@ -508,7 +517,9 @@ UNIT.NAME.PRE.DESCRIPTOR = c(
     retention.unsuppressed='',
     art.adherence.suppressed='',
     art.adherence.unsuppressed='',
-    gain.of.suppression = ''
+    gain.of.suppression = '',
+    sapply(ADDITIONAL.PREP.TYPES, function(type){''}),
+    sapply(paste0('rr.',ADDITIONAL.PREP.TYPES), function(type){''})
 )
 if (!setequal(ALLOWED.INTERVENTION.UNIT.TYPES, names(UNIT.NAME.PRE.DESCRIPTOR)))
     stop(paste0("Failed sanity check - UNIT.NAME.PRE.DESCRIPTOR names do not match ALLOWED.INTERVENTION.UNIT.TYPES"))
@@ -530,7 +541,9 @@ UNIT.NAME.POST.DESCRIPTOR = c(
     retention.unsuppressed=' retained',
     art.adherence.suppressed=' adherent',
     art.adherence.unsuppressed=' adherent',
-    gain.of.suppression = ' per year'
+    gain.of.suppression = ' per year',
+    lai.prep = 'on long-acting PrEP',
+    rr.lai.prep = 'long-acting PrEP effectiveness'
 )
 if (!setequal(ALLOWED.INTERVENTION.UNIT.TYPES, names(UNIT.NAME.POST.DESCRIPTOR)))
     stop(paste0("Failed sanity check - UNIT.NAME.POST.DESCRIPTOR names do not match ALLOWED.INTERVENTION.UNIT.TYPES"))
@@ -552,7 +565,9 @@ UNIT.NAME.CATEGORY = c(
     retention.unsuppressed='Retention',
     art.adherence.suppressed='ART Adherence',
     art.adherence.unsuppressed='ART Adherence',
-    gain.of.suppression='Gain Suppression'
+    gain.of.suppression='Gain Suppression',
+    lai.prep = 'on long-acting PrEP',
+    rr.lai.prep = 'long-acting PrEP effectiveness'
 )
 if (!setequal(ALLOWED.INTERVENTION.UNIT.TYPES, names(UNIT.NAME.CATEGORY)))
     stop(paste0("Failed sanity check - UNIT.NAME.CATEGORY names do not match ALLOWED.INTERVENTION.UNIT.TYPES"))

@@ -62,7 +62,7 @@ source('code/processing//postprocessing.R')
 source('code/execution//systematic_calibration.R')
 source('code/calibration/starting_value_generator.R')
 source('code/core_code/setup/compression.R')
-#source('code/time_text.R') #from commoncode
+source('code/core_code/time_text.R') #from commoncode, for printing updates
 
 #-- Interventions --#
 source('code/core_code/interventions/target_population.R')
@@ -76,7 +76,3 @@ source('code/core_code/interventions/intervention_defaults.R')
 source('code/execution/prepare_simset_for_projections.R')
 #source('code/interventions/systematic_intervention_sets.R')
 source('code/execution/run_systematic_interventions.R')
-
-#-- Redo Surveillance Manager to get rid of old version stuck somewhere in loaded object --#
-#source('code/data_managers/hiv_surveillance_manager.R')
-

@@ -837,8 +837,14 @@ set.foreground.rates <- function(components,
         components[[type.name]]$foreground.max = c(components[[type.name]]$foreground.max, list(foreground.max))
         
         # Clear dependencies
+        if (any(type==get.prep.types(components)))
+            type.name = 'foreground.prep'
+        if (any(type==paste0('rr.', get.prep.types(components))))
+            type.name = 'foreground.rr.prep'
+            
         components = clear.dependent.values(components, type.name)
     }
+    
     components
 }
 
@@ -980,15 +986,43 @@ setup.prep.susceptibility <- function(components,
                                       prep.rr.heterosexual,
                                       prep.rr.msm,
                                       prep.rr.idu,
-                                      prep.persistence)
+                                      prep.persistence,
+                                      type='prep')
 {
-    components$prep.rr.heterosexual = as.numeric(prep.rr.heterosexual)
-    components$prep.rr.msm = as.numeric(prep.rr.msm)
-    components$prep.rr.idu = as.numeric(prep.rr.idu)
-    components$prep.persistence = as.numeric(prep.persistence)
-    
+    if (type=='prep')
+    {
+        components$prep.rr.heterosexual = as.numeric(prep.rr.heterosexual)
+        components$prep.rr.msm = as.numeric(prep.rr.msm)
+        components$prep.rr.idu = as.numeric(prep.rr.idu)
+        components$prep.persistence = as.numeric(prep.persistence)
+    }
+    else
+    {
+        components = register.prep.type(components, type)
+        
+        components$additional.prep[[type]]$rr.heterosexual = as.numeric(prep.rr.heterosexual)
+        components$additional.prep[[type]]$rr.msm = as.numeric(prep.rr.msm)
+        components$additional.prep[[type]]$rr.idu = as.numeric(prep.rr.idu)
+        components$additional.prep[[type]]$persistence = as.numeric(prep.persistence)
+    }
+        
     components = clear.dependent.values(components, c('prep.rr.heterosexual','prep.rr.msm','prep.rr.idu'))
     components
+}
+
+register.prep.type <- function(components, type)
+{
+    if (is.null(components$additional.prep))
+        components$additional.prep = list()
+    if (is.null(components$additional.prep[[type]]))
+        components$additional.prep[[type]] = list()
+    
+    components
+}
+
+get.prep.types <- function(components)
+{
+    unique(c('prep', names(components$additional.prep)))
 }
 
 setup.needle.exchange.remission.effect <- function(components,
