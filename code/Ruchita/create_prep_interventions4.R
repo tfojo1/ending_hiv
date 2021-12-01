@@ -227,50 +227,6 @@ create.prep.interventions.v2 <- function(start.year=2023,
                                                  allow.intervention.multiple.names = T)
     
     #SCENARIO 4
-    oral.baseline.plus.25.oral = create.intervention(ALL.MSM,
-                                                     BASELINE.TO.ORAL.EFFICACY,
-                                                     ADDITIONAL.PLUS.25.ORAL,
-                                                     ADDITIONAL.TO.ORAL.EFFICACY,oral.prep.rr.dist,inj.vs.oral.hr.dist, oral.prep.persistence.dist, inj.vs.oral.discontinuation.rr.dist)
-    INTERVENTION.MANAGER = register.intervention(oral.baseline.plus.25.oral, code=paste0('msm.baseline.oral.plus.25.oral', suffix),
-                                                 name='Baseline Oral PrEP with 25% Oral uptake on MSM',
-                                                 manager = INTERVENTION.MANAGER,
-                                                 allow.intervention.multiple.names = T)
-    
-    #SCENARIO 5
-    oral.baseline.plus.25.lai = create.intervention(ALL.MSM,
-                                                    BASELINE.TO.ORAL.EFFICACY,
-                                                    ADDITIONAL.PLUS.25.INJ,
-                                                    ADDITIONAL.TO.INJ.EFFICACY,oral.prep.rr.dist,inj.vs.oral.hr.dist, oral.prep.persistence.dist, inj.vs.oral.discontinuation.rr.dist)
-    INTERVENTION.MANAGER = register.intervention(oral.baseline.plus.25.lai, code=paste0('msm.baseline.oral.plus.25.lai', suffix),
-                                                 name='Baseline Oral PrEP with 25% LAI uptake on MSM',
-                                                 manager = INTERVENTION.MANAGER,
-                                                 allow.intervention.multiple.names = T)
-    
-    
-    #SCENARIO 6
-    oral.baseline.plus.35.oral = create.intervention(ALL.MSM,
-                                                     BASELINE.TO.ORAL.EFFICACY,
-                                                     ADDITIONAL.PLUS.35.ORAL,
-                                                     ADDITIONAL.TO.ORAL.EFFICACY,oral.prep.rr.dist,inj.vs.oral.hr.dist, oral.prep.persistence.dist, inj.vs.oral.discontinuation.rr.dist)
-    INTERVENTION.MANAGER = register.intervention(oral.baseline.plus.35.oral, code=paste0('msm.baseline.oral.plus.35.oral', suffix),
-                                                 name='Baseline Oral PrEP with 25% Oral uptake on MSM',
-                                                 manager = INTERVENTION.MANAGER,
-                                                 allow.intervention.multiple.names = T)
-    
-    #SCENARIO 7
-    oral.baseline.plus.35.lai = create.intervention(ALL.MSM,
-                                                    BASELINE.TO.ORAL.EFFICACY,
-                                                    ADDITIONAL.PLUS.35.INJ,
-                                                    ADDITIONAL.TO.INJ.EFFICACY,oral.prep.rr.dist,inj.vs.oral.hr.dist, oral.prep.persistence.dist, inj.vs.oral.discontinuation.rr.dist)
-    INTERVENTION.MANAGER = register.intervention(oral.baseline.plus.35.lai, code=paste0('msm.baseline.oral.plus.35.lai', suffix),
-                                                 name='Baseline Oral PrEP with 35% LAI uptake on MSM',
-                                                 manager = INTERVENTION.MANAGER,
-                                                 allow.intervention.multiple.names = T)
-    
-    
-    
-    #Additional
-    
     lai.baseline.plus.10.lai = create.intervention(ALL.MSM,
                                                    BASELINE.TO.INJ.COVERAGE,
                                                    BASELINE.TO.INJ.EFFICACY,
@@ -281,6 +237,42 @@ create.prep.interventions.v2 <- function(start.year=2023,
                                                  manager = INTERVENTION.MANAGER,
                                                  allow.intervention.multiple.names = T)
     
+    #SCENARIO 5
+    oral.baseline.plus.25.oral = create.intervention(ALL.MSM,
+                                                     BASELINE.TO.ORAL.EFFICACY,
+                                                     ADDITIONAL.PLUS.25.ORAL,
+                                                     ADDITIONAL.TO.ORAL.EFFICACY,oral.prep.rr.dist,inj.vs.oral.hr.dist, oral.prep.persistence.dist, inj.vs.oral.discontinuation.rr.dist)
+    INTERVENTION.MANAGER = register.intervention(oral.baseline.plus.25.oral, code=paste0('msm.baseline.oral.plus.25.oral', suffix),
+                                                 name='Baseline Oral PrEP with 25% Oral uptake on MSM',
+                                                 manager = INTERVENTION.MANAGER,
+                                                 allow.intervention.multiple.names = T)
+    
+    #SCENARIO 6
+    oral.baseline.plus.25.lai = create.intervention(ALL.MSM,
+                                                    BASELINE.TO.ORAL.EFFICACY,
+                                                    ADDITIONAL.PLUS.25.INJ,
+                                                    ADDITIONAL.TO.INJ.EFFICACY,oral.prep.rr.dist,inj.vs.oral.hr.dist, oral.prep.persistence.dist, inj.vs.oral.discontinuation.rr.dist)
+    INTERVENTION.MANAGER = register.intervention(oral.baseline.plus.25.lai, code=paste0('msm.baseline.oral.plus.25.lai', suffix),
+                                                 name='Baseline Oral PrEP with 25% LAI uptake on MSM',
+                                                 manager = INTERVENTION.MANAGER,
+                                                 allow.intervention.multiple.names = T)
+    
+    #SCENARIO 7
+    lai.baseline.plus.25.lai = create.intervention(ALL.MSM,
+                                                   BASELINE.TO.INJ.COVERAGE,
+                                                   BASELINE.TO.INJ.EFFICACY,
+                                                   ADDITIONAL.PLUS.25.INJ,
+                                                   ADDITIONAL.TO.INJ.EFFICACY,oral.prep.rr.dist,inj.vs.oral.hr.dist, oral.prep.persistence.dist, inj.vs.oral.discontinuation.rr.dist)
+    INTERVENTION.MANAGER = register.intervention(lai.baseline.plus.25.lai, code=paste0('msm.baseline.lai.plus.25.lai', suffix),
+                                                 name='Baseline LAI PrEP with 25% LAI uptake on MSM',
+                                                 manager = INTERVENTION.MANAGER,
+                                                 allow.intervention.multiple.names = T)
+    
+   
+    
+    #Additional
+    
+
     half.half.baseline.plus.5.oral.5.lai = create.intervention(ALL.MSM,
                                                                BASELINE.TO.50.50.COVERAGE,
                                                                BASELINE.TO.50.50.EFFICACY,
