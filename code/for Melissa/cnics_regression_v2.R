@@ -1,5 +1,6 @@
 MELISSAS.FILE = "~/Dropbox/Documents_local/Hopkins/PhD/Dissertation/EHE/CNICS/synthetic_fixed_2021-10-04.Rdata"
-TODDS.FILE = '../../CNICS/cleaned_datasets/arch68/cnics_fixed_2021-10-04.Rdata'
+TODDS.FILE = "Q:/CNICS/cleaned/2021/cnics_fixed_from2012_2021-12-03.Rdata"
+#TODDS.FILE = '../../CNICS/cleaned_datasets/arch68/cnics_fixed_2021-10-04.Rdata'
 if (file.exists(MELISSAS.FILE))
 {
     load(MELISSAS.FILE)
@@ -31,7 +32,11 @@ use.gee = F
 if (any(names(dataset)=='age.category.randomized'))
     names(dataset)[names(dataset)=='age.category.randomized'] = 'age.category'
 
-dataset <- dataset[dataset$sex!="Intersexed",]
+dataset$sex = as.character(dataset$sex)
+dataset$sex[dataset$sex=='male'] = 'Male'
+dataset$sex[dataset$sex=='female'] = 'Female'
+
+dataset <- dataset[dataset$sex=="Male" | dataset$sex=='Female',]
 dataset <- dataset[dataset$age.category!="0-13",]
 
 dataset$age.category <- factor(dataset$age.category, levels = c("35-45","13-25","25-35","45-55","55+"))
@@ -41,60 +46,29 @@ anchor.year = 2010
 dataset$relative.year <- dataset$date - anchor.year
 
 ## Creating sex.risk categories ##
-for (i in 1:nrow(dataset)) {
-    if(dataset$risk[i]=="msm")  {
-        dataset$sex.risk[i]="msm"
-        
-    } else if(dataset$risk[i]=="msm_idu")  {
-        dataset$sex.risk[i]="msm_idu"
-        
-    } else if(dataset$sex[i]=="Male" && dataset$risk[i]=="heterosexual")  {
-        dataset$sex.risk[i]="heterosexual_male"
-        
-    } else if(dataset$sex[i]=="Female" && dataset$risk[i]=="heterosexual")  {
-        dataset$sex.risk[i]="heterosexual_female"
-        
-    } else if(dataset$sex[i]=="Male" && dataset$risk[i]=="idu")  {
-        dataset$sex.risk[i]="idu_male"
-        
-    } else if(dataset$sex[i]=="Female" && dataset$risk[i]=="idu")  {
-        dataset$sex.risk[i]="idu_female"
-        
-    } else if(dataset$risk[i]=="other")  {
-        dataset$sex.risk[i]="other"
-        
-    } else 
-        dataset$sex.risk[i]="missing"
-}
+
+
+dataset$sex.risk = 'missing'
+dataset$sex.risk[dataset$risk=="msm"] = "msm"
+dataset$sex.risk[dataset$risk=="msm_idu"] = "msm_idu"
+dataset$sex.risk[dataset$sex=='Male' & dataset$risk=="heterosexual"] = "heterosexual_male"
+dataset$sex.risk[dataset$sex=='Female' & dataset$risk=="heterosexual"] = "heterosexual_female"
+dataset$sex.risk[dataset$sex=='Male' & dataset$risk=="idu"] = "idu_male"
+dataset$sex.risk[dataset$sex=='Female' & dataset$risk=="idu"] = "idu_female"
+dataset$sex.risk[dataset$risk=='other'] = 'other'
+
+
+dataset = dataset[dataset$sex.risk != 'missing' & dataset$sex.risk != 'other',]
+dataset$sex.risk = factor(dataset$sex.risk, levels=c('msm','msm_idu','heterosexual_male','heterosexual_female','idu_male','idu_female'))
 
 ## Defining engagement criteria; disengagement time ##
 print("Defining engagement criteria and disengagement time")
-for (i in 1:nrow(dataset)) {
-    if(dataset$vl.now[i]==TRUE && dataset$visits.now[i]==TRUE)  {
-        dataset$engaged.now[i]=TRUE
-        
-    } else 
-        dataset$engaged.now[i]=FALSE
-    
-}
+dataset$engaged.now = dataset$vl.now & dataset$visits.now
 
-for (i in 1:nrow(dataset)) {
-    if(dataset$vl.future[i]==TRUE && dataset$visits.future[i]==TRUE)  {
-        dataset$engaged.future[i]=TRUE
-        
-    } else 
-        dataset$engaged.future[i]=FALSE
-    
-}
+dataset$engaged.future = dataset$vl.future & dataset$visits.future
 
-for (i in 1:nrow(dataset)) {
-    if(!is.na(dataset$years.since.vl.and.visit[i]) && dataset$years.since.vl.and.visit[i]<=2)  {
-        dataset$disengaged.category[i] = "0-2"
-        
-    } else 
-        dataset$disengaged.category[i]=">2"
-    
-}
+dataset$disengaged.category = ">2"
+dataset$disengaged.category[!is.na(dataset$years.since.vl.and.visit) & dataset$years.since.vl.and.visit<=2] = '0-2'
 
 
 
@@ -123,10 +97,10 @@ disengaged$future.state <- factor(disengaged$future.state, levels = c("reengage.
 disengaged$age.category <- factor(disengaged$age.category, levels = c("35-45","13-25","25-35","45-55","55+"))
 disengaged$sex <- factor(disengaged$sex, levels = c("Male","Female"))
 disengaged$race <- factor(disengaged$race, levels = c("other","black","hispanic"))
-disengaged$risk <- factor(disengaged$risk, levels = c("heterosexual","idu","msm","msm_idu","other"))
+disengaged$risk <- factor(disengaged$risk, levels = c("heterosexual","idu","msm","msm_idu"))
 disengaged$sex.risk <- factor(disengaged$sex.risk, levels = c("msm","msm_idu",
                                                               "heterosexual_male","heterosexual_female",
-                                                              "idu_male","idu_female","other"))
+                                                              "idu_male","idu_female"))
 
 disengaged.for.weights = disengaged[!is.na(disengaged$future.state) & (disengaged$future.state=='reengage.suppress' | disengaged$future.state=='reengage.unsuppress'),]
 
@@ -194,7 +168,7 @@ engaged.unsuppressed$race <- factor(engaged.unsuppressed$race, levels = c("other
 engaged.unsuppressed$risk <- factor(engaged.unsuppressed$risk, levels = c("heterosexual","idu","msm","msm_idu","other"))
 engaged.unsuppressed$sex.risk <- factor(engaged.unsuppressed$sex.risk, levels = c("msm","msm_idu",
                                                                                   "heterosexual_male","heterosexual_female",
-                                                                                  "idu_male","idu_female","other"))
+                                                                                  "idu_male","idu_female"))
 
 model.suppressed.if.not.truly.disengaged.EU <- geeglm(suppressed.future ~ age.category + sex.risk + race +
                                                           relative.year + relative.year:age.category + relative.year:sex.risk + relative.year:race,
@@ -345,7 +319,7 @@ engaged.suppressed$race <- factor(engaged.suppressed$race, levels = c("other","b
 engaged.suppressed$risk <- factor(engaged.suppressed$risk, levels = c("heterosexual","idu","msm","msm_idu","other"))
 engaged.suppressed$sex.risk <- factor(engaged.suppressed$sex.risk, levels = c("msm","msm_idu",
                                                                               "heterosexual_male","heterosexual_female",
-                                                                              "idu_male","idu_female","other"))
+                                                                              "idu_male","idu_female"))
 
 
 model.suppressed.if.not.truly.disengaged.ES <- geeglm(suppressed.future ~ age.category + sex.risk + race +
