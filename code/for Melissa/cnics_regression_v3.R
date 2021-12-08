@@ -1,5 +1,5 @@
 MELISSAS.FILE = "~/Dropbox/Documents_local/Hopkins/PhD/Dissertation/EHE/CNICS/synthetic_fixed_from2007_2021-12-07.Rdata"
-TODDS.FILE = '../../CNICS/cleaned_datasets/arch68/cnics_fixed_2021-10-04.Rdata'
+TODDS.FILE = 'Q:/CNICS/cleaned/2021/cnics_fixed_from2007_2021-12-07.Rdata'
 if (file.exists(MELISSAS.FILE))
 {
     load(MELISSAS.FILE)
@@ -202,7 +202,10 @@ engaged.unsuppressed$sex.risk <- factor(engaged.unsuppressed$sex.risk, levels = 
 ##-- DATASET 1: Unsuppressed naive --##
 ##-----------------------------------##
 print("Preparing Dataset for unsuppressed-naive")
-unsuppressed.naive <- engaged.unsuppressed[engaged.unsuppressed$art.naive.now==TRUE,]
+naive.mask = dataset$art.naive.now & (is.na(dataset$suppressed.now) | !dataset$suppressed.now)
+#unsuppressed.naive <- engaged.unsuppressed[engaged.unsuppressed$art.naive.now==TRUE,]
+unsuppressed.naive <- dataset[naive.mask,]
+#@melissa - we were working here
 
 model.suppressed.if.not.truly.disengaged.UN <- geeglm(suppressed.future ~ age.category + sex.risk + race +
                                                           relative.year + relative.year:age.category + relative.year:sex.risk + relative.year:race,
@@ -543,7 +546,12 @@ if (use.gee==T)
 ##------------------------------------##
 
 disengaged$p.truly.disengaged = expit(predict.glm(model.truly.disengaged, newdata=disengaged))
-disengaged$p.truly.disengaged[disengaged$future.state=='reengage.unsuppress'] = 1
+
+mask = disengaged$future.state=='reengage.unsuppress'
+p.suppressed.if.engaged.for.disengaged = expit(predict.glm(model.suppressed.if.engaged, newdata=disengaged[mask,]))
+disengaged$p.truly.disengaged[mask] = prior.p.lost /
+    (prior.p.lost + (1-prior.p.lost) * (1-p.suppressed.if.engaged.for.disengaged))
+
 disengaged$p.truly.disengaged[disengaged$future.state=='reengage.suppress'] = 0
 
 
