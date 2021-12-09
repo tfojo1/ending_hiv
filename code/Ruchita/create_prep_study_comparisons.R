@@ -158,7 +158,6 @@ create.prep.interventions.v2 <- function(start.year,
 
 }
 
-
 INTERVENTION.MANAGER.1.0 = create.prep.interventions.v2(start.year,
                                                         implemented.year,
                                                         suffix,
@@ -167,3 +166,9 @@ INTERVENTION.MANAGER.1.0 = create.prep.interventions.v2(start.year,
                                                         oral.prep.persistence.dist = ORAL.PREP.PERSISTENCE.DIST, #oral.prep.persistence
                                                         inj.vs.oral.discontinuation.rr.dist = INJ.VS.ORAL.DISCONTINUATION.RR.DIST, #inj.vs.oral.discontinuation.rr
                                                         INTERVENTION.MANAGER = INTERVENTION.MANAGER.1.0)
+
+
+#@ruchita - I want you to fill in this list
+COMPARISON.INTERVENTIONS.TO.RUN = list(
+    #fill in here
+)
