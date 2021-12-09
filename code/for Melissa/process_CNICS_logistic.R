@@ -1,4 +1,4 @@
-load("~/Dropbox/Documents_local/Hopkins/PhD/Dissertation/EHE/Ending_HIV/ending_hiv/code/for Melissa/CNICS analysis/logistic_output_adj_real_jheem.model_2021-11-12")
+load("~/Dropbox/Documents_local/Hopkins/PhD/Dissertation/EHE/Ending_HIV/ending_hiv/code/for Melissa/CNICS analysis/logistic_output_adj_synthetic_jheem.model_2021-12-09")
 
 
 ##--------------------------------------##
@@ -282,4 +282,4 @@ full.table = matrix(data = c(naive.to.supp.combined.table, naive.to.lost.combine
                   
 
 write.csv(full.table, file=file.path('code','for Melissa', 'CNICS analysis', 
-                                                     "full.logistic.output.csv"))
+                                                     "full.logistic.output.synthetic.csv"))
