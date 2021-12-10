@@ -170,5 +170,6 @@ INTERVENTION.MANAGER.1.0 = create.prep.interventions.v2(start.year,
 
 #@ruchita - I want you to fill in this list
 COMPARISON.INTERVENTIONS.TO.RUN = list(
-    #fill in here
+INJ.MALONEY, INJ.MARSHALL, ORAL.MALONEY, ORAL.MARSHALL, BASELINE.MARSHALL, BASELINE.MALONEY
+
 )
