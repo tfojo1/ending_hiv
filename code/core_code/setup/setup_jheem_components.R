@@ -1495,6 +1495,36 @@ setup.background.suppression <- function(components,
 
 #-- LEAVE UNSUPPRESSED --#
 
+setup.background <- function(components,
+                             type,
+                             years,
+                             location,
+                             continuum.manager,
+                             ramp.year,
+                             ramp.multiplier)
+{
+    type.name = paste0('background.',type)
+    
+    if (is.null(components[[type.name]]))
+        components[[type.name]] = list()
+    
+    components[[type.name]]$years = years
+    
+    components[[type.name]]$model = get.continuum.model(continuum.manager,
+                                                        type=type,
+                                                        location)
+    
+    components[[type.name]]$ramp.year = ramp.year
+    components[[type.name]]$ramp.multiplier = ramp.multiplier
+    
+    
+    components = clear.dependent.values(components,
+                                        dependent.on = type.name)
+    
+    components
+}
+
+
 setup.background.leave.unsuppressed <- function(components,
                                                 continuum.manager,
                                                 location,
