@@ -59,16 +59,14 @@ INJ.VS.ORAL.DISCONTINUATION.RR.DIST = Uniform.Distribution(min=.25,
                                                            max=1,
                                                            var.name='inj.vs.oral.discontinuation.rr')
 
+#take this out of function 
 
-create.prep.interventions.v2 <- function(start.year,
-                                         implemented.year,
-                                         suffix='',
-                                         oral.prep.rr.dist = ORAL.PREP.MSM.RR.DIST, #oral.prep.rr
-                                         inj.vs.oral.hr.dist = INJ.PREP.HR.DIST, #inj.vs.oral.hr
-                                         oral.prep.persistence.dist = ORAL.PREP.PERSISTENCE.DIST, #oral.prep.persistence
-                                         inj.vs.oral.discontinuation.rr.dist = INJ.VS.ORAL.DISCONTINUATION.RR.DIST, #inj.vs.oral.discontinuation.rr
-                                         INTERVENTION.MANAGER = INTERVENTION.MANAGER.1.0)
-{
+oral.prep.rr.dist = ORAL.PREP.MSM.RR.DIST #oral.prep.rr
+inj.vs.oral.hr.dist = INJ.PREP.HR.DIST #inj.vs.oral.hr
+oral.prep.persistence.dist = ORAL.PREP.PERSISTENCE.DIST #oral.prep.persistence
+inj.vs.oral.discontinuation.rr.dist = INJ.VS.ORAL.DISCONTINUATION.RR.DIST #inj.vs.oral.discontinuation.rr
+INTERVENTION.MANAGER = INTERVENTION.MANAGER.1.0
+
   if (suffix != '' && substr(suffix, 1,1)!='_')
     suffix = paste0("_", suffix)
   
@@ -156,7 +154,7 @@ create.prep.interventions.v2 <- function(start.year,
                                                allow.intervention.multiple.names = T)
   
 
-}
+
 
 INTERVENTION.MANAGER.1.0 = create.prep.interventions.v2(start.year,
                                                         implemented.year,
