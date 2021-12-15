@@ -41,60 +41,22 @@ anchor.year = 2010
 dataset$relative.year <- dataset$date - anchor.year
 
 ## Creating sex.risk categories ##
-for (i in 1:nrow(dataset)) {
-    if(dataset$risk[i]=="msm")  {
-        dataset$sex.risk[i]="msm"
-        
-    } else if(dataset$risk[i]=="msm_idu")  {
-        dataset$sex.risk[i]="msm_idu"
-        
-    } else if(dataset$sex[i]=="male" && dataset$risk[i]=="heterosexual")  {
-        dataset$sex.risk[i]="heterosexual_male"
-        
-    } else if(dataset$sex[i]=="female" && dataset$risk[i]=="heterosexual")  {
-        dataset$sex.risk[i]="heterosexual_female"
-        
-    } else if(dataset$sex[i]=="male" && dataset$risk[i]=="idu")  {
-        dataset$sex.risk[i]="idu_male"
-        
-    } else if(dataset$sex[i]=="female" && dataset$risk[i]=="idu")  {
-        dataset$sex.risk[i]="idu_female"
-        
-    # } else if(dataset$risk[i]=="other")  {
-    #     dataset$sex.risk[i]="other"
-        
-    } else 
-        dataset$sex.risk[i]="missing"
-}
+dataset$sex.risk[dataset$risk=="msm"] = "msm"
+dataset$sex.risk[dataset$risk=="msm_idu"] = "msm_idu"
+dataset$sex.risk[dataset$sex=="male" & dataset$risk=="heterosexual"] = "heterosexual_male"
+dataset$sex.risk[dataset$sex=="female" & dataset$risk=="heterosexual"] = "heterosexual_female"
+dataset$sex.risk[dataset$sex=="male" & dataset$risk=="idu"] = "idu_male"
+dataset$sex.risk[dataset$sex=="female" & dataset$risk=="idu"] = "idu_female"
+dataset$sex.risk[is.na(dataset$sex.risk)] = "missing"
+
 
 ## Defining engagement criteria; disengagement time ##
 print("Defining engagement criteria and disengagement time")
-for (i in 1:nrow(dataset)) {
-    if(dataset$vl.now[i] && dataset$visits.now[i])  {
-        dataset$engaged.now[i]=TRUE
-        
-    } else 
-        dataset$engaged.now[i]=FALSE
-    
-}
-
-for (i in 1:nrow(dataset)) {
-    if(dataset$vl.future[i] && dataset$visits.future[i])  {
-        dataset$engaged.future[i]=TRUE
-        
-    } else 
-        dataset$engaged.future[i]=FALSE
-    
-}
-
-for (i in 1:nrow(dataset)) {
-    if(!is.na(dataset$years.since.vl.and.visit[i]) && dataset$years.since.vl.and.visit[i]<=2)  {
-        dataset$disengaged.category[i] = "0-2"
-        
-    } else 
-        dataset$disengaged.category[i]=">2"
-    
-}
+dataset$engaged.now <- dataset$vl.now & dataset$visits.now
+dataset$engaged.future <- dataset$vl.future & dataset$visits.future
+dataset$disengaged.category[!is.na(dataset$years.since.vl.and.visit) & dataset$years.since.vl.and.visit<=2] = "0-2"
+dataset$disengaged.category[!is.na(dataset$years.since.vl.and.visit) & dataset$years.since.vl.and.visit>2] = ">2"
+dataset$disengaged.category[is.na(dataset$years.since.vl.and.visit)] = "missing"
 
 
 dataset.2007 <- dataset
@@ -104,21 +66,12 @@ dataset <- dataset[dataset$date>=2012.5,]
 print("Preparing Dataset for disengaged, for fitting the probability of true disengage")
 disengaged <-dataset[!dataset$engaged.now & dataset$disengaged.category=="0-2",]
 
-for (i in 1:nrow(disengaged)) {
-    if(!is.na(disengaged$engaged.future[i]) && !disengaged$engaged.future[i])  {
-        disengaged$future.state[i]="remain"
-        
-    } else if(!is.na(disengaged$engaged.future[i]) && !is.na(disengaged$suppressed.future[i]) &&
-              disengaged$engaged.future[i] && !disengaged$suppressed.future[i])  {
-        disengaged$future.state[i]="reengage.unsuppress"
-        
-    } else if(!is.na(disengaged$engaged.future[i]) && !is.na(disengaged$suppressed.future[i]) &&
-              disengaged$engaged.future[i] && disengaged$suppressed.future[i])  {
-        disengaged$future.state[i]="reengage.suppress"
-        
-    } else 
-        disengaged$future.state[i]="missing"
-}
+disengaged$future.state[!is.na(disengaged$engaged.future) & !disengaged$engaged.future] = "remain"
+disengaged$future.state[!is.na(disengaged$engaged.future) & !is.na(disengaged$suppressed.future)
+                        & disengaged$engaged.future & !disengaged$suppressed.future] = "reengage.unsuppress"
+disengaged$future.state[!is.na(disengaged$engaged.future) & !is.na(disengaged$suppressed.future)
+                        & disengaged$engaged.future & disengaged$suppressed.future] = "reengage.suppress"
+disengaged$future.state[is.na(disengaged$future.state)] = "missing"
 
 
 disengaged <-disengaged[disengaged$future.state!="missing",]
@@ -164,29 +117,66 @@ if (1==2)
 
 
 ##-----------------------------------##
+##------- Total disengagement -------##
+##-----------------------------------##
+all.engaged <-dataset[!is.na(dataset$engaged.now) & dataset$engaged.now,]
+
+all.engaged$future.state[!is.na(all.engaged$engaged.future) & !all.engaged$engaged.future]="lost"
+all.engaged$future.state[!is.na(all.engaged$engaged.future) & all.engaged$engaged.future]="remain"
+
+all.engaged$age.category <- factor(all.engaged$age.category, levels = c("35-45","13-25","25-35","45-55","55+"))
+all.engaged$sex <- factor(all.engaged$sex, levels = c("male","female"))
+all.engaged$race <- factor(all.engaged$race, levels = c("other","black","hispanic"))
+all.engaged$risk <- factor(all.engaged$risk, levels = c("heterosexual","idu","msm","msm_idu"))
+all.engaged$sex.risk <- factor(all.engaged$sex.risk, levels = c("msm","msm_idu",
+                                                                              "heterosexual_male","heterosexual_female",
+                                                                              "idu_male","idu_female"))
+
+all.engaged$lost.future = as.numeric(all.engaged$future.state=='lost')
+
+
+#### Logistic models for Total Disengagement  ####
+if (use.gee==T)
+{
+    ## --> Lost
+    print("Fitting logistic model for All CNICS --> lost, WITH individual slopes")
+    model.all.to.lost.slopes <- geeglm(lost.future ~ age.category + sex.risk + race + relative.year
+                                         + age.category*relative.year + sex.risk*relative.year + race*relative.year,
+                                         data=all.engaged, id=id, family=binomial, corstr="exchangeable")
+    
+    print("Fitting logistic model for All CNICS --> lost, WITHOUT individual slopes")
+    model.all.to.lost.noslopes <- geeglm(lost.future ~ age.category + sex.risk + race + relative.year,
+                                           data=all.engaged, id=id, family=binomial, corstr="exchangeable")
+} else
+{
+    ## --> Lost
+    print("Fitting logistic model for All CNICS --> lost, WITH individual slopes, no GEE")
+    model.all.to.lost.slopes <- glm(lost.future ~ age.category + sex.risk + race + relative.year
+                                      + age.category*relative.year + sex.risk*relative.year + race*relative.year,
+                                      data=all.engaged, family=binomial)
+    
+    print("Fitting logistic model for All CNICS --> lost, WITHOUT individual slopes, no GEE")
+    model.all.to.lost.noslopes <- glm(lost.future ~ age.category + sex.risk + race + relative.year,
+                                        data=all.engaged, family=binomial)
+}  
+
+
+
+
+##-----------------------------------##
 ##-- DATASET 1: Unsuppressed naive --##
 ##-----------------------------------##
 print("Preparing Dataset for unsuppressed-naive")
 naive.mask = !is.na(dataset.2007$art.naive.now) & dataset.2007$art.naive.now  & (is.na(dataset.2007$suppressed.now) | !dataset.2007$suppressed.now)
 unsuppressed.naive <- dataset.2007[naive.mask,]
 
-for (i in 1:nrow(unsuppressed.naive)) {
-    if(!is.na(unsuppressed.naive$art.naive.future) && unsuppressed.naive$art.naive.future[i] 
-       && (is.na(unsuppressed.naive$suppressed.future[i]) | !unsuppressed.naive$suppressed.future[i])) {
-        unsuppressed.naive$future.state[i]="remain"
-        
-    } else if(!is.na(unsuppressed.naive$engaged.future[i]) && !is.na(unsuppressed.naive$suppressed.future[i]) &&
-              unsuppressed.naive$engaged.future[i] && unsuppressed.naive$suppressed.future[i])  {
-        unsuppressed.naive$future.state[i]="suppress"
-        
-    } else if(!is.na(unsuppressed.naive$engaged.future[i]) &&
-              !unsuppressed.naive$engaged.future[i])  {
-        unsuppressed.naive$future.state[i]="lost"
-        
-    } else 
-        unsuppressed.naive$future.state[i]="missing"
-    
-}
+unsuppressed.naive$future.state[!is.na(unsuppressed.naive$art.naive.future) & unsuppressed.naive$art.naive.future 
+                                & (is.na(unsuppressed.naive$suppressed.future) | !unsuppressed.naive$suppressed.future)]="remain"
+unsuppressed.naive$future.state[!is.na(unsuppressed.naive$engaged.future) & !is.na(unsuppressed.naive$suppressed.future) 
+                                &   unsuppressed.naive$engaged.future & unsuppressed.naive$suppressed.future]="suppress"
+unsuppressed.naive$future.state[!is.na(unsuppressed.naive$engaged.future) & !unsuppressed.naive$engaged.future]="lost"
+unsuppressed.naive$future.state[is.na(unsuppressed.naive$future.state)] = "missing"
+
 
 
 unsuppressed.naive <-unsuppressed.naive[unsuppressed.naive$future.state!="missing",]
@@ -339,24 +329,12 @@ print("Preparing Dataset for unsuppressed-failing")
 engaged.unsuppressed <-dataset[dataset$engaged.now & !dataset$suppressed.now & !is.na(dataset$suppressed.now),]
 unsuppressed.failing <- engaged.unsuppressed[!engaged.unsuppressed$art.naive.now,]
 
-
-for (i in 1:nrow(unsuppressed.failing)) {
-    if(!is.na(unsuppressed.failing$engaged.future[i]) && !is.na(unsuppressed.failing$suppressed.future[i]) &&
-       unsuppressed.failing$engaged.future[i] && !unsuppressed.failing$suppressed.future[i])  {
-        unsuppressed.failing$future.state[i]="remain"
-        
-    } else if(!is.na(unsuppressed.failing$engaged.future[i]) && !is.na(unsuppressed.failing$suppressed.future[i]) &&
-              unsuppressed.failing$engaged.future[i] && unsuppressed.failing$suppressed.future[i])  {
-        unsuppressed.failing$future.state[i]="suppress"
-        
-    } else if(!is.na(unsuppressed.failing$engaged.future[i]) &&
-              !unsuppressed.failing$engaged.future[i])  {
-        unsuppressed.failing$future.state[i]="lost"
-        
-    } else 
-        unsuppressed.failing$future.state[i]="missing"
-    
-}
+unsuppressed.failing$future.state[!is.na(unsuppressed.failing$engaged.future) & !is.na(unsuppressed.failing$suppressed.future) 
+                                  & unsuppressed.failing$engaged.future & !unsuppressed.failing$suppressed.future]="remain"
+unsuppressed.failing$future.state[!is.na(unsuppressed.failing$engaged.future) & !is.na(unsuppressed.failing$suppressed.future) 
+                                & unsuppressed.failing$engaged.future & unsuppressed.failing$suppressed.future]="suppress"
+unsuppressed.failing$future.state[!is.na(unsuppressed.failing$engaged.future) & !unsuppressed.failing$engaged.future] ="lost"
+unsuppressed.failing$future.state[is.na(unsuppressed.failing$future.state)] = "missing"
 
 
 unsuppressed.failing <-unsuppressed.failing[unsuppressed.failing$future.state!="missing",]
@@ -456,23 +434,13 @@ if (use.gee==T)
 print("Preparing Dataset for engaged-suppressed")
 engaged.suppressed <-dataset[dataset$engaged.now & dataset$suppressed.now & !is.na(dataset$suppressed.now),]
 
-for (i in 1:nrow(engaged.suppressed)) {
-    if(!is.na(engaged.suppressed$engaged.future[i]) && !is.na(engaged.suppressed$suppressed.future[i]) &&
-       engaged.suppressed$engaged.future[i] && engaged.suppressed$suppressed.future[i])  {
-        engaged.suppressed$future.state[i]="remain"
-        
-    } else if(!is.na(engaged.suppressed$engaged.future[i]) && !is.na(engaged.suppressed$suppressed.future[i]) &&
-              engaged.suppressed$engaged.future[i] && !engaged.suppressed$suppressed.future[i])  {
-        engaged.suppressed$future.state[i]="unsuppress"
-        
-    } else if(!is.na(engaged.suppressed$engaged.future[i]) &&
-              !engaged.suppressed$engaged.future[i])  {
-        engaged.suppressed$future.state[i]="lost"
-        
-    } else 
-        engaged.suppressed$future.state[i]="missing"
-    
-}
+engaged.suppressed$future.state[!is.na(engaged.suppressed$engaged.future) & !is.na(engaged.suppressed$suppressed.future) 
+                                & engaged.suppressed$engaged.future & engaged.suppressed$suppressed.future] ="remain"
+engaged.suppressed$future.state[!is.na(engaged.suppressed$engaged.future) & !is.na(engaged.suppressed$suppressed.future) &
+                                    engaged.suppressed$engaged.future & !engaged.suppressed$suppressed.future]="unsuppress"
+engaged.suppressed$future.state[!is.na(engaged.suppressed$engaged.future) & !engaged.suppressed$engaged.future] ="lost"
+engaged.suppressed$future.state[is.na(engaged.suppressed$future.state)] = "missing"
+
 
 engaged.suppressed <-engaged.suppressed[engaged.suppressed$future.state!="missing",]
 engaged.suppressed$future.state <- factor(engaged.suppressed$future.state, levels = c("unsuppress","lost","remain"))
