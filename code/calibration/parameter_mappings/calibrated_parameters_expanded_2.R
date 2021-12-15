@@ -221,9 +221,20 @@ parameters.prior = join.distributions(
     age4.proportion.linked.slope.or = Lognormal.Distribution(0, 0.5*log(2)/5),
     age5.proportion.linked.slope.or = Lognormal.Distribution(0, 0.5*log(2)/5),
 
+    
     #-- STARTING ART --#
     heterosexual.start.art.or = Lognormal.Distribution(0, 0.5*log(2)),
-    #@melissa - fill in the rest
+    msm.start.art.or = Lognormal.Distribution(0, 0.5*log(2)),
+    idu.start.art.or = Lognormal.Distribution(0, 0.5*log(2)),
+    msm.idu.start.art.or = Lognormal.Distribution(0, 0.5*log(2)),
+    
+    black.start.art.or = Lognormal.Distribution(0, 0.5*log(2)),
+    hispanic.start.art.or = Lognormal.Distribution(0, 0.5*log(2)),
+    
+    age1.start.art.or = Lognormal.Distribution(0, 0.5*log(2)),
+    age2.start.art.or = Lognormal.Distribution(0, 0.5*log(2)),
+    age4.start.art.or = Lognormal.Distribution(0, 0.5*log(2)),
+    age5.start.art.or = Lognormal.Distribution(0, 0.5*log(2)),
     
     
     #-- ADHERENCE --#
@@ -534,6 +545,18 @@ PARAMETER.VAR.BLOCKS.1 = list(
                       'age5.proportion.linked.or',
                       'age5.proportion.linked.slope.or'),
   
+  start.art.by.risk = c('heterosexual.start.art.or',
+                        'msm.start.art.or',
+                        'idu.start.art.or',
+                        'msm.idu.start.art.or'), 
+  
+  start.art.by.race = c('black.start.art.or',
+                        'hispanic.proportion.adherent.or'),  
+  
+  start.art.by.age = c('age1.start.art.or',
+                        'age2.start.art.or',
+                        'age4.start.art.or',
+                        'age5.start.art.or'), 
   
   msm.adherence = c('msm.proportion.adherent.or',
                       'msm.proportion.adherent.slope.or',
@@ -544,12 +567,6 @@ PARAMETER.VAR.BLOCKS.1 = list(
                                    'idu.proportion.adherent.slope.or',
                                    'heterosexual.proportion.adherent.or',
                                    'heterosexual.proportion.adherent.slope.or'),
-  
- # @melissa - do for X.start.art.or
-  
-  start.art.by.race = c('black.start.art.or',
-                       'hispanic.proportion.adherent.or'), 
- 
  
   
   adherence.by.race = c('black.proportion.adherent.or',
