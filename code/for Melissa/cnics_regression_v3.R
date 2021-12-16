@@ -293,6 +293,10 @@ if (use.gee==T)
 ## Remove still naive in the future
 imputed.unsuppressed.naive.start.art <- imputed.unsuppressed.naive[imputed.unsuppressed.naive$art.naive.future==FALSE,]
 
+## Prune the dates
+keep.years.mask = imputed.unsuppressed.naive.start.art$date > 2008 & imputed.unsuppressed.naive.start.art$date < 2018
+imputed.unsuppressed.naive.start.art = imputed.unsuppressed.naive.start.art[keep.years.mask,]
+
 ## Suppress 
 if (use.gee==T)
 {
