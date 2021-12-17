@@ -264,6 +264,10 @@ imputed.unsuppressed.naive$lost.future = as.numeric(imputed.unsuppressed.naive$f
 
 #### Logistic models for Unsuppressed-Naive  ####
 
+## Prune the dates
+keep.years.mask = imputed.unsuppressed.naive$date > 2008 #& imputed.unsuppressed.naive.start.art$date < 2018
+imputed.unsuppressed.naive = imputed.unsuppressed.naive[keep.years.mask,]
+
 ## Disengage
 if (use.gee==T)
 {
@@ -292,10 +296,6 @@ if (use.gee==T)
 
 ## Remove still naive in the future
 imputed.unsuppressed.naive.start.art <- imputed.unsuppressed.naive[imputed.unsuppressed.naive$art.naive.future==FALSE,]
-
-## Prune the dates
-keep.years.mask = imputed.unsuppressed.naive.start.art$date > 2008 & imputed.unsuppressed.naive.start.art$date < 2018
-imputed.unsuppressed.naive.start.art = imputed.unsuppressed.naive.start.art[keep.years.mask,]
 
 ## Suppress 
 if (use.gee==T)
