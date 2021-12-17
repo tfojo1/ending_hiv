@@ -1,4 +1,4 @@
-load("~/Dropbox/Documents_local/Hopkins/PhD/Dissertation/EHE/Ending_HIV/ending_hiv/code/for Melissa/CNICS analysis/logistic_output_adj_synthetic_jheem.model_2021-12-09")
+load("~/Dropbox/Documents_local/Hopkins/PhD/Dissertation/EHE/Ending_HIV/ending_hiv/code/for Melissa/CNICS analysis/logistic_output_adj_synthetic_jheem.model_2021-12-15")
 
 
 ##--------------------------------------##
