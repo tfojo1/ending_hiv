@@ -1,4 +1,5 @@
 
+source('code/source_code.R')
 
 persistence.to.coverage.fraction <- function(persistence)
 {
@@ -155,15 +156,6 @@ INTERVENTION.MANAGER = INTERVENTION.MANAGER.1.0
   
 
 
-
-INTERVENTION.MANAGER.1.0 = create.prep.interventions.v2(start.year,
-                                                        implemented.year,
-                                                        suffix,
-                                                        oral.prep.rr.dist = ORAL.PREP.MSM.RR.DIST, #oral.prep.rr
-                                                        inj.vs.oral.hr.dist = INJ.PREP.HR.DIST, #inj.vs.oral.hr
-                                                        oral.prep.persistence.dist = ORAL.PREP.PERSISTENCE.DIST, #oral.prep.persistence
-                                                        inj.vs.oral.discontinuation.rr.dist = INJ.VS.ORAL.DISCONTINUATION.RR.DIST, #inj.vs.oral.discontinuation.rr
-                                                        INTERVENTION.MANAGER = INTERVENTION.MANAGER.1.0)
 
 
 #@ruchita - I want you to fill in this list
