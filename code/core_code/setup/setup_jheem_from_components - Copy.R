@@ -590,50 +590,30 @@ DEPENDENCIES = list(seed.rate.per.stratum='initial.population',
                     aids.progression.rate='cd4.transitions',
                     cd4.recovery.rate='cd4.transitions',
                     prep.screening.frequency='continuum.transitions',
-                    
-                    # background/foreground
                     background.testing=c('continuum.transitions','testing.rates.and.times'),
                     foreground.testing=c('continuum.transitions','testing.rates.and.times'),
-                    
+                    #                        background.testing.rate.ratios=c('continuum.transitions','testing.rates.and.times'),
                     background.suppression=c('suppression.rates.and.times','hiv.mortality.rates','sexual.transmissibilities','idu.transmissibilities'),
                     foreground.suppression=c('suppression.rates.and.times','hiv.mortality.rates','sexual.transmissibilities','idu.transmissibilities'),
-                    
-                    background.prep=c('prep.rates.and.times','idu.susceptibility','sexual.susceptibility','new.infection.proportions','new.infection.proportions.years'),
-                    foreground.prep=c('prep.rates.and.times','idu.susceptibility','sexual.susceptibility','new.infection.proportions','new.infection.proportions.years'),
-                    
-                    background.needle.exchange = c('needle.exchange.rates.and.times','idu.susceptibility','idu.transitions'),
-                    foreground.needle.exchange = c('needle.exchange.rates.and.times','idu.susceptibility','idu.transitions'),
-                    
-                    # Expanded continuum
+                    background.newly.suppressed=c('newly.suppressed.rates.and.times','unsuppressed.to.disengaged.rates.and.times','continuum.transitions'),
+                    foreground.art.adherence.unsuppressed=c('newly.suppressed.rates.and.times','continuum.transitions'),
+                    foreground.gain.of.suppression=c('newly.suppressed.rates.and.times','continuum.transitions'),
+                    background.unsuppression=c('unsuppression.rates.and.times','suppressed.to.disengaged.rates.and.times','continuum.transitions'),
+                    foreground.art.adherence.suppressed=c('unsuppression.rates.and.times','continuum.transitions'),
+                    gain.of.suppression.rate=c('newly.suppressed.rates.and.times','continuum.transitions'),
+                    loss.of.suppression.rate=c('unsuppression.rates.and.times','continuum.transitions'),
                     background.linkage=c('linkage.rates.and.times','continuum.transitions'),
                     foreground.linkage=c('linkage.rates.and.times','continuum.transitions'),
-                    
-                    background.naive.to.suppressed=c('naive.to.suppressed.rates.and.times','continuum.transitions'),
-                    foreground.naive.to.suppressed=c('naive.to.suppressed.rates.and.times','continuum.transitions'),
-                    
-                    background.naive.to.disengaged=c('naive.to.disengaged.rates.and.times','continuum.transitions'),
-                    foreground.naive.to.disengaged=c('naive.to.disengaged.rates.and.times','continuum.transitions'),
-
-                    background.start.art = c('start.art.rates.and.times', 'continuum.transitions'),
-                    foreground.start.art = c('start.art.rates.and.times', 'continuum.transitions'),
-                    time.to.suppression.on.art = 'continuum.transitions',
-                    
-                    background.failing.to.suppressed=c('failing.to.suppressed.rates.and.times','continuum.transitions'),
-                    foreground.failing.to.suppressed=c('failing.to.suppressed.rates.and.times','continuum.transitions'),
-                    
-                    background.failing.to.disengaged=c('failing.to.disengaged.rates.and.times','continuum.transitions'),
-                    foreground.failing.to.disengaged=c('failing.to.disengaged.rates.and.times','continuum.transitions'),
-                    
-                    background.suppressed.to.failing=c('suppressed.to.failing.rates.and.times','continuum.transitions'),
-                    foreground.suppressed.to.failing=c('suppressed.to.failing.rates.and.times','continuum.transitions'),
-                    
-                    background.suppressed.to.disengaged=c('suppressed.to.disengaged.rates.and.times','continuum.transitions'),
-                    foreground.suppressed.to.disengaged=c('suppressed.to.disengaged.rates.and.times','continuum.transitions'),
-                    
+                    background.unsuppressed.to.disengaged=c('unsuppressed.to.disengaged.rates.and.times','newly.suppressed.rates.and.times','continuum.transitions'),
+                    foreground.retention.unsuppressed=c('unsuppressed.to.disengaged.rates.and.times','continuum.transitions'),
+                    background.suppressed.to.disengaged=c('suppressed.to.disengaged.rates.and.times','unsuppression.rates.and.times','continuum.transitions'),
+                    foreground.retention.suppressed=c('suppressed.to.disengaged.rates.and.times','continuum.transitions'),
                     background.reengagement=c('reengagement.rates.and.times','continuum.transitions'),
                     foreground.reengagement=c('reengagement.rates.and.times','continuum.transitions'),
-                    
-                    # Other
+                    background.prep=c('prep.rates.and.times','idu.susceptibility','sexual.susceptibility','new.infection.proportions','new.infection.proportions.years'),
+                    foreground.prep=c('prep.rates.and.times','idu.susceptibility','sexual.susceptibility','new.infection.proportions','new.infection.proportions.years'),
+                    background.needle.exchange = c('needle.exchange.rates.and.times','idu.susceptibility','idu.transitions'),
+                    foreground.needle.exchange = c('needle.exchange.rates.and.times','idu.susceptibility','idu.transitions'),
                     needle.exchange.rr = 'idu.susceptibility',
                     needle.exchange.remission.rate.ratio = 'idu.transitions',
                     prep.rr.heterosexual='sexual.susceptibility',
@@ -1160,8 +1140,8 @@ do.setup.continuum.transitions <- function(components)
             
             # unengaged -> engaged/naive
             # unengaged -> disengaged
-            components = do.calculate.rates(components, 'linkage')
-            linkage.proportions = calculate.rates(components, 'linkage')
+            components = do.calculate.linkage(components)
+            linkage.proportions = calculate.linkage(components)
             
             linkage.rates = list(rates=lapply(linkage.proportions$rates, function(p){
                 p / components$time.to.link.vs.disengage
@@ -1178,64 +1158,58 @@ do.setup.continuum.transitions <- function(components)
             # engaged/naive -> engaged/suppressed
             # engaged/naive -> disengaged
             
-            components = do.calculate.start.art.proportions(components)
-            start.art.proportions = calculate.start.art.proportions(components)
+            components = do.calculate.time.to.art.rates(components)
+            time.to.art.rates = calculate.time.to.art.rates(components)
             
-            components = do.calculate.rates(components, 'naive.to.suppressed')
-            new.art.suppressed.proportions = calculate.rates(components, 'naive.to.suppressed')
+            components = do.calculate.new.art.suppressed.proportions(components)
+            new.art.suppressed.proportions = calculate.new.art.suppressed.proportions(components)
             
-            start.art = merge.rates(rates1=start.art.proportions$rates,
-                                    times1=start.art.proportions$times,
+            start.art = merge.rates(rates1=time.to.art.rates$rates,
+                                    times1=time.to.art.rates$times,
                                     rates2=new.art.suppressed.proportions$rates,
                                     times2=new.art.suppressed.proportions$times)
             
-            time.to.suppression.on.art = calculate.time.to.suppression.on.art(components,
-                                                                              years=start.art$times)
             naive.to.suppressed.rates = list(
                 rates=lapply(1:length(start.art$rates1), function(i){
-                    start.art.rate = -log(1-start.art$rates1[[i]])
-                    
                     start.art$rates2[[i]] / #the proportion suppressed once starting art
-                        (time.to.suppression.on.art[i] + 1/start.art.rate) # the time to suppression (or not)
+                        (components$time.to.suppression.on.art + 1/start.art$rates1[[i]]) # the time to suppression (or not)
                 }),
                 times=start.art$times
             )
             
             naive.to.failing.rates = list(
                 rates=lapply(1:length(start.art$rates1), function(i){
-                    start.art.rate = -log(1-start.art$rates1[[i]])
-                    
                     (1-start.art$rates2[[i]]) / #the proportion NOT suppressed once starting art
-                        (time.to.suppression.on.art[i] + 1/start.art.rate) # the time to suppression (or not)
+                        (components$time.to.suppression.on.art + 1/start.art$rates1[[i]]) # the time to suppression (or not)
                 }),
                 times=start.art$times
             )
             
-            components = do.calculate.rates(components, 'naive.to.disengaged')
-            naive.to.disengaged.rates = calculate.rates(components, 'naive.to.disengaged')
+            components = do.calculate.naive.to.disengaged.rates(components)
+            naive.to.disengaged.rates = calculate.naive.to.disengaged.rates(components)
             
             
             # engaged/failing -> engaged/suppressed
             # engaged/failing -> disengaged
-            components = do.calculate.rates(components, 'failing.to.suppressed')
-            failing.to.suppressed.rates = calculate.rates(components, 'failing.to.suppressed')
+            components = do.calculate.failing.to.suppressed.rates(components)
+            failing.to.suppressed.rates = calculate.failing.to.suppressed.rates(components)
             
-            components = do.calculate.rates(components, 'failing.to.disengaged')
-            failing.to.disengaged.rates = calculate.rates(components, 'failing.to.disengaged')
+            components = do.calculate.failing.to.disengaged.rates(components)
+            failing.to.disengaged.rates = calculate.failing.to.disengaged.rates(components)
             
             
             # engaged/suppressed -> engaged/failing
             # engaged/suppressed -> disengaged
-            components = do.calculate.rates(components, 'suppressed.to.failing')
-            suppressed.to.failing.rates = calculate.rates(components, 'suppressed.to.failing')
+            components = do.calculate.suppressed.to.failing.rates(components)
+            suppressed.to.failing.rates = calculate.suppressed.to.failing.rates(components)
             
-            components = do.calculate.rates(components, 'suppressed.to.disengaged')
-            suppressed.to.disengaged.rates = calculate.rates(components, 'suppressed.to.disengaged')
+            components = do.calculate.suppressed.to.disengaged.rates(components)
+            suppressed.to.disengaged.rates = calculate.suppressed.to.disengaged.rates(components)
 
             
             # disengaged -> engaged/failing
-            components = do.calculate.rates(components, 'reengagement')
-            reengagement.rates = calculate.rates(components, 'reengagement')
+            components = do.calculate.reengagement.rates(components)
+            reengagement.rates = calculate.reengagement.rates(components)
             
         ##-- INTERPOLATE THE RATES --##
             
@@ -1363,10 +1337,6 @@ do.setup.continuum.transitions <- function(components)
                     reengagement.rates$rates[[i]][,,,,,'disengaged',,]
                 
                 
-        #-- CHECK and then RETURN --#
-                if (any(is.na(continuum.transitions.for.year)))
-                    browser()
-                #stop("NA values produced in continuum transitions array")
                 continuum.transitions.for.year
             })
             components$continuum.transition.years = all.times
@@ -1381,11 +1351,8 @@ do.setup.continuum.transitions <- function(components)
     components
 }
 
-
-##--------------------------------------------------##
 ##--------------------------------------------------##
 ##-- RATES and TIMES (for suppression, prep, etc) --##
-##--------------------------------------------------##
 ##--------------------------------------------------##
 
 
@@ -1404,8 +1371,6 @@ trim.rates.and.times <- function(rates.and.times,
     rates.and.times
 }
 
-
-#-- Suppression --#
 calculate.suppression <- function(components)
 {
     if (is.null(components$suppression.rates.and.times))
@@ -1465,7 +1430,6 @@ do.calculate.suppression <- function(components)
     }
 }
 
-#-- Testing --#
 calculate.testing.rates <- function(components)
 {
     if (is.null(components$testing.rates.and.times))
@@ -1587,6 +1551,7 @@ do.calculate.prep.rrs <- function(components, type='prep')
 }
 
 
+#added here
 calculate.aggregate.prep.coverage.and.risk <- function(components)
 {
     prep.types = get.prep.types(components)
@@ -1725,7 +1690,6 @@ do.calculate.prep.coverage <- function(components)
     components
 }
 
-#-- Needle Exchange --#
 calculate.needle.exchange.coverage <- function(components)
 {
     if (is.null(components$needle.exchange.rates.and.times))
@@ -1758,38 +1722,17 @@ calculate.rates <- function(components,
 
 do.calculate.rates <- function(components, type)
 {
-    special.cases = c('testing', #that have their own specific function
-                      'suppression',
-                      'prep',
-                      'rr.prep',
-                      'needle.exchange.coverage',
-                      'start.art'
-    )   
-    if (any(type==special.cases))
-        stop(paste0("Calculating '", type, "' rates cannot be handled with a call to 'do.calculate.rates'. You must invoke the specific function"))
-    
-    
     dst.name = paste0(type, ".rates.and.times")
     src.name = paste0('background.', type)
     foreground.name = paste0('foreground.', type)
     sub.component = components[[src.name]]
     
-        
-    if (is.null(sub.component))
-        stop(paste0("Background has not been set up for '", type, "'"))
-    if (is.null(sub.component$model))
-        stop(paste0("Background has not been fully set up for '", type, "' (model is missing)"))
-    if (is.null(sub.component$additional.intercept.ors) || is.null(sub.component$additional.slope.ors))
-        stop(paste0("Background has not been fully set up for '", type, "' (additional ors is missing)"))
-    if (is.null(sub.component$future.slope.or))
-        stop(paste0("Background has not been fully set up for '", type, "' (future.slope is missing)"))
-    
     #Pull background proportions from logistic model
-    background.proportions = get.background.proportions(base.model = sub.component$model,
-                                                        years = sub.component$years,
+    background.proportions = get.background.proportions(base.model = sub.components$model,
+                                                        years = sub.components$years,
                                                         additional.intercepts = log(sub.component$additional.intercept.ors),
                                                         additional.slopes = log(sub.component$additional.slope.ors),
-                                                        future.slope = log(sub.component$future.slope.or),
+                                                        future.slope = log(sub.components$future.slope.or),
                                                         future.slope.after.year = sub.component$future.slope.after.year,
                                                         idu.applies.to.in.remission = T,
                                                         idu.applies.to.msm.idu=T,
@@ -1798,39 +1741,14 @@ do.calculate.rates <- function(components, type)
     
     #Add in ramp up (in the past)
     
-    background.years = c(sub.component$ramp.years, 
+    background.years = c(sub.component$ramp.year, 
                               sub.component$years)
-    background.proportions = c(
-        lapply(sub.component$ramp.multipliers, function(mult){
-            mult * background.proportions[[1]]
-        }),
-        background.proportions)
+    background.proportions = c(list(sub.component$ramp.multiplier * background.proportions[[1]]), 
+                               background.proportions)
     
-    o = order(background.years)
-    background.years = background.years[o]
-    background.proportions = background.proportions[o]
-    
-    
-    # Do we need to convert to rates?
-    if (is.null(components[[foreground.name]]))
-        convert.foreground.proportions.to.rates = sub.component$convert.proportions.to.rates 
-            #By default, this has us interpolate on proportions
-    else
-    {
-        convert.each.foreground.proportions.to.rates = 
-            unlist(components[[foreground.name]]$convert.proportions.to.rates)
-        
-        convert.foreground.proportions.to.rates = all(convert.each.foreground.proportions.to.rates)
-        if (!all(convert.each.foreground.proportions.to.rates==convert.foreground.proportions.to.rates))
-            stop("Either all foreground elements must be converted from proportions to rates or none must (you cannot have some converted and others not)")
-    }
-    
-    if (convert.foreground.proportions.to.rates && !sub.component$convert.proportions.to.rates)
-        stop("Cannot convert foreground proportions to rates if we are not converting background proportions to rates")
     
     #Convert background to rates
-
-    if (sub.component$convert.proportions.to.rates && !convert.foreground.proportions.to.rates)
+    if (sub.component$convert.to.rates.before.foreground)
         background.rates = lapply(background.proportions, function(p){
             -log(1-p)
         })
@@ -1843,112 +1761,527 @@ do.calculate.rates <- function(components, type)
                                                         foreground = components[[foreground.name]],
                                                         max.background.time = components$background.change.to.years[[type]])
     
-    if (sub.component$convert.proportions.to.rates && convert.foreground.proportions.to.rates)
+    if (sub.component$convert.to.rates.after.foreground &&
+        !sub.component$convert.to.rates.before.foreground)
         rates$rates = lapply(rates$rates, function(p){
             -log(1-p)
         })
         
     #Return
-    components[[dst.name]] = rates
+    components$testing.rates.and.times = testing.rates
     components
 }
 
-calculate.start.art.proportions <- function(components,
-                            type)
+
+
+calculate.linkage <- function(components)
 {
-    component.name = "start.art.rates.and.times"
-    if (is.null(components[[component.name]]))
-        components = do.calculate.rates(components, type)
-    components[[component.name]]
+    if (is.null(components$linkage.rates.and.times))
+        components = do.calculate.linkage(components)
+    components$linkage.rates.and.times
 }
 
-
-do.calculate.start.art.proportions <- function(components, type)
+do.calculate.linkage <- function(components)
 {
-    sub.component = components$background.start.art
-    foreground.name = 'foreground.start.art'
-    
-    #Pull background proportions from logistic model
-    background.proportions = get.background.proportions(base.model = sub.component$model,
-                                                        years = sub.component$years,
-                                                        additional.intercepts = log(sub.component$additional.intercept.ors),
-                                                        additional.slopes = log(sub.component$additional.slope.ors),
-                                                        future.slope = log(sub.component$future.slope.or),
-                                                        future.slope.after.year = sub.component$future.slope.after.year,
-                                                        idu.applies.to.in.remission = T,
-                                                        idu.applies.to.msm.idu=T,
-                                                        msm.applies.to.msm.idu=T,
-                                                        jheem=components$jheem)
-    
-    #Add in ramp up (in the past)
-    background.years = c(sub.component$zero.art.year,
-                         sub.component$ramp.years, 
-                         sub.component$years,
-                         sub.component$full.art.year)
-    
-    background.proportions = c(
-        list(0 * background.proportions[[1]]),
-        lapply(sub.component$ramp.multipliers, function(mult){
-            mult * background.proportions[[1]]
-        }),
-        background.proportions,
-        list(1 - 0 * background.proportions[[1]]))
-    
-    o = order(background.years)
-    background.years = background.years[o]
-    background.proportions = background.proportions[o]
-    
-    # Do we need to convert to rates?
-    if (is.null(components[[foreground.name]]))
-        convert.foreground.proportions.to.rates = sub.component$convert.proportions.to.rates
+    if (!is.null(components$settings$VERSION) && components$settings$VERSION=='expanded_1.0')
+    {
+        #Pull background suppression proportions from logistic model
+        background.linkage = get.background.proportions(base.model = components$background.linkage$model,
+                                                            years = components$background.linkage$years,
+                                                            additional.intercepts = log(components$background.linkage$additional.intercept.ors),
+                                                            additional.slopes = log(components$background.linkage$additional.slope.ors),
+                                                            future.slope = log(components$background.linkage$future.slope.or),
+                                                            future.slope.after.year = components$background.linkage$future.slope.after.year,
+                                                            idu.applies.to.in.remission = T,
+                                                            idu.applies.to.msm.idu=T,
+                                                            msm.applies.to.msm.idu=T,
+                                                            jheem=components$jheem)
+        
+        #Add in prior linkage
+        background.linkage.years = c(components$background.linkage$linkage.ramp.year, 
+                                         components$background.linkage$years)
+        background.linkage = c(list(components$background.linkage$linkage.ramp.multiplier * background.linkage[[1]]), background.linkage)
+        
+        linkage.doesnt.apply = setdiff(dimnames(background.linkage[[1]])[['continuum']], 'unengaged')
+        
+        background.linkage = lapply(background.linkage, function(r){
+            r[,,,,,linkage.doesnt.apply,,] = 0
+            r
+        })
+        
+        
+        #Overlay foreground linkage
+        linkage = do.get.rates.from.background.and.foreground(background.rates = background.linkage,
+                                                              background.times = background.linkage.years,
+                                                              foreground = components$foreground.linkage,
+                                                              max.background.time = components$background.change.to.years$linkage,
+                                                              type='linkage')
+        
+
+        components$linkage.rates.and.times = linkage
+        components
+    }
     else
     {
-        convert.each.foreground.proportions.to.rates = 
-            unlist(components[[foreground.name]]$convert.proportions.to.rates)
+        # This code should never be called - if not expanded continuum
+        print("THIS CODE SHOULD NOT HAVE BEEN CALLED - calculating newly suppressed rates with collapsed continuum")
+    }
+}
+
+##-- LEAVING UNSUPPRESSED --##
+
+calculate.newly.suppressed.rates <- function(components)
+{
+    if (is.null(components$newly.suppressed.rates.and.times))
+        components = do.calculate.leave.unsuppressed.rates(components)
+    components$newly.suppressed.rates.and.times
+}
+
+calculate.unsuppressed.to.disengaged.rates <- function(components)
+{
+    if (is.null(components$unsuppressed.to.disengaged.rates.and.times))
+        components = do.calculate.leave.unsuppressed.rates(components)
+    components$unsuppressed.to.disengaged.rates.and.times
+}
+
+do.calculate.leave.unsuppressed.rates <- function(components)
+{
+    if (!is.null(components$settings$VERSION) && components$settings$VERSION=='expanded_1.0')
+    {
+        #Pull background suppression proportions from logistic model
+        background.ps = get.background.proportions.multinomial(base.model=components$background.leave.unsuppressed$model,
+                                                               years=components$background.leave.unsuppressed$years,
+                                                               additional.intercepts = list(
+                                                                   suppress=log(components$background.newly.suppressed$additional.intercept.ors),
+                                                                   disengage=log(components$background.unsuppressed.to.disengaged$additional.intercept.ors)
+                                                               ),
+                                                               additional.slopes = list(
+                                                                   suppress=log(components$background.newly.suppressed$additional.slope.ors),
+                                                                   disengage=log(components$background.unsuppressed.to.disengaged$additional.slope.ors)
+                                                               ),
+                                                               future.slope=c(
+                                                                   suppress=log(components$background.newly.suppressed$future.slope.or),
+                                                                   disengage=log(components$background.unsuppressed.to.disengaged$future.slope.or)
+                                                               ),
+                                                               future.slope.after.year=components$background.leave.unsuppressed$future.slope.after.year,
+                                                               idu.applies.to.in.remission = T,
+                                                               jheem=components$jheem
+                                                               )
+
         
-        convert.foreground.proportions.to.rates = all(convert.each.foreground.proportions.to.rates)
-        if (!all(convert.each.foreground.proportions.to.rates==convert.foreground.proportions.to.rates))
-            stop("Either all foreground elements must be converted from proportions to rates or none must (you cannot have some converted and others not)")
+        #-- Process disengaged --#
+        background.p = background.ps[['disengage']]
+        
+        #Add in ramp
+        unsuppressed.states = 'engaged_unsuppressed'
+        doesnt.apply = setdiff(components$settings$CONTINUUM_OF_CARE, unsuppressed.states)
+        
+        background.unsuppressed.to.disengaged.years = c(components$background.unsuppressed.to.disengaged$unsuppressed.to.disengaged.ramp.year, 
+                                                        components$background.leave.unsuppressed$years)
+        background.p = c(list(components$background.unsuppressed.to.disengaged$unsuppressed.to.disengaged.ramp.multiplier * background.p[[1]]),
+                         background.p)
+        
+        # Convert to p retained
+        background.p.retained = lapply(background.p, function(p){
+            p[,,,,,doesnt.apply,,] = 1
+            1-p
+        })
+        
+        #Overlay foreground suppressed.to.disengaged
+        unsuppressed.to.disengaged = do.get.rates.from.background.and.foreground(background.rates = background.p.retained,
+                                                                               background.times = background.unsuppressed.to.disengaged.years,
+                                                                               foreground = components$foreground.retention.unsuppressed,
+                                                                               max.background.time = components$background.change.to.years$unsuppressed.to.disengaged,
+                                                                               type='unsuppressed.to.disengaged')
+        
+        # Convert back to p disengaged, and from there, to a rate
+        unsuppressed.to.disengaged$rates = lapply(unsuppressed.to.disengaged$rates, function(p){
+            r=-log(p)
+            r[,,,,,doesnt.apply,,] = 0
+            r
+        })
+        
+        components$unsuppressed.to.disengaged.rates.and.times = unsuppressed.to.disengaged
+        
+        
+        #-- Process Newly Suppressed --#
+        background.p = background.ps[['suppress']]
+        
+        #Add in zero suppression
+        
+        background.suppression.years = c(components$background.newly.suppressed$zero.suppression.year, 
+                                         components$background.leave.unsuppressed$years)
+        background.p = c(list(0 * background.p[[1]]), background.p)
+        
+        
+        non.engaged.suppressed.states = setdiff(dimnames(background.p[[1]])[['continuum']], 'engaged_unsuppressed')
+        
+        if (!is.null(components$foreground.art.adherence.unsuppressed))
+        {
+            # Convert to p adherent
+            background.p.adherent = lapply(background.p, function(p){
+                p[,,,,,non.engaged.suppressed.states,,] = 0
+                r = -log(1-p)
+                r/components$gain.of.suppression.rate
+            })
+            
+            #Overlay foreground suppression
+            suppression = do.get.rates.from.background.and.foreground(background.rates = background.p.adherent,
+                                                                      background.times = background.suppression.years,
+                                                                      foreground = components$foreground.art.adherence.unsuppressed,
+                                                                      max.background.time = components$background.change.to.years$newly.suppressed)
+           
+            # Convert back to rates
+            suppression$rates = lapply(suppression$rates, function(p){
+                r = p*components$gain.of.suppression.rate
+                r[,,,,,non.engaged.suppressed.states,,] = 0
+                r
+            })
+        }
+        else
+        {
+#            background.rates = lapply(background.p, function(p){
+#                p[,,,,,non.engaged.suppressed.states,,] = 0
+#                -log(1-p)
+#            })
+
+            suppression = do.get.rates.from.background.and.foreground(background.rates = background.p,
+                                                                      background.times = background.suppression.years,
+                                                                      foreground = components$foreground.gain.of.suppression,
+                                                                      max.background.time = components$background.change.to.years$newly.suppressed)
+#browser()
+            suppression$rates = lapply(suppression$rates, function(p){
+                r = -log(1-p)
+                r[,,,,,non.engaged.suppressed.states,,] = 0
+                r
+            })
+        }
+       
+        
+        components$newly.suppressed.rates.and.times = suppression
+        
+        #-- Return --#
+        components
+    }
+    else
+    {
+        # This code should never be called - if not expanded continuum
+        print("THIS CODE SHOULD NOT HAVE BEEN CALLED - calculating unsuppressed to disengaged rates with collapsed continuum")
+    }
+}
+
+
+##-- LEAVING SUPPRESSED --##
+
+calculate.suppressed.to.disengaged.rates <- function(components)
+{
+    if (is.null(components$suppressed.to.disengaged.rates.and.times))
+        components = do.calculate.leave.suppressed.rates(components)
+    components$suppressed.to.disengaged.rates.and.times
+}
+
+calculate.unsuppression.rates <- function(components)
+{
+    if (is.null(components$unsuppression.rates.and.times))
+        components = do.calculate.leave.suppressed.rates(components)
+    components$unsuppression.rates.and.times
+}
+
+do.calculate.leave.suppressed.rates <- function(components)
+{
+    if (!is.null(components$settings$VERSION) && components$settings$VERSION=='expanded_1.0')
+    {
+        #Pull background proportions from multinomial model
+        
+        background.ps = get.background.proportions.multinomial(base.model=components$background.leave.suppressed$model,
+                                                               years=components$background.leave.suppressed$years,
+                                                               additional.intercepts = list(
+                                                                   unsuppress=log(components$background.unsuppression$additional.intercept.ors),
+                                                                   disengage=log(components$background.suppressed.to.disengaged$additional.intercept.ors)
+                                                               ),
+                                                               additional.slopes = list(
+                                                                   unsuppress=log(components$background.unsuppression$additional.slope.ors),
+                                                                   disengage=log(components$background.suppressed.to.disengaged$additional.slope.ors)
+                                                               ),
+                                                               future.slope=c(
+                                                                   unsuppress=log(components$background.unsuppression$future.slope.or),
+                                                                   disengage=log(components$background.suppressed.to.disengaged$future.slope.or)
+                                                               ),
+                                                               future.slope.after.year=components$background.leave.suppressed$future.slope.after.year,
+                                                               idu.applies.to.in.remission = T,
+                                                               jheem=components$jheem
+        )
+        
+        #-- Process disengagement --#
+        
+        background.p = background.ps[['disengage']]
+        
+        #Add in ramp
+        suppressed.states = 'engaged_suppressed'
+        doesnt.apply = setdiff(components$settings$CONTINUUM_OF_CARE, suppressed.states)
+        
+        background.suppressed.to.disengaged.years = c(components$background.suppressed.to.disengaged$suppressed.to.disengaged.ramp.year, 
+                                                      components$background.leave.suppressed$years)
+        background.p = c(list(components$background.suppressed.to.disengaged$suppressed.to.disengaged.ramp.multiplier * background.p[[1]]),
+                         background.p)
+        
+        # Convert to p retained
+        background.p.retained = lapply(background.p, function(p){
+            p[,,,,,doesnt.apply,,] = 0
+            1-p
+        })
+        
+
+        
+        #Overlay foreground suppressed.to.disengaged
+        suppressed.to.disengaged = do.get.rates.from.background.and.foreground(background.rates = background.p.retained,
+                                                                               background.times = background.suppressed.to.disengaged.years,
+                                                                               foreground = components$foreground.retention.suppressed,
+                                                                               max.background.time = components$background.change.to.years$suppressed.to.disengaged)
+        
+        # Convert back to p disengaged, and from there, to a rate
+        suppressed.to.disengaged$rates = lapply(suppressed.to.disengaged$rates, function(p){
+            r=-log(p)
+            r[,,,,,doesnt.apply,,] = 0
+            r
+        })
+        
+        components$suppressed.to.disengaged.rates.and.times = suppressed.to.disengaged
+        
+        #-- Process unsuppression --#
+        background.p = background.ps[['unsuppress']]
+        
+        # Convert to p adherent to ART
+        suppressed.states = components$settings$SUPPRESSED_STATES
+        unsuppression.doesnt.apply = setdiff(components$settings$CONTINUUM_OF_CARE, suppressed.states)
+        
+        background.unsuppression.years = c(components$background.unsuppression$unsuppression.ramp.year, 
+                                           components$background.leave.suppressed$years)
+        
+        background.p = c(list(components$background.unsuppression$unsuppression.ramp.multiplier * background.p[[1]]),
+                                  background.p)
+        
+        if (is.null(components$foreground.art.adherence.suppressed))
+        {
+            unsuppression = do.get.rates.from.background.and.foreground(background.rates = background.p,
+                                                                        background.times = background.unsuppression.years,
+                                                                        foreground = NULL,
+                                                                        max.background.time = components$background.change.to.years$unsuppression)
+      #    browser() 
+            unsuppression$rates = lapply(unsuppression$rates, function(p){
+                p[,,,,,unsuppression.doesnt.apply,,] = 0
+                -log(1-p)
+            })
+        }
+        else
+        {
+            background.p.adherent = lapply(background.p, function(p){
+                p[,,,,,unsuppression.doesnt.apply,,] = 0
+                r=-log(1-p)
+                1-r/components$loss.of.suppression.rate
+            })
+        
+        
+            #Overlay foreground unsuppression
+            unsuppression = do.get.rates.from.background.and.foreground(background.rates = background.p.adherent,
+                                                                        background.times = background.unsuppression.years,
+                                                                        foreground = components$foreground.art.adherence.suppressed,
+                                                                        max.background.time = components$background.change.to.years$unsuppression)
+        
+            unsuppression$rates = lapply(unsuppression$rates, function(p){
+                r = (1-p)*components$loss.of.suppression.rate
+                r[,,,,,unsuppression.doesnt.apply,,] = 0
+                r
+            })
+        }
+        
+        components$unsuppression.rates.and.times = unsuppression
+        
+        #-- Return --#
+        components
+    }
+    else
+    {
+        # This code should never be called - if not expanded continuum
+        print("THIS CODE SHOULD NOT HAVE BEEN CALLED - calculating suppressed to disengaged rates with collapsed continuum")
+    }
+}
+
+##-- REENGAGMENT --##
+
+calculate.reengagement.rates <- function(components)
+{
+    if (is.null(components$reengagement.rates.and.times))
+        components = do.calculate.reengagement.rates(components)
+    components$reengagement.rates.and.times
+}
+
+do.calculate.reengagement.rates <- function(components)
+{
+    if (!is.null(components$settings$VERSION) && components$settings$VERSION=='expanded_1.0')
+    {
+        #Pull background suppression proportions from logistic model
+        background.p = get.background.proportions(base.model = components$background.reengagement$model,
+                                                  years = components$background.reengagement$years,
+                                                  additional.intercepts = log(components$background.reengagement$additional.intercept.ors),
+                                                  additional.slopes = log(components$background.reengagement$additional.slope.ors),
+                                                  future.slope = log(components$background.reengagement$future.slope.or),
+                                                  future.slope.after.year = components$background.reengagement$future.slope.after.year,
+                                                  idu.applies.to.in.remission = T,
+                                                  idu.applies.to.msm.idu=T,
+                                                  msm.applies.to.msm.idu=T,
+                                                  jheem=components$jheem)
+        
+        #Add in ramp
+        
+        disengaged.states = 'disengaged'
+        doesnt.apply = setdiff(components$settings$CONTINUUM_OF_CARE, disengaged.states)
+        background.rates = lapply(background.p, function(p){
+            p[,,,,,doesnt.apply,,] = 0
+            -log(1-p)
+        })
+        
+        
+        background.reengagement.years = c(components$background.reengagement$reengagement.ramp.year, 
+                                                        components$background.reengagement$years)
+        background.rates = c(list(components$background.reengagement$reengagement.ramp.multiplier * background.rates[[1]]),
+                             background.rates)
+        
+        #Overlay foreground reengagement
+        reengagement = do.get.rates.from.background.and.foreground(background.rates = background.rates,
+                                                                   background.times = background.reengagement.years,
+                                                                   foreground = components$foreground.reengagement,
+                                                                   max.background.time = components$background.change.to.years$reengagement)
+        
+  
+        components$reengagement.rates.and.times = reengagement
+        components
+    }
+    else
+    {
+        # This code should never be called - if not expanded continuum
+        print("THIS CODE SHOULD NOT HAVE BEEN CALLED - calculating unsuppressed to disengaged rates with collapsed continuum")
+    }
+}
+
+logit = function(p){log(p) - log(1-p)}
+expit = function(lo){1/(1+exp(-lo))}
+
+get.background.proportions.multinomial <- function(base.model,
+                                                   years,
+                                                   additional.intercepts,
+                                                   additional.slopes,
+                                                   add.additional.after.multinomial=T,
+                                                   future.slope=0,
+                                                   future.slope.after.year,
+                                                   idu.applies.to.in.remission=T,
+                                                   max.proportion=base.model$max.proportion,
+                                                   transformation = function(x){max.proportion / (1+exp(-x))},
+                                                   jheem,
+                                                   expand.population=c('hiv.positive','hiv.negative','none')[1])
+{
+    if (add.additional.after.multinomial)
+    {
+        intercepts = sapply(base.model$outcome.names[1:(base.model$num.outcomes-1)], function(outcome){
+            base.model$intercepts[[outcome]]
+        })
+        slopes = sapply(base.model$outcome.names[1:(base.model$num.outcomes-1)], function(outcome){
+            base.model$slopes[[outcome]]
+        })
+        future.slope = sapply(base.model$outcome.names[1:(base.model$num.outcomes-1)], function(outcome){
+            rep(0, length(base.model$slopes[[1]]))
+        })
+    }
+    else
+    {
+        intercepts = sapply(base.model$outcome.names[1:(base.model$num.outcomes-1)], function(outcome){
+            add.additional.betas.to.array(arr = base.model$intercepts[[outcome]],
+                                          additional.betas = additional.intercepts[[outcome]],
+                                          idu.applies.to.in.remission = idu.applies.to.in.remission)
+        })
+        slopes = sapply(base.model$outcome.names[1:(base.model$num.outcomes-1)], function(outcome){
+            add.additional.betas.to.array(arr = base.model$slopes[[outcome]],
+                                          additional.betas = additional.slopes[[outcome]],
+                                          idu.applies.to.in.remission = idu.applies.to.in.remission)
+        })
+        future.slope = sapply(base.model$outcome.names[1:(base.model$num.outcomes-1)], function(outcome){
+            rep(future.slope[outcome], length(base.model$slopes[[1]]))
+        })
     }
     
-    if (convert.foreground.proportions.to.rates && !sub.component$convert.proportions.to.rates)
-        stop("Cannot convert foreground proportions to rates if we are not converting background proportions to rates")
+    dim.names = c(dimnames(base.model$intercepts[[1]]),
+                  outcome=list(base.model$outcome.names[1:(base.model$num.outcomes-1)]))
+    dim(intercepts) = dim(slopes) = dim(future.slope) = sapply(dim.names, length)
+    dimnames(intercepts) = dimnames(slopes) = dimnames(future.slope) = dim.names
     
-    #Convert background to rates
-    if (sub.component$convert.proportions.to.rates && !convert.foreground.proportions.to.rates)
-        background.rates = lapply(background.proportions, function(p){
-            -log(1-p)
+    
+    # this should return a list of lists
+    # The outer list contains one element for each outcome (1 to K-1)
+    #  for each outcome, there is a list, with one element for each year
+    #  each element for a year is an array of transition probabilities
+    rv = lapply(1:(base.model$num.outcomes-1), function(k){
+        
+        lapply(years, function(year){
+            
+            x.betas = intercepts + slopes * (year-base.model$anchor.year)
+            if (year > future.slope.after.year)
+                x.betas = x.betas + future.slope * (year-future.slope.after.year)
+            year.rv = exp(x.betas[,,,,k]) / (1 + rowSums(exp(x.betas), dims=4))
+                #**potential optimization - pre-crunch the rowSums
+            
+            outcome = base.model$outcome.names[k]
+            if (add.additional.after.multinomial)
+            {
+                logit.year.rv = add.additional.betas.to.array(arr = logit(year.rv),
+                                                              additional.betas = additional.intercepts[[outcome]],
+                                                              idu.applies.to.in.remission = idu.applies.to.in.remission)
+                logit.year.rv = add.additional.betas.to.array(arr = logit.year.rv,
+                                                               additional.betas = additional.slopes[[outcome]] * (year-base.model$anchor.year),
+                                                               idu.applies.to.in.remission = idu.applies.to.in.remission)
+                
+                if (year > future.slope.after.year)
+                    logit.year.rv = logit.year.rv + future.slope[,,,,k] * (year-future.slope.after.year)
+                
+                year.rv = expit(logit.year.rv)
+                
+                if (outcome=='disengage')
+                    year.rv = 1 - (1-year.rv)*base.model$max.retention
+                else 
+                {
+                    year.rv = base.model$min.non.retention.proportion + 
+                        year.rv * (base.model$max.non.retention.proportion - base.model$min.non.retention.proportion)
+                }
+            }
+            else if (any(base.model$outcome.names=='disengage'))
+            {
+                if (base.model$outcome.names[k]=='disengage')
+                    year.rv = (1-base.model$max.retention) + base.model$max.retention*year.rv
+                else
+                    year.rv = base.model$max.retention * year.rv
+            }   
+            
+            if (expand.population=='hiv.positive')
+                expand.population.to.hiv.positive(jheem, year.rv)
+            else if (expand.population=='hiv.negative')
+                expand.population.to.hiv.negative(jheem, year.rv)
+            else
+                year.rv
         })
-    else
-        background.rates = background.proportions
+    })
     
-    #Overlay foreground rates
-    rates = do.get.rates.from.background.and.foreground(background.rates = background.rates,
-                                                        background.times = background.years,
-                                                        foreground = components[[foreground.name]],
-                                                        max.background.time = components$background.change.to.years[['start.art']])
+    names(rv) = base.model$outcome.names[1:(base.model$num.outcomes-1)]
     
-    if (sub.component$convert.proportions.to.rates && convert.foreground.proportions.to.rates)
-        rates$rates = lapply(rates$rates, function(p){
-            -log(1-p)
-        })
+    if (add.additional.after.multinomial)
+    {
+        for (outcome in names(rv))
+        {
+            rv
+        }
+    }
     
-    #Return
-    components$start.art.rates.and.times = rates
-    components
+    rv
 }
 
-#in years
-calculate.time.to.suppression.on.art <- function(components,
-                                                 years)
-{
-    interpolate.parameters(values=components$time.to.suppression.on.art$latency.to.suppression.in.years,
-                           value.times=components$time.to.suppression.on.art$years.at.which.latency.applies,
-                           desired.times = years,
-                           return.list = F)
-}
-
-##-- GET BACKGROUND PROPORTIONS --##
 
 get.background.proportions <- function(base.model,
                                        years,
@@ -1959,9 +2292,8 @@ get.background.proportions <- function(base.model,
                                        idu.applies.to.in.remission=T,
                                        idu.applies.to.msm.idu=T,
                                        msm.applies.to.msm.idu=T,
-                                       min.proportion=if (is.null(base.model$min.proportion)) 0 else base.model$min.proportion,
                                        max.proportion=base.model$max.proportion,
-                                       transformation = function(x){min.proportion + (max.proportion-min.proportion) / (1+exp(-x))},
+                                       transformation = function(x){max.proportion / (1+exp(-x))},
                                        jheem,
                                        expand.population=c('hiv.positive','hiv.negative','none')[1])
 {
@@ -1973,7 +2305,7 @@ get.background.proportions <- function(base.model,
                                           idu.applies.to.in.remission = idu.applies.to.in.remission,
                                           idu.applies.to.msm.idu = idu.applies.to.msm.idu,
                                           msm.applies.to.msm.idu = msm.applies.to.msm.idu)
-    if (!is.null(base.model$mixed.linear) && base.model$mixed.linear)
+    if (base.model$mixed.linear)
     {
         intercept = transformation(intercept)
         pre.tx.slope = slope
@@ -1994,7 +2326,7 @@ get.background.proportions <- function(base.model,
     
     lapply(years, function(year){
         
-        if (!is.null(base.model$mixed.linear) && base.model$mixed.linear && base.model$use.logistic.tail)
+        if (base.model$mixed.linear && base.model$use.logistic.tail)
         {
             p = calculate.logistic.tail.values(logistic.tail.model, year)
         }
@@ -2005,8 +2337,8 @@ get.background.proportions <- function(base.model,
                 future.slope * max(0,year-future.slope.after.year)
             
             
-            if (!is.null(base.model$mixed.linear) && base.model$mixed.linear)
-                p[] = pmax(min.proportion, pmin(max.proportion, pmax(0, p)))
+            if (base.model$mixed.linear)
+                p[] = pmin(base.model$max.proportion, pmax(0, p))
             else if (!is.null(transformation))
                 p = transformation(p)
         }
@@ -2312,7 +2644,7 @@ calculate.changing.trates.and.times <- function(params)
 #},
 #error = function(e){
 #    browser()
-#})4
+#})
 }
 
 do.calculate.changing.trates.and.times <- function(r.peak, r0, r1, r2, r0.5,

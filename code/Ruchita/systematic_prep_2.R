@@ -2,8 +2,8 @@
 
 
 ##-- SOURCE CODE --##
-source('code/source_code.R')
-source('code/Ruchita/create_prep_interventions2.R')
+#source('code/source_code.R')
+#source('code/Ruchita/create_prep_interventions2.R')
 
 
 ##-- ORGANIZE the INTERVENTIONS WE CARE ABOUT --##
@@ -361,7 +361,7 @@ make.sensitivity.plot <- function(msas=TARGET.MSAS,
   
   int.code = intervention.codes 
   
-  if(cities = "separated") {
+  if(cities == "separated") {
     for(a in 1: dim(parameters)[2]){
       p = as.numeric(as.character(parameters[,a]))
       
@@ -628,7 +628,9 @@ aggregate.raw.prep.results <- function(msas,
 
 
 
-make.figure <- function(msas=TARGET.MSAS,intervention.codes = UPTAKE.INTERVENTIONS.CODES, raw.prep.results = prep.results,round.digits=0){
+make.figure <- function(msas=TARGET.MSAS,intervention.codes = UPTAKE.INTERVENTIONS.CODES, raw.prep.results = prep.results,round.digits=0)
+{
+}
 
 aggregate.prep.coverage <- function(msas,
                                        intervention.codes = baseline.oral.variable.efficacy,
@@ -732,10 +734,12 @@ make.figure <- function(msas=TARGET.MSAS,intervention.codes = UPTAKE.35.INTERVEN
 }
 
 #Baseline PrEP
-
+if (1==2)
+{
 baseline = baseline.prep[4,,,1]
 baseline = as.data.frame(baseline)
 baseline = baseline/parameters[,2]
 #baseline = colMeans(baseline)
 baseline = rowMeans(baseline)
 mean(baseline)
+}

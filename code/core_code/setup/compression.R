@@ -3,7 +3,8 @@ compress.simset <- function(simset,
                             keep.cdc=F,
                             keep.non.cdc=T,
                             keep.years=2008:2030,
-                            keep.dimensions=c('year','age','race','subpopulation','sex','risk','continuum'),
+                            keep.cd4=F,
+                            keep.dimensions=c('year','age','race','subpopulation','sex','risk','continuum','cd4')[c(T,T,T,T,T,T,T,keep.cd4)],
                             compress.continuum.to.diagnosed.vs.undiagnosed=T)
 {
     extend.simulations(simset, function(sim, parameters){

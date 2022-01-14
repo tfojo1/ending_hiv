@@ -24,6 +24,35 @@ get.continuum.model<- function(continuum.manager,
 }
 
 
+get.suppression.model <- function(cm,
+                                  location)
+{
+  list(intercept=cm$suppression$stratified.log.odds.intercept,
+       slope=cm$suppression$stratified.log.odds.slope,
+       anchor.year = cm$suppression$anchor.year,
+       max.proportion = cm$suppression$max.proportion)
+}
+
+#Returns a list with 3 components, representing a linear log-odds model of testing
+# $intercept - an age x race x sex x risk array of log-odds intercepts
+# $slope - an age x race x sex x risk array of log-odds slopes (relative to time)
+# $anchor year - the year that corresponds to the intercept
+
+
+get.testing.model <- function(cm,
+                              location,
+                              population)
+{
+    
+    get.continuum.model(continuum.manager=cm, type='testing', location=location)
+ # list(intercept = cm$testing$stratified.log.odds.intercept,
+  #     slope = cm$testing$stratified.log.odds.slope,
+   #    anchor.year = cm$testing$anchor.year,
+    #   max.proportion = cm$testing$max.proportion)
+  
+  #    OLD.get.testing.model(cm, location, population)
+}
+
 
 ####----------------------####
 ####----------------------####
@@ -61,6 +90,7 @@ create.continuum.manager <- function(dir='cleaned_data/',
                                      
                                      max.naive.retention = 0.98,
                                      max.failing.retention = 0.95,
+                                     max.suppressed.retention = 0.98,
                                      
                                      verbose=T
 )
@@ -71,6 +101,7 @@ create.continuum.manager <- function(dir='cleaned_data/',
     
     cm = setup.expanded.continuum.models(cm,
                                          file=expanded.continuum.file,
+                                         settings=settings,
                                          
                                          max.naive.to.suppressed.proportion = max.naive.to.suppressed.proportion,
                                          max.failing.to.suppressed.proportion = max.failing.to.suppressed.proportion,
@@ -129,6 +160,7 @@ create.continuum.manager <- function(dir='cleaned_data/',
 #@melissa - fill in here
 setup.expanded.continuum.models <- function(cm,
                                             file, 
+                                            settings,
                                             
                                             max.naive.to.suppressed.proportion,
                                             max.failing.to.suppressed.proportion,
@@ -146,11 +178,19 @@ setup.expanded.continuum.models <- function(cm,
                                             
                                             verbose=T)
 {
+    if (verbose)
+        print("Setting up time to start ART model")
+    
+    cm = setup.start.art.model(cm,
+                               settings = settings)
+  
     load(file) #-->output list
     
     if (verbose)
       print("Setting up naive-to-suppressed")
+    
     cm$naive.to.suppressed = setup.logistic.model(anchor.year=output$anchor.year,
+                                                  settings = settings,
                                                   max.proportion=max.naive.to.suppressed.proportion,
                                                   
                                                   total.intercept = output$naive.to.suppressed.noslopes.coefficients['(Intercept)'],
@@ -170,16 +210,17 @@ setup.expanded.continuum.models <- function(cm,
                                                   age1.intercept=output$naive.to.suppressed.noslopes.coefficients['age.category13-25'],
                                                   age2.intercept=output$naive.to.suppressed.noslopes.coefficients['age.category25-35'],
                                                   age3.intercept=0,
-                                                  age4.intercept=output$naive.to.suppressed.noslopes.coefficients['age.category35-45'],
+                                                  age4.intercept=output$naive.to.suppressed.noslopes.coefficients['age.category45-55'],
                                                   age5.intercept=output$naive.to.suppressed.noslopes.coefficients['age.category55+'],
                                                   
                                                   total.slope = output$naive.to.suppressed.noslopes.coefficients['relative.year'])
     
     if (verbose)
       print("Setting up naive-to-lost")
-    cm$naive.to.lost = setup.logistic.model(anchor.year=output$anchor.year,
-                                                  max.proportion=max.naive.retention,
-                                                  min.proportion=min.naive.retention,      
+    cm$naive.to.disengaged = setup.logistic.model(anchor.year=output$anchor.year,
+                                                  max.proportion=1-min.naive.retention,
+                                                  min.proportion=1-max.naive.retention,     
+                                                  settings=settings,
                                             
                                                   total.intercept = output$naive.to.lost.noslopes.coefficients['(Intercept)'],
                                                   msm.intercept = 0,
@@ -198,7 +239,7 @@ setup.expanded.continuum.models <- function(cm,
                                                   age1.intercept=output$naive.to.lost.noslopes.coefficients['age.category13-25'],
                                                   age2.intercept=output$naive.to.lost.noslopes.coefficients['age.category25-35'],
                                                   age3.intercept=0,
-                                                  age4.intercept=output$naive.to.lost.noslopes.coefficients['age.category35-45'],
+                                                  age4.intercept=output$naive.to.lost.noslopes.coefficients['age.category45-55'],
                                                   age5.intercept=output$naive.to.lost.noslopes.coefficients['age.category55+'],
                                                   
                                                   total.slope = output$naive.to.lost.noslopes.coefficients['relative.year'])
@@ -206,7 +247,8 @@ setup.expanded.continuum.models <- function(cm,
     if (verbose)
       print("Setting up failing-to-suppressed")
     cm$failing.to.suppressed = setup.logistic.model(anchor.year=output$anchor.year,
-                                            max.proportion=max.failing.to.suppressed.proportion,
+                                            max.proportion=max.failing.to.suppressed.proportion,     
+                                            settings=settings,
                                             
                                             total.intercept = output$failing.to.suppressed.noslopes.coefficients['(Intercept)'],
                                             msm.intercept = 0,
@@ -225,16 +267,17 @@ setup.expanded.continuum.models <- function(cm,
                                             age1.intercept=output$failing.to.suppressed.noslopes.coefficients['age.category13-25'],
                                             age2.intercept=output$failing.to.suppressed.noslopes.coefficients['age.category25-35'],
                                             age3.intercept=0,
-                                            age4.intercept=output$failing.to.suppressed.noslopes.coefficients['age.category35-45'],
+                                            age4.intercept=output$failing.to.suppressed.noslopes.coefficients['age.category45-55'],
                                             age5.intercept=output$failing.to.suppressed.noslopes.coefficients['age.category55+'],
                                             
                                             total.slope = output$failing.to.suppressed.noslopes.coefficients['relative.year'])
     
     if (verbose)
       print("Setting up failing-to-lost")
-    cm$failing.to.lost = setup.logistic.model(anchor.year=output$anchor.year,
-                                                    max.proportion=max.failing.retention,
-                                                    min.proportion=min.failing.retention,   
+    cm$failing.to.disengaged = setup.logistic.model(anchor.year=output$anchor.year,
+                                                    max.proportion=1-min.failing.retention,
+                                                    min.proportion=1-max.failing.retention,     
+                                                    settings=settings,
                                                     
                                                     total.intercept = output$failing.to.lost.noslopes.coefficients['(Intercept)'],
                                                     msm.intercept = 0,
@@ -253,7 +296,7 @@ setup.expanded.continuum.models <- function(cm,
                                                     age1.intercept=output$failing.to.lost.noslopes.coefficients['age.category13-25'],
                                                     age2.intercept=output$failing.to.lost.noslopes.coefficients['age.category25-35'],
                                                     age3.intercept=0,
-                                                    age4.intercept=output$failing.to.lost.noslopes.coefficients['age.category35-45'],
+                                                    age4.intercept=output$failing.to.lost.noslopes.coefficients['age.category45-55'],
                                                     age5.intercept=output$failing.to.lost.noslopes.coefficients['age.category55+'],
                                                     
                                                     total.slope = output$failing.to.lost.noslopes.coefficients['relative.year'])
@@ -261,7 +304,8 @@ setup.expanded.continuum.models <- function(cm,
     if (verbose)
       print("Setting up suppressed-to-failing")
     cm$suppressed.to.failing = setup.logistic.model(anchor.year=output$anchor.year,
-                                              min.proportion=min.suppressed.to.failing.proportion,
+                                              min.proportion=min.suppressed.to.failing.proportion,     
+                                              settings=settings,
                                               
                                               total.intercept = output$suppressed.to.failing.noslopes.coefficients['(Intercept)'],
                                               msm.intercept = 0,
@@ -280,16 +324,17 @@ setup.expanded.continuum.models <- function(cm,
                                               age1.intercept=output$suppressed.to.failing.noslopes.coefficients['age.category13-25'],
                                               age2.intercept=output$suppressed.to.failing.noslopes.coefficients['age.category25-35'],
                                               age3.intercept=0,
-                                              age4.intercept=output$suppressed.to.failing.noslopes.coefficients['age.category35-45'],
+                                              age4.intercept=output$suppressed.to.failing.noslopes.coefficients['age.category45-55'],
                                               age5.intercept=output$suppressed.to.failing.noslopes.coefficients['age.category55+'],
                                               
                                               total.slope = output$suppressed.to.failing.noslopes.coefficients['relative.year'])
     
     if (verbose)
       print("Setting up suppressed-to-lost")
-    cm$suppressed.to.lost = setup.logistic.model(anchor.year=output$anchor.year,
-                                                    max.proportion=max.suppressed.retention,
-                                                    min.proportion=min.suppressed.retention,   
+    cm$suppressed.to.disengaged = setup.logistic.model(anchor.year=output$anchor.year,
+                                                    max.proportion=1-min.suppressed.retention,
+                                                    min.proportion=1-max.suppressed.retention,     
+                                                    settings=settings,
                                                     
                                                     total.intercept = output$suppressed.to.lost.noslopes.coefficients['(Intercept)'],
                                                     msm.intercept = 0,
@@ -308,15 +353,16 @@ setup.expanded.continuum.models <- function(cm,
                                                     age1.intercept=output$suppressed.to.lost.noslopes.coefficients['age.category13-25'],
                                                     age2.intercept=output$suppressed.to.lost.noslopes.coefficients['age.category25-35'],
                                                     age3.intercept=0,
-                                                    age4.intercept=output$suppressed.to.lost.noslopes.coefficients['age.category35-45'],
+                                                    age4.intercept=output$suppressed.to.lost.noslopes.coefficients['age.category45-55'],
                                                     age5.intercept=output$suppressed.to.lost.noslopes.coefficients['age.category55+'],
                                                     
                                                     total.slope = output$suppressed.to.lost.noslopes.coefficients['relative.year'])
     
     if (verbose)
       print("Setting up disengaged-to-reengage")
-    cm$disengaged.to.reengage = setup.logistic.model(anchor.year=output$anchor.year,
-                                                 max.proportion=max.reengaged.proportion,
+    cm$reengagement = setup.logistic.model(anchor.year=output$anchor.year,
+                                                 max.proportion=max.reengaged.proportion,     
+                                           settings=settings,
                                                  
                                                  total.intercept = output$disengaged.noslopes.coefficients['(Intercept)'],
                                                  msm.intercept = 0,
@@ -335,7 +381,7 @@ setup.expanded.continuum.models <- function(cm,
                                                  age1.intercept=output$disengaged.noslopes.coefficients['age.category13-25'],
                                                  age2.intercept=output$disengaged.noslopes.coefficients['age.category25-35'],
                                                  age3.intercept=0,
-                                                 age4.intercept=output$disengaged.noslopes.coefficients['age.category35-45'],
+                                                 age4.intercept=output$disengaged.noslopes.coefficients['age.category45-55'],
                                                  age5.intercept=output$disengaged.noslopes.coefficients['age.category55+'],
                                                  
                                                  total.slope = output$disengaged.noslopes.coefficients['relative.year'])
@@ -343,6 +389,32 @@ setup.expanded.continuum.models <- function(cm,
     # Return
     cm
 }
+
+
+##----------------------------##
+##-- SET UP START ART MODEL --##
+##----------------------------##
+
+setup.start.art.model <- function(cm,
+                                  settings)
+{
+    YEAR = 2010
+    LATENCY = 10/12 #10 months
+    
+    rate = 1/LATENCY
+    p = 1-exp(-rate)
+    
+    cm$start.art = setup.logistic.model(anchor.year=YEAR,
+                                                  settings = settings,
+                                                  max.proportion=1,
+                                                  
+                                                  total.intercept = logit(p),
+                                                  total.slope = 0
+    )
+    
+    cm
+}
+
 
 ##--------------------------##
 ##-- SET UP LINKAGE MODEL --##
@@ -1121,7 +1193,9 @@ setup.logistic.model <- function(anchor.year,
              msm = msm.intercept,
              msm.idu = msm.idu.intercept,
              female = female.heterosexual.intercept,
-             female.idu = female.idu.intercept
+             female.idu = female.idu.intercept,
+             
+             idu.in.remission.is.idu=idu.in.remission.is.idu
          ),
          
          slope = setup.array.from.coefficients(
@@ -1147,7 +1221,9 @@ setup.logistic.model <- function(anchor.year,
              msm = msm.slope,
              msm.idu = msm.idu.slope,
              female = female.heterosexual.slope,
-             female.idu = female.idu.slope
+             female.idu = female.idu.slope,
+             
+             idu.in.remission.is.idu=idu.in.remission.is.idu
          ),
          
          log.ors = c(
@@ -1190,7 +1266,7 @@ setup.logistic.model <- function(anchor.year,
              age2.slope=age2.slope,
              age3.slope=age3.slope,
              age4.slope=age4.slope,
-             age5.slope=age5.slope,
+             age5.slope=age5.slope
          )
     ) 
 }
@@ -1217,7 +1293,9 @@ setup.array.from.coefficients <- function(settings,
                                           idu=0,
                                           msm.idu=0,
                                           female=0,
-                                          female.idu=0)
+                                          female.idu=0,
+                                          
+                                          idu.in.remission.is.idu)
 {
     dim.names = list(age = settings$AGES$labels,
                      race = settings$RACES,
@@ -1241,7 +1319,7 @@ setup.array.from.coefficients <- function(settings,
     non.idu.states = 'never_IDU'
     if (!idu.in.remission.is.idu)
         non.idu.states = c(non.idu.states, 'IDU_in_remission')
-    idu.states = setdiff(risks, non.idu.states)
+    idu.states = setdiff(settings$RISK_STRATA, non.idu.states)
     
     rv[,,'heterosexual_male',non.idu.states] = rv[,,'heterosexual_male',non.idu.states] + heterosexual.male
     rv[,,'heterosexual_male',idu.states] = rv[,,'heterosexual_male',idu.states] + heterosexual.male.idu

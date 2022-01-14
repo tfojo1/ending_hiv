@@ -259,8 +259,8 @@ def = function(int1, int2)
 
 is.null.intervention <- function(int)
 {
-    is(int, 'null_intervention')
-    #length(int@raw) == 0
+    is(int, 'null_intervention') ||
+        (!isS4(int) && length(int$raw) == 0) #for backwards compatibility
 }
 
 setGeneric('get.intervention.unit.types', 

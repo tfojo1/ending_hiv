@@ -305,6 +305,11 @@ get.total.population <- function(sim,
                                  years=sim$years,
                                  census.totals = if (exists('ALL.DATA.MANAGERS')) ALL.DATA.MANAGERS$census.totals else CENSUS.TOTALS)
 {
+    if (!any(sapply(sim$years, function(year){
+        any(year==census.totals$years)
+    })))
+        stop("None of the simulation's years are represented in census totals data")
+    
     last.census.year = max(census.totals$years)
     years.after.census = years[years>last.census.year]
     years.with.or.before.census = setdiff(years, years.after.census)
@@ -684,6 +689,7 @@ do.extract.new.diagnoses <- function(results,
                                         sexes=NULL,
                                         risks=NULL,
                                         continuum.to=continuum.to,
+                                        cd4s = cd4s,
                                         hiv.subsets=hiv.subsets,
                                         include.hiv.positive.in.denominator=T,
                                         keep.dimensions=union(keep.dimensions, c('sex','risk')),
@@ -702,6 +708,7 @@ do.extract.new.diagnoses <- function(results,
                               sexes=sexes,
                               risks=risks,
                               continuum.to=continuum.to,
+                              cd4s = cd4s,
                               hiv.subsets=hiv.subsets,
                               include.hiv.positive.in.denominator=T,
                               keep.dimensions=keep.dimensions,

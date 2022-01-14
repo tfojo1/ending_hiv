@@ -236,6 +236,7 @@ parameters.prior = join.distributions(
     age4.start.art.or = Lognormal.Distribution(0, 0.5*log(2)),
     age5.start.art.or = Lognormal.Distribution(0, 0.5*log(2)),
     
+    full.art.year = Uniform.Distribution(2015, 2018),
     
     #-- ADHERENCE --#
     heterosexual.proportion.adherent.or = Lognormal.Distribution(0, 0.5*log(2)),
@@ -551,7 +552,8 @@ PARAMETER.VAR.BLOCKS.1 = list(
                         'msm.idu.start.art.or'), 
   
   start.art.by.race = c('black.start.art.or',
-                        'hispanic.proportion.adherent.or'),  
+                        'hispanic.proportion.adherent.or',
+                        'full.art.year'),  
   
   start.art.by.age = c('age1.start.art.or',
                         'age2.start.art.or',
@@ -1309,35 +1311,49 @@ get.components.for.calibrated.parameters <- function(parameters, components,
   )
   
   
+  components = set.background.start.art.ramp.and.years(components,
+                                                       full.art.year=parameters['full.art.year'])
   
   #-- Smoothing Years --#
   
   if (any(grepl('gains\\.end\\.by\\.year', names(parameters))))
       components = set.background.change.to.years(components,
-                                                  testing.change.to.year=parameters['testing.gains.end.by.year'],
-                                                  prep.change.to.year=parameters['prep.gains.end.by.year'],
-                                                  suppression.change.to.year = parameters['suppression.gains.end.by.year'],
-                                                  newly.suppressed.change.to.year = parameters['suppression.gains.end.by.year'],
-                                                  unsuppression.change.to.year = parameters['suppression.gains.end.by.year'],
+                                                  testing=parameters['testing.gains.end.by.year'],
+                                                  prep=parameters['prep.gains.end.by.year'],
+                                                  suppression = parameters['suppression.gains.end.by.year'],
+                                                  newly = parameters['suppression.gains.end.by.year'],
+                                                  unsuppression = parameters['suppression.gains.end.by.year'],
                                                   
-                                                  linkage.change.to.year = parameters['linkage.gains.end.by.year'],
-                                                  unsuppressed.to.disengaged.change.to.year = parameters['retention.gains.end.by.year'],
-                                                  suppressed.to.disengaged.change.to.year = parameters['retention.gains.end.by.year'],
-                                                  reengagement.change.to.year = parameters['reengagement.gains.end.by.year']
+                                                  linkage = parameters['linkage.gains.end.by.year'],
+                                                  unsuppressed = parameters['retention.gains.end.by.year'],
+                                                  suppressed = parameters['retention.gains.end.by.year'],
+                                                  reengagement = parameters['reengagement.gains.end.by.year']
                                                   )
   
   if (any(grepl('total\\.future.*slope\\.or', names(parameters))))
       components = set.future.background.slopes(components,
-                                                future.testing.slope.or = parameters['total.future.testing.slope.or'],
-                                                future.prep.slope.or = parameters['total.future.prep.slope.or'],
-                                                future.supression.slope.or = parameters['total.future.suppressed.slope.or'],
-                                                future.newly.suppressed.slope.or = parameters['total.future.suppressed.slope.or'],
-                                                future.unsuppression.slope.or = parameters['total.future.unsuppression.slope.or'],
-                                                future.linkage.slope.or = parameters['total.future.linkage.slope.or'],
-                                                future.unsuppressed.to.disengaged.slope.or = parameters['total.future.disengagement.slope.or'],
-                                                future.suppressed.to.disengaged.slope.or = parameters['total.future.disengagement.slope.or'],
-                                                future.reengagement.slope.or = parameters['total.future.reengagement.slope.or'],
-                                                after.year = parameters['future.slope.after.year'])
+                                                   testing = parameters['total.future.testing.slope.or'],
+                                                   prep = parameters['total.future.prep.slope.or'],
+                                                   
+                                                   linkage = parameters['total.future.linkage.slope.or'],
+                                                   
+                                                   # to suppressed
+                                                   naive.to.suppressed = parameters['total.future.suppressed.slope.or'],
+                                                   failing.to.suppressed = parameters['total.future.suppressed.slope.or'],
+                                                   
+                                                   # to failing
+                                                   naive.to.failing = parameters['total.future.unsuppression.slope.or'],
+                                                   suppressed.to.failing = parameters['total.future.unsuppression.slope.or'],
+                                                   
+                                                   # to disengaged
+                                                   failing.to.disengaged = parameters['total.future.disengagement.slope.or'],
+                                                   naive.to.disengaged = parameters['total.future.disengagement.slope.or'],
+                                                   suppressed.to.disengaged = parameters['total.future.disengagement.slope.or'],
+                                                   
+                                                   # reengagement
+                                                   reengagement = parameters['total.future.reengagement.slope.or'],
+                                                   
+                                                   after.year = parameters['future.slope.after.year'])
 
   #-- Return --#
   components

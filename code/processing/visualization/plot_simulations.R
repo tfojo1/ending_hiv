@@ -19,7 +19,7 @@ DATA.TYPE.NAMES = c(new='Reported Cases',
 
 
 DATA.TYPE.AXIS.LABELS = c(
-    incidence='Incident Cases (n)',
+    incidence='Incident Infections (n)',
     new='Reported Cases (n)',
     prevalence='Prevalent Cases (n)',
     mortality='Deaths in PWH (n)',
@@ -1893,7 +1893,6 @@ make.change.df <- function(simsets,
     
     #-- Pull the outcome arrays --#
     arrs = lapply(1:length(simsets), function(i){
-        
         if (length(setdiff(years.for.change, dimnames(total.population.per.simset[[1]])$year)>0))
             stop(paste0("Cannot calculate a change: year(s) ",
                         setdiff(years.for.change, dimnames(total.population.per.simset[[1]])$year),

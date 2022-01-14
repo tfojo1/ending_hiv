@@ -926,15 +926,15 @@ get.components.for.calibrated.parameters <- function(parameters, components,
   
   if (any(grepl('gains\\.end\\.by\\.year', names(parameters))))
       components = set.background.change.to.years(components,
-                                                  testing.change.to.year=parameters['testing.gains.end.by.year'],
-                                                  suppression.change.to.year=parameters['suppression.gains.end.by.year'],
-                                                  prep.change.to.year=parameters['prep.gains.end.by.year'])
+                                                  testing=parameters['testing.gains.end.by.year'],
+                                                  suppression=parameters['suppression.gains.end.by.year'],
+                                                  prep=parameters['prep.gains.end.by.year'])
   
   if (any(grepl('total\\.future.*slope\\.or', names(parameters))))
       components = set.future.background.slopes(components,
-                                                future.testing.slope.or = parameters['total.future.testing.slope.or'],
-                                                future.prep.slope.or = parameters['total.future.prep.slope.or'],
-                                                future.supression.slope.or = parameters['total.future.suppressed.slope.or'],
+                                                testing = parameters['total.future.testing.slope.or'],
+                                                prep = parameters['total.future.prep.slope.or'],
+                                                suppression = parameters['total.future.suppressed.slope.or'],
                                                 after.year = parameters['future.slope.after.year'])
 
   #-- Return --#

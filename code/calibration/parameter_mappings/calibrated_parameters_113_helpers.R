@@ -55,11 +55,19 @@ clear.calibration.dependencies <- function(components)
                         total.future.suppressed.slope.or='background.suppression',
                         other=c('background.prep',
                                 'background.linkage',
-                                'background.newly.suppressed',
-                                'background.unsuppression',
+                                
+                                'background.naive.to.suppressed',
+                                'background.naive.to.disengaged',
+                                'background.start.art',
+                                
+                                'background.failing.to.suppressed',
+                                'background.failing.to.disengaged',
+                                
+                                'background.suppressed.to.failing',
                                 'background.suppressed.to.disengaged',
-                                'background.unsuppressed.to.disengaged',
+                                
                                 'background.reengagement'),
+                        
                         aging='aging',
                         idu.transitions=c('incident.idu','idu.remission','idu.relapse'),
                         global.trate=c('global.sexual.transmission.rates','global.idu.transmission.rates'),

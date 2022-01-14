@@ -68,8 +68,6 @@ oral.prep.persistence.dist = ORAL.PREP.PERSISTENCE.DIST #oral.prep.persistence
 inj.vs.oral.discontinuation.rr.dist = INJ.VS.ORAL.DISCONTINUATION.RR.DIST #inj.vs.oral.discontinuation.rr
 INTERVENTION.MANAGER = INTERVENTION.MANAGER.1.0
 
-  if (suffix != '' && substr(suffix, 1,1)!='_')
-    suffix = paste0("_", suffix)
   
   # COVERAGE INTERVENTION UNITS
   
@@ -149,7 +147,7 @@ INTERVENTION.MANAGER = INTERVENTION.MANAGER.1.0
                                                allow.intervention.multiple.names = T)
   
   INJ.MALONEY = create.intervention(ALL.MSM,PREP.15.MALONEY,INJECTABLE.PREP.VARIABLE.MALONEY, oral.prep.rr.dist, inj.vs.oral.hr.dist)
-  INTERVENTION.MANAGER = register.intervention(INJ.MALONEY, code=paste0('inj.marshall'),
+  INTERVENTION.MANAGER = register.intervention(INJ.MALONEY, code=paste0('inj.maloney'),
                                                name='15% all injectable maloney',
                                                manager = INTERVENTION.MANAGER,
                                                allow.intervention.multiple.names = T)
@@ -163,3 +161,5 @@ COMPARISON.INTERVENTIONS.TO.RUN = list(
 INJ.MALONEY, INJ.MARSHALL, ORAL.MALONEY, ORAL.MARSHALL, BASELINE.MARSHALL, BASELINE.MALONEY
 
 )
+
+INTERVENTION.MANAGER.1.0 = INTERVENTION.MANAGER
