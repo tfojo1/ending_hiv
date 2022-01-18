@@ -1184,31 +1184,31 @@ do.setup.continuum.transitions <- function(components)
             components = do.calculate.rates(components, 'naive.to.suppressed')
             new.art.suppressed.proportions = calculate.rates(components, 'naive.to.suppressed')
             
-            start.art = merge.rates(rates1=start.art.proportions$rates,
-                                    times1=start.art.proportions$times,
-                                    rates2=new.art.suppressed.proportions$rates,
-                                    times2=new.art.suppressed.proportions$times)
+            start.art.naive = merge.rates(rates1=start.art.proportions$rates,
+                                          times1=start.art.proportions$times,
+                                          rates2=new.art.suppressed.proportions$rates,
+                                          times2=new.art.suppressed.proportions$times)
             
             time.to.suppression.on.art = calculate.time.to.suppression.on.art(components,
-                                                                              years=start.art$times)
+                                                                              years=start.art.naive$times)
             naive.to.suppressed.rates = list(
-                rates=lapply(1:length(start.art$rates1), function(i){
-                    start.art.rate = -log(1-start.art$rates1[[i]])
+                rates=lapply(1:length(start.art.naive$rates1), function(i){
+                    start.art.rate = -log(1-start.art.naive$rates1[[i]])
                     
-                    start.art$rates2[[i]] / #the proportion suppressed once starting art
+                    start.art.naive$rates2[[i]] / #the proportion suppressed once starting art
                         (time.to.suppression.on.art[i] + 1/start.art.rate) # the time to suppression (or not)
                 }),
-                times=start.art$times
+                times=start.art.naive$times
             )
-            
+          
             naive.to.failing.rates = list(
-                rates=lapply(1:length(start.art$rates1), function(i){
-                    start.art.rate = -log(1-start.art$rates1[[i]])
+                rates=lapply(1:length(start.art.naive$rates1), function(i){
+                    start.art.rate = -log(1-start.art.naive$rates1[[i]])
                     
-                    (1-start.art$rates2[[i]]) / #the proportion NOT suppressed once starting art
+                    (1-start.art.naive$rates2[[i]]) / #the proportion NOT suppressed once starting art
                         (time.to.suppression.on.art[i] + 1/start.art.rate) # the time to suppression (or not)
                 }),
-                times=start.art$times
+                times=start.art.naive$times
             )
             
             components = do.calculate.rates(components, 'naive.to.disengaged')
@@ -1279,7 +1279,6 @@ do.setup.continuum.transitions <- function(components)
                                                                      value.times = naive.to.disengaged.rates$times,
                                                                      desired.times = all.times)
             
-            
             #-- From Failing --#
             failing.to.suppressed.rates$rates = interpolate.parameters(values = failing.to.suppressed.rates$rates,
                                                                        value.times = failing.to.suppressed.rates$times,
@@ -1322,7 +1321,7 @@ do.setup.continuum.transitions <- function(components)
                     linkage.rates$rates[[i]][,,,,,components$settings$FIRST_DIAGNOSED_STATE,,]
                 
                 # unengaged -> disengaged
-                continuum.transitions.for.year[,,,,,components$settings$FIRST_DIAGNOSED_STATE,,,'disengaged'] =
+                continuum.transitions.for.year[,,,,,components$settings$FIRST_DIAGNOSED_STATE,,,'disengaged_naive'] =
                     non.linkage.rates$rates[[i]][,,,,,components$settings$FIRST_DIAGNOSED_STATE,,]
                 
          #-- FROM ENGAGED, NAIVE --#
@@ -1335,7 +1334,7 @@ do.setup.continuum.transitions <- function(components)
                     naive.to.suppressed.rates$rates[[i]][,,,,,'engaged_unsuppressed_naive',,]
                 
                 # engaged/naive -> disengaged
-                continuum.transitions.for.year[,,,,,'engaged_unsuppressed_naive',,,'disengaged'] =
+                continuum.transitions.for.year[,,,,,'engaged_unsuppressed_naive',,,'disengaged_naive'] =
                     naive.to.disengaged.rates$rates[[i]][,,,,,'engaged_unsuppressed_naive',,]
     
          #-- FROM ENGAGED, FAILING --#
@@ -1344,7 +1343,7 @@ do.setup.continuum.transitions <- function(components)
                     failing.to.suppressed.rates$rates[[i]][,,,,,'engaged_unsuppressed_failing',,]
     
                 # engaged/failing -> disengaged
-                continuum.transitions.for.year[,,,,,'engaged_unsuppressed_failing',,,'disengaged'] =
+                continuum.transitions.for.year[,,,,,'engaged_unsuppressed_failing',,,'disengaged_failing'] =
                    failing.to.disengaged.rates$rates[[i]][,,,,,'engaged_unsuppressed_failing',,]
     
          #-- FROM ENGAGED, SUPPRESSED --#
@@ -1353,14 +1352,19 @@ do.setup.continuum.transitions <- function(components)
                     suppressed.to.failing.rates$rates[[i]][,,,,,'engaged_suppressed',,]
                 
                 # engaged/suppressed -> disengaged
-                continuum.transitions.for.year[,,,,,'engaged_suppressed',,,'disengaged'] =
+                continuum.transitions.for.year[,,,,,'engaged_suppressed',,,'disengaged_failing'] =
                     suppressed.to.disengaged.rates$rates[[i]][,,,,,'engaged_suppressed',,]
                 
          #-- FROM DISENGAGED --#       
                 
                 # disengaged -> engaged/unsuppressed
-                continuum.transitions.for.year[,,,,,'disengaged',,,'engaged_unsuppressed_failing'] =
-                    reengagement.rates$rates[[i]][,,,,,'disengaged',,]
+                continuum.transitions.for.year[,,,,,'disengaged_naive',,,'engaged_unsuppressed_naive'] =
+                    reengagement.rates$rates[[i]][,,,,,'disengaged_naive',,]
+                
+                
+                # disengaged -> engaged/unsuppressed
+                continuum.transitions.for.year[,,,,,'disengaged_failing',,,'engaged_unsuppressed_failing'] =
+                    reengagement.rates$rates[[i]][,,,,,'disengaged_failing',,]
                 
                 
         #-- CHECK and then RETURN --#

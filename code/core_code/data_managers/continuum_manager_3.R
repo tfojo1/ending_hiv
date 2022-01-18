@@ -399,7 +399,8 @@ setup.start.art.model <- function(cm,
                                   settings)
 {
     YEAR = 2010
-    LATENCY = 10/12 #10 months
+#    LATENCY = 10/12 #10 months
+    LATENCY = mean(c(1.54, 1.48)) #1.5 years
     
     rate = 1/LATENCY
     p = 1-exp(-rate)

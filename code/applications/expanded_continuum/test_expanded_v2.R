@@ -28,6 +28,9 @@ simplot(sim1, data.types = c('suppression','engagement','suppression.of.engaged'
 # for example
 pp2 = pp1
 pp2['msm.start.art.or'] = 0.5
+pp2['idu.start.art.or'] = 0.5
+pp2['msm.idu.start.art.or'] = 0.5
+pp2['heterosexual.start.art.or'] = 0.5
 
 sim2 = run.simulation(pp2)
 

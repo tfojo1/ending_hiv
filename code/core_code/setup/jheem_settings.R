@@ -41,7 +41,8 @@ SETTINGS.EXPANDED.CONTINUUM = list(AGE_CUTOFFS = SETTINGS.COLLAPSED.CONTINUUM$AG
                                                           'engaged_unsuppressed_naive',
                                                           'engaged_unsuppressed_failing', 
                                                           'engaged_suppressed', 
-                                                          'disengaged'),
+                                                          'disengaged_naive',
+                                                          'disengaged_failing'),
                                     CD4_STRATA = SETTINGS.COLLAPSED.CONTINUUM$CD4_STRATA,
                                     SUBPOPULATIONS = SETTINGS.COLLAPSED.CONTINUUM$SUBPOPULATIONS,
                                     SEXES = SETTINGS.COLLAPSED.CONTINUUM$SEXES)
