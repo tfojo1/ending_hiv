@@ -23,19 +23,13 @@ simplot(sim1, data.types = c('suppression','engagement','suppression.of.engaged'
 
 
 # @Melissa, play with parameters here
-
-# for example
 pp2 = pp1
-pp2['msm.start.art.or'] = pp2['idu.start.art.or'] = 
-    pp2['msm.idu.start.art.or'] = pp2['heterosexual.start.art.or'] = 0.25
-
-pp2['msm.proportion.adherent.or'] = pp2['idu.proportion.adherent.or'] =
-    pp2['msm.idu.proportion.adherent.or'] = pp2['heterosexual.proportion.adherent.or'] = .5
-
+pp2['heterosexual.proportion.linked.slope.or'] = 1.25 
+pp2['heterosexual.proportion.linked.or'] = 0.25 
 sim2 = run.simulation(pp2)
+simplot(sim1, sim2, data.types = c('suppression','engagement','suppression.of.engaged'), facet.by = 'risk')
 
-simplot(sim1, sim2)
-simplot(sim1, sim2, data.types = c('suppression','engagement','suppression.of.engaged'))
+
 
 # the parameters that are specific to your model are:
 print(setdiff(get.parameters.prior.for.version(VERSION.MANAGER, 'expanded_1.0')@var.names,
