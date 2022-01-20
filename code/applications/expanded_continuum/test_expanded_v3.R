@@ -24,10 +24,9 @@ simplot(sim1, data.types = c('suppression','engagement','suppression.of.engaged'
 
 # @Melissa, play with parameters here
 pp2 = pp1
-pp2['heterosexual.proportion.linked.slope.or'] = 1.25 
-pp2['heterosexual.proportion.linked.or'] = 0.25 
+pp2['already.lost.vs.failing.proportion.lost.or'] = 4
 sim2 = run.simulation(pp2)
-simplot(sim1, sim2, data.types = c('suppression','engagement','suppression.of.engaged'), facet.by = 'risk')
+simplot(sim1, sim2, data.types = c('suppression','engagement','suppression.of.engaged'))
 
 
 
