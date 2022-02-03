@@ -3,6 +3,7 @@
 ##-- ALL MSAs DEFINED AS CONSTANTS --##
 ##-----------------------------------##
 
+#-- EHE MSAs --#
 NYC.MSA = '35620'
 MIAMI.MSA = '33100'
 LA.MSA = '31080'
@@ -43,7 +44,10 @@ BATON.ROUGE.MSA = '12940'
 SACRAMENTO.MSA = '40900'
 CLEVELAND.MSA = '17460'
 
+#-- Non-EHE MSAs --#
 ST.LOUIS.MSA = '41180'
+DENVER.MSA = '19740'
+PORTLAND.MSA = '38900'
 
 ##----------------------------##
 ##-- LUMP THEM INTO VECTORS --##

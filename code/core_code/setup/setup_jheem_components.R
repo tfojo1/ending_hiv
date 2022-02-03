@@ -797,8 +797,11 @@ set.foreground.rates <- function(components,
                                  foreground.max,
                                  convert.proportions.to.rates,
                                  allow.foreground.less=F,
-                                 overwrite.previous=T)
+                                 allow.foreground.greater=T,
+                                 overwrite.previous=T,
+                                 invert.proportions=F)
 {
+    
     type.name = paste0('foreground.', type)
     if (is.null(rates))
     {
@@ -817,6 +820,7 @@ set.foreground.rates <- function(components,
             components[[type.name]]$end.years = list()
             components[[type.name]]$apply.functions = list()
             components[[type.name]]$allow.foreground.less = list()
+            components[[type.name]]$allow.foreground.greater = list()
             components[[type.name]]$foreground.min = list()
             components[[type.name]]$foreground.max = list()
             components[[type.name]]$convert.proportions.to.rates = list()
@@ -824,6 +828,18 @@ set.foreground.rates <- function(components,
         
         if (class(rates)!='list')
             rates = list(rates)
+        
+        if (invert.proportions)
+        {
+            old.allow.less = allow.foreground.less
+            allow.foreground.less = allow.foreground.greater
+            allow.foreground.greater = old.allow.less
+            
+            rates = lapply(rates, function(r){
+                1-r
+            })
+        }
+        
         names(rates) = as.character(years)
         
         # Add the new settings
@@ -834,9 +850,10 @@ set.foreground.rates <- function(components,
         components[[type.name]]$end.years = c(components[[type.name]]$end.years, list(end.years))
         components[[type.name]]$apply.functions = c(components[[type.name]]$apply.functions, list(apply.functions))
         components[[type.name]]$allow.foreground.less = c(components[[type.name]]$allow.foreground.less, list(allow.foreground.less))
+        components[[type.name]]$allow.foreground.greater = c(components[[type.name]]$allow.foreground.greater, list(allow.foreground.greater))
         components[[type.name]]$foreground.min = c(components[[type.name]]$foreground.min, list(foreground.min))
         components[[type.name]]$foreground.max = c(components[[type.name]]$foreground.max, list(foreground.max))
-        components[[type.name]]$convert.proportions.to.rates = c(components[[convert.proportions.to.rates]]$convert.proportions.to.rates,
+        components[[type.name]]$convert.proportions.to.rates = c(components[[type.name]]$convert.proportions.to.rates,
                                                                  list(convert.proportions.to.rates))
         
         # Clear dependencies
@@ -1663,71 +1680,6 @@ setup.background.reengagement <- function(components,
     components
 }
 
-
-set.background.reengagement.ors <- function(components,
-                                                        msm.or.intercept=NA,
-                                                        heterosexual.or.intercept=NA,
-                                                        idu.or.intercept=NA,
-                                                        msm.idu.or.intercept=NA,
-                                                        black.or.intercept=NA,
-                                                        hispanic.or.intercept=NA,
-                                                        other.or.intercept=NA,
-                                                        age1.or.intercept=NA,
-                                                        age2.or.intercept=NA,
-                                                        age3.or.intercept=NA,
-                                                        age4.or.intercept=NA,
-                                                        age5.or.intercept=NA,
-                                                        
-                                                        total.or.slope=NA,
-                                                        
-                                                        msm.or.slope=NA,
-                                                        heterosexual.or.slope=NA,
-                                                        idu.or.slope=NA,
-                                                        msm.idu.or.slope=NA,
-                                                        black.or.slope=NA,
-                                                        hispanic.or.slope=NA,
-                                                        other.or.slope=NA,
-                                                        age1.or.slope=NA,
-                                                        age2.or.slope=NA,
-                                                        age3.or.slope=NA,
-                                                        age4.or.slope=NA,
-                                                        age5.or.slope=NA)
-{
-    components = do.set.background.ors(components,
-                                       component.name='background.reengagement',
-                                       
-                                       msm.or.intercept=msm.or.intercept,
-                                       heterosexual.or.intercept=heterosexual.or.intercept,
-                                       idu.or.intercept=idu.or.intercept,
-                                       msm.idu.or.intercept=msm.idu.or.intercept,
-                                       black.or.intercept=black.or.intercept,
-                                       hispanic.or.intercept=hispanic.or.intercept,
-                                       other.or.intercept=other.or.intercept,
-                                       age1.or.intercept=age1.or.intercept,
-                                       age2.or.intercept=age2.or.intercept,
-                                       age3.or.intercept=age3.or.intercept,
-                                       age4.or.intercept=age4.or.intercept,
-                                       age5.or.intercept=age5.or.intercept,
-                                       
-                                       total.or.slope=total.or.slope,
-                                       
-                                       msm.or.slope=msm.or.slope,
-                                       heterosexual.or.slope=heterosexual.or.slope,
-                                       idu.or.slope=idu.or.slope,
-                                       msm.idu.or.slope=msm.idu.or.slope,
-                                       black.or.slope=black.or.slope,
-                                       hispanic.or.slope=hispanic.or.slope,
-                                       other.or.slope=other.or.slope,
-                                       age1.or.slope=age1.or.slope,
-                                       age2.or.slope=age2.or.slope,
-                                       age3.or.slope=age3.or.slope,
-                                       age4.or.slope=age4.or.slope,
-                                       age5.or.slope=age5.or.slope
-    )
-    
-    components = clear.dependent.values(components, 'background.reengagement')
-    components
-}
 
 #-- CHANGE TO YEARS --#
 

@@ -54,6 +54,100 @@ get.testing.model <- function(cm,
 }
 
 
+##---------------------------##
+##-- GETTING TESTING RATES --##
+##---------------------------##
+
+get.proportion.ever.tested <- function(cm, location)
+{
+    location.mask = cm$testing$total.ever.tested$location==location
+    if (any(location.mask))
+    {
+        list(ever.tested = cm$testing$total.ever.tested$frac.ever[location.mask],
+             sample.size = cm$testing$total.ever.tested$sample.size[location.mask],
+             years = cm$testing$total.ever.tested$year[location.mask])
+    }
+    else
+        NULL
+}
+
+get.proportion.ever.tested.in.state.msas <- function(cm, location)
+{
+    location.states = states.for.msa(location)
+    locations = unique(cm$testing$total.ever.tested$location)
+    same.state.mask = sapply(locations, function(loc){
+        states.for.loc = states.for.msa(loc)
+        any(sapply(location.states, function(st){
+            any(st == states.for.loc)
+        }))
+    })
+    if (any(same.state.mask))
+    {
+        locations = locations[same.state.mask]
+        location.mask = sapply(cm$testing$total.ever.tested$location, function(loc){
+            any(loc==locations)
+        })
+    }
+    else
+        location.mask = T
+    
+    years = sort(unique(cm$testing$total.ever.tested$year[location.mask]))
+    ever.tested = sapply(years, function(year){
+        year.mask = location.mask & cm$testing$total.ever.tested$year == year
+        sum(cm$testing$total.ever.tested$frac.ever[year.mask] * cm$testing$total.ever.tested$sample.size[year.mask]) /
+            sum(cm$testing$total.ever.tested$sample.size[year.mask])
+    })
+    sample.size = sapply(years, function(year){
+        year.mask = location.mask & cm$testing$total.ever.tested$year == year
+        ceiling(mean(cm$testing$total.ever.tested$sample.size[year.mask]))
+    })
+    
+    list(ever.tested=ever.tested,
+         sample.size=sample.size,
+         years=years)
+}
+
+get.proportion.ever.tested.in.states <- function(cm,
+                                                 states,
+                                                 age=F,
+                                                 race=F,
+                                                 sex=F)
+{
+    if (age)
+    {
+        if (length(states)==1)
+            rv = list(numerators = cm$state.testing$numerators.age[,states,],
+                      denominators = cm$state.testing$denominators.age[,states,])
+        else
+            rv = list(numerators = apply(cm$state.testing$numerators.age[,states,], c('year','age'), sum, na.rm=T),
+                      denominators = apply(cm$state.testing$denominators.age[,states,], c('year','age'), sum, na.rm=T))
+    }
+    else if (race)
+    {
+        if (length(states)==1)
+            rv = list(numerators = cm$state.testing$numerators.race[,states,],
+                      denominators = cm$state.testing$denominators.race[,states,])
+        else
+            rv = list(numerators = apply(cm$state.testing$numerators.race[,states,], c('year','race'), sum, na.rm=T),
+                      denominators = apply(cm$state.testing$denominators.race[,states,], c('year','race'), sum, na.rm=T))
+    }
+    else if (sex)
+    {
+        if (length(states)==1)
+            rv = list(numerators = cm$state.testing$numerators.sex[,states,],
+                      denominators = cm$state.testing$denominators.sex[,states,])
+        else
+            rv = list(numerators = apply(cm$state.testing$numerators.sex[,states,], c('year','sex'), sum, na.rm=T),
+                      denominators = apply(cm$state.testing$denominators.sex[,states,], c('year','sex'), sum, na.rm=T))
+    }
+    else
+        stop("One of the arguments 'age', 'sex', or 'race' must be set to TRUE")
+    
+    rv$years = as.numeric(dimnames(rv$numerators)[['year']])
+    rv
+}
+
+
 ####----------------------####
 ####----------------------####
 ####-- SET-UP FUNCTIONS --####

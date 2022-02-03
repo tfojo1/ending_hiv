@@ -1,7 +1,10 @@
 
+DELAYED = 'covid.delayed.mobility'
+RAPID = 'covid.rapid.resumption.mobility'
+
 if (1==2)
 {
-    load('results/covid/covid_4.1_results.Rdata')
+    load('results/covid/covid_4.2_results.Rdata')
 
     
 }
@@ -11,11 +14,11 @@ make.supplement.table <- function(outcomes.arr,
                                   locations=dimnames(outcomes.arr)$location,
                                   years=c(2020,2021,2025),
                                   scenarios=c('Absent COVID' = 'baseline',
-                                              'Prolonged Barriers to Care'='delayed.hiv.care',
-                                              'Rapid Resumption of Care' = 'base'),
+                                              'Prolonged Barriers to Care'=DELAYED,
+                                              'Rapid Resumption of Care' = RAPID),
                                   ci.coverage=0.95,
                                   digits=0,
-                                  pct=outcome=='suppression' || outcome=='diagnosed')
+                                  pct=outcome=='suppression' || outcome=='diagnosed' || outcome=='fraction.acute')
 {
     alpha = (1-ci.coverage)/2
     
@@ -24,7 +27,6 @@ make.supplement.table <- function(outcomes.arr,
                   params=parameters,
                   var.name=outcome,
                   years=years,
-                  intervention.name=NA,
                   locations=locations,
                   aggregate.locations=F,
                   aggregate.years=F)
@@ -34,7 +36,6 @@ make.supplement.table <- function(outcomes.arr,
                         params=parameters,
                         var.name=outcome,
                         years=years,
-                        intervention.name=NA,
                         locations=locations,
                         aggregate.locations=T,
                         aggregate.years=F)
@@ -99,99 +100,120 @@ make.supplement.table <- function(outcomes.arr,
 }
 
 source('../../commoncode/latex_helpers.R')
+OUTPUT.DIR = '../jheem_supplements/covid/tables'
 if (1==2)
 {
     # Incidence
     tab = make.supplement.table(outcomes.arr=outcomes.arr,
                                 years=2020,
                                 outcome='incidence')
-    make.latex.table(tab, file = '../Manuscripts/covid_manuscript/supplement/tables/inc_tab_2020.txt')
+    make.latex.table(tab, file = file.path(OUTPUT.DIR, 'inc_tab_2020.txt'))
     
     
     tab = make.supplement.table(outcomes.arr=outcomes.arr,
                                 years=2021,
                                 outcome='incidence')
-    make.latex.table(tab, file = '../Manuscripts/covid_manuscript/supplement/tables/inc_tab_2021.txt')
+    make.latex.table(tab, file = file.path(OUTPUT.DIR, 'inc_tab_2021.txt'))
     
     
     tab = make.supplement.table(outcomes.arr=outcomes.arr,
                                 years=2025,
                                 outcome='incidence')
-    make.latex.table(tab, file = '../Manuscripts/covid_manuscript/supplement/tables/inc_tab_2025.txt')
+    make.latex.table(tab, file = file.path(OUTPUT.DIR, 'inc_tab_2025.txt'))
     
     
     # Reported Diagnoses
     tab = make.supplement.table(outcomes.arr=outcomes.arr,
                                 years=2020,
                                 outcome='new')
-    make.latex.table(tab, file = '../Manuscripts/covid_manuscript/supplement/tables/new_tab_2020.txt')
+    make.latex.table(tab, file = file.path(OUTPUT.DIR, 'new_tab_2020.txt'))
     
     
     tab = make.supplement.table(outcomes.arr=outcomes.arr,
                                 years=2021,
                                 outcome='new')
-    make.latex.table(tab, file = '../Manuscripts/covid_manuscript/supplement/tables/new_tab_2021.txt')
+    make.latex.table(tab, file = file.path(OUTPUT.DIR, 'new_tab_2021.txt'))
     
     
     tab = make.supplement.table(outcomes.arr=outcomes.arr,
                                 years=2025,
                                 outcome='new')
-    make.latex.table(tab, file = '../Manuscripts/covid_manuscript/supplement/tables/new_tab_2025.txt')
+    make.latex.table(tab, file = file.path(OUTPUT.DIR, 'new_tab_2025.txt'))
     
     
     # Prevalence
     tab = make.supplement.table(outcomes.arr=outcomes.arr,
                                 years=2020,
                                 outcome='prevalence')
-    make.latex.table(tab, file = '../Manuscripts/covid_manuscript/supplement/tables/prev_tab_2020.txt')
+    make.latex.table(tab, file = file.path(OUTPUT.DIR, 'prev_tab_2020.txt'))
     
     
     tab = make.supplement.table(outcomes.arr=outcomes.arr,
                                 years=2021,
                                 outcome='prevalence')
-    make.latex.table(tab, file = '../Manuscripts/covid_manuscript/supplement/tables/prev_tab_2021.txt')
+    make.latex.table(tab, file = file.path(OUTPUT.DIR, 'prev_tab_2021.txt'))
     
     
     tab = make.supplement.table(outcomes.arr=outcomes.arr,
                                 years=2025,
                                 outcome='prevalence')
-    make.latex.table(tab, file = '../Manuscripts/covid_manuscript/supplement/tables/prev_tab_2025.txt')
+    make.latex.table(tab, file = file.path(OUTPUT.DIR, 'prev_tab_2025.txt'))
+    
+    
+    # Acute
+    tab = make.supplement.table(outcomes.arr=outcomes.arr,
+                                years=2020,
+                                outcome='prevalence.acute.all')
+    make.latex.table(tab, file = file.path(OUTPUT.DIR, 'acute_tab_2020.txt'))
+    
+    
+    tab = make.supplement.table(outcomes.arr=outcomes.arr,
+                                years=2021,
+                                outcome='prevalence.acute.all')
+    make.latex.table(tab, file = file.path(OUTPUT.DIR, 'acute_tab_2021.txt'))
+    
+    
+    tab = make.supplement.table(outcomes.arr=outcomes.arr,
+                                years=2025,
+                                outcome='prevalence.acute.all')
+    make.latex.table(tab, file = file.path(OUTPUT.DIR, 'acute_tab_2025.txt'))
+    
     
     
     # Awareness
     tab = make.supplement.table(outcomes.arr=outcomes.arr,
                                 years=2020,
-                                outcome='diagnosed')
-    make.latex.table(tab, file = '../Manuscripts/covid_manuscript/supplement/tables/dx_tab_2020.txt')
+                                outcome='acute')
+    make.latex.table(tab, file = file.path(OUTPUT.DIR, 'dx_tab_2020.txt'))
     
     
     tab = make.supplement.table(outcomes.arr=outcomes.arr,
                                 years=2021,
                                 outcome='diagnosed')
-    make.latex.table(tab, file = '../Manuscripts/covid_manuscript/supplement/tables/dx_tab_2021.txt')
+    make.latex.table(tab, file = file.path(OUTPUT.DIR, 'dx_tab_2021.txt'))
     
     
     tab = make.supplement.table(outcomes.arr=outcomes.arr,
                                 years=2025,
                                 outcome='diagnosed')
-    make.latex.table(tab, file = '../Manuscripts/covid_manuscript/supplement/tables/dx_tab_2025.txt')
+    make.latex.table(tab, file = file.path(OUTPUT.DIR, 'dx_tab_2025.txt'))
  
     # Suppression
     tab = make.supplement.table(outcomes.arr=outcomes.arr,
                                 years=2020,
                                 outcome='suppression')
-    make.latex.table(tab, file = '../Manuscripts/covid_manuscript/supplement/tables/supp_tab_2020.txt')
+    make.latex.table(tab, file = file.path(OUTPUT.DIR, 'supp_tab_2020.txt'))
     
     
     tab = make.supplement.table(outcomes.arr=outcomes.arr,
                                 years=2021,
                                 outcome='suppression')
-    make.latex.table(tab, file = '../Manuscripts/covid_manuscript/supplement/tables/supp_tab_2021.txt')
+    make.latex.table(tab, file = file.path(OUTPUT.DIR, 'supp_tab_2021.txt'))
     
     
     tab = make.supplement.table(outcomes.arr=outcomes.arr,
                                 years=2025,
                                 outcome='suppression')
-    make.latex.table(tab, file = '../Manuscripts/covid_manuscript/supplement/tables/supp_tab_2025.txt')
+    make.latex.table(tab, file = file.path(OUTPUT.DIR, 'supp_tab_2025.txt'))
     
 }

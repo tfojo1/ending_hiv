@@ -156,10 +156,12 @@ setup.initial.mcmc.for.msa <- function(msa,
     )
 }
 
-create.start.value.generator.for.msa <- function(msa)
+create.start.value.generator.for.msa <- function(msa, 
+                                                 version,
+                                                 initial.dir='systematic_initial')
 {
-    files = list.files(file.path(SYSTEMATIC.ROOT.DIR, 'systematic_initial'))
-    full.files = list.files(file.path(SYSTEMATIC.ROOT.DIR, 'systematic_initial'), full.names = T)
+    files = list.files(file.path(SYSTEMATIC.ROOT.DIR, initial.dir))
+    full.files = list.files(file.path(SYSTEMATIC.ROOT.DIR, initial.dir), full.names = T)
     
     mask = grepl(msa, files)
     if (!any(mask))
@@ -167,7 +169,9 @@ create.start.value.generator.for.msa <- function(msa)
     load(full.files[mask][sum(mask)])
     
     simset = extract.simset(mcmc, additional.burn=mcmc@n.iter/2)
-    sampling.dist = create.starting.sampling.distribution(simset)
+    prior = get.parameters.prior.for.version(VERSION.MANAGER, version=version)
+    
+    sampling.dist = create.starting.sampling.distribution(simset, prior = prior)
     save(sampling.dist, file=file.path(SYSTEMATIC.ROOT.DIR, 'starting_value_generators',
                                        paste0(msa, '.Rdata')))
 }
@@ -177,6 +181,7 @@ create.start.value.generator.for.msa <- function(msa)
 ##-----------------------##
 
 setup.parallel.mcmc.for.msa <- function(msa,
+                                        version='collapsed_1.0',
                                         likelihood=NULL,
                                         prior=parameters.prior,
                                         parameter.var.blocks = PARAMETER.VAR.BLOCKS.1,
@@ -188,6 +193,7 @@ setup.parallel.mcmc.for.msa <- function(msa,
                                         max.sim.time=20,
                                         save.dir=file.path(SYSTEMATIC.ROOT.DIR, 'systematic_parallel'),
                                         cache.dir=file.path(SYSTEMATIC.ROOT.DIR, 'systematic_caches'),
+                                        initial.dir=file.path(SYSTEMATIC.ROOT.DIR, 'systematic_initial'),
                                         update.frequency=200,
                                         cache.frequency=CACHE.FREQUENCY,
                                         save.suffix='',
@@ -211,8 +217,8 @@ setup.parallel.mcmc.for.msa <- function(msa,
     # Pull Initial MCMC
     if (verbose)
         print("Loading the initial MCMC")
-    files = list.files(file.path(SYSTEMATIC.ROOT.DIR, 'systematic_initial'))
-    full.files = list.files(file.path(SYSTEMATIC.ROOT.DIR, 'systematic_initial'), full.names = T)
+    files = list.files(initial.dir)
+    full.files = list.files(initial.dir, full.names = T)
     
     mask = grepl(msa, files)
     if (!any(mask))
@@ -223,7 +229,11 @@ setup.parallel.mcmc.for.msa <- function(msa,
     if (verbose)
         print("Creating starting value generator")
     simset = extract.simset(mcmc, additional.burn=mcmc@n.iter/2)
-    start.value.generator = create.starting.sampling.distribution(simset, correlated.sd.inflation = .75, uncorrelated.sd.inflation = .5)
+    prior = get.parameters.prior.for.version(VERSION.MANAGER, version=version)
+    start.value.generator = create.starting.sampling.distribution(simset, 
+                                                                  prior = prior,
+                                                                  correlated.sd.inflation = .75, 
+                                                                  uncorrelated.sd.inflation = .5)
     
     # Pull chain state variables
     chain.state = mcmc@chain.states[[1]]
@@ -234,6 +244,7 @@ setup.parallel.mcmc.for.msa <- function(msa,
     
     # Pass to sub function
     setup.mcmc.for.msa(msa=msa,
+                       version=version,
                        likelihood=likelihood,
                        prior=prior,
                        parameter.var.blocks=parameter.var.blocks,
@@ -338,7 +349,7 @@ setup.mcmc.for.msa <- function(msa,
             print("Running initial simulation to plot")
         init.sim = run.simulation(first.start.values)
 #        print(plot.calibration.risk(init.sim) + ggtitle(paste0("Initial Sim: ", msa.names(msa))))
-        print(plot.calibration.sex(init.sim, data.types='prep') + ggtitle(paste0("Initial Sim: ", msa.names(msa))) +
+        print(simplot(init.sim, data.types=c('new','prevalence')) + ggtitle(paste0("Initial Sim: ", msa.names(msa))) +
             theme(plot.title=element_text(hjust=1)))
     }
     

@@ -160,6 +160,9 @@ create.msa.likelihood <- function(msa,
     #-- Pull Other Values to make likelihood --#
     POPULATION.TOTALS=get.census.totals(ALL.DATA.MANAGERS$census.totals, msa)
     
+    #-- The Cache for Nested Errors --#
+    nested.error.cache = make.nested.errors.cache(msa.surveillance, state.surveillance, county.surveillance)
+    
     #Create the individual components of the likelihood
     if (verbose)
         print("Creating 'new' likelihood")
@@ -249,7 +252,9 @@ create.msa.likelihood <- function(msa,
                                               observation.error.fn = SUPPRESSION.OBS.ERROR.SD,
                                               sd.inflation = SUPPRESSION.SD.INFLATION,
                                               
-                                              probability.decreasing.slope=PROBABILITY.SUPPRESSION.DECREASING
+                                              probability.decreasing.slope=PROBABILITY.SUPPRESSION.DECREASING,
+                                              
+                                              cached.errors = nested.error.cache
                                               )
     
     if (include.engagement)
@@ -267,7 +272,9 @@ create.msa.likelihood <- function(msa,
                                                   observation.error.fn = ENGAGEMENT.OBS.ERROR.SD,
                                                   sd.inflation = ENGAGEMENT.SD.INFLATION,
                                                   
-                                                  probability.decreasing.slope=PROBABILITY.ENGAGEMENT.DECREASING
+                                                  probability.decreasing.slope=PROBABILITY.ENGAGEMENT.DECREASING,
+                                               
+                                               cached.errors = nested.error.cache
         )
     }
     else
@@ -288,7 +295,9 @@ create.msa.likelihood <- function(msa,
                                                   observation.error.fn = LINKAGE.OBS.ERROR.SD,
                                                   sd.inflation = LINKAGE.SD.INFLATION,
                                                   
-                                                  probability.decreasing.slope=PROBABILITY.LINKAGE.DECREASING
+                                                  probability.decreasing.slope=PROBABILITY.LINKAGE.DECREASING,
+                                               
+                                               cached.errors = nested.error.cache
         )
     }
     else
@@ -339,7 +348,9 @@ create.msa.likelihood <- function(msa,
                                               observation.error.fn = DIAGNOSED.OBS.ERROR.SD,
                                               sd.inflation = TOTAL.SD.INFLATION.DX,
                                               
-                                              probability.decreasing.slope=PROBABILITY.DIAGNOSIS.DECREASING
+                                              probability.decreasing.slope=PROBABILITY.DIAGNOSIS.DECREASING,
+                                      
+                                      cached.errors = nested.error.cache
     )
     
     if (verbose)
