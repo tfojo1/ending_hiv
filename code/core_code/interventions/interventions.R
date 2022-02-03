@@ -737,6 +737,7 @@ process.intervention <- function(intervention,
             character.na=character(); character.na[1] = NA
             rv$apply.functions = array(character.na, dim=sapply(dim.names, length), dimnames=dim.names)
             rv$allow.less.than.otherwise = array(F, dim=sapply(dim.names, length), dimnames=dim.names)
+            rv$allow.greater.than.otherwise = array(F, dim=sapply(dim.names, length), dimnames=dim.names)
             
             rv$times = sort(unique(c(
                 unlist(sapply(sub$intervention.units, function(unit){unit$years})),
@@ -752,6 +753,7 @@ process.intervention <- function(intervention,
                 rv$end.times[tpop] = unit$end.year
                 rv$apply.functions[tpop] = unit$apply.function
                 rv$allow.less.than.otherwise[tpop] = unit$allow.less.than.otherwise
+                rv$allow.greater.than.otherwise[tpop] = unit$allow.greater.than.otherwise
                 rv$min.rates[tpop] = unit$min.rate
                 rv$max.rates[tpop] = unit$max.rate
                 

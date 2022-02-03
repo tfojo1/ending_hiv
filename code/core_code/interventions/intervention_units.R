@@ -16,6 +16,7 @@ THROW.ERROR.IF.PAST.CHECK.YEAR = T
 #'@param years The times at which those rates apply. Should be the same length as rates
 #'@param apply.function The character name of the function that applies the intervention rate. Options are 'absolute' (the intervention rate is used as the new rate), 'multiplier' (the intervention rate is multiplied by the old rate), 'odds.ratio' (the intervention rate is treated as an odds ratio, and applied to the old rate, which is treated as a probability), 'additive' (the intervention rate is added to the old rate)
 #'@param allow.less.than.otherwse Whether the relevant rates are allowed to be less than they would have been without the intervention
+#'@param allow.greater.than.otherwse Whether the relevant rates are allowed to be greater than they would have been without the intervention
 #'
 create.intervention.unit <- function(type=c('testing','prep','suppression','needle.exchange',''),
                                      start.year=2021,
@@ -24,6 +25,7 @@ create.intervention.unit <- function(type=c('testing','prep','suppression','need
                                      end.year=Inf,
                                      apply.function=c('absolute','multiplier','odds.ratio','additive')[1],
                                      allow.less.than.otherwise = apply.function!='absolute',
+                                     allow.greater.than.otherwise = T,
                                      min.rate=-Inf,
                                      max.rate=Inf,
                                      raw.rates=rates,
@@ -80,6 +82,7 @@ create.intervention.unit <- function(type=c('testing','prep','suppression','need
               years=years,
               apply.function=apply.function,
               allow.less.than.otherwise=allow.less.than.otherwise,
+              allow.greater.than.otherwise=allow.greater.than.otherwise,
               min.rate = min.rate,
               max.rate = max.rate,
               raw.rates = raw.rates,
@@ -106,6 +109,7 @@ create.proportion.multiplier.intervention.unit <- function(type=c('testing','pre
                                                            end.year=Inf,
                                                            apply.function=c('absolute','multiplier','odds.ratio','additive')[1],
                                                            allow.less.than.otherwise = apply.function!='absolute',
+                                                           allow.greater.than.otherwise = T,
                                                            min.rate=-Inf,
                                                            max.rate=Inf,
                                                            raw.proportions=proportions,
@@ -126,6 +130,7 @@ create.proportion.multiplier.intervention.unit <- function(type=c('testing','pre
                              end.year=end.year,
                              apply.function = apply.function,
                              allow.less.than.otherwise=allow.less.than.otherwise,
+                             allow.greater.than.otherwise=allow.greater.than.otherwise,
                              min.rate=min.rate,
                              max.rate=max.rate,
                              raw.rates = raw.proportions,
@@ -464,10 +469,10 @@ UNIT.NAME.AS.PCT = c(
     idu.transmission=F,
     linkage=T,
     retention.suppressed=T,
-    retention.unsuppressed=T,
-    art.adherence.suppressed=T,
-    art.adherence.unsuppressed=T,
-    gain.of.suppression=T,
+    retention.naive=T,
+    retention.failing=T,
+    gain.of.suppression.naive=T,
+    gain.of.suppression.failing=T,
     sapply(ADDITIONAL.PREP.TYPES, function(type){T}),
     sapply(paste0('rr.',ADDITIONAL.PREP.TYPES), function(type){F})
 )
@@ -490,10 +495,10 @@ UNIT.NAME.RATE.SUFFIX = c(
     idu.transmission='',
     linkage='',
     retention.suppressed='',
-    retention.unsuppressed='',
-    art.adherence.suppressed='',
-    art.adherence.unsuppressed='',
-    gain.of.suppression='',
+    retention.naive='',
+    retention.failing='',
+    gain.of.suppression.naive='',
+    gain.of.suppression.failing='',
     sapply(ADDITIONAL.PREP.TYPES, function(type){''}),
     sapply(paste0('rr.',ADDITIONAL.PREP.TYPES), function(type){'-fold'})
 )
@@ -514,10 +519,10 @@ UNIT.NAME.PRE.DESCRIPTOR = c(
     idu.transmission='',
     linkage='',
     retention.suppressed='',
-    retention.unsuppressed='',
-    art.adherence.suppressed='',
-    art.adherence.unsuppressed='',
-    gain.of.suppression = '',
+    retention.naive='',
+    retention.failing='',
+    gain.of.suppression.naive='',
+    gain.of.suppression.failing='',
     sapply(ADDITIONAL.PREP.TYPES, function(type){''}),
     sapply(paste0('rr.',ADDITIONAL.PREP.TYPES), function(type){''})
 )
@@ -538,10 +543,10 @@ UNIT.NAME.POST.DESCRIPTOR = c(
     idu.transmission=' idu transmission',
     linkage=' linked',
     retention.suppressed=' retained',
-    retention.unsuppressed=' retained',
-    art.adherence.suppressed=' adherent',
-    art.adherence.unsuppressed=' adherent',
-    gain.of.suppression = ' per year',
+    retention.naive=' retained',
+    retention.failing=' retained',
+    gain.of.suppression.naive = ' per year',
+    gain.of.suppression.failing = ' per year',
     lai.prep = 'on long-acting PrEP',
     rr.lai.prep = 'long-acting PrEP effectiveness'
 )
@@ -562,10 +567,10 @@ UNIT.NAME.CATEGORY = c(
     idu.transmission='IV Transmission',
     linkage='Linkage',
     retention.suppressed='Retention',
-    retention.unsuppressed='Retention',
-    art.adherence.suppressed='ART Adherence',
-    art.adherence.unsuppressed='ART Adherence',
-    gain.of.suppression='Gain Suppression',
+    retention.naive='Retention',
+    retention.failing='Retention',
+    gain.of.suppression.naive='Gain Suppression',
+    gain.of.suppression.failing='Gain Suppression',
     lai.prep = 'on long-acting PrEP',
     rr.lai.prep = 'long-acting PrEP effectiveness'
 )

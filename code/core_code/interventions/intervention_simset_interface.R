@@ -174,6 +174,8 @@ setup.components.for.intervention <- function(components,
         apply.functions[,,,,,diagnosed.states,,] = NA
         allow.less = expand.population.to.hiv.positive(components$jheem, 
                                                        intervention@processed$testing$allow.less.than.otherwise)
+        allow.greater = expand.population.to.hiv.positive(components$jheem, 
+                                                       intervention@processed$testing$allow.greater.than.otherwise)
         
         
         components = set.foreground.rates(components, 'testing',
@@ -183,54 +185,70 @@ setup.components.for.intervention <- function(components,
                                           end.years = end.times,
                                           apply.functions = apply.functions,
                                           allow.foreground.less = allow.less,
+                                          allow.foreground.greater = allow.greater,
                                           overwrite.previous = overwrite.prior.intervention,
                                           foreground.min = min.rates,
-                                          foreground.max = max.rates)
+                                          foreground.max = max.rates,
+                                          convert.proportions.to.rates=F)
     }
     
     # Linkage
     components = do.set.foreground.for.hiv.positive(components=components,
                                                     intervention=intervention,
-                                                    element.name='linkage',
+                                                    intervention.element.name='linkage',
+                                                    components.element.name='linkage',
                                                     applies.to.continuum.states='unengaged',
                                                     overwrite.prior.intervention=overwrite.prior.intervention,
-                                                    not.applies.value = 0)
+                                                    not.applies.value = 0,
+                                                    convert.proportions.to.rates=F)
     
     # Retention
     components = do.set.foreground.for.hiv.positive(components=components,
                                                     intervention=intervention,
-                                                    element.name='retention.unsuppressed',
-                                                    applies.to.continuum.states='engaged_unsuppressed',
+                                                    intervention.element.name='retention.naive',
+                                                    components.element.name='naive.to.disengaged',
+                                                    applies.to.continuum.states='engaged_unsuppressed_naive',
                                                     overwrite.prior.intervention=overwrite.prior.intervention,
-                                                    not.applies.value = 0)
+                                                    not.applies.value = 0,
+                                                    convert.proportions.to.rates=T,
+                                                    invert.proportions = T)
     components = do.set.foreground.for.hiv.positive(components=components,
                                                     intervention=intervention,
-                                                    element.name='retention.suppressed',
+                                                    intervention.element.name='retention.failing',
+                                                    components.element.name='failing.to.disengaged',
+                                                    applies.to.continuum.states='engaged_unsuppressed_failing',
+                                                    overwrite.prior.intervention=overwrite.prior.intervention,
+                                                    not.applies.value = 0,
+                                                    convert.proportions.to.rates=T,
+                                                    invert.proportions = T)
+    components = do.set.foreground.for.hiv.positive(components=components,
+                                                    intervention=intervention,
+                                                    intervention.element.name='retention.suppressed',
+                                                    components.element.name='suppressed.to.disengaged',
                                                     applies.to.continuum.states='engaged_suppressed',
                                                     overwrite.prior.intervention=overwrite.prior.intervention,
-                                                    not.applies.value = 0)
-    
-    # ART Adherence
-    components = do.set.foreground.for.hiv.positive(components=components,
-                                                    intervention=intervention,
-                                                    element.name='art.adherence.unsuppressed',
-                                                    applies.to.continuum.states='engaged_unsuppressed',
-                                                    overwrite.prior.intervention=overwrite.prior.intervention,
-                                                    not.applies.value = 0)
-    components = do.set.foreground.for.hiv.positive(components=components,
-                                                    intervention=intervention,
-                                                    element.name='art.adherence.suppressed',
-                                                    applies.to.continuum.states='engaged_suppressed',
-                                                    overwrite.prior.intervention=overwrite.prior.intervention,
-                                                    not.applies.value = 0)
+                                                    not.applies.value = 0,
+                                                    convert.proportions.to.rates=T,
+                                                    invert.proportions = T)
+
     
     # Gain of Suppression
     components = do.set.foreground.for.hiv.positive(components=components,
                                                     intervention=intervention,
-                                                    element.name='gain.of.suppression',
-                                                    applies.to.continuum.states='engaged_unsuppressed',
+                                                    intervention.element.name='gain.of.suppression.naive',
+                                                    components.element.name='naive.to.suppressed',
+                                                    applies.to.continuum.states='engaged_unsuppressed_naive',
                                                     overwrite.prior.intervention=overwrite.prior.intervention,
-                                                    not.applies.value = 0)
+                                                    not.applies.value = 0,
+                                                    convert.proportions.to.rates=F)
+    components = do.set.foreground.for.hiv.positive(components=components,
+                                                    intervention=intervention,
+                                                    intervention.element.name='gain.of.suppression.failing',
+                                                    components.element.name='failing.to.suppressed',
+                                                    applies.to.continuum.states='engaged_unsuppressed_failing',
+                                                    overwrite.prior.intervention=overwrite.prior.intervention,
+                                                    not.applies.value = 0,
+                                                    convert.proportions.to.rates=T)
     
     # Suppression
     if (!is.null(intervention@processed$suppression))
@@ -260,6 +278,8 @@ setup.components.for.intervention <- function(components,
         apply.functions[,,,,,undiagnosed.states,,] = NA
         allow.less = expand.population.to.hiv.positive(components$jheem, 
                                                        intervention@processed$suppression$allow.less.than.otherwise)
+        allow.greater = expand.population.to.hiv.positive(components$jheem, 
+                                                          intervention@processed$suppression$allow.greater.than.otherwise)
         
         components = set.foreground.rates(components, 'suppression',
                                           rates = suppressed.proportions,
@@ -268,9 +288,11 @@ setup.components.for.intervention <- function(components,
                                           end.years = end.times,
                                           apply.functions = apply.functions,
                                           allow.foreground.less = allow.less,
+                                          allow.foreground.greater = allow.greater,
                                           overwrite.previous = overwrite.prior.intervention,
                                           foreground.min = min.rates,
-                                          foreground.max = max.rates)
+                                          foreground.max = max.rates,
+                                          convert.proportions.to.rates=F)
     }
     
     # PrEP Coverage
@@ -290,6 +312,8 @@ setup.components.for.intervention <- function(components,
                                                      intervention@processed[[prep.type]]$apply.functions)
             allow.less = expand.population.to.hiv.negative(components$jheem, 
                                                            intervention@processed[[prep.type]]$allow.less.than.otherwise)
+            allow.greater = expand.population.to.hiv.negative(components$jheem, 
+                                                              intervention@processed[[prep.type]]$allow.greater.than.otherwise)
             
             components = register.prep.type(components, prep.type)
             components = set.foreground.rates(components, prep.type,
@@ -299,9 +323,11 @@ setup.components.for.intervention <- function(components,
                                               end.years = end.times,
                                               apply.functions = apply.functions,
                                               allow.foreground.less = allow.less,
+                                              allow.foreground.greater = allow.greater,
                                               overwrite.previous = overwrite.prior.intervention,
                                               foreground.min = min.rates,
-                                              foreground.max = max.rates)
+                                              foreground.max = max.rates,
+                                              convert.proportions.to.rates=F)
         }
         
         
@@ -321,6 +347,8 @@ setup.components.for.intervention <- function(components,
                                                      intervention@processed[[rr.type]]$apply.functions)
             allow.less = expand.population.to.hiv.negative(components$jheem, 
                                                            intervention@processed[[rr.type]]$allow.less.than.otherwise)
+            allow.greater = expand.population.to.hiv.negative(components$jheem, 
+                                                              intervention@processed[[rr.type]]$allow.greater.than.otherwise)
             
             components = register.prep.type(components, prep.type)
             components = set.foreground.rates(components, rr.type,
@@ -330,9 +358,11 @@ setup.components.for.intervention <- function(components,
                                               end.years = end.times,
                                               apply.functions = apply.functions,
                                               allow.foreground.less = allow.less,
+                                              allow.foreground.greater = allow.greater,
                                               overwrite.previous = overwrite.prior.intervention,
                                               foreground.min = min.rates,
-                                              foreground.max = max.rates)
+                                              foreground.max = max.rates,
+                                              convert.proportions.to.rates=F)
         }
     }    
     
@@ -352,7 +382,9 @@ setup.components.for.intervention <- function(components,
                                                  intervention@processed$needle.exchange$apply.functions)[,,,,idu.states]
         allow.less = expand.population.to.general(components$jheem, 
                                                   intervention@processed$needle.exchange$allow.less.than.otherwise)[,,,,idu.states]
-        
+        allow.greater = expand.population.to.general(components$jheem, 
+                                                          intervention@processed$needle.exchange$allow.greater.than.otherwise)[,,,,idu.states]
+
         components = set.foreground.rates(components, 'needle.exchange',
                                           rates = rates,
                                           years = intervention@processed$needle.exchange$times,
@@ -360,9 +392,11 @@ setup.components.for.intervention <- function(components,
                                           end.years = end.times,
                                           apply.functions = apply.functions,
                                           allow.foreground.less = allow.less,
+                                          allow.foreground.greater = allow.greater,
                                           overwrite.previous = overwrite.prior.intervention,
                                           foreground.min = min.rates,
-                                          foreground.max = max.rates)
+                                          foreground.max = max.rates,
+                                          convert.proportions.to.rates=F)
     }
     
     # IDU Transitions
@@ -387,6 +421,8 @@ setup.components.for.intervention <- function(components,
                                                      intervention@processed[[idu.trans]]$apply.functions)[,,,,state.for.trans]
             allow.less = expand.population.to.general(components$jheem, 
                                                       intervention@processed[[idu.trans]]$allow.less.than.otherwise)[,,,,state.for.trans]
+            allow.greater= expand.population.to.general(components$jheem, 
+                                                      intervention@processed[[idu.trans]]$allow.greater.than.otherwise)[,,,,state.for.trans]
             
             components = set.foreground.rates(components, idu.trans,
                                               rates = rates,
@@ -395,9 +431,11 @@ setup.components.for.intervention <- function(components,
                                               end.years = end.times,
                                               apply.functions = apply.functions,
                                               allow.foreground.less = allow.less,
+                                              allow.foreground.greater = allow.greater,
                                               overwrite.previous = overwrite.prior.intervention,
                                               foreground.min = min.rates,
-                                              foreground.max = max.rates)
+                                              foreground.max = max.rates,
+                                              convert.proportions.to.rates=F)
         }
     }
     
@@ -462,6 +500,10 @@ setup.components.for.intervention <- function(components,
                                                                     heterosexual.arr = intervention@processed$heterosexual.transmission$allow.less.than.otherwise,
                                                                     msm.arr = intervention@processed$msm.transmission$allow.less.than.otherwise,
                                                                     default.value = F)
+        allow.greater = merge.heterosexual.and.msm.transmission.arrays(jheem=components$jheem,
+                                                                    heterosexual.arr = intervention@processed$heterosexual.transmission$allow.greater.than.otherwise,
+                                                                    msm.arr = intervention@processed$msm.transmission$allow.greater.than.otherwise,
+                                                                    default.value = F)
         
         components = set.foreground.rates(components, 'sexual.transmission',
                                           rates = rates,
@@ -470,9 +512,11 @@ setup.components.for.intervention <- function(components,
                                           end.years = end.times,
                                           apply.functions = apply.functions,
                                           allow.foreground.less = allow.less,
+                                          allow.foreground.greater = allow.greater,
                                           overwrite.previous = overwrite.prior.intervention,
                                           foreground.min = min.rates,
-                                          foreground.max = max.rates)
+                                          foreground.max = max.rates,
+                                          convert.proportions.to.rates=F)
     }
     
     # IDU Transmission
@@ -491,6 +535,7 @@ setup.components.for.intervention <- function(components,
         max.rates = expand.array.to.contact(intervention@processed$idu.transmission$max.rates[,,,idu.states])
         apply.functions = expand.array.to.contact(intervention@processed$idu.transmission$apply.functions[,,,idu.states])
         allow.less = expand.array.to.contact(intervention@processed$idu.transmission$allow.less.than.otherwise[,,,idu.states])
+        allow.greater = expand.array.to.contact(intervention@processed$idu.transmission$allow.greater.than.otherwise[,,,idu.states])
         
         components = set.foreground.rates(components, 'idu.transmission',
                                           rates = rates,
@@ -499,9 +544,11 @@ setup.components.for.intervention <- function(components,
                                           end.years = end.times,
                                           apply.functions = apply.functions,
                                           allow.foreground.less = allow.less,
+                                          allow.foreground.greater = allow.greater,
                                           overwrite.previous = overwrite.prior.intervention,
                                           foreground.min = min.rates,
-                                          foreground.max = max.rates)
+                                          foreground.max = max.rates,
+                                          convert.proportions.to.rates=F)
     }
     
     
@@ -510,15 +557,18 @@ setup.components.for.intervention <- function(components,
 
 do.set.foreground.for.hiv.positive <- function(components,
                                                intervention,
-                                               element.name,
+                                               intervention.element.name,
+                                               components.element.name,
+                                               convert.proportions.to.rates,
                                                applies.to.continuum.states,
                                                overwrite.prior.intervention,
-                                               not.applies.value = 0)
+                                               not.applies.value = 0,
+                                               invert.proportions=F)
 {
     not.applies.states = setdiff(components$settings$CONTINUUM_OF_CARE, applies.to.continuum.states)
-    if (!is.null(intervention@processed[[element.name]]))
+    if (!is.null(intervention@processed[[intervention.element.name]]))
     {
-        rates = lapply(intervention@processed[[element.name]]$rates, function(r)
+        rates = lapply(intervention@processed[[intervention.element.name]]$rates, function(r)
         {
             r = expand.population.to.hiv.positive(components$jheem, r)
             r[,,,,,not.applies.states,,] = not.applies.value
@@ -526,34 +576,39 @@ do.set.foreground.for.hiv.positive <- function(components,
             r
         })
         
-        start.times = expand.population.to.hiv.positive(components$jheem, intervention@processed[[element.name]]$start.times)
+        start.times = expand.population.to.hiv.positive(components$jheem, intervention@processed[[intervention.element.name]]$start.times)
         start.times[,,,,,not.applies.states,,] = Inf
-        end.times = expand.population.to.hiv.positive(components$jheem, intervention@processed[[element.name]]$end.times)
+        end.times = expand.population.to.hiv.positive(components$jheem, intervention@processed[[intervention.element.name]]$end.times)
         end.times[,,,,,not.applies.states,,] = Inf
         
-        min.rates = expand.population.to.hiv.positive(components$jheem, intervention@processed[[element.name]]$min.rates)
+        min.rates = expand.population.to.hiv.positive(components$jheem, intervention@processed[[intervention.element.name]]$min.rates)
         min.rates[,,,,,not.applies.states,,] = -Inf
-        max.rates = expand.population.to.hiv.positive(components$jheem, intervention@processed[[element.name]]$max.rates)
+        max.rates = expand.population.to.hiv.positive(components$jheem, intervention@processed[[intervention.element.name]]$max.rates)
         max.rates[,,,,,not.applies.states,,] = -Inf
         
         apply.functions = expand.character.array(expand.population.to.hiv.positive,
                                                  components$jheem,
-                                                 intervention@processed[[element.name]]$apply.functions)
+                                                 intervention@processed[[intervention.element.name]]$apply.functions)
         apply.functions[,,,,,not.applies.states,,] = NA
         allow.less = expand.population.to.hiv.positive(components$jheem, 
-                                                       intervention@processed[[element.name]]$allow.less.than.otherwise)
+                                                       intervention@processed[[intervention.element.name]]$allow.less.than.otherwise)
+        allow.greater = expand.population.to.hiv.positive(components$jheem, 
+                                                       intervention@processed[[intervention.element.name]]$allow.greater.than.otherwise)
         
         
-        components = set.foreground.rates(components, element.name,
+        components = set.foreground.rates(components, components.element.name,
                                           rates = rates,
-                                          years = intervention@processed[[element.name]]$times,
+                                          years = intervention@processed[[intervention.element.name]]$times,
                                           start.years = start.times,
                                           end.years = end.times,
                                           apply.functions = apply.functions,
                                           allow.foreground.less = allow.less,
+                                          allow.foreground.greater = allow.greater,
                                           overwrite.previous = overwrite.prior.intervention,
                                           foreground.min = min.rates,
-                                          foreground.max = max.rates)
+                                          foreground.max = max.rates,
+                                          convert.proportions.to.rates=convert.proportions.to.rates,
+                                          invert.proportions=invert.proportions)
     }
     
     components

@@ -1749,6 +1749,10 @@ do.calculate.needle.exchange.coverage <- function(components)
 
 #-- FOR THE EXPANDED CONTINUUM (below) --#
 
+calculate.linkage <- function(components)
+{
+    calculate.rates(components, type='linkage')
+}
 
 #-- The GENERAL calculate rates functions --#
 calculate.rates <- function(components,
@@ -2978,6 +2982,7 @@ do.get.rates.from.background.and.foreground <- function(background.rates,
                                             foreground.functions = foreground$apply.functions,
                                             max.background.time = max.background.time,
                                             allow.foreground.less = foreground$allow.foreground.less,
+                                            allow.foreground.greater = foreground$allow.foreground.greater,
                                             foreground.min = foreground$foreground.min,
                                             foreground.max = foreground$foreground.max,
                                             type=type)
@@ -2992,6 +2997,7 @@ get.rates.from.background.and.foreground <- function(background.rates,
                                                      foreground.end.times,
                                                      max.background.time=Inf,
                                                      allow.foreground.less,
+                                                     allow.foreground.greater,
                                                      foreground.functions,
                                                      foreground.min,
                                                      foreground.max,
@@ -3011,6 +3017,7 @@ get.rates.from.background.and.foreground <- function(background.rates,
         this.foreground.start.times = foreground.start.times[[1]]
         this.foreground.end.times = foreground.end.times[[1]]
         this.allow.foreground.less = allow.foreground.less[[1]]
+        this.allow.foreground.greater = allow.foreground.greater[[1]]
         this.foreground.functions = foreground.functions[[1]]
         this.foreground.min = foreground.min[[1]]
         this.foreground.max = foreground.max[[1]]
@@ -3035,7 +3042,7 @@ get.rates.from.background.and.foreground <- function(background.rates,
         
         sub.rates = numeric(length(all.times))
         names(sub.rates) = as.character(all.times)
-
+        
         raw.rates = sapply(1:length(this.foreground.rates[[1]]), function(i){
             bg.rates = sub.rates = sapply(interpolated.background.rates, function(bg){bg[i]}) #start off with the background rates
             
@@ -3111,6 +3118,8 @@ get.rates.from.background.and.foreground <- function(background.rates,
             
             if (!this.allow.foreground.less[i])
                 sub.rates[sub.rates < bg.rates] = bg.rates[sub.rates < bg.rates]
+            if (!this.allow.foreground.greater[i])
+                sub.rates[sub.rates > bg.rates] = bg.rates[sub.rates > bg.rates]
             
             sub.rates
         })
@@ -3133,6 +3142,7 @@ get.rates.from.background.and.foreground <- function(background.rates,
                                                      foreground.end.times=foreground.end.times[-1],
                                                      max.background.time=Inf,
                                                      allow.foreground.less=allow.foreground.less[-1],
+                                                     allow.foreground.greater=allow.foreground.greater[-1],
                                                      foreground.functions=foreground.functions[-1],
                                                      foreground.min = foreground.min[-1],
                                                      foreground.max = foreground.max[-1])
@@ -3146,52 +3156,6 @@ get.rates.from.background.and.foreground <- function(background.rates,
     }
 }
 
-OLD.get.rates.from.background.and.foreground <- function(background.rates,
-                                                         background.times,
-                                                         foreground.rates,
-                                                         foreground.times,
-                                                         max.background.time=Inf,
-                                                         allow.foreground.less=F)
-{
-    if (is.null(foreground.times))
-        list(rates=background.rates[background.times<=max.background.time],
-             times=background.times[background.times<=max.background.time])
-    else
-    {
-        if (is.null(foreground.rates))
-            stop("foreground.rates is NULL")
-        
-        background.rates = background.rates[background.times<=max.background.time]
-        background.times = background.times[background.times<=max.background.time]
-        
-        if (max(background.times) < (min(foreground.times)-1))
-        {
-            background.times = c(background.times, min(foreground.times)-1)
-            background.rates = c(background.rates,
-                                 background.rates[length(background.rates)])
-        }
-        
-        rates.and.times = merge.rates(rates1 = background.rates,
-                                      times1 = background.times,
-                                      rates2 = foreground.rates,
-                                      times2 = foreground.times)
-        
-        list(rates=lapply(1:length(rates.and.times$rates1), function(i){
-            foreground = rates.and.times$rates2[[i]]
-            rates = background = rates.and.times$rates1[[i]]
-            if (rates.and.times$times[i] >= min(foreground.times))
-            {
-                mask = !is.na(foreground)
-                if (!allow.foreground.less)
-                    mask = mask & foreground >= background
-                rates[mask] = foreground[mask]
-            }
-            
-            rates
-        }),
-        times=rates.and.times$times)
-    }
-}
 
 merge.rates <- function(rates1,
                         times1,

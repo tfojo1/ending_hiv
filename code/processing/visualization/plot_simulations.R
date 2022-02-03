@@ -15,6 +15,7 @@ DATA.TYPE.NAMES = c(new='Reported Cases',
                     testing.period='HIV Testing Frequency',
                     prep='PrEP Uptake',
                     engagement='Engagement',
+                    linkage='Linkage',
                     suppression.of.engaged='Suppression among Engaged PWH')
 
 
@@ -1808,6 +1809,12 @@ get.arr.for.data.type <- function(simset,
                                             dimension.subsets = dimension.subsets,
                                             year.anchor=year.anchor)
     }
+    else if (data.type=='linkage')
+        arr = extract.simset.linkage(simset,
+                                     years = years, 
+                                     all.dimensions = keep.dimensions,
+                                     dimension.subsets = dimension.subsets,
+                                     year.anchor=year.anchor)
     else if (data.type=='diagnosed')
         arr = extract.simset.knowledge.of.status(simset,
                                                  years = years, 
@@ -2695,6 +2702,52 @@ extract.simset.engagement<- function(simset, years, all.dimensions,
                 hiv.subsets=NULL,
                 use.cdc.categorizations=T)
 #                year.anchor=year.anchor)
+    
+    if (is.null(dim(eg)))
+    {
+        dim.names = list(names(eg), 1:simset@n.sim)
+        names(dim.names) = c(all.dimensions, 'simulation')
+    }
+    else
+        dim.names = c(dimnames(eg), list(simulation=1:simset@n.sim))
+    
+    dim(rv) = sapply(dim.names, length)
+    dimnames(rv) = dim.names
+    
+    rv
+}
+
+extract.simset.linkage<- function(simset, years, all.dimensions,
+                                     dimension.subsets, year.anchor)
+{
+    eg = extract.linkage(simset@simulations[[1]],
+                               years=years, 
+                               keep.dimensions=all.dimensions,
+                               per.population=1,
+                               ages=dimension.subsets[['age']],
+                               races=dimension.subsets[['race']],
+                               subpopulations=dimension.subsets[['subpopulation']],
+                               sexes=dimension.subsets[['sex']],
+                               risks=dimension.subsets[['risk']],
+                               continuum='unengaged',
+                               cd4=NULL,
+                               hiv.subsets=NULL,
+                               use.cdc.categorizations=T)
+    #                             year.anchor=year.anchor)
+    rv = sapply(simset@simulations, extract.linkage,
+                years=years, 
+                keep.dimensions=all.dimensions,
+                per.population=1,
+                ages=dimension.subsets[['age']],
+                races=dimension.subsets[['race']],
+                subpopulations=dimension.subsets[['subpopulation']],
+                sexes=dimension.subsets[['sex']],
+                risks=dimension.subsets[['risk']],
+                continuum='unengaged',
+                cd4=NULL,
+                hiv.subsets=NULL,
+                use.cdc.categorizations=T)
+    #                year.anchor=year.anchor)
     
     if (is.null(dim(eg)))
     {

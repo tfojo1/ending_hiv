@@ -1,16 +1,19 @@
 
-source('code/covid/covid_plots.R')
+source('code/applications/covid/covid_plots.R')
 CUM.INC.YEARS = 2020:2025
 
 ##-- SOURCE CODE --##
 if (1==2)
 {
-    load('results/covid/covid_4.1_results.Rdata')
+    load('results/covid/covid_4.2_results.Rdata')
     
 }
+DELAYED = 'covid.delayed.mobility'
+RAPID = 'covid.rapid.resumption.mobility'
+ALL.COVID.SCENARIOS = c(DELAYED, RAPID)
 
-ALL.COVID.SCENARIOS = c('base','delayed.hiv.care')#,'rebound.sex.delayed.hiv.care')
 YEARS.OF.INTEREST = 2019:2025
+
 
 ##----------##
 ##-- TEXT --##
@@ -20,10 +23,10 @@ YEARS.OF.INTEREST = 2019:2025
 ## Narrative on changes in reported vs incidence
 if (1==2)
 {
-    abs.diff.from.prior = outcomes.arr[,ALL.COVID.SCENARIOS,,as.character(YEARS.OF.INTEREST[-1]),,] - 
-        outcomes.arr[,ALL.COVID.SCENARIOS,,as.character(YEARS.OF.INTEREST[-length(YEARS.OF.INTEREST)]),,]
+    abs.diff.from.prior = outcomes.arr[,ALL.COVID.SCENARIOS,as.character(YEARS.OF.INTEREST[-1]),,] - 
+        outcomes.arr[,ALL.COVID.SCENARIOS,as.character(YEARS.OF.INTEREST[-length(YEARS.OF.INTEREST)]),,]
     rel.diff.from.prior = abs.diff.from.prior /  
-        outcomes.arr[,ALL.COVID.SCENARIOS,,as.character(YEARS.OF.INTEREST[-length(YEARS.OF.INTEREST)]),,]
+        outcomes.arr[,ALL.COVID.SCENARIOS,as.character(YEARS.OF.INTEREST[-length(YEARS.OF.INTEREST)]),,]
  
     # the year-on-year reductions - new
     round(100*data.frame(
@@ -36,20 +39,27 @@ if (1==2)
     decrease.new.in.both.prior = apply(rel.diff.from.prior[,,-1,'new',]<0 & 
                                            rel.diff.from.prior[,,-dim(rel.diff.from.prior)['year'],'new',]<0, 'year', mean)
     
-    round(100-100*apply(rel.diff.from.prior[,'base',,'new',]<0, 'year', mean))
-    round(100-100*apply(rel.diff.from.prior[,'delayed.hiv.care',,'new',]<0, 'year', mean))
+    round(100-100*apply(rel.diff.from.prior[,RAPID,,'new',]<0, 'year', mean))
+    round(100-100*apply(rel.diff.from.prior[,DELAYED,,'new',]<0, 'year', mean))
+    round(100*apply(rel.diff.from.prior[,RAPID,,'new',]<0, 'year', mean))
+    round(100*apply(rel.diff.from.prior[,DELAYED,,'new',]<0, 'year', mean))
     
-    round(100-100*apply(rel.diff.from.prior[,'base',,'incidence',]<0, 'year', mean))
-    round(100-100*apply(rel.diff.from.prior[,'delayed.hiv.care',,'incidence',]<0, 'year', mean))
+    round(100-100*apply(rel.diff.from.prior[,RAPID,,'incidence',]<0, 'year', mean))
+    round(100-100*apply(rel.diff.from.prior[,DELAYED,,'incidence',]<0, 'year', mean))
     
     round(100*c(1-decrease.new.from.prior['2021'],
                 1-decrease.new.in.both.prior['2022'] - (1-decrease.new.from.prior['2021'])))
     
     # the year-on-year reductions - incidence
     round(100*data.frame(
-        mean = apply(rel.diff.from.prior[,,,'incidence',], 'year', mean),
-        ci.lower = apply(rel.diff.from.prior[,,,'incidence',], 'year', quantile, probs=.025),
-        ci.upper = apply(rel.diff.from.prior[,,,'incidence',], 'year', quantile, probs=.975)
+      mean = apply(rel.diff.from.prior[,,,'incidence',], 'year', mean),
+      ci.lower = apply(rel.diff.from.prior[,,,'incidence',], 'year', quantile, probs=.025),
+      ci.upper = apply(rel.diff.from.prior[,,,'incidence',], 'year', quantile, probs=.975)
+    )   )
+    round(100*data.frame(
+      mean = apply(rel.diff.from.prior[,,,'new',], 'year', mean),
+      ci.lower = apply(rel.diff.from.prior[,,,'new',], 'year', quantile, probs=.025),
+      ci.upper = apply(rel.diff.from.prior[,,,'new',], 'year', quantile, probs=.975)
     )   )
     
     decrease.inc.from.prior = apply(rel.diff.from.prior[,,,'incidence',]<0, 'year', mean)
@@ -71,15 +81,49 @@ if (1==2)
     # in the delayed scenario - discrepancy between new and inc
     # the year-on-year reductions - new
     round(100*data.frame(
-        mean = apply(rel.diff.from.prior[,'delayed.hiv.care',,'new',], 'year', mean),
-        ci.lower = apply(rel.diff.from.prior[,'delayed.hiv.care',,'new',], 'year', quantile, probs=.025),
-        ci.upper = apply(rel.diff.from.prior[,'delayed.hiv.care',,'new',], 'year', quantile, probs=.975)
+        mean = apply(rel.diff.from.prior[,DELAYED,,'new',], 'year', mean),
+        ci.lower = apply(rel.diff.from.prior[,DELAYED,,'new',], 'year', quantile, probs=.025),
+        ci.upper = apply(rel.diff.from.prior[,DELAYED,,'new',], 'year', quantile, probs=.975)
     )   )
     round(100*data.frame(
-        mean = apply(rel.diff.from.prior[,'delayed.hiv.care',,'incidence',], 'year', mean),
-        ci.lower = apply(rel.diff.from.prior[,'delayed.hiv.care',,'incidence',], 'year', quantile, probs=.025),
-        ci.upper = apply(rel.diff.from.prior[,'delayed.hiv.care',,'incidence',], 'year', quantile, probs=.975)
+        mean = apply(rel.diff.from.prior[,DELAYED,,'incidence',], 'year', mean),
+        ci.lower = apply(rel.diff.from.prior[,DELAYED,,'incidence',], 'year', quantile, probs=.025),
+        ci.upper = apply(rel.diff.from.prior[,DELAYED,,'incidence',], 'year', quantile, probs=.975)
     )   )
+    
+    
+    #narrative split good/bad
+    high.suppression.mask = parameters[,'suppression.reduction'] < 0.2
+    low.suppression.mask = parameters[,'suppression.reduction'] >= 0.2
+    
+    high.transmission.mask = parameters[,'sexual.transmission.reduction'] < 0.2
+    low.transmission.mask = parameters[,'sexual.transmission.reduction'] > 0.3
+    
+    high.s.low.t = high.suppression.mask & low.transmission.mask
+    low.s.high.t = low.suppression.mask & high.transmission.mask
+    
+    round(100*data.frame(
+      mean = apply(rel.diff.from.prior[,DELAYED,,'new',low.s.high.t], 'year', mean),
+      ci.lower = apply(rel.diff.from.prior[,DELAYED,,'new',low.s.high.t], 'year', quantile, probs=.025),
+      ci.upper = apply(rel.diff.from.prior[,DELAYED,,'new',low.s.high.t], 'year', quantile, probs=.975)
+    )   )
+    round(100*data.frame(
+      mean = apply(rel.diff.from.prior[,DELAYED,,'incidence',low.s.high.t], 'year', mean),
+      ci.lower = apply(rel.diff.from.prior[,DELAYED,,'incidence',low.s.high.t], 'year', quantile, probs=.025),
+      ci.upper = apply(rel.diff.from.prior[,DELAYED,,'incidence',low.s.high.t], 'year', quantile, probs=.975)
+    )   )
+    
+    round(100*data.frame(
+      mean = apply(rel.diff.from.prior[,DELAYED,,'new',high.s.low.t], 'year', mean),
+      ci.lower = apply(rel.diff.from.prior[,DELAYED,,'new',high.s.low.t], 'year', quantile, probs=.025),
+      ci.upper = apply(rel.diff.from.prior[,DELAYED,,'new',high.s.low.t], 'year', quantile, probs=.975)
+    )   )
+    round(100*data.frame(
+      mean = apply(rel.diff.from.prior[,DELAYED,,'incidence',high.s.low.t], 'year', mean),
+      ci.lower = apply(rel.diff.from.prior[,DELAYED,,'incidence',high.s.low.t], 'year', quantile, probs=.025),
+      ci.upper = apply(rel.diff.from.prior[,DELAYED,,'incidence',high.s.low.t], 'year', quantile, probs=.975)
+    )   )
+    
 }
 
 
@@ -87,7 +131,7 @@ if (1==2)
 CUMULATIVE.YEARS = 2020:2025
 if (1==2)
 {
-    cumulative = apply(outcomes.arr[,,1,as.character(CUMULATIVE.YEARS),,], c('location','scenario','outcome','sim'), sum)
+    cumulative = apply(outcomes.arr[,,as.character(CUMULATIVE.YEARS),,], c('location','scenario','outcome','sim'), sum)
     
     
     total.cumulative = apply(cumulative, c('scenario','outcome','sim'), sum)
@@ -97,8 +141,8 @@ if (1==2)
       big.mark=',')
     
     
-    format(round(c(mean(total.cumulative['base','incidence',]),
-                   quantile(total.cumulative['base','incidence',], probs=c(0.025,0.975)))),
+    format(round(c(mean(total.cumulative['covid.rapid.resumption.mobility','incidence',]),
+                   quantile(total.cumulative['covid.rapid.resumption.mobility','incidence',], probs=c(0.025,0.975)))),
            big.mark=',')
     
     cumulative.change.from.baseline = lapply(ALL.COVID.SCENARIOS, function(sc){
@@ -125,11 +169,11 @@ if (1==2)
         )
     })))
     
-    # delayed vs base
-    delayed.vs.base.inc = total.cumulative['delayed.hiv.care','incidence',] - total.cumulative['base','incidence',]
-    delayed.vs.base.rel.inc = delayed.vs.base.inc / total.cumulative['delayed.hiv.care','incidence',]
+    # delayed vs rapid
+    delayed.vs.base.inc = total.cumulative['covid.delayed.mobility','incidence',] - total.cumulative['covid.rapid.resumption.mobility','incidence',]
+    delayed.vs.base.rel.inc = delayed.vs.base.inc / total.cumulative['covid.delayed.mobility','incidence',]
     
-    delayed.vs.base.rel.delta = (total.cumulative[sc,'incidence',]-total.cumulative['baseline','incidence',]) 
+    #delayed.vs.base.rel.delta = (total.cumulative[sc,'incidence',]-total.cumulative['baseline','incidence',]) 
     
     format(round(
         c(mean=mean(delayed.vs.base.inc),
@@ -142,7 +186,7 @@ if (1==2)
                  ci.upper=quantile(delayed.vs.base.rel.inc, probs=0.975)
     ))
     
-    msa.rel.change.inc = melt(sapply(cumulative.change.from.baseline, function(delta){
+    msa.rel.change.inc = reshape2::melt(sapply(cumulative.change.from.baseline, function(delta){
         apply(delta[,'incidence',], 'location', mean)
     }))
     msa.rel.change.inc$ci.lower = as.numeric(sapply(cumulative.change.from.baseline, function(delta){
@@ -165,8 +209,8 @@ if (1==2)
     #for prevalence
     prev.year = '2025'
     round(100*t(sapply(ALL.COVID.SCENARIOS, function(sc){
-        x = (outcomes.arr[,sc,1,prev.year,'prevalence.all',] - outcomes.arr[,'baseline',1,prev.year,'prevalence.all',]) /
-            outcomes.arr[,'baseline',1,prev.year,'prevalence.all',]
+        x = (outcomes.arr[,sc,prev.year,'prevalence.all',] - outcomes.arr[,'baseline',prev.year,'prevalence.all',]) /
+            outcomes.arr[,'baseline',prev.year,'prevalence.all',]
         
         c(mean=mean(x),
           ci.lower=quantile(x,probs=0.025),
@@ -175,13 +219,104 @@ if (1==2)
           max=max(x)
           )
     })),1)
+    
+    #for acute
+    
+    n.acute = apply(outcomes.arr[,,as.character(YEARS.OF.INTEREST), 'prevalence.acute.all',],
+                    c('location','scenario','year','sim'), sum)
+    
+    
+    
+
+    round(100*t(rbind(apply(n.acute[,DELAYED,,] /
+                              n.acute[,'baseline',,],
+                            'year', mean),
+                      
+                      apply(n.acute[,DELAYED,,] /
+                              n.acute[,'baseline',,],
+                            'year', quantile, probs=c(.025,.975))
+    ))-100)
+    
+    round(100*t(rbind(apply(outcomes.arr[,DELAYED, as.character(YEARS.OF.INTEREST), 'prevalence.acute.all',low.s.high.t] /
+            outcomes.arr[,'baseline', as.character(YEARS.OF.INTEREST), 'prevalence.acute.all',low.s.high.t],
+          'year', mean),
+          
+          apply(outcomes.arr[,DELAYED, as.character(YEARS.OF.INTEREST), 'prevalence.acute.all',low.s.high.t] /
+                  outcomes.arr[,'baseline', as.character(YEARS.OF.INTEREST), 'prevalence.acute.all',low.s.high.t],
+                'year', quantile, probs=c(.025,.975))
+    ))-100)
+    
+    
+    round(100*t(rbind(apply(outcomes.arr[,DELAYED, as.character(YEARS.OF.INTEREST), 'prevalence.acute.all',high.s.low.t] /
+                    outcomes.arr[,'baseline', as.character(YEARS.OF.INTEREST), 'prevalence.acute.all',high.s.low.t],
+                  'year', mean),
+            
+            apply(outcomes.arr[,DELAYED, as.character(YEARS.OF.INTEREST), 'prevalence.acute.all',high.s.low.t] /
+                    outcomes.arr[,'baseline', as.character(YEARS.OF.INTEREST), 'prevalence.acute.all',high.s.low.t],
+                  'year', quantile, probs=c(.025,.975))
+    ))-100)
+    
+    
+    #for acute-diagnosed
+    
+    #narrative split good/bad
+    high.suppression.mask = parameters[,'suppression.reduction'] < 0.2
+    low.suppression.mask = parameters[,'suppression.reduction'] >= 0.2
+    
+    high.transmission.mask = parameters[,'sexual.transmission.reduction'] < 0.2
+    low.transmission.mask = parameters[,'sexual.transmission.reduction'] > 0.3
+    
+    high.s.low.t = high.suppression.mask & low.transmission.mask
+    low.s.high.t = low.suppression.mask & high.transmission.mask
+    
+        
+    n.acute.dx = outcomes.arr[,,as.character(YEARS.OF.INTEREST),'prevalence.acute.all',] -
+                          outcomes.arr[,,as.character(YEARS.OF.INTEREST),'prevalence.acute.undiagnosed',]
+    
+    pseudo.new.acute.dx = 12/2.9 * n.acute.dx[,,-1,]
+    pseudo.new.acute.dx = 12/2.9 * (n.acute.dx[,,-1,] + n.acute.dx[,,-length(YEARS.OF.INTEREST),])/2
+
+    prev.year.weights = c('2019'=0.25, '2020'=.75, '2021'=0.5, '2022'=0.5, '2023'=0.5, '2024'=0.5)
+    prev.year.weights = expand.population(prev.year.weights, dimnames(n.acute.dx[,,-length(YEARS.OF.INTEREST),]))
+    pseudo.new.acute.dx = 12/2.9 * (n.acute.dx[,,-1,] * (1-prev.year.weights) +
+                                      n.acute.dx[,,-length(YEARS.OF.INTEREST),] * prev.year.weights)
+    
+    sc = c(DELAYED,RAPID)#'baseline'
+    
+sc= DELAYED
+    if (length(sc)==1)
+    {
+       total.pseudo.new.acute.dx = apply(pseudo.new.acute.dx[,sc,,], c('year','sim'), sum)
+       total.new = apply(outcomes.arr[,sc,as.character(YEARS.OF.INTEREST[-1]),'new',], c('year','sim'), sum)
+    
+         frac.acute = total.pseudo.new.acute.dx / total.new
+       cbind(
+          all=apply(frac.acute, 'year', mean),
+          good=apply(frac.acute[,high.s.low.t], 'year', mean),
+          bad=apply(frac.acute[,low.s.high.t], 'year', mean)
+       )
+    }
+    else
+    {
+       total.pseudo.new.acute.dx = apply(pseudo.new.acute.dx[,sc,,], c('year','scenario','sim'), sum)
+       total.new = apply(outcomes.arr[,sc,as.character(YEARS.OF.INTEREST[-1]),'new',], c('year','scenario','sim'), sum)
+       
+       frac.acute = total.pseudo.new.acute.dx / total.new
+       cbind(
+          all=apply(frac.acute, 'year', mean),
+          good=apply(frac.acute[,,high.s.low.t], 'year', mean),
+          bad=apply(frac.acute[,,low.s.high.t], 'year', mean)
+       )
+       
+    }
+    
 }
 
 
 #Parameters influence
 if (1==2)
 {
-    PARAMETERS.OF.INTEREST = dimnames(parameters)$variable[1:4]
+    PARAMETERS.OF.INTEREST = dimnames(parameters)[[2]][1:4]
     cumulative = apply(outcomes.arr[,,1,as.character(CUMULATIVE.YEARS),,], c('location','scenario','outcome','sim'), sum)
     
     
@@ -192,8 +327,8 @@ if (1==2)
            big.mark=',')
     
     
-    format(round(c(mean(total.cumulative['base','incidence',]),
-                   quantile(total.cumulative['base','incidence',], probs=c(0.025,0.975)))),
+    format(round(c(mean(total.cumulative[RAPID,'incidence',]),
+                   quantile(total.cumulative[RAPID,'incidence',], probs=c(0.025,0.975)))),
            big.mark=',')
     
     cumulative.change.from.baseline = lapply(ALL.COVID.SCENARIOS, function(sc){
@@ -259,7 +394,12 @@ if (1==2)
           ci.lower=quantile(x, probs=.025),
           ci.upper=quantile(x, probs=0.975))
     })))
-    
+    format(round(t(sapply(ALL.COVID.SCENARIOS, function(sc){
+       c(mean=mean(total.cumulative[sc,'incidence',high.s.low.t]-total.cumulative['baseline','incidence',high.s.low.t]),
+         ci.lower=quantile(total.cumulative[sc,'incidence',high.s.low.t]-total.cumulative['baseline','incidence',high.s.low.t], probs=0.025),
+         ci.upper=quantile(total.cumulative[sc,'incidence',high.s.low.t]-total.cumulative['baseline','incidence',high.s.low.t], probs=0.975)
+       )
+    }))), big.mark=',')
     
     low.s.high.t = low.suppression.mask & high.transmission.mask
     sum(low.s.high.t)
@@ -269,6 +409,12 @@ if (1==2)
           ci.lower=quantile(x, probs=.025),
           ci.upper=quantile(x, probs=0.975))
     })))
+    format(round(t(sapply(ALL.COVID.SCENARIOS, function(sc){
+       c(mean=mean(total.cumulative[sc,'incidence',low.s.high.t]-total.cumulative['baseline','incidence',low.s.high.t]),
+         ci.lower=quantile(total.cumulative[sc,'incidence',low.s.high.t]-total.cumulative['baseline','incidence',low.s.high.t], probs=0.025),
+         ci.upper=quantile(total.cumulative[sc,'incidence',low.s.high.t]-total.cumulative['baseline','incidence',low.s.high.t], probs=0.975)
+       )
+    }))), big.mark=',')
 }
 
 
