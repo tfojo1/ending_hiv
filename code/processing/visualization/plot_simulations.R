@@ -17,7 +17,8 @@ DATA.TYPE.NAMES = c(new='Reported Cases',
                     engagement='Engagement',
                     linkage='Linkage',
                     retention='Retention in Care',
-                    suppression.of.engaged='Suppression among Engaged PWH')
+                    suppression.of.engaged='Suppression among Engaged PWH',
+                    gain.of.suppression='Gain of Suppression among Engaged PWH')
 
 
 DATA.TYPE.AXIS.LABELS = c(
@@ -34,7 +35,8 @@ DATA.TYPE.AXIS.LABELS = c(
     engagement='Proportion Engaged (%)',
     linkage='Proportion Linked (%)',
     suppression.of.engaged='Proportion Suppressed (%)',
-    retention='Proportion Retained (%)'
+    retention='Proportion Retained (%)',
+    gain.of.suppression='Proportion Gaining Suppression (%)'
 )
 
 DATA.TYPE.UNITS = c(
@@ -51,7 +53,8 @@ DATA.TYPE.UNITS = c(
   engagement='Engaged',
   linkage='Linked',
   suppression.of.engaged='Suppressed',
-  retention='Retained'
+  retention='Retained',
+  gain.of.suppression='Gained Suppression'
 )
 
 DATA.TYPE.UNIT.DESCRIPTOR = c(
@@ -68,7 +71,8 @@ DATA.TYPE.UNIT.DESCRIPTOR = c(
     engagement='%',
     linkage='%',
     suppression.of.engaged='%',
-    retention='%'
+    retention='%',
+    gain.of.suppression='%'
 )
 
 CUMULATIVE.APPLIES.TO.DATA.TYPE = c(
@@ -85,7 +89,8 @@ CUMULATIVE.APPLIES.TO.DATA.TYPE = c(
     engagement=F,
     linkage=F,
     suppression.of.engaged=F,
-    retention=F
+    retention=F,
+    gain.of.suppression=F
 )
 
 CHANGE.STATISTIC.IS.RELATIVE = c(
@@ -1577,7 +1582,8 @@ get.truth.df <- function(location,
         rv$Source = 'US Census Bureau'
         rv
     }
-    else if (data.type=='testing.rate' || data.type=='testing.period' || data.type=='retention')
+    else if (data.type=='testing.rate' || data.type=='testing.period' || 
+             data.type=='retention' || data.type=='gain.of.suppression')
         rv = NULL
     else
     {
@@ -1838,6 +1844,12 @@ get.arr.for.data.type <- function(simset,
                                        all.dimensions = keep.dimensions,
                                        dimension.subsets = dimension.subsets,
                                        year.anchor=year.anchor)
+    else if (data.type=='gain.of.suppression')
+        arr = extract.simset.gain.of.suppression(simset,
+                                                 years = years, 
+                                                 all.dimensions = keep.dimensions,
+                                                 dimension.subsets = dimension.subsets,
+                                                 year.anchor=year.anchor)
     else if (data.type=='diagnosed')
         arr = extract.simset.knowledge.of.status(simset,
                                                  years = years, 
@@ -2806,6 +2818,55 @@ extract.simset.retention<- function(simset, years, all.dimensions,
                          use.cdc.categorizations=T)
     #                             year.anchor=year.anchor)
     rv = sapply(simset@simulations, extract.retention,
+                years=years, 
+                keep.dimensions=all.dimensions,
+                per.population=1,
+                ages=dimension.subsets[['age']],
+                races=dimension.subsets[['race']],
+                subpopulations=dimension.subsets[['subpopulation']],
+                sexes=dimension.subsets[['sex']],
+                risks=dimension.subsets[['risk']],
+                continuum=continuum,
+                cd4=NULL,
+                hiv.subsets=NULL,
+                use.cdc.categorizations=T)
+    #                year.anchor=year.anchor)
+    
+    if (is.null(dim(eg)))
+    {
+        dim.names = list(names(eg), 1:simset@n.sim)
+        names(dim.names) = c(all.dimensions, 'simulation')
+    }
+    else
+        dim.names = c(dimnames(eg), list(simulation=1:simset@n.sim))
+    
+    dim(rv) = sapply(dim.names, length)
+    dimnames(rv) = dim.names
+    
+    rv
+}
+
+extract.simset.gain.of.suppression<- function(simset, years, all.dimensions,
+                                              dimension.subsets, year.anchor)
+{
+    continuum = setdiff(attr(simset@simulations[[1]], 'components')$settings$ENGAGED_STATES,
+                        attr(simset@simulations[[1]], 'components')$settings$SUPPRESSED_STATES)
+    
+    eg = extract.gain.of.suppression(simset@simulations[[1]],
+                                     years=years, 
+                                     keep.dimensions=all.dimensions,
+                                     per.population=1,
+                                     ages=dimension.subsets[['age']],
+                                     races=dimension.subsets[['race']],
+                                     subpopulations=dimension.subsets[['subpopulation']],
+                                     sexes=dimension.subsets[['sex']],
+                                     risks=dimension.subsets[['risk']],
+                                     continuum=continuum,
+                                     cd4=NULL,
+                                     hiv.subsets=NULL,
+                                     use.cdc.categorizations=T)
+    #                             year.anchor=year.anchor)
+    rv = sapply(simset@simulations, extract.gain.of.suppression,
                 years=years, 
                 keep.dimensions=all.dimensions,
                 per.population=1,

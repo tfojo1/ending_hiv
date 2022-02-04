@@ -1319,6 +1319,114 @@ extract.retention <- function(sim,
                                keep.dimensions=keep.dimensions)
 }
 
+extract.gain.of.suppression <- function(sim,
+                              years=if (year.anchor=='start') sim$years else sim$years[-1],
+                              keep.dimensions='year',
+                              per.population=1,
+                              ages=NULL,
+                              races=NULL,
+                              subpopulations=NULL,
+                              sexes=NULL,
+                              risks=NULL,
+                              continuum=setdiff(attr(sim, 'components')$settings$ENGAGED_STATES,
+                                                attr(sim, 'components')$settings$SUPPRESSED_STATES),
+                              cd4=NULL,
+                              hiv.subsets=NULL,
+                              use.cdc.categorizations=F,
+                              year.anchor=c('start','mid','end')[2])
+{
+    components = attr(sim, 'components')
+    if (components$settings$IS_CONTINUUM_COLLAPSED)
+        stop("Simulation uses a collapsed continuum - cannot extract retention")
+    
+    allowed.states = setdiff(attr(sim, 'components')$settings$ENGAGED_STATES,
+                             attr(sim, 'components')$settings$SUPPRESSED_STATES)
+    invalid.states = setdiff(continuum, allowed.states)
+    if (length(invalid.states)>0)
+        stop(paste0("The following are not engaged/unsuppressed states in the continuum: ",
+                    paste0(invalid.states, collapse=', ')))
+    
+    
+    extract.fn = function(fn.years)
+    {
+        # pull the raw rates
+        raw.gain.of.suppression.rates = NULL
+        
+        # Naive
+        if (any(continuum=='engaged_unsuppressed_naive'))
+        {
+            naive.to.suppressed = calculate.rates(components, 'naive.to.suppressed')
+            naive.to.suppressed = interpolate.parameters(
+                values=naive.to.suppressed$rates,
+                value.times = naive.to.suppressed$times,
+                desired.times = fn.years)
+            
+            if (is.null(raw.gain.of.suppression.rates))
+                raw.gain.of.suppression.rates = naive.to.suppressed
+            else
+            {
+                raw.gain.of.suppression.rates = lapply(1:length(raw.gain.of.suppression.rates), function(i){
+                    raw.gain.of.suppression.rates[[i]][,,,,,'engaged_unsuppressed_naive',,] = 
+                        naive.to.suppressed[[i]][,,,,,'engaged_unsuppressed_naive',,]
+                    raw.gain.of.suppression.rates[[i]]
+                })
+            }                
+        }
+        
+        # Failing
+        
+        if (any(continuum=='engaged_unsuppressed_failing'))
+        {
+            failing.to.suppressed = calculate.rates(components, 'failing.to.suppressed')
+            failing.to.suppressed = interpolate.parameters(
+                values=failing.to.suppressed$rates,
+                value.times = failing.to.suppressed$times,
+                desired.times = fn.years)
+            
+            if (is.null(raw.gain.of.suppression.rates))
+                raw.gain.of.suppression.rates = failing.to.suppressed
+            else
+            {
+                raw.gain.of.suppression.rates = lapply(1:length(raw.gain.of.suppression.rates), function(i){
+                    raw.gain.of.suppression.rates[[i]][,,,,,'engaged_unsuppressed_failing',,] = 
+                        failing.to.suppressed[[i]][,,,,,'engaged_unsuppressed_failing',,]
+                    raw.gain.of.suppression.rates[[i]]
+                })
+            }                
+        }
+        
+        # convert to p retained
+        raw.gain.p = list(
+            rates=lapply(raw.gain.of.suppression.rates, function(r){
+                exp(-r)
+            }),
+            times = fn.years)
+        
+        # do extract    
+        do.extract.rates(raw.rates = raw.gain.p,
+                         sim=sim,
+                         years=fn.years,
+                         keep.dimensions=keep.dimensions,
+                         per.population=per.population,
+                         ages=ages,
+                         races=races,
+                         subpopulations=subpopulations,
+                         sexes=sexes,
+                         risks=risks,
+                         continuum=continuum,
+                         cd4=cd4,
+                         hiv.subsets=hiv.subsets,
+                         use.cdc.categorizations=use.cdc.categorizations,
+                         include.hiv.negative = F)
+    }    
+    
+    do.extract.for.year.anchor(years=years,
+                               year.anchor=year.anchor,
+                               raw.year.is.start=T,
+                               extract.fn=extract.fn,
+                               keep.dimensions=keep.dimensions)
+}
+
 do.extract.engagement <- function(sim,
                                 years=sim$years,
                                 keep.dimensions='year',
