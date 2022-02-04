@@ -1011,10 +1011,14 @@ setup.prep.susceptibility <- function(components,
 {
     if (type=='prep')
     {
-        components$prep.rr.heterosexual = as.numeric(prep.rr.heterosexual)
-        components$prep.rr.msm = as.numeric(prep.rr.msm)
-        components$prep.rr.idu = as.numeric(prep.rr.idu)
-        components$prep.persistence = as.numeric(prep.persistence)
+        if (!is.na(prep.rr.heterosexual))
+            components$prep.rr.heterosexual = as.numeric(prep.rr.heterosexual)
+        if (!is.na(prep.rr.msm))
+            components$prep.rr.msm = as.numeric(prep.rr.msm)
+        if (!is.na(prep.rr.idu))
+            components$prep.rr.idu = as.numeric(prep.rr.idu)
+        if (!is.na(prep.persistence))
+            components$prep.persistence = as.numeric(prep.persistence)
     }
     else
     {
