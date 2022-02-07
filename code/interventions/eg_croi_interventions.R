@@ -70,3 +70,5 @@ run.systematic.interventions(simset,
 
 simset = simset.wret
 save(simset, file='mcmc_runs/baltimore_croi_v2.Rdata')
+
+simplot(noint, simset, data.types='incidence')
