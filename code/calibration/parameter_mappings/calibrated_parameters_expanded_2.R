@@ -1364,15 +1364,22 @@ get.components.for.calibrated.parameters <- function(parameters, components,
   
   if (any(grepl('gains\\.end\\.by\\.year', names(parameters))))
       components = set.background.change.to.years(components,
+                                                  
                                                   testing=parameters['testing.gains.end.by.year'],
                                                   prep=parameters['prep.gains.end.by.year'],
-                                                  suppression = parameters['suppression.gains.end.by.year'],
-                                                  newly = parameters['suppression.gains.end.by.year'],
-                                                  unsuppression = parameters['suppression.gains.end.by.year'],
                                                   
                                                   linkage = parameters['linkage.gains.end.by.year'],
-                                                  unsuppressed = parameters['retention.gains.end.by.year'],
-                                                  suppressed = parameters['retention.gains.end.by.year'],
+                                                  
+                                                  naive.to.suppressed = parameters['linkage.gains.end.by.year'],
+                                                  naive.to.disengaged = parameters['linkage.gains.end.by.year'],
+                                                  start.art = parameters['linkage.gains.end.by.year'],
+                                                  
+                                                  failing.to.disengaged = parameters['linkage.gains.end.by.year'],
+                                                  failing.to.suppressed = parameters['linkage.gains.end.by.year'],
+                                                  
+                                                  suppressed.to.disengaged = parameters['linkage.gains.end.by.year'],
+                                                  suppressed.to.failing = parameters['linkage.gains.end.by.year'],
+                                                  
                                                   reengagement = parameters['reengagement.gains.end.by.year']
                                                   )
   
