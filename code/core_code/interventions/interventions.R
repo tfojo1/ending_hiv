@@ -115,6 +115,7 @@ join.interventions <- function(...)
     }
     
     rv = interventions.to.join[[1]]
+    
     if (length(interventions.to.join)>1)
     {
         for (int in interventions.to.join[-1])
@@ -142,7 +143,7 @@ def = function(int1, int2)
     
     int1@processed = list()
     
-    for (type in names(int1@raw))
+    for (type in union(names(int1@raw), names(int2@raw)))
     {
         if (is.null(int1@raw[[type]]))
             int1@raw[[type]] = list(target.populations=list(),
