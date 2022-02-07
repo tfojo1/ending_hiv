@@ -1372,7 +1372,6 @@ get.components.for.calibrated.parameters <- function(parameters, components,
                                                   
                                                   naive.to.suppressed = parameters['linkage.gains.end.by.year'],
                                                   naive.to.disengaged = parameters['linkage.gains.end.by.year'],
-                                                  start.art = parameters['linkage.gains.end.by.year'],
                                                   
                                                   failing.to.disengaged = parameters['linkage.gains.end.by.year'],
                                                   failing.to.suppressed = parameters['linkage.gains.end.by.year'],
@@ -1395,7 +1394,6 @@ get.components.for.calibrated.parameters <- function(parameters, components,
                                                    failing.to.suppressed = parameters['total.future.suppressed.slope.or'],
                                                    
                                                    # to failing
-                                                   naive.to.failing = parameters['total.future.unsuppression.slope.or'],
                                                    suppressed.to.failing = parameters['total.future.unsuppression.slope.or'],
                                                    
                                                    # to disengaged
