@@ -115,7 +115,7 @@ create.nested.likelihood <- function(data.type=c('suppression','engagement','lin
     meta.indices.for.counties = numeric()
     meta.indices.for.observed.counties = numeric()
     counties.per.meta.index = list()
- 
+    
     if (length(states)==0 && length(counties)==0)
     {
         if (!have.msa.data)
@@ -165,7 +165,8 @@ create.nested.likelihood <- function(data.type=c('suppression','engagement','lin
             meta.indices.for.counties = 1:length(counties.per.meta.index)
         }
       
-        meta.indices.for.states = max(meta.indices.for.counties) + 1:length(states)
+        meta.indices.for.states = max(c(0,meta.indices.for.counties)) + #add a zero in in case there are no counties
+            1:length(states)
         
         if (have.msa.data)
             meta.index.for.msa = max(meta.indices.for.states) + 1
@@ -444,20 +445,23 @@ create.nested.likelihood <- function(data.type=c('suppression','engagement','lin
     county.p.variance = get.county.to.msa.outcome.variance(data.type,
                                                            msa.surveillance = msa.surveillance,
                                                            county.surveillance = county.surveillance,
+                                                           state.surveillance = state.surveillance,
                                                            cached.errors = cached.errors)
     state.p.bias = get.state.to.msa.outcome.bias(data.type,
                                                  msa.surveillance = msa.surveillance,
                                                  state.surveillance = state.surveillance,
                                                  cached.errors = cached.errors)
-    county.p.bias = get.state.to.msa.outcome.bias(data.type,
-                                                  msa.surveillance = msa.surveillance,
-                                                  county.surveillance = county.surveillance,
-                                                  cached.errors = cached.errors)
+    
+    # We're going to assume there is no bias on average between MSAs and the counties that they comprise
+#    county.p.bias = get.state.to.msa.outcome.bias(data.type,
+#                                                  msa.surveillance = msa.surveillance,
+#                                                  county.surveillance = county.surveillance,
+#                                                  cached.errors = cached.errors)
     
     metalocation.p.bias = lapply(1:n.years, function(i){
         rv = matrix(0, nrow=n.strata, ncol=n.metalocations)
         rv[,meta.indices.for.states] = state.p.bias
-        rv[,meta.indices.for.counties] = county.p.bias
+ #       rv[,meta.indices.for.counties] = county.p.bias
 
         rv
     })
@@ -1414,7 +1418,9 @@ get.state.to.msa.outcome.variance <- function(data.type,
 get.county.to.msa.outcome.variance <- function(data.type,
                                                msa.surveillance,
                                                county.surveillance,
+                                               state.surveillance, #for backup
                                                cached.errors=NULL,
+                                               min.obs=15,
                                                years=NULL,
                                                details=F)
 {
@@ -1443,7 +1449,28 @@ get.county.to.msa.outcome.variance <- function(data.type,
                                       by.race=T,
                                       by.sex=T,
                                       by.risk=T,
-                                      details=details)
+                                      details=details,
+                                      min.obs=0)
+    
+    if (length(paired.data$msa)<min.obs)
+    {
+        paired2 = get.paired.msa.data(data.type=data.type,
+                                      years=years,
+                                      msa.surveillance=msa.surveillance,
+                                      other.surveillance=state.surveillance,
+                                      msa.to.other.code.mapping.fn = states.for.msa,
+                                      eliminate.one.to.one.mappings=F,
+                                      by.total=T,
+                                      by.age=T,
+                                      by.race=T,
+                                      by.sex=T,
+                                      by.risk=T,
+                                      details=details,
+                                      min.obs=0)
+        
+        paired.data$other = c(paired.data$other, paired2$other)
+        paired.data$msa = c(paired.data$msa, paired2$msa)
+    }
     
     if (details) # for testing/debugging
         print(qplot(paired.data$msa, paired.data$other) + geom_smooth() + 
@@ -1486,6 +1513,7 @@ get.paired.msa.data <- function(data.type,
                                 by.race=T,
                                 by.sex=T,
                                 by.risk=T,
+                                min.obs=15,
                                 details=F)
 {
     rv = list(
@@ -1514,6 +1542,7 @@ get.paired.msa.data <- function(data.type,
         rv$location1 = c(rv$location1, sub.rv$location1)
         rv$location2 = c(rv$location2, sub.rv$location2)
         rv$stratification = c(rv$stratification, sub.rv$stratification)
+        
     }
     
     
@@ -1613,8 +1642,17 @@ get.paired.msa.data <- function(data.type,
     rv$stratification = rv$stratification[mask]
     
     # check that we have something
-    if (length(rv$msa)<20)
-        stop("There are fewer than 20 data points available to calculate")
+    if (length(rv$msa)<min.obs)
+    {
+        if (eliminate.one.to.one.mappings)
+            geography = 'county'
+        else
+            geography = 'state'
+        
+        stop(paste0("There are only ",
+                    length(rv$msa), " data points available to estimate MSA-to-",
+                    geography, " variation in '", data.type, "'"))
+    }
     
     if (details)
         print(paste0("Using ", length(rv$msa), " data points for ", data.type))
@@ -1666,6 +1704,7 @@ get.paired.msa.data.one.stratification <- function(data.type,
             msa.data = data.for.msas[[i]]
             
             other.location.codes = msa.to.other.code.mapping.fn(msa)
+            
             if (length(other.location.codes)>1 || !eliminate.one.to.one.mappings)
             {
                 for (other.code in other.location.codes)
@@ -1774,6 +1813,7 @@ make.nested.errors.cache <- function(msa.surveillance,
         county.value = get.county.to.msa.outcome.variance(data.type=data.type,
                                                           msa.surveillance = msa.surveillance,
                                                           county.surveillance = county.surveillance,
+                                                          state.surveillance = state.surveillance,
                                                           years=years,
                                                           details=verbose)
         cache = cache.nested.error(cache,
@@ -1795,14 +1835,14 @@ make.nested.errors.cache <- function(msa.surveillance,
                                    geography='state', data.type=data.type, statistic='bias', years=years,
                                    value=state.value)
         
-        county.value = get.county.to.msa.outcome.bias(data.type=data.type,
-                                                      msa.surveillance = msa.surveillance,
-                                                      county.surveillance = county.surveillance,
-                                                      years=years,
-                                                      details=verbose)
-        cache = cache.nested.error(cache,
-                                   geography='county', data.type=data.type, statistic='bias', years=years,
-                                   value=county.value)
+#        county.value = get.county.to.msa.outcome.bias(data.type=data.type,
+#                                                      msa.surveillance = msa.surveillance,
+#                                                      county.surveillance = county.surveillance,
+#                                                      years=years,
+#                                                      details=verbose)
+ #       cache = cache.nested.error(cache,
+#                                   geography='county', data.type=data.type, statistic='bias', years=years,
+#                                   value=county.value)
     }
 
     for (data.type in ratio.cv.data.types)

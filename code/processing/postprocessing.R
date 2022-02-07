@@ -287,7 +287,7 @@ do.project.absolute <- function(sim,
     denominators = do.extract.population.subset(sim, years=years, 
                                                 keep.dimensions = 'year', 
                                                 use.cdc.categorizations = F)
-    
+
     rv = as.numeric(numerators) / as.numeric(denominators) * total.population
     
     if (is.null(dim(numerators)))
@@ -310,18 +310,37 @@ get.total.population <- function(sim,
     })))
         stop("None of the simulation's years are represented in census totals data")
     
-    last.census.year = max(census.totals$years)
-    years.after.census = years[years>last.census.year]
-    years.with.or.before.census = setdiff(years, years.after.census)
+    census.data = get.census.totals(census.totals, 
+                                    location=attr(sim, 'location'), 
+                                    years = years,
+                                    interpolate.missing.years = T,
+                                    flatten.single.dim.array = T)
+    census.data = census.data[!is.na(census.data)]
+    if (length(census.data)==0)
+        stop(paste0("No census data available for location '", attr(sim, 'location'), "'"))
     
-    if (length(years.with.or.before.census)==0)
-        rv.with.or.before.census = numeric()
+    last.census.year = max(as.numeric(names(census.data)))
+    years.after.census = years[years>last.census.year]
+    first.census.year = min(as.numeric(names(census.data)))
+    years.before.census = years[years<first.census.year]
+    years.with.census = setdiff(years, union(years.before.census, years.after.census))
+    
+    rv.with.census = census.data[as.character(years.with.census)]
+
+    if (length(years.before.census)==0)
+        rv.before.census = numeric()
     else
-        rv.with.or.before.census = get.census.totals(census.totals, 
+    {
+        sim.pop.before.census = extract.population.subset(sim, keep.dimensions = 'year', years=years.before.census)
+        sim.pop.first.with.census = extract.population.subset(sim, keep.dimensions = 'year', years=first.census.year)
+        cen.pop.first.with.census = get.census.totals(census.totals, 
                                                      location=attr(sim, 'location'), 
-                                                     years = years.with.or.before.census,
-                                                     interpolate.missing.years = T,
+                                                     years = first.census.year,
+                                                     interpolate.missing.years = F,
                                                      flatten.single.dim.array = T)
+        
+        rv.before.census = sim.pop.before.census / sim.pop.first.with.census * cen.pop.first.with.census
+    }
     
     if (length(years.after.census)==0)
         rv.after.census = numeric()
@@ -332,13 +351,13 @@ get.total.population <- function(sim,
         cen.pop.last.with.census = get.census.totals(census.totals, 
                                                      location=attr(sim, 'location'), 
                                                      years = last.census.year,
-                                                     interpolate.missing.years = F,
+                                                     interpolate.missing.years = T,
                                                      flatten.single.dim.array = T)
         
         rv.after.census = sim.pop.after.census / sim.pop.last.with.census * cen.pop.last.with.census
     }
-    
-    rv = c(rv.with.or.before.census, rv.after.census)
+   
+    rv = c(rv.before.census, rv.with.census, rv.after.census)
     names(rv) = as.character(years)
     rv
 }
@@ -361,7 +380,7 @@ do.extract.population.subset <- function(results,
                                          hiv.subsets=NULL,
                                          include.hiv.positive=T,
                                          include.hiv.negative=T,
-                                         keep.dimensions=NULL,
+                                         keep.dimensions='year',
                                          denominator.dimensions='year',
                                          per.population=NA,
                                          transformation.fn=NULL,
@@ -1350,7 +1369,7 @@ extract.gain.of.suppression <- function(sim,
     extract.fn = function(fn.years)
     {
         # pull the raw rates
-        raw.gain.of.suppression.rates = NULL
+        raw.gain.of.suppression.p = NULL
         
         # Naive
         if (any(continuum=='engaged_unsuppressed_naive'))
@@ -1361,14 +1380,14 @@ extract.gain.of.suppression <- function(sim,
                 value.times = naive.to.suppressed$times,
                 desired.times = fn.years)
             
-            if (is.null(raw.gain.of.suppression.rates))
-                raw.gain.of.suppression.rates = naive.to.suppressed
+            if (is.null(raw.gain.of.suppression.p))
+                raw.gain.of.suppression.p = naive.to.suppressed
             else
             {
-                raw.gain.of.suppression.rates = lapply(1:length(raw.gain.of.suppression.rates), function(i){
-                    raw.gain.of.suppression.rates[[i]][,,,,,'engaged_unsuppressed_naive',,] = 
+                raw.gain.of.suppression.p = lapply(1:length(raw.gain.of.suppression.p), function(i){
+                    raw.gain.of.suppression.p[[i]][,,,,,'engaged_unsuppressed_naive',,] = 
                         naive.to.suppressed[[i]][,,,,,'engaged_unsuppressed_naive',,]
-                    raw.gain.of.suppression.rates[[i]]
+                    raw.gain.of.suppression.p[[i]]
                 })
             }                
         }
@@ -1383,27 +1402,29 @@ extract.gain.of.suppression <- function(sim,
                 value.times = failing.to.suppressed$times,
                 desired.times = fn.years)
             
-            if (is.null(raw.gain.of.suppression.rates))
-                raw.gain.of.suppression.rates = failing.to.suppressed
+            failing.to.suppressed = lapply(failing.to.suppressed, function(r){
+                exp(-r)
+            })
+            
+            if (is.null(raw.gain.of.suppression.p))
+                raw.gain.of.suppression.p = failing.to.suppressed
             else
             {
-                raw.gain.of.suppression.rates = lapply(1:length(raw.gain.of.suppression.rates), function(i){
-                    raw.gain.of.suppression.rates[[i]][,,,,,'engaged_unsuppressed_failing',,] = 
+                raw.gain.of.suppression.p = lapply(1:length(raw.gain.of.suppression.p), function(i){
+                    raw.gain.of.suppression.p[[i]][,,,,,'engaged_unsuppressed_failing',,] = 
                         failing.to.suppressed[[i]][,,,,,'engaged_unsuppressed_failing',,]
-                    raw.gain.of.suppression.rates[[i]]
+                    raw.gain.of.suppression.p[[i]]
                 })
             }                
         }
         
-        # convert to p retained
-        raw.gain.p = list(
-            rates=lapply(raw.gain.of.suppression.rates, function(r){
-                exp(-r)
-            }),
-            times = fn.years)
+        raw.gain.of.suppression.p = list(
+            rates = raw.gain.of.suppression.p,
+            times = fn.years
+        )
         
         # do extract    
-        do.extract.rates(raw.rates = raw.gain.p,
+        do.extract.rates(raw.rates = raw.gain.of.suppression.p,
                          sim=sim,
                          years=fn.years,
                          keep.dimensions=keep.dimensions,
@@ -1491,6 +1512,7 @@ do.extract.engagement <- function(sim,
 
 extract.prep.persistence <- function(sim)
 {
+    components = attr(sim, 'components')
     components$prep.persistence
 }
 

@@ -5,6 +5,8 @@
 create.msa.likelihood <- function(msa,
                                   include.engagement=F,
                                   include.linkage=F,
+                                  include.retention = F,
+                                  include.cum.aids.mort = T,
                                   
                                   EVERYTHING.WEIGHT=1/2,
                                   
@@ -151,11 +153,20 @@ create.msa.likelihood <- function(msa,
     AIDS.TO.HIV.RATIO.LOG.SD = 0.5 * log(1.2)
     AIDS.RHO = 0
     
-    #-- Elements for Historical Cumulative Diagnoses --#
+    #-- Elements for Historical Cumulative Mortality --#
     SD.INFLATION.CUM.MORT = 1/sqrt(EVERYTHING.WEIGHT) / sqrt(CUM.MORT.WEIGHT)
     #    CUM.MORT.SD = function(years,num){sqrt(5^2 + 0.5 * (0.065*num)^2 + 0.5 * (num^0.33)^2)}
     CUM.MORT.SD = function(years, num){2 * sqrt(5^2 + 0.5 * (0.09*num)^2 + 0.5 * (num^0.69)^2)}
     
+    cum.aids.mort.data = get.surveillance.data(msa.surveillance, msa, data.type='cumulative.aids.mortality', throw.error.if.missing.data = F,
+                                               sex=T,race=T,risk=T)
+    if (include.cum.aids.mort && 
+        (is.null(cum.aids.mort.data) || all(is.na(cum.aids.mort.data))))
+    {
+        print(paste0("NOT USING CUMULATIVE AIDS MORTALITY IN LIKELIHOOD (No data for ",
+                     msa.names(msa), ")"))
+        include.cum.aids.mort = F
+    }
     
     #-- Pull Other Values to make likelihood --#
     POPULATION.TOTALS=get.census.totals(ALL.DATA.MANAGERS$census.totals, msa)
@@ -303,6 +314,16 @@ create.msa.likelihood <- function(msa,
     else
         linkage.lik = function(sim, log=T){if (log) 0 else 1}
     
+    if (include.retention)
+    {
+        if (verbose)
+            print("Creating 'retention' likelihood")
+        
+        retention.lik = create.retention.likelihood()
+    }
+    else
+        retention.lik = function(sim, log=T){if (log) 0 else 1}
+    
     
     if (verbose)
         print("Creating 'PrEP' likelihood")
@@ -375,12 +396,17 @@ create.msa.likelihood <- function(msa,
                                     years=idu.years,
                                     log.sd = IDU.LOG.SD)
     
-    if (verbose)
-        print("Creating 'cumulative mortality' likelihood")
-    cum.mort.lik = create.cumulative.mortality.likelihood(surv = msa.surveillance,
-                                                          location = msa,
-                                                          numerator.sd = CUM.MORT.SD,
-                                                          sd.inflation = SD.INFLATION.CUM.MORT)
+    if (include.cum.aids.mort)
+    {
+        if (verbose)
+            print("Creating 'cumulative aids mortality' likelihood")
+        cum.mort.lik = create.cumulative.mortality.likelihood(surv = msa.surveillance,
+                                                              location = msa,
+                                                              numerator.sd = CUM.MORT.SD,
+                                                              sd.inflation = SD.INFLATION.CUM.MORT)
+    }
+    else
+        cum.mort.lik = function(sim, log=T){if (log) 0 else 1}
     
     if (verbose)
         print("Creating 'AIDS diagnoses' likelihood")
@@ -403,6 +429,7 @@ create.msa.likelihood <- function(msa,
                                                        dx=dx.lik,
                                                        linkage=linkage.lik,
                                                        engagement=engaged.lik,
+                                                       retention=retention.lik,
                                                        supp=suppressed.lik,
                                                        prep=prep.lik,
                                                        testing=testing.lik,
@@ -445,6 +472,7 @@ create.msa.likelihood <- function(msa,
                                                dx=dx.lik,
                                                linkage=linkage.lik,
                                                engagement=engaged.lik,
+                                               retention=retention.lik,
                                                supp=suppressed.lik,
                                                prep=prep.lik,
                                                testing=testing.lik,

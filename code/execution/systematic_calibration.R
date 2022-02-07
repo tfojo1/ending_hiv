@@ -72,15 +72,11 @@ setup.initial.mcmc.for.msa <- function(msa,
     
     # If the starting parameters don't match what we need for the version
     #  start at the median values
+    
+    prior = get.parameters.prior.for.version(VERSION.MANAGER, version=version)
     starting.parameters.to.use = suppressWarnings(get.medians(prior))
     matching.names = intersect(names(starting.parameters), names(starting.parameters.to.use))
     starting.parameters.to.use[matching.names] = starting.parameters[matching.names]
-    
- #   print("HACKING START VALUES FOR CROI 2022 FOR MELISSA")
-   # starting.parameters.to.use['heterosexual.proportion.lost.or'] = 
-     #   starting.parameters.to.use['msm.proportion.lost.or'] = 
-     #   starting.parameters.to.use['msm.idu.proportion.lost.or'] = 
-      #  starting.parameters.to.use['idu.proportion.lost.or'] = 2
     
     start.value.generator = function(n){
         if (n==1)
@@ -115,6 +111,8 @@ setup.initial.mcmc.for.msa <- function(msa,
         init.sds[init.sds>1] = (param.medians)[init.sds>1] / 40
         init.sds[grepl('peak.*mult', names(init.sds))] = init.sds[grepl('peak.*mult', names(init.sds))] / 16
         init.sds = init.sds * 2
+        
+        init.sds[init.sds==0] = 1/40 #for z-scores
         
         initial.cov.mat = diag(init.sds^2)
         
@@ -184,7 +182,7 @@ setup.parallel.mcmc.for.msa <- function(msa,
                                         version='collapsed_1.0',
                                         likelihood=NULL,
                                         prior=parameters.prior,
-                                        parameter.var.blocks = PARAMETER.VAR.BLOCKS.1,
+                                        parameter.var.blocks = get.parameter.sampling.blocks.for.version(VERSION.MANAGER, version),
                                         start.value.generator=NULL,
                                         chains=4,
                                         n.iter=100000,
@@ -278,7 +276,7 @@ setup.mcmc.for.msa <- function(msa,
                                version,
                                likelihood=NULL,
                                prior=parameters.prior,
-                               parameter.var.blocks = PARAMETER.VAR.BLOCKS.1,
+                               parameter.var.blocks = get.parameter.sampling.blocks.for.version(VERSION.MANAGER, version),
                                start.value.generator=NULL,
                                chains=4,
                                n.iter=50000,
@@ -401,6 +399,8 @@ setup.mcmc.for.msa <- function(msa,
     logit.transform.mask = grepl('max.proportion', names(transformations)) &
         !grepl('\\.or', names(transformations))
     transformations[logit.transform.mask] = 'logit'
+    identity.transform.mask = grepl('.z$', prior@var.names)
+    transformations[identity.transform.mask] = 'identity'
     
     ctrl = create.adaptive.blockwise.metropolis.control(var.names=prior@var.names,
                                                         simulation.function=run.simulation,

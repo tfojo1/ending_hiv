@@ -1009,6 +1009,13 @@ setup.prep.susceptibility <- function(components,
                                       prep.persistence,
                                       type='prep')
 {
+    if (!is.na(prep.rr.heterosexual) && prep.rr.heterosexual < 0)
+        stop("prep.rr.heterosexual must be positive")
+    if (!is.na(prep.rr.msm) && prep.rr.msm < 0)
+        stop("prep.rr.msm must be positive")
+    if (!is.na(prep.rr.idu) && prep.rr.idu < 0)
+        stop("prep.rr.idu must be positive")
+    
     if (type=='prep')
     {
         if (!is.na(prep.rr.heterosexual))

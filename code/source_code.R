@@ -50,7 +50,8 @@ source('code/core_code/setup/setup_initial_components.R')
 
 #-- Calibration --#
 source('code/calibration/parameter_mappings/calibrated_parameters_113_helpers.R')
-source('code/calibration/parameter_mappings/calibrated_parameters_117g.R')
+source('code/calibration/parameter_mappings/calibrated_parameters_118.R')
+source('code/calibration/parameter_mappings/calibrated_parameters_expanded_2.R')
 
 source('code/calibration/likelihoods/estimate_cdc_errors.R')
 source('code/calibration/likelihoods/likelihoods_2.R')

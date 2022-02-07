@@ -502,9 +502,11 @@ do.setup.crunch.or.fix <- function(components,
             (setting == FIX && !comp.was.null))
         {
             for (i in 1:length(components$new.infection.proportions))
+            {
                 jheem = set.new.infection.proportions(jheem,
                                                       proportions=components$new.infection.proportions[[i]],
                                                       time=components$new.infection.proportions.years[i])
+            }
         }
     }
     

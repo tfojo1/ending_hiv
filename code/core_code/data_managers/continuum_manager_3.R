@@ -27,10 +27,7 @@ get.continuum.model<- function(continuum.manager,
 get.suppression.model <- function(cm,
                                   location)
 {
-  list(intercept=cm$suppression$stratified.log.odds.intercept,
-       slope=cm$suppression$stratified.log.odds.slope,
-       anchor.year = cm$suppression$anchor.year,
-       max.proportion = cm$suppression$max.proportion)
+    get.continuum.model(cm, type='suppression', location)
 }
 
 #Returns a list with 3 components, representing a linear log-odds model of testing

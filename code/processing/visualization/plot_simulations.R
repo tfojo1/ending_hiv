@@ -18,7 +18,8 @@ DATA.TYPE.NAMES = c(new='Reported Cases',
                     linkage='Linkage',
                     retention='Retention in Care',
                     suppression.of.engaged='Suppression among Engaged PWH',
-                    gain.of.suppression='Gain of Suppression among Engaged PWH')
+                    gain.of.suppression='Gain of Suppression among Engaged PWH',
+                    aids.diagnoses='Historical AIDS Diagnoses')
 
 
 DATA.TYPE.AXIS.LABELS = c(
@@ -36,7 +37,8 @@ DATA.TYPE.AXIS.LABELS = c(
     linkage='Proportion Linked (%)',
     suppression.of.engaged='Proportion Suppressed (%)',
     retention='Proportion Retained (%)',
-    gain.of.suppression='Proportion Gaining Suppression (%)'
+    gain.of.suppression='Proportion Gaining Suppression (%)',
+    aids.diagnoses='Reported AIDS Cases (n)'
 )
 
 DATA.TYPE.UNITS = c(
@@ -54,7 +56,8 @@ DATA.TYPE.UNITS = c(
   linkage='Linked',
   suppression.of.engaged='Suppressed',
   retention='Retained',
-  gain.of.suppression='Gained Suppression'
+  gain.of.suppression='Gained Suppression',
+  aids.diagnoses = 'Cases'
 )
 
 DATA.TYPE.UNIT.DESCRIPTOR = c(
@@ -72,7 +75,8 @@ DATA.TYPE.UNIT.DESCRIPTOR = c(
     linkage='%',
     suppression.of.engaged='%',
     retention='%',
-    gain.of.suppression='%'
+    gain.of.suppression='%',
+    aids.diagnoses='cases'
 )
 
 CUMULATIVE.APPLIES.TO.DATA.TYPE = c(
@@ -90,7 +94,8 @@ CUMULATIVE.APPLIES.TO.DATA.TYPE = c(
     linkage=F,
     suppression.of.engaged=F,
     retention=F,
-    gain.of.suppression=F
+    gain.of.suppression=F,
+    aids.diagnoses=T
 )
 
 CHANGE.STATISTIC.IS.RELATIVE = c(
@@ -1873,6 +1878,12 @@ get.arr.for.data.type <- function(simset,
                                            all.dimensions = keep.dimensions,
                                            dimension.subsets = dimension.subsets,
                                            year.anchor=year.anchor)
+    else if (data.type=='aids.diagnoses')
+        arr = extract.simset.aids.diagnoses(simset,
+                                           years = years, 
+                                           all.dimensions = keep.dimensions,
+                                           dimension.subsets = dimension.subsets,
+                                           total.population = total.population)
     else
         stop(paste0("'", data.type, "' is not a valid data.type."))
     
@@ -2484,7 +2495,7 @@ extract.simset.new.diagnoses <- function(simset, years, all.dimensions,
                                               hiv.subsets=NULL,
                                               use.cdc.categorizations=T)
         denominators = do.extract.population.subset(sim, years=years, keep.dimensions = 'year', use.cdc.categorizations = T)
-       
+ 
         as.numeric(numerators) / as.numeric(denominators) * total.population[,i]
     })
     
@@ -2500,6 +2511,22 @@ extract.simset.new.diagnoses <- function(simset, years, all.dimensions,
     dimnames(rv) = dim.names
     
     rv
+}
+
+extract.simset.aids.diagnoses <- function(simset, years, all.dimensions,
+                                          dimension.subsets, total.population,
+                                          hiv.to.aids.diagnoses.ratio=mean(c('1999'=1.45,
+                                                                             '2000'=1.56,
+                                                                             '2001'=1.51,
+                                                                             '2002'=1.39,
+                                                                             '2003'=1.35,
+                                                                             '2004'=1.25))
+)
+{
+    extract.simset.new.diagnoses(simset, years=years, 
+                                 all.dimensions = all.dimensions,
+                                 dimension.subsets = dimension.subsets,
+                                 total.population=total.population) / hiv.to.aids.diagnoses.ratio
 }
 
 #per total population in year
