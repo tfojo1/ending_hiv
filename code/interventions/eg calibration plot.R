@@ -12,8 +12,12 @@ ss.noint = run.simset.intervention(baseline, NO.INTERVENTION, run.from.year=2021
 
 ss.int = run.simset.intervention(baseline, WHOLEPOP.AS95, run.from.year=2021, run.to.year=2031,
                                  keep.years=2018:2031) #don't do this
-#load('file')
-#ss.int = simset
+
+load('mcmc_runs/visualization_simsets/12580/1.0_12580_noint.Rdata')
+ss.noint = simset
+
+load('mcmc_runs/visualization_simsets/12580/1.0_12580_wholepop.c.p.high.Rdata')
+ss.int = simset
 
 
 source('code/processing/visualization/sim_plots.R')
