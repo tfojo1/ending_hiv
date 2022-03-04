@@ -193,9 +193,18 @@ UPTAKE.INTERVENTIONS.INJ.CODES = c(
   'msm.inj.25.uptake_23_27'
 )
 
+
+#New Uptake Interventions 
+
+NEW.UPTAKE.INTERVENTIONS = c("msm.baseline.oral_23_27","msm.baseline.lai_23_27","msm.baseline.oral.plus.10.oral_23_27","msm.baseline.oral.plus.10.lai_23_27","msm.baseline.lai.plus.10.lai_23_27","msm.baseline.oral.plus.25.oral_23_27","msm.baseline.oral.plus.25.lai_23_27","msm.baseline.lai.plus.25.lai_23_27")  
+
+
+
 STAGGERED.ORAL.INJ.PREP.CODES = character(2*length(ORAL.PREP.INTERVENTION.CODES))
 STAGGERED.ORAL.INJ.PREP.CODES[2*(1:length(ORAL.PREP.INTERVENTION.CODES))-1] = ORAL.PREP.INTERVENTION.CODES
 STAGGERED.ORAL.INJ.PREP.CODES[2*(1:length(INJ.PREP.INTERVENTION.CODES))] = INJ.PREP.INTERVENTION.CODES
+
+
 
 
 
@@ -292,11 +301,11 @@ make.prep.table <- function(msas=TARGET.MSAS,
             else if (stat == 'diff')
             {
               diff = ((int.values[1,]-int.values[dim(int.values)[1],])/int.values[1,])*100
-              mean_diff = round(mean(diff),2)
+              mean_diff = round(mean(diff),0)
               CI_low = round(quantile(diff, probs=.025),0)
               CI_high = round(quantile(diff, probs=.975),0)
-              paste0(format(mean_diff,big.mark=','),"% [",CI_low,"% to ",CI_high,"%]")
-              #paste0(format(mean_diff,big.mark=','),"%")
+              #paste0(format(mean_diff,big.mark=','),"% [",CI_low,"% to ",CI_high,"%]")
+              paste0(format(mean_diff,big.mark=','),"%")
               #mean_diff
               
             }
@@ -316,7 +325,7 @@ make.prep.table <- function(msas=TARGET.MSAS,
     
     rv = as.data.frame(rv)
     row.names(rv) = names(msas)
-    colnames(rv) = paste(intervention.codes, comparison.codes) 
+    colnames(rv) = intervention.codes #change for comparison as needed
     rv
 }
 
@@ -350,8 +359,8 @@ city.correlations <- function(msas=TARGET.MSAS,
   }
 
 make.sensitivity.plot <- function(msas=TARGET.MSAS,
-                              intervention.codes = "msm.inj.25.uptake_23_27",
-                              comparison.codes = "msm.oral.25.uptake_23_27",
+                              intervention.codes = "msm.baseline.lai.plus.25.lai_23_27",
+                              comparison.codes = "msm.baseline.oral.plus.25.oral_23_27",
                               raw.prep.results = prep.results,
                               parameter = parameters,
                               include.totals = F,
@@ -360,10 +369,12 @@ make.sensitivity.plot <- function(msas=TARGET.MSAS,
                               round.digits=0){
   
   int.code = intervention.codes 
+  comp.code = comparison.codes
+  parameter = parameter*100
   
   if(cities = "separated") {
-    for(a in 1: dim(parameters)[2]){
-      p = as.numeric(as.character(parameters[,a]))
+    for(a in 1: dim(parameter)[2]){
+      p = as.numeric(as.character(parameter[,a]))
       
       inj.values = vector("list", length = length(msas))
       for( b in 1:length(msas)){
@@ -386,7 +397,7 @@ make.sensitivity.plot <- function(msas=TARGET.MSAS,
       groups = do.call(rbind.data.frame, groups)
       
       ggplot(groups, aes(x =`Parameter Group`, y =`Incidence Reduction`)) +          
-        geom_boxplot() +  theme(axis.text.x = element_text(size = 20, angle = 45,vjust = 0.5, hjust=.5)) + ggtitle(paste0("Parameter: ",colnames(parameters)[a]))
+        geom_boxplot() +  theme(axis.text.x = element_text(size = 20, angle = 45,vjust = 0.5, hjust=.5)) + ggtitle(paste0("Parameter: ",colnames(parameter)[a]))
       
       #correlation = round(cor(inj.values, method = "spearman")[2,1],3)
       #ggplot(inj.values, aes(x=`Parameter`, y=`Incidence Reduction`)) +
@@ -396,9 +407,11 @@ make.sensitivity.plot <- function(msas=TARGET.MSAS,
   }
   
   else if (cities == "combined") {
-    for(a in 1: dim(parameters)[2]){
+    for(a in 1: dim(parameter)[2]){
     
-    p = as.numeric(as.character(parameters[,a]))
+    p = as.numeric(as.character(parameter[,a]))
+  
+ 
   
     
     inj.values = vector("list", length = length(msas))
@@ -422,14 +435,17 @@ make.sensitivity.plot <- function(msas=TARGET.MSAS,
     inj.values = as.data.frame(inj.values)
     inj.values = inj.values[order(inj.values$Parameter),]
     cor(inj.values, method = "spearman")[2,1]
-    groups = split(inj.values, cut(inj.values$Parameter, 5))
-    groups = Filter(NROW, groups)
+  
+    groups = vector("list", length = 5)
+    for (b in 1:5){
+      groups[[b]] = inj.values[((b-1)*(dim(inj.values)[1]/5)+1):(b*(dim(inj.values)[1]/5)),]
+    }
     
-    ID = sapply(groups, function(x) paste0(round(min(x$Parameter, na.rm=TRUE),2)," to ",round(max(x$Parameter, na.rm=TRUE),2)))
+    ID = sapply(groups, function(x) paste0(round(min(x$Parameter, na.rm=TRUE),2),"% to ",round(max(x$Parameter, na.rm=TRUE),2),"%"))
     groups <- mapply(cbind, groups, "Parameter Group"=ID, SIMPLIFY=F)
     groups = do.call(rbind.data.frame, groups)
     
-    plot = ggplot(groups, aes(x =`Parameter Group`, y =`Incidence Reduction`)) + ggtitle(paste0("Parameter: ",colnames(parameters)[a])) + 
+    plot = ggplot(groups, aes(x =`Parameter Group`, y =`Incidence Reduction`)) + ggtitle(paste0("Parameter: ",colnames(parameter)[a])) + 
       geom_boxplot() 
       
     plot + theme_bw()+ theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) + theme(axis.title=element_text(size=20), axis.text.x = element_text(size = 20, angle = 45, hjust=1), axis.text.y = element_text(size = 20)) 
@@ -440,13 +456,13 @@ make.sensitivity.plot <- function(msas=TARGET.MSAS,
   
   else if(cities == "comparison") {
     
-    p = 1-(1-as.numeric(as.character(parameters[,3])))*as.numeric(as.character(parameters[,4]))
+  
     
-    for(a in 1: dim(parameters)[2]){
+    for(a in 1: dim(parameter)[2]){
       
       int.code = intervention.codes
       comp.code = comparison.codes
-      p = as.numeric(as.character(parameters[,a]))
+      p = 100 - as.numeric(as.character(parameter[,3]))
       
       #inectable values 
       inj.values = vector("list", length = length(msas))
@@ -495,15 +511,24 @@ make.sensitivity.plot <- function(msas=TARGET.MSAS,
       values = as.data.frame(values)
       values = values[order(values$Parameter),]
       correlation = cor(values, method = "spearman")[2,1]
-      groups = split(values, cut(values$Parameter, 5))
+      
+      groups = vector("list", length = 5)
+      for (b in 1:5){
+        groups[[b]] = values[((b-1)*(dim(values)[1]/5)+1):(b*(dim(values)[1]/5)),]
+      }
+     
       groups = Filter(NROW, groups)
       
-      ID = sapply(groups, function(x) paste0(round(min(x$Parameter, na.rm=TRUE),2)," to ",round(max(x$Parameter, na.rm=TRUE),2)))
+      mean(groups[[1]]$`Absolute Difference`)
+      quantile(groups[[1]]$`Absolute Difference`, probs = .025)
+      quantile(groups[[1]]$`Absolute Difference`, probs = .975)
+      
+      ID = sapply(groups, function(x) paste0(round(min(x$Parameter, na.rm=TRUE),0),"% to ",round(max(x$Parameter, na.rm=TRUE),0),"%"))
       groups <- mapply(cbind, groups, "Parameter Group"=ID, SIMPLIFY=F)
       groups = do.call(rbind.data.frame, groups)
       
-      plot = ggplot(groups, aes(x =`Parameter Group`, y =`Absolute Difference`)) + ggtitle(paste0("Parameter: ",colnames(parameters)[a]," ", correlation)) + 
-        geom_boxplot() 
+      plot = ggplot(groups, aes(x =`Parameter Group`, y =`Absolute Difference`)) + ggtitle(paste0("Parameter: ",colnames(parameter)[a]," ", correlation)) + 
+        geom_boxplot() + ylab("Difference in Incidence Reduction")
       
       plot + theme_bw()+ theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) + theme(axis.title=element_text(size=20), axis.text.x = element_text(size = 20, angle = 45, hjust=1), axis.text.y = element_text(size = 20)) 
       
@@ -675,7 +700,7 @@ aggregate.prep.coverage <- function(msas,
 
 
 
-make.figure <- function(msas=TARGET.MSAS,intervention.codes = UPTAKE.35.INTERVENTIONS.CODES, raw.prep.results = prep.results,round.digits=0){
+make.figure <- function(msas=TARGET.MSAS,intervention.codes = NEW.UPTAKE.INTERVENTIONS, raw.prep.results = prep.results,round.digits=0){
  
 
   plots = vector("list", length= length(intervention.codes))
@@ -685,9 +710,19 @@ make.figure <- function(msas=TARGET.MSAS,intervention.codes = UPTAKE.35.INTERVEN
     rv = sapply(1:11, function(j){
       int.code = intervention.codes[i]
       int.values = raw.prep.results[j,,,int.code]
-      #int_collapse = do.call(cbind, int.values)
-     rv_11 = rowSums(int.values)
+      #int_collapse = do.call(cbind, int.values
     })
+    
+    int.code = intervention.codes[i]
+    int.values = raw.prep.results[1,,,int.code]
+    #int_collapse = do.call(cbind, int.values)
+    rv_1 = rowSums(int.values)
+    
+    int.code = intervention.codes[i]
+    int.values = raw.prep.results[11,,,int.code]
+    #int_collapse = do.call(cbind, int.values
+    rv_11 = rowSums(int.values)
+  
     
     red = (rv[,1]-rv[,11])/(rv[,1])*100
     red = (rv_1-rv_11)/(rv_1)*100
@@ -695,6 +730,9 @@ make.figure <- function(msas=TARGET.MSAS,intervention.codes = UPTAKE.35.INTERVEN
     mean_red = mean(red)
     mean_red_low = quantile(red, probs = .025)
     mean_red_high = quantile(red, probs = .975)
+    mean_red
+    mean_red_low 
+    mean_red_high 
     
     mean_reduction[[i]] = paste0(round(mean_red,0),"% [",round(mean_red_low,0),"% to ",round(mean_red_high,0),"%]")
     reduction[[i]] = red
@@ -733,9 +771,17 @@ make.figure <- function(msas=TARGET.MSAS,intervention.codes = UPTAKE.35.INTERVEN
 
 #Baseline PrEP
 
-baseline = baseline.prep[4,,,1]
-baseline = as.data.frame(baseline)
-baseline = baseline/parameters[,2]
-#baseline = colMeans(baseline)
+baseline_2023 = baseline.prep[4,,,1]
+baseline_2023 = as.data.frame(baseline_2023)
+baseline_2023 = baseline_2023/parameters[,2]
+baseline_2023 = colMeans(baseline_2023)
+
+baseline_2020 = baseline.prep[1,,,1]
+baseline_2020 = as.data.frame(baseline_2020)
+baseline_2020 = baseline_2020/parameters[,2]
+baseline_2020 = colMeans(baseline_2020)
+
+diff = baseline_2023-baseline_2020
+
 baseline = rowMeans(baseline)
 mean(baseline)
