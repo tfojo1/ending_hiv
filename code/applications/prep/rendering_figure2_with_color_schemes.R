@@ -21,8 +21,8 @@ if (TEST.COLORS)
                       upper.threshold.colors = c(GOOD.COLOR))
     
     plot.shaded.table(round(tab,2), thresholds = c(0,.5,1), 
-                      lower.threshold.colors = c(BAD.COLOR,'yellow'),
-                      upper.threshold.colors = c('yellow',GOOD.COLOR))
+                      lower.threshold.colors = c(BAD.COLOR,GOOD.COLOR),
+                      upper.threshold.colors = c(GOOD.COLOR,'green4'))
 }
 
 
