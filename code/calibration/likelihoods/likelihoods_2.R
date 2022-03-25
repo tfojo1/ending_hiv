@@ -64,6 +64,7 @@ create.likelihood.function <- function(data.type=c('new','prevalence','mortality
                                        bias.fn = function(...){0},
                                        bias.sd = function(...){0},
                                        adjust.likelihood.elements.fn=NULL,
+                                       adjust.rates.fn=NULL,
                                        corr.mat.fn=NULL,
                                        make.variance.fn=NULL,
                                        make.cov.mat.fn=NULL)
@@ -260,6 +261,9 @@ create.likelihood.function <- function(data.type=c('new','prevalence','mortality
                                        denominator.dimensions=denominator.dimensions,
                                        aggregate.denominator.males=aggregate.denominator.males,
                                        prep.multiplier=prep.multiplier)
+        
+        if (!is.null(adjust.rates.fn))
+            rates = adjust.rates.fn(rates, jheem.results)
 
         # Pass it all to the sub-function to crunch
         likelihood.sub(rates,
@@ -496,6 +500,21 @@ get.states.for.msa.suppression <- function(msa)
     states
 }
 
+##---------------##
+##-- RETENTION --##
+##---------------##
+
+create.retention.likelihood <- function(retention = 0.775,
+                                        retention.sd = 0.01,
+                                        years=2006:2011)
+{
+    function(sim, log=T){
+        sim.retention = extract.retention(sim, years=years)
+        mean.retention = mean(sim.retention)
+        
+        dnorm(retention, mean.retention, retention.sd, log=log)
+    }
+}
 
 ##---------------------##
 ##-- PREP LIKELIHOOD --##
@@ -508,6 +527,13 @@ get.states.for.msa.suppression <- function(msa)
 # where
 # - (p_prep * p_indicated) ~ Beta with mean p_prep
 
+# under assumptions of constant discontinuation rate,
+#  calculates the AUC for time on PrEP
+coverage.to.uptake.ratio <- function(persistence)
+{
+    lambda = -log(persistence)
+    1/(1+lambda)
+}
 
 create.prep.likelihood <- function(location,
                                    years=2012:2018,
@@ -524,20 +550,52 @@ create.prep.likelihood <- function(location,
                                    by.age=T,
                                    by.sex=T,
                                    p.indicated.cv=0.25,
-                                   p.indicated.rho=0.9)
+                                   p.indicated.rho=0.9,
+                                   use.uncertain.persistence=F)
 {
+    
+    if (!use.uncertain.persistence)
+    {
+        adjust.rates.fn = function(rates, sim){
+            rates / coverage.to.uptake.ratio(extract.prep.persistence(sim))
+        }
+    }
+    else
+        adjust.rates.fn = NULL
     
     # Adjust the measurement errors
     adjust.fn <- function(likelihood.elements)
     {
-        # Running through a log-normal distribution approximating the log.sd by the cv
+        # There are three adjustments to make:
         
-        # Set up cvs for frac recorded and persistence
+        # 1) Fraction Recorded
+        frac.recorded = FRACTION.PREP.STARTS.RECORDED
         cv.frac.recorded = FRACTION.PREP.STARTS.RECORDED.SD / FRACTION.PREP.STARTS.RECORDED
+      
+        # 2) Fraction Correctly Classified
+        frac.correctly.classified = FRACTION.PREP.CORRECTLY.CLASSIFIED
         cv.correctly.classified = FRACTION.PREP.CORRECTLY.CLASSIFIED.SD / FRACTION.PREP.CORRECTLY.CLASSIFIED
-#        cv.gt.1mo = FRACTION.PREP.GT.1MO.SD / FRACTION.PREP.GT.1MO
-        cv.3mo.to.12mo = PREP.RX.3MO.To.1Y.SD['total'] / PREP.RX.3MO.To.1Y['total']
-#        cv.ret.3mo = PREP.RETENTION.3MO.SD / PREP.RETENTION.3MO
+        
+        # 3) Persistence -> coverage/uptake
+        if (use.uncertain.persistence)
+        {
+            PERSISTENCE = 0.56
+            PERSISTENCE.SD = 0.053 #from Ruchita's analysis
+            
+            coverage.to.uptake = coverage.to.uptake.ratio(PERSISTENCE)
+            coverage.to.uptake.sd = (coverage.to.uptake.ratio(PERSISTENCE + 2*1.96 * PERSISTENCE.SD) -
+                                         coverage.to.uptake.ratio(PERSISTENCE - 2*1.96 * PERSISTENCE.SD)) /
+                2 / 1.96
+            cv.coverage.to.uptake = coverage.to.uptake.sd / coverage.to.uptake
+        }
+        else
+        {
+            coverage.to.uptake = 1
+            cv.coverage.to.update = 0
+        }
+        
+
+        # Running through a log-normal distribution approximating the log.sd by the cv
         
       
         # x
@@ -549,16 +607,12 @@ create.prep.likelihood <- function(location,
         new.cvs.sq = numerator.cvs.sq + 
             cv.frac.recorded^2 + 
             cv.correctly.classified^2 +
-#            cv.gt.1mo^2 +
-            cv.3mo.to.12mo^2# +
-#            cv.ret.3mo^2
+            cv.coverage.to.update^2
         
         new.means = likelihood.elements$response.vector / 
-          FRACTION.PREP.STARTS.RECORDED * 
-            FRACTION.PREP.CORRECTLY.CLASSIFIED *
-#            FRACTION.PREP.GT.1MO *
-            PREP.RX.3MO.To.1Y['total'] #* 
-#          PREP.RETENTION.3MO
+            frac.recorded * 
+            frac.correctly.classified *
+            coverage.to.uptake
         
         new.sds = sqrt(new.cvs.sq) * new.means
         new.cov.mat = new.sds %*% t(new.sds) * corr.mat
@@ -625,6 +679,7 @@ create.prep.likelihood <- function(location,
                                numerator.year.to.year.off.correlation=numerator.year.to.year.off.correlation,
                                numerator.chunk.years=numerator.chunk.years,
                                numerator.sd = numerator.sd,
+                               adjust.rates.fn = adjust.rates.fn,
                                adjust.likelihood.elements.fn = adjust.fn,
                                corr.mat.fn = corr.mat.fn,
                                make.variance.fn = make.variance.fn,
@@ -1337,6 +1392,11 @@ create.aids.diagnoses.likelihood <- function(surv=msa.surveillance,
                                              rho=0.5
 )
 {
+    population = interpolate.parameters(values = population[!is.na(population)],
+                                        value.times = years[!is.na(population)],
+                                        desired.times = years,
+                                        return.list=F)
+    
     observed.aids = get.surveillance.data(location.codes = location, data.type='aids.diagnoses', years=years)
     obs.sds = numerator.sd(years, observed.aids)
     
@@ -1364,7 +1424,7 @@ create.aids.diagnoses.likelihood <- function(surv=msa.surveillance,
         
         #  sds = sqrt(population * rates * (1-rates) * sd.inflation^2 + obs.var)
         
-        
+    
         cov.mat = make.compound.symmetry.matrix(sqrt(obs.var), rho) + 
             diag(population * rates * (1-rates) * sd.inflation^2)
         
@@ -1372,7 +1432,7 @@ create.aids.diagnoses.likelihood <- function(surv=msa.surveillance,
             print(cbind(obs.aids=observed.aids, obs=obs, sim=rates*population))
         
         dmvnorm(x=as.numeric(obs),
-                mean=as.numeric(rates*population),
+                mean=as.numeric(observed.aids),
                 sigma=cov.mat, 
                 log=log)
         

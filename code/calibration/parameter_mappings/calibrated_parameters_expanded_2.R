@@ -236,6 +236,7 @@ parameters.prior = join.distributions(
     age4.start.art.or = Lognormal.Distribution(0, 0.5*log(2)),
     age5.start.art.or = Lognormal.Distribution(0, 0.5*log(2)),
     
+    full.art.year = Uniform.Distribution(2015, 2018),
     
     #-- ADHERENCE --#
     heterosexual.proportion.adherent.or = Lognormal.Distribution(0, 0.5*log(2)),
@@ -325,6 +326,12 @@ parameters.prior = join.distributions(
     age2.prep.or = Lognormal.Distribution(0, log(2)),
     age4.prep.or = Lognormal.Distribution(0, log(2)),
     age5.prep.or = Lognormal.Distribution(0, log(2)),
+    
+    prep.efficacy.z = Normal.Distribution(0, 1),
+    prep.persistence = Normal.Distribution(0.56, 0.0587, lower=0, upper=1),
+    #from https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6378757/
+    # with Wald CI inflated 10x
+    
 
     #-- Proportion MSM --#
     proportion.msm.of.male.mult = Lognormal.Distribution(0, 0.125*log(2)),
@@ -551,7 +558,8 @@ PARAMETER.VAR.BLOCKS.1 = list(
                         'msm.idu.start.art.or'), 
   
   start.art.by.race = c('black.start.art.or',
-                        'hispanic.proportion.adherent.or'),  
+                        'hispanic.start.art.or',
+                        'full.art.year'),  
   
   start.art.by.age = c('age1.start.art.or',
                         'age2.start.art.or',
@@ -617,14 +625,16 @@ PARAMETER.VAR.BLOCKS.1 = list(
                                             'already.lost.vs.failing.proportion.lost.or'),
   
   msm.prep = c('msm.prep.intercept.or',
-                        'msm.prep.slope.or'),
+               'msm.prep.slope.or',
+               'prep.persistence'),
   
   non.msm.prep = c('non.msm.prep.intercept.or',
                    'idu.prep.slope.or',
                    'heterosexual.prep.slope.or'),
   
   prep.by.race = c('black.prep.or',
-                   'hispanic.prep.or'),
+                   'hispanic.prep.or',
+                   'prep.efficacy.z'),
   
   prep.by.age = c('age1.prep.or',
                   'age2.prep.or',
@@ -675,6 +685,34 @@ IDU.SUSCEPTIBLITY.RR.BY.AGE = c(.762/.788*.720/.672,
 # https://www.cdc.gov/hiv/pdf/library/reports/surveillance/cdc-hiv-surveillance-report-2011-vol-23.pdf
 AGE4.AGING.1 = get.aging.rate.last.of.10(173559,139643)
 
+# For PrEP Efficacy
+
+get.prep.efficacy.dist <- function(est, lower, upper)
+{
+  rr.est = 1-est
+  rr.lower = 1-upper
+  rr.upper = 1-lower
+  
+  log.ci.span = log(rr.upper)-log(rr.lower)
+  
+  sigma = log.ci.span / 2 / qnorm(.975)
+  
+  list(
+    mean = log(rr.est) - sigma^2/2,
+    sd = sigma
+  )
+}
+
+prep.efficacy.msm = get.prep.efficacy.dist(.86, .64, .96)
+#https://pubmed.ncbi.nlm.nih.gov/26364263/
+prep.efficacy.het = get.prep.efficacy.dist(.67, .44, .81)
+#https://www.nejm.org/doi/full/10.1056/nejmoa1108524
+prep.efficacy.idu = get.prep.efficacy.dist(.489, .096, .722)
+#https://pubmed.ncbi.nlm.nih.gov/23769234/
+
+##---------------------------------##
+##-- The Get Components Function --##
+##---------------------------------##
 get.components.for.calibrated.parameters <- function(parameters, components,
                                                      data.managers = ALL.DATA.MANAGERS)
 {
@@ -1118,34 +1156,35 @@ get.components.for.calibrated.parameters <- function(parameters, components,
                                      age4.or.slope=parameters['age4.proportion.lost.slope.or'],
                                      age5.or.slope=parameters['age5.proportion.lost.slope.or']
   )
-  components = set.background.reengagement.ors(components,
-                                               msm.or.intercept = 1/parameters['msm.proportion.lost.or']/parameters['already.lost.vs.nonsuppressed.proportion.lost.or'],
-                                               heterosexual.or.intercept=1/parameters['heterosexual.proportion.lost.or']/parameters['already.lost.vs.nonsuppressed.proportion.lost.or'],
-                                               idu.or.intercept=1/parameters['idu.proportion.lost.or']/parameters['already.lost.vs.nonsuppressed.proportion.lost.or'],
-                                               msm.idu.or.intercept=1/parameters['msm.idu.proportion.lost.or']/parameters['already.lost.vs.nonsuppressed.proportion.lost.or'],
-                                               
-                                               black.or.intercept=1/parameters['black.proportion.lost.or'],
-                                               hispanic.or.intercept=1/parameters['hispanic.proportion.lost.or'],
-                                               
-                                               age1.or.intercept=1/parameters['age1.proportion.lost.or'],
-                                               age2.or.intercept=1/parameters['age2.proportion.lost.or'],
-                                               age4.or.intercept=1/parameters['age4.proportion.lost.or'],
-                                               age5.or.intercept=1/parameters['age5.proportion.lost.or'],
-                                               
-                                               
-                                               msm.or.slope=1/parameters['msm.proportion.lost.slope.or'],
-                                               heterosexual.or.slope=1/parameters['heterosexual.proportion.lost.slope.or'],
-                                               idu.or.slope=1/parameters['idu.proportion.lost.slope.or'],
-                                               msm.idu.or.slope=1/parameters['msm.idu.proportion.lost.slope.or'],
-                                               
-                                               black.or.slope=1/parameters['black.proportion.lost.slope.or'],
-                                               hispanic.or.slope=1/parameters['hispanic.proportion.lost.slope.or'],
-                                               
-                                               age1.or.slope=1/parameters['age1.proportion.lost.slope.or'],
-                                               age2.or.slope=1/parameters['age2.proportion.lost.slope.or'],
-                                               age4.or.slope=1/parameters['age4.proportion.lost.slope.or'],
-                                               age5.or.slope=1/parameters['age5.proportion.lost.slope.or']
-)
+  components = do.set.background.ors(components,
+                                     component.name = 'reengagement',
+                                     msm.or.intercept = 1/parameters['msm.proportion.lost.or']/parameters['already.lost.vs.failing.proportion.lost.or'],
+                                     heterosexual.or.intercept=1/parameters['heterosexual.proportion.lost.or']/parameters['already.lost.vs.failing.proportion.lost.or'],
+                                     idu.or.intercept=1/parameters['idu.proportion.lost.or']/parameters['already.lost.vs.failing.proportion.lost.or'],
+                                     msm.idu.or.intercept=1/parameters['msm.idu.proportion.lost.or']/parameters['already.lost.vs.failing.proportion.lost.or'],
+                                     
+                                     black.or.intercept=1/parameters['black.proportion.lost.or'],
+                                     hispanic.or.intercept=1/parameters['hispanic.proportion.lost.or'],
+                                     
+                                     age1.or.intercept=1/parameters['age1.proportion.lost.or'],
+                                     age2.or.intercept=1/parameters['age2.proportion.lost.or'],
+                                     age4.or.intercept=1/parameters['age4.proportion.lost.or'],
+                                     age5.or.intercept=1/parameters['age5.proportion.lost.or'],
+                                     
+                                     
+                                     msm.or.slope=1/parameters['msm.proportion.lost.slope.or'],
+                                     heterosexual.or.slope=1/parameters['heterosexual.proportion.lost.slope.or'],
+                                     idu.or.slope=1/parameters['idu.proportion.lost.slope.or'],
+                                     msm.idu.or.slope=1/parameters['msm.idu.proportion.lost.slope.or'],
+                                     
+                                     black.or.slope=1/parameters['black.proportion.lost.slope.or'],
+                                     hispanic.or.slope=1/parameters['hispanic.proportion.lost.slope.or'],
+                                     
+                                     age1.or.slope=1/parameters['age1.proportion.lost.slope.or'],
+                                     age2.or.slope=1/parameters['age2.proportion.lost.slope.or'],
+                                     age4.or.slope=1/parameters['age4.proportion.lost.slope.or'],
+                                     age5.or.slope=1/parameters['age5.proportion.lost.slope.or']
+  )
   
   
   # Time to start art
@@ -1166,6 +1205,15 @@ get.components.for.calibrated.parameters <- function(parameters, components,
   )
   
   #-- PrEP --#
+  
+  components = setup.prep.susceptibility(components,
+                                         prep.rr.heterosexual = exp(prep.efficacy.het$mean - 
+                                           prep.efficacy.het$sd * parameters['prep.efficacy.z']), #higher z is more efficacious
+                                         prep.rr.msm = exp(prep.efficacy.msm$mean - 
+                                           prep.efficacy.msm$sd * parameters['prep.efficacy.z']), #higher z is more efficacious,
+                                         prep.rr.idu = exp(prep.efficacy.idu$mean - 
+                                           prep.efficacy.idu$sd * parameters['prep.efficacy.z']), #higher z is more efficacious,
+                                         prep.persistence = parameters['prep.persistence'])
   
   components = set.background.prep.ors(components,
                                        msm.or.intercept=parameters['msm.prep.intercept.or'],
@@ -1309,35 +1357,54 @@ get.components.for.calibrated.parameters <- function(parameters, components,
   )
   
   
+  components = set.background.start.art.ramp.and.years(components,
+                                                       full.art.year=parameters['full.art.year'])
   
   #-- Smoothing Years --#
   
   if (any(grepl('gains\\.end\\.by\\.year', names(parameters))))
       components = set.background.change.to.years(components,
-                                                  testing.change.to.year=parameters['testing.gains.end.by.year'],
-                                                  prep.change.to.year=parameters['prep.gains.end.by.year'],
-                                                  suppression.change.to.year = parameters['suppression.gains.end.by.year'],
-                                                  newly.suppressed.change.to.year = parameters['suppression.gains.end.by.year'],
-                                                  unsuppression.change.to.year = parameters['suppression.gains.end.by.year'],
                                                   
-                                                  linkage.change.to.year = parameters['linkage.gains.end.by.year'],
-                                                  unsuppressed.to.disengaged.change.to.year = parameters['retention.gains.end.by.year'],
-                                                  suppressed.to.disengaged.change.to.year = parameters['retention.gains.end.by.year'],
-                                                  reengagement.change.to.year = parameters['reengagement.gains.end.by.year']
+                                                  testing=parameters['testing.gains.end.by.year'],
+                                                  prep=parameters['prep.gains.end.by.year'],
+                                                  
+                                                  linkage = parameters['linkage.gains.end.by.year'],
+                                                  
+                                                  naive.to.suppressed = parameters['linkage.gains.end.by.year'],
+                                                  naive.to.disengaged = parameters['linkage.gains.end.by.year'],
+                                                  
+                                                  failing.to.disengaged = parameters['linkage.gains.end.by.year'],
+                                                  failing.to.suppressed = parameters['linkage.gains.end.by.year'],
+                                                  
+                                                  suppressed.to.disengaged = parameters['linkage.gains.end.by.year'],
+                                                  suppressed.to.failing = parameters['linkage.gains.end.by.year'],
+                                                  
+                                                  reengagement = parameters['reengagement.gains.end.by.year']
                                                   )
   
   if (any(grepl('total\\.future.*slope\\.or', names(parameters))))
       components = set.future.background.slopes(components,
-                                                future.testing.slope.or = parameters['total.future.testing.slope.or'],
-                                                future.prep.slope.or = parameters['total.future.prep.slope.or'],
-                                                future.supression.slope.or = parameters['total.future.suppressed.slope.or'],
-                                                future.newly.suppressed.slope.or = parameters['total.future.suppressed.slope.or'],
-                                                future.unsuppression.slope.or = parameters['total.future.unsuppression.slope.or'],
-                                                future.linkage.slope.or = parameters['total.future.linkage.slope.or'],
-                                                future.unsuppressed.to.disengaged.slope.or = parameters['total.future.disengagement.slope.or'],
-                                                future.suppressed.to.disengaged.slope.or = parameters['total.future.disengagement.slope.or'],
-                                                future.reengagement.slope.or = parameters['total.future.reengagement.slope.or'],
-                                                after.year = parameters['future.slope.after.year'])
+                                                   testing = parameters['total.future.testing.slope.or'],
+                                                   prep = parameters['total.future.prep.slope.or'],
+                                                   
+                                                   linkage = parameters['total.future.linkage.slope.or'],
+                                                   
+                                                   # to suppressed
+                                                   naive.to.suppressed = parameters['total.future.suppressed.slope.or'],
+                                                   failing.to.suppressed = parameters['total.future.suppressed.slope.or'],
+                                                   
+                                                   # to failing
+                                                   suppressed.to.failing = parameters['total.future.unsuppression.slope.or'],
+                                                   
+                                                   # to disengaged
+                                                   failing.to.disengaged = parameters['total.future.disengagement.slope.or'],
+                                                   naive.to.disengaged = parameters['total.future.disengagement.slope.or'],
+                                                   suppressed.to.disengaged = parameters['total.future.disengagement.slope.or'],
+                                                   
+                                                   # reengagement
+                                                   reengagement = parameters['total.future.reengagement.slope.or'],
+                                                   
+                                                   after.year = parameters['future.slope.after.year'])
 
   #-- Return --#
   components

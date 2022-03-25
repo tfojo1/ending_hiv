@@ -15,11 +15,15 @@ DATA.TYPE.NAMES = c(new='Reported Cases',
                     testing.period='HIV Testing Frequency',
                     prep='PrEP Uptake',
                     engagement='Engagement',
-                    suppression.of.engaged='Suppression among Engaged PWH')
+                    linkage='Linkage',
+                    retention='Retention in Care',
+                    suppression.of.engaged='Suppression among Engaged PWH',
+                    gain.of.suppression='Gain of Suppression among Engaged PWH',
+                    aids.diagnoses='Historical AIDS Diagnoses')
 
 
 DATA.TYPE.AXIS.LABELS = c(
-    incidence='Incident Cases (n)',
+    incidence='Incident Infections (n)',
     new='Reported Cases (n)',
     prevalence='Prevalent Cases (n)',
     mortality='Deaths in PWH (n)',
@@ -28,7 +32,13 @@ DATA.TYPE.AXIS.LABELS = c(
     testing.rate='Avg. Tests per Person per Year',
     population='Population (n)',
     testing.period='Years Between Tests',
-    prep='Proportion on PrEP (%)'
+    prep='Proportion on PrEP (%)',
+    engagement='Proportion Engaged (%)',
+    linkage='Proportion Linked (%)',
+    suppression.of.engaged='Proportion Suppressed (%)',
+    retention='Proportion Retained (%)',
+    gain.of.suppression='Proportion Gaining Suppression (%)',
+    aids.diagnoses='Reported AIDS Cases (n)'
 )
 
 DATA.TYPE.UNITS = c(
@@ -41,7 +51,13 @@ DATA.TYPE.UNITS = c(
   testing.rate = 'Tests per year',
   population = 'People',
   testing.period = 'Years between tests',
-  prep = 'Coverage'
+  prep = 'Coverage',
+  engagement='Engaged',
+  linkage='Linked',
+  suppression.of.engaged='Suppressed',
+  retention='Retained',
+  gain.of.suppression='Gained Suppression',
+  aids.diagnoses = 'Cases'
 )
 
 DATA.TYPE.UNIT.DESCRIPTOR = c(
@@ -54,7 +70,13 @@ DATA.TYPE.UNIT.DESCRIPTOR = c(
     testing.rate = 'tests per year',
     population = 'teople',
     testing.period = 'years between tests',
-    prep = '%'
+    prep = '%',
+    engagement='%',
+    linkage='%',
+    suppression.of.engaged='%',
+    retention='%',
+    gain.of.suppression='%',
+    aids.diagnoses='cases'
 )
 
 CUMULATIVE.APPLIES.TO.DATA.TYPE = c(
@@ -67,7 +89,13 @@ CUMULATIVE.APPLIES.TO.DATA.TYPE = c(
     testing.rate = F,
     population = F,
     testing.perio = F,
-    prep = F
+    prep = F,
+    engagement=F,
+    linkage=F,
+    suppression.of.engaged=F,
+    retention=F,
+    gain.of.suppression=F,
+    aids.diagnoses=T
 )
 
 CHANGE.STATISTIC.IS.RELATIVE = c(
@@ -1559,7 +1587,8 @@ get.truth.df <- function(location,
         rv$Source = 'US Census Bureau'
         rv
     }
-    else if (data.type=='testing.rate' || data.type=='testing.period')
+    else if (data.type=='testing.rate' || data.type=='testing.period' || 
+             data.type=='retention' || data.type=='gain.of.suppression')
         rv = NULL
     else
     {
@@ -1808,6 +1837,24 @@ get.arr.for.data.type <- function(simset,
                                             dimension.subsets = dimension.subsets,
                                             year.anchor=year.anchor)
     }
+    else if (data.type=='linkage')
+        arr = extract.simset.linkage(simset,
+                                     years = years, 
+                                     all.dimensions = keep.dimensions,
+                                     dimension.subsets = dimension.subsets,
+                                     year.anchor=year.anchor)
+    else if (data.type=='retention')
+        arr = extract.simset.retention(simset,
+                                       years = years, 
+                                       all.dimensions = keep.dimensions,
+                                       dimension.subsets = dimension.subsets,
+                                       year.anchor=year.anchor)
+    else if (data.type=='gain.of.suppression')
+        arr = extract.simset.gain.of.suppression(simset,
+                                                 years = years, 
+                                                 all.dimensions = keep.dimensions,
+                                                 dimension.subsets = dimension.subsets,
+                                                 year.anchor=year.anchor)
     else if (data.type=='diagnosed')
         arr = extract.simset.knowledge.of.status(simset,
                                                  years = years, 
@@ -1831,6 +1878,12 @@ get.arr.for.data.type <- function(simset,
                                            all.dimensions = keep.dimensions,
                                            dimension.subsets = dimension.subsets,
                                            year.anchor=year.anchor)
+    else if (data.type=='aids.diagnoses')
+        arr = extract.simset.aids.diagnoses(simset,
+                                           years = years, 
+                                           all.dimensions = keep.dimensions,
+                                           dimension.subsets = dimension.subsets,
+                                           total.population = total.population)
     else
         stop(paste0("'", data.type, "' is not a valid data.type."))
     
@@ -1893,7 +1946,6 @@ make.change.df <- function(simsets,
     
     #-- Pull the outcome arrays --#
     arrs = lapply(1:length(simsets), function(i){
-        
         if (length(setdiff(years.for.change, dimnames(total.population.per.simset[[1]])$year)>0))
             stop(paste0("Cannot calculate a change: year(s) ",
                         setdiff(years.for.change, dimnames(total.population.per.simset[[1]])$year),
@@ -2443,7 +2495,7 @@ extract.simset.new.diagnoses <- function(simset, years, all.dimensions,
                                               hiv.subsets=NULL,
                                               use.cdc.categorizations=T)
         denominators = do.extract.population.subset(sim, years=years, keep.dimensions = 'year', use.cdc.categorizations = T)
-       
+ 
         as.numeric(numerators) / as.numeric(denominators) * total.population[,i]
     })
     
@@ -2459,6 +2511,22 @@ extract.simset.new.diagnoses <- function(simset, years, all.dimensions,
     dimnames(rv) = dim.names
     
     rv
+}
+
+extract.simset.aids.diagnoses <- function(simset, years, all.dimensions,
+                                          dimension.subsets, total.population,
+                                          hiv.to.aids.diagnoses.ratio=mean(c('1999'=1.45,
+                                                                             '2000'=1.56,
+                                                                             '2001'=1.51,
+                                                                             '2002'=1.39,
+                                                                             '2003'=1.35,
+                                                                             '2004'=1.25))
+)
+{
+    extract.simset.new.diagnoses(simset, years=years, 
+                                 all.dimensions = all.dimensions,
+                                 dimension.subsets = dimension.subsets,
+                                 total.population=total.population) / hiv.to.aids.diagnoses.ratio
 }
 
 #per total population in year
@@ -2696,6 +2764,149 @@ extract.simset.engagement<- function(simset, years, all.dimensions,
                 hiv.subsets=NULL,
                 use.cdc.categorizations=T)
 #                year.anchor=year.anchor)
+    
+    if (is.null(dim(eg)))
+    {
+        dim.names = list(names(eg), 1:simset@n.sim)
+        names(dim.names) = c(all.dimensions, 'simulation')
+    }
+    else
+        dim.names = c(dimnames(eg), list(simulation=1:simset@n.sim))
+    
+    dim(rv) = sapply(dim.names, length)
+    dimnames(rv) = dim.names
+    
+    rv
+}
+
+extract.simset.linkage<- function(simset, years, all.dimensions,
+                                     dimension.subsets, year.anchor)
+{
+    eg = extract.linkage(simset@simulations[[1]],
+                               years=years, 
+                               keep.dimensions=all.dimensions,
+                               per.population=1,
+                               ages=dimension.subsets[['age']],
+                               races=dimension.subsets[['race']],
+                               subpopulations=dimension.subsets[['subpopulation']],
+                               sexes=dimension.subsets[['sex']],
+                               risks=dimension.subsets[['risk']],
+                               continuum='unengaged',
+                               cd4=NULL,
+                               hiv.subsets=NULL,
+                               use.cdc.categorizations=T)
+    #                             year.anchor=year.anchor)
+    rv = sapply(simset@simulations, extract.linkage,
+                years=years, 
+                keep.dimensions=all.dimensions,
+                per.population=1,
+                ages=dimension.subsets[['age']],
+                races=dimension.subsets[['race']],
+                subpopulations=dimension.subsets[['subpopulation']],
+                sexes=dimension.subsets[['sex']],
+                risks=dimension.subsets[['risk']],
+                continuum='unengaged',
+                cd4=NULL,
+                hiv.subsets=NULL,
+                use.cdc.categorizations=T)
+    #                year.anchor=year.anchor)
+    
+    if (is.null(dim(eg)))
+    {
+        dim.names = list(names(eg), 1:simset@n.sim)
+        names(dim.names) = c(all.dimensions, 'simulation')
+    }
+    else
+        dim.names = c(dimnames(eg), list(simulation=1:simset@n.sim))
+    
+    dim(rv) = sapply(dim.names, length)
+    dimnames(rv) = dim.names
+    
+    rv
+}
+
+extract.simset.retention<- function(simset, years, all.dimensions,
+                                    dimension.subsets, year.anchor)
+{
+    continuum = attr(simset@simulations[[1]], 'components')$settings$ENGAGED_STATES
+    
+    eg = extract.retention(simset@simulations[[1]],
+                         years=years, 
+                         keep.dimensions=all.dimensions,
+                         per.population=1,
+                         ages=dimension.subsets[['age']],
+                         races=dimension.subsets[['race']],
+                         subpopulations=dimension.subsets[['subpopulation']],
+                         sexes=dimension.subsets[['sex']],
+                         risks=dimension.subsets[['risk']],
+                         continuum=continuum,
+                         cd4=NULL,
+                         hiv.subsets=NULL,
+                         use.cdc.categorizations=T)
+    #                             year.anchor=year.anchor)
+    rv = sapply(simset@simulations, extract.retention,
+                years=years, 
+                keep.dimensions=all.dimensions,
+                per.population=1,
+                ages=dimension.subsets[['age']],
+                races=dimension.subsets[['race']],
+                subpopulations=dimension.subsets[['subpopulation']],
+                sexes=dimension.subsets[['sex']],
+                risks=dimension.subsets[['risk']],
+                continuum=continuum,
+                cd4=NULL,
+                hiv.subsets=NULL,
+                use.cdc.categorizations=T)
+    #                year.anchor=year.anchor)
+    
+    if (is.null(dim(eg)))
+    {
+        dim.names = list(names(eg), 1:simset@n.sim)
+        names(dim.names) = c(all.dimensions, 'simulation')
+    }
+    else
+        dim.names = c(dimnames(eg), list(simulation=1:simset@n.sim))
+    
+    dim(rv) = sapply(dim.names, length)
+    dimnames(rv) = dim.names
+    
+    rv
+}
+
+extract.simset.gain.of.suppression<- function(simset, years, all.dimensions,
+                                              dimension.subsets, year.anchor)
+{
+    continuum = setdiff(attr(simset@simulations[[1]], 'components')$settings$ENGAGED_STATES,
+                        attr(simset@simulations[[1]], 'components')$settings$SUPPRESSED_STATES)
+    
+    eg = extract.gain.of.suppression(simset@simulations[[1]],
+                                     years=years, 
+                                     keep.dimensions=all.dimensions,
+                                     per.population=1,
+                                     ages=dimension.subsets[['age']],
+                                     races=dimension.subsets[['race']],
+                                     subpopulations=dimension.subsets[['subpopulation']],
+                                     sexes=dimension.subsets[['sex']],
+                                     risks=dimension.subsets[['risk']],
+                                     continuum=continuum,
+                                     cd4=NULL,
+                                     hiv.subsets=NULL,
+                                     use.cdc.categorizations=T)
+    #                             year.anchor=year.anchor)
+    rv = sapply(simset@simulations, extract.gain.of.suppression,
+                years=years, 
+                keep.dimensions=all.dimensions,
+                per.population=1,
+                ages=dimension.subsets[['age']],
+                races=dimension.subsets[['race']],
+                subpopulations=dimension.subsets[['subpopulation']],
+                sexes=dimension.subsets[['sex']],
+                risks=dimension.subsets[['risk']],
+                continuum=continuum,
+                cd4=NULL,
+                hiv.subsets=NULL,
+                use.cdc.categorizations=T)
+    #                year.anchor=year.anchor)
     
     if (is.null(dim(eg)))
     {

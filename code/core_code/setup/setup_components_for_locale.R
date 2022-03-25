@@ -31,7 +31,8 @@ setup.components.for.msa <- function(msa,
                                      include.hiv=T,
                                      idu.transition.years=c(2000,2020),
                                      allow.non.optimized.idu.transitions=F,
-                                     idu.transition.end.year=2030)
+                                     idu.transition.end.year=2030,
+                                     ramp.year=1996)
 {
     msa.counties = counties.for.msa(msa)
 
@@ -267,225 +268,176 @@ setup.components.for.msa <- function(msa,
         
     #-- Newly Suppressed, Linkage, etc --#
     
+    smooth.years = smooth.from.year:(smooth.to.year+1)
+    
     if (!is.null(settings$VERSION) && settings$VERSION=='expanded_1.0')
     {
-        comps = setup.background.leave.unsuppressed(comps,
-                                                    continuum.manager = data.managers$continuum,
-                                                    location=msa,
-                                                    years=smooth.from.year:(smooth.to.year+1))
-        
-        comps = setup.background.newly.suppressed(comps,
-                                                  continuum.manager=data.managers$continuum,
-                                                  location=msa)
-        
-        comps = set.background.newly.suppressed.ors(comps,
-                                               msm.or.intercept=1,
-                                               heterosexual.or.intercept=1,
-                                               idu.or.intercept=1,
-                                               black.or.intercept=1,
-                                               hispanic.or.intercept=1,
-                                               other.or.intercept=1,
-                                               age1.or.intercept=1,
-                                               age2.or.intercept=1,
-                                               age3.or.intercept=1,
-                                               age4.or.intercept=1,
-                                               age5.or.intercept=1,
-                                               
-                                               total.or.slope=1,
-                                               msm.or.slope=1,
-                                               heterosexual.or.slope=1,
-                                               idu.or.slope=1,
-                                               black.or.slope=1,
-                                               hispanic.or.slope=1,
-                                               other.or.slope=1,
-                                               age1.or.slope=1,
-                                               age2.or.slope=1,
-                                               age3.or.slope=1,
-                                               age4.or.slope=1,
-                                               age5.or.slope=1)
-        
-        
-        comps = setup.background.leave.suppressed(comps,
-                                                  continuum.manager=data.managers$continuum,
-                                                  location=msa,
-                                                  years=smooth.from.year:(smooth.to.year+1))
-        
-        comps = setup.background.unsuppression(comps,
-                                                  continuum.manager=data.managers$continuum,
-                                                  location=msa)
-        
-        comps = set.background.unsuppression.ors(comps,
-                                                    msm.or.intercept=1,
-                                                    heterosexual.or.intercept=1,
-                                                    idu.or.intercept=1,
-                                                    black.or.intercept=1,
-                                                    hispanic.or.intercept=1,
-                                                    other.or.intercept=1,
-                                                    age1.or.intercept=1,
-                                                    age2.or.intercept=1,
-                                                    age3.or.intercept=1,
-                                                    age4.or.intercept=1,
-                                                    age5.or.intercept=1,
-                                                    
-                                                    total.or.slope=1,
-                                                    msm.or.slope=1,
-                                                    heterosexual.or.slope=1,
-                                                    idu.or.slope=1,
-                                                    black.or.slope=1,
-                                                    hispanic.or.slope=1,
-                                                    other.or.slope=1,
-                                                    age1.or.slope=1,
-                                                    age2.or.slope=1,
-                                                    age3.or.slope=1,
-                                                    age4.or.slope=1,
-                                                    age5.or.slope=1)
-        
-        comps = setup.background.linkage(comps,
+        #- Linkage -#
+        comps = setup.background.linkage(components=comps,
                                          continuum.manager=data.managers$continuum,
                                          location=msa,
-                                         years=smooth.from.year:(smooth.to.year+1))
+                                         years=smooth.years,
+                                         linkage.ramp.year=ramp.year,
+                                         linkage.ramp.multiplier=1,
+                                         time.to.link.vs.disengage=1/4 #3 months
+        )
         
-        comps = set.background.linkage.ors(comps,
-                                               msm.or.intercept=1,
-                                               heterosexual.or.intercept=1,
-                                               idu.or.intercept=1,
-                                               black.or.intercept=1,
-                                               hispanic.or.intercept=1,
-                                               other.or.intercept=1,
-                                               age1.or.intercept=1,
-                                               age2.or.intercept=1,
-                                               age3.or.intercept=1,
-                                               age4.or.intercept=1,
-                                               age5.or.intercept=1,
-                                               
-                                               total.or.slope=1,
-                                               msm.or.slope=1,
-                                               heterosexual.or.slope=1,
-                                               idu.or.slope=1,
-                                               black.or.slope=1,
-                                               hispanic.or.slope=1,
-                                               other.or.slope=1,
-                                               age1.or.slope=1,
-                                               age2.or.slope=1,
-                                               age3.or.slope=1,
-                                               age4.or.slope=1,
-                                               age5.or.slope=1)
+        #- Naive -#
+        comps = setup.background(components=comps,
+                                 type='naive.to.suppressed',
+                                 years=smooth.years,
+                                 location=msa,
+                                 continuum.manager=data.managers$continuum,
+                                 convert.proportions.to.rates=F,
+                                 ramp.years=ramp.year,
+                                 ramp.multipliers=1
+        )
+        comps = setup.background(components=comps,
+                                 type='naive.to.disengaged',
+                                 years=smooth.years,
+                                 location=msa,
+                                 continuum.manager=data.managers$continuum,
+                                 convert.proportions.to.rates=T,
+                                 ramp.years=ramp.year,
+                                 ramp.multipliers=1
+        )
         
+        #- Failing -#
+        comps = setup.background(components=comps,
+                                 type='failing.to.suppressed',
+                                 years=smooth.years,
+                                 location=msa,
+                                 continuum.manager=data.managers$continuum,
+                                 convert.proportions.to.rates=T,
+                                 ramp.years=ramp.year,
+                                 ramp.multipliers=1
+        )
+        comps = setup.background(components=comps,
+                                 type='failing.to.disengaged',
+                                 years=smooth.years,
+                                 location=msa,
+                                 continuum.manager=data.managers$continuum,
+                                 convert.proportions.to.rates=T,
+                                 ramp.years=ramp.year,
+                                 ramp.multipliers=1
+        )
         
-        comps = setup.background.unsuppressed.to.disengaged(comps,
-                                               continuum.manager=data.managers$continuum,
-                                               location=msa)
+        #- Suppressed -#
+        comps = setup.background(components=comps,
+                                 type='suppressed.to.failing',
+                                 years=smooth.years,
+                                 location=msa,
+                                 continuum.manager=data.managers$continuum,
+                                 convert.proportions.to.rates=T,
+                                 ramp.years=ramp.year,
+                                 ramp.multipliers=1
+        )
+        comps = setup.background(components=comps,
+                                 type='suppressed.to.disengaged',
+                                 years=smooth.years,
+                                 location=msa,
+                                 continuum.manager=data.managers$continuum,
+                                 convert.proportions.to.rates=T,
+                                 ramp.years=ramp.year,
+                                 ramp.multipliers=1
+        )
         
-        comps = set.background.unsuppressed.to.disengaged.ors(comps,
-                                                 msm.or.intercept=1,
-                                                 heterosexual.or.intercept=1,
-                                                 idu.or.intercept=1,
-                                                 black.or.intercept=1,
-                                                 hispanic.or.intercept=1,
-                                                 other.or.intercept=1,
-                                                 age1.or.intercept=1,
-                                                 age2.or.intercept=1,
-                                                 age3.or.intercept=1,
-                                                 age4.or.intercept=1,
-                                                 age5.or.intercept=1,
-                                                 
-                                                 total.or.slope=1,
-                                                 msm.or.slope=1,
-                                                 heterosexual.or.slope=1,
-                                                 idu.or.slope=1,
-                                                 black.or.slope=1,
-                                                 hispanic.or.slope=1,
-                                                 other.or.slope=1,
-                                                 age1.or.slope=1,
-                                                 age2.or.slope=1,
-                                                 age3.or.slope=1,
-                                                 age4.or.slope=1,
-                                                 age5.or.slope=1)
+        #- Reengagement -#
+        comps = setup.background(components=comps,
+                                 type='reengagement',
+                                 years=smooth.years,
+                                 location=msa,
+                                 continuum.manager=data.managers$continuum,
+                                 convert.proportions.to.rates=T,
+                                 ramp.years=ramp.year,
+                                 ramp.multipliers=1
+        )
         
-        comps = setup.background.suppressed.to.disengaged(comps,
-                                                            continuum.manager=data.managers$continuum,
-                                                            location=msa)
+        #-- Starting ART --#
         
-        comps = set.background.suppressed.to.disengaged.ors(comps,
-                                                              msm.or.intercept=1,
-                                                              heterosexual.or.intercept=1,
-                                                              idu.or.intercept=1,
-                                                              black.or.intercept=1,
-                                                              hispanic.or.intercept=1,
-                                                              other.or.intercept=1,
-                                                              age1.or.intercept=1,
-                                                              age2.or.intercept=1,
-                                                              age3.or.intercept=1,
-                                                              age4.or.intercept=1,
-                                                              age5.or.intercept=1,
-                                                              
-                                                              total.or.slope=1,
-                                                              msm.or.slope=1,
-                                                              heterosexual.or.slope=1,
-                                                              idu.or.slope=1,
-                                                              black.or.slope=1,
-                                                              hispanic.or.slope=1,
-                                                              other.or.slope=1,
-                                                              age1.or.slope=1,
-                                                              age2.or.slope=1,
-                                                              age3.or.slope=1,
-                                                              age4.or.slope=1,
-                                                              age5.or.slope=1)
+        comps = setup.background.start.art(components=comps,
+                                           continuum.manager=data.managers$continuum)
         
-        comps = setup.background.reengagement(comps,
-                                                            continuum.manager=data.managers$continuum,
-                                                            location=msa,
-                                                            years=smooth.from.year:(smooth.to.year+1))
+        #- ORs -#
         
-        comps = set.background.reengagement.ors(comps,
-                                                              msm.or.intercept=1,
-                                                              heterosexual.or.intercept=1,
-                                                              idu.or.intercept=1,
-                                                              black.or.intercept=1,
-                                                              hispanic.or.intercept=1,
-                                                              other.or.intercept=1,
-                                                              age1.or.intercept=1,
-                                                              age2.or.intercept=1,
-                                                              age3.or.intercept=1,
-                                                              age4.or.intercept=1,
-                                                              age5.or.intercept=1,
-                                                              
-                                                              total.or.slope=1,
-                                                              msm.or.slope=1,
-                                                              heterosexual.or.slope=1,
-                                                              idu.or.slope=1,
-                                                              black.or.slope=1,
-                                                              hispanic.or.slope=1,
-                                                              other.or.slope=1,
-                                                              age1.or.slope=1,
-                                                              age2.or.slope=1,
-                                                              age3.or.slope=1,
-                                                              age4.or.slope=1,
-                                                              age5.or.slope=1)
+        types.to.set = c('linkage',
+                         'naive.to.suppressed', 'naive.to.disengaged',
+                         'failing.to.suppressed', 'failing.to.disengaged',
+                         'suppressed.to.failing', 'suppressed.to.disengaged',
+                         'reengagement',
+                         'start.art')
+        
+        for (type in types.to.set)
+        {
+            do.set.background.ors(components=comps,
+                                  component.name=type,
+                                  msm.or.intercept=1,
+                                  heterosexual.or.intercept=1,
+                                  idu.or.intercept=1,
+                                  msm.idu.or.intercept=1,
+                                  black.or.intercept=1,
+                                  hispanic.or.intercept=1,
+                                  other.or.intercept=1,
+                                  age1.or.intercept=1,
+                                  age2.or.intercept=1,
+                                  age3.or.intercept=1,
+                                  age4.or.intercept=1,
+                                  age5.or.intercept=1,
+                                  
+                                  total.or.slope=1,
+                                  
+                                  msm.or.slope=1,
+                                  heterosexual.or.slope=1,
+                                  idu.or.slope=1,
+                                  msm.idu.or.slope=1,
+                                  black.or.slope=1,
+                                  hispanic.or.slope=1,
+                                  other.or.slope=1,
+                                  age1.or.slope=1,
+                                  age2.or.slope=1,
+                                  age3.or.slope=1,
+                                  age4.or.slope=1,
+                                  age5.or.slope=1
+            )
+        }
     }
-    
     
     #-- Future slopes --#
     comps = set.future.background.slopes(comps,
-                                         future.testing.slope.or=1,
-                                         future.prep.slope.or=1,
+                                         testing=1,
+                                         prep=1,
                                          after.year=2020)
     
     
     if (is.null(settings$VERSION) || settings$VERSION=='collapsed_1.0')
         comps = set.future.background.slopes(comps,
-                                             future.supression.slope.or=1,
+                                             suppression=1,
                                              after.year=2020)
     
     
     if (!is.null(settings$VERSION) && settings$VERSION=='expanded_1.0')
         comps = set.future.background.slopes(comps,
-                                             future.newly.suppressed.slope.or=1,
-                                             future.unsuppression.slope.or=1,
-                                             future.linkage.slope.or=1,
-                                             future.unsuppressed.to.disengaged.slope.or=1,
-                                             future.suppressed.to.disengaged.slope.or=1,
-                                             future.reengagement.slope.or=1,
+                                             
+                                             linkage = 1,
+                                             
+                                             # naive
+                                             naive.to.suppressed = 1,
+                                             naive.to.disengaged = 1,
+                                             
+                                             # failing
+                                             failing.to.suppressed = 1,
+                                             failing.to.disengaged = 1,
+                                             
+                                             # to failing
+                                             suppressed.to.failing = 1,
+                                             suppressed.to.disengaged = 1,
+                                             
+                                             # reengagement
+                                             reengagement = 1,
+                                             
+                                             # start ART
+                                             start.art = 1,
+                                             
                                              after.year=2020)
     
     #-- Needle Exchange --#
@@ -517,15 +469,24 @@ setup.components.for.msa <- function(msa,
                                       zero.prep.year=zero.prep.year)
     
     comps = set.background.change.to.years(comps,
-                                           testing.change.to.year=smooth.to.year,
-                                           suppression.change.to.year=smooth.to.year,
-                                           prep.change.to.year=smooth.to.year,
-                                           newly.suppressed=smooth.to.year,
-                                           unsuppression=smooth.to.year,
+                                           testing=smooth.to.year,
+                                           suppression=smooth.to.year,
+                                           prep=smooth.to.year,
+                                           
                                            linkage=smooth.to.year,
-                                           unsuppressed.to.disengaged=smooth.to.year,
-                                           suppressed.to.disengaged.change.to.year=smooth.to.year,
-                                           reengagement.change.to.year=smooth.to.year)
+                                           
+                                           naive.to.suppressed=smooth.to.year,
+                                           naive.to.disengaged=smooth.to.year,
+                                           
+                                           failing.to.suppressed=smooth.to.year,
+                                           failing.to.disengaged=smooth.to.year,
+                                           
+                                           suppressed.to.failing=smooth.to.year,
+                                           suppressed.to.disengaged=smooth.to.year,
+                                           
+                                           reengagement=smooth.to.year,
+                                           
+                                           start.art = smooth.to.year)
     
     #-- Transmission --#
     if (verbose)

@@ -204,7 +204,7 @@ create.prep.interventions.v2 <- function(start.year=2023,
     #SCENARIO 1
     baseline.to.lai = create.intervention(ALL.MSM,
                                           BASELINE.TO.INJ.COVERAGE,
-                                          BASELINE.TO.LAI.EFFICACY,oral.prep.rr.dist,inj.vs.oral.hr.dist, oral.prep.persistence.dist, inj.vs.oral.discontinuation.rr.dist)
+                                          BASELINE.TO.INJ.EFFICACY,oral.prep.rr.dist,inj.vs.oral.hr.dist, oral.prep.persistence.dist, inj.vs.oral.discontinuation.rr.dist)
     INTERVENTION.MANAGER = register.intervention(baseline.to.lai, code=paste0('msm.baseline.lai', suffix),
                                                  name='Baseline LAI PrEP on MSM',
                                                  manager = INTERVENTION.MANAGER,

@@ -53,13 +53,22 @@ clear.calibration.dependencies <- function(components)
                                                          'idu.transmissibility.rr.by.race','sexual.transmissibility.rr.by.race'),
                         total.suppressed.or='background.suppression',
                         total.future.suppressed.slope.or='background.suppression',
+                        prep.rr = c('prep.rr.heterosexual','prep.rr.msm','prep.rr.idu'),
                         other=c('background.prep',
                                 'background.linkage',
-                                'background.newly.suppressed',
-                                'background.unsuppression',
+                                
+                                'background.naive.to.suppressed',
+                                'background.naive.to.disengaged',
+                                'background.start.art',
+                                
+                                'background.failing.to.suppressed',
+                                'background.failing.to.disengaged',
+                                
+                                'background.suppressed.to.failing',
                                 'background.suppressed.to.disengaged',
-                                'background.unsuppressed.to.disengaged',
+                                
                                 'background.reengagement'),
+                        
                         aging='aging',
                         idu.transitions=c('incident.idu','idu.remission','idu.relapse'),
                         global.trate=c('global.sexual.transmission.rates','global.idu.transmission.rates'),

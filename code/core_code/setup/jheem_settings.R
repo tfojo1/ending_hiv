@@ -35,7 +35,14 @@ VERSION.MANAGER = register.settings(VERSION.MANAGER,
 SETTINGS.EXPANDED.CONTINUUM = list(AGE_CUTOFFS = SETTINGS.COLLAPSED.CONTINUUM$AGE_CUTOFFS,
                                     RACES = BLACK.HISPANIC.OTHER,
                                     RISK_STRATA = SETTINGS.COLLAPSED.CONTINUUM$RISK_STRATA,
-                                    CONTINUUM_OF_CARE = c('undiagnosed', 'undiagnosed_from_prep', 'unengaged', 'engaged_unsuppressed', 'engaged_suppressed', 'disengaged'),
+                                    CONTINUUM_OF_CARE = c('undiagnosed', 
+                                                          'undiagnosed_from_prep', 
+                                                          'unengaged', 
+                                                          'engaged_unsuppressed_naive',
+                                                          'engaged_unsuppressed_failing', 
+                                                          'engaged_suppressed', 
+                                                          'disengaged_naive',
+                                                          'disengaged_failing'),
                                     CD4_STRATA = SETTINGS.COLLAPSED.CONTINUUM$CD4_STRATA,
                                     SUBPOPULATIONS = SETTINGS.COLLAPSED.CONTINUUM$SUBPOPULATIONS,
                                     SEXES = SETTINGS.COLLAPSED.CONTINUUM$SEXES)
@@ -50,7 +57,9 @@ SETTINGS.EXPANDED.CONTINUUM$FIRST_DIAGNOSED_STATE = SETTINGS.EXPANDED.CONTINUUM$
 SETTINGS.EXPANDED.CONTINUUM$AGES = make.age.strata(SETTINGS.EXPANDED.CONTINUUM$AGE_CUTOFFS)
 SETTINGS.EXPANDED.CONTINUUM$DIAGNOSED_STATES = setdiff(SETTINGS.EXPANDED.CONTINUUM$CONTINUUM_OF_CARE, SETTINGS.EXPANDED.CONTINUUM$UNDIAGNOSED_STATES)
 SETTINGS.EXPANDED.CONTINUUM$SUPPRESSED_STATES = 'engaged_suppressed'
-SETTINGS.EXPANDED.CONTINUUM$ENGAGED_STATES = c("engaged_unsuppressed", "engaged_suppressed")
+SETTINGS.EXPANDED.CONTINUUM$ENGAGED_STATES = c("engaged_unsuppressed_naive", 
+                                               "engaged_unsuppressed_failing", 
+                                               "engaged_suppressed")
 SETTINGS.EXPANDED.CONTINUUM$IS_CONTINUUM_COLLAPSED = F
 SETTINGS.EXPANDED.CONTINUUM$VERSION = 'expanded_1.0'
 

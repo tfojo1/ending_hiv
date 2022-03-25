@@ -72,15 +72,11 @@ setup.initial.mcmc.for.msa <- function(msa,
     
     # If the starting parameters don't match what we need for the version
     #  start at the median values
+    
+    prior = get.parameters.prior.for.version(VERSION.MANAGER, version=version)
     starting.parameters.to.use = suppressWarnings(get.medians(prior))
     matching.names = intersect(names(starting.parameters), names(starting.parameters.to.use))
     starting.parameters.to.use[matching.names] = starting.parameters[matching.names]
-    
- #   print("HACKING START VALUES FOR CROI 2022 FOR MELISSA")
-   # starting.parameters.to.use['heterosexual.proportion.lost.or'] = 
-     #   starting.parameters.to.use['msm.proportion.lost.or'] = 
-     #   starting.parameters.to.use['msm.idu.proportion.lost.or'] = 
-      #  starting.parameters.to.use['idu.proportion.lost.or'] = 2
     
     start.value.generator = function(n){
         if (n==1)
@@ -115,6 +111,8 @@ setup.initial.mcmc.for.msa <- function(msa,
         init.sds[init.sds>1] = (param.medians)[init.sds>1] / 40
         init.sds[grepl('peak.*mult', names(init.sds))] = init.sds[grepl('peak.*mult', names(init.sds))] / 16
         init.sds = init.sds * 2
+        
+        init.sds[init.sds==0] = 1/40 #for z-scores
         
         initial.cov.mat = diag(init.sds^2)
         
@@ -156,10 +154,12 @@ setup.initial.mcmc.for.msa <- function(msa,
     )
 }
 
-create.start.value.generator.for.msa <- function(msa)
+create.start.value.generator.for.msa <- function(msa, 
+                                                 version,
+                                                 initial.dir='systematic_initial')
 {
-    files = list.files(file.path(SYSTEMATIC.ROOT.DIR, 'systematic_initial'))
-    full.files = list.files(file.path(SYSTEMATIC.ROOT.DIR, 'systematic_initial'), full.names = T)
+    files = list.files(file.path(SYSTEMATIC.ROOT.DIR, initial.dir))
+    full.files = list.files(file.path(SYSTEMATIC.ROOT.DIR, initial.dir), full.names = T)
     
     mask = grepl(msa, files)
     if (!any(mask))
@@ -167,7 +167,9 @@ create.start.value.generator.for.msa <- function(msa)
     load(full.files[mask][sum(mask)])
     
     simset = extract.simset(mcmc, additional.burn=mcmc@n.iter/2)
-    sampling.dist = create.starting.sampling.distribution(simset)
+    prior = get.parameters.prior.for.version(VERSION.MANAGER, version=version)
+    
+    sampling.dist = create.starting.sampling.distribution(simset, prior = prior)
     save(sampling.dist, file=file.path(SYSTEMATIC.ROOT.DIR, 'starting_value_generators',
                                        paste0(msa, '.Rdata')))
 }
@@ -177,9 +179,10 @@ create.start.value.generator.for.msa <- function(msa)
 ##-----------------------##
 
 setup.parallel.mcmc.for.msa <- function(msa,
+                                        version='collapsed_1.0',
                                         likelihood=NULL,
                                         prior=parameters.prior,
-                                        parameter.var.blocks = PARAMETER.VAR.BLOCKS.1,
+                                        parameter.var.blocks = get.parameter.sampling.blocks.for.version(VERSION.MANAGER, version),
                                         start.value.generator=NULL,
                                         chains=4,
                                         n.iter=100000,
@@ -188,6 +191,7 @@ setup.parallel.mcmc.for.msa <- function(msa,
                                         max.sim.time=20,
                                         save.dir=file.path(SYSTEMATIC.ROOT.DIR, 'systematic_parallel'),
                                         cache.dir=file.path(SYSTEMATIC.ROOT.DIR, 'systematic_caches'),
+                                        initial.dir=file.path(SYSTEMATIC.ROOT.DIR, 'systematic_initial'),
                                         update.frequency=200,
                                         cache.frequency=CACHE.FREQUENCY,
                                         save.suffix='',
@@ -211,8 +215,8 @@ setup.parallel.mcmc.for.msa <- function(msa,
     # Pull Initial MCMC
     if (verbose)
         print("Loading the initial MCMC")
-    files = list.files(file.path(SYSTEMATIC.ROOT.DIR, 'systematic_initial'))
-    full.files = list.files(file.path(SYSTEMATIC.ROOT.DIR, 'systematic_initial'), full.names = T)
+    files = list.files(initial.dir)
+    full.files = list.files(initial.dir, full.names = T)
     
     mask = grepl(msa, files)
     if (!any(mask))
@@ -223,7 +227,11 @@ setup.parallel.mcmc.for.msa <- function(msa,
     if (verbose)
         print("Creating starting value generator")
     simset = extract.simset(mcmc, additional.burn=mcmc@n.iter/2)
-    start.value.generator = create.starting.sampling.distribution(simset, correlated.sd.inflation = .75, uncorrelated.sd.inflation = .5)
+    prior = get.parameters.prior.for.version(VERSION.MANAGER, version=version)
+    start.value.generator = create.starting.sampling.distribution(simset, 
+                                                                  prior = prior,
+                                                                  correlated.sd.inflation = .75, 
+                                                                  uncorrelated.sd.inflation = .5)
     
     # Pull chain state variables
     chain.state = mcmc@chain.states[[1]]
@@ -234,6 +242,7 @@ setup.parallel.mcmc.for.msa <- function(msa,
     
     # Pass to sub function
     setup.mcmc.for.msa(msa=msa,
+                       version=version,
                        likelihood=likelihood,
                        prior=prior,
                        parameter.var.blocks=parameter.var.blocks,
@@ -267,7 +276,7 @@ setup.mcmc.for.msa <- function(msa,
                                version,
                                likelihood=NULL,
                                prior=parameters.prior,
-                               parameter.var.blocks = PARAMETER.VAR.BLOCKS.1,
+                               parameter.var.blocks = get.parameter.sampling.blocks.for.version(VERSION.MANAGER, version),
                                start.value.generator=NULL,
                                chains=4,
                                n.iter=50000,
@@ -338,7 +347,7 @@ setup.mcmc.for.msa <- function(msa,
             print("Running initial simulation to plot")
         init.sim = run.simulation(first.start.values)
 #        print(plot.calibration.risk(init.sim) + ggtitle(paste0("Initial Sim: ", msa.names(msa))))
-        print(plot.calibration.sex(init.sim, data.types='prep') + ggtitle(paste0("Initial Sim: ", msa.names(msa))) +
+        print(simplot(init.sim, data.types=c('new','prevalence')) + ggtitle(paste0("Initial Sim: ", msa.names(msa))) +
             theme(plot.title=element_text(hjust=1)))
     }
     
@@ -390,6 +399,8 @@ setup.mcmc.for.msa <- function(msa,
     logit.transform.mask = grepl('max.proportion', names(transformations)) &
         !grepl('\\.or', names(transformations))
     transformations[logit.transform.mask] = 'logit'
+    identity.transform.mask = grepl('.z$', prior@var.names)
+    transformations[identity.transform.mask] = 'identity'
     
     ctrl = create.adaptive.blockwise.metropolis.control(var.names=prior@var.names,
                                                         simulation.function=run.simulation,

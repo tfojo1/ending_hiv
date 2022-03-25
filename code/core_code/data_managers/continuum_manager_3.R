@@ -24,6 +24,126 @@ get.continuum.model<- function(continuum.manager,
 }
 
 
+get.suppression.model <- function(cm,
+                                  location)
+{
+    get.continuum.model(cm, type='suppression', location)
+}
+
+#Returns a list with 3 components, representing a linear log-odds model of testing
+# $intercept - an age x race x sex x risk array of log-odds intercepts
+# $slope - an age x race x sex x risk array of log-odds slopes (relative to time)
+# $anchor year - the year that corresponds to the intercept
+
+
+get.testing.model <- function(cm,
+                              location,
+                              population)
+{
+    
+    get.continuum.model(continuum.manager=cm, type='testing', location=location)
+ # list(intercept = cm$testing$stratified.log.odds.intercept,
+  #     slope = cm$testing$stratified.log.odds.slope,
+   #    anchor.year = cm$testing$anchor.year,
+    #   max.proportion = cm$testing$max.proportion)
+  
+  #    OLD.get.testing.model(cm, location, population)
+}
+
+
+##---------------------------##
+##-- GETTING TESTING RATES --##
+##---------------------------##
+
+get.proportion.ever.tested <- function(cm, location)
+{
+    location.mask = cm$testing$total.ever.tested$location==location
+    if (any(location.mask))
+    {
+        list(ever.tested = cm$testing$total.ever.tested$frac.ever[location.mask],
+             sample.size = cm$testing$total.ever.tested$sample.size[location.mask],
+             years = cm$testing$total.ever.tested$year[location.mask])
+    }
+    else
+        NULL
+}
+
+get.proportion.ever.tested.in.state.msas <- function(cm, location)
+{
+    location.states = states.for.msa(location)
+    locations = unique(cm$testing$total.ever.tested$location)
+    same.state.mask = sapply(locations, function(loc){
+        states.for.loc = states.for.msa(loc)
+        any(sapply(location.states, function(st){
+            any(st == states.for.loc)
+        }))
+    })
+    if (any(same.state.mask))
+    {
+        locations = locations[same.state.mask]
+        location.mask = sapply(cm$testing$total.ever.tested$location, function(loc){
+            any(loc==locations)
+        })
+    }
+    else
+        location.mask = T
+    
+    years = sort(unique(cm$testing$total.ever.tested$year[location.mask]))
+    ever.tested = sapply(years, function(year){
+        year.mask = location.mask & cm$testing$total.ever.tested$year == year
+        sum(cm$testing$total.ever.tested$frac.ever[year.mask] * cm$testing$total.ever.tested$sample.size[year.mask]) /
+            sum(cm$testing$total.ever.tested$sample.size[year.mask])
+    })
+    sample.size = sapply(years, function(year){
+        year.mask = location.mask & cm$testing$total.ever.tested$year == year
+        ceiling(mean(cm$testing$total.ever.tested$sample.size[year.mask]))
+    })
+    
+    list(ever.tested=ever.tested,
+         sample.size=sample.size,
+         years=years)
+}
+
+get.proportion.ever.tested.in.states <- function(cm,
+                                                 states,
+                                                 age=F,
+                                                 race=F,
+                                                 sex=F)
+{
+    if (age)
+    {
+        if (length(states)==1)
+            rv = list(numerators = cm$state.testing$numerators.age[,states,],
+                      denominators = cm$state.testing$denominators.age[,states,])
+        else
+            rv = list(numerators = apply(cm$state.testing$numerators.age[,states,], c('year','age'), sum, na.rm=T),
+                      denominators = apply(cm$state.testing$denominators.age[,states,], c('year','age'), sum, na.rm=T))
+    }
+    else if (race)
+    {
+        if (length(states)==1)
+            rv = list(numerators = cm$state.testing$numerators.race[,states,],
+                      denominators = cm$state.testing$denominators.race[,states,])
+        else
+            rv = list(numerators = apply(cm$state.testing$numerators.race[,states,], c('year','race'), sum, na.rm=T),
+                      denominators = apply(cm$state.testing$denominators.race[,states,], c('year','race'), sum, na.rm=T))
+    }
+    else if (sex)
+    {
+        if (length(states)==1)
+            rv = list(numerators = cm$state.testing$numerators.sex[,states,],
+                      denominators = cm$state.testing$denominators.sex[,states,])
+        else
+            rv = list(numerators = apply(cm$state.testing$numerators.sex[,states,], c('year','sex'), sum, na.rm=T),
+                      denominators = apply(cm$state.testing$denominators.sex[,states,], c('year','sex'), sum, na.rm=T))
+    }
+    else
+        stop("One of the arguments 'age', 'sex', or 'race' must be set to TRUE")
+    
+    rv$years = as.numeric(dimnames(rv$numerators)[['year']])
+    rv
+}
+
 
 ####----------------------####
 ####----------------------####
@@ -61,6 +181,7 @@ create.continuum.manager <- function(dir='cleaned_data/',
                                      
                                      max.naive.retention = 0.98,
                                      max.failing.retention = 0.95,
+                                     max.suppressed.retention = 0.98,
                                      
                                      verbose=T
 )
@@ -71,6 +192,7 @@ create.continuum.manager <- function(dir='cleaned_data/',
     
     cm = setup.expanded.continuum.models(cm,
                                          file=expanded.continuum.file,
+                                         settings=settings,
                                          
                                          max.naive.to.suppressed.proportion = max.naive.to.suppressed.proportion,
                                          max.failing.to.suppressed.proportion = max.failing.to.suppressed.proportion,
@@ -128,7 +250,8 @@ create.continuum.manager <- function(dir='cleaned_data/',
 
 #@melissa - fill in here
 setup.expanded.continuum.models <- function(cm,
-                                            file,
+                                            file, 
+                                            settings,
                                             
                                             max.naive.to.suppressed.proportion,
                                             max.failing.to.suppressed.proportion,
@@ -146,20 +269,244 @@ setup.expanded.continuum.models <- function(cm,
                                             
                                             verbose=T)
 {
+    if (verbose)
+        print("Setting up time to start ART model")
+    
+    cm = setup.start.art.model(cm,
+                               settings = settings)
+  
     load(file) #-->output list
     
     if (verbose)
-        print("Setting up naive-to-suppressed")
-    #cm$naive.to.suppressed = setup.logistic.model(anchor.year=output$anchor.year,
-     #                                             max.proportion=x,
+      print("Setting up naive-to-suppressed")
+    
+    cm$naive.to.suppressed = setup.logistic.model(anchor.year=output$anchor.year,
+                                                  settings = settings,
+                                                  max.proportion=max.naive.to.suppressed.proportion,
                                                   
-      #                                            total.intercept = output$naive.to.supp.noslopes['intercept'])
+                                                  total.intercept = output$naive.to.suppressed.noslopes.coefficients['(Intercept)'],
+                                                  msm.intercept = 0,
+                                                  msm.idu.intercept = output$naive.to.suppressed.noslopes.coefficients['sex.riskmsm_idu'],
+                                                  heterosexual.intercept = 0,
+                                                  male.heterosexual.intercept=output$naive.to.suppressed.noslopes.coefficients['sex.riskheterosexual_male'],
+                                                  female.heterosexual.intercept=output$naive.to.suppressed.noslopes.coefficients['sex.riskheterosexual_female'],
+                                                  idu.intercept = 0,
+                                                  male.idu.intercept = output$naive.to.suppressed.noslopes.coefficients['sex.riskidu_male'],
+                                                  female.idu.intercept = output$naive.to.suppressed.noslopes.coefficients['sex.riskidu_female'],
+                                                  
+                                                  black.intercept=output$naive.to.suppressed.noslopes.coefficients['raceblack'],
+                                                  hispanic.intercept=output$naive.to.suppressed.noslopes.coefficients['racehispanic'],
+                                                  other.intercept=0,
+                                                  
+                                                  age1.intercept=output$naive.to.suppressed.noslopes.coefficients['age.category13-25'],
+                                                  age2.intercept=output$naive.to.suppressed.noslopes.coefficients['age.category25-35'],
+                                                  age3.intercept=0,
+                                                  age4.intercept=output$naive.to.suppressed.noslopes.coefficients['age.category45-55'],
+                                                  age5.intercept=output$naive.to.suppressed.noslopes.coefficients['age.category55+'],
+                                                  
+                                                  total.slope = output$naive.to.suppressed.noslopes.coefficients['relative.year'])
     
+    if (verbose)
+      print("Setting up naive-to-lost")
+    cm$naive.to.disengaged = setup.logistic.model(anchor.year=output$anchor.year,
+                                                  max.proportion=1-min.naive.retention,
+                                                  min.proportion=1-max.naive.retention,     
+                                                  settings=settings,
+                                            
+                                                  total.intercept = output$naive.to.lost.noslopes.coefficients['(Intercept)'],
+                                                  msm.intercept = 0,
+                                                  msm.idu.intercept = output$naive.to.lost.noslopes.coefficients['sex.riskmsm_idu'],
+                                                  heterosexual.intercept = 0,
+                                                  male.heterosexual.intercept=output$naive.to.lost.noslopes.coefficients['sex.riskheterosexual_male'],
+                                                  female.heterosexual.intercept=output$naive.to.lost.noslopes.coefficients['sex.riskheterosexual_female'],
+                                                  idu.intercept = 0,
+                                                  male.idu.intercept = output$naive.to.lost.noslopes.coefficients['sex.riskidu_male'],
+                                                  female.idu.intercept = output$naive.to.lost.noslopes.coefficients['sex.riskidu_female'],
+                                                  
+                                                  black.intercept=output$naive.to.lost.noslopes.coefficients['raceblack'],
+                                                  hispanic.intercept=output$naive.to.lost.noslopes.coefficients['racehispanic'],
+                                                  other.intercept=0,
+                                                  
+                                                  age1.intercept=output$naive.to.lost.noslopes.coefficients['age.category13-25'],
+                                                  age2.intercept=output$naive.to.lost.noslopes.coefficients['age.category25-35'],
+                                                  age3.intercept=0,
+                                                  age4.intercept=output$naive.to.lost.noslopes.coefficients['age.category45-55'],
+                                                  age5.intercept=output$naive.to.lost.noslopes.coefficients['age.category55+'],
+                                                  
+                                                  total.slope = output$naive.to.lost.noslopes.coefficients['relative.year'])
     
+    if (verbose)
+      print("Setting up failing-to-suppressed")
+    cm$failing.to.suppressed = setup.logistic.model(anchor.year=output$anchor.year,
+                                            max.proportion=max.failing.to.suppressed.proportion,     
+                                            settings=settings,
+                                            
+                                            total.intercept = output$failing.to.suppressed.noslopes.coefficients['(Intercept)'],
+                                            msm.intercept = 0,
+                                            msm.idu.intercept = output$failing.to.suppressed.noslopes.coefficients['sex.riskmsm_idu'],
+                                            heterosexual.intercept = 0,
+                                            male.heterosexual.intercept=output$failing.to.suppressed.noslopes.coefficients['sex.riskheterosexual_male'],
+                                            female.heterosexual.intercept=output$failing.to.suppressed.noslopes.coefficients['sex.riskheterosexual_female'],
+                                            idu.intercept = 0,
+                                            male.idu.intercept = output$failing.to.suppressed.noslopes.coefficients['sex.riskidu_male'],
+                                            female.idu.intercept = output$failing.to.suppressed.noslopes.coefficients['sex.riskidu_female'],
+                                            
+                                            black.intercept=output$failing.to.suppressed.noslopes.coefficients['raceblack'],
+                                            hispanic.intercept=output$failing.to.suppressed.noslopes.coefficients['racehispanic'],
+                                            other.intercept=0,
+                                            
+                                            age1.intercept=output$failing.to.suppressed.noslopes.coefficients['age.category13-25'],
+                                            age2.intercept=output$failing.to.suppressed.noslopes.coefficients['age.category25-35'],
+                                            age3.intercept=0,
+                                            age4.intercept=output$failing.to.suppressed.noslopes.coefficients['age.category45-55'],
+                                            age5.intercept=output$failing.to.suppressed.noslopes.coefficients['age.category55+'],
+                                            
+                                            total.slope = output$failing.to.suppressed.noslopes.coefficients['relative.year'])
+    
+    if (verbose)
+      print("Setting up failing-to-lost")
+    cm$failing.to.disengaged = setup.logistic.model(anchor.year=output$anchor.year,
+                                                    max.proportion=1-min.failing.retention,
+                                                    min.proportion=1-max.failing.retention,     
+                                                    settings=settings,
+                                                    
+                                                    total.intercept = output$failing.to.lost.noslopes.coefficients['(Intercept)'],
+                                                    msm.intercept = 0,
+                                                    msm.idu.intercept = output$failing.to.lost.noslopes.coefficients['sex.riskmsm_idu'],
+                                                    heterosexual.intercept = 0,
+                                                    male.heterosexual.intercept=output$failing.to.lost.noslopes.coefficients['sex.riskheterosexual_male'],
+                                                    female.heterosexual.intercept=output$failing.to.lost.noslopes.coefficients['sex.riskheterosexual_female'],
+                                                    idu.intercept = 0,
+                                                    male.idu.intercept = output$failing.to.lost.noslopes.coefficients['sex.riskidu_male'],
+                                                    female.idu.intercept = output$failing.to.lost.noslopes.coefficients['sex.riskidu_female'],
+                                                    
+                                                    black.intercept=output$failing.to.lost.noslopes.coefficients['raceblack'],
+                                                    hispanic.intercept=output$failing.to.lost.noslopes.coefficients['racehispanic'],
+                                                    other.intercept=0,
+                                                    
+                                                    age1.intercept=output$failing.to.lost.noslopes.coefficients['age.category13-25'],
+                                                    age2.intercept=output$failing.to.lost.noslopes.coefficients['age.category25-35'],
+                                                    age3.intercept=0,
+                                                    age4.intercept=output$failing.to.lost.noslopes.coefficients['age.category45-55'],
+                                                    age5.intercept=output$failing.to.lost.noslopes.coefficients['age.category55+'],
+                                                    
+                                                    total.slope = output$failing.to.lost.noslopes.coefficients['relative.year'])
+    
+    if (verbose)
+      print("Setting up suppressed-to-failing")
+    cm$suppressed.to.failing = setup.logistic.model(anchor.year=output$anchor.year,
+                                              min.proportion=min.suppressed.to.failing.proportion,     
+                                              settings=settings,
+                                              
+                                              total.intercept = output$suppressed.to.failing.noslopes.coefficients['(Intercept)'],
+                                              msm.intercept = 0,
+                                              msm.idu.intercept = output$suppressed.to.failing.noslopes.coefficients['sex.riskmsm_idu'],
+                                              heterosexual.intercept = 0,
+                                              male.heterosexual.intercept=output$suppressed.to.failing.noslopes.coefficients['sex.riskheterosexual_male'],
+                                              female.heterosexual.intercept=output$suppressed.to.failing.noslopes.coefficients['sex.riskheterosexual_female'],
+                                              idu.intercept = 0,
+                                              male.idu.intercept = output$suppressed.to.failing.noslopes.coefficients['sex.riskidu_male'],
+                                              female.idu.intercept = output$suppressed.to.failing.noslopes.coefficients['sex.riskidu_female'],
+                                              
+                                              black.intercept=output$suppressed.to.failing.noslopes.coefficients['raceblack'],
+                                              hispanic.intercept=output$suppressed.to.failing.noslopes.coefficients['racehispanic'],
+                                              other.intercept=0,
+                                              
+                                              age1.intercept=output$suppressed.to.failing.noslopes.coefficients['age.category13-25'],
+                                              age2.intercept=output$suppressed.to.failing.noslopes.coefficients['age.category25-35'],
+                                              age3.intercept=0,
+                                              age4.intercept=output$suppressed.to.failing.noslopes.coefficients['age.category45-55'],
+                                              age5.intercept=output$suppressed.to.failing.noslopes.coefficients['age.category55+'],
+                                              
+                                              total.slope = output$suppressed.to.failing.noslopes.coefficients['relative.year'])
+    
+    if (verbose)
+      print("Setting up suppressed-to-lost")
+    cm$suppressed.to.disengaged = setup.logistic.model(anchor.year=output$anchor.year,
+                                                    max.proportion=1-min.suppressed.retention,
+                                                    min.proportion=1-max.suppressed.retention,     
+                                                    settings=settings,
+                                                    
+                                                    total.intercept = output$suppressed.to.lost.noslopes.coefficients['(Intercept)'],
+                                                    msm.intercept = 0,
+                                                    msm.idu.intercept = output$suppressed.to.lost.noslopes.coefficients['sex.riskmsm_idu'],
+                                                    heterosexual.intercept = 0,
+                                                    male.heterosexual.intercept=output$suppressed.to.lost.noslopes.coefficients['sex.riskheterosexual_male'],
+                                                    female.heterosexual.intercept=output$suppressed.to.lost.noslopes.coefficients['sex.riskheterosexual_female'],
+                                                    idu.intercept = 0,
+                                                    male.idu.intercept = output$suppressed.to.lost.noslopes.coefficients['sex.riskidu_male'],
+                                                    female.idu.intercept = output$suppressed.to.lost.noslopes.coefficients['sex.riskidu_female'],
+                                                    
+                                                    black.intercept=output$suppressed.to.lost.noslopes.coefficients['raceblack'],
+                                                    hispanic.intercept=output$suppressed.to.lost.noslopes.coefficients['racehispanic'],
+                                                    other.intercept=0,
+                                                    
+                                                    age1.intercept=output$suppressed.to.lost.noslopes.coefficients['age.category13-25'],
+                                                    age2.intercept=output$suppressed.to.lost.noslopes.coefficients['age.category25-35'],
+                                                    age3.intercept=0,
+                                                    age4.intercept=output$suppressed.to.lost.noslopes.coefficients['age.category45-55'],
+                                                    age5.intercept=output$suppressed.to.lost.noslopes.coefficients['age.category55+'],
+                                                    
+                                                    total.slope = output$suppressed.to.lost.noslopes.coefficients['relative.year'])
+    
+    if (verbose)
+      print("Setting up disengaged-to-reengage")
+    cm$reengagement = setup.logistic.model(anchor.year=output$anchor.year,
+                                                 max.proportion=max.reengaged.proportion,     
+                                           settings=settings,
+                                                 
+                                                 total.intercept = output$disengaged.noslopes.coefficients['(Intercept)'],
+                                                 msm.intercept = 0,
+                                                 msm.idu.intercept = output$disengaged.noslopes.coefficients['sex.riskmsm_idu'],
+                                                 heterosexual.intercept = 0,
+                                                 male.heterosexual.intercept=output$disengaged.noslopes.coefficients['sex.riskheterosexual_male'],
+                                                 female.heterosexual.intercept=output$disengaged.noslopes.coefficients['sex.riskheterosexual_female'],
+                                                 idu.intercept = 0,
+                                                 male.idu.intercept = output$disengaged.noslopes.coefficients['sex.riskidu_male'],
+                                                 female.idu.intercept = output$disengaged.noslopes.coefficients['sex.riskidu_female'],
+                                                 
+                                                 black.intercept=output$disengaged.noslopes.coefficients['raceblack'],
+                                                 hispanic.intercept=output$disengaged.noslopes.coefficients['racehispanic'],
+                                                 other.intercept=0,
+                                                 
+                                                 age1.intercept=output$disengaged.noslopes.coefficients['age.category13-25'],
+                                                 age2.intercept=output$disengaged.noslopes.coefficients['age.category25-35'],
+                                                 age3.intercept=0,
+                                                 age4.intercept=output$disengaged.noslopes.coefficients['age.category45-55'],
+                                                 age5.intercept=output$disengaged.noslopes.coefficients['age.category55+'],
+                                                 
+                                                 total.slope = output$disengaged.noslopes.coefficients['relative.year'])
     
     # Return
     cm
 }
+
+
+##----------------------------##
+##-- SET UP START ART MODEL --##
+##----------------------------##
+
+setup.start.art.model <- function(cm,
+                                  settings)
+{
+    YEAR = 2010
+#    LATENCY = 10/12 #10 months
+    LATENCY = mean(c(1.54, 1.48)) #1.5 years
+    
+    rate = 1/LATENCY
+    p = 1-exp(-rate)
+    
+    cm$start.art = setup.logistic.model(anchor.year=YEAR,
+                                                  settings = settings,
+                                                  max.proportion=1,
+                                                  
+                                                  total.intercept = logit(p),
+                                                  total.slope = 0
+    )
+    
+    cm
+}
+
 
 ##--------------------------##
 ##-- SET UP LINKAGE MODEL --##
@@ -938,7 +1285,9 @@ setup.logistic.model <- function(anchor.year,
              msm = msm.intercept,
              msm.idu = msm.idu.intercept,
              female = female.heterosexual.intercept,
-             female.idu = female.idu.intercept
+             female.idu = female.idu.intercept,
+             
+             idu.in.remission.is.idu=idu.in.remission.is.idu
          ),
          
          slope = setup.array.from.coefficients(
@@ -964,7 +1313,9 @@ setup.logistic.model <- function(anchor.year,
              msm = msm.slope,
              msm.idu = msm.idu.slope,
              female = female.heterosexual.slope,
-             female.idu = female.idu.slope
+             female.idu = female.idu.slope,
+             
+             idu.in.remission.is.idu=idu.in.remission.is.idu
          ),
          
          log.ors = c(
@@ -1007,7 +1358,7 @@ setup.logistic.model <- function(anchor.year,
              age2.slope=age2.slope,
              age3.slope=age3.slope,
              age4.slope=age4.slope,
-             age5.slope=age5.slope,
+             age5.slope=age5.slope
          )
     ) 
 }
@@ -1034,7 +1385,9 @@ setup.array.from.coefficients <- function(settings,
                                           idu=0,
                                           msm.idu=0,
                                           female=0,
-                                          female.idu=0)
+                                          female.idu=0,
+                                          
+                                          idu.in.remission.is.idu)
 {
     dim.names = list(age = settings$AGES$labels,
                      race = settings$RACES,
@@ -1058,7 +1411,7 @@ setup.array.from.coefficients <- function(settings,
     non.idu.states = 'never_IDU'
     if (!idu.in.remission.is.idu)
         non.idu.states = c(non.idu.states, 'IDU_in_remission')
-    idu.states = setdiff(risks, non.idu.states)
+    idu.states = setdiff(settings$RISK_STRATA, non.idu.states)
     
     rv[,,'heterosexual_male',non.idu.states] = rv[,,'heterosexual_male',non.idu.states] + heterosexual.male
     rv[,,'heterosexual_male',idu.states] = rv[,,'heterosexual_male',idu.states] + heterosexual.male.idu

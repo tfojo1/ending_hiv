@@ -345,7 +345,7 @@ create.continuum.manager <- function(dir='cleaned_data/',
     
     if(!test){  
         if (verbose)
-        print('Reading Linkage')
+            print('Reading Linkage')
         cm = run.linkage.regressions(cm,
                                      dir=dir,
                                      anchor.year = linkage.anchor.year,
@@ -981,6 +981,58 @@ setup.retention <- function(cm,
     
     # return
     cm
+}
+##-----------------------------##
+##-- HELPER FOR LOGISTIC MODEL --##
+##-----------------------------##
+
+setup.logistic.model <- function(anchor.year,
+                                 max.proportion=1,
+                                 
+                                 total.intercept = 0,
+                                 msm.intercept = 0,
+                                 msm.idu.intercept = 0,
+                                 heterosexual.intercept = 0,
+                                 male.heterosexual.intercept=0,
+                                 female.heterosexual.intercept=0,
+                                 idu.intercept = 0,
+                                 male.idu.intercept = 0,
+                                 female.idu.intercept = 0,
+                                 
+                                 black.intercept=0,
+                                 hispanic.intercept=0,
+                                 other.intercept=0,
+                                 
+                                 age1.intercept=0,
+                                 age2.intercept=0,
+                                 age3.intercept=0,
+                                 age4.intercept=0,
+                                 age5.intercept=0,
+                                 
+                                 #Slopes
+                                 total.slope = 0,
+                                 msm.slope = 0,
+                                 msm.idu.slope = 0,
+                                 heterosexual.slope = 0,
+                                 male.heterosexual.slope=0,
+                                 female.heterosexual.slope=0,
+                                 idu.slope = 0,
+                                 male.idu.slope = 0,
+                                 female.idu.slope = 0,
+                                 
+                                 black.slope=0,
+                                 hispanic.slope=0,
+                                 other.slope=0,
+                                 
+                                 age1.slope=0,
+                                 age2.slope=0,
+                                 age3.slope=0,
+                                 age4.slope=0,
+                                 age5.slope=0
+                                
+                                 )
+{
+    
 }
 
 ##-----------------------------##

@@ -9,6 +9,8 @@ run.systematic.interventions <- function(simset,
                                          interventions=ALL.INTERVENTIONS,
                                          overwrite=F,
                                          compress=T,
+                                         pare.components=T,
+                                         compress.cd4=T,
                                          run.from.year=NULL,
                                          run.to.year=2030,
                                          verbose=T,
@@ -44,7 +46,7 @@ run.systematic.interventions <- function(simset,
             if (verbose)
                 print("Compressing baseline simset...")
         
-            save.simset(simset, dir=dst.dir, compress=compress)
+            save.simset(simset, dir=dst.dir, compress=compress, compress.cd4=compress.cd4, pare.components = pare.components)
         }
         
         if (overwrite || !file.exists(file.path(dst.dir, location, get.seed.filename(location))))
@@ -58,20 +60,24 @@ run.systematic.interventions <- function(simset,
     start.time = Sys.time()
     n.total.sim=0
     
-    for (int in interventions)
+    for (i in 1:length(interventions))
     {
+        int = interventions[[i]]
+        
         filename = get.simset.filename(location=location,
                                        intervention=int)
         int.name = get.intervention.name(int)
         if (!overwrite && file.exists(file.path(dst.dir, location, filename)))
         {
             if (verbose)
-                print(paste0("Skipping intervention: '", int.name, "' - already done"))
+                print(paste0(i, " of ", length(interventions), 
+                             ": Skipping intervention: '", int.name, "' - already done"))
         }
         else
         {
             if (verbose)
-                print(paste0("Running intervention: '", int.name, "' on ", base.simset@n.sim, " simulations..."))
+                print(paste0(i, " of ", length(interventions), 
+                             ": Running intervention: '", int.name, "' on ", base.simset@n.sim, " simulations..."))
             
             simset = run.simset.intervention(base.simset,
                                              intervention=int,
@@ -86,7 +92,7 @@ run.systematic.interventions <- function(simset,
                 print(paste0("Total runtime = ", get.timespan.text(run.time),
                              " (", get.timespan.text(run.time/n.total.sim), " per simulation on average)"))
             
-            save.simset(simset, dir=dst.dir, compress=compress)
+            save.simset(simset, dir=dst.dir, compress=compress, compress.cd4=compress.cd4, pare.components = pare.components)
         }
     }
     

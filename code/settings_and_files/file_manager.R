@@ -8,6 +8,9 @@ make.filenames.from.elements <- function(location,
                                         intervention.code,
                                         version=VERSION)
 {
+    if (grepl('_', version))
+        stop("version cannot contain '_' (underscore)")
+    
     paste0(version, "_", location, "_", intervention.code, ".Rdata")
 }
 
@@ -85,20 +88,22 @@ save.simset <- function(simset,
                         dir='mcmc_runs/visualization_simsets',
                         compress=!full,
                         pare.components=!full,
-#                        compress.years=max(attr(simset, 'run.from.year'), min(simset@simulations[[1]]$years)):max(simset@simulations[[1]]$years),
-                        full=F)
+                        compress.cd4=T,
+                        #compress.years=max(attr(simset, 'run.from.year'), min(simset@simulations[[1]]$years)):max(simset@simulations[[1]]$years),
+                        full=F,
+                        version=VERSION)
 {
     if (compress)
-        simset = compress.simset(simset)#, keep.years=compress.years)
+        simset = compress.simset(simset, keep.cd4=!compress.cd4)#, keep.years=compress.years)
     if (pare.components)
         simset = pare.simset.components(simset)
     
     location = attr(simset@simulations[[1]], 'location')
     
     if (full)
-        filename = get.full.filename(location)
+        filename = get.full.filename(location, version=version)
     else
-        filename = get.simset.filename(simset)
+        filename = get.simset.filename(simset, version=version)
     
     if (basename(dir) != location)
         dir = file.path(dir, location)
@@ -114,6 +119,9 @@ save.seed.simset <- function(simset,
                              max.seed.keep.from.year=2018, #for census totals
                              version=VERSION)
 {
+    if (grepl('_', version))
+        stop("version cannot contain '_' (underscore)")
+    
     if (is.null(attr(simset, 'run.from.year')))
         simset = prepare.simset.for.interventions(simset)
     
@@ -157,8 +165,11 @@ get.baseline.filename <- function(location,
                         version=version)
 }
 
-parse.simset.filenames <- function(filenames)
+parse.simset.filenames <- function(filenames, remove.rdata.extension=T)
 {
+    if (remove.rdata.extension)
+        filenames = gsub('\\.Rdata$', '', filenames, ignore.case = T)
+    
     splits = strsplit(filenames, "_")
     rv = sapply(splits, function(one.split){
         c(version=one.split[1],
