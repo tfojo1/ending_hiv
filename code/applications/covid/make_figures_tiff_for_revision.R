@@ -6,7 +6,7 @@ source('code/applications/covid/covid_plots.R')
 library(colorspace)
 
 ##-- SET-UP --##
-IMAGE.DIR = '../Manuscripts/covid_manuscript/CID submission/CID Revision/tiff_images'#'../CROI/CROI 2022 JHEEM-COVID'
+IMAGE.DIR = '../Manuscripts/covid_manuscript/CID submission/proofs'#'../CROI/CROI 2022 JHEEM-COVID'
 library(ggsci)
 PALETTE = pal_jama()
 COLORS = PALETTE(6)[-5]#[c(1,2,5,3,4)]
@@ -17,6 +17,9 @@ names(COLORS) = c('baseline',
                   'rebound.sexual.transmission',
                   'rebound.sex.delayed.hiv.care')
 
+DELAYED = 'covid.delayed.mobility'
+RAPID = 'covid.rapid.resumption.mobility'
+
 #BLACK AND WHITE COLORS
 COLORS[DELAYED] = 'gray65'
 COLORS[RAPID] = 'gray40'
@@ -25,7 +28,7 @@ DARK.COLORS = darken(darken(COLORS))
 names(DARK.COLORS) = names(COLORS)
 
 PNG.POINT.SIZE = 5
-RES = 600
+RES = 1200
 
 LINE.SIZE = .75
 

@@ -46,7 +46,7 @@ make.covid.scatterplot <- function(results=outcomes.arr,
                                    var2='incidence',
                                    var1.years=2020:2025,
                                    var2.years=2020:2025,
-                                   scenario1='base',
+                                   scenario1='covid.delayed.mobility',
                                    scenario2=scenario1,
                                    subtract.scenario1=NA,
                                    subtract.relative1=T,
@@ -569,6 +569,7 @@ make.covid.boxplot <- function(results=outcomes.arr,
                                      subtract.scenario=NA,
                                      interval.coverage=0.95,
                                      summary.stat=median,
+                               ylim=c(NA,NA),
                                      #style arguments
                                      colors=pal_jama(),
                                      ribbon.alpha=0.2,
@@ -672,6 +673,7 @@ make.location.boxplot <- function(results=outcomes.arr,
                                   interval2.coverage=0.5,
                                   summary.stat=median,
                                   loc.names=location.names,
+                                  ylim=c(NA,NA),
                                   colors=pal_jama(),
                                   box.width=0.5,
                                   n.spacers=1,
@@ -680,6 +682,9 @@ make.location.boxplot <- function(results=outcomes.arr,
                                   #style arguments
                                )
 {
+    if (is.na(interval.coverage))
+      interval.coverage=interval2.coverage
+  
     df = df.total = NULL
     alpha = (1-interval.coverage)/2
     alpha2 = (1-interval2.coverage)/2
@@ -825,7 +830,7 @@ make.location.boxplot <- function(results=outcomes.arr,
         ) +
         scale_fill_manual(values=colors, name='Scenario:', labels=COVID.SCENARIO.NAMES[names(colors)],
                           limits=names(colors)[1:(length(colors)-n.spacers)]) + 
-        scale_y_continuous(labels=x.label, name = outcome.axis.name)
+        scale_y_continuous(labels=x.label, name = outcome.axis.name, limits = ylim)
      
     if (vertical)
         rv = rv + coord_flip() 

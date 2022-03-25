@@ -189,11 +189,14 @@ extract.covid.results <- function(sim1,
                                                                            years=sim1.years,
                                                                            cd4='acute',
                                                                            continuum=setdiff(sim1$continuum, sim1$diagnosed.continuum.states))
-    
-    new.acute.dx[as.character(sim1.years)] = project.absolute.new.diagnoses(sim=sim1, keep.dimensions = 'year',
-                                                                      years=sim1.years,
-                                                                      cd4='acute')
-browser()    
+    tryCatch({
+        new.acute.dx[as.character(sim1.years)] = project.absolute.new.diagnoses(sim=sim1, keep.dimensions = 'year',
+                                                                          years=sim1.years,
+                                                                          cd4='acute')
+    },
+    error=function(e){
+        print("Unable to pull new acute diagnoses")  
+    })
     suppressed[as.character(sim1.years)] = extract.suppression(sim=sim1, keep.dimensions = 'year',
                                                                years=sim1.years)
     pop[as.character(sim1.years)] = get.total.population(sim=sim1, years=sim1.years)
@@ -229,9 +232,14 @@ browser()
                                                                                              continuum=setdiff(sim1$continuum, sim1$diagnosed.continuum.states))
                 
                 
-                new.acute.dx[as.character(sim2.years)] = project.absolute.new.diagnoses(sim=sim2, keep.dimensions = 'year',
-                                                                                        years=sim2.years,
-                                                                                        cd4='acute')
+                tryCatch({
+                    new.acute.dx[as.character(sim2.years)] = project.absolute.new.diagnoses(sim=sim2, keep.dimensions = 'year',
+                                                                                            years=sim2.years,
+                                                                                            cd4='acute')
+                },
+                error = function(e){
+                    
+                })
             }
             suppressed[as.character(sim2.years)] = extract.suppression(sim=sim2, keep.dimensions = 'year',
                                                                        years=sim2.years)

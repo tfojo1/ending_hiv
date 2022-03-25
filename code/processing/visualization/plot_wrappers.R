@@ -1,4 +1,7 @@
 source('code/processing/postprocessing.R')
+source('code/processing/outcome_formatting.R')
+source('code/processing/generalized_extract_results.R')
+
 source('code/core_code/data_managers/locale_mappings.R')
 source('code/core_code/data_managers/hiv_surveillance_manager.R')
 source('code/core_code/data_managers/census_totals.R')

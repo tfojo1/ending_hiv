@@ -123,7 +123,7 @@ create.covid.scenario <- function(pandemic.effects.distribution=NULL,
                 stop("prep.reduction.distribution must be a univariate distribution")
             prep.reduction.distribution@var.names = 'prep.reduction'
             
-            to.join = c(to.join, list(testing.reduction.distribution))
+            to.join = c(to.join, list(prep.reduction.distribution))
         }
         else if (pandemic.affects.prep)
             stop("testing.reduction.distribution cannot be null. Set pandemic.affects.prep=F to omit")

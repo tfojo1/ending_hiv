@@ -55,7 +55,7 @@ source('code/calibration/parameter_mappings/calibrated_parameters_expanded_2.R')
 
 source('code/calibration/likelihoods/estimate_cdc_errors.R')
 source('code/calibration/likelihoods/likelihoods_2.R')
-source('code/calibration/likelihoods/likelihoods_nested_location.R')
+source('code/calibration/likelihoods/likelihoods_nested_location2.R')
 source('code/calibration/likelihoods/likelihood_master.R')
 
 #-- Systematic --#

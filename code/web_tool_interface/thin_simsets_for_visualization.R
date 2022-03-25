@@ -1,16 +1,18 @@
 
 source('code/source_code.R')
-source('code/targets/target_msas.R')
-source('code/systematic_calibration/systematic_cache_status.R')
+source('code/execution/systematic_cache_status.R')
+
+source('code/applications/ehe/create_ehe_intervention_presets.R')
+source('code/applications/ehe/ehe_systematic_intervention_sets.R')
 
 if (1==2)
 {
-    prepare.simsets.for.visualization()
+    prepare.simsets.for.visualization(locations=c(DENVER.MSA))
 }
 
 prepare.simsets.for.visualization <- function(locations=TARGET.MSAS,
-                                              src.dir='mcmc_runs/full_simsets/',
-                                              dst.dir='mcmc_runs/visualization_simsets/',
+                                              src.dir=file.path(SYSTEMATIC.ROOT.DIR, 'full_simsets'),
+                                              dst.dir=file.path(SYSTEMATIC.ROOT.DIR, 'visualization_simsets'),
                                               verbose=T, overwrite=F,
                                               n.keep=80)
 {
@@ -37,7 +39,7 @@ prepare.simsets.for.visualization <- function(locations=TARGET.MSAS,
             if (overwrite || !baseline.exists)
                 save.simset(full.simset, dir=dst.dir, compress=T)
             if (overwrite || !seed.exists)
-                save.seed.simset(full.simset, file.path(dst.dir, location))
+                save.seed.simset(full.simset, file.path(dst.dir))
         }
         
         #-- Intervention simsets --#

@@ -12,14 +12,12 @@ SCENARIOS.TO.RUN = list(
     NO.INTERVENTION #this is in here so we can get the stratified acute vs chronic
 )
 
-print("**************************\nNOTE: NOT RUNNING ALL SCENARIOS\n**************************")
-SCENARIOS.TO.RUN = SCENARIOS.TO.RUN[c(3,2)]
 
-locations = TARGET.MSAS[(8-1)*4 + 1:4] #c(BALTIMORE.MSA, NYC.MSA)
+locations = DENVER.MSA #TARGET.MSAS[(8-1)*4 + 1:4] #c(BALTIMORE.MSA, NYC.MSA)
 
 test = F
-run = F
-process = T
+run = T
+process = F
 
 if (run)
 {

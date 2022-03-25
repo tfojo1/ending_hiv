@@ -160,10 +160,11 @@ get.idu.prevalence <- function(idu.manager,
                                do.not.scale.proportions.to.match.overall=F)
 {
     counties = format.combined.fips(counties)
-
+    
     #Get the population sizes
     dim.names = c(list(county=counties), dimnames(idu.manager$idu.1yr.risk))
     populations = array(NA, dim=sapply(dim.names, length), dimnames=dim.names)
+    
     for (age in 1:dim(populations)['age'])
         populations[,age,,] = get.census.data(census, years=years, fips=counties,
                                               sexes=dimnames(idu.manager$idu.1yr.risk)[['sex']],
