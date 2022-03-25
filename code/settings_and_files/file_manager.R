@@ -91,7 +91,8 @@ save.simset <- function(simset,
                         compress.cd4=T,
                         #compress.years=max(attr(simset, 'run.from.year'), min(simset@simulations[[1]]$years)):max(simset@simulations[[1]]$years),
                         full=F,
-                        version=VERSION)
+                        version=VERSION,
+                        save.full.in.master.directory=F)
 {
     if (compress)
         simset = compress.simset(simset, keep.cd4=!compress.cd4)#, keep.years=compress.years)
@@ -105,7 +106,8 @@ save.simset <- function(simset,
     else
         filename = get.simset.filename(simset, version=version)
     
-    if (basename(dir) != location)
+    if (basename(dir) != location && 
+        (!full || !save.full.in.master.directory))
         dir = file.path(dir, location)
     if (!dir.exists(dir))
         dir.create(dir)
@@ -137,6 +139,8 @@ save.seed.simset <- function(simset,
     filename = get.seed.filename(location=location,
                                  version=version)
     
+    if (!dir.exists(file.path(dir, location)))
+        dir.create(file.path(dir, location), recursive=T)
     save(simset, file=file.path(dir, location, filename))
 }
 

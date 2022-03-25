@@ -1,33 +1,45 @@
 
 source('code/calibration/target_msas.R')
-msa = SAN.DIEGO.MSA
+msa = SEATTLE.MSA
 source('code/processing/for_talks/talk_plot_settings.R')
 
 DO.INTERVENTIONS = T
-DO.CALIBRATION = T
+DO.CALIBRATION = F
 DO.STRATIFIED.INTERVENTIONS = F
 
 #RUN ON DESKTOP - to save interventions
-if (1==2)
+if (is.desktop)
 {
-    load(paste0('Q:/Ending_HIV/full_runs_from_annals/mcmc_runs/full_simsets/1.0_',msa,'_full.Rdata'))
+    base.filename = paste0('/1.0_',msa,'_full.Rdata')
+    noint.filename = paste0('1.0_',msa,'_noint.Rdata')
+    int1.filename = paste0('1.0_',msa,'_ybhm.t1x.p10.s80_23.27.Rdata')
+    int2.filename = paste0('1.0_',msa,'_mi.t2x.p25.s90_23.27.Rdata')
+    
+    src.dir = 'Q:/Ending_HIV/mcmc_runs/full_simsets'
+    if (!file.exists(file.path(src.dir, msa, int2.filename)))
+        src.dir = 'Q:/Ending_HIV/full_runs_from_annals/mcmc_runs/full_simsets'
+    
+    
+    load(file.path(src.dir, base.filename))
     simset = flatten.simset(simset)
     base = subset.simset(thin.simset(simset, floor(simset@n.sim/THIN.TO)), 1:THIN.TO)
     
-    load(paste0('Q:/Ending_HIV/full_runs_from_annals/mcmc_runs/full_simsets/',msa,'/1.0_',msa,'_noint.Rdata'))
+    load(file.path(src.dir, msa, noint.filename))
     noint = subset.simset(thin.simset(simset, floor(simset@n.sim/THIN.TO)), 1:THIN.TO)
     
-    load(paste0('Q:/Ending_HIV/full_runs_from_annals/mcmc_runs/full_simsets/',msa,'/1.0_',msa,'_ybhm.t1x.p10.s80_23.27.Rdata'))
+    load(file.path(src.dir, msa, int1.filename))
     int1 = subset.simset(thin.simset(simset, floor(simset@n.sim/THIN.TO)), 1:THIN.TO)
     
-    load(paste0('Q:/Ending_HIV/full_runs_from_annals/mcmc_runs/full_simsets/',msa,'/1.0_',msa,'_mi.t2x.p25.s90_23.27.Rdata'))
+    load(file.path(src.dir, msa, int2.filename))
     int2 = subset.simset(thin.simset(simset, floor(simset@n.sim/THIN.TO)), 1:THIN.TO)
     
     save(base, noint, int1, int2, file=paste0('tmp/simsets_for_talk_plots_',msa,'.Rdata'))
+    
+    print(paste0("Done saving simsets for ", msa.names(msa)))
 }
 
 #RUN ON LAPTOP - for making plots
-if (!exists('base'))
+if (!is.desktop && !exists('base'))
 {
     load(file=paste0('tmp/simsets_for_talk_plots_',msa,'.Rdata'))
 }
@@ -68,11 +80,11 @@ if (1==2)
 
 
 # EG for calibration
-if (DO.CALIBRATION)
+if (DO.CALIBRATION && !is.desktop)
 {
-    one.sim.simset = subset.simset(base, 1:100)
+    one.sim.simset = subset.simset(base, 1+50+10*(1:3))#1:100)
     one.sim.simset@n.sim=as.integer(1)
-    one.sim.simset@simulations = one.sim.simset@simulations[1]
+    one.sim.simset@simulations = one.sim.simset@simulations[2]
     one.sim.simset@weights = 1
     
     plot = plot.simulations.flex(list(one.sim.simset), data.type='new', years=2010:2020,
@@ -92,7 +104,7 @@ if (DO.CALIBRATION)
     
 }
 
-if (DO.INTERVENTIONS)
+if (DO.INTERVENTIONS && !is.desktop)
 {
     x.n = panel.b = plot.simulations.flex(list(base, noint), data.type='new', years=2010:2030,
                                         color.by='intervention', colors=INTERVENTION.COLORS[1:3],
@@ -178,7 +190,7 @@ if (DO.INTERVENTIONS)
                                           return.change.data.frame=T,
                                           y.axis.title.function = Y.TITLE.FUNCTION
     ); z.i$plot
-    print(paste0('INTERVENTION 1: ', 
+    print(paste0('INTERVENTION 2: ', 
                  floor(-100*z.i$change.df[2,3]), '% [',
                  floor(-100*z.i$change.df[2,5]), ' to ',
                  floor(-100*z.i$change.df[2,4]), '%]'))
@@ -383,7 +395,7 @@ if (DO.INTERVENTIONS)
 }
 
 #STRATIFIED INTERVENTIONS
-if (DO.STRATIFIED.INTERVENTIONS)
+if (DO.STRATIFIED.INTERVENTIONS && !is.desktop)
 {
     x.i = panel.b = plot.simulations.flex(list(base, noint), data.type='incidence', years=2010:2030,
                                           race='black',
@@ -401,7 +413,7 @@ if (DO.STRATIFIED.INTERVENTIONS)
 }
 
 #CALIBRATION 
-if (DO.CALIBRATION)
+if (DO.CALIBRATION && !is.desktop)
 {
     # MARGINALS of RACE, RISK, AGE
     

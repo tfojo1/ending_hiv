@@ -21,6 +21,9 @@ print('*****************************')
 print('')
 
 IMAGE.DIR = paste0('../../../Talks/Ending HIV Model v1/Talks post Annals/plots/', msa)
+if (!dir.exists(IMAGE.DIR))
+    dir.create(IMAGE.DIR)
+    
 COVID.IMAGE.DIR = file.path(IMAGE.DIR, 'covid')
 if (!dir.exists(COVID.IMAGE.DIR))
     dir.create(COVID.IMAGE.DIR)
@@ -53,7 +56,19 @@ THIN.TO = 100
 
 # COLORS
 COLORS = pal_jama()
-INTERVENTION.COLORS = pal_jama()(4)
+INTERVENTION.COLORS = pal_jama()(7)
+INTERVENTION.COLORS = INTERVENTION.COLORS[c(1:4,3,5:7)]
+
+names(INTERVENTION.COLORS) = c(
+    'truth',
+    'base',
+    'int1',
+    'int2',
+    'ex1',
+    'ex2',
+    'ex3',
+    'ex4'
+)
 
 ##-- RENDER A PLOTLY TO PNG WITH A SPECIFIC RESOLUTION --#
 do.save.plot <- function(plot,

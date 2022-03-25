@@ -9,7 +9,8 @@
 library(ggplot2)
 library(data.table)
 library(ggsci)
-source('code/processing/visualization/plot_simulations.R')
+source('code/processing/outcome_formatting.R')
+source('code/processing/generalized_extract_results.R')
 
 source('code/processing/postprocessing.R')
 source('code/core_code/setup/setup_jheem_from_components.R')
@@ -96,7 +97,7 @@ simplot <- function(...,
                     location = NULL,
                     location.1to2.mapping = states.for.msa,
                     location.1to3.mapping = counties.for.msa,
-                    use.surv2.for.data.types = c('suppression','engagement','suppression.of.engaged','diagnosed'),
+                    use.surv2.for.data.types = c('suppression','engagement','suppression.of.engaged','diagnosed','retention','testing','testing.rate','testing.period'),
                     use.surv3.for.data.types=use.surv2.for.data.types,
                     
                     use.state.data = T,
@@ -637,7 +638,7 @@ simplot <- function(...,
         if (color.truth.by=='split' && color.sims.by=='split' && !is.null(df.sim))
         {
             truth.base.colors = sim.base.colors
-            unique.truth.color.by = bnames(truth.base.colors)
+            unique.truth.color.by = names(truth.base.colors)
         }
         else
         {
@@ -807,7 +808,8 @@ simplot <- function(...,
 
 pretty.format.strata.values <- function(vals)
 {
-    rv = toupper.first(as.character(vals))
+    rv = paste0(toupper(substr(as.character(vals),1,1)),
+                substr(as.character(vals),2,nchar(as.character(vals))))
     rv[vals=='msm'] = 'MSM'
     rv[vals=='msm_idu'] = 'MSM/PWID'
     rv[vals=='idu'] = 'PWID'

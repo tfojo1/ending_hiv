@@ -1,6 +1,6 @@
 
 source('code/calibration/target_msas.R')
-msa = SAN.DIEGO.MSA
+msa = SEATTLE.MSA
 source('code/processing/for_talks/talk_plot_settings.R')
 
 DO.RENDER = T
@@ -16,22 +16,32 @@ COVID.YEARS = 2015:2025
 
 
 # load up and save the simsets
-if (1==2)
+if (is.desktop)
 {
     source('code/source_code.R')
     
+    
+    base.filename = paste0('/1.0_',msa,'_full.Rdata')
+    noint.filename = paste0('1.0_',msa,'_noint.Rdata')
+    delayed.filename = paste0('1.0_',msa,'_covid.delayed.mobility.Rdata')
+    rapid.filename = paste0('1.0_',msa,'_covid.rapid.resumption.mobility.Rdata')
+    
+    src.dir = 'Q:/Ending_HIV/mcmc_runs'
+    if (!file.exists(file.path(src.dir, 'covid_simsets', msa, delayed.filename)))
+        src.dir = 'Q:/Ending_HIV/full_runs_from_annals/mcmc_runs'
+    
     #-- Load Simsets --#
     
-    load(paste0('Q:/Ending_HIV/full_runs_from_annals/mcmc_runs/full_simsets/1.0_',msa,'_full.Rdata'))
+    load(file.path(src.dir, 'full_simsets', base.filename))
     base = simset
     
-    load(paste0('Q:/Ending_HIV/full_runs_from_annals/mcmc_runs/full_simsets/',msa,'/1.0_',msa,'_noint.Rdata'))
+    load(file.path(src.dir, 'full_simsets', msa, noint.filename))
     noint = simset
     
-    load(paste0('Q:/Ending_HIV/mcmc_runs/covid_simsets/',msa,'/1.0_',msa,'_covid.delayed.mobility.Rdata'))
+    load(file.path(src.dir, 'covid_simsets', msa, delayed.filename))
     delayed = simset
     
-    load(paste0('Q:/Ending_HIV/mcmc_runs/covid_simsets/',msa,'/1.0_',msa,'_covid.rapid.resumption.mobility.Rdata'))
+    load(file.path(src.dir, 'covid_simsets', msa, rapid.filename))
     rapid = simset
     
     
@@ -79,6 +89,8 @@ if (1==2)
          delayed.all, delayed.bad, delayed.good,
          rapid.bad,
          file=paste0('tmp/covid_simsets_for_talk_plots_',msa,'.Rdata'))
+    
+    print(paste0("Done saving *covid* simsets for ", msa.names(msa)))
 }
 
 #RUN ON LAPTOP - for making plots
@@ -263,7 +275,7 @@ if (!is.desktop && DO.RENDER)
                                 label.axis.ci=F,
                                 y.axis.title.function = Y.TITLE.FUNCTION
     ); x.i$plot
-    print(paste0('ALL, WITH COVID: ', 
+    print(paste0('GOOD, WITH COVID: ', 
                  format(ceiling(abs(x.i$change.df[2,3])),big.mark=','), ' ', 
                  "(", ceiling(100*abs(x.i$change.df[2,3])/x.i$change.df[1,6]), "%) ",
                  ifelse(x.i$change.df[2,3]<0, 'fewer', 'more'),
@@ -327,4 +339,62 @@ if (1==2)
         pointsize=PNG.POINT.SIZE, width=HEAT.MAP.PANEL.WIDTH, height=HEAT.MAP.PANEL.HEIGHT, res=RES, units='in')
     do.make.covid.heat.map('12580', scenario='delayed.hiv.care')
     dev.off()
+}
+
+
+# For the boxplots
+
+LOCATION.BOXPLOT.PANEL.HEIGHT = 5
+LOCATION.BOXPLOT.PANEL.WIDTH = 10
+BOXPLOT.THEME = THEME + theme(legend.position = 'none',
+                              text = element_text(size=24),
+                              axis.text.x = element_text(angle = 45, hjust=1))#, vjust = 0.5, hjust=1))
+
+COVID.COLORS = PALETTE(6)[-5]#[c(1,2,5,3,4)]
+#COLORS = PALETTE(7)[-c(5,6)]#[c(1,2,5,3,4)]
+names(COVID.COLORS) = c('baseline',
+                  'covid.rapid.resumption.mobility',
+                  'covid.delayed.mobility',
+                  'rebound.sexual.transmission',
+                  'rebound.sex.delayed.hiv.care')
+
+
+PNG.POINT.SIZE = 5
+RES = 600
+
+if (1==2)
+{
+  
+  load('results/covid/covid_4.2_results.Rdata')
+  source('code/applications/covid/covid_plots.R')
+    
+    PACIFIC.LOCATIONS = c(
+        VEGAS.MSA,
+        SACRAMENTO.MSA,
+        RIVERSIDE.MSA,
+        PHOENIX.MSA,
+        LA.MSA,
+        SAN.DIEGO.MSA,
+        SF.MSA
+    )
+    
+    # for mountain west
+    load('results/covid/covid_4.2_mountain_west_results.Rdata')
+    MOUNTAIN.WEST.LOCATIONS = names(location.names)
+    
+  png(file.path(COVID.IMAGE.DIR, '../..', 'mountain_west_covid_boxplot.png'), pointsize=PNG.POINT.SIZE, 
+      width=LOCATION.BOXPLOT.PANEL.WIDTH, height=LOCATION.BOXPLOT.PANEL.HEIGHT, res=RES, units='in')
+  
+  make.location.boxplot(colors=COVID.COLORS[3],
+                        locations = MOUNTAIN.WEST.LOCATIONS,
+                        scenarios = 'covid.delayed.mobility',
+                        loc.names = MSA.BRIEF.NAMES,
+                        include.total = F,
+                        outcome.axis.name = 'Change in Cumulative\nHIV Incidence 2020-25,\nRelative to No-COVID',
+                        ylim = c(-.2,NA),
+                        vertical = F) + 
+    BOXPLOT.THEME +
+    xlab(NULL) 
+  
+  dev.off()
 }
