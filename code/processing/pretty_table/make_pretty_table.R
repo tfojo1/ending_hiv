@@ -84,12 +84,23 @@ plot.shaded.table <- function(tab,
     
     #-- Make the data frame --#
     
-    df = reshape2::melt(tab)
-    df$color = names(color.mapping)
-    names(df)[1] = 'y'
-    names(df)[2] = 'x'
-    df$y = factor(df$y, rev(unique(df$y)))
-    df$x = factor(df$x)
+    x.values = dimnames(tab)[[1]]
+    if (is.null(x.values))
+        x.values = as.character(1:dim(tab)[1])
+    y.values = dimnames(tab)[[2]]
+    if (is.null(y.values))
+        y.values = as.character(1:dim(tab)[2])
+    
+    melted = suppressWarnings(reshape2::melt(tab))
+    
+    df = data.frame(
+        value = melted$value,
+        x=rep(x.values, length(y.values)),
+        y=rep(y.values, each=length(x.values)),
+        color = names(color.mapping)
+    )
+    df$y = factor(df$y, rev(y.values))
+    df$x = factor(df$x, levels=x.values)
     
     x.lab = names(dimnames(tab))[1]
     y.lab = names(dimnames(tab))[2]    

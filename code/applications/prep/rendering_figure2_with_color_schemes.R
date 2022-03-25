@@ -1,8 +1,9 @@
 
-BAD.COLOR = 'red'
-GOOD.COLOR = 'purple'
+BAD.COLOR = 'red2'
+GOOD.COLOR = 'green2'
 
 library(reshape2)
+source('code/processing/pretty_table/make_pretty_table.R')
 
 TEST.COLORS = T
 
@@ -15,18 +16,13 @@ if (TEST.COLORS)
     tab = read.csv(file)
     tab = tab[,-1]
     
+    plot.shaded.table(round(tab,2), thresholds = c(0,.6), 
+                      lower.threshold.colors = c(BAD.COLOR),
+                      upper.threshold.colors = c(GOOD.COLOR))
     
-    df = data.frame(
-        val = as.numeric(as.matrix(tab)),
-        row = rep(1:nrow(tab), ncol(tab)),
-        col = rep(1:ncol(tab), each=nrow(tab))
-    )
-    df$label = paste0(floor(100*df$val), '%')
-    df$val = pmax(0,df$val)
-    
-    
-    print(ggplot(df, aes(col,row,fill=val)) + geom_tile() + geom_text(aes(label=label)) +
-        scale_fill_gradient(low=BAD.COLOR, high=GOOD.COLOR, limits=c(0,1)))
+    plot.shaded.table(round(tab,2), thresholds = c(0,.5,1), 
+                      lower.threshold.colors = c(BAD.COLOR,'yellow'),
+                      upper.threshold.colors = c('yellow',GOOD.COLOR))
 }
 
 
