@@ -1,12 +1,16 @@
 
 
 source('code/source_code.R')
-source('code/calibration/parameter_mappings/calibrated_parameters_expanded_2.R')
 source('code/processing/visualization/sim_plots.R')
 
 # Likelihood
+suffix = ''
+print("Creating Likelihood")
 likelihood = create.msa.likelihood(BALTIMORE.MSA,
-                                   include.engagement=T, include.linkage=T)
+                                   version='expanded_1.0')
+
+print('Done - setting up for MCMC')
+set.seed(12444)
 
 N.ITER = 25000
 THIN = 25
@@ -24,7 +28,7 @@ mcmc = setup.initial.mcmc.for.msa(msa=BALTIMORE.MSA,
                            save.dir=file.path(SYSTEMATIC.ROOT.DIR, 'systematic_initial_expanded'),
                            cache.dir=file.path(SYSTEMATIC.ROOT.DIR, 'systematic_caches_expanded'),
                            update.frequency=UPDATE.FREQ,#200,
-                           save.suffix='expanded',
+                           save.suffix=paste0('expanded', suffix),
                            
                            target.acceptance.rate=0.1,
                            SCALING.BASE.UPDATE = 1,
@@ -39,7 +43,7 @@ mcmc = setup.initial.mcmc.for.msa(msa=BALTIMORE.MSA,
                            verbose=T)
 
 
-save(mcmc, file=paste0('Q:/Ending_HIV/mcmc_runs/systematic_initial_expanded/12580_',Sys.Date(),'.Rdata'))
+save(mcmc, file=paste0('Q:/Ending_HIV/mcmc_runs/systematic_initial_expanded', '/12580',suffix, '_', Sys.Date(),'.Rdata'))
 
 # to cut simset
 if (1==2)
@@ -51,10 +55,12 @@ if (1==2)
 # to resume
 if (1==2)
 {
-    mcmc = run.mcmc.from.cache(dir = file.path(SYSTEMATIC.ROOT.DIR, 'systematic_caches_expanded', '12580_1x20K_expanded_2021-10-14'),
+    list.files(file.path(SYSTEMATIC.ROOT.DIR, 'systematic_caches_expanded'))
+    mcmc = run.mcmc.from.cache(dir = file.path(SYSTEMATIC.ROOT.DIR, 'systematic_caches_expanded', '12580_1x25K_expanded_2022-03-23'),
                         update.frequency = UPDATE.FREQ, update.detail = 'high')
     
-    save(mcmc, file='Q:/Ending_HIV/mcmc_runs/systematic_initial_expanded/12580_2021-10-16.Rdata')
+    save(mcmc, file=paste0('Q:/Ending_HIV/mcmc_runs/systematic_initial_expanded', '/12580',suffix, '_', Sys.Date(),'.Rdata'))
+    
     
     simset = extract.simset(mcmc, additional.burn=500, additional.thin=5)
     

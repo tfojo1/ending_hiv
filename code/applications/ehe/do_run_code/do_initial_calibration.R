@@ -1,18 +1,11 @@
 
-if (1==2)
-{
-    setwd('../Ending_HIV/')
-}
-
-source('code/plots.R')
 source('code/source_code.R')
-source('code/systematic_calibration/systematic_calibration.R')
-source('code/targets/target_msas.R')
+source("code/processing/visualization/sim_plots.R")
 
 set.seed(5557)
  
-msa=ST.LOUIS.MSA
-save.suffix = ''
+msa=PORTLAND.MSA 
+save.suffix = 'manual2'
 DO.vIS.INTERVENTIONS = F
 
 RESUME=F
@@ -23,7 +16,7 @@ if (RESUME)
     print(save.suffix)
     print('----------------------------------------------------')
     print(qplot(1,1) + ggtitle(msa.names(msa)) + theme(plot.title=element_text(hjust=1)))
-    mcmc = run.mcmc.for.msa.cache(paste0('mcmc_runs/systematic_caches/',msa,'_1x20K_final.2011_2020-12-15/'))
+    mcmc = run.mcmc.for.msa.cache('Q:Ending_HIV/mcmc_runs/systematic_caches/19740_1x20K_manual_2022-02-20')
 }
 if (!RESUME)
 {
@@ -31,9 +24,13 @@ if (!RESUME)
     print(paste0("Setting up to run initial MCMC on ", msa.names(msa)))
     print(save.suffix)
     print('----------------------------------------------------')
+    
+print("Using OLD (v1 for Annals) likelihood.")
+likelihood = OLD.create.msa.likelihood.v1.for.annals(msa)#, EVERYTHING.WEIGHT=1/8)
+#likelihood = create.msa.likelihood(msa=msa, EVERYTHING.WEIGHT=1/8)
 mcmc = setup.initial.mcmc.for.msa(msa, run=T, save.suffix = save.suffix, 
-                                  target.acceptance.rate = 0.100, derive.step.size.from.prior.mcmc = F,
-                                  likelihood = create.msa.likelihood(msa=msa, EVERYTHING.WEIGHT=1/8))
+                                  likelihood=likelihood,
+                                  target.acceptance.rate = 0.100, derive.step.size.from.prior.mcmc = F)
 }
 #if (save.suffix=='')
     save.name = paste0(msa, '.Rdata')

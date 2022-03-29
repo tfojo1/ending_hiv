@@ -9,11 +9,11 @@ noint = run.simset.intervention(sub.simset, NO.INTERVENTION,
 
 # RETENTION
 RET.95.NAIVE = create.intervention.unit(type='retention.naive',
-                                        start.year=2023, rates=.999, years=2027)
+                                        start.year=2023, rates=.99, years=2027)
 RET.95.FAILING = create.intervention.unit(type='retention.failing',
-                                        start.year=2023, rates=.999, years=2027)
+                                        start.year=2023, rates=.99, years=2027)
 RET.95.SUPPRESSED = create.intervention.unit(type='retention.suppressed',
-                                        start.year=2023, rates=.999, years=2027)
+                                        start.year=2023, rates=.99, years=2027)
 
 INT.RET.95 = create.intervention(WHOLE.POPULATION,
                                  RET.95.NAIVE, RET.95.FAILING, RET.95.SUPPRESSED)

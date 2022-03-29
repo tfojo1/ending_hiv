@@ -62,7 +62,7 @@ ORAL.PREP.PERSISTENCE.DIST = Normal.Distribution(mean=oral.persistence.mean,
                                                  var.name='oral.prep.persistence')
 
 INJ.VS.ORAL.DISCONTINUATION.RR.DIST = Uniform.Distribution(min=.25,
-                                                           max=1.25,
+                                                           max=1,
                                                            var.name='inj.vs.oral.discontinuation.rr')
 
 ##-- MAKE THE INTERVENTIONS AND REGISTER THEM --##
@@ -78,10 +78,6 @@ create.prep.interventions.v2 <- function(start.year=2023,
 {
     if (suffix != '' && substr(suffix, 1,1)!='_')
         suffix = paste0("_", suffix)
-    
-    #Baseline coverage
-    
-
 
     BASELINE.TO.INJ.COVERAGE = create.intervention.unit(type='prep',
                                                         start.year=start.year,

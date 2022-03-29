@@ -2,7 +2,7 @@
 
 
 
-ALLOWED.NESTED.DATA.TYPES = c('suppression','engagement','linkage','diagnosed')
+ALLOWED.NESTED.DATA.TYPES = c('suppression','engagement','linkage','diagnosed','retention')
 create.nested.likelihood <- function(data.type=c('suppression','engagement','linkage','diagnosed')[1],
                                         msa,
                                         msa.surveillance,
@@ -16,7 +16,9 @@ create.nested.likelihood <- function(data.type=c('suppression','engagement','lin
                                         
                                         observation.error.fn,
                                         error.correlation=0.5,
-                                        
+                                     
+                                        within.location.error.correlation=0,
+                                     
                                         sd.inflation = 1,
                                      
                                      
@@ -68,9 +70,10 @@ create.nested.likelihood <- function(data.type=c('suppression','engagement','lin
         
     
     # Pull state data
+    states.containing.msa = states.for.msa(msa)
     if (include.states)
     {
-        states = states.for.msa(msa)
+        states = states.containing.msa
         state.data = lapply(states, get.surveillance.data,
                             surv=state.surveillance, data.type=data.type, years=years,
                             throw.error.if.missing.data = F)
@@ -91,9 +94,10 @@ create.nested.likelihood <- function(data.type=c('suppression','engagement','lin
         include.counties = length(counties.for.msa(msa))>1
     
     # Pull county data
+    counties.in.msa = counties.for.msa(msa)
     if (include.counties)
     {
-        counties = counties.in.msa = counties.for.msa(msa)
+        counties = counties.in.msa
         county.data = lapply(counties, get.surveillance.data,
                              surv=county.surveillance, data.type=data.type, years=years,
                              throw.error.if.missing.data = F)
@@ -130,10 +134,10 @@ create.nested.likelihood <- function(data.type=c('suppression','engagement','lin
         meta.indices.for.observed.counties = 1:length(counties)
         if (!setequal(counties.in.msa, counties))
             counties.per.meta.index = c(counties.per.meta.index,
-                                   list(setdiff(counties.in.msa, counties)))
+                                        list(setdiff(counties.in.msa, counties)))
         
         meta.indices.for.counties = 1:length(counties.per.meta.index)
-    
+        
         if (length(states)>0)
         {
             meta.indices.for.states = max(meta.indices.for.counties) + 1
@@ -164,7 +168,7 @@ create.nested.likelihood <- function(data.type=c('suppression','engagement','lin
             
             meta.indices.for.counties = 1:length(counties.per.meta.index)
         }
-      
+        
         meta.indices.for.states = max(c(0,meta.indices.for.counties)) + #add a zero in in case there are no counties
             1:length(states)
         
@@ -194,12 +198,12 @@ create.nested.likelihood <- function(data.type=c('suppression','engagement','lin
         obs.state.indices = index + 1:length(states)
         index = index + length(states)
     }
-
+    
     if (verbose)
         cat('DONE.\n')
     
-#-- BUILD THE METALOCATIONS to OBS MATRIX --#
-
+    #-- BUILD THE METALOCATIONS to OBS MATRIX --#
+    
     if (verbose)
         cat('NSTLIK: Building the meta-location to obs matrix...')
     
@@ -233,11 +237,11 @@ create.nested.likelihood <- function(data.type=c('suppression','engagement','lin
             metalocation.to.obs.location.matrix[obs.state.indices[i], meta.indices.for.states[i] ] = 1
         }
     }
- 
+    
     if (verbose)
         cat('DONE.\n')
     
-#-- SET UP OBSERVATIONS and TRANSFORMATION MATRICES --#    
+    #-- SET UP OBSERVATIONS and TRANSFORMATION MATRICES --#    
     
     if (verbose)
         cat('NSTLIK: Setting up observations and transformation matrices...')
@@ -290,7 +294,7 @@ create.nested.likelihood <- function(data.type=c('suppression','engagement','lin
                                                  risks=risks,
                                                  na.rm=F)
     }) 
-       
+    
     # Pull out the observations and errors
     observations.by.location = lapply(obs.loc.likelihood.elements, function(el){
         el$response.vector
@@ -330,10 +334,10 @@ create.nested.likelihood <- function(data.type=c('suppression','engagement','lin
             el$descriptions[mask]
         })
     })
-
+    
     # Pull out which years actually have any data
     # That way we won't waste computational power on years that don't have any data
-
+    
     orig.years = years
     years = sort(unique(as.numeric(unique(unlist(sapply(obs.loc.likelihood.elements, function(el){
         unique(substr(el$descriptions, 1, 4))
@@ -349,7 +353,7 @@ create.nested.likelihood <- function(data.type=c('suppression','engagement','lin
         cat('DONE.\n')
     
     
-#-- SET UP N MULTIPLIERS --#
+    #-- SET UP N MULTIPLIERS --#
     
     if (verbose)
         cat('NSTLIK: Setting up "n-multipliers"...')
@@ -363,26 +367,26 @@ create.nested.likelihood <- function(data.type=c('suppression','engagement','lin
     data.type.for.n = 'prevalence'
     if (data.type == 'linkage')
         data.type.for.n = 'new'
-
+    
     state.n.cv = get.state.to.msa.outcome.ratio.cv(data.type.for.n,
-                                                               msa.surveillance = msa.surveillance,
-                                                               state.surveillance = state.surveillance,
+                                                   msa.surveillance = msa.surveillance,
+                                                   state.surveillance = state.surveillance,
                                                    cached.errors = cached.errors)
     county.n.cv = get.county.to.msa.outcome.ratio.cv(data.type.for.n,
-                                                                 msa.surveillance = msa.surveillance,
-                                                                 county.surveillance = county.surveillance,
+                                                     msa.surveillance = msa.surveillance,
+                                                     county.surveillance = county.surveillance,
                                                      cached.errors = cached.errors)
     n.multipliers.for.counties = lapply(counties.per.meta.index, function(cty){
         rv = calculate.outcome.differences(data.type=data.type.for.n,
-                                      years=years,
-                                      locations1=cty,
-                                      surv1=county.surveillance,
-                                      locations2=msa,
-                                      surv2=msa.surveillance,         
-                                      ages=ages,
-                                      races=races,
-                                      sexes=sexes,
-                                      risks=risks)
+                                           years=years,
+                                           locations1=cty,
+                                           surv1=county.surveillance,
+                                           locations2=msa,
+                                           surv2=msa.surveillance,         
+                                           ages=ages,
+                                           races=races,
+                                           sexes=sexes,
+                                           risks=risks)
         
         dim(rv) = c(length(years), length(rv)/length(years))
         rv
@@ -390,15 +394,15 @@ create.nested.likelihood <- function(data.type=c('suppression','engagement','lin
     
     n.multipliers.for.states = lapply(states, function(st){
         rv = calculate.outcome.differences(data.type=data.type.for.n,
-                                      years=years,
-                                      locations1=st,
-                                      surv1=state.surveillance,
-                                      locations2=msa,
-                                      surv2=msa.surveillance,         
-                                      ages=ages,
-                                      races=races,
-                                      sexes=sexes,
-                                      risks=risks)
+                                           years=years,
+                                           locations1=st,
+                                           surv1=state.surveillance,
+                                           locations2=msa,
+                                           surv2=msa.surveillance,         
+                                           ages=ages,
+                                           races=races,
+                                           sexes=sexes,
+                                           risks=risks)
         
         dim(rv) = c(length(years), length(rv)/length(years))
         rv
@@ -433,7 +437,7 @@ create.nested.likelihood <- function(data.type=c('suppression','engagement','lin
     if (verbose)
         cat('DONE.\n')
     
-#-- SET UP P BIAS and VARIANCE --#
+    #-- SET UP P BIAS and VARIANCE --#
     
     if (verbose)
         cat('NSTLIK: Setting up "p-bias" and variance...')
@@ -453,16 +457,16 @@ create.nested.likelihood <- function(data.type=c('suppression','engagement','lin
                                                  cached.errors = cached.errors)
     
     # We're going to assume there is no bias on average between MSAs and the counties that they comprise
-#    county.p.bias = get.state.to.msa.outcome.bias(data.type,
-#                                                  msa.surveillance = msa.surveillance,
-#                                                  county.surveillance = county.surveillance,
-#                                                  cached.errors = cached.errors)
+    #    county.p.bias = get.state.to.msa.outcome.bias(data.type,
+    #                                                  msa.surveillance = msa.surveillance,
+    #                                                  county.surveillance = county.surveillance,
+    #                                                  cached.errors = cached.errors)
     
     metalocation.p.bias = lapply(1:n.years, function(i){
         rv = matrix(0, nrow=n.strata, ncol=n.metalocations)
         rv[,meta.indices.for.states] = state.p.bias
- #       rv[,meta.indices.for.counties] = county.p.bias
-
+        #       rv[,meta.indices.for.counties] = county.p.bias
+        
         rv
     })
     metalocation.p.variance = lapply(1:n.years, function(i){
@@ -476,17 +480,17 @@ create.nested.likelihood <- function(data.type=c('suppression','engagement','lin
     if (verbose)
         cat('DONE.\n')
     
-#-- SET UP THE EXTRACT FUNCTIONS --#
+    #-- SET UP THE EXTRACT FUNCTIONS --#
     
     if (verbose)
         cat('NSTLIK: Setting up extract functions...')
     
     if (data.type=='linkage')
     {
-        total.new = get.surveillance.data(msa.surveillance, location.codes = msa, data.type='prevalence', years=years)
+        total.new = get.surveillance.data(msa.surveillance, location.codes = msa, data.type='new')
         total.new = unlist(interpolate.parameters(values=total.new[!is.na(total.new)],
-                                                         value.times=years[!is.na(total.new)],
-                                                         desired.times = years))
+                                                  value.times=attr(total.new, 'years')[!is.na(total.new)],
+                                                  desired.times = years))
         
         extract.np.fn = function(sim){
             n = do.extract.new.diagnoses(sim, years=years, keep.dimensions=c('year','age','race','sex','risk'), 
@@ -500,9 +504,9 @@ create.nested.likelihood <- function(data.type=c('suppression','engagement','lin
     }
     else 
     {
-        total.prevalence = get.surveillance.data(msa.surveillance, location.codes = msa, data.type='prevalence', years=years)
+        total.prevalence = get.surveillance.data(msa.surveillance, location.codes = msa, data.type='prevalence')
         total.prevalence = unlist(interpolate.parameters(values=total.prevalence[!is.na(total.prevalence)],
-                                                         value.times=years[!is.na(total.prevalence)],
+                                                         value.times=attr(total.prevalence, 'years')[!is.na(total.prevalence)],
                                                          desired.times = years))
         
         if (data.type=='diagnosed')
@@ -511,7 +515,7 @@ create.nested.likelihood <- function(data.type=c('suppression','engagement','lin
                                                     per.population=NA, use.cdc.categorizations = F)
                 numerator = do.extract.diagnosed.hiv(sim, years=years, keep.dimensions=c('year','age','race','sex','risk'), 
                                                      per.population=NA, use.cdc.categorizations = F)
-        
+                
                 p = numerator/denominator
                 
                 list(n=numerator / rowSums(numerator) * total.prevalence / p,
@@ -520,14 +524,14 @@ create.nested.likelihood <- function(data.type=c('suppression','engagement','lin
         else if (data.type=='suppression')
             extract.np.fn = function(sim){
                 denominator = do.extract.diagnosed.hiv(sim, years=years, keep.dimensions=c('year','age','race','sex','risk'),
-                                             per.population = NA, use.cdc.categorizations = F)
+                                                       per.population = NA, use.cdc.categorizations = F)
                 p = extract.suppression(sim, years=years, keep.dimensions=c('year','age','race','sex','risk'),
                                         continuum = sim$diagnosed.continuum.states,
                                         per.population = 1, use.cdc.categorizations = F)
                 
                 list(n=denominator / rowSums(denominator) * total.prevalence,
                      p=p)
-        }
+            }
         else if (data.type=='engagement')
             extract.np.fn = function(sim){
                 denominator = do.extract.diagnosed.hiv(sim, years=years, keep.dimensions=c('year','age','race','sex','risk'),
@@ -539,6 +543,32 @@ create.nested.likelihood <- function(data.type=c('suppression','engagement','lin
                 list(n=denominator / rowSums(denominator) * total.prevalence,
                      p=p)
             }
+        else if (data.type=='retention')
+        {
+            total.engagement = get.surveillance.data(msa.surveillance, location.codes = msa, data.type='prevalence')
+            total.engagement = unlist(interpolate.parameters(values=total.engagement[!is.na(total.engagement)],
+                                                             value.times=attr(total.engagement, 'years')[!is.na(total.engagement)],
+                                                             desired.times = years))
+            
+            engaged.prevalence = total.prevalence * total.engagement
+            if (any(is.na(engaged.prevalence)))
+                stop('Unable to pull engaged prevalence')
+            
+            
+            extract.np.fn = function(sim){
+                engaged.states = attr(sim, 'components')$settings$ENGAGED_STATES
+                denominator = do.extract.prevalence(sim, years=years, 
+                                                    keep.dimensions=c('year','age','race','sex','risk'),
+                                                    continuum = engaged.states,
+                                                    per.population = NA, use.cdc.categorizations = F)
+                p = extract.retention(sim, years=years, keep.dimensions=c('year','age','race','sex','risk'),
+                                      continuum = engaged.states,
+                                      per.population = 1, use.cdc.categorizations = F)
+                
+                list(n=denominator / rowSums(denominator) * engaged.prevalence,
+                     p=p)
+            }
+        }
         else
             stop("Invalid data.type")
     }
@@ -546,12 +576,12 @@ create.nested.likelihood <- function(data.type=c('suppression','engagement','lin
     if (verbose)
         cat('DONE.\n')
     
-#-- CREATE THE FUNCTION AND RETURN --#
-
+    #-- CREATE THE FUNCTION AND RETURN --#
+    
     if (verbose)
         cat("NSTLIK: All done. Packaging up a function and returning.")
     
-    function(sim, log=T) {
+    function(sim, log=T, debug=F) {
         
         np = extract.np.fn(sim)
         p = np$p
@@ -560,39 +590,42 @@ create.nested.likelihood <- function(data.type=c('suppression','engagement','lin
         
         # The continous likelihood
         tryCatch({
-        lik.continuous = nested.proportion.likelihood.sub(
-            p = p,
-            n = n,
-            
-            metalocation.n.multipliers = metalocation.n.multipliers,
-            metalocation.n.multiplier.variance = metalocation.n.multiplier.variance,
-            
-            metalocation.p.bias = metalocation.p.bias,
-            metalocation.p.variance = metalocation.p.variance,
-            
-            sum.index = meta.index.for.msa,
-            condition.on.sum.indices = meta.indices.for.counties,
-            
-            metalocation.to.obs.location.matrix = metalocation.to.obs.location.matrix,
-            
-            observation.errors.by.location=observation.errors.by.location,
-            observations.by.location=observations.by.location,
-            observation.descriptions.by.location, #a list, with a character vector for each location
-            observations.are.proportions=T,
-            
-            transformation.matrices,
-            #^ a list, one elem per year. Each elem is itself a list, with one elem per obs location
-            #  transformation[[i]][[j]] is a matrix for the ith year, jth location that collapses across strata
-            transformation.names, 
-            #^ a list of lists (elem per year and obs location) with a vector of the names of outcomes after transformation
-            
-            sd.inflation=sd.inflation,
-            log=log
-        ) },
-        error=function(e){
-            save(sim, data.type, file='mcmc_runs/nested_lik_error_info.Rdata')
-            stop("propagating error")
-        })
+            lik.continuous = nested.proportion.likelihood.sub(
+                p = p,
+                n = n,
+                
+                metalocation.n.multipliers = metalocation.n.multipliers,
+                metalocation.n.multiplier.variance = metalocation.n.multiplier.variance,
+                
+                metalocation.p.bias = metalocation.p.bias,
+                metalocation.p.variance = metalocation.p.variance,
+                
+                sum.index = meta.index.for.msa,
+                condition.on.sum.indices = meta.indices.for.counties,
+                
+                metalocation.to.obs.location.matrix = metalocation.to.obs.location.matrix,
+                
+                observation.errors.by.location=observation.errors.by.location,
+                observations.by.location=observations.by.location,
+                observation.descriptions.by.location, #a list, with a character vector for each location
+                observations.are.proportions=T,
+                
+                transformation.matrices,
+                #^ a list, one elem per year. Each elem is itself a list, with one elem per obs location
+                #  transformation[[i]][[j]] is a matrix for the ith year, jth location that collapses across strata
+                transformation.names, 
+                #^ a list of lists (elem per year and obs location) with a vector of the names of outcomes after transformation
+                
+                within.location.error.correlation = within.location.error.correlation,
+                
+                sd.inflation=sd.inflation,
+                log=log,
+                debug=debug
+            ) },
+            error=function(e){
+                save(sim, data.type, file='mcmc_runs/nested_lik_error_info.Rdata')
+                stop(e)
+            })
         
         # The binary (is decreasing) likelihood
         if (is.na(probability.decreasing.slope))
@@ -647,23 +680,26 @@ nested.proportion.likelihood.sub <- function(
     transformation.names, 
     #^ a list of lists (elem per year and obs location) with a vector of the names of outcomes after transformation
     
+    within.location.error.correlation=0, 
+    
     sd.inflation=1,
-    log=T
+    log=T,
+    debug=F
 )
 {
-#-- Some general variables --#
-
+    #-- Some general variables --#
+    
     n.years = dim(p)[1]
     years = dimnames(p)[[1]]
     n.strata = dim(p)[2]
     
     n.metalocations = dim(metalocation.to.obs.location.matrix)[2]
     n.obs.locations = dim(metalocation.to.obs.location.matrix)[1]
-
+    
     sim.np = n*p
     sim.np.1mp = sim.np * (1-p)
     
-#-- Split the n and p up by metalocation --#
+    #-- Split the n and p up by metalocation --#
     
     # each element indexed [stratum, meta-loc]
     metalocation.p = lapply(1:n.years, function(i){
@@ -674,14 +710,13 @@ nested.proportion.likelihood.sub <- function(
     metalocation.n = lapply(1:n.years, function(i){
         n[i,] * metalocation.n.multipliers[[i]]
     })
-
+    
     # each element indexed [stratum, meta-loc]
     metalocation.n.variance = lapply(1:n.years, function(i){
         n[i,]^2 * metalocation.n.multiplier.variance[[i]]
     })
     
-    
-#-- Make variances on np --#
+    #-- Make variances on np --#
     
     # each element indexed [stratum, meta-loc]
     metalocation.var = lapply(1:n.years, function(i){
@@ -692,10 +727,10 @@ nested.proportion.likelihood.sub <- function(
         
         n*p*(1-p) + n*p.var*(n-1) + n.var*p^2 + n.var*p.var
     })
-
+    
     #-- Define the mean vector and variance-covariance matrix for each year --#
-
-        
+    
+    
     # one elem per year
     # each elem is a matrix [stratum, metalocation]
     metalocation.mean.by.year = lapply(1:n.years, function(i){
@@ -743,14 +778,14 @@ nested.proportion.likelihood.sub <- function(
         if (length(condition.on.sum.indices)>0)
         {
             total.conditioned.v = rowSums(v[,condition.on.sum.indices])
-           
+            
             for (j in condition.on.sum.indices)
             {
                 rv[j,j,] = v[,j] * (total.conditioned.v-v[,j]) / total.conditioned.v +
-                        #^ie, for j=1, var = sigma_1^2 * sigma_2^2 + sigma_1^2 * sigma_3^2 + ...
-                        # this is var(y_i | sum=k)
+                    #^ie, for j=1, var = sigma_1^2 * sigma_2^2 + sigma_1^2 * sigma_3^2 + ...
+                    # this is var(y_i | sum=k)
                     sim.np.1mp[i,] * (v[,j]/total.conditioned.v)^2
-                        #^this is the extra variance for unknown k
+                #^this is the extra variance for unknown k
                 
                 zero.mask = total.conditioned.v == 0
                 rv[j,j,zero.mask] = 0
@@ -764,7 +799,7 @@ nested.proportion.likelihood.sub <- function(
             
             if (length(sum.index)>0)
                 rv[sum.index,sum.index,] = sim.np.1mp[i,]
-             
+            
             combos = combn(condition.on.sum.indices, m=2)
             for (combo.index in dim(combos)[2])
             {
@@ -773,9 +808,9 @@ nested.proportion.likelihood.sub <- function(
                 
                 zero.mask = total.conditioned.v==0
                 rv[j1,j2,] = rv[j2,j1,] = -v[,j1]*v[,j2] / total.conditioned.v +
-                            #^ the cov conditional on sum = k
+                    #^ the cov conditional on sum = k
                     sim.np.1mp[i,] * v[,j1] * v[,j2] / total.conditioned.v^2
-                            #^ the extra covariance incurred by unknown k
+                #^ the extra covariance incurred by unknown k
                 rv[j1,j2,zero.mask] = rv[j2,j1,zero.mask] = 0
             }
         }
@@ -783,7 +818,7 @@ nested.proportion.likelihood.sub <- function(
         rv
     })
     
-#-- Collapse the meta-locations to observed locations --#
+    #-- Collapse the meta-locations to observed locations --#
     
     #each elem indexed [stratum, obs.location]
     obs.location.stratified.mean.by.year = lapply(metalocation.mean.by.year, function(mean.mat){
@@ -883,24 +918,40 @@ nested.proportion.likelihood.sub <- function(
     
     #each elem is a covariance matrix
     # each dimension of the covariance matrix is location-major/stratum-minor order
+    within.loc.correlation.mat = matrix(within.location.error.correlation,
+                                        nrow = n.strata, ncol = n.strata)
+    diag(within.loc.correlation.mat) = 1
+    
     obs.location.covar.by.year = lapply(1:n.years, function(i){
         collapsed.mat = obs.location.stratified.covar.by.year[[i]]
         
         expanded.mat = matrix(0, nrow=n.strata*n.obs.locations, ncol=n.strata*n.obs.locations)
+        #indexed location-major
+        # ie, expanded.mat[1:n.strata,1:n.strata] is the covariance matrix for all strata in the first location
+        # 
+        
         for (j1 in 1:n.obs.locations)
         {
             for (j2 in 1:n.obs.locations)
             {
                 indices1 = (j1-1)*n.strata + 1:n.strata
                 indices2 = (j2-1)*n.strata + 1:n.strata
+                
                 expanded.indices = indices1 + (indices2-1)*dim(expanded.mat)[1]
-                expanded.mat[expanded.indices] = collapsed.mat[j1,j2,]
+                
+                if (within.location.error.correlation==0)
+                    expanded.mat[expanded.indices] = collapsed.mat[j1,j2,]
+                else
+                {
+                    cross.loc.sqrt.cov = sqrt(collapsed.mat[j1,j2,])
+                    expanded.mat[expanded.indices] = 
+                        cross.loc.sqrt.cov %*% t(cross.loc.sqrt.cov) * within.loc.correlation.mat
+                }
             }
         }
         
         aggregated.transformation.matrices[[i]] %*% expanded.mat %*% t(aggregated.transformation.matrices[[i]])
     })
-    
     
     #-- Hydrate the lists into mean vector and covariance matrix --#
     obs.location.mean = unlist(obs.location.mean.by.year)
@@ -936,7 +987,7 @@ nested.proportion.likelihood.sub <- function(
     obs.location.covar = obs.location.covar[o,o]
     if (observations.are.proportions)
         obs.location.n = obs.location.n[o]
-
+    
     #-- Layer the observation errors onto the covariance matrices --#
     
     o = 1:length(observation.names)
@@ -948,7 +999,7 @@ nested.proportion.likelihood.sub <- function(
         err = observation.errors.by.location[[j]]
         if (observations.are.proportions)
             err = err * (obs.location.n[indices] %*% t(obs.location.n[indices]))
-
+        
         obs.location.covar[indices,indices] = obs.location.covar[indices,indices] * sd.inflation^2 +
             err
     }
@@ -965,6 +1016,10 @@ nested.proportion.likelihood.sub <- function(
         stop("NA values in distribution parameters")
     }
     
+    if (debug)
+        print(rbind(obs=obs.v/obs.location.n,
+                    mean=obs.location.mean/obs.location.n,
+                    sd=sqrt(diag(obs.location.covar)) / obs.location.n))
     dmvnorm(x = obs.v,
             mean = obs.location.mean,
             sigma = obs.location.covar,
@@ -996,21 +1051,21 @@ if (1==2)
 #returns an array indexed [year, stratum]
 # values are: reverse.scale(scale(values1)-scale(values2))
 calculate.outcome.differences <- function(data.type,
-                                     years,
-                                     locations1,
-                                     surv1,
-                                     locations2,
-                                     surv2,
-                                     
-                                     smooth.scale=log,
-                                     reverse.scale=exp,
-                                     
-                                     smooth=T,
-                                     
-                                     ages=c('13-24 years', '25-34 years', '35-44 years', '45-54 years', '55+ years'),
-                                     races=c('black','hispanic','other'),
-                                     sexes=c('heterosexual_male','msm','female'),
-                                     risks=c('never_IDU','active_IDU','IDU_in_remission')
+                                          years,
+                                          locations1,
+                                          surv1,
+                                          locations2,
+                                          surv2,
+                                          
+                                          smooth.scale=log,
+                                          reverse.scale=exp,
+                                          
+                                          smooth=T,
+                                          
+                                          ages=c('13-24 years', '25-34 years', '35-44 years', '45-54 years', '55+ years'),
+                                          races=c('black','hispanic','other'),
+                                          sexes=c('heterosexual_male','msm','female'),
+                                          risks=c('never_IDU','active_IDU','IDU_in_remission')
 )
 {
     dimensions = list(age=ages,
@@ -1155,23 +1210,28 @@ if (1==2)
         'suppression',
         'diagnosed',
         'engagement',
-        'linkage'
+        'linkage',
+        'retention'
     )
     
     
+    nested.error.cache = NULL
     x = sapply(types.to.test, function(type){
         print(type)
         c(
             state_bias = get.state.to.msa.outcome.bias(type, msa.surveillance, state.surveillance,
                                                        cached.errors = nested.error.cache),
-            county_bias = get.county.to.msa.outcome.bias(type, msa.surveillance, county.surveillance,
-                                                         cached.errors = nested.error.cache),
+            # county_bias = get.county.to.msa.outcome.bias(type, msa.surveillance, county.surveillance,
+            #                                             cached.errors = nested.error.cache),
             state_sd = get.state.to.msa.outcome.variance(type, msa.surveillance, state.surveillance,
                                                          cached.errors = nested.error.cache)^.5,
             county_sd = get.county.to.msa.outcome.variance(type, msa.surveillance, county.surveillance,
+                                                           state.surveillance = state.surveillance,
                                                            cached.errors = nested.error.cache)^.5
         )    
     })
+    
+    get.state.to.msa.outcome.variance('retention', msa.surveillance, county.surveillance)
     
     round(100*x,1)
     
@@ -1192,6 +1252,7 @@ if (1==2)
     round(y,2)
     
     get.state.to.msa.outcome.ratio.cv('new', msa.surveillance, state.surveillance)
+    get.state.to.msa.outcome.ratio.cv('prevalence', msa.surveillance, state.surveillance)
     
     nested.error.cache = make.nested.errors.cache(msa.surveillance, state.surveillance, county.surveillance,
                                                   verbose=T)
@@ -1200,14 +1261,19 @@ if (1==2)
 #-- Errors on Ratios --# 
 
 get.state.to.msa.outcome.ratio.cv <- function(data.type,
-                                                    msa.surveillance,
-                                                    state.surveillance,
+                                              msa.surveillance,
+                                              state.surveillance,
                                               cached.errors=NULL,
-                                                    years=NULL,
-                                                    details=F)
+                                              years=NULL,
+                                              details=F)
 {
+    return(.1^2)
     #for now
     #.1^2
+    
+    # we don't have data on retention at the local level, so...
+    if (data.type=='retention')
+        data.type = 'engagement'
     
     if (!is.null(cached.errors))
     {
@@ -1247,13 +1313,17 @@ get.state.to.msa.outcome.ratio.cv <- function(data.type,
 }
 
 get.county.to.msa.outcome.ratio.cv <- function(data.type,
-                                                     msa.surveillance,
-                                                     county.surveillance,
+                                               msa.surveillance,
+                                               county.surveillance,
                                                cached.errors=NULL,
-                                                     years=NULL,
-                                                     details=F)
+                                               years=NULL,
+                                               details=F)
 {
     #.1^2
+    
+    # we don't have data on retention at the local level, so...
+    if (data.type=='retention')
+        data.type = 'engagement'
     
     if (!is.null(cached.errors))
     {
@@ -1300,6 +1370,9 @@ get.state.to.msa.outcome.bias <- function(data.type,
                                           details=F)
 {
     #0
+    # we don't have data on retention at the local level, so...
+    if (data.type=='retention')
+        data.type = 'engagement'
     
     if (!is.null(cached.errors))
     {
@@ -1334,13 +1407,16 @@ get.state.to.msa.outcome.bias <- function(data.type,
 }
 
 get.county.to.msa.outcome.bias <- function(data.type,
-                                          msa.surveillance,
-                                          county.surveillance,
-                                          cached.errors=NULL,
-                                          years=NULL,
-                                          details=F)
+                                           msa.surveillance,
+                                           county.surveillance,
+                                           cached.errors=NULL,
+                                           years=NULL,
+                                           details=F)
 {
     #0
+    # we don't have data on retention at the local level, so...
+    if (data.type=='retention')
+        data.type = 'engagement'
     
     if (!is.null(cached.errors))
     {
@@ -1381,8 +1457,12 @@ get.state.to.msa.outcome.variance <- function(data.type,
                                               years=NULL,
                                               details=F)
 {
+    # return(0.01^2)
     #.01^2
-
+    # we don't have data on retention at the local level, so...
+    if (data.type=='retention')
+        data.type = 'engagement'
+    
     if (!is.null(cached.errors))
     {
         rv = get.cached.nested.error(cache=cached.errors,
@@ -1425,6 +1505,9 @@ get.county.to.msa.outcome.variance <- function(data.type,
                                                details=F)
 {
     #.01^2
+    # we don't have data on retention at the local level, so...
+    if (data.type=='retention')
+        data.type = 'engagement'
     
     if (!is.null(cached.errors))
     {
@@ -1486,6 +1569,7 @@ DATA.TYPE.MIN = c(
     'suppression' = 0,
     'diagnosed' = 0,
     'engagement' = 0,
+    'retention' = 0,
     'new' = 0,
     'prevalence' = 0
 )
@@ -1495,6 +1579,7 @@ DATA.TYPE.MAX = c(
     'suppression' = 1,
     'diagnosed' = 1,
     'engagement' = 1,
+    'retention' = 1,
     'new' = Inf,
     'prevalence' = Inf
 )
@@ -1685,7 +1770,7 @@ get.paired.msa.data.one.stratification <- function(data.type,
     missing.all.mask = sapply(data.for.msas, function(data){
         is.null(data) || all(is.na(data))
     })
-
+    
     msas = msas[!missing.all.mask]
     data.for.msas = data.for.msas[!missing.all.mask]
     
@@ -1727,7 +1812,7 @@ get.paired.msa.data.one.stratification <- function(data.type,
                         rv$location1 = c(rv$location1,
                                          rep(msa, sum(both.not.missing)))
                         rv$location2 = c(rv$location2,
-                                        rep(other.code, sum(both.not.missing)))
+                                         rep(other.code, sum(both.not.missing)))
                     }
                 }
             }
@@ -1752,13 +1837,13 @@ get.paired.ratios.and.reference <- function(paired.data)
     if (1==2)
     {
         locations = unique(paired.data$location[paired.data$stratification=='all'])
-    reference.by.location = sapply(locations, function(loc){
-        mask = paired.data$location==loc & paired.data$stratification=='all'
-        mean(ratios[mask])
-    })
-    
-    references = reference.by.location[paired.data$location]
-
+        reference.by.location = sapply(locations, function(loc){
+            mask = paired.data$location==loc & paired.data$stratification=='all'
+            mean(ratios[mask])
+        })
+        
+        references = reference.by.location[paired.data$location]
+        
     }
     
     references = sapply(1:length(ratios), function(i){
@@ -1779,7 +1864,8 @@ get.paired.ratios.and.reference <- function(paired.data)
     
     list(
         ratio = ratios[!missing],
-        reference = references[!missing]
+        reference = references[!missing],
+        stratification = paired.data$stratification[!missing]
     )
 }
 
@@ -1835,16 +1921,16 @@ make.nested.errors.cache <- function(msa.surveillance,
                                    geography='state', data.type=data.type, statistic='bias', years=years,
                                    value=state.value)
         
-#        county.value = get.county.to.msa.outcome.bias(data.type=data.type,
-#                                                      msa.surveillance = msa.surveillance,
-#                                                      county.surveillance = county.surveillance,
-#                                                      years=years,
-#                                                      details=verbose)
- #       cache = cache.nested.error(cache,
-#                                   geography='county', data.type=data.type, statistic='bias', years=years,
-#                                   value=county.value)
+        #        county.value = get.county.to.msa.outcome.bias(data.type=data.type,
+        #                                                      msa.surveillance = msa.surveillance,
+        #                                                      county.surveillance = county.surveillance,
+        #                                                      years=years,
+        #                                                      details=verbose)
+        #       cache = cache.nested.error(cache,
+        #                                   geography='county', data.type=data.type, statistic='bias', years=years,
+        #                                   value=county.value)
     }
-
+    
     for (data.type in ratio.cv.data.types)
     {
         if (verbose)
@@ -1860,10 +1946,10 @@ make.nested.errors.cache <- function(msa.surveillance,
                                    value=state.value)
         
         county.value = get.county.to.msa.outcome.ratio.cv(data.type=data.type,
-                                                         msa.surveillance = msa.surveillance,
-                                                         county.surveillance = county.surveillance,
-                                                         years=years,
-                                                         details=verbose)
+                                                          msa.surveillance = msa.surveillance,
+                                                          county.surveillance = county.surveillance,
+                                                          years=years,
+                                                          details=verbose)
         cache = cache.nested.error(cache,
                                    geography='county', data.type=data.type, statistic='ratio.cv', years=years,
                                    value=county.value)
@@ -1898,6 +1984,6 @@ get.nested.error.cache.name <- function(geography, data.type, statistic, years)
         years = '<none>'
     else
         years = paste0(years, collapse='.')
-        
+    
     paste0(geography, "__", data.type, "__", statistic, "__", years)
 }
