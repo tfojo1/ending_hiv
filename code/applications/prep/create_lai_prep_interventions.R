@@ -1,5 +1,5 @@
 
-# This file implements the generic create function used by the web tool
+
 
 #'@param baseline.proportion.oral
 #'@param additional.proportion.oral

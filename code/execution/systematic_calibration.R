@@ -2,8 +2,6 @@ CACHE.FREQUENCY = 500
 
 
 
-
-
 ##-----------------##
 ##-- RUN INITIAL --##
 ##-----------------##
@@ -11,20 +9,16 @@ CACHE.FREQUENCY = 500
 setup.initial.mcmc.for.msa <- function(msa,
                                        version='collapsed_1.0',
                                        likelihood=NULL,
-                                       prior=get.parameters.prior.for.version(version),
-                                       parameter.var.blocks = get.parameter.sampling.blocks.for.version(version),
+                                       prior=get.parameters.prior.for.version(VERSION.MANAGER, version),
+                                       parameter.var.blocks = get.parameter.sampling.blocks.for.version(VERSION.MANAGER, version),
                                        template.mcmc=NULL,
                                        chains=1,
                                        n.iter=20000,
                                        thin=20,
                                        burn=0,
                                        max.sim.time=20,
-                                       save.dir=file.path(SYSTEMATIC.ROOT.DIR,
-                                                          paste0('systematic_initial', 
-                                                                 get.directory.suffix.for.version(version))),
-                                       cache.dir=file.path(SYSTEMATIC.ROOT.DIR, 
-                                                           paste0('systematic_caches',
-                                                                  get.directory.suffix.for.version(version))),
+                                       save.dir=file.path(SYSTEMATIC.ROOT.DIR, 'systematic_initial'),
+                                       cache.dir=file.path(SYSTEMATIC.ROOT.DIR, 'systematic_caches'),
                                        update.frequency=200,
                                        cache.frequency=CACHE.FREQUENCY,
                                        save.suffix='',
@@ -52,59 +46,37 @@ setup.initial.mcmc.for.msa <- function(msa,
         likelihood = create.msa.likelihood(msa)
     }
     
-    # Start values:
-    # The order of preference for values is:
-    # 1) Start values for this version
-    # 2) A prior run for an earlier version
-    # 3) Start values for a prior version
-
-    starting.parameters = NULL
-    for (version.to.pull in c(version, get.prior.versions(version)))
-    {
-        prior.simset.filename = get.full.filename(location=msa)
-        prior.run.file = file.path(SYSTEMATIC.ROOT.DIR,
-                                   paste0('full_simsets', get.directory.suffix.for.version(version.to.pull)),
-                                   prior.simset.filename)
-        
-        if (version != version.to.pull &&
-            file.exists(prior.run.file))
-        {
-            load(prior.run.file)
-            print(paste0("* Getting starting parameters from prior run for version '", version.to.pull))
-            starting.parameters = simset@parameters[simset@n.sim,]
-        }
-        else
-        {
-            start.value.file = file.path(SYSTEMATIC.ROOT.DIR, 
-                                         version.to.pull,
-                                         'start_values',
-                                         paste0(msa, '.Rdata'))
-            if (file.exists(start.value.file))
-            {
-                print(paste0("* Getting starting parameters from start_values file for version '", version.to.pull))
-                load(start.value.file)
-            }
-        }
-            
-        if (!is.null(starting.parameters))
-            break
-    }
+    # Start values
+    # If we have a prior systematic calibration, use those values
+    # Otherwise pull from the start value generator
     
-    if (is.null(starting.parameters))
-        stop(paste0("Initial values have not been set for ", msa.names(msa), " for version '",
-                    version, "' and no prior versions have runs or initial values"))
+    prior.simset.filename = get.full.filename(location=msa)
+    prior.run.file = file.path(SYSTEMATIC.ROOT.DIR, 'quick_simsets', prior.simset.filename)
+    if (!file.exists(prior.run.file))
+        prior.run.file = file.path(SYSTEMATIC.ROOT.DIR, 'full_simsets', prior.simset.filename)
+    
+    if (file.exists(prior.run.file))
+    {
+        load(prior.run.file)
+        starting.parameters = simset@parameters[simset@n.sim,]
+    }
+    else
+    {
+        start.value.file = file.path(SYSTEMATIC.ROOT.DIR, 'start_values', paste0(msa, '.Rdata'))
+        if (!file.exists(start.value.file))
+            stop(paste0("Initial values have not been set for ", msa.names(msa)))
+        
+        load(start.value.file)
+    }
     
     
     # If the starting parameters don't match what we need for the version
     #  start at the median values
     
-    prior = get.parameters.prior.for.version(version=version)
+    prior = get.parameters.prior.for.version(VERSION.MANAGER, version=version)
     starting.parameters.to.use = suppressWarnings(get.medians(prior))
     matching.names = intersect(names(starting.parameters), names(starting.parameters.to.use))
     starting.parameters.to.use[matching.names] = starting.parameters[matching.names]
-    
-    if (any(is.na(starting.parameters.to.use)))
-        stop("NA produced in starting.parameters.to.use")
     
     start.value.generator = function(n){
         if (n==1)
@@ -195,7 +167,7 @@ create.start.value.generator.for.msa <- function(msa,
     load(full.files[mask][sum(mask)])
     
     simset = extract.simset(mcmc, additional.burn=mcmc@n.iter/2)
-    prior = get.parameters.prior.for.version(version=version)
+    prior = get.parameters.prior.for.version(VERSION.MANAGER, version=version)
     
     sampling.dist = create.starting.sampling.distribution(simset, prior = prior)
     save(sampling.dist, file=file.path(SYSTEMATIC.ROOT.DIR, 'starting_value_generators',
@@ -210,22 +182,16 @@ setup.parallel.mcmc.for.msa <- function(msa,
                                         version='collapsed_1.0',
                                         likelihood=NULL,
                                         prior=parameters.prior,
-                                        parameter.var.blocks = get.parameter.sampling.blocks.for.version(version),
+                                        parameter.var.blocks = get.parameter.sampling.blocks.for.version(VERSION.MANAGER, version),
                                         start.value.generator=NULL,
                                         chains=4,
                                         n.iter=100000,
                                         thin=100,
                                         burn=0,
                                         max.sim.time=20,
-                                        save.dir=file.path(SYSTEMATIC.ROOT.DIR,
-                                                           paste0('systematic_parallel', 
-                                                                  get.directory.suffix.for.version(version))),
-                                        cache.dir=file.path(SYSTEMATIC.ROOT.DIR, 
-                                                            paste0('systematic_caches',
-                                                                   get.directory.suffix.for.version(version))),
-                                        initial.dir=file.path(SYSTEMATIC.ROOT.DIR,
-                                                              paste0('systematic_initial', 
-                                                                     get.directory.suffix.for.version(version))),
+                                        save.dir=file.path(SYSTEMATIC.ROOT.DIR, 'systematic_parallel'),
+                                        cache.dir=file.path(SYSTEMATIC.ROOT.DIR, 'systematic_caches'),
+                                        initial.dir=file.path(SYSTEMATIC.ROOT.DIR, 'systematic_initial'),
                                         update.frequency=200,
                                         cache.frequency=CACHE.FREQUENCY,
                                         save.suffix='',
@@ -261,7 +227,7 @@ setup.parallel.mcmc.for.msa <- function(msa,
     if (verbose)
         print("Creating starting value generator")
     simset = extract.simset(mcmc, additional.burn=mcmc@n.iter/2)
-    prior = get.parameters.prior.for.version(version=version)
+    prior = get.parameters.prior.for.version(VERSION.MANAGER, version=version)
     start.value.generator = create.starting.sampling.distribution(simset, 
                                                                   prior = prior,
                                                                   correlated.sd.inflation = .75, 
@@ -310,7 +276,7 @@ setup.mcmc.for.msa <- function(msa,
                                version,
                                likelihood=NULL,
                                prior=parameters.prior,
-                               parameter.var.blocks = get.parameter.sampling.blocks.for.version(version),
+                               parameter.var.blocks = get.parameter.sampling.blocks.for.version(VERSION.MANAGER, version),
                                start.value.generator=NULL,
                                chains=4,
                                n.iter=50000,
@@ -509,11 +475,11 @@ create.run.simulation.function <- function(msa,
                                            fix.components=T)
 {
     #-- Init Components --#
-    settings = get.settings.for.version(version)  
+    settings = get.settings.for.version(VERSION.MANAGER, version)  
   
     base.components = setup.initial.components(msa=msa, settings = settings)
     
-    get.components.fn = get.components.function.for.version(version)
+    get.components.fn = get.components.function.for.version(VERSION.MANAGER, version)
     
     init.components = get.components.fn(start.values, base.components)
     

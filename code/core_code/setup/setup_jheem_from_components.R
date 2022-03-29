@@ -5,8 +5,6 @@
 ##-- RUN FOR COMPONENTS --##
 ##------------------------##
 
-DEFAULT.JHEEM.ATOL = 1e-04
-DEFAULT.JHEEM.RTOL = 1e-04
 run.jheem.from.components <- function(components,
                                       start.year=1970, end.year=2020,
                                       max.run.time.seconds=Inf,
@@ -25,8 +23,7 @@ run.jheem.from.components <- function(components,
                         start.year = start.year, end.year = end.year,
                         verbose=F, print.warnings = F,
                         max.run.time.seconds=max.run.time.seconds,
-                        keep.years=keep.years, 
-                        atol = DEFAULT.JHEEM.ATOL, rtol=DEFAULT.JHEEM.RTOL)
+                        keep.years=keep.years)
     
     #-- Store some attributes --#
     attr(results, 'msm.proportions.by.race') = components$proportions.msm.of.male
@@ -1061,10 +1058,7 @@ do.setup.idu.transitions <- function(components)
                                                                   foreground = components$foreground.idu.relapse,
                                                                   max.background.time = Inf)
         
- 
-        # I don't know why, but somehow this was getting set to an empty list
-        # So just have to recalculate every time - it's cheap
-#        if (is.null(components$needle.exchange.rates.and.times))
+        if (is.null(components$needle.exchange.rates.and.times))
             components = do.calculate.needle.exchange.coverage(components)
         needle.exchange = calculate.needle.exchange.coverage(components)
         
@@ -1100,6 +1094,7 @@ do.setup.idu.transitions <- function(components)
         # Put it together into transitions array
         idu.transitions = get.general.transition.array.skeleton(components$jheem, transition.dimension='risk')
         components$idu.transitions = lapply(1:length(components$interpolated.idu.transition.years), function(i){
+            
             idu.transitions[,,,,'never_IDU','active_IDU'] = idu.incidence$rates[[i]]
             
             idu.transitions[,,,,'active_IDU','IDU_in_remission'] = idu.remission$rates[[i]] * 
@@ -1376,7 +1371,8 @@ do.setup.continuum.transitions <- function(components)
                 
         #-- CHECK and then RETURN --#
                 if (any(is.na(continuum.transitions.for.year)))
-                    stop("NA values produced in continuum transitions array")
+                    browser()
+                #stop("NA values produced in continuum transitions array")
                 continuum.transitions.for.year
             })
             components$continuum.transition.years = all.times
@@ -1987,7 +1983,6 @@ get.background.proportions <- function(base.model,
                                           idu.applies.to.in.remission = idu.applies.to.in.remission,
                                           idu.applies.to.msm.idu = idu.applies.to.msm.idu,
                                           msm.applies.to.msm.idu = msm.applies.to.msm.idu)
-
     if (!is.null(base.model$mixed.linear) && base.model$mixed.linear)
     {
         intercept = transformation(intercept)

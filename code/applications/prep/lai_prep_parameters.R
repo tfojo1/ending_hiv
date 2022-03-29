@@ -68,5 +68,5 @@ DEFAULT.ORAL.PREP.PERSISTENCE.DIST = Normal.Distribution(mean=oral.persistence.m
                                                  var.name='oral.prep.persistence')
 
 DEFAULT.INJ.VS.ORAL.DISCONTINUATION.RR.DIST = Uniform.Distribution(min=.25,
-                                                           max=1.25,
+                                                           max=1,
                                                            var.name='inj.vs.oral.discontinuation.rr')

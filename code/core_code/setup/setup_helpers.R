@@ -303,7 +303,7 @@ recategorize.to.cdc.risk.strata <- function(population)
         access(population, sex='heterosexual_male', risk='IDU_in_remission')
 
     #pull msm+idu
-    access(rv, sex='male',risk='msm_idu') = access(population, sex='msm', risk='active_IDU') +
+    access(rv, sex='female',risk='msm_idu') = access(population, sex='msm', risk='active_IDU') +
         access(population, sex='msm', risk='IDU_in_remission')
 
     #pull heterosexual
@@ -338,8 +338,8 @@ recategorize.to.jheem.risk.strata <- function(population,
     access(rv, sex='heterosexual_male', risk='IDU_in_remission') = access(population, sex='male', risk='idu') * proportion.idu.in.remission
     
     #pull msm+idu
-    access(rv, sex='msm', risk='active_IDU') = access(population, sex='male', risk='msm_idu') * proportion.idu.active
-    access(rv, sex='msm', risk='IDU_in_remission') = access(population, sex='male', risk='msm_idu') * proportion.idu.in.remission
+    access(rv, sex='msm', risk='active_IDU') = access(population, sex='female', risk='msm_idu') * proportion.idu.active
+    access(rv, sex='msm', risk='IDU_in_remission') = access(population, sex='female', risk='msm_idu') * proportion.idu.in.remission
     
     #pull heterosexual
     access(rv, sex='female', risk='never_IDU') = access(population, sex='female', risk='heterosexual')

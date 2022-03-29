@@ -19,20 +19,20 @@ prep.pp = function(pp)
     prior.medians
 }
 
-load('mcmc_runs/start_values/collapsed_1.0/31080.Rdata'); pp = prep.pp(starting.parameters)
-load('mcmc_runs/start_values/collapsed_1.0/35620.Rdata'); pp = prep.pp(starting.parameters)
-load('mcmc_runs/start_values/collapsed_1.0/12060.Rdata'); pp = prep.pp(starting.parameters)
-load('mcmc_runs/start_values/collapsed_1.0/26420.Rdata'); pp = prep.pp(starting.parameters)
-load('mcmc_runs/start_values/collapsed_1.0/19820.Rdata'); pp = prep.pp(starting.parameters)
-load('mcmc_runs/start_values/collapsed_1.0/29280.Rdata'); pp = prep.pp(starting.parameters)
-load('mcmc_runs/start_values/collapsed_1.0/32820.Rdata'); pp = prep.pp(starting.parameters)
-load('mcmc_runs/start_values/collapsed_1.0/41860.Rdata'); pp = prep.pp(starting.parameters)
-load('mcmc_runs/start_values/collapsed_1.0/12420.Rdata'); pp = prep.pp(starting.parameters)
-load('mcmc_runs/start_values/collapsed_1.0/41470.Rdata'); pp = prep.pp(starting.parameters)
-load('mcmc_runs/start_values/collapsed_1.0/18140.Rdata'); pp = prep.pp(starting.parameters)
-load('mcmc_runs/start_values/collapsed_1.0/12580.Rdata'); pp = prep.pp(starting.parameters)
-load('mcmc_runs/start_values/collapsed_1.0/33100.Rdata'); pp = prep.pp(starting.parameters)
-load('mcmc_runs/start_values/collapsed_1.0/19740.Rdata'); pp = prep.pp(starting.parameters)
+load('mcmc_runs/start_values/31080.Rdata'); pp = prep.pp(starting.parameters)
+load('mcmc_runs/start_values/35620.Rdata'); pp = prep.pp(starting.parameters)
+load('mcmc_runs/start_values/12060.Rdata'); pp = prep.pp(starting.parameters)
+load('mcmc_runs/start_values/26420.Rdata'); pp = prep.pp(starting.parameters)
+load('mcmc_runs/start_values/19820.Rdata'); pp = prep.pp(starting.parameters)
+load('mcmc_runs/start_values/29280.Rdata'); pp = prep.pp(starting.parameters)
+load('mcmc_runs/start_values/32820.Rdata'); pp = prep.pp(starting.parameters)
+load('mcmc_runs/start_values/41860.Rdata'); pp = prep.pp(starting.parameters)
+load('mcmc_runs/start_values/12420.Rdata'); pp = prep.pp(starting.parameters)
+load('mcmc_runs/start_values/41470.Rdata'); pp = prep.pp(starting.parameters)
+load('mcmc_runs/start_values/18140.Rdata'); pp = prep.pp(starting.parameters)
+load('mcmc_runs/start_values/12580.Rdata'); pp = prep.pp(starting.parameters)
+load('mcmc_runs/start_values/33100.Rdata'); pp = prep.pp(starting.parameters)
+load('mcmc_runs/start_values/19740.Rdata'); pp = prep.pp(starting.parameters)
 
 
 msm.trates = names(pp)[grepl('msm.trate',names(pp))]
@@ -61,10 +61,10 @@ set.pp.to.default <- function(pp)
     pp['black.black.sexual.oe'] = 3.76
     pp['hispanic.hispanic.sexual.oe'] = 2.19
     pp['other.other.sexual.oe'] = 1.55
-    
+
     pp['acute.transmissibility.rr'] = 12
     pp['diagnosed.transmission.rr'] = mean(c(1-.68, 1/3.5))
-    
+        
     pp    
 }
 
@@ -118,14 +118,14 @@ simplot(sim2, facet.by='risk')
 
 starting.parameters = pp2; msa.names(msa)
 # save to both local and systematic directories
-save(starting.parameters, file=file.path(SYSTEMATIC_ROOT_DIR, 'start_values/collapsed_1.0', paste0(msa, '.Rdata')));  save(starting.parameters, file=file.path('mcmc_runs/start_values/collapsed_1.0', paste0(msa, '.Rdata')))
+save(starting.parameters, file=file.path(SYSTEMATIC_ROOT_DIR, 'start_values', paste0(msa, '.Rdata')));  save(starting.parameters, file=file.path('mcmc_runs/start_values', paste0(msa, '.Rdata')))
 
 
 
 
 D#to redo parameters
 msa = CHICAGO.MSA
-load(file.path('mcmc_runs/start_values/collapsed_1.0', paste0(msa, '.Rdata'))); msa.names(msa)
+load(file.path('mcmc_runs/start_values', paste0(msa, '.Rdata'))); msa.names(msa)
 pp = prep.pp(starting.parameters)
 pp2 = pp; pp2[testing] = 1; pp2[suppression] = 1; pp2['msm.proportion.tested.or'] = 0.5
 run.simulation = create.run.simulation.function(msa, start.values=pp)
@@ -134,9 +134,9 @@ sim1 = run.simulation(pp)
 #to redo with testing parameters set to 1
 for (msa in c(NYC.MSA, LA.MSA, MIAMI.MSA, ATLANTA.MSA, HOUSTON.MSA, DALLAS.MSA, CHICAGO.MSA, DC.MSA))
 {
-    load(file=file.path('mcmc_runs/start_values/collapsed_1.0/', paste0(msa, '.Rdata'))); msa.names(msa)
+    load(file=file.path('mcmc_runs/start_values', paste0(msa, '.Rdata'))); msa.names(msa)
     starting.parameters[testing] = 1; starting.parameters[suppression] = 1
-    save(starting.parameters, file=file.path('mcmc_runs/start_values/collapsed_1.0', paste0(msa, '.Rdata'))); msa.names(msa)
+    save(starting.parameters, file=file.path('mcmc_runs/start_values', paste0(msa, '.Rdata'))); msa.names(msa)
 }
 
 

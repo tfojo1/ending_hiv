@@ -1,6 +1,3 @@
-##-- DEPRECATED FILE --##
-## go to code/applications/shared/error_summaries.R
-
 
 # for checking that these things make sense
 if (1==2)
@@ -95,10 +92,10 @@ make.pretty.error.summary.table <- function(mae, mape,
 }
 
 get.error.summary.table <- function(abs.arr,
-                                    outcome,
-                                    years=2010:2018,
-                                    take.mean.first=F,
-                                    error.fn=calculate.mape)
+                           outcome,
+                           years=2010:2018,
+                           take.mean.first=F,
+                           error.fn=calculate.mape)
 {
     dimnames(abs.arr)$outcome[dimnames(abs.arr)$outcome=='prevalence.diagnosed'] = 'prevalence'
     

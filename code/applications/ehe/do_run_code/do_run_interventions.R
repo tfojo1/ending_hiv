@@ -1,15 +1,8 @@
 
-source('code/source_code.R')
-source('code/execution/extract_and_run.R')
-source('code/applications/ehe/create_ehe_intervention_presets.R')
-source('code/applications/ehe/ehe_systematic_intervention_sets.R')
-msas = DENVER.MSA
+source('code/systematic_calibration/extract_and_run.R')
+msas = TARGET.MSAS[6 + 8*3]#TARGET.MSAS[2 + 8*(0:3)]
 
-INTERVENTION.CODES.TO.DO = c(EHE.TALK.INTERVENTION.CODES,
-                             setdiff(WEB.TOOL.INTERVENTION.CODES, EHE.TALK.INTERVENTION.CODES))
-INTERVENTION.CODES.TO.DO = rev(c(INTERVENTION.CODES.TO.DO[!grepl('23.27', INTERVENTION.CODES.TO.DO)],
-                                 INTERVENTION.CODES.TO.DO[grepl('23.27', INTERVENTION.CODES.TO.DO)]))
-INTERVENTIONS.TO.DO = lapply(INTERVENTION.CODES.TO.DO, intervention.from.code)
+INTERVENTIONS.TO.DO = NEW.A2.TO.ADD.SET.3Y[4] #ALL.INTERVENTIONS.3Y#[c(5,12)]
 
 for (msa in msas)
 {

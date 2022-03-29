@@ -105,25 +105,14 @@ WEB.TOOL.INTERVENTION.CODES = unique(c(
     'noint',
     
     paste0(MAIN.INTERVENTION.CODES, "_23.27"),
-    paste0(SINGLE.MODALITY.INTERVENTION.CODES, "_23.27"),
-    
     paste0(MAIN.INTERVENTION.CODES, "_23.25"),
     
+    paste0(SINGLE.MODALITY.INTERVENTION.CODES, "_23.27"),
     
     paste0(IDU.INTERVENTION.CODES, "_23.27")
 ))
 
 WEB.TOOL.INTERVENTIONS = lapply(WEB.TOOL.INTERVENTION.CODES, intervention.from.code)
-
-EHE.TALK.INTERVENTION.CODES = c(
-    'noint',
-    'ybhm.t1x.p10.s80_23.27',
-    'mi.t2x.p25.s90_23.27',
-    'all.p10_23.27',  
-    'all.p25_23.27',
-    'mi.t2x_het.t1x_23.27',
-    'all.s90_23.27'
-)
 
 ALL.INTERVENTION.CODES = unique(c(
     WEB.TOOL.INTERVENTION.CODES,    

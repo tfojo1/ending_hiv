@@ -1,12 +1,20 @@
 
-source('code/source_code.R')
+if (1==2)
+{
+    setwd('../../../Ending HIV/Ending_HIV/')
+}
 
-msa = PORTLAND.MSA
+
+source('code/source_code.R')
+source('code/systematic_calibration/systematic_calibration.R')
+source('code/targets/target_msas.R')
+
+msa = ST.LOUIS.MSA
 chain = 4
 
 # Get the cache and run it
 cache.dirs = list.dirs(file.path(SYSTEMATIC.ROOT.DIR, 'systematic_caches'), recursive = F)
-mask = grepl(msa, cache.dirs) & grepl('4x', cache.dirs)
+mask = grepl(msa, cache.dirs)
 
 if (!any(mask))
     stop(paste0("No cache dir has been set up for '", msa, "' (", msa.names(msa), ")"))

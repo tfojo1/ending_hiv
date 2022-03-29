@@ -1,4 +1,3 @@
-SAVE = T
 MELISSAS.FILE = "~/Dropbox/Documents_local/Hopkins/PhD/Dissertation/EHE/CNICS/synthetic_fixed_from2007_2021-12-07.Rdata"
 TODDS.FILE = 'Q:/CNICS/cleaned/2021/cnics_fixed_from2007_2021-12-07.Rdata'
 if (file.exists(MELISSAS.FILE))
@@ -281,11 +280,6 @@ if (use.gee==T)
     print("Fitting logistic model for unsuppressed-naive --> lost, WITHOUT individual slopes")
     model.naive.to.lost.noslopes <- geeglm(lost.future ~ age.category + sex.risk + race + relative.year,
                                              data=imputed.unsuppressed.naive, id=id, family=binomial, corstr="exchangeable")
-    
-    unsuppressed.naive$lost.future = unsuppressed.naive$future.state=='lost'
-    unimputed.naive.to.lost.noslopes <- geeglm(lost.future ~ age.category + sex.risk + race + relative.year,
-                                           data=unsuppressed.naive, id=id, family=binomial, corstr="exchangeable")
-    
 } else
 {
     ## --> Lost
@@ -411,11 +405,7 @@ if (use.gee==T)
     
     print("Fitting logistic model for unsuppressed-failing --> lost, WITHOUT individual slopes")
     model.failing.to.lost.noslopes <- geeglm(lost.future ~ age.category + sex.risk + race + relative.year,
-                                             data=imputed.unsuppressed.failing, id=id, family=binomial, corstr="exchangeable")
-    
-    unsuppressed.failing$lost.future = unsuppressed.failing$future.state=='lost'
-    unimputed.failing.to.lost.noslopes <- geeglm(lost.future ~ age.category + sex.risk + race + relative.year,
-                                             data=unsuppressed.failing, id=id, family=binomial, corstr="exchangeable")
+                                            data=imputed.unsuppressed.failing, id=id, family=binomial, corstr="exchangeable")
 } else
 {
     ## --> Suppress
@@ -522,10 +512,6 @@ if (use.gee==T)
     print("Fitting logistic model for engaged-suppressed --> lost, WITHOUT individual slopes")
     model.supp.to.lost.noslopes <- geeglm(lost.future ~ age.category + sex.risk + race + relative.year,
                                           data=imputed.engaged.suppressed, id=id, family=binomial, corstr="exchangeable")
-    
-    engaged.suppressed$lost.future = engaged.suppressed$future.state=='lost'
-    unimputed.supp.to.lost.noslopes <- geeglm(lost.future ~ age.category + sex.risk + race + relative.year,
-                                          data=engaged.suppressed, id=id, family=binomial, corstr="exchangeable")
 } else
 {
     ## --> Failing
@@ -655,8 +641,7 @@ output <- list(
     naive.to.suppressed.slopes.coefficients=model.naive.to.supp.slopes$coefficients,
     naive.to.suppressed.noslopes.coefficients=model.naive.to.supp.noslopes$coefficients,
     naive.to.lost.slopes.coefficients=model.naive.to.lost.slopes$coefficients,
-    naive.to.lost.noslopes.coefficients=(model.naive.to.lost.noslopes$coefficients +
-                                             unimputed.naive.to.lost.noslopes$coefficients)/2,
+    naive.to.lost.noslopes.coefficients=model.naive.to.lost.noslopes$coefficients,
     
     #Naive, variance
     naive.to.suppressed.slopes.variance=model.naive.to.supp.slopes$robust.variance,
@@ -668,8 +653,7 @@ output <- list(
     failing.to.suppressed.slopes.coefficients=model.failing.to.supp.slopes$coefficients,
     failing.to.suppressed.noslopes.coefficients=model.failing.to.supp.noslopes$coefficients,
     failing.to.lost.slopes.coefficients=model.failing.to.lost.slopes$coefficients,
-    failing.to.lost.noslopes.coefficients=(model.failing.to.lost.noslopes$coefficients +
-                                               unimputed.failing.to.lost.noslopes$coefficients)/2,
+    failing.to.lost.noslopes.coefficients=model.failing.to.lost.noslopes$coefficients,
     
     #Failing, variance
     failing.to.suppressed.slopes.variance=model.failing.to.supp.slopes$robust.variance,
@@ -681,8 +665,7 @@ output <- list(
     suppressed.to.failing.slopes.coefficients=model.supp.to.failing.slopes$coefficients,
     suppressed.to.failing.noslopes.coefficients=model.supp.to.failing.noslopes$coefficients,
     suppressed.to.lost.slopes.coefficients=model.supp.to.lost.slopes$coefficients,
-    suppressed.to.lost.noslopes.coefficients=(model.supp.to.lost.noslopes$coefficients +
-                                                  unimputed.supp.to.lost.noslopes$coefficients)/2,
+    suppressed.to.lost.noslopes.coefficients=model.supp.to.lost.noslopes$coefficients,
     
     #Suppressed, variance
     suppressed.to.failing.slopes.variance=model.supp.to.failing.slopes$robust.variance,
@@ -698,79 +681,10 @@ output <- list(
     
     anchor.year=anchor.year)
 
-##-- ONE LAST CORRECTION for proportion lost --##
 
-print("CORRECTING THE LOST INTERCEPTS")
+print("Done - saving output")
+save(output, file=file.path('code','for Melissa', 'CNICS analysis', 
+                            paste0('logistic_output_adj_', dataset.type, '_', analysis, '_', Sys.Date())))
 
-DESIRED.OVERALL.P.RETAINED = 0.775 
-#this is the average of all four metric for https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4334738/
-# (since we're not taking a stance on which metric is most valid)
-
-desired.p.lost = 1-DESIRED.OVERALL.P.RETAINED
-#calculate the actual p lost
-
-imputed.all = rbind(
-    imputed.engaged.suppressed,
-    imputed.unsuppressed.failing,
-    imputed.unsuppressed.naive[imputed.unsuppressed.naive$relative.year>2,]
-)
-
-predict.from.coefficients <- function(coefs, df)
-{
-    lo = coefs[1] +
-        coefs["age.category13-25"] * as.numeric(df$age.category=='13-25') +
-        coefs["age.category25-35"] * as.numeric(df$age.category=='25-35') +
-        coefs["age.category45-55"] * as.numeric(df$age.category=='45-55') +
-        coefs["age.category55+"] * as.numeric(df$age.category=='55+') +
-        coefs["sex.riskmsm_idu"] * as.numeric(df$sex.risk=='msm_idu') +
-        coefs["sex.riskheterosexual_male"] * as.numeric(df$sex.risk=='heterosexual_male') +
-        coefs["sex.riskheterosexual_female"] * as.numeric(df$sex.risk=='heterosexual_female') +
-        coefs["sex.riskidu_male"] * as.numeric(df$sex.risk=='idu_male') +
-        coefs["sex.riskidu_female"] * as.numeric(df$sex.risk=='idu_female') +
-        coefs["raceblack"] * as.numeric(df$race=='black') +
-        coefs["racehispanic"] * as.numeric(df$race=='hispanic') +
-        coefs["relative.year"] * as.numeric(df$relative.year)
-    
-    1 / (1+exp(-lo))
-}
-
-desired.lo.lost = log(desired.p.lost) - log(1-desired.p.lost)
-actual.p.lost = mean(imputed.all$lost.future)
-actual.lo.lost = log(actual.p.lost) - log(1-actual.p.lost)
-
-
-
-probs = c(
-    predict.from.coefficients(output$naive.to.lost.noslopes.coefficients, imputed.unsuppressed.naive[imputed.unsuppressed.naive$relative.year>2,]),
-    predict.from.coefficients(output$failing.to.lost.noslopes.coefficients, imputed.unsuppressed.failing),
-    predict.from.coefficients(output$suppressed.to.lost.noslopes.coefficients, imputed.engaged.suppressed)
-)
-mean.indiv.correction = mean(desired.lo.lost - 
-                                 log(probs) + log(1-probs))
-
-mean.correction = desired.lo.lost - actual.lo.lost
-
-lo.correction = (mean.indiv.correction + mean.correction) / 2 
-                   
-# apply the correction
-
-output$naive.to.lost.noslopes.coefficients[1] = output$naive.to.lost.noslopes.coefficients[1] + lo.correction
-output$failing.to.lost.noslopes.coefficients[1] = output$failing.to.lost.noslopes.coefficients[1] + lo.correction
-output$suppressed.to.lost.noslopes.coefficients[1] = output$suppressed.to.lost.noslopes.coefficients[1] + lo.correction
-
-
-
-
-##-- SAVE --##
-if (!SAVE)
-    print("Done - NOT SAVING HERE")
-
-if (SAVE)
-{
-    print("Done - saving output")
-    save(output, file=file.path('code','for Melissa', 'CNICS analysis', 
-                                paste0('logistic_output_adj_', dataset.type, '_', analysis, '_', Sys.Date())))
-    
-    if (dataset.type=='real')
-        save(output, file='cleaned_data/continuum/cnics_regression.Rdata')
-}
+if (dataset.type=='real')
+    save(output, file='cleaned_data/continuum/cnics_regression.Rdata')

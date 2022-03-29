@@ -1,6 +1,4 @@
 
-# This file defines and registers the interventions we use for our manuscript
-
 ##-- MAKE THE INTERVENTIONS AND REGISTER THEM --##
 
 create.standard.prep.interventions <- function(start.year=2023,
@@ -218,21 +216,6 @@ create.standard.prep.interventions <- function(start.year=2023,
                                                  name='50/50 Baseline PrEP with 5% LAI/5% Oral uptake on MSM',
                                                  manager = INTERVENTION.MANAGER,
                                                  allow.intervention.multiple.names = T)
-    
-    
-    # Targeted to racial minorities
-    BLACK.HISPANIC.MSM = create.target.population(sexes='msm',
-                                                  races=c('black','hispanic'))
-    
-    lai.baseline.plus.25.lai.black.hisp = create.intervention(BLACK.HISPANIC.MSM,
-                                                         BASELINE.TO.INJ.COVERAGE,
-                                                         BASELINE.TO.INJ.EFFICACY,
-                                                         ADDITIONAL.PLUS.25.INJ,
-                                                         ADDITIONAL.TO.INJ.EFFICACY,oral.prep.rr.dist,inj.vs.oral.hr.dist, oral.prep.persistence.dist, inj.vs.oral.discontinuation.rr.dist)
-    INTERVENTION.MANAGER = register.intervention(lai.baseline.plus.25.lai.black.hisp, code=paste0('msm.baseline.lai.plus.25.lai.black.hisp', suffix),
-                                                 name='Baseline LAI PrEP with 25% LAI uptake on Black and Hispanic MSM',
-                                                 manager = INTERVENTION.MANAGER,
-                                                 allow.intervention.multiple.names = T)
 }
 
 
@@ -247,17 +230,3 @@ INTERVENTION.MANAGER.1.0 = create.standard.prep.interventions(start.year=2023,
                                                               oral.prep.persistence.dist = DEFAULT.ORAL.PREP.PERSISTENCE.DIST, #oral.prep.persistence
                                                               inj.vs.oral.discontinuation.rr.dist = DEFAULT.INJ.VS.ORAL.DISCONTINUATION.RR.DIST, #inj.vs.oral.discontinuation.rr
                                                               INTERVENTION.MANAGER = INTERVENTION.MANAGER.1.0)
-
-STANDARD.LAI.PREP.INTERVENTION.CODES = paste0(c(
-    'msm.baseline.oral',
-    'msm.baseline.lai',
-    'msm.baseline.oral.plus.10.oral',
-    'msm.baseline.oral.plus.10.lai',
-    'msm.baseline.lai.plus.10.lai',
-    'msm.baseline.oral.plus.25.oral',
-    'msm.baseline.oral.plus.25.lai',
-    'msm.baseline.lai.plus.25.lai',
-    'msm.baseline.lai.plus.25.lai.black.hisp'
-), '_23_27')
-
-STANDARD.LAI.PREP.INTERVENTIONS = lapply(STANDARD.LAI.PREP.INTERVENTION.CODES, intervention.from.code)

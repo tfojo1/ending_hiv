@@ -117,7 +117,7 @@ MSA.BRIEF.NAMES = c(
     '47900' = 'Washington D.C.',
     '37980' = 'Philadelphia',
     '36740' = 'Orlando',
-    '41860' = 'San Francisco',
+    '41860' = 'San Fracnisco',
     '38060' = 'Phoenix',
     '45300' = 'Tampa',
     '40140' = 'Riverside',
@@ -139,7 +139,5 @@ MSA.BRIEF.NAMES = c(
     '12940' = 'Baton Rouge',
     '40900' = 'Sacramento',
     '17460' = 'Cleveland',
-    '41180' = 'St. Louis',
-    '19740' = 'Denver',
-    '38900' = 'Portland'
+    '41180' = 'St. Louis'
 )

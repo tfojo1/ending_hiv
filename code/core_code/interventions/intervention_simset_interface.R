@@ -26,7 +26,6 @@ run.simset.intervention <- function(simset,
         
         new.params = NULL
         new.param.names = character()
-        bounds = NULL
         for (i in 1:length(intervention@parameter.distributions))
         {
             dist = intervention@parameter.distributions[[i]]
@@ -39,14 +38,13 @@ run.simset.intervention <- function(simset,
             
             new.params = cbind(new.params, generate.random.samples(dist, simset@n.sim))
             new.param.names = c(new.param.names, dist@var.names)   
-            
-            
-            bounds = cbind(bounds, get.support.bounds(dist@support))
         }
         
         #reset the seed
         if (!is.null(seed))
             set.seed(to.reset.seed)
+        
+        bounds = get.support.bounds(dist@support)
         
         simset = add.parameters(simset, 
                                 parameters=new.params,

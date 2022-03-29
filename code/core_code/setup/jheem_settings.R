@@ -26,10 +26,9 @@ SETTINGS.COLLAPSED.CONTINUUM$DIAGNOSED_STATES = setdiff(SETTINGS.COLLAPSED.CONTI
 SETTINGS.COLLAPSED.CONTINUUM$IS_CONTINUUM_COLLAPSED = T
 SETTINGS.COLLAPSED.CONTINUUM$VERSION = 'collapsed_1.0'
 
-VERSION.MANAGER = register.version(version=SETTINGS.COLLAPSED.CONTINUUM$VERSION,
-                                   settings=SETTINGS.COLLAPSED.CONTINUUM,
-                                   prior.versions=character(),
-                                   directory.suffix = '')
+VERSION.MANAGER = register.settings(VERSION.MANAGER, 
+                                    version=SETTINGS.COLLAPSED.CONTINUUM$VERSION,
+                                    settings=SETTINGS.COLLAPSED.CONTINUUM)
 
 ##-- FOR EXPANDED CONTINUUM --#
 
@@ -64,10 +63,9 @@ SETTINGS.EXPANDED.CONTINUUM$ENGAGED_STATES = c("engaged_unsuppressed_naive",
 SETTINGS.EXPANDED.CONTINUUM$IS_CONTINUUM_COLLAPSED = F
 SETTINGS.EXPANDED.CONTINUUM$VERSION = 'expanded_1.0'
 
-VERSION.MANAGER = register.version(version=SETTINGS.EXPANDED.CONTINUUM$VERSION,
-                                   settings=SETTINGS.EXPANDED.CONTINUUM,
-                                   prior.versions=SETTINGS.COLLAPSED.CONTINUUM$VERSION,
-                                   directory.suffix = '_expanded')
+VERSION.MANAGER = register.settings(VERSION.MANAGER, 
+                                    version=SETTINGS.EXPANDED.CONTINUUM$VERSION,
+                                    settings=SETTINGS.EXPANDED.CONTINUUM)
 
 ##-- CHOOSE WHICH ONE TO USE --#
 

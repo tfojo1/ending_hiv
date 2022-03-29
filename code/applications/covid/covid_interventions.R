@@ -1,6 +1,5 @@
 library(lubridate)
 
-setClassUnion("intervention_or_null", c("intervention", "NULL"))
 
 setOldClass('target.population')
 setClass('covid_scenario',
@@ -20,9 +19,7 @@ setClass('covid_scenario',
              onset.duration = 'numeric',
              
              effect.details = 'list',
-             effect.types = 'character',
-             
-             next.scenario = 'intervention_or_null'
+             effect.types = 'character'
          ))
 
 
@@ -31,17 +28,12 @@ setClass('covid_scenario',
 create.covid.scenario <- function(pandemic.effects.distribution=NULL,
                                   target.population=WHOLE.POPULATION,
                                   
-                                  mobility.weight.distribution=Beta.Distribution(2,2),
+                                  mobility.weight.distribution,
                                   
                                   sexual.transmission.reduction.distribution,
                                   suppression.reduction.distribution,
                                   testing.reduction.distribution,
                                   prep.reduction.distribution,
-                                  
-                                  pandemic.affects.sexual.transmission=T,
-                                  pandemic.affects.suppression=T,
-                                  pandemic.affects.testing=T,
-                                  pandemic.affects.prep=T,
                                   
                                   index.to.mobility,
                                   mobility.types = NON.PARK.MOBILITY.TYPES,
@@ -67,73 +59,36 @@ create.covid.scenario <- function(pandemic.effects.distribution=NULL,
                                   throw.error.if.fail.check=T)
 {
     #-- Check Distribution Objects --#
-    
-    all.var.names = c('sexual.transmission.reduction','suppression.reduction','testing.reduction','prep.reduction')
-    required.var.names = all.var.names[c(pandemic.affects.sexual.transmission,
-                                         pandemic.affects.suppression,
-                                         pandemic.affects.testing,
-                                         pandemic.affects.prep)]
-    if (length(required.var.names)==0)
-        stop("The pandemic must be specified to affect at least one of the following: ",
-             paste0(all.var.names, collapse=', '))
-    
     if (is.null(pandemic.effects.distribution))
     {
-        to.join = list()
-        if (!is.null(sexual.transmission.reduction.distribution))
-        {
-            if (!is(sexual.transmission.reduction.distribution, 'Distribution') ||
-                sexual.transmission.reduction.distribution@n.var > 1)
-                stop("sexual.transmission.reduction.distribution must be a univariate distribution")
-            sexual.transmission.reduction.distribution@var.names = 'sexual.transmission.reduction'
-            
-            to.join = c(to.join, list(sexual.transmission.reduction.distribution))
-        }
-        else if (pandemic.affects.sexual.transmission)
-            stop("sexual.transmission.reduction.distribution cannot be null. Set pandemic.affects.sexual.transmission=F to omit")
+        if (!is(sexual.transmission.reduction.distribution, 'Distribution') ||
+            sexual.transmission.reduction.distribution@n.var > 1)
+            stop("sexual.transmission.reduction.distribution must be a univariate distribution")
+        if (!is(suppression.reduction.distribution, 'Distribution') ||
+            suppression.reduction.distribution@n.var > 1)
+            stop("suppression.reduction.distribution must be a univariate distribution")
+        if (!is(testing.reduction.distribution, 'Distribution') ||
+            testing.reduction.distribution@n.var > 1)
+            stop("testing.reduction.distribution must be a univariate distribution")
+        if (!is(prep.reduction.distribution, 'Distribution') ||
+            prep.reduction.distribution@n.var > 1)
+            stop("prep.reduction.distribution must be a univariate distribution")
         
-        if (!is.null(suppression.reduction.distribution))
-        {
-            if (!is(suppression.reduction.distribution, 'Distribution') ||
-                suppression.reduction.distribution@n.var > 1)
-                stop("suppression.reduction.distribution must be a univariate distribution")
-            suppression.reduction.distribution@var.names = 'suppression.reduction'
-            
-            to.join = c(to.join, list(suppression.reduction.distribution))
-        }
-        else if (pandemic.affects.suppression)
-            stop("suppression.reduction.distribution cannot be null. Set pandemic.affects.suppression=F to omit")
+        sexual.transmission.reduction.distribution@var.names = 'sexual.transmission.reduction'
+        suppression.reduction.distribution@var.names = 'suppression.reduction'
+        testing.reduction.distribution@var.names = 'testing.reduction'
+        prep.reduction.distribution@var.names = 'prep.reduction'
         
-        if (!is.null(testing.reduction.distribution))
-        {
-            if (!is(testing.reduction.distribution, 'Distribution') ||
-                testing.reduction.distribution@n.var > 1)
-                stop("testing.reduction.distribution must be a univariate distribution")
-            testing.reduction.distribution@var.names = 'testing.reduction'
-            
-            to.join = c(to.join, list(testing.reduction.distribution))
-        }
-        else if (pandemic.affects.testing)
-            stop("testing.reduction.distribution cannot be null. Set pandemic.affects.testing=F to omit")
-            
-        if (!is.null(prep.reduction.distribution))
-        {
-            if (!is(prep.reduction.distribution, 'Distribution') ||
-                prep.reduction.distribution@n.var > 1)
-                stop("prep.reduction.distribution must be a univariate distribution")
-            prep.reduction.distribution@var.names = 'prep.reduction'
-            
-            to.join = c(to.join, list(prep.reduction.distribution))
-        }
-        else if (pandemic.affects.prep)
-            stop("testing.reduction.distribution cannot be null. Set pandemic.affects.prep=F to omit")
-
-        pandemic.effects.distribution = join.distributions(to.join)
+        pandemic.effects.distribution = join.distributions(sexual.transmission.reduction.distribution,
+                                                           suppression.reduction.distribution,
+                                                           testing.reduction.distribution,
+                                                           prep.reduction.distribution)
     }
     
+    required.var.names = c('sexual.transmission.reduction','suppression.reduction','testing.reduction','prep.reduction')
     if (!is(pandemic.effects.distribution, 'Distribution') &&
         length(setdiff(required.var.names, pandemic.effects.distribution@var.names))>0)
-        stop(paste0("pandemic.effects.distribution must be a multivariate distribution that contains all of the following ",
+        stop(paste0("pandemic.effects.distribution must be a multivariate distribution that contains the following ",
                     length(required.var.names), " variables: ",
                     paste0("'", required.var.names, "'", collapse=', ')))
     
@@ -244,11 +199,7 @@ create.covid.scenario <- function(pandemic.effects.distribution=NULL,
             type = 'prep',
             start.normalize.time = start.prep.normalize.time,
             normal.time = prep.normal.time
-        ))[c(pandemic.affects.sexual.transmission,
-             pandemic.affects.suppression,
-             pandemic.affects.testing,
-             pandemic.affects.prep)]
-    
+        ))
     
     effect.types = sapply(effect.details, function(d){d$type})
     names(effect.details) = effect.types
@@ -269,9 +220,7 @@ create.covid.scenario <- function(pandemic.effects.distribution=NULL,
              onset.duration = pandemic.effects.onset.duration,
              
              effect.details = effect.details,
-             effect.types = effect.types,
-             
-             next.scenario=NULL
+             effect.types = effect.types
     )
     
     rv
@@ -298,7 +247,7 @@ def = function(int1, int2)
         int1@onset.duration == int2@onset.duration &&
         setequal(int1@effect.types, int2@effect.types) &&
         target.populations.equal(int1@target.population, int2@target.population)
-    
+
     if (!equal)
         return (F)
     
@@ -312,21 +261,6 @@ def = function(int1, int2)
     
     distributions.equal(int1@pandemic.effects.distribution, int2@pandemic.effects.distribution) &&
         distributions.equal(int1@mobility.weight.distribution, int2@mobility.weight.distribution)
-})
-
-setMethod('do.join.interventions',
-          signature = 'standard_intervention',
-def = function(int1, int2)
-{
-    if (!is(int2, 'covid_scenario'))
-      stop("Both interventions must be of class 'covid_scenario'")
-    
-    if (is.null(int1@next.scenario))
-        int1@next.scenario = int2
-    else
-        int1@next.scenario = do.join.interventions(int1@next.scenario, int2)
-    
-    int1
 })
 
 ##--------------------------------------##
@@ -345,9 +279,6 @@ cast.covid.intervention.for.location <- function(intervention,
                                                  location,
                                                  mdm=MOBILITY.DATA.MANAGER)
 {
-    if (!is(intervention, 'covid_scenario'))
-        stop("intervention must be an object of class 'covid_scenario'")
-    
     if (intervention@index.to.mobility)
     {
         #-- Calculate from and to times --#
@@ -419,33 +350,25 @@ cast.covid.intervention.for.location <- function(intervention,
     #-- Make the Intervention Units --#
     units = list()
     for (details in intervention@effect.details)
-        units = c(units, 
-                  cast.covid.intervention.unit(type = details$type,
-                                               start.time = intervention@start.time,
-                                               onset.duration = intervention@onset.duration,
-                                               
-                                               start.normalize.time = details$start.normalize.time,
-                                               normal.time = details$normal.time,
-                                               
-                                               mobility.times = mobility.times,
-                                               mobility.deltas = mobility.deltas
-                  ))
+    units = c(units, 
+              cast.covid.intervention.unit(type = details$type,
+                                           start.time = intervention@start.time,
+                                           onset.duration = intervention@onset.duration,
+                                           
+                                           start.normalize.time = details$start.normalize.time,
+                                           normal.time = details$normal.time,
+                                           
+                                           mobility.times = mobility.times,
+                                           mobility.deltas = mobility.deltas
+              ))
     
     #-- Put it together --#
-    rv = create.intervention(
+    create.intervention(
         intervention@target.population,
         units,
         intervention@pandemic.effects.distribution,
         intervention@mobility.weight.distribution
     )
-    
-    if (is.null(intervention@next.scenario))
-        rv
-    else
-        join.interventions(rv, 
-                           cast.covid.intervention.for.location(intervention@next.scenario,
-                                                                location=location,
-                                                                mdm=mdm))
 }
 
 cast.covid.intervention.unit <- function(type,
@@ -496,13 +419,13 @@ cast.covid.intervention.unit <- function(type,
         
      #   rates = function(parameters) {
      #       mobility.weight = parameters[mobility.weight.name]
-     #       1 - parameters[effect.name] * (mobility.weight * mobility.multipliers + (1-mobility.weight)) * taper.multipliers
+     #       1 + parameters[effect.name] * (mobility.weight * mobility.multipliers + (1-mobility.weight)) * taper.multipliers
      #   }
         
         #evaluates to this expression:
         #   1 + <effect> * (<mobility.weight> * mobility.multipliers + (1-<mobility.weight>)) * taper.multiplier
         # = 1 + <effect> * (<mobility.weight> * (mobility.multipliers-1) + 1) * taper.multiplier
-        expr.text = paste0("1 - ", effect.name, 
+        expr.text = paste0("1 + ", effect.name, 
                            " * (", mobility.weight.name,
                            " * (c(", paste0(mobility.multipliers, collapse=','), 
                            ")-1) + 1) * c(", paste0(taper.multipliers, collapse=','), ")")

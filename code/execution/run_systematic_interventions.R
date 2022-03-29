@@ -13,7 +13,6 @@ run.systematic.interventions <- function(simset,
                                          compress.cd4=T,
                                          run.from.year=NULL,
                                          run.to.year=2030,
-                                         keep.years=NULL,
                                          verbose=T,
                                          save.baseline.and.seed=T,
                                          seed=123415)
@@ -38,8 +37,7 @@ run.systematic.interventions <- function(simset,
     else
         run.from.year = min(run.from.year, attr(base.simset, 'run.from.year'))
     
-    if (is.null(keep.years))
-        keep.years=min(run.from.year, MAX.FIRST.KEEP.YEAR):run.to.year
+    keep.years=min(run.from.year, MAX.FIRST.KEEP.YEAR):run.to.year
     
     if (save.baseline.and.seed)
     {

@@ -5,9 +5,7 @@ ALLOWED.DATA.TYPES = c('prevalence','new','mortality',
                        'suppression.of.engaged',
                        'estimated.prevalence', 'estimated.prevalence.ci.lower','estimated.prevalence.ci.upper', 'estimated.prevalence.rse',
                        'cumulative.aids.mortality', 'aids.diagnoses',
-                       'linkage','engagement','new.for.continuum','retention',
-                       'prep',
-                       'testing','testing.n')
+                       'linkage','engagement','new.for.continuum', 'prep')
 
 # This is also set in parallel in hiv_surveillance_manager_reader.R
 SURVEILLANCE.DELIMITER = ';'
@@ -29,8 +27,6 @@ get.surveillance.data <- function(surv=msa.surveillance,
                                   risk=F,
                                   aggregate.locations=T,
                                   aggregate.years=F,
-                                  aggregate.by=c('sum','mean','weight')[1],
-                                  aggregate.weight.data.type=NULL,
                                   throw.error.if.missing.years=F,
                                   throw.error.if.missing.data=T,
                                   na.rm=F,
@@ -207,38 +203,10 @@ get.surveillance.data <- function(surv=msa.surveillance,
     
     keep.dimnames = keep.dimnames[keep.dimnames.names]
     
-    if (setequal(keep.dimnames.names, names(dimnames(data))))
-    {
-        if (!all(keep.dimnames.names==names(dimnames(data))))
-            data = apply(data, keep.dimnames.names, function(x){x})
-    }
-    else if (get.source || get.url || get.details)
+    if (get.source || get.url || get.details)
         data = apply(data, keep.dimnames.names, merge.surveillance.codes)
-    else if (aggregate.by=='sum')
+    else
         data = apply(data, keep.dimnames.names, sum, na.rm=na.rm)
-    else if (aggregate.by=='mean')
-        data = apply(data, keep.dimnames.names, mean, na.rm=na.rm)
-    else #aggregate by = 'weighted'
-    {
-        if (is.null(aggregate.weight.data.type))
-            stop("Must set 'aggregate.weight.data.type' in order to aggregate by weight")
-        denominators = get.surveillance.data(surv=surv,
-                                             location.codes=location.codes,
-                                             data.type=aggregate.weight.data.type,
-                                             years=years,
-                                             age=age,
-                                             race=race,
-                                             sex=sex,
-                                             risk=risk,
-                                             aggregate.locations=F,
-                                             aggregate.years=F,
-                                             throw.error.if.missing.years=throw.error.if.missing.years,
-                                             throw.error.if.missing.data=throw.error.if.missing.data)
- 
-        denominators[is.na(data)] = NA
-        data = apply(data*denominators, keep.dimnames.names, sum, na.rm=na.rm) /
-            apply(denominators, keep.dimnames.names, sum, na.rm=na.rm)
-    }
     
     dim(data) = sapply(keep.dimnames, length)
     dimnames(data) = keep.dimnames
@@ -438,13 +406,8 @@ get.surveillance.data.details <- function(surv=msa.surveillance,
                                     get.url=F,
                                     get.details=F)
         
-        if (is.null(rv))
-            rv = src
-        else
-        {
-            missing = is.na(rv) | rv==''
-            rv[missing] = src[missing]
-        }
+        missing = is.na(rv) | rv==''
+        rv[missing] = src[missing]
     }
     
     rv

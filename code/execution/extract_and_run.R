@@ -1,4 +1,5 @@
-
+source('code/source_code.R')
+source('code/targets/target_msas.R')
 
 done.mcmc.locations <- function(dir=file.path(SYSTEMATIC.ROOT.DIR, 'systematic_parallel'))
 {

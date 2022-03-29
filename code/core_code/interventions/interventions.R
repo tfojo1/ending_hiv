@@ -544,28 +544,13 @@ register.intervention <- function(int,
 
 
 
-get.intervention.code <- function(int, manager=INTERVENTION.MANAGER.1.0, 
-                                  throw.error.for.null.intervention=T,
-                                  throw.error.if.missing.intervention=T)
+get.intervention.code <- function(int, manager=INTERVENTION.MANAGER.1.0)
 {   
-    if (is.null(int))
-    {
-        if (throw.error.for.null.intervention)
-            stop("Cannot get code for NULL intervention")
-        else
-            return (NA)
-    }
-    
-    if (!is(int, 'intervention'))
-        stop("int must be an object of class 'intervention' or a subclass of 'intervention'")
-    
     mask = sapply(manager$intervention, function(comp){
         interventions.equal(int, comp)
     })
     if (any(mask))
         as.character(manager$code[mask])
-    else if (throw.error.if.missing.intervention)
-        stop("The given intervention has not been registered with the intervention manager - cannot get code")
     else
         NULL
 }
