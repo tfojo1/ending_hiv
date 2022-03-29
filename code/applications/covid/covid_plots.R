@@ -47,8 +47,12 @@ make.covid.scatterplot <- function(results=outcomes.arr,
                                    var2='incidence',
                                    var1.years=2020:2025,
                                    var2.years=2020:2025,
+<<<<<<< HEAD
                                    scenario1='base',
                                    intervention.name1=NA,
+=======
+                                   scenario1='covid.delayed.mobility',
+>>>>>>> cd653bf0c14570643f9d595cd2a7ccacae9b37f3
                                    scenario2=scenario1,
                                    intervention.name2=intervention.name1,
                                    subtract.scenario1=NA,
@@ -596,6 +600,7 @@ make.covid.boxplot <- function(results=outcomes.arr,
                                      subtract.intervention.name=NA,
                                      interval.coverage=0.95,
                                      summary.stat=median,
+                               ylim=c(NA,NA),
                                      #style arguments
                                      colors=pal_jama(),
                                      ribbon.alpha=0.2,
@@ -705,6 +710,7 @@ make.location.boxplot <- function(results=outcomes.arr,
                                   interval2.coverage=0.5,
                                   summary.stat=median,
                                   loc.names=location.names,
+                                  ylim=c(NA,NA),
                                   colors=pal_jama(),
                                   box.width=0.5,
                                   n.spacers=1,
@@ -713,6 +719,9 @@ make.location.boxplot <- function(results=outcomes.arr,
                                   #style arguments
                                )
 {
+    if (is.na(interval.coverage))
+      interval.coverage=interval2.coverage
+  
     df = df.total = NULL
     alpha = (1-interval.coverage)/2
     alpha2 = (1-interval2.coverage)/2
@@ -858,7 +867,7 @@ make.location.boxplot <- function(results=outcomes.arr,
         ) +
         scale_fill_manual(values=colors, name='Scenario:', labels=COVID.SCENARIO.NAMES[names(colors)],
                           limits=names(colors)[1:(length(colors)-n.spacers)]) + 
-        scale_y_continuous(labels=x.label, name = outcome.axis.name)
+        scale_y_continuous(labels=x.label, name = outcome.axis.name, limits = ylim)
      
     if (vertical)
         rv = rv + coord_flip() 

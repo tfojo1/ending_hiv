@@ -43,12 +43,14 @@ do.get.raw.estimates <- function(dir.name=c('full','quick')[1],
         suffix = paste0("_", suffix)
     
     dir = file.path(SYSTEMATIC.ROOT.DIR, paste0(dir.name, "_simsets"))
-    filename = file.path(SYSTEMATIC.ROOT.DIR, '..', 'results', dir.name, 'scratch', paste0(msa, suffix, '.Rdata'))
+    save.dir = file.path(SYSTEMATIC.ROOT.DIR, '..', 'results', dir.name, 'scratch')
+    filename = file.path(save.dir, paste0(msa, suffix, '.Rdata'))
     
     if (overwrite || !file.exists(filename))
     {
         if (verbose)
             print(paste0("Doing '", suffix, "' run for ", msa.names(msa)))
+        
         est=get.raw.estimates(dir=dir,
                                     msas=msa,
                                     interventions=interventions,
@@ -61,6 +63,8 @@ do.get.raw.estimates <- function(dir.name=c('full','quick')[1],
         if (save.if.incomplete || sum(is.na(est))==0)
         {
             print(paste0(" --> Done. Saving"))
+            if (!dir.exists(save.dir))
+                dir.create(save.dir, recursive = T)
             save(est, file=filename)
         }
         else

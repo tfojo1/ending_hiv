@@ -265,9 +265,19 @@ msa.names <- function(cbsas.or.division.codes,
     rv
 }
 
+msa.for.division <- function(division.codes,
+                             mappings=DEFAULT.LOCALE.MAPPING)
+{
+    division.codes = as.character(division.codes)
+    sapply(as.character(division.codes), function(code){
+        mappings$msas$cbsa[!is.na(mappings$msas$division_code) & mappings$msas$division_code==code][1]
+    })
+}
+
 msa.division.names <- function(division.codes,
                               mappings=DEFAULT.LOCALE.MAPPING)
 {
+    division.codes = as.character(division.codes)
     sapply(as.character(division.codes), function(code){
         mappings$msas$division_name[!is.na(mappings$msas$division_code) & mappings$msas$division_code==code][1]
     })

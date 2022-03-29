@@ -306,9 +306,45 @@ get.census.data <- function(census,
                             aggregate.counties=F,
                             aggregate.ages=F,
                             aggregate.races=F,
-                            aggregate.sexes=F)
-{
+                            aggregate.sexes=F,
+                            collapse.races=F,
+                            collapse.race.mapping = list(
+                                black='black',
+                                hispanic='hispanic',
+                                other=c('white',
+                                        'american_indian_or_alaska_native',
+                                        'asian')
+                            ),
+                            throw.error.if.location.missing=T)
+{   
+    fips = unlist(sapply(fips, function(one.loc){
+        if (!is.na(msa.names(one.loc)))
+            counties.for.msa(one.loc)
+        else if (!is.na(state.abbreviation.to.fips(one.loc)))
+            counties.for.state(one.loc)
+        else
+            one.loc
+    }))
+    
     fips = format.combined.fips(fips)
+    
+    missing.fips = setdiff(fips, census$combined.fips)
+    if (length(missing.fips)>0)
+    {
+        if (throw.error.if.location.missing)
+            stop(paste0("The census data does not include the following county code(s): ",
+                        paste0("'", missing.fips, "'", collapse=', ')))
+        else
+            return (NULL)
+    }
+    
+    final.races = races
+    if (is.null(ages))
+        ages = census$age.names
+    if (is.null(races) || collapse.races)
+        races = census$races
+    if (is.null(sexes))
+        sexes = census$sexes
 
     rv = census$data[as.character(years), fips, as.character(ages), races, sexes]
 
@@ -318,8 +354,120 @@ get.census.data <- function(census,
 
     aggregate.mask = c(aggregate.years, aggregate.counties, aggregate.ages, aggregate.races, aggregate.sexes)
     if (all(aggregate.mask))
+        rv = sum(rv)
+    else
+        rv = apply(rv, (1:5)[!aggregate.mask], sum)
+    
+    if (collapse.races && !aggregate.races)
+    {
+        old.rv = rv
+        dim.names = dimnames(old.rv)
+        
+        race.index = (1:length(dim(old.rv)))[names(dim(old.rv))=='race']
+        collapsed.dim = c(
+            prod(dim(old.rv)[(1:length(dim(old.rv)))<race.index]),
+            dim(old.rv)['race'],
+            prod(dim(old.rv)[(1:length(dim(old.rv)))>race.index])
+        )
+        
+        dim(old.rv) = collapsed.dim
+        dimnames(old.rv) = list(NULL, race=dim.names$race, NULL)
+        
+        collapsed.dim[2] = length(collapse.race.mapping)
+        dim.names$race = names(collapse.race.mapping)
+        
+        rv = array(NaN, dim=collapsed.dim,
+                   dimnames=list(NULL,names(collapse.race.mapping),NULL))
+        for (i in 1:length(collapse.race.mapping))
+        {
+            if (length(collapse.race.mapping[[i]])==1)
+                rv[,i,] = old.rv[,collapse.race.mapping[[i]],]
+            else
+            {
+                to.sum  = old.rv[,collapse.race.mapping[[i]],]
+                dim(to.sum) = c(collapsed.dim[1],length(collapse.race.mapping[[i]]),collapsed.dim[3])
+                rv[,i,] = apply(to.sum, c(1,3), sum)
+            }
+        }
+        
+        if (!is.null(final.races))
+            rv = rv[,final.races,]
+        
+        dim(rv) = sapply(dim.names, length)
+        dimnames(rv) = dim.names
+    }
+    
+    rv
+}
+
+get.census.data.age.aggregated <- function(census,
+                                           years=census$years,
+                                           fips=census$combined.fips,
+                                           age.cutoffs=sort(union(census$age.lowers, census$age.uppers)),
+                                           races=census$races,
+                                           sexes=census$sexes,
+                                           aggregate.years=F,
+                                           aggregate.counties=F,
+                                           aggregate.ages=F,
+                                           aggregate.races=F,
+                                           aggregate.sexes=F)
+{
+    fips = format.combined.fips(fips)
+    
+    age.labels = paste0(age.cutoffs[-length(age.cutoffs)],
+                        '-',
+                        (age.cutoffs[-1]-1),
+                        ' years')
+    age.labels[is.infinite(age.cutoffs[-1])] = 
+        paste0(age.cutoffs[-length(age.cutoffs)][is.infinite(age.cutoffs[-1])],
+               '+ years')
+    
+    dim.names = list(
+        year=as.character(years),
+        location=fips,
+        age=age.labels, 
+        race=races,
+        sex=sexes
+    )
+    
+    rv = array(NaN,
+               dim=sapply(dim.names, length),
+               dimnames=dim.names)
+    
+    for (age in 1:length(age.labels))
+    {
+        age.lower = age.cutoffs[age]
+        age.upper = age.cutoffs[age+1]
+        
+        #make sure no age brackets overlap (ie, part in, part out)
+        if (any(census$age.lowers < age.lower & census$age.uppers > age.lower) ||
+            any(census$age.lowers < age.upper & census$age.uppers > age.upper))
+        {
+            stop("Some of the census age brackets overlap requested age brackets without fitting completely in them")
+        }
+        
+        # find the census age brackets we need for this age
+        census.age.mask = census$age.lowers >= age.lower & census$age.uppers <= age.upper
+        
+        if (!any(census.age.mask))
+            stop("The census does not have any age ranges that fall into ", age.labels[age])
+        
+        rv[,,age,,] = get.census.data(census,
+                                      years=years,
+                                      fips=fips,
+                                      ages=census$age.names[census.age.mask],
+                                      races=races,
+                                      sexes=sexes,
+                                      aggregate.years=F,
+                                      aggregate.counties=F,
+                                      aggregate.ages=T,
+                                      aggregate.races=F,
+                                      aggregate.sexes=F)
+    }
+    
+    aggregate.mask = c(aggregate.years, aggregate.counties, aggregate.ages, aggregate.races, aggregate.sexes)
+    if (all(aggregate.mask))
         sum(rv)
     else
         apply(rv, (1:5)[!aggregate.mask], sum)
 }
-

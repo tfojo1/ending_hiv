@@ -127,12 +127,12 @@ create.likelihood.function <- function(data.type=c('new','prevalence','mortality
     
     if (!is.null(adjust.likelihood.elements.fn))
         likelihood.elements = adjust.likelihood.elements.fn(likelihood.elements)
-
+    
     if (is.null(likelihood.elements$numerator.covar.mat))
         numerator.covar.mat = NULL
     else
         numerator.covar.mat = likelihood.elements$numerator.covar.mat * sd.inflation.for.observations^2
-
+    
     # Set up the correlation matrix, if needed
     if (year.to.year.correlation == 0 && is.null(corr.mat.fn))
         corr.mat = NULL
@@ -140,12 +140,12 @@ create.likelihood.function <- function(data.type=c('new','prevalence','mortality
         corr.mat = corr.mat.fn(likelihood.elements, fixed.denominator.elements)
     else
         corr.mat = make.compound.symmetry.by.year.matrix(access(population, year=as.character(years)), correlation=year.to.year.correlation)
-
+    
     
     ##----------------------------------------------------------------##
     ##-- Set up SD Inflation (if dependent on a data.type or n.obs) --##
     ##----------------------------------------------------------------##
-
+    
     if (is(sd.inflation, 'character'))
     {
         data.for.all.for.sd.inflation = get.surveillance.data(surv, location, data.type=sd.inflation)
@@ -161,13 +161,13 @@ create.likelihood.function <- function(data.type=c('new','prevalence','mortality
                                                                          numerator.year.to.year.chunk.correlation=numerator.year.to.year.chunk.correlation,
                                                                          numerator.year.to.year.off.correlation=numerator.year.to.year.off.correlation,
                                                                          numerator.chunk.years=numerator.chunk.years
-                                                                         )
-
+        )
+        
         sd.inflation = get.sd.inflation(match.to.response = likelihood.elements$response.vector,
                                         match.to.descriptions = likelihood.elements$descriptions,
                                         response.2 = sd.inflation.elements$response.vector,
                                         descriptions.2 = sd.inflation.elements$descriptions)
-
+        
     }
     
     if (inflate.sd.by.n.obs.per.year || upweight.by.n.obs.per.year)
@@ -194,7 +194,7 @@ create.likelihood.function <- function(data.type=c('new','prevalence','mortality
     ##------------------------------------------------------------------------------------##
     ##-- Set up a mask to pull out components we don't use in the transformation matrix --##
     ##------------------------------------------------------------------------------------##
-
+    
     denominators.are.totals = length(denominator.dimensions)==1 & denominator.dimensions=='year'
     if (is.null(corr.mat) &&
         !use.simulated.denominators &&
@@ -264,7 +264,7 @@ create.likelihood.function <- function(data.type=c('new','prevalence','mortality
         
         if (!is.null(adjust.rates.fn))
             rates = adjust.rates.fn(rates, jheem.results)
-
+        
         # Pass it all to the sub-function to crunch
         likelihood.sub(rates,
                        transformation.matrix = likelihood.elements$transformation.matrix,
@@ -493,6 +493,8 @@ get.states.for.msa.suppression <- function(msa)
             states = 'NC'
         else if (msa=='41180') # St Louis
             states = 'MO'
+        else if (msa=='38900') # Portland
+            states = 'OR'
         else
             stop(paste0("More than one state for msa '", msa, "' ('", msa.names(msa), "') - cannot supply suppression data"))
     }
@@ -571,7 +573,7 @@ create.prep.likelihood <- function(location,
         # 1) Fraction Recorded
         frac.recorded = FRACTION.PREP.STARTS.RECORDED
         cv.frac.recorded = FRACTION.PREP.STARTS.RECORDED.SD / FRACTION.PREP.STARTS.RECORDED
-      
+        
         # 2) Fraction Correctly Classified
         frac.correctly.classified = FRACTION.PREP.CORRECTLY.CLASSIFIED
         cv.correctly.classified = FRACTION.PREP.CORRECTLY.CLASSIFIED.SD / FRACTION.PREP.CORRECTLY.CLASSIFIED
@@ -594,10 +596,10 @@ create.prep.likelihood <- function(location,
             cv.coverage.to.update = 0
         }
         
-
+        
         # Running through a log-normal distribution approximating the log.sd by the cv
         
-      
+        
         # x
         numerator.variances = diag(likelihood.elements$numerator.covar.mat)
         corr.mat = cov2cor(likelihood.elements$numerator.covar.mat)
@@ -649,7 +651,7 @@ create.prep.likelihood <- function(location,
             
             corr.mat
         }
-
+        
         make.cov.mat.fn <- function(p, n, corr.mat)
         {
             n.p = n*p
@@ -709,7 +711,8 @@ create.knowledge.of.status.likelihood <- function(location,
         load('cached/knowledge_of_status_regressions.Rdata')
     
     #-- Set up for totals --#
-    total.knowledge = get.surveillance.data(surv, location.codes = location, data.type=sim$diagnosed.continuum.states, 
+    total.knowledge = get.surveillance.data(surv, location.codes = location, 
+                                            data.type='diagnosed', 
                                             years=years, throw.error.if.missing.data = F)
     if (is.null(total.knowledge))
     {
@@ -785,7 +788,7 @@ create.knowledge.of.status.likelihood <- function(location,
                                                 keep.dimensions = c('year','age','race','sex','risk'),
                                                 per.population = NA)
             
-            df = melt(sim.prevalence)
+            df = reshape2::melt(sim.prevalence)
             df$fraction = as.numeric(sim.diagnosed.prevalence / sim.prevalence)
             
             #if (any(df$fraction<0) || any(df$fraction>1))
@@ -1424,7 +1427,7 @@ create.aids.diagnoses.likelihood <- function(surv=msa.surveillance,
         
         #  sds = sqrt(population * rates * (1-rates) * sd.inflation^2 + obs.var)
         
-    
+        
         cov.mat = make.compound.symmetry.matrix(sqrt(obs.var), rho) + 
             diag(population * rates * (1-rates) * sd.inflation^2)
         
@@ -1492,7 +1495,7 @@ create.cumulative.mortality.likelihood <- function(years=1981:2000,
         
         if (verbose)
         {
-            print(cbind(melt(numerators/denominator*population)[mask,], observed, d=piecewise))
+            print(cbind(reshape2::melt(numerators/denominator*population)[mask,], observed, d=piecewise))
             print(c(sim=sum(rates*population), obs=sum(observed)))
         }
         
@@ -1854,10 +1857,10 @@ likelihood.sub <- function(pre.transformation.rates,
                                                       n=denominator.vector,
                                                       corr.mat=corr.mat)    
     }
-
+    
     if (!is.null(transformation.mapping))
         n.p = sum.for.matrix.mapping(n.p, transformation.mapping)
-
+    
     mean.vector = transformation.matrix %*% n.p
     
     if (is.null(denominator.covar.mat))
@@ -1988,11 +1991,12 @@ create.likelihood.elements.for.data.type <- function(data.type=c('new','prevalen
                                                      by.sex.risk,
                                                      by.race.risk,
                                                      numerator.sd=function(...){0},
+                                                     pass.n.to.numerator.sd=F,
                                                      bias.fn=function(...){0},
                                                      bias.sd=function(...){0},
                                                      numerator.year.to.year.chunk.correlation=0,
                                                      numerator.year.to.year.off.correlation=0,
-                                                     numerator.chunk.years=numeric(),
+                                                     numerator.chunk.years=NULL,
                                                      ages=c('13-24 years', '25-34 years', '35-44 years', '45-54 years', '55+ years'),
                                                      races=c('black','hispanic','other'),
                                                      sexes=c('heterosexual_male','msm','female'),
@@ -2016,11 +2020,23 @@ create.likelihood.elements.for.data.type <- function(data.type=c('new','prevalen
     if (by.total)
     {
         cdc.arr = get.surveillance.data(surv, location, data.type=data.type, years=years, throw.error.if.missing.data = F, na.rm=na.rm)
+        cdc.details = get.surveillance.data.details(surv, location, data.type=data.type, years=years, throw.error.if.missing.data = F)
+        if (pass.n.to.numerator.sd)
+            cdc.n = get.surveillance.data(surv, location, data.type=paste0(data.type,'.n'), years=years, throw.error.if.missing.data = F, na.rm=na.rm)
+        else
+            cdc.n = NULL
+        
         if (!is.null(cdc.arr))
         {
-            tmrv = make.transformation.matrix.and.response.vector(cdc.arr=cdc.arr, jheem.skeleton=jheem.skeleton)
+            tmrv = make.transformation.matrix.and.response.vector(cdc.arr=cdc.arr, 
+                                                                  cdc.details=cdc.details,
+                                                                  cdc.n=cdc.n,
+                                                                  jheem.skeleton=jheem.skeleton)
             
-            sds = numerator.sd(years=tmrv$year, num=tmrv$response.vector)
+            if (pass.n.to.numerator.sd)
+                sds = numerator.sd(years=tmrv$year, num=tmrv$response.vector, denom=tmrv$n)
+            else
+                sds = numerator.sd(years=tmrv$year, num=tmrv$response.vector)
             if (length(sds)==1)
                 sds = rep(sds, length(tmrv$response.vector))
             bias = bias.fn(years=tmrv$year, num=tmrv$response.vector)
@@ -2034,14 +2050,19 @@ create.likelihood.elements.for.data.type <- function(data.type=c('new','prevalen
             response.vector = c(response.vector, tmrv$response.vector + bias)
             transformation.matrix = rbind(transformation.matrix, tmrv$transformation.matrix)
             
-            one.numerator.covar.mat = make.chunked.compound.symmetry.matrix(sds=sds,
-                                                                            chunk.rho=numerator.year.to.year.chunk.correlation,
-                                                                            non.chunk.rho=numerator.year.to.year.off.correlation,
-                                                                            years=tmrv$year,
-                                                                            categories=tmrv$non.year.descriptions,
-                                                                            chunk.years=numerator.chunk.years)
-            #        one.numerator.covar.mat = make.compound.symmetry.matrix(sds=sds,
-            #                                                                rho=numerator.year.to.year.correlation)
+            if (is.null(numerator.chunk.years) || length(numerator.chunk.years)==0)
+                one.numerator.covar.mat = make.chunked.compound.symmetry.by.details(sds=sds,
+                                                                                    chunk.rho=numerator.year.to.year.chunk.correlation,
+                                                                                    non.chunk.rho=numerator.year.to.year.off.correlation,
+                                                                                    details=tmrv$details,
+                                                                                    categories=tmrv$non.year.descriptions)
+            else
+                one.numerator.covar.mat = make.chunked.compound.symmetry.matrix(sds=sds,
+                                                                                chunk.rho=numerator.year.to.year.chunk.correlation,
+                                                                                non.chunk.rho=numerator.year.to.year.off.correlation,
+                                                                                years=tmrv$year,
+                                                                                categories=tmrv$non.year.descriptions,
+                                                                                chunk.years=numerator.chunk.years)
             
             numerator.covar.mat = join.independent.covariance.matrices(numerator.covar.mat,
                                                                        one.numerator.covar.mat)
@@ -2052,11 +2073,23 @@ create.likelihood.elements.for.data.type <- function(data.type=c('new','prevalen
     if (by.sex)
     {
         cdc.arr = get.surveillance.data(surv, location, data.type=data.type, years=years, sex=T, throw.error.if.missing.data = F, na.rm=na.rm)
+        cdc.details = get.surveillance.data.details(surv, location, data.type=data.type, years=years, sex=T, throw.error.if.missing.data = F)
+        if (pass.n.to.numerator.sd)
+            cdc.n = get.surveillance.data(surv, location, data.type=paste0(data.type,'.n'), years=years, throw.error.if.missing.data = F, na.rm=na.rm)
+        else
+            cdc.n = NULL
+        
         if (!is.null(cdc.arr))
         {
-            tmrv = make.transformation.matrix.and.response.vector(cdc.arr=cdc.arr, jheem.skeleton=jheem.skeleton)
+            tmrv = make.transformation.matrix.and.response.vector(cdc.arr=cdc.arr, 
+                                                                  cdc.details=cdc.details,
+                                                                  cdc.n=cdc.n,
+                                                                  jheem.skeleton=jheem.skeleton)
             
-            sds = numerator.sd(years=tmrv$year, num=tmrv$response.vector)
+            if (pass.n.to.numerator.sd)
+                sds = numerator.sd(years=tmrv$year, num=tmrv$response.vector, denom=tmrv$n)
+            else
+                sds = numerator.sd(years=tmrv$year, num=tmrv$response.vector)
             if (length(sds)==1)
                 sds = rep(sds, length(tmrv$response.vector))
             bias = bias.fn(years=tmrv$year, num=tmrv$response.vector)
@@ -2070,14 +2103,19 @@ create.likelihood.elements.for.data.type <- function(data.type=c('new','prevalen
             response.vector = c(response.vector, tmrv$response.vector + bias)
             transformation.matrix = rbind(transformation.matrix, tmrv$transformation.matrix)
             
-            one.numerator.covar.mat = make.chunked.compound.symmetry.matrix(sds=sds,
-                                                                            chunk.rho=numerator.year.to.year.chunk.correlation,
-                                                                            non.chunk.rho=numerator.year.to.year.off.correlation,
-                                                                            years=tmrv$year,
-                                                                            categories=tmrv$non.year.descriptions,
-                                                                            chunk.years=numerator.chunk.years)
-            #        one.numerator.covar.mat = make.compound.symmetry.matrix(sds=sds,
-            #                                                                rho=numerator.year.to.year.correlation)
+            if (is.null(numerator.chunk.years) || length(numerator.chunk.years)==0)
+                one.numerator.covar.mat = make.chunked.compound.symmetry.by.details(sds=sds,
+                                                                                    chunk.rho=numerator.year.to.year.chunk.correlation,
+                                                                                    non.chunk.rho=numerator.year.to.year.off.correlation,
+                                                                                    details=tmrv$details,
+                                                                                    categories=tmrv$non.year.descriptions)
+            else
+                one.numerator.covar.mat = make.chunked.compound.symmetry.matrix(sds=sds,
+                                                                                chunk.rho=numerator.year.to.year.chunk.correlation,
+                                                                                non.chunk.rho=numerator.year.to.year.off.correlation,
+                                                                                years=tmrv$year,
+                                                                                categories=tmrv$non.year.descriptions,
+                                                                                chunk.years=numerator.chunk.years)
             
             numerator.covar.mat = join.independent.covariance.matrices(numerator.covar.mat,
                                                                        one.numerator.covar.mat)
@@ -2088,11 +2126,23 @@ create.likelihood.elements.for.data.type <- function(data.type=c('new','prevalen
     if (by.race)
     {
         cdc.arr = get.surveillance.data(surv, location, data.type=data.type, years=years, race=T, throw.error.if.missing.data = F, na.rm=na.rm)
+        cdc.details = get.surveillance.data.details(surv, location, data.type=data.type, years=years, race=T, throw.error.if.missing.data = F)
+        if (pass.n.to.numerator.sd)
+            cdc.n = get.surveillance.data(surv, location, data.type=paste0(data.type,'.n'), years=years, throw.error.if.missing.data = F, na.rm=na.rm)
+        else
+            cdc.n = NULL
+        
         if (!is.null(cdc.arr))
         {
-            tmrv = make.transformation.matrix.and.response.vector(cdc.arr=cdc.arr, jheem.skeleton=jheem.skeleton)
+            tmrv = make.transformation.matrix.and.response.vector(cdc.arr=cdc.arr,
+                                                                  cdc.details=cdc.details,
+                                                                  cdc.n=cdc.n,
+                                                                  jheem.skeleton=jheem.skeleton)
             
-            sds = numerator.sd(years=tmrv$year, num=tmrv$response.vector)
+            if (pass.n.to.numerator.sd)
+                sds = numerator.sd(years=tmrv$year, num=tmrv$response.vector, denom=tmrv$n)
+            else
+                sds = numerator.sd(years=tmrv$year, num=tmrv$response.vector)
             if (length(sds)==1)
                 sds = rep(sds, length(tmrv$response.vector))
             bias = bias.fn(years=tmrv$year, num=tmrv$response.vector)
@@ -2106,14 +2156,19 @@ create.likelihood.elements.for.data.type <- function(data.type=c('new','prevalen
             response.vector = c(response.vector, tmrv$response.vector + bias)
             transformation.matrix = rbind(transformation.matrix, tmrv$transformation.matrix)
             
-            one.numerator.covar.mat = make.chunked.compound.symmetry.matrix(sds=sds,
-                                                                            chunk.rho=numerator.year.to.year.chunk.correlation,
-                                                                            non.chunk.rho=numerator.year.to.year.off.correlation,
-                                                                            years=tmrv$year,
-                                                                            categories=tmrv$non.year.descriptions,
-                                                                            chunk.years=numerator.chunk.years)
-            #        one.numerator.covar.mat = make.compound.symmetry.matrix(sds=sds,
-            #                                                                rho=numerator.year.to.year.correlation)
+            if (is.null(numerator.chunk.years) || length(numerator.chunk.years)==0)
+                one.numerator.covar.mat = make.chunked.compound.symmetry.by.details(sds=sds,
+                                                                                    chunk.rho=numerator.year.to.year.chunk.correlation,
+                                                                                    non.chunk.rho=numerator.year.to.year.off.correlation,
+                                                                                    details=tmrv$details,
+                                                                                    categories=tmrv$non.year.descriptions)
+            else
+                one.numerator.covar.mat = make.chunked.compound.symmetry.matrix(sds=sds,
+                                                                                chunk.rho=numerator.year.to.year.chunk.correlation,
+                                                                                non.chunk.rho=numerator.year.to.year.off.correlation,
+                                                                                years=tmrv$year,
+                                                                                categories=tmrv$non.year.descriptions,
+                                                                                chunk.years=numerator.chunk.years)
             
             numerator.covar.mat = join.independent.covariance.matrices(numerator.covar.mat,
                                                                        one.numerator.covar.mat)
@@ -2124,11 +2179,23 @@ create.likelihood.elements.for.data.type <- function(data.type=c('new','prevalen
     if (by.age)
     {
         cdc.arr = get.surveillance.data(surv, location, data.type=data.type, years=years, age=T, throw.error.if.missing.data = F, na.rm=na.rm)
+        cdc.details = get.surveillance.data.details(surv, location, data.type=data.type, years=years, age=T, throw.error.if.missing.data = F)
+        if (pass.n.to.numerator.sd)
+            cdc.n = get.surveillance.data(surv, location, data.type=paste0(data.type,'.n'), years=years, throw.error.if.missing.data = F, na.rm=na.rm)
+        else
+            cdc.n = NULL
+        
         if (!is.null(cdc.arr))
         {
-            tmrv = make.transformation.matrix.and.response.vector(cdc.arr=cdc.arr, jheem.skeleton=jheem.skeleton)
+            tmrv = make.transformation.matrix.and.response.vector(cdc.arr=cdc.arr,
+                                                                  cdc.details=cdc.details,
+                                                                  cdc.n=cdc.n,
+                                                                  jheem.skeleton=jheem.skeleton)
             
-            sds = numerator.sd(years=tmrv$year, num=tmrv$response.vector)
+            if (pass.n.to.numerator.sd)
+                sds = numerator.sd(years=tmrv$year, num=tmrv$response.vector, denom=tmrv$n)
+            else
+                sds = numerator.sd(years=tmrv$year, num=tmrv$response.vector)
             if (length(sds)==1)
                 sds = rep(sds, length(tmrv$response.vector))
             bias = bias.fn(years=tmrv$year, num=tmrv$response.vector)
@@ -2142,14 +2209,19 @@ create.likelihood.elements.for.data.type <- function(data.type=c('new','prevalen
             response.vector = c(response.vector, tmrv$response.vector + bias)
             transformation.matrix = rbind(transformation.matrix, tmrv$transformation.matrix)
             
-            one.numerator.covar.mat = make.chunked.compound.symmetry.matrix(sds=sds,
-                                                                            chunk.rho=numerator.year.to.year.chunk.correlation,
-                                                                            non.chunk.rho=numerator.year.to.year.off.correlation,
-                                                                            years=tmrv$year,
-                                                                            categories=tmrv$non.year.descriptions,
-                                                                            chunk.years=numerator.chunk.years)
-            #        one.numerator.covar.mat = make.compound.symmetry.matrix(sds=sds,
-            #                                                                rho=numerator.year.to.year.correlation)
+            if (is.null(numerator.chunk.years) || length(numerator.chunk.years)==0)
+                one.numerator.covar.mat = make.chunked.compound.symmetry.by.details(sds=sds,
+                                                                                    chunk.rho=numerator.year.to.year.chunk.correlation,
+                                                                                    non.chunk.rho=numerator.year.to.year.off.correlation,
+                                                                                    details=tmrv$details,
+                                                                                    categories=tmrv$non.year.descriptions)
+            else
+                one.numerator.covar.mat = make.chunked.compound.symmetry.matrix(sds=sds,
+                                                                                chunk.rho=numerator.year.to.year.chunk.correlation,
+                                                                                non.chunk.rho=numerator.year.to.year.off.correlation,
+                                                                                years=tmrv$year,
+                                                                                categories=tmrv$non.year.descriptions,
+                                                                                chunk.years=numerator.chunk.years)
             
             numerator.covar.mat = join.independent.covariance.matrices(numerator.covar.mat,
                                                                        one.numerator.covar.mat)
@@ -2160,11 +2232,23 @@ create.likelihood.elements.for.data.type <- function(data.type=c('new','prevalen
     if (by.risk)
     {
         cdc.arr = get.surveillance.data(surv, location, data.type=data.type, years=years, risk=T, throw.error.if.missing.data = F, na.rm=na.rm)
+        cdc.details = get.surveillance.data.details(surv, location, data.type=data.type, years=years, risk=T, throw.error.if.missing.data = F)
+        if (pass.n.to.numerator.sd)
+            cdc.n = get.surveillance.data(surv, location, data.type=paste0(data.type,'.n'), years=years, throw.error.if.missing.data = F, na.rm=na.rm)
+        else
+            cdc.n = NULL
+        
         if (!is.null(cdc.arr))
         {
-            tmrv = make.transformation.matrix.and.response.vector(cdc.arr=cdc.arr, jheem.skeleton=jheem.skeleton)
+            tmrv = make.transformation.matrix.and.response.vector(cdc.arr=cdc.arr,
+                                                                  cdc.details=cdc.details,
+                                                                  cdc.n=cdc.n,
+                                                                  jheem.skeleton=jheem.skeleton)
             
-            sds = numerator.sd(years=tmrv$year, num=tmrv$response.vector)
+            if (pass.n.to.numerator.sd)
+                sds = numerator.sd(years=tmrv$year, num=tmrv$response.vector, denom=tmrv$n)
+            else
+                sds = numerator.sd(years=tmrv$year, num=tmrv$response.vector)
             if (length(sds)==1)
                 sds = rep(sds, length(tmrv$response.vector))
             bias = bias.fn(years=tmrv$year, num=tmrv$response.vector)
@@ -2178,14 +2262,19 @@ create.likelihood.elements.for.data.type <- function(data.type=c('new','prevalen
             response.vector = c(response.vector, tmrv$response.vector + bias)
             transformation.matrix = rbind(transformation.matrix, tmrv$transformation.matrix)
             
-            one.numerator.covar.mat = make.chunked.compound.symmetry.matrix(sds=sds,
-                                                                            chunk.rho=numerator.year.to.year.chunk.correlation,
-                                                                            non.chunk.rho=numerator.year.to.year.off.correlation,
-                                                                            years=tmrv$year,
-                                                                            categories=tmrv$non.year.descriptions,
-                                                                            chunk.years=numerator.chunk.years)
-            #        one.numerator.covar.mat = make.compound.symmetry.matrix(sds=sds,
-            #                                                                rho=numerator.year.to.year.correlation)
+            if (is.null(numerator.chunk.years) || length(numerator.chunk.years)==0)
+                one.numerator.covar.mat = make.chunked.compound.symmetry.by.details(sds=sds,
+                                                                                    chunk.rho=numerator.year.to.year.chunk.correlation,
+                                                                                    non.chunk.rho=numerator.year.to.year.off.correlation,
+                                                                                    details=tmrv$details,
+                                                                                    categories=tmrv$non.year.descriptions)
+            else
+                one.numerator.covar.mat = make.chunked.compound.symmetry.matrix(sds=sds,
+                                                                                chunk.rho=numerator.year.to.year.chunk.correlation,
+                                                                                non.chunk.rho=numerator.year.to.year.off.correlation,
+                                                                                years=tmrv$year,
+                                                                                categories=tmrv$non.year.descriptions,
+                                                                                chunk.years=numerator.chunk.years)
             
             numerator.covar.mat = join.independent.covariance.matrices(numerator.covar.mat,
                                                                        one.numerator.covar.mat)
@@ -2196,11 +2285,23 @@ create.likelihood.elements.for.data.type <- function(data.type=c('new','prevalen
     if (by.sex.age)
     {
         cdc.arr = get.surveillance.data(surv, location, data.type=data.type, years=years, sex=T, age=T, throw.error.if.missing.data = F, na.rm=na.rm)
+        cdc.details = get.surveillance.data.details(surv, location, data.type=data.type, years=years, sex=T, age=T, throw.error.if.missing.data = F)
+        if (pass.n.to.numerator.sd)
+            cdc.n = get.surveillance.data(surv, location, data.type=paste0(data.type,'.n'), years=years, throw.error.if.missing.data = F, na.rm=na.rm)
+        else
+            cdc.n = NULL
+        
         if (!is.null(cdc.arr))
         {
-            tmrv = make.transformation.matrix.and.response.vector(cdc.arr=cdc.arr, jheem.skeleton=jheem.skeleton)
+            tmrv = make.transformation.matrix.and.response.vector(cdc.arr=cdc.arr, 
+                                                                  cdc.details=cdc.details,
+                                                                  cdc.n=cdc.n,
+                                                                  jheem.skeleton=jheem.skeleton)
             
-            sds = numerator.sd(years=tmrv$year, num=tmrv$response.vector)
+            if (pass.n.to.numerator.sd)
+                sds = numerator.sd(years=tmrv$year, num=tmrv$response.vector, denom=tmrv$n)
+            else
+                sds = numerator.sd(years=tmrv$year, num=tmrv$response.vector)
             if (length(sds)==1)
                 sds = rep(sds, length(tmrv$response.vector))
             bias = bias.fn(years=tmrv$year, num=tmrv$response.vector)
@@ -2214,14 +2315,19 @@ create.likelihood.elements.for.data.type <- function(data.type=c('new','prevalen
             response.vector = c(response.vector, tmrv$response.vector + bias)
             transformation.matrix = rbind(transformation.matrix, tmrv$transformation.matrix)
             
-            one.numerator.covar.mat = make.chunked.compound.symmetry.matrix(sds=sds,
-                                                                            chunk.rho=numerator.year.to.year.chunk.correlation,
-                                                                            non.chunk.rho=numerator.year.to.year.off.correlation,
-                                                                            years=tmrv$year,
-                                                                            categories=tmrv$non.year.descriptions,
-                                                                            chunk.years=numerator.chunk.years)
-            #        one.numerator.covar.mat = make.compound.symmetry.matrix(sds=sds,
-            #                                                                rho=numerator.year.to.year.correlation)
+            if (is.null(numerator.chunk.years) || length(numerator.chunk.years)==0)
+                one.numerator.covar.mat = make.chunked.compound.symmetry.by.details(sds=sds,
+                                                                                    chunk.rho=numerator.year.to.year.chunk.correlation,
+                                                                                    non.chunk.rho=numerator.year.to.year.off.correlation,
+                                                                                    details=tmrv$details,
+                                                                                    categories=tmrv$non.year.descriptions)
+            else
+                one.numerator.covar.mat = make.chunked.compound.symmetry.matrix(sds=sds,
+                                                                                chunk.rho=numerator.year.to.year.chunk.correlation,
+                                                                                non.chunk.rho=numerator.year.to.year.off.correlation,
+                                                                                years=tmrv$year,
+                                                                                categories=tmrv$non.year.descriptions,
+                                                                                chunk.years=numerator.chunk.years)
             
             numerator.covar.mat = join.independent.covariance.matrices(numerator.covar.mat,
                                                                        one.numerator.covar.mat)
@@ -2232,11 +2338,23 @@ create.likelihood.elements.for.data.type <- function(data.type=c('new','prevalen
     if (by.sex.race)
     {
         cdc.arr = get.surveillance.data(surv, location, data.type=data.type, years=years, sex=T, race=T, throw.error.if.missing.data = F, na.rm=na.rm)
+        cdc.details = get.surveillance.data.details(surv, location, data.type=data.type, years=years, sex=T, race=T, throw.error.if.missing.data = F)
+        if (pass.n.to.numerator.sd)
+            cdc.n = get.surveillance.data(surv, location, data.type=paste0(data.type,'.n'), years=years, throw.error.if.missing.data = F, na.rm=na.rm)
+        else
+            cdc.n = NULL
+        
         if (!is.null(cdc.arr))
         {
-            tmrv = make.transformation.matrix.and.response.vector(cdc.arr=cdc.arr, jheem.skeleton=jheem.skeleton)
+            tmrv = make.transformation.matrix.and.response.vector(cdc.arr=cdc.arr,
+                                                                  cdc.details=cdc.details,
+                                                                  cdc.n=cdc.n,
+                                                                  jheem.skeleton=jheem.skeleton)
             
-            sds = numerator.sd(years=tmrv$year, num=tmrv$response.vector)
+            if (pass.n.to.numerator.sd)
+                sds = numerator.sd(years=tmrv$year, num=tmrv$response.vector, denom=tmrv$n)
+            else
+                sds = numerator.sd(years=tmrv$year, num=tmrv$response.vector)
             if (length(sds)==1)
                 sds = rep(sds, length(tmrv$response.vector))
             bias = bias.fn(years=tmrv$year, num=tmrv$response.vector)
@@ -2250,14 +2368,19 @@ create.likelihood.elements.for.data.type <- function(data.type=c('new','prevalen
             response.vector = c(response.vector, tmrv$response.vector + bias)
             transformation.matrix = rbind(transformation.matrix, tmrv$transformation.matrix)
             
-            one.numerator.covar.mat = make.chunked.compound.symmetry.matrix(sds=sds,
-                                                                            chunk.rho=numerator.year.to.year.chunk.correlation,
-                                                                            non.chunk.rho=numerator.year.to.year.off.correlation,
-                                                                            years=tmrv$year,
-                                                                            categories=tmrv$non.year.descriptions,
-                                                                            chunk.years=numerator.chunk.years)
-            #        one.numerator.covar.mat = make.compound.symmetry.matrix(sds=sds,
-            #                                                                rho=numerator.year.to.year.correlation)
+            if (is.null(numerator.chunk.years) || length(numerator.chunk.years)==0)
+                one.numerator.covar.mat = make.chunked.compound.symmetry.by.details(sds=sds,
+                                                                                    chunk.rho=numerator.year.to.year.chunk.correlation,
+                                                                                    non.chunk.rho=numerator.year.to.year.off.correlation,
+                                                                                    details=tmrv$details,
+                                                                                    categories=tmrv$non.year.descriptions)
+            else
+                one.numerator.covar.mat = make.chunked.compound.symmetry.matrix(sds=sds,
+                                                                                chunk.rho=numerator.year.to.year.chunk.correlation,
+                                                                                non.chunk.rho=numerator.year.to.year.off.correlation,
+                                                                                years=tmrv$year,
+                                                                                categories=tmrv$non.year.descriptions,
+                                                                                chunk.years=numerator.chunk.years)
             
             numerator.covar.mat = join.independent.covariance.matrices(numerator.covar.mat,
                                                                        one.numerator.covar.mat)
@@ -2268,11 +2391,23 @@ create.likelihood.elements.for.data.type <- function(data.type=c('new','prevalen
     if (by.sex.risk)
     {
         cdc.arr = get.surveillance.data(surv, location, data.type=data.type, years=years, sex=T, risk=T, throw.error.if.missing.data = F, na.rm=na.rm)
+        cdc.details = get.surveillance.data.details(surv, location, data.type=data.type, years=years, sex=T, risk=T, throw.error.if.missing.data = F)
+        if (pass.n.to.numerator.sd)
+            cdc.n = get.surveillance.data(surv, location, data.type=paste0(data.type,'.n'), years=years, throw.error.if.missing.data = F, na.rm=na.rm)
+        else
+            cdc.n = NULL
+        
         if (!is.null(cdc.arr))
         {
-            tmrv = make.transformation.matrix.and.response.vector(cdc.arr=cdc.arr, jheem.skeleton=jheem.skeleton)
+            tmrv = make.transformation.matrix.and.response.vector(cdc.arr=cdc.arr,
+                                                                  cdc.details=cdc.details,
+                                                                  cdc.n=cdc.n,
+                                                                  jheem.skeleton=jheem.skeleton)
             
-            sds = numerator.sd(years=tmrv$year, num=tmrv$response.vector)
+            if (pass.n.to.numerator.sd)
+                sds = numerator.sd(years=tmrv$year, num=tmrv$response.vector, denom=tmrv$n)
+            else
+                sds = numerator.sd(years=tmrv$year, num=tmrv$response.vector)
             if (length(sds)==1)
                 sds = rep(sds, length(tmrv$response.vector))
             bias = bias.fn(years=tmrv$year, num=tmrv$response.vector)
@@ -2286,14 +2421,19 @@ create.likelihood.elements.for.data.type <- function(data.type=c('new','prevalen
             response.vector = c(response.vector, tmrv$response.vector + bias)
             transformation.matrix = rbind(transformation.matrix, tmrv$transformation.matrix)
             
-            one.numerator.covar.mat = make.chunked.compound.symmetry.matrix(sds=sds,
-                                                                            chunk.rho=numerator.year.to.year.chunk.correlation,
-                                                                            non.chunk.rho=numerator.year.to.year.off.correlation,
-                                                                            years=tmrv$year,
-                                                                            categories=tmrv$non.year.descriptions,
-                                                                            chunk.years=numerator.chunk.years)
-            #        one.numerator.covar.mat = make.compound.symmetry.matrix(sds=sds,
-            #                                                                rho=numerator.year.to.year.correlation)
+            if (is.null(numerator.chunk.years) || length(numerator.chunk.years)==0)
+                one.numerator.covar.mat = make.chunked.compound.symmetry.by.details(sds=sds,
+                                                                                    chunk.rho=numerator.year.to.year.chunk.correlation,
+                                                                                    non.chunk.rho=numerator.year.to.year.off.correlation,
+                                                                                    details=tmrv$details,
+                                                                                    categories=tmrv$non.year.descriptions)
+            else
+                one.numerator.covar.mat = make.chunked.compound.symmetry.matrix(sds=sds,
+                                                                                chunk.rho=numerator.year.to.year.chunk.correlation,
+                                                                                non.chunk.rho=numerator.year.to.year.off.correlation,
+                                                                                years=tmrv$year,
+                                                                                categories=tmrv$non.year.descriptions,
+                                                                                chunk.years=numerator.chunk.years)
             
             numerator.covar.mat = join.independent.covariance.matrices(numerator.covar.mat,
                                                                        one.numerator.covar.mat)
@@ -2304,11 +2444,23 @@ create.likelihood.elements.for.data.type <- function(data.type=c('new','prevalen
     if (by.race.risk)
     {
         cdc.arr = get.surveillance.data(surv, location, data.type=data.type, years=years, race=T, risk=T, throw.error.if.missing.data = F, na.rm=na.rm)
+        cdc.details = get.surveillance.data.details(surv, location, data.type=data.type, years=years, race=T, risk=T, throw.error.if.missing.data = F)
+        if (pass.n.to.numerator.sd)
+            cdc.n = get.surveillance.data(surv, location, data.type=paste0(data.type,'.n'), years=years, throw.error.if.missing.data = F, na.rm=na.rm)
+        else
+            cdc.n = NULL
+        
         if (!is.null(cdc.arr))
         {
-            tmrv = make.transformation.matrix.and.response.vector(cdc.arr=cdc.arr, jheem.skeleton=jheem.skeleton)
+            tmrv = make.transformation.matrix.and.response.vector(cdc.arr=cdc.arr,
+                                                                  cdc.details=cdc.details,
+                                                                  cdc.n=cdc.n,
+                                                                  jheem.skeleton=jheem.skeleton)
             
-            sds = numerator.sd(years=tmrv$year, num=tmrv$response.vector)
+            if (pass.n.to.numerator.sd)
+                sds = numerator.sd(years=tmrv$year, num=tmrv$response.vector, denom=tmrv$n)
+            else
+                sds = numerator.sd(years=tmrv$year, num=tmrv$response.vector)
             if (length(sds)==1)
                 sds = rep(sds, length(tmrv$response.vector))
             bias = bias.fn(years=tmrv$year, num=tmrv$response.vector)
@@ -2322,14 +2474,19 @@ create.likelihood.elements.for.data.type <- function(data.type=c('new','prevalen
             response.vector = c(response.vector, tmrv$response.vector + bias)
             transformation.matrix = rbind(transformation.matrix, tmrv$transformation.matrix)
             
-            one.numerator.covar.mat = make.chunked.compound.symmetry.matrix(sds=sds,
-                                                                            chunk.rho=numerator.year.to.year.chunk.correlation,
-                                                                            non.chunk.rho=numerator.year.to.year.off.correlation,
-                                                                            years=tmrv$year,
-                                                                            categories=tmrv$non.year.descriptions,
-                                                                            chunk.years=numerator.chunk.years)
-            #        one.numerator.covar.mat = make.compound.symmetry.matrix(sds=sds,
-            #                                                                rho=numerator.year.to.year.correlation)
+            if (is.null(numerator.chunk.years) || length(numerator.chunk.years)==0)
+                one.numerator.covar.mat = make.chunked.compound.symmetry.by.details(sds=sds,
+                                                                                    chunk.rho=numerator.year.to.year.chunk.correlation,
+                                                                                    non.chunk.rho=numerator.year.to.year.off.correlation,
+                                                                                    details=tmrv$details,
+                                                                                    categories=tmrv$non.year.descriptions)
+            else
+                one.numerator.covar.mat = make.chunked.compound.symmetry.matrix(sds=sds,
+                                                                                chunk.rho=numerator.year.to.year.chunk.correlation,
+                                                                                non.chunk.rho=numerator.year.to.year.off.correlation,
+                                                                                years=tmrv$year,
+                                                                                categories=tmrv$non.year.descriptions,
+                                                                                chunk.years=numerator.chunk.years)
             
             numerator.covar.mat = join.independent.covariance.matrices(numerator.covar.mat,
                                                                        one.numerator.covar.mat)
@@ -2385,7 +2542,7 @@ compare.sims.likelihood <- function(likelihood, ...,
     
     argnames <- sys.call()
     sim.names = sapply(argnames[-1][-1], as.character)
-
+    
     dimnames(rv)[[2]] = sim.names
     
     if (length(sim.names)==2)
@@ -2402,11 +2559,22 @@ compare.sims.likelihood <- function(likelihood, ...,
 ##-- MID-LEVEL HELPERS TO *CREATE* LIKELIHOOD --##
 ##----------------------------------------------##
 
-make.transformation.matrix.and.response.vector <- function(cdc.arr, jheem.skeleton,
+make.transformation.matrix.and.response.vector <- function(cdc.arr, 
+                                                           cdc.details,
+                                                           cdc.n = NULL,
+                                                           jheem.skeleton,
                                                            ages=NULL, races=NULL,
                                                            sexes=NULL, risks=NULL)
 {
-    melted = melt(cdc.arr, as.is=T)
+    melted = reshape2::melt(cdc.arr, as.is=T)
+    melted$details = as.character(cdc.details)
+    if (is.null(cdc.n))
+        melted$n = NaN
+    else
+        melted$n = as.numeric(cdc.n)
+    
+    base.colnames = c('value','details','n')
+    n.base.cols = length(base.colnames)
     
     if (!is.null(ages) && !is.null(melted$age))
         melted = melted[sapply(melted$age, function(age){any(age==ages)}),]
@@ -2436,21 +2604,24 @@ make.transformation.matrix.and.response.vector <- function(cdc.arr, jheem.skelet
         transformation.matrix = rbind(transformation.matrix, as.numeric(one.transformation))
     }
     
-    if (dim(melted)[2]==1)
+    non.base.colnames = setdiff(dimnames(melted)[[2]], base.colnames)
+    non.base.non.year.colnames = setdiff(dimnames(melted)[[2]], c('year', base.colnames))
+    
+    if (dim(melted)[2]==n.base.cols)
         descriptions = rep('all', dim(melted)[1])
-    else if (dim(melted)[2]==2)
-        descriptions = melted[,dimnames(melted)[[2]]!='value']
+    else if (dim(melted)[2]==(n.base.cols+1))
+        descriptions = melted[,non.base.colnames]
     else
-        descriptions = apply(melted[,dimnames(melted)[[2]]!='value'], 1, function(row){
+        descriptions = apply(melted[,non.base.colnames], 1, function(row){
             paste0(row, collapse=', ')
         })
     
-    if (dim(melted)[2]<=2)
+    if (dim(melted)[2]<=(n.base.cols+1))
         non.year.descriptions = rep('all', dim(melted)[1])
-    else if (dim(melted)[2]==3)
-        non.year.descriptions = melted[,dimnames(melted)[[2]]!='value' & dimnames(melted)[[2]]!='year']
+    else if (dim(melted)[2]==(n.base.cols+2))
+        non.year.descriptions = melted[,non.base.non.year.colnames]
     else
-        non.year.descriptions = apply(melted[,dimnames(melted)[[2]]!='value' & dimnames(melted)[[2]]!='year'], 1, function(row){
+        non.year.descriptions = apply(melted[,non.base.non.year.colnames], 1, function(row){
             paste0(row, collapse=', ')
         })
     
@@ -2458,7 +2629,9 @@ make.transformation.matrix.and.response.vector <- function(cdc.arr, jheem.skelet
          response.vector = as.matrix(melted$value, ncol=1),
          descriptions=descriptions,
          non.year.descriptions=non.year.descriptions,
-         year=melted$year)
+         year=melted$year,
+         details=melted$details,
+         n=melted$n)
 }
 
 create.simple.denominator.elements <- function(population, msm.cv = msm.cv, idu.cv = idu.cv)
@@ -2808,6 +2981,32 @@ make.chunked.compound.symmetry.matrix <- function(sds,
     rho.mat[!equal.category.mask] = 0
     
     diag(rho.mat) = 1
+    sds %*% t(sds) * rho.mat
+}
+
+make.chunked.compound.symmetry.by.details <- function(sds,
+                                                      chunk.rho,
+                                                      non.chunk.rho,
+                                                      categories,
+                                                      details)
+{
+    details[is.na(details)] = 'NA-VALUE-FOR-DETAILS'
+    rho.mat = sapply(1:length(categories), function(i){
+        sapply(1:length(categories), function(j){
+            if (i==j)
+                1
+            else if (categories[i]==categories[j])
+            {
+                if (details[i]==details[j])
+                    chunk.rho
+                else
+                    non.chunk.rho
+            }
+            else
+                0
+        })
+    })
+    
     sds %*% t(sds) * rho.mat
 }
 

@@ -297,9 +297,9 @@ parameters.prior = join.distributions(
     age5.proportion.lost.slope.or = Lognormal.Distribution(0, 0.5*log(2)/5),
 
     # (plus a term for from suppressed or from unsuppressed) 
-    suppressed.vs.failing.proportion.lost.or = Lognormal.Distribution(0, 0.5*log(2)),
-    naive.vs.failing.proportion.lost.or = Lognormal.Distribution(0, 0.5*log(2)),
-    already.lost.vs.failing.proportion.lost.or = Lognormal.Distribution(0, 0.5*log(2)),
+    suppressed.vs.failing.proportion.lost.or = Lognormal.Distribution(0, 0.5*log(4)),
+    naive.vs.failing.proportion.lost.or = Lognormal.Distribution(0, 0.5*log(4)),
+    already.lost.vs.failing.proportion.lost.or = Lognormal.Distribution(0, 0.5*log(8)),
 
     #-- PrEP --#
     

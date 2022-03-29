@@ -9,6 +9,8 @@ SURVEILLANCE.DELIMITER = ';'
 ####---------------------------####
 ###################################
 
+library(haven)
+
 ##--------------------------------------------##
 ##-- THE GENERAL READ FUNCTION and WRAPPERS --##
 ##--------------------------------------------##
@@ -83,7 +85,7 @@ read.state.surveillance.manager <- function(dir='cleaned_data/hiv_surveillance/s
                                             verbose=T,
                                             test=F)
 {
-    read.surveillance.manager(dir=dir,
+    rv = read.surveillance.manager(dir=dir,
                               location.field='FIPS',
                               location.mapping.fn = state.fips.to.abbreviation,
                               sources=sources,
@@ -91,6 +93,15 @@ read.state.surveillance.manager <- function(dir='cleaned_data/hiv_surveillance/s
                               details=details,
                               verbose=verbose,
                               test=test)
+    
+    rv = add.total.retention.data(rv,
+                                  dir=file.path(dir, 'retention'),
+                                  read.location.fn=state.name.to.abbreviation,
+                                  sources.by.year='CDC',
+                                  details.by.year='CDC Surveillance Reports',
+                                  url.by.year=STATE.RETENTION.URLS)
+        
+    rv
 }
 
 read.county.surveillance.manager <- function(dir='cleaned_data/hiv_surveillance/county/',
@@ -109,6 +120,64 @@ read.county.surveillance.manager <- function(dir='cleaned_data/hiv_surveillance/
                               verbose=verbose,
                               test=test)
 }
+
+
+
+# Checks the surveillance manager's internal dimensions for consistency
+# and caches all the possible values
+finalize.surveillance.manager <- function(surv,
+                                          verbose=T)
+{
+    dimension.names = list()
+    
+    # The dimensions which are allowed to differ from array to array
+    allow.dimensions.unequal = c('year','location')
+    
+    array.mask = sapply(surv, is.array)
+    
+    if (verbose)
+        cat("Checking ", sum(array.mask), " elements in the surveillance manager for consistency\n", sep='')
+    
+    for (elem.name in names(surv)[array.mask])
+    {
+        elem = surv[[elem.name]]
+        
+        elem.dim.names = dimnames(elem)
+        for (dim in names(elem.dim.names))
+        {
+            if (is.null(dimension.names[[dim]]))
+                dimension.names[[dim]] = elem.dim.names[[dim]]
+            else
+            {
+                if (any(dim==allow.dimensions.unequal))
+                {
+                    dimension.names[[dim]] = sort(union(dimension.names[[dim]],
+                                                        elem.dim.names[[dim]]))
+                }
+                else
+                {
+                    if (!setequal(dimension.names[[dim]], elem.dim.names[[dim]]))
+                        stop(paste0("The values for dimension '", dim, "' are not equal among all elements of the surveillance manager. ",
+                                    "In particular, they differ for '", elem.name, "' as compared to preceding elements"))
+                    
+                }
+            }
+            
+            
+            # Could also check the source, details, and surveillance here, but not doing it now
+        }
+    }
+    
+    if (verbose)
+        cat("The surveillance manager checks out. Returning\n")
+    
+    surv$DIMENSION.VALUES = dimension.names
+    surv$DIMENSION.VALUES$year = as.numeric(surv$DIMENSION.VALUES$year)
+    
+    #-- Return --#
+    surv
+}
+
 
 ##---------------------------##
 ##-- MSA READING FUNCTIONS --##
@@ -1085,9 +1154,9 @@ SAME.YEAR.URLS = c(
 
 DEFAULT.NEW.DATA.URLS = c(OFF.YEAR.URLS, SAME.YEAR.URLS)
 
-DEFAULT.NEW.DATA.DETAILS = rep("MSA Surveillance Reports, after 2013", length(DEFAULT.NEW.DATA.URLS))
+DEFAULT.NEW.DATA.DETAILS = rep("MSA Surveillance Reports, after 2014", length(DEFAULT.NEW.DATA.URLS))
 names(DEFAULT.NEW.DATA.DETAILS) = names(DEFAULT.NEW.DATA.URLS)
-DEFAULT.NEW.DATA.DETAILS[as.numeric(names(DEFAULT.NEW.DATA.DETAILS))<2014] = 'MSA Surveillance Reports, 2008-2013'
+DEFAULT.NEW.DATA.DETAILS[as.numeric(names(DEFAULT.NEW.DATA.DETAILS))<=2014] = 'MSA Surveillance Reports, 2008-2014'
 DEFAULT.NEW.DATA.DETAILS[as.numeric(names(DEFAULT.NEW.DATA.DETAILS))<2008] = 'MSA Surveillance Reports, before 2008'
 
 DEFAULT.PREVALENCE.DATA.URLS = c(OFF.YEAR.URLS, SAME.YEAR.URLS)
@@ -1563,6 +1632,147 @@ add.surveillance.data <- function(surv,
     surv
 }
 
+add.total.retention.data <- function(surv,
+                                     dir='cleaned_data/hiv_surveillance/state/retention',
+                                     read.location.fn=state.name.to.abbreviation,
+                                     sources.by.year='CDC',
+                                     details.by.year='CDC Surveillance Reports',
+                                     url.by.year=STATE.RETENTION.URLS)
+{
+    if (!dir.exists(dir))
+        stop(paste0("The directory '", dir, "' does not exist"))
+    filenames = list.files(dir)
+    
+    year.for.file = as.numeric(gsub(".*_([0-9][0-9][0-9][0-9])\\.csv", "\\1", filenames))
+    
+    if (length(sources.by.year)==1 && 
+        (length(year.for.file)>1 || is.null(names(sources.by.year))))
+    {
+        sources.by.year = rep(sources.by.year, length(year.for.file))
+        names(sources.by.year) = as.character(year.for.file)
+    }
+    years.missing.sources = setdiff(as.numeric(names(sources.by.year)), year.for.file)
+    if (length(years.missing.sources)>0)
+        stop("The following year(s) have no source listed: ", paste0(years.missing.sources, collapse=', '))
+    
+    if (length(details.by.year)==1 && 
+        (length(year.for.file)>1 || is.null(names(details.by.year))))
+    {
+        details.by.year = rep(details.by.year, length(year.for.file))
+        names(details.by.year) = as.character(year.for.file)
+    }
+    years.missing.details = setdiff(as.numeric(names(details.by.year)), year.for.file)
+    if (length(years.missing.details)>0)
+        stop("The following year(s) have no details listed: ", paste0(years.missing.details, collapse=', '))
+    
+    if (length(url.by.year)==1 && 
+        (length(year.for.file)>1 || is.null(names(url.by.year))))
+    {
+        url.by.year = rep(url.by.year, length(year.for.file))
+        names(url.by.year) = as.character(year.for.file)
+    }
+    years.missing.url = setdiff(as.numeric(names(url.by.year)), year.for.file)
+    if (length(years.missing.url)>0)
+        stop("The following year(s) have no URL listed: ", paste0(years.missing.url, collapse=', '))
+        
+    
+    # read the files
+    dfs = lapply(file.path(dir, filenames),
+                 read.csv,
+                 stringsAsFactors=F)
+    
+    # remove total row and code location
+    # parse the numbers
+    dfs = lapply(1:length(dfs), function(i){
+        df = dfs[[i]]
+        mask = tolower(df[,1]) != 'total'
+        df = df[mask,]
+        df$location = as.character(read.location.fn(df[,1]))
+        
+        #try removing the the last letter - in case it was a superscript
+        missing = is.na(df$location)
+        names.for.missing = df[missing,1]
+        try.again.names = substr(names.for.missing, 1, nchar(names.for.missing)-1)
+        df$location[missing] = as.character(read.location.fn(try.again.names))
+        
+        if (any(is.na(df$location)))
+            stop(paste0("Unable to parse the following location(s) for ", 
+                        year.for.file[i], " ('",
+                        filenames[i], "'): ",
+                        paste0(df[is.na(df$location),1], collapse=', ')))
+        
+        df$n.engaged = as.numeric(gsub(",", '', df[,3]))
+        if (any(is.na(df$n.engaged)))
+            stop(paste0("Unable to parse the number engaged for ", 
+                        year.for.file[i], " ('",
+                        filenames[i], "') for the following row(s): ",
+                        paste0((1:dim(df)[1])[is.na(df$n.engaged)], collapse=', ')
+            ))
+        
+        df$n.retained = as.numeric(gsub(",", '', df[,5]))
+        if (any(is.na(df$n.retained)))
+            stop(paste0("Unable to parse the number retained for ", 
+                        year.for.file[i], " ('",
+                        filenames[i], "') for the following row(s): ",
+                        paste0((1:dim(df)[1])[is.na(df$n.retained)], collapse=', ')
+            ))
+        
+        df$retention = df$n.retained / df$n.engaged
+        
+        df
+    })
+    
+    
+    # Set up the dimensions of the array
+    all.locations = sort(unique(unlist(
+        sapply(dfs, function(df){df$location})
+    )))
+    dim.names = list(year=as.character(year.for.file),
+                     location=all.locations)
+    
+    surv$retention.all = array(NaN, dim=sapply(dim.names, length), dimnames=dim.names)
+    surv$source$retention.all = surv$details$retention.all = surv$url$retention.all =
+        array(as.character(NA), dim=sapply(dim.names, length), dimnames=dim.names)
+    
+    
+    # Set up the source, details, and url codes
+    surv = add.surveillance.mapping.codes(surv, sources.by.year)
+    surv = add.surveillance.mapping.codes(surv, details.by.year)
+    surv = add.surveillance.mapping.codes(surv, url.by.year)
+    
+    # Replace the source/url/details strings with codes
+    sources.by.year = get.surveillance.mapping.codes(surv, sources.by.year, collapse=F)
+    url.by.year = get.surveillance.mapping.codes(surv, url.by.year, collapse=F)
+    details.by.year = get.surveillance.mapping.codes(surv, details.by.year, collapse=F)
+    
+    
+    # Pull the data into the arrays
+    for (i in 1:length(dfs))
+    {
+        df = dfs[[i]]
+        year = as.character(year.for.file[i])
+        surv$retention.all[year, df$location] = df$retention
+        
+        surv$source$retention.all[year, df$location] = sources.by.year[i]
+        surv$details$retention.all[year, df$location] = details.by.year[i]
+        surv$url$retention.all[year, df$location] = url.by.year[i]
+    }
+    
+    # Return
+    surv
+}
+
+STATE.RETENTION.URLS = c(
+    '2010'='https://www.cdc.gov/hiv/pdf/library/reports/surveillance/cdc-hiv-surveillance-supplemental-report-vol-18-5.pdf',
+    '2011'='https://www.cdc.gov/hiv/pdf/library/reports/surveillance/cdc-hiv-surveillance-supplemental-report-vol-19-3.pdf',
+    '2012'='https://www.cdc.gov/hiv/pdf/library/reports/surveillance/cdc-hiv-surveillance-supplemental-report-vol-20-2.pdf',
+    '2013'='https://www.cdc.gov/hiv/pdf/library/reports/surveillance/cdc-hiv-surveillance-supplemental-report-vol-21-4.pdf',
+    '2014'='https://www.cdc.gov/hiv/pdf/library/reports/surveillance/cdc-hiv-surveillance-supplemental-report-vol-22-2.pdf',
+    '2015'='https://www.cdc.gov/hiv/pdf/library/reports/surveillance/cdc-hiv-surveillance-supplemental-report-vol-23-4.pdf',
+    '2016'='https://www.cdc.gov/hiv/pdf/library/reports/surveillance/cdc-hiv-surveillance-supplemental-report-vol-24-3.pdf',
+    '2018'='https://www.cdc.gov/hiv/pdf/library/reports/surveillance/cdc-hiv-surveillance-supplemental-report-vol-25-2.pdf',
+    '2019'='https://www.cdc.gov/hiv/library/reports/hiv-surveillance/vol-26-no-2/index.html'
+)
 
 ##------------------------------##
 ##-- SOURCE, URL, and DETAILS --##
@@ -1950,8 +2160,8 @@ read.surveillance.file.to.manager <- function(file,
         # Get the suffix of the element (array) in the list we will access
         if (all(marginal.by.dim))
             arr.suffix = 'all'
-        else if (!any(marginal.by.dim))
-            arr.suffix = 'master'
+  #      else if (!any(marginal.by.dim))
+   #         arr.suffix = 'master'
         else
         {
             suffix.components = DIMENSION.ORDER[sapply(DIMENSION.ORDER, function(catg){
@@ -2866,6 +3076,537 @@ max.marginal.sum <- function(arr1, arr2, keep=c('race','risk'))
     rv
 }
 
+
+##------------------------##
+##-- TESTING from BRFSS --##
+##------------------------##
+
+BRFSS.URLS = list(
+    msa = c(
+        '2014'='https://www.cdc.gov/brfss/smart/smart_2014.html',
+        '2015'='https://www.cdc.gov/brfss/smart/smart_2015.html',
+        '2016'='https://www.cdc.gov/brfss/smart/smart_2016.html',
+        '2017'='https://www.cdc.gov/brfss/smart/smart_2017.html',
+        '2018'='https://www.cdc.gov/brfss/smart/smart_2018.html',
+        '2019'='https://www.cdc.gov/brfss/smart/smart_2019.html',
+        '2020'='https://www.cdc.gov/brfss/smart/smart_2020.html'
+    ),
+    state = c(
+        '2013'='https://www.cdc.gov/brfss/annual_data/annual_2013.html',
+        '2014'='https://www.cdc.gov/brfss/annual_data/annual_2014.html',
+        '2015'='https://www.cdc.gov/brfss/annual_data/annual_2015.html',
+        '2016'='https://www.cdc.gov/brfss/annual_data/annual_2016.html',
+        '2017'='https://www.cdc.gov/brfss/annual_data/annual_2017.html',
+        '2018'='https://www.cdc.gov/brfss/annual_data/annual_2018.html',
+        '2019'='https://www.cdc.gov/brfss/annual_data/annual_2019.html',
+        '2020'='https://www.cdc.gov/brfss/annual_data/annual_2020.html'
+    )
+)
+
+
+read.testing.from.brfss <- function(surv,
+                                    dir='Q:Ending_HIV/large_cleaned_data/brfss/brfss_msa/',
+                                    src='BRFSS',
+                                    geography=c('msa','state')[1],
+                                    details= if (geography=='msa') 'BRFSS Smart Cities' else 'BRFSS',
+                                    urls.by.year= BRFSS.URLS[[geography]],
+                                    use.brfss.weights=F,
+                                    include.only.at.risk=T,
+                                    impute.testing.by.month=T,
+                                    verbose = T)
+{
+    filenames = list.files(dir)
+
+    all.years = gsub('.*([0-9][0-9][0-9][0-9])\\.xpt', '\\1', filenames, ignore.case = T)
+    
+#-- Read and process the files --#
+    if (verbose)
+        cat("Reading ", length(filenames), " BRFSS files...\n", sep='')
+    
+    dfs = lapply(1:length(filenames), function(i){
+        file = filenames[i]
+        year = as.numeric(all.years[i])
+        
+        if (verbose)
+            cat("  Reading ", year, " BRFSS file: '", file, "'...", sep='')
+        one.df = read_xpt(file.path(dir, file))
+        
+        if (geography=='msa')
+        {
+            if (all(names(one.df)!='_MMSA'))
+                stop(paste0("MSA field ('_MMSA') is missing from '", file, "'"))
+            
+            df.locations = one.df[['_MMSA']]
+            locations = unique(df.locations)
+            valid.msa.mask = !sapply(msa.names(locations), is.na)
+            locations = locations[valid.msa.mask]
+            
+            one.df = one.df[sapply(df.locations, function(loc){
+                any(locations==loc)
+            }),]
+            df.locations = one.df[['_MMSA']]
+            msas.for.divisions = msa.for.division(df.locations)
+            df.locations[!is.na(msas.for.divisions)] = msas.for.divisions[!is.na(msas.for.divisions)]
+        }
+        else if (geography=='state')
+        {
+            if (all(names(one.df)!='_STATE'))
+                stop(paste0("MSA field ('_STATE') is missing from '", file, "'"))
+            
+            df.locations = state.fips.to.abbreviation(one.df[['_STATE']])
+            one.df = one.df[!is.na(df.locations),]
+            df.locations = df.locations[!is.na(df.locations)]
+        }
+        else
+            stop("geography must be either 'msa' or 'state'")
+        
+    
+        if (include.only.at.risk)
+        {
+            potential.risk.fields = c('HIVRISK5','HIVRISK4')
+            present.risk.fields = sapply(potential.risk.fields, function(field){
+                any(field==names(one.df))
+            })
+            if (!any(present.risk.fields))
+            {
+                if (verbose)
+                    cat(paste0("Data Missing\n  ** risk field (",
+                               paste0("'", potential.risk.fields[-length(potential.risk.fields)], "'", collapse=", "),
+                               " or '", potential.risk.fields[length(potential.risk.fields)], "'",
+                               ") is missing from '", file, "'\n",
+                               "  ==> ", year, " data will BE OMITTED\n"))
+                return (NULL)
+            }
+            else
+                risk.field = potential.risk.fields[present.risk.fields][1]
+            
+            at.risk = !is.na(one.df[[risk.field]]) & one.df[[risk.field]]==1
+            
+            one.df = one.df[at.risk,]
+            df.locations = df.locations[at.risk]
+        }
+        
+        if (all(names(one.df)!='WEIGHT2'))  
+            stop(paste0("weight field ('WEIGHT2') is missing from '", file, "'"))
+        
+        rv = data.frame(
+            location = as.character(df.locations),
+            weight = one.df$WEIGHT2
+        )
+        
+        if (use.brfss.weights)
+        {
+            missing.weight = is.na(rv$weight)
+            rv = rv[!missing.weight,]
+            one.df = one.df[!missing.weight,]
+        }
+        
+        if (all(names(one.df)!='HIVTSTD3'))  
+            stop(paste0("HIV test field ('HIVTSTD3') is missing from '", file, "'"))
+        test.year = as.numeric(substr(one.df$HIVTSTD3, 
+                                      nchar(one.df$HIVTSTD3)-3,
+                                      nchar(one.df$HIVTSTD3)))
+        test.year[test.year=='7777'] = NA
+        test.year[test.year=='9999'] = NA
+        if (impute.testing.by.month)
+        {
+            test.month = as.numeric(substr(one.df$HIVTSTD3,
+                                           1,
+                                           nchar(one.df$HIVTSTD3)-4))
+            test.month[is.na(test.year)] = NA
+            
+            rv$tested = as.numeric(!is.na(test.year) & test.year >= year)
+            mask = !is.na(test.year) & test.year==(year-1)
+            rv$tested[mask] = test.month[mask] / 12
+        }
+        else
+            rv$tested = as.numeric(!is.na(test.year) & test.year >= (year-1))
+        
+        
+        # Race
+        if (all(names(one.df)!='_RACE'))  
+            stop(paste0("race field ('_RACE') is missing from '", file, "'"))
+        rv$race = 'other'
+        rv$race[one.df[['_RACE']]==8] = 'hispanic'
+        rv$race[one.df[['_RACE']]==2] = 'black'
+        rv$race[one.df[['_RACE']]==9] = 'unknown'
+        
+        # Age
+        if (all(names(one.df)!='_AGEG5YR'))  
+            stop(paste0("age field ('_AGEG5YR') is missing from '", file, "'"))
+        rv$age = 'unknown'
+        rv$age[one.df[['_AGEG5YR']]<14] = '55+ years'
+        rv$age[one.df[['_AGEG5YR']]<=7] = '45-54 years'
+        rv$age[one.df[['_AGEG5YR']]<=5] = '35-44 years'
+        rv$age[one.df[['_AGEG5YR']]<=3] = '25-34 years'
+        rv$age[one.df[['_AGEG5YR']]==1] = '13-24 years'
+
+        # Sex
+        
+        potential.sex.fields = c('_SEX','SEX','SEX1')
+        present.sex.fields = sapply(potential.sex.fields, function(field){
+            any(field==names(one.df))
+        })
+        if (!any(present.sex.fields))
+            stop(paste0("sex field (",
+                        paste0("'", potential.sex.fields[-length(potential.sex.fields)], "'", collapse=", "),
+                        ", or '", potential.sex.fields[length(potential.sex.fields)], "'",
+                        ") is missing from '", file, "'"))
+        else
+            sex.field = potential.sex.fields[present.sex.fields][1]
+            
+        rv$sex = 'unknown'
+        rv$sex[!is.na(one.df[[sex.field]]) & one.df[[sex.field]]==1 ] = 'male'
+        rv$sex[!is.na(one.df[[sex.field]]) & one.df[[sex.field]]==2 ] = 'female'
+        
+       
+        # Risk
+        
+        rv$risk = 'unknown'
+        
+        if (any(names(one.df)=='SXORIENT') || any(names(one.df)=='SOMALE'))
+        {
+            if (any(names(one.df)=='SXORIENT'))
+                rv$risk[!is.na(rv$sex) & rv$sex=='male' & !is.na(one.df$SXORIENT) &
+                            (one.df$SXORIENT==2 | one.df$SXORIENT==3)] = 'msm'
+            if (any(names(one.df)=='SOMALE'))
+                rv$risk[!is.na(one.df$SOMALE) & (one.df$SOMALE==1 | one.df$SOMALE==3)] = 'msm'
+            
+            if (any(names(one.df)=='TRNSGNDR'))
+                rv$risk[!is.na(one.df$TRNSGNDR) & 
+                            (one.df$TRNSGNDR==1 | 
+                                 (one.df$TRNSGNDR==3 & !is.na(rv$sex) & rv$sex=='male'))] = 'msm'
+        }
+        
+        if (verbose)
+            cat("Success\n")
+        rv$location = as.character(rv$location)
+        rv
+    })
+    
+    if (verbose)
+        cat("Done reading BRFSS files\n")
+    
+#-- Post-processing after reading files --#
+    
+    # Decide which years' data we are going to keep
+    missing.data = sapply(dfs, is.null)
+
+    dfs = dfs[!missing.data]
+    all.years = all.years[!missing.data]
+    
+    all.locations = sort(unique(unlist(sapply(dfs, function(df){
+        unique(df$location)
+    }))))
+    names(dfs)=as.character(all.years)
+    
+    # Set up dimension names
+    all.dim.names = list(
+        year = as.character(all.years),
+        location = all.locations,
+        sex = c('male','female'),
+        age = c('13-24 years', '25-34 years', '35-44 years', '45-54 years', '55+ years'),
+        race = c('black','hispanic','other'),
+        risk = c('msm','idu','msm_idu','heterosexual')
+    )
+    
+    #check urls
+    missing.url.years = setdiff(all.years, names(urls.by.year))
+    if (length(missing.url.years)>0)
+        stop("Missing URLs for BRFSS files for year(s): ",
+             paste0(missing.url.years, collapse=', '))
+    urls = urls.by.year[all.years]
+    
+    #register source, details, and url codes
+    surv = add.surveillance.mapping.codes(surv, src)
+    surv = add.surveillance.mapping.codes(surv, urls)
+    surv = add.surveillance.mapping.codes(surv, details)
+    
+    # Replace the source/url/details strings with codes
+    src = get.surveillance.mapping.codes(surv, src, collapse=F)
+    urls = get.surveillance.mapping.codes(surv, urls, collapse=F)
+    details = get.surveillance.mapping.codes(surv, details, collapse=F)
+    
+#-- All (no stratification beyond year/loc) --#
+    
+    if (verbose)
+        cat("Pulling data for totals by year and location...")
+    surv$testing.all = sapply(all.locations, function(loc){
+        sapply(all.years, function(year){
+            df = dfs[[year]]
+            
+            mask = df$location == loc
+            
+            if (use.brfss.weights)
+                sum(df$weight[mask] * df$tested[mask]) / sum(df$weight[mask])
+            else
+                mean(df$tested[mask])
+        })
+    })
+    
+    surv$testing.n.all = sapply(all.locations, function(loc){
+        sapply(all.years, function(year){
+            df = dfs[[year]]
+            
+            mask = df$location == loc
+            
+            if (use.brfss.weights)
+                ( sum(df$weight[mask]) )^2 / sum( (df$weight[mask])^2 )
+            else
+                sum(mask)
+        })
+    })
+    
+    dim(surv$testing.all) = dim(surv$testing.n.all) = sapply(all.dim.names[1:2], length)
+    dimnames(surv$testing.all) = dimnames(surv$testing.n.all) = all.dim.names[1:2]
+    
+    surv$source$testing.all = surv$source$testing.n = 
+        array(src, dim=sapply(all.dim.names[1:2], length), dimnames=all.dim.names[1:2])
+    surv$details$testing.all = surv$details$testing.n = 
+        array(details, dim=sapply(all.dim.names[1:2], length), dimnames=all.dim.names[1:2])
+    surv$url$testing.all = surv$url$testing.n = 
+        array(urls, dim=sapply(all.dim.names[1:2], length), dimnames=all.dim.names[1:2])
+    
+    missing.mask = is.na(surv$testing.all)
+    surv$source$testing.all[missing.mask] = surv$source$testing.n.all[missing.mask] =
+        surv$details$testing.all[missing.mask] = surv$details$testing.n.all[missing.mask] =
+        surv$url$testing.all[missing.mask] = surv$url$testing.n.all[missing.mask] = NA
+    
+    if (verbose)
+        cat('Done\n')
+    
+#-- By Sex --#
+    
+    if (verbose)
+        cat("Pulling data stratified by sex...")
+    
+    surv$testing.sex = sapply(all.dim.names$sex, function(sex){
+        sapply(all.locations, function(loc){
+            sapply(all.years, function(year){
+                df = dfs[[year]]
+                
+                mask = df$location == loc & df$sex==sex
+                
+                if (use.brfss.weights)
+                    sum(df$weight[mask] * df$tested[mask]) / sum(df$weight[mask])
+                else
+                    mean(df$tested[mask])
+            })
+        })
+    })
+    
+    surv$testing.n.sex = sapply(all.dim.names$sex, function(sex){
+        sapply(all.locations, function(loc){
+            sapply(all.years, function(year){
+                df = dfs[[year]]
+                
+                mask = df$location == loc & df$sex==sex
+                
+                if (use.brfss.weights)
+                    ( sum(df$weight[mask]) )^2 / sum( (df$weight[mask])^2 )
+                else
+                    sum(mask)
+            })
+        })
+    })
+    
+    dim.names = all.dim.names[c('year','location','sex')]
+    dim(surv$testing.sex) = dim(surv$testing.n.sex) = sapply(dim.names, length)
+    dimnames(surv$testing.sex) = dimnames(surv$testing.n.sex) = dim.names
+    
+    surv$source$testing.sex = surv$source$testing.n.sex = 
+        array(src, dim=sapply(dim.names, length), dimnames=dim.names)
+    surv$details$testing.sex = surv$details$testing.n.sex = 
+        array(details, dim=sapply(dim.names, length), dimnames=dim.names)
+    surv$url$testing.sex = surv$url$testing.n.sex = 
+        array(urls, dim=sapply(dim.names, length), dimnames=dim.names)
+    
+    missing.mask = is.na(surv$testing.sex)
+    surv$source$testing.sex[missing.mask] = surv$source$testing.n.sex[missing.mask] =
+        surv$details$testing.sex[missing.mask] = surv$details$testing.n.sex[missing.mask] =
+        surv$url$testing.sex[missing.mask] = surv$url$testing.n.sex[missing.mask] = NA
+    
+    if (verbose)
+        cat('Done\n')
+    
+#-- By Age --#
+    
+    if (verbose)
+        cat("Pulling data stratified by age...")
+    
+    surv$testing.age = sapply(all.dim.names$age, function(age){
+        sapply(all.locations, function(loc){
+            sapply(all.years, function(year){
+                df = dfs[[year]]
+                
+                mask = df$location == loc & df$age==age
+                
+                if (use.brfss.weights)
+                    sum(df$weight[mask] * df$tested[mask]) / sum(df$weight[mask])
+                else
+                    mean(df$tested[mask])
+            })
+        })
+    })
+    
+    surv$testing.n.age = sapply(all.dim.names$age, function(age){
+        sapply(all.locations, function(loc){
+            sapply(all.years, function(year){
+                df = dfs[[year]]
+                
+                mask = df$location == loc & df$age==age
+                
+                if (use.brfss.weights)
+                    ( sum(df$weight[mask]) )^2 / sum( (df$weight[mask])^2 )
+                else
+                    sum(mask)
+            })
+        })
+    })
+    
+    dim.names = all.dim.names[c('year','location','age')]
+    dim(surv$testing.age) = dim(surv$testing.n.age) = sapply(dim.names, length)
+    dimnames(surv$testing.age) = dimnames(surv$testing.n.age) = dim.names
+    
+    surv$source$testing.age = surv$source$testing.n.age = 
+        array(src, dim=sapply(dim.names, length), dimnames=dim.names)
+    surv$details$testing.age = surv$details$testing.n.age = 
+        array(details, dim=sapply(dim.names, length), dimnames=dim.names)
+    surv$url$testing.age = surv$url$testing.n.age = 
+        array(urls, dim=sapply(dim.names, length), dimnames=dim.names)
+    
+    missing.mask = is.na(surv$testing.age)
+    surv$source$testing.age[missing.mask] = surv$source$testing.n.age[missing.mask] =
+        surv$details$testing.age[missing.mask] = surv$details$testing.n.age[missing.mask] =
+        surv$url$testing.age[missing.mask] = surv$url$testing.n.age[missing.mask] = NA
+    
+    if (verbose)
+        cat('Done\n')
+    
+#-- By Race --#
+    
+    if (verbose)
+        cat("Pulling data stratified by race...")
+    
+    surv$testing.race = sapply(all.dim.names$race, function(race){
+        sapply(all.locations, function(loc){
+            sapply(all.years, function(year){
+                df = dfs[[year]]
+                
+                mask = df$location == loc & df$race==race
+                
+                if (use.brfss.weights)
+                    sum(df$weight[mask] * df$tested[mask]) / sum(df$weight[mask])
+                else
+                    mean(df$tested[mask])
+            })
+        })
+    })
+    
+    surv$testing.n.race = sapply(all.dim.names$race, function(race){
+        sapply(all.locations, function(loc){
+            sapply(all.years, function(year){
+                df = dfs[[year]]
+                
+                mask = df$location == loc & df$race==race
+                
+                if (use.brfss.weights)
+                    ( sum(df$weight[mask]) )^2 / sum( (df$weight[mask])^2 )
+                else
+                    sum(mask)
+            })
+        })
+    })
+    
+    dim.names = all.dim.names[c('year','location','race')]
+    dim(surv$testing.race) = dim(surv$testing.n.race) = sapply(dim.names, length)
+    dimnames(surv$testing.race) = dimnames(surv$testing.n.race) = dim.names
+    
+    surv$source$testing.race = surv$source$testing.n.race = 
+        array(src, dim=sapply(dim.names, length), dimnames=dim.names)
+    surv$details$testing.race = surv$details$testing.n.race = 
+        array(details, dim=sapply(dim.names, length), dimnames=dim.names)
+    surv$url$testing.race = surv$url$testing.n.race = 
+        array(urls, dim=sapply(dim.names, length), dimnames=dim.names)
+    
+    missing.mask = is.na(surv$testing.race)
+    surv$source$testing.race[missing.mask] = surv$source$testing.n.race[missing.mask] =
+        surv$details$testing.race[missing.mask] = surv$details$testing.n.race[missing.mask] =
+        surv$url$testing.race[missing.mask] = surv$url$testing.n.race[missing.mask] = NA
+    
+    if (verbose)
+        cat('Done\n')
+    
+    
+#-- By Risk --#
+    
+    has.risk.data = sapply(dfs, function(df){
+        any(df$risk != 'unknown')
+    })
+    
+    if (any(has.risk.data))
+    {
+        if (verbose)
+            cat("Pulling data stratified by risk...")
+        
+        dim.names = all.dim.names[c('year','location','risk')]
+        dim.names$year = dim.names$year[has.risk.data]
+        
+        surv$testing.risk = sapply(dim.names$risk, function(risk){
+            sapply(all.locations, function(loc){
+                sapply(dim.names$year, function(year){
+                    df = dfs[[year]]
+                    
+                    mask = df$location == loc & df$risk==risk
+                    
+                    if (use.brfss.weights)
+                        sum(df$weight[mask] * df$tested[mask]) / sum(df$weight[mask])
+                    else
+                        mean(df$tested[mask])
+                })
+            })
+        })
+        
+        surv$testing.n.risk = sapply(dim.names$risk, function(risk){
+            sapply(all.locations, function(loc){
+                sapply(dim.names$year, function(year){
+                    df = dfs[[year]]
+                    
+                    mask = df$location == loc & df$risk==risk
+                    
+                    if (use.brfss.weights)
+                        ( sum(df$weight[mask]) )^2 / sum( (df$weight[mask])^2 )
+                    else
+                        sum(mask)
+                })
+            })
+        })
+        
+        dim(surv$testing.risk) = dim(surv$testing.n.risk) = sapply(dim.names, length)
+        dimnames(surv$testing.risk) = dimnames(surv$testing.n.risk) = dim.names
+        
+        surv$source$testing.risk = surv$source$testing.n.risk = 
+            array(src, dim=sapply(dim.names, length), dimnames=dim.names)
+        surv$details$testing.risk = surv$details$testing.n.risk = 
+            array(details, dim=sapply(dim.names, length), dimnames=dim.names)
+        surv$url$testing.risk = surv$url$testing.n.risk = 
+            array(urls, dim=sapply(dim.names, length), dimnames=dim.names)
+        
+        missing.mask = is.na(surv$testing.risk)
+        surv$source$testing.risk[missing.mask] = surv$source$testing.n.risk[missing.mask] =
+            surv$details$testing.risk[missing.mask] = surv$details$testing.n.risk[missing.mask] =
+            surv$url$testing.risk[missing.mask] = surv$url$testing.n.risk[missing.mask] = NA
+        
+        if (verbose)
+            cat('Done\n')
+    }
+    
+#-- Return --#
+    
+    surv
+}
+
+
 ##---------------------------------##
 ##-- POST-PROCESSING AGGREGATORS --##
 ##---------------------------------##
@@ -2994,6 +3735,7 @@ aggregate.surveillance.other.risk.as.heterosexual <- function(surv)
     
     surv
 }
+
 
 ##-----------------------##
 ##-- LOW-LEVEL HELPERS --##

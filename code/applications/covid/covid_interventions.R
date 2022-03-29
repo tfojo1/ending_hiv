@@ -79,10 +79,38 @@ create.covid.scenario <- function(pandemic.effects.distribution=NULL,
         testing.reduction.distribution@var.names = 'testing.reduction'
         prep.reduction.distribution@var.names = 'prep.reduction'
         
+<<<<<<< HEAD
         pandemic.effects.distribution = join.distributions(sexual.transmission.reduction.distribution,
                                                            suppression.reduction.distribution,
                                                            testing.reduction.distribution,
                                                            prep.reduction.distribution)
+=======
+        if (!is.null(testing.reduction.distribution))
+        {
+            if (!is(testing.reduction.distribution, 'Distribution') ||
+                testing.reduction.distribution@n.var > 1)
+                stop("testing.reduction.distribution must be a univariate distribution")
+            testing.reduction.distribution@var.names = 'testing.reduction'
+            
+            to.join = c(to.join, list(testing.reduction.distribution))
+        }
+        else if (pandemic.affects.testing)
+            stop("testing.reduction.distribution cannot be null. Set pandemic.affects.testing=F to omit")
+            
+        if (!is.null(prep.reduction.distribution))
+        {
+            if (!is(prep.reduction.distribution, 'Distribution') ||
+                prep.reduction.distribution@n.var > 1)
+                stop("prep.reduction.distribution must be a univariate distribution")
+            prep.reduction.distribution@var.names = 'prep.reduction'
+            
+            to.join = c(to.join, list(prep.reduction.distribution))
+        }
+        else if (pandemic.affects.prep)
+            stop("testing.reduction.distribution cannot be null. Set pandemic.affects.prep=F to omit")
+
+        pandemic.effects.distribution = join.distributions(to.join)
+>>>>>>> cd653bf0c14570643f9d595cd2a7ccacae9b37f3
     }
     
     required.var.names = c('sexual.transmission.reduction','suppression.reduction','testing.reduction','prep.reduction')
