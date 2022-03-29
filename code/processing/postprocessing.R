@@ -1039,7 +1039,7 @@ extract.suppression <- function(sim,
 
 
 extract.linkage <- function(sim,
-                            years=if (year.anchor=='start') sim$years else sim$years[-length(sim$years)],
+                            years=NULL,
                             keep.dimensions='year',
                             per.population=1,
                             ages=NULL,
@@ -1072,6 +1072,7 @@ extract.linkage <- function(sim,
                          years=fn.years,
                          keep.dimensions=keep.dimensions,
                          per.population=per.population,
+                         population.years.offset = -1,
                          ages=ages,
                          races=races,
                          subpopulations=subpopulations,
@@ -1092,7 +1093,7 @@ extract.linkage <- function(sim,
 }
 
 extract.retention <- function(sim,
-                              years=if (year.anchor=='start') sim$years else sim$years[-length(sim$years)],
+                              years=NULL,
                               keep.dimensions='year',
                               per.population=1,
                               ages=NULL,
@@ -1225,7 +1226,7 @@ extract.retention <- function(sim,
 }
 
 extract.gain.of.suppression <- function(sim,
-                              years=if (year.anchor=='start') sim$years else sim$years[-length(sim$years)],
+                              years=NULL,
                               keep.dimensions='year',
                               per.population=1,
                               ages=NULL,
@@ -1343,7 +1344,7 @@ extract.gain.of.suppression <- function(sim,
 }
 
 do.extract.engagement <- function(sim,
-                                years=if (year.anchor=='end') sim$years else sim$years[-1],
+                                years=NULL,
                                 keep.dimensions='year',
                                 per.population=1,
                                 ages=NULL,
