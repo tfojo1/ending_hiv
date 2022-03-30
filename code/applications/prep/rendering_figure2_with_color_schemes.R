@@ -17,12 +17,10 @@ if (TEST.COLORS)
     tab = tab[,-1]
     
     plot.shaded.table(round(tab,2), thresholds = c(0,.6), 
-                      lower.threshold.colors = c(BAD.COLOR),
-                      upper.threshold.colors = c(GOOD.COLOR))
+                      colors = c(BAD.COLOR, GOOD.COLOR))
     
     plot.shaded.table(round(tab,2), thresholds = c(0,.5,1), 
-                      lower.threshold.colors = c(BAD.COLOR,GOOD.COLOR),
-                      upper.threshold.colors = c(GOOD.COLOR,'green4'))
+                      colors = c(BAD.COLOR,GOOD.COLOR,'green4'))
 }
 
 
