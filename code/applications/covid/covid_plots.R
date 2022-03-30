@@ -4,7 +4,6 @@ library(ggsci)
 library(ggrepel)
 library(scales)
 
-source('code/covid/run_covid_simset_3.0.R')
 
 ##---------------##
 ##-- CONSTANTS --##
@@ -13,10 +12,10 @@ source('code/covid/run_covid_simset_3.0.R')
 COVID.SCENARIO.NAMES = c(
     baseline = 'Absent COVID',
     noint = "Absent COVID",
-    base = "Rapid Resumption of Care",
-    delayed.hiv.care = "Prolonged Barriers to Care",
-    rebound.sexual.transmission = "COVID: Rebound Increase in Sexual Transmission",
-    rebound.sex.delayed.hiv.care = "COVID: Rebound Sexual Transmission and Delayed HIV Care"
+    covid.rapid.resumption = "Rapid Resumption of Care",
+    covid.delayed = "Prolonged Barriers to Care",
+    covid.rapid.resumption.mobility = "Rapid Resumption of Care",
+    covid.delayed.mobility = "Prolonged Barriers to Care"
 )
 
 COVID.OUTCOME.NAMES = c(incidence="Incident Cases",
@@ -48,25 +47,25 @@ make.covid.scatterplot <- function(results=outcomes.arr,
                                    var1.years=2020:2025,
                                    var2.years=2020:2025,
 <<<<<<< HEAD
+<<<<<<< HEAD
                                    scenario1='base',
                                    intervention.name1=NA,
 =======
                                    scenario1='covid.delayed.mobility',
 >>>>>>> cd653bf0c14570643f9d595cd2a7ccacae9b37f3
+=======
+                                   scenario1='covid.delayed.mobility',
+>>>>>>> 42461671cc2ceca64462160b88a8ed1b6fe3f42f
                                    scenario2=scenario1,
-                                   intervention.name2=intervention.name1,
                                    subtract.scenario1=NA,
-                                   subtract.intervention.name1=NA,
                                    subtract.relative1=T,
                                    subtract.scenario2='baseline',
-                                   subtract.intervention.name2=NA,
                                    subtract.relative2=T,
                                    cor.method='spearman',
                                    #size by
                                    size.by=NULL,
                                    size.by.years=2019,
                                    size.by.scenario='baseline',
-                                   size.by.intervention.name=NA,
                                    #style arguments
                                    point.size=5,
                                    point.size.range=c(2,10),
@@ -83,11 +82,11 @@ make.covid.scatterplot <- function(results=outcomes.arr,
 {
     x.as.pct = (!is.na(subtract.scenario1) && subtract.relative1 ) ||
         any(var1 == PCT.VARIABLES) ||
-        any(dimnames(params)[['variable']]==var1)
+        any(dimnames(params)[[2]]==var1)
     x.force.plus.sign = !is.na(subtract.scenario1)
     y.as.pct = (!is.na(subtract.scenario2) && subtract.relative2 ) ||
         any(var2 == PCT.VARIABLES) ||
-        any(dimnames(params)[['variable']]==var2)
+        any(dimnames(params)[[2]]==var2)
     y.force.plus.sign = !is.na(subtract.scenario2)
     
     values1 = get.variable(results=results,
@@ -96,7 +95,6 @@ make.covid.scatterplot <- function(results=outcomes.arr,
                            var.name = var1,
                            years=var1.years,
                            scenario=scenario1,
-                           intervention.name=intervention.name1,
                            aggregate.locations = aggregate.locations)
     
     if (!is.null(subtract.scenario1) && !is.na(subtract.scenario1))
@@ -107,7 +105,6 @@ make.covid.scatterplot <- function(results=outcomes.arr,
                                    var.name = var1,
                                    years=var1.years,
                                    scenario=subtract.scenario1,
-                                   intervention.name=subtract.intervention.name1,
                                    aggregate.locations = aggregate.locations)
         
         values1 = values1 - relative.to1
@@ -121,7 +118,6 @@ make.covid.scatterplot <- function(results=outcomes.arr,
                            var.name = var2,
                            years=var2.years,
                            scenario=scenario2,
-                           intervention.name=intervention.name2,
                            aggregate.locations = aggregate.locations)
     
     if (!is.null(subtract.scenario2) && !is.na(subtract.scenario2))
@@ -132,7 +128,6 @@ make.covid.scatterplot <- function(results=outcomes.arr,
                                     var.name = var2,
                                     years=var2.years,
                                     scenario=subtract.scenario2,
-                                    intervention.name=subtract.intervention.name2,
                                     aggregate.locations = aggregate.locations)
         
         values2 = values2 - relative.to2
@@ -148,7 +143,6 @@ make.covid.scatterplot <- function(results=outcomes.arr,
                                       var.name = size.by,
                                       years=size.by.years,
                                       scenario=size.by.scenario,
-                                      intervention.name=size.by.intervention.name,
                                       aggregate.locations=aggregate.locations)
     }
     else
@@ -156,7 +150,7 @@ make.covid.scatterplot <- function(results=outcomes.arr,
     
     if (is.null(aggregate.simulations.fn))
     {
-        df = melt(values1, value.name = 'value1')
+        df = reshape2::melt(values1, value.name = 'value1')
         df$value2 = as.numeric(values2)
         
         if (!is.null(size.by.values))
@@ -276,14 +270,10 @@ make.covid.binned.boxplot <- function(results=outcomes.arr,
                                    var1.years=2020:2025,
                                    var2.years=2020:2025,
                                    scenario1='base',
-                                   intervention.name1=NA,
                                    scenario2=scenario1,
-                                   intervention.name2=intervention.name1,
                                    subtract.scenario1=NA,
-                                   subtract.intervention.name1=NA,
                                    subtract.relative1=T,
                                    subtract.scenario2='baseline',
-                                   subtract.intervention.name2=NA,
                                    subtract.relative2=T,
                                    cor.method='spearman',
                                    #style arguments
@@ -298,11 +288,11 @@ make.covid.binned.boxplot <- function(results=outcomes.arr,
 {
     x.as.pct = (!is.na(subtract.scenario1) && subtract.relative1 ) ||
         any(var1 == PCT.VARIABLES) ||
-        any(dimnames(params)[['variable']]==var1)
+        any(dimnames(params)[[2]]==var1)
     x.force.plus.sign = !is.na(subtract.scenario1)
     y.as.pct = (!is.na(subtract.scenario2) && subtract.relative2 ) ||
         any(var2 == PCT.VARIABLES) ||
-        any(dimnames(params)[['variable']]==var2)
+        any(dimnames(params)[[2]]==var2)
     y.force.plus.sign = !is.na(subtract.scenario2)
     
     values1 = get.variable(results=results,
@@ -311,7 +301,6 @@ make.covid.binned.boxplot <- function(results=outcomes.arr,
                            var.name = var1,
                            years=var1.years,
                            scenario=scenario1,
-                           intervention.name=intervention.name1,
                            aggregate.locations = aggregate.locations)
     
     if (!is.null(subtract.scenario1) && !is.na(subtract.scenario1))
@@ -322,7 +311,6 @@ make.covid.binned.boxplot <- function(results=outcomes.arr,
                                     var.name = var1,
                                     years=var1.years,
                                     scenario=subtract.scenario1,
-                                    intervention.name=subtract.intervention.name1,
                                     aggregate.locations = aggregate.locations)
         
         values1 = values1 - relative.to1
@@ -336,7 +324,6 @@ make.covid.binned.boxplot <- function(results=outcomes.arr,
                            var.name = var2,
                            years=var2.years,
                            scenario=scenario2,
-                           intervention.name=intervention.name2,
                            aggregate.locations = aggregate.locations)
     
     if (!is.null(subtract.scenario2) && !is.na(subtract.scenario2))
@@ -347,7 +334,6 @@ make.covid.binned.boxplot <- function(results=outcomes.arr,
                                     var.name = var2,
                                     years=var2.years,
                                     scenario=subtract.scenario2,
-                                    intervention.name=subtract.intervention.name2,
                                     aggregate.locations = aggregate.locations)
         
         values2 = values2 - relative.to2
@@ -462,9 +448,7 @@ make.correlation.scatterplot <- function(results=outcomes.arr,
                                          var1.year=2019,
                                          var2.year=2019,
                                          scenario='base',
-                                         intervention.name=NA,
                                          subtract.scenario='baseline',
-                                         subtract.intervention.name=NA,
                                          subtract.relative=T,
                                          cor.method='spearman',
                                          #style arguments
@@ -478,10 +462,10 @@ make.correlation.scatterplot <- function(results=outcomes.arr,
 {
     x.as.pct = correlate.var1 || 
         any(PCT.VARIABLES==var1) ||
-        any(dimnames(params)[['variable']]==var1)
+        any(dimnames(params)[[2]]==var1)
     y.as.pct = correlate.var2 || 
         any(PCT.VARIABLES==var2) ||
-        any(dimnames(params)[['variable']]==var2)
+        any(dimnames(params)[[2]]==var2)
     
     values1 = get.variable(results=results,
                            params=params,
@@ -489,7 +473,6 @@ make.correlation.scatterplot <- function(results=outcomes.arr,
                            var.name = var1,
                            years=var1.year,
                            scenario=scenario,
-                           intervention.name=intervention.name,
                            aggregate.locations = F)
     
     values2 = get.variable(results=results,
@@ -498,7 +481,6 @@ make.correlation.scatterplot <- function(results=outcomes.arr,
                            var.name = var2,
                            years=var2.year,
                            scenario=scenario,
-                           intervention.name=intervention.name,
                            aggregate.locations = F)
     
     abs.outcome = get.variable(results=results,
@@ -507,7 +489,6 @@ make.correlation.scatterplot <- function(results=outcomes.arr,
                            var.name = outcome,
                            years=outcome.years,
                            scenario=scenario,
-                           intervention.name=intervention.name,
                            aggregate.locations = F)
     
     if (!is.null(subtract.scenario) && !is.na(subtract.scenario))
@@ -518,7 +499,6 @@ make.correlation.scatterplot <- function(results=outcomes.arr,
                                    var.name = outcome,
                                    years=outcome.years,
                                    scenario=subtract.scenario,
-                                   intervention.name=subtract.intervention.name,
                                    aggregate.locations = F)
         
         outcome = abs.outcome - relative.to
@@ -592,12 +572,10 @@ make.covid.boxplot <- function(results=outcomes.arr,
                                      years=2019:2025,
                                      locations=dimnames(results)[['location']],
                                      scenarios=dimnames(results)[['scenario']],#c('base','delayed.hiv.care','rebound.sexual.transmission','rebound.sex.delayed.hiv.care'),
-                                     intervention.names = c(NA, 'testing.5.6.6')[1],
                                      outcomes = c('incidence','prevalence','new')[1],
                                      include.baseline=T,
                                      aggregate.locations = T,
                                      subtract.scenario=NA,
-                                     subtract.intervention.name=NA,
                                      interval.coverage=0.95,
                                      summary.stat=median,
                                ylim=c(NA,NA),
@@ -616,13 +594,11 @@ make.covid.boxplot <- function(results=outcomes.arr,
                                          years=years,
                                          locations=locations,
                                          scenarios=sc,
-                                         intervention.names = intervention.names,
                                          outcomes = outcomes,
                                          include.baseline=include.baseline,
                                          aggregate.locations = aggregate.locations,
                                          cumulative=T,
                                          subtract.scenario=sc,
-                                         subtract.intervention.name=subtract.intervention.name,
                                          interval.coverage=interval.coverage,
                                          summary.stat=summary.stat)
             
@@ -634,13 +610,11 @@ make.covid.boxplot <- function(results=outcomes.arr,
                                  years=years,
                                  locations=locations,
                                  scenarios=scenarios,
-                                 intervention.names = intervention.names,
                                  outcomes = outcomes,
                                  include.baseline=include.baseline,
                                  aggregate.locations = aggregate.locations,
                                  cumulative=T,
                                  subtract.scenario=subtract.scenario,
-                                 subtract.intervention.name=subtract.intervention.name,
                                  interval.coverage=interval.coverage,
                                  summary.stat=summary.stat)
     df = df[df$year==max(years),]
@@ -700,11 +674,9 @@ make.location.boxplot <- function(results=outcomes.arr,
                                   years=2019:2025,
                                   locations=dimnames(results)[['location']],
                                   scenarios='base',
-                                  intervention.name = c(NA, 'testing.5.6.6')[1],
                                   outcome = c('incidence','prevalence','new')[1],
                                   include.total = T,
                                   subtract.scenario='baseline',
-                                  subtract.intervention.name=NA,
                                   subtract.relative=T,
                                   interval.coverage=0.95,
                                   interval2.coverage=0.5,
@@ -734,7 +706,6 @@ make.location.boxplot <- function(results=outcomes.arr,
                               var.name = outcome,
                               years=years,
                               scenario=scenario,
-                              intervention.name=intervention.name,
                               aggregate.locations = F,
                               aggregate.years = T)
         values.total = get.variable(results=results,
@@ -743,7 +714,6 @@ make.location.boxplot <- function(results=outcomes.arr,
                                     var.name = outcome,
                                     years=years,
                                     scenario=scenario,
-                                    intervention.name=intervention.name,
                                     aggregate.locations = T,
                                     aggregate.years = T)
         
@@ -755,7 +725,6 @@ make.location.boxplot <- function(results=outcomes.arr,
                                        var.name = outcome,
                                        years=years,
                                        scenario=subtract.scenario,
-                                       intervention.name=subtract.intervention.name,
                                        aggregate.locations = F,
                                        aggregate.years = T)
             
@@ -769,7 +738,6 @@ make.location.boxplot <- function(results=outcomes.arr,
                                        var.name = outcome,
                                        years=years,
                                        scenario=subtract.scenario,
-                                       intervention.name=subtract.intervention.name,
                                        aggregate.locations = T,
                                        aggregate.years = T)
             
@@ -824,6 +792,7 @@ make.location.boxplot <- function(results=outcomes.arr,
         stop("Not enough colors were supplied to cover all scenarios")
     colors = colors[1:length(unique.scenarios)]
     names(colors) = unique.scenarios #COVID.SCENARIO.NAMES[scenarios]
+    colors = rev(colors)
     
     #-- Add Spacers --#
     for (i in 1:n.spacers)
@@ -855,6 +824,9 @@ make.location.boxplot <- function(results=outcomes.arr,
         x.label = force.plus.percent
     else
         x.label = force.plus
+    
+    df$scenario = factor(df$scenario, levels = (unique(df$scenario)))
+    
     
     rv = ggplot(df) + 
         geom_boxplot(aes(x=location,
@@ -899,9 +871,7 @@ make.covid.heat.map <- function(results=outcomes.arr,
                                 var1.year=2019,
                                 var2.year=2019,
                                 scenario='base',
-                                intervention.name=NA,
                                 subtract.scenario='baseline',
-                                subtract.intervention.name=NA,
                                 subtract.relative=T,
                                 outcome.tile.stat=mean,
                                 #style arguments
@@ -919,10 +889,10 @@ make.covid.heat.map <- function(results=outcomes.arr,
 {
     x.as.pct = correlate.var1 || 
         any(PCT.VARIABLES==var1) ||
-        any(dimnames(params)[['variable']]==var1)
+        any(dimnames(params)[[2]]==var1)
     y.as.pct = correlate.var2 || 
         any(PCT.VARIABLES==var2) ||
-        any(dimnames(params)[['variable']]==var2)
+        any(dimnames(params)[[2]]==var2)
     
     tile.df = do.make.tile.df(results=results,
                               params=params,
@@ -938,9 +908,7 @@ make.covid.heat.map <- function(results=outcomes.arr,
                               var1.year=var1.year,
                               var2.year=var2.year,
                               scenario=scenario,
-                              intervention.name=intervention.name,
                               subtract.scenario=subtract.scenario,
-                              subtract.intervention.name=subtract.intervention.name,
                               subtract.relative=subtract.relative,
                               outcome.tile.stat=outcome.tile.stat,
                               bin.width1=bin.width1,
@@ -1002,14 +970,12 @@ make.covid.timeline.plot <- function(results=outcomes.arr,
                                      years=2019:2025,
                                      locations=dimnames(results)[['location']],
                                      scenarios=dimnames(results)[['scenario']],#c('base','delayed.hiv.care','rebound.sexual.transmission','rebound.sex.delayed.hiv.care'),
-                                     intervention.names = c(NA, 'testing.5.6.6')[1],
                                      outcomes = c('incidence','prevalence','new')[1],
                                      groups=NULL,
                                      include.baseline=T,
                                      aggregate.locations = T,
                                      cumulative=F,
                                      subtract.scenario=NA,
-                                     subtract.intervention.name=NA,
                                      subtract.relative=F,
                                      interval.coverage=0.95,
                                      summary.stat=mean,
@@ -1042,7 +1008,7 @@ make.covid.timeline.plot <- function(results=outcomes.arr,
     { 
         sim.mask = rep(T, dim(results)['sim'])
         #        sim.mask = !is.na(groups)
-        sub.results = results[,,,,,sim.mask]
+        sub.results = results[,,,,sim.mask]
         sub.dim.names = dimnames(results)
         sub.dim.names$sim = sub.dim.names$sim[sim.mask]
         dim(sub.results) = sapply(sub.dim.names, length)
@@ -1051,13 +1017,11 @@ make.covid.timeline.plot <- function(results=outcomes.arr,
                                      years=years,
                                      locations=locations,
                                      scenarios='baseline',
-                                     intervention.names = NA,
                                      outcomes = baseline.outcomes,
                                      include.baseline=F,
                                      aggregate.locations = aggregate.locations,
                                      cumulative=cumulative,
                                      subtract.scenario=subtract.scenario,
-                                     subtract.intervention.name=subtract.intervention.name,
                                      interval.coverage=interval.coverage,
                                      summary.stat=summary.stat,
                                      subtract.relative=subtract.relative)
@@ -1079,22 +1043,21 @@ make.covid.timeline.plot <- function(results=outcomes.arr,
         for (group in unique.groups.for.scenario)
         {
             sim.mask = !is.na(gg) & gg == group
-            sub.results = results[,,,,,sim.mask]
+            sub.results = results[,,,,sim.mask]
             sub.dim.names = dimnames(results)
             sub.dim.names$sim = sub.dim.names$sim[sim.mask]
             dim(sub.results) = sapply(sub.dim.names, length)
             dimnames(sub.results) = sub.dim.names
+            
             one.df = prepare.timeline.df(results=sub.results,
                                      years=years,
                                      locations=locations,
                                      scenarios=scenario,
-                                     intervention.names = intervention.names,
                                      outcomes = outcomes,
                                      include.baseline=F,
                                      aggregate.locations = aggregate.locations,
                                      cumulative=cumulative,
                                      subtract.scenario=subtract.scenario,
-                                     subtract.intervention.name=subtract.intervention.name,
                                      subtract.relative = subtract.relative,
                                      interval.coverage=interval.coverage,
                                      summary.stat=summary.stat)
@@ -1249,21 +1212,17 @@ make.quantile.timeline.plot <- function(results=outcomes.arr,
                                         n.quantiles=5,
                                         show.quantiles=1:5,
                                         quantile.scenario='base',
-                                        quantile.intervention.name=NA,
                                         quantile.var = 'incidence',
                                         quantile.subtract.scenario='baseline',
-                                        quantile.subtract.intervention.name=NA,
                                         quantile.subtract.relative=F,
                                         quantile.years=years,
                                         locations=dimnames(results)[['location']],
                                         scenarios='base',
-                                        intervention.names = NA,
                                         outcomes = c('incidence','prevalence','new')[1],
                                         baseline.outcomes=outcomes,
                                         include.baseline=T,
                                         cumulative=F,
                                         subtract.scenario=NA,
-                                        subtract.intervention.name=NA,
                                         interval.coverage=0.95,
                                         summary.stat=mean,
                                         #style arguments
@@ -1286,7 +1245,6 @@ make.quantile.timeline.plot <- function(results=outcomes.arr,
                                var.name = quantile.var,
                                years=quantile.years,
                                scenario=quantile.scenario,
-                               intervention.name=quantile.intervention.name,
                                aggregate.locations = T)
     
     if (!is.null(subtract.scenario) && !is.na(subtract.scenario))
@@ -1297,7 +1255,6 @@ make.quantile.timeline.plot <- function(results=outcomes.arr,
                                    var.name = quantile.var,
                                    years=quantile.years,
                                    scenario=quantile.subtract.scenario,
-                                   intervention.name=squantile.ubtract.intervention.name,
                                    aggregate.locations = T)
         
         aggregated.results = abs.outcome - relative.to
@@ -1319,7 +1276,6 @@ make.quantile.timeline.plot <- function(results=outcomes.arr,
                               years=years,
                               locations=locations,
                               scenarios=scenarios,
-                              intervention.names = intervention.names,
                               outcomes = outcomes,
                              baseline.outcomes=baseline.outcomes,
                               groups=groups,
@@ -1327,7 +1283,6 @@ make.quantile.timeline.plot <- function(results=outcomes.arr,
                               aggregate.locations = T,
                               cumulative=cumulative,
                               subtract.scenario=subtract.scenario,
-                              subtract.intervention.name=subtract.intervention.name,
                               interval.coverage=interval.coverage,
                               summary.stat=mean,
                               #style arguments
@@ -1349,13 +1304,11 @@ make.stacked.timeline.plot <- function(results=outcomes.arr,
                                        years=2019:2025,
                                        locations=dimnames(results)[['location']],
                                        scenarios=setdiff(dimnames(results)[['scenario']], 'baseline'),
-                                       intervention.names = c(NA, 'testing.5.6.6')[1],
                                        outcomes = c('incidence','prevalence','new')[1],
                                        include.baseline=F,
                                        aggregate.locations = T,
                                        cumulative=F,
                                        subtract.scenario='baseline',
-                                       subtract.intervention.name=NA,
                                        interval.coverage=0.95,
                                        summary.stat=mean,
                                        #style arguments
@@ -1368,13 +1321,11 @@ make.stacked.timeline.plot <- function(results=outcomes.arr,
                              years=years,
                              locations=locations,
                              scenarios=scenarios,
-                             intervention.names = intervention.names,
                              outcomes = outcomes,
                              include.baseline=include.baseline,
                              aggregate.locations = aggregate.locations,
                              cumulative=cumulative,
                              subtract.scenario=subtract.scenario,
-                             subtract.intervention.name=subtract.intervention.name,
                              interval.coverage=interval.coverage,
                              summary.stat=summary.stat)
     
@@ -1446,12 +1397,11 @@ get.variable <- function(results=outcomes.arr,
                                     "suppression.reduction", "sexual.transmission.increase")[1],
                          years=2019:2025,
                          scenario='base',
-                         intervention.name=NA,
                          locations=unique(dimnames(results)[['location']]),
                          aggregate.locations=T,
                          aggregate.years=T)
 {
-    if (any(var.name==dimnames(params)[['variable']]))
+    if (any(var.name==dimnames(params)[[2]]))
     {
         params = params[,var.name]
         
@@ -1480,7 +1430,6 @@ get.variable <- function(results=outcomes.arr,
                      var.name='incidence',
                      years=years,
                      scenario=scenario,
-                     intervention.name=intervention.name,
                      locations=locations,
                      aggregate.locations=aggregate.locations,
                      aggregate.years=aggregate.years) /
@@ -1489,7 +1438,6 @@ get.variable <- function(results=outcomes.arr,
                          var.name='prevalence.all',
                          years=years,
                          scenario=scenario,
-                         intervention.name=intervention.name,
                          locations=locations,
                          aggregate.locations=aggregate.locations,
                          aggregate.years=aggregate.years)
@@ -1505,7 +1453,6 @@ get.variable <- function(results=outcomes.arr,
                      var.name='prevalence.diagnosed',
                      years=years,
                      scenario=scenario,
-                     intervention.name=intervention.name,
                      locations=locations,
                      aggregate.locations=aggregate.locations,
                      aggregate.years=aggregate.years) /
@@ -1514,7 +1461,25 @@ get.variable <- function(results=outcomes.arr,
                          var.name='prevalence.all',
                          years=years,
                          scenario=scenario,
-                         intervention.name=intervention.name,
+                         locations=locations,
+                         aggregate.locations=aggregate.locations,
+                         aggregate.years=aggregate.years)
+    }
+    else if (var.name=='fraction.acute')
+    {
+        get.variable(results=results,
+                     params=params,
+                     var.name='prevalence.acute.all',
+                     years=years,
+                     scenario=scenario,
+                     locations=locations,
+                     aggregate.locations=aggregate.locations,
+                     aggregate.years=aggregate.years) /
+            get.variable(results=results,
+                         params=params,
+                         var.name='prevalence.all',
+                         years=years,
+                         scenario=scenario,
                          locations=locations,
                          aggregate.locations=aggregate.locations,
                          aggregate.years=aggregate.years)
@@ -1525,16 +1490,13 @@ get.variable <- function(results=outcomes.arr,
                          year=as.character(years),
                          sim=dimnames(results)[['sim']])
         
-        if (is.na(intervention.name))
-            intervention.name='none'
-        
         outcome = var.name
         if (var.name=='prevalence')
             outcome = 'prevalence.all'
         
         orig.results = results
         
-        results = results[locations, scenario, intervention.name, as.character(years), outcome, ]
+        results = results[locations, scenario, as.character(years), outcome, ]
         
         dim(results) = sapply(dim.names, length)
         dimnames(results) = dim.names
@@ -1567,7 +1529,6 @@ get.variable <- function(results=outcomes.arr,
                                        var.name='prevalence.diagnosed',
                                        years=years,
                                        scenario=scenario,
-                                       intervention.name=intervention.name,
                                        locations=locations,
                                        aggregate.locations=aggregate.locations,
                                        aggregate.years=aggregate.years)
@@ -1583,26 +1544,24 @@ prepare.timeline.df <- function(results=outcomes.arr,
                                 years=2019:2025,
                                 locations=dimnames(results)[['location']],
                                 scenarios=dimnames(results)[['scenario']],#c('base','delayed.hiv.care','rebound.sexual.transmission','rebound.sex.delayed.hiv.care'),
-                                intervention.names = c(NA, 'testing.5.6.6')[1],
                                 outcomes = c('incidence','prevalence','new')[1],
                                 include.baseline=T,
                                 aggregate.locations = T,
                                 cumulative=F,
                                 subtract.scenario='baseline',
-                                subtract.intervention.name=NA,
                                 subtract.relative=F,
                                 interval.coverage=0.95,
                                 interval.coverage2=0.5,
                                 summary.stat=mean)
 {
-    orig.arr = outcomes.arr
-    new.dim.names = dimnames(outcomes.arr)
+    orig.arr = results
+    new.dim.names = dimnames(results)
     new.dim.names$outcome = c(new.dim.names$outcome, 'one')
     default.denominator = 1
     if (aggregate.locations)
         default.denominator = 1/length(locations)
     results = array(default.denominator, dim=sapply(new.dim.names, length), dimnames=new.dim.names)
-    results[,,,,dimnames(orig.arr)$outcome,] = orig.arr
+    results[,,,dimnames(orig.arr)$outcome,] = orig.arr
     
     outcome.numerators = outcomes
     outcome.denominators = rep('one', length(outcomes))
@@ -1610,8 +1569,7 @@ prepare.timeline.df <- function(results=outcomes.arr,
     outcome.denominators[outcomes=='diagnosed'] = 'prevalence.all'
     
     do.subtract = !is.null(subtract.scenario) && !is.na(subtract.scenario)
-    intervention.names[is.na(intervention.names)] = 'none'
-    
+
     if (include.baseline)
         scenarios = union('baseline',scenarios)
   #  if (do.subtract)
@@ -1619,7 +1577,6 @@ prepare.timeline.df <- function(results=outcomes.arr,
     
     dim.names = dimnames(results)
     dim.names[['scenario']] = scenarios
-    dim.names[['intervention']] = intervention.names
     dim.names[['location']] = locations
     dim.names[['outcome']] = outcomes
     dim.names[['year']] = as.character(years)
@@ -1627,32 +1584,21 @@ prepare.timeline.df <- function(results=outcomes.arr,
     # Subset
     if (do.subtract)
     {   
-        if (is.na(subtract.intervention.name))
-            subtract.intervention.name = 'none'
-        to.subtract.numerators = results[locations, subtract.scenario, subtract.intervention.name, as.character(years), outcome.numerators, ]
-        to.subtract.denominators = results[locations, subtract.scenario, subtract.intervention.name, as.character(years), outcome.denominators, ]
+        to.subtract.numerators = results[locations, subtract.scenario, as.character(years), outcome.numerators, ]
+        to.subtract.denominators = results[locations, subtract.scenario, as.character(years), outcome.denominators, ]
         
     }
-    result.numerators = results[locations, scenarios, intervention.names, as.character(years), outcome.numerators, ]
-    result.denominators = results[locations, scenarios, intervention.names, as.character(years), outcome.denominators, ]
+    result.numerators = results[locations, scenarios, as.character(years), outcome.numerators, ]
+    result.denominators = results[locations, scenarios, as.character(years), outcome.denominators, ]
     
     dim(result.numerators) = dim(result.denominators) = sapply(dim.names, length)
     dimnames(result.numerators) = dimnames(result.denominators) = dim.names
-    if (include.baseline)
-    {
-        for (int.name in intervention.names)
-        {
-            result.numerators[,'baseline',int.name,,,] = result.numerators[,'baseline','none',,,]
-            result.denominators[,'baseline',int.name,,,] = result.denominators[,'baseline','none',,,]
-        }
-        
-    }
-    
+
     if (do.subtract)
     {
-        result.numerators = apply(result.numerators, c('location','year','outcome','sim','scenario','intervention'), function(x){x}) - 
+        result.numerators = apply(result.numerators, c('location','year','outcome','sim','scenario'), function(x){x}) - 
             as.numeric(to.subtract.numerators)
-        result.denominators = apply(result.denominators, c('location','year','outcome','sim','scenario','intervention'), function(x){x}) - 
+        result.denominators = apply(result.denominators, c('location','year','outcome','sim','scenario'), function(x){x}) - 
             as.numeric(to.subtract.denominators)
         subtract.keep.dimensions = names(dimnames(to.subtract.numerators))
     }
@@ -1711,23 +1657,15 @@ prepare.timeline.df <- function(results=outcomes.arr,
     ci2.upper = apply(results, keep.dimensions, quantile, probs=1-alpha2, na.rm=T)
     
     # Set up the data frame
-    df = melt(stat.arr, value.name = 'estimate')
+    df = reshape2::melt(stat.arr, value.name = 'estimate')
     df$ci.lower = as.numeric(ci.lower)
     df$ci.upper = as.numeric(ci.upper)
     df$ci2.lower = as.numeric(ci2.lower)
     df$ci2.upper = as.numeric(ci2.upper)
     
     df$scenario = as.character(df$scenario)
-    df$intervention = as.character(df$intervention)
-    df$scenario = sapply(1:dim(df)[1], function(i){
-        scenario.plus.intervention.name = COVID.SCENARIO.NAMES[df$scenario[i]]
-        if (df$intervention[i] != 'none')
-            scenario.plus.intervention.name = paste0(scenario.plus.intervention.name,
-                                                     ", ",
-                                                     secondary.intervention.name(df$intervention[i]))
-        scenario.plus.intervention.name
-    })
-    
+    df$scenario = COVID.SCENARIO.NAMES[df$scenario]
+
     if (aggregate.locations)
         df$location = "Total"
     
@@ -1748,9 +1686,7 @@ do.make.tile.df <- function(results=outcomes.arr,
                             var1.year=2019,
                             var2.year=2019,
                             scenario='base',
-                            intervention.name=NA,
                             subtract.scenario='baseline',
-                            subtract.intervention.name=NA,
                             subtract.relative=T,
                             outcome.tile.stat=mean,
                             bin.width1=0.05,
@@ -1758,10 +1694,10 @@ do.make.tile.df <- function(results=outcomes.arr,
 {
     x.as.pct = correlate.var1 || 
         any(PCT.VARIABLES==var1) ||
-        any(dimnames(params)[['variable']]==var1)
+        any(dimnames(params)[[2]]==var1)
     y.as.pct = correlate.var2 || 
         any(PCT.VARIABLES==var2) ||
-        any(dimnames(params)[['variable']]==var2)
+        any(dimnames(params)[[2]]==var2)
     
     values1 = get.variable(results=results,
                            params=params,
@@ -1769,7 +1705,6 @@ do.make.tile.df <- function(results=outcomes.arr,
                            var.name = var1,
                            years=var1.year,
                            scenario=scenario,
-                           intervention.name=intervention.name,
                            aggregate.locations = aggregate.locations)
     
     values2 = get.variable(results=results,
@@ -1778,7 +1713,6 @@ do.make.tile.df <- function(results=outcomes.arr,
                            var.name = var2,
                            years=var2.year,
                            scenario=scenario,
-                           intervention.name=intervention.name,
                            aggregate.locations = aggregate.locations)
     
     abs.outcome = get.variable(results=results,
@@ -1787,7 +1721,6 @@ do.make.tile.df <- function(results=outcomes.arr,
                                var.name = outcome,
                                years=outcome.years,
                                scenario=scenario,
-                               intervention.name=intervention.name,
                                aggregate.locations = aggregate.locations)
     
     if (!is.null(subtract.scenario) && !is.na(subtract.scenario))
@@ -1798,7 +1731,6 @@ do.make.tile.df <- function(results=outcomes.arr,
                                    var.name = outcome,
                                    years=outcome.years,
                                    scenario=subtract.scenario,
-                                   intervention.name=subtract.intervention.name,
                                    aggregate.locations = aggregate.locations)
         
         outcome = abs.outcome - relative.to
@@ -1885,7 +1817,7 @@ make.tile.df <- function(x.values,
             })
         })
     
-    rv = melt(arr, value.name='outcome')
+    rv = reshape2::melt(arr, value.name='outcome')
     rv$x.bin = as.numeric(rv$x.bin)
     rv$y.bin = as.numeric(rv$y.bin)
     rv$n = as.numeric(n.arr)

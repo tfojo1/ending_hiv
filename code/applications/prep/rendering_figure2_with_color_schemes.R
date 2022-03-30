@@ -1,6 +1,6 @@
 
 BAD.COLOR = 'red2'
-GOOD.COLOR = 'green3'
+GOOD.COLOR = 'green2'
 
 library(reshape2)
 source('code/processing/pretty_table/make_pretty_table.R')

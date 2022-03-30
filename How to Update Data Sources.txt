@@ -1,0 +1,9 @@
+
+
+TESTING FROM BRFSS
+A) Smart Cities (MSA Level)
+https://www.cdc.gov/brfss/smart/Smart_data.htm
+download the SAS transport (xpt) file to Q:Ending_HIV/large_cleaned_data/brfss/brfss_msa
+B) Full BRFSS (State Level)
+https://www.cdc.gov/brfss/annual_data/annual_data.htm
+download the SAS transport (xpt) file to Q:Ending_HIV/large_cleaned_data/brfss/brfss_state
