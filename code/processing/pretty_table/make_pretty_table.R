@@ -14,8 +14,9 @@ write.shaded.table <- function(tab,
                                file,
                                color.by=tab,
                                thresholds,
-                               lower.threshold.colors,
-                               upper.threshold.colors,
+                               colors=NULL,
+                               lower.threshold.colors=NULL,
+                               upper.threshold.colors=NULL,
                                na.value=NULL,
                                na.color=NULL,
                                allow.na=!is.null(na.color),
@@ -35,6 +36,7 @@ write.shaded.table <- function(tab,
     
     colors = assign.pretty.colors(color.by=color.by,
                                   thresholds=thresholds,
+                                  colors=colors,
                                   lower.threshold.colors=lower.threshold.colors,
                                   upper.threshold.colors=upper.threshold.colors,
                                   na.value=na.value,
@@ -54,8 +56,9 @@ write.shaded.table <- function(tab,
 plot.shaded.table <- function(tab,
                               color.by=tab,
                               thresholds,
-                              lower.threshold.colors,
-                              upper.threshold.colors,
+                              colors=NULL,
+                              lower.threshold.colors=NULL,
+                              upper.threshold.colors=NULL,
                               na.value=NULL,
                               na.color=NULL,
                               allow.na=!is.null(na.color))
@@ -73,6 +76,7 @@ plot.shaded.table <- function(tab,
     
     colors = assign.pretty.colors(color.by=color.by,
                                   thresholds=thresholds,
+                                  colors=colors,
                                   lower.threshold.colors=lower.threshold.colors,
                                   upper.threshold.colors=upper.threshold.colors,
                                   na.value=na.value,
@@ -117,6 +121,7 @@ plot.shaded.table <- function(tab,
 
 assign.pretty.colors <- function(color.by=tab,
                                  thresholds,
+                                 colors,
                                  lower.threshold.colors,
                                  upper.threshold.colors,
                                  na.value=NULL,
@@ -150,10 +155,24 @@ assign.pretty.colors <- function(color.by=tab,
         stop("'thresholds' must be strictly increasing")
     
     
-    if (length(lower.threshold.colors)!=n.segments)
-        stop(paste0("'lower.threshold.colors' must have ", n.segments, " values (one less than the number of values in 'thresholds')"))
-    if (length(upper.threshold.colors)!=n.segments)
-        stop(paste0("'upper.threshold.colors' must have ", n.segments, " values (one less than the number of values in 'thresholds')"))
+    if (is.null(colors))
+    {
+        if (is.null(lower.threshold.colors) || is.null(upper.threshold.colors))
+            stop("You must set either 'colors' or 'lower.threshold.colors' AND 'upper.threshold.colors")
+        
+        if (length(lower.threshold.colors)!=n.segments)
+            stop(paste0("'lower.threshold.colors' must have ", n.segments, " values (one less than the number of values in 'thresholds')"))
+        if (length(upper.threshold.colors)!=n.segments)
+            stop(paste0("'upper.threshold.colors' must have ", n.segments, " values (one less than the number of values in 'thresholds')"))
+        
+    }
+    else
+    {
+        if (length(colors) != length(thresholds))
+            stop("colors must have the same length as thresholds")
+        lower.threshold.colors = colors[-length(colors)]
+        upper.threshold.colors = colors[-1]
+    }
     
     
     #-- Set up the color ramps --#
