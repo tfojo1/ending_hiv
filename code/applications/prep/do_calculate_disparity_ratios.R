@@ -11,7 +11,11 @@ black.disparity.ratios=cbind(colMeans(b.vs.o['2019',,,1]),colMeans(b.vs.o['2030'
 hispanic.disparity.ratios=cbind(colMeans(h.vs.o['2019',,,1]),colMeans(h.vs.o['2030',,,]));dimnames(hispanic.disparity.ratios)[[2]]=NULL;round(hispanic.disparity.ratios,1)
 
 colnames(black.disparity.ratios) = c("2019 Disparity", dimnames(msm.results.by.race)$intervention)
+colnames(hispanic.disparity.ratios) = c("2019 Disparity", dimnames(msm.results.by.race)$intervention)
 
+
+write.csv(black.disparity.ratios,"code/Ruchita/black.disparity.ratios.csv")
+write.csv(hispanic.disparity.ratios,"code/Ruchita/hispanic.disparity.ratios.csv")
 
 #Ratio of Incident Cases per Population in 2030 
 
