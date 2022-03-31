@@ -1,6 +1,10 @@
 
+
+#For Figure 2
 BAD.COLOR = 'red2'
 GOOD.COLOR = 'green2'
+
+
 
 library(reshape2)
 source('code/processing/pretty_table/make_pretty_table.R')
@@ -12,15 +16,21 @@ if (TEST.COLORS)
 {
    #read your table here
    
-    file = 'results/prep/Figure_2_Updated.csv' #change as needed
-    tab = read.csv(file)
-    tab = tab[,-1]
+    file = 'code/Ruchita/Figure_2_Updated.csv' #change as needed
+    tab_figure2 = read.csv(file)
+    tab_figure2 = tab_figure2[,-1]
+    
+    tab_disparity = black.disparity.ratios
     
     plot.shaded.table(round(tab,2), thresholds = c(0,.6), 
-                      colors = c(BAD.COLOR, GOOD.COLOR))
+                      colors = c(BAD.COLOR, GGOOD.COLOR))
     
-    plot.shaded.table(round(tab,2), thresholds = c(0,.5,1), 
-                      colors = c(BAD.COLOR,GOOD.COLOR,'green4'))
+    plot.shaded.table(round(tab_figure2,2), thresholds = c(0,.6,1), 
+                      colors = c(BAD.COLOR,GOOD.COLOR,GOOD.COLOR))
+    
+    
+    plot.shaded.table(round(tab_disparity,2), thresholds = c(1,8), 
+                      colors = c(GOOD.COLOR,BAD.COLOR))
 }
 
 
