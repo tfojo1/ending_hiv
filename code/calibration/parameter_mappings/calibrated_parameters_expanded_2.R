@@ -299,7 +299,7 @@ parameters.prior = join.distributions(
     # (plus a term for from suppressed or from unsuppressed) 
     suppressed.vs.failing.proportion.lost.or = Lognormal.Distribution(0, 0.5*log(4)),
     naive.vs.failing.proportion.lost.or = Lognormal.Distribution(0, 0.5*log(4)),
-    already.lost.vs.failing.proportion.lost.or = Lognormal.Distribution(0, 0.5*log(8)),
+    already.lost.vs.failing.proportion.lost.or = Lognormal.Distribution(0, 0.5*log(4)),
 
     #-- PrEP --#
     
