@@ -10,6 +10,7 @@ h.vs.o = inc.per.pop[,'hispanic',,,] / inc.per.pop[,'other',,,]
 black.disparity.ratios=cbind(colMeans(b.vs.o['2019',,,1]),colMeans(b.vs.o['2030',,,]));dimnames(black.disparity.ratios)[[2]]=NULL;round(black.disparity.ratios,1)
 hispanic.disparity.ratios=cbind(colMeans(h.vs.o['2019',,,1]),colMeans(h.vs.o['2030',,,]));dimnames(hispanic.disparity.ratios)[[2]]=NULL;round(hispanic.disparity.ratios,1)
 
+colnames(black.disparity.ratios) = c("2019 Disparity", dimnames(msm.results.by.race)$intervention)
 
 
 #Ratio of Incident Cases per Population in 2030 
