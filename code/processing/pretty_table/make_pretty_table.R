@@ -88,26 +88,26 @@ plot.shaded.table <- function(tab,
     
     #-- Make the data frame --#
     
-    x.values = dimnames(tab)[[1]]
+    x.values = dimnames(tab)[[2]]
     if (is.null(x.values))
-        x.values = as.character(1:dim(tab)[1])
-    y.values = dimnames(tab)[[2]]
+        x.values = as.character(1:dim(tab)[2])
+    y.values = dimnames(tab)[[1]]
     if (is.null(y.values))
-        y.values = as.character(1:dim(tab)[2])
+        y.values = as.character(1:dim(tab)[1])
     
     melted = suppressWarnings(reshape2::melt(tab))
     
     df = data.frame(
         value = melted$value,
-        x=rep(x.values, length(y.values)),
-        y=rep(y.values, each=length(x.values)),
+        x=rep(x.values, each=length(y.values)),
+        y=rep(y.values, length(x.values)),
         color = names(color.mapping)
     )
     df$y = factor(df$y, rev(y.values))
     df$x = factor(df$x, levels=x.values)
     
-    x.lab = names(dimnames(tab))[1]
-    y.lab = names(dimnames(tab))[2]    
+    x.lab = names(dimnames(tab))[2]
+    y.lab = names(dimnames(tab))[1]    
     
     ggplot(df, aes(x,y,fill=color,label=value)) +
         geom_tile() + geom_text() +
