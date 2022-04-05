@@ -12,10 +12,22 @@ SCENARIOS.TO.RUN = list(
     NO.INTERVENTION #this is in here so we can get the stratified acute vs chronic
 )
 
+<<<<<<< HEAD
+<<<<<<< HEAD
+locations = TARGET.MSAS[(8-1)*4 + 1:4] #c(BALTIMORE.MSA, NYC.MSA)
+
+test = F
+=======
 
 locations = DENVER.MSA #TARGET.MSAS[(8-1)*4 + 1:4] #c(BALTIMORE.MSA, NYC.MSA)
 
 test = F
+=======
+
+locations = DENVER.MSA #TARGET.MSAS[(8-1)*4 + 1:4] #c(BALTIMORE.MSA, NYC.MSA)
+
+test = F
+>>>>>>> 42461671cc2ceca64462160b88a8ed1b6fe3f42f
 run = T
 process = F
 
@@ -45,6 +57,10 @@ if (run)
                                      compress.cd4=F)
     }
 }
+<<<<<<< HEAD
+>>>>>>> cd653bf0c14570643f9d595cd2a7ccacae9b37f3
+=======
+>>>>>>> 42461671cc2ceca64462160b88a8ed1b6fe3f42f
 
 if (process)
 {
