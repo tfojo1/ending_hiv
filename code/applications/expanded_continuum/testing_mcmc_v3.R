@@ -4,7 +4,7 @@ source('code/source_code.R')
 source('code/processing/visualization/sim_plots.R')
 
 # Likelihood
-suffix = ''
+suffix = 'v2'
 print("Creating Likelihood")
 likelihood = create.msa.likelihood(BALTIMORE.MSA,
                                    version='expanded_1.0')
