@@ -1,0 +1,42 @@
+\begin{table}
+\begin{tabular}{|c|c|c|c|}
+\hline
+\textbf{Location} & \textbf{Absent COVID, 2025} & \textbf{Prolonged Barriers to Care, 2025} & \textbf{Rapid Resumption of Care, 2025}\\
+\hline\hline
+New York-Newark-Jersey City, NY-NJ-PA & 137,977 [132,816 to 143,172] & 138,452 [133,246 to 143,907] & 138,053 [132,969 to 143,571]\\
+Miami-Fort Lauderdale-Pompano Beach, FL &  67,751 [ 62,495 to  72,728] &  67,604 [ 62,245 to  72,763] &  67,398 [ 62,172 to  72,415]\\
+Los Angeles-Long Beach-Anaheim, CA &  67,244 [ 60,600 to  73,543] &  67,129 [ 60,672 to  73,450] &  66,879 [ 60,367 to  73,218]\\
+Atlanta-Sandy Springs-Alpharetta, GA &  42,373 [ 38,541 to  46,568] &  42,238 [ 38,366 to  46,590] &  42,121 [ 38,232 to  46,532]\\
+Houston-The Woodlands-Sugar Land, TX &  41,297 [ 37,814 to  44,882] &  41,138 [ 37,585 to  44,714] &  41,010 [ 37,502 to  44,609]\\
+Dallas-Fort Worth-Arlington, TX &  36,576 [ 33,038 to  40,257] &  36,551 [ 32,951 to  40,580] &  36,412 [ 32,833 to  40,426]\\
+Chicago-Naperville-Elgin, IL-IN-WI &  36,543 [ 33,729 to  39,599] &  36,383 [ 33,332 to  39,578] &  36,285 [ 33,272 to  39,404]\\
+Washington-Arlington-Alexandria, DC-VA-MD-WV &  34,796 [ 32,301 to  37,436] &  34,897 [ 32,439 to  37,516] &  34,793 [ 32,341 to  37,332]\\
+Philadelphia-Camden-Wilmington, PA-NJ-DE-MD &  26,219 [ 24,648 to  27,882] &  26,191 [ 24,563 to  27,849] &  26,129 [ 24,531 to  27,732]\\
+Orlando-Kissimmee-Sanford, FL &  16,545 [ 14,967 to  18,449] &  16,505 [ 14,907 to  18,398] &  16,439 [ 14,855 to  18,341]\\
+San Francisco-Oakland-Berkeley, CA &  25,993 [ 23,442 to  28,831] &  26,069 [ 23,550 to  28,912] &  25,966 [ 23,399 to  28,815]\\
+Phoenix-Mesa-Chandler, AZ &  15,711 [ 13,824 to  17,874] &  15,683 [ 13,815 to  17,881] &  15,617 [ 13,781 to  17,767]\\
+Tampa-St. Petersburg-Clearwater, FL &  15,934 [ 14,302 to  17,996] &  15,888 [ 14,175 to  18,012] &  15,831 [ 14,129 to  17,931]\\
+Riverside-San Bernardino-Ontario, CA &  13,689 [ 11,879 to  16,016] &  13,656 [ 11,823 to  16,034] &  13,553 [ 11,777 to  15,867]\\
+Detroit-Warren-Dearborn, MI &  12,821 [ 11,567 to  14,140] &  12,839 [ 11,525 to  14,155] &  12,759 [ 11,465 to  14,019]\\
+Baltimore-Columbia-Towson, MD &  17,836 [ 16,714 to  18,997] &  17,828 [ 16,697 to  18,978] &  17,798 [ 16,677 to  18,950]\\
+Las Vegas-Henderson-Paradise, NV &  10,859 [  9,653 to  12,205] &  10,800 [  9,621 to  12,175] &  10,766 [  9,586 to  12,140]\\
+Boston-Cambridge-Newton, MA-NH &  16,636 [ 15,000 to  18,579] &  16,802 [ 15,143 to  18,735] &  16,726 [ 15,063 to  18,644]\\
+San Diego-Chula Vista-Carlsbad, CA &  14,055 [ 12,265 to  16,061] &  14,090 [ 12,269 to  16,118] &  14,038 [ 12,223 to  16,045]\\
+Charlotte-Concord-Gastonia, NC-SC &  10,451 [  9,354 to  11,747] &  10,422 [  9,313 to  11,768] &  10,385 [  9,270 to  11,736]\\
+San Antonio-New Braunfels, TX &   9,675 [  8,694 to  10,769] &   9,651 [  8,655 to  10,730] &   9,612 [  8,630 to  10,703]\\
+Jacksonville, FL &   9,364 [  8,435 to  10,405] &   9,334 [  8,421 to  10,424] &   9,303 [  8,397 to  10,361]\\
+New Orleans-Metairie, LA &   9,586 [  8,802 to  10,433] &   9,583 [  8,795 to  10,422] &   9,553 [  8,774 to  10,377]\\
+Memphis, TN-MS-AR &   8,843 [  8,034 to   9,659] &   8,813 [  7,993 to   9,648] &   8,788 [  7,973 to   9,626]\\
+Seattle-Tacoma-Bellevue, WA &  11,773 [  9,514 to  14,290] &  11,889 [  9,557 to  14,535] &  11,749 [  9,457 to  14,219]\\
+Austin-Round Rock-Georgetown, TX &   8,352 [  7,470 to   9,348] &   8,369 [  7,465 to   9,375] &   8,330 [  7,431 to   9,310]\\
+Indianapolis-Carmel-Anderson, IN &   7,105 [  6,179 to   8,107] &   7,095 [  6,157 to   8,091] &   7,070 [  6,134 to   8,072]\\
+Cincinnati, OH-KY-IN &   6,175 [  5,325 to   7,250] &   6,190 [  5,346 to   7,264] &   6,160 [  5,320 to   7,235]\\
+Columbus, OH &   6,697 [  5,835 to   7,576] &   6,698 [  5,809 to   7,598] &   6,678 [  5,804 to   7,594]\\
+Baton Rouge, LA &   6,404 [  5,917 to   7,071] &   6,393 [  5,905 to   7,047] &   6,382 [  5,898 to   7,028]\\
+Sacramento-Roseville-Folsom, CA &   5,732 [  4,930 to   6,616] &   5,698 [  4,880 to   6,606] &   5,666 [  4,872 to   6,567]\\
+Cleveland-Elyria, OH &   5,517 [  5,010 to   6,071] &   5,517 [  5,002 to   6,047] &   5,505 [  4,994 to   6,041]\\
+
+Total & 756,529 [738,705 to 773,547] & 756,394 [734,259 to 778,110] & 753,755 [732,847 to 774,473]\\
+\hline
+\end{tabular}
+\end{table}

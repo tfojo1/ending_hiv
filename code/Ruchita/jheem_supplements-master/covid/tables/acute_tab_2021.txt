@@ -1,0 +1,42 @@
+\begin{table}
+\begin{tabular}{|c|c|c|c|}
+\hline
+\textbf{Location} & \textbf{Absent COVID, 2021} & \textbf{Prolonged Barriers to Care, 2021} & \textbf{Rapid Resumption of Care, 2021}\\
+\hline\hline
+New York-Newark-Jersey City, NY-NJ-PA &   478 [  405 to   557] &   569 [  434 to   744] &   492 [  401 to   602]\\
+Miami-Fort Lauderdale-Pompano Beach, FL &   375 [  267 to   477] &   398 [  286 to   522] &   366 [  259 to   477]\\
+Los Angeles-Long Beach-Anaheim, CA &   426 [  368 to   492] &   463 [  368 to   575] &   421 [  349 to   507]\\
+Atlanta-Sandy Springs-Alpharetta, GA &   329 [  282 to   381] &   350 [  287 to   426] &   324 [  272 to   386]\\
+Houston-The Woodlands-Sugar Land, TX &   287 [  229 to   347] &   300 [  232 to   384] &   279 [  218 to   351]\\
+Dallas-Fort Worth-Arlington, TX &   250 [  204 to   298] &   275 [  213 to   352] &   249 [  197 to   312]\\
+Chicago-Naperville-Elgin, IL-IN-WI &   266 [  225 to   315] &   275 [  221 to   338] &   259 [  213 to   315]\\
+Washington-Arlington-Alexandria, DC-VA-MD-WV &   119 [   95 to   149] &   142 [  105 to   193] &   122 [   95 to   156]\\
+Philadelphia-Camden-Wilmington, PA-NJ-DE-MD &   126 [  100 to   157] &   136 [  104 to   179] &   125 [   95 to   161]\\
+Orlando-Kissimmee-Sanford, FL &   120 [   93 to   154] &   129 [   96 to   171] &   118 [   89 to   159]\\
+San Francisco-Oakland-Berkeley, CA &    98 [   72 to   130] &   118 [   78 to   165] &   100 [   71 to   135]\\
+Phoenix-Mesa-Chandler, AZ &    98 [   72 to   137] &   107 [   74 to   152] &    97 [   68 to   136]\\
+Tampa-St. Petersburg-Clearwater, FL &   101 [   74 to   147] &   109 [   77 to   154] &    99 [   72 to   141]\\
+Riverside-San Bernardino-Ontario, CA &   113 [   76 to   169] &   122 [   77 to   187] &   109 [   69 to   167]\\
+Detroit-Warren-Dearborn, MI &    94 [   68 to   125] &   105 [   71 to   145] &    93 [   65 to   129]\\
+Baltimore-Columbia-Towson, MD &    56 [   40 to    74] &    64 [   45 to    87] &    56 [   41 to    76]\\
+Las Vegas-Henderson-Paradise, NV &    80 [   62 to    99] &    82 [   61 to   106] &    78 [   59 to   100]\\
+Boston-Cambridge-Newton, MA-NH &   119 [   74 to   190] &   144 [   88 to   220] &   130 [   80 to   202]\\
+San Diego-Chula Vista-Carlsbad, CA &    57 [   44 to    73] &    67 [   47 to    93] &    58 [   43 to    78]\\
+Charlotte-Concord-Gastonia, NC-SC &    72 [   56 to    93] &    77 [   56 to   102] &    71 [   52 to    91]\\
+San Antonio-New Braunfels, TX &    71 [   56 to    90] &    77 [   57 to   102] &    70 [   53 to    90]\\
+Jacksonville, FL &    62 [   42 to    91] &    66 [   45 to    99] &    61 [   42 to    90]\\
+New Orleans-Metairie, LA &    51 [   38 to    67] &    57 [   41 to    76] &    51 [   37 to    69]\\
+Memphis, TN-MS-AR &    52 [   36 to    69] &    55 [   38 to    78] &    51 [   35 to    71]\\
+Seattle-Tacoma-Bellevue, WA &    84 [   44 to   138] &   104 [   51 to   181] &    86 [   46 to   143]\\
+Austin-Round Rock-Georgetown, TX &    45 [   35 to    58] &    52 [   36 to    74] &    45 [   33 to    62]\\
+Indianapolis-Carmel-Anderson, IN &    52 [   39 to    66] &    56 [   41 to    73] &    51 [   38 to    67]\\
+Cincinnati, OH-KY-IN &    75 [   55 to   105] &    80 [   57 to   113] &    76 [   54 to   108]\\
+Columbus, OH &    38 [   28 to    53] &    41 [   29 to    58] &    38 [   27 to    53]\\
+Baton Rouge, LA &    36 [   25 to    52] &    38 [   27 to    56] &    36 [   25 to    52]\\
+Sacramento-Roseville-Folsom, CA &    44 [   32 to    59] &    46 [   31 to    66] &    42 [   29 to    59]\\
+Cleveland-Elyria, OH &    23 [   17 to    31] &    26 [   18 to    36] &    23 [   17 to    32]\\
+
+Total & 4,298 [3,968 to 4,676] & 4,732 [3,881 to 5,874] & 4,275 [3,659 to 5,039]\\
+\hline
+\end{tabular}
+\end{table}
