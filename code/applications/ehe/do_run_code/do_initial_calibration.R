@@ -4,8 +4,8 @@ source("code/processing/visualization/sim_plots.R")
 
 set.seed(5557)
  
-msa=PORTLAND.MSA 
-save.suffix = 'manual2'
+msa=JACKSON.MSA 
+save.suffix = ''
 DO.vIS.INTERVENTIONS = F
 
 RESUME=F
@@ -25,9 +25,9 @@ if (!RESUME)
     print(save.suffix)
     print('----------------------------------------------------')
     
-print("Using OLD (v1 for Annals) likelihood.")
-likelihood = OLD.create.msa.likelihood.v1.for.annals(msa)#, EVERYTHING.WEIGHT=1/8)
-#likelihood = create.msa.likelihood(msa=msa, EVERYTHING.WEIGHT=1/8)
+#print("Using OLD (v1 for Annals) likelihood.")
+#likelihood = OLD.create.msa.likelihood.v1.for.annals(msa)#, EVERYTHING.WEIGHT=1/8)
+likelihood = create.msa.likelihood(msa=msa, EVERYTHING.WEIGHT=1/8, include.new.msm.idu = F)
 mcmc = setup.initial.mcmc.for.msa(msa, run=T, save.suffix = save.suffix, 
                                   likelihood=likelihood,
                                   target.acceptance.rate = 0.100, derive.step.size.from.prior.mcmc = F)

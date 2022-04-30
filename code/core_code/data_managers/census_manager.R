@@ -346,8 +346,12 @@ get.census.data <- function(census,
     if (is.null(sexes))
         sexes = census$sexes
 
+#    tryCatch({
     rv = census$data[as.character(years), fips, as.character(ages), races, sexes]
-
+#    },error=function(e){
+#    browser()
+#})
+    
     new.dimnames = c(list(year=as.character(years), county=fips, age=ages, race=races, sex=sexes))
     dim(rv) = sapply(new.dimnames, length)
     dimnames(rv) = new.dimnames

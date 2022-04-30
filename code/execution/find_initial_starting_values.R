@@ -10,7 +10,7 @@ source('code/processing/visualization/sim_plots.R')
 #load('mcmc_runs/test_runs/la.113c_revised.lik.v12_20K_2020-09-20.Rdata')
 #pp = mcmc@samples[1,mcmc@n.iter,]
 
-prior = get.parameters.prior.for.version(VERSION.MANAGER, 'collapsed_1.0')
+prior = get.parameters.prior.for.version('collapsed_1.0')
 prep.pp = function(pp)
 {
     prior.medians = suppressWarnings(get.medians(prior))
@@ -33,6 +33,8 @@ load('mcmc_runs/start_values/collapsed_1.0/18140.Rdata'); pp = prep.pp(starting.
 load('mcmc_runs/start_values/collapsed_1.0/12580.Rdata'); pp = prep.pp(starting.parameters)
 load('mcmc_runs/start_values/collapsed_1.0/33100.Rdata'); pp = prep.pp(starting.parameters)
 load('mcmc_runs/start_values/collapsed_1.0/19740.Rdata'); pp = prep.pp(starting.parameters)
+load('mcmc_runs/start_values/collapsed_1.0/13820.Rdata'); pp = prep.pp(starting.parameters)
+load('mcmc_runs/start_values/collapsed_1.0/27140.Rdata'); pp = prep.pp(starting.parameters)
 
 
 msm.trates = names(pp)[grepl('msm.trate',names(pp))]
@@ -70,7 +72,7 @@ set.pp.to.default <- function(pp)
 
 #-- MSA specific --#
 
-msa = DENVER.MSA
+msa = JACKSON.MSA
 run.simulation = create.run.simulation.function(msa, start.values=pp)
 
 pp2 = set.pp.to.default(pp)
@@ -84,31 +86,36 @@ simplot(sim1,sim2, facet.by='risk')
 #plot.calibration.race.risk(sim1)
 
 sim2 = run.simulation(pp2)
+simplot(sim2, data.types='new', facet.by='risk', split.by=NULL);lik.new(sim2)
+
 simplot(sim2, facet.by='risk')
 
 pp2 = set.pp.to.default(pp)
-pp2[msm.trates] = pp[msm.trates] *  .9
-pp2[msm.trates.1] = pp[msm.trates.1] * 1.5
+pp2[msm.trates] = pp[msm.trates] *  1
+pp2[msm.trates.1] = pp[msm.trates.1] * 1
 pp2[msm.trates.2] = pp[msm.trates.2] * 1
 
-pp2[idu.trates] = pp[idu.trates] * .75
-pp2[idu.trates.1] = pp[idu.trates.1] * 1.4
+pp2[idu.trates] = pp[idu.trates] * 1
+pp2[idu.trates.1] = pp[idu.trates.1] * 2
 pp2[idu.trates.2] = pp[idu.trates.2] * 1
 
-pp2[het.trates] = pp[het.trates] * 1.6
-pp2[het.trates.1] = pp[het.trates.1] * .3
-pp2[het.trates.2] = pp[het.trates.2] * 1
+pp2[het.trates] = pp[het.trates] * .8
+pp2[het.trates.1] = pp[het.trates.1] * .8
+pp2[het.trates.2] = pp[het.trates.2] * .8
 
-pp2[msm.idu.multipliers] = pp[msm.idu.multipliers] * 1
-pp2['msm.vs.heterosexual.male.idu.susceptibility.rr.2'] = pp['msm.vs.heterosexual.male.idu.susceptibility.rr.2'] * .5
+pp2[msm.idu.multipliers] = pp[msm.idu.multipliers] * 2
+pp2['msm.vs.heterosexual.male.idu.susceptibility.rr.2'] = pp['msm.vs.heterosexual.male.idu.susceptibility.rr.2'] * 2
 
-pp2['msm.incident.idu.multiplier.0'] = pp['msm.incident.idu.multiplier.0'] * 4
-pp2['msm.incident.idu.multiplier.2'] = pp['msm.incident.idu.multiplier.2'] * 4
+pp2['msm.incident.idu.multiplier.0'] = pp['msm.incident.idu.multiplier.0'] * 1
+pp2['msm.incident.idu.multiplier.2'] = pp['msm.incident.idu.multiplier.2'] *1
 
-sim2 = run.simulation(pp2)
-simplot
+
+
 
 simplot(sim2, data.types='aids.diagnoses', years= 1990:2010)
+
+simplot(sim2, facet.by='risk', data.types = 'new', split.by='sex')
+simplot(sim2, facet.by='risk', data.types = 'new', split.by='race')
 
 
 simplot(list(sim2), facet.by='risk', years=2000:2020)
@@ -118,7 +125,7 @@ simplot(sim2, facet.by='risk')
 
 starting.parameters = pp2; msa.names(msa)
 # save to both local and systematic directories
-save(starting.parameters, file=file.path(SYSTEMATIC_ROOT_DIR, 'start_values/collapsed_1.0', paste0(msa, '.Rdata')));  save(starting.parameters, file=file.path('mcmc_runs/start_values/collapsed_1.0', paste0(msa, '.Rdata')))
+save(starting.parameters, file=file.path(SYSTEMATIC.ROOT.DIR, 'start_values/collapsed_1.0', paste0(msa, '.Rdata')));  save(starting.parameters, file=file.path('mcmc_runs/start_values/collapsed_1.0', paste0(msa, '.Rdata')))
 
 
 
@@ -148,3 +155,8 @@ likelihood(sim2)
 lik.comps = attr(likelihood, 'components')
 sapply(lik.comps, function(ll){ll(sim2)})
 
+lik.comps[['aids']](sim2)
+lik.comps[['new']](sim2)
+
+lik.new = create.msa.likelihood(msa, EVERYTHING.WEIGHT = 1/8, debug.component = 'new');lik.new(sim2)
+lik.new(sim2)

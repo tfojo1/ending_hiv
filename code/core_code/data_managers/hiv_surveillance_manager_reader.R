@@ -3213,6 +3213,7 @@ read.testing.from.brfss <- function(surv,
             test.month = as.numeric(substr(one.df$HIVTSTD3,
                                            1,
                                            nchar(one.df$HIVTSTD3)-4))
+            test.month[!is.na(test.month) & test.month==77] = 6 #assume the unknown
             test.month[is.na(test.year)] = NA
             
             rv$tested = as.numeric(!is.na(test.year) & test.year >= year)
@@ -3222,6 +3223,8 @@ read.testing.from.brfss <- function(surv,
         else
             rv$tested = as.numeric(!is.na(test.year) & test.year >= (year-1))
         
+        if (any(!is.na(rv$tested) & (rv$tested>1 | rv$tested<0)))
+            stop("Generated probabilities tested that are >1 or <0")
         
         # Race
         if (all(names(one.df)!='_RACE'))  
@@ -3343,6 +3346,7 @@ read.testing.from.brfss <- function(surv,
                 mean(df$tested[mask])
         })
     })
+    
     
     surv$testing.n.all = sapply(all.locations, function(loc){
         sapply(all.years, function(year){

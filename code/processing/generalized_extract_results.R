@@ -611,7 +611,7 @@ get.truth.df <- function(location,
             }
         }
         
-        if (is.null(rv) || length(rv)==0)
+        if (is.null(rv) || length(rv)==0 || all(is.na(rv)))
             NULL
         else
         {

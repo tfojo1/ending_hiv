@@ -12,6 +12,7 @@ create.msa.likelihood <- function(msa,
                                   years=2008:2019,
                                   
                                   EVERYTHING.WEIGHT=1/2,
+                                  OBS.ERROR.WEIGHT = 1,
                                   
                                   NEW.WEIGHT = 1/4,#1/2,
                                   PREV.WEIGHT = 1,#2,
@@ -23,7 +24,7 @@ create.msa.likelihood <- function(msa,
                                   SUPPRESSION.WEIGHT = 1/16,
                                   ENGAGEMENT.WEIGHT = 1/16,
                                   LINKAGE.WEIGHT = 1/16,
-                                  RETENTION.WEIGHT = 1,
+                                  RETENTION.WEIGHT = 1/2,
                                   PREP.WEIGHT = 1,
                                   
                                   TESTING.WEIGHT = 1,
@@ -54,6 +55,7 @@ create.msa.likelihood <- function(msa,
                                   IDU.LOG.SD = log(2),
                                   
                                   new.correlated.year.chunks=list(2008:2014, 2015:2018),
+                                  include.new.msm.idu = T,
                                   prevalence.correlated.year.chunks=list(2007:2013, 2014:2017),
                                   mortality.correlated.year.chunks=list(2009:2013, 2014:2016),
                                   idu.years=2014:2016,
@@ -97,7 +99,7 @@ create.msa.likelihood <- function(msa,
   #  NEW.SD = function(years, num){sqrt(measurement.error.cv.vs.sqrt.weight * (0.047*num)^2 +#from 2016 mult.exp
   NEW.SD = function(years, num){sqrt(measurement.error.cv.vs.sqrt.weight * (new.cv*num)^2 +
                                        (1-measurement.error.cv.vs.sqrt.weight) * (num^new.exp)^2) *
-      measurement.error.sd.mult}
+      measurement.error.sd.mult * 1/sqrt(OBS.ERROR.WEIGHT)}
   
   
   #-- Elements for Prevalence --#
@@ -112,7 +114,7 @@ create.msa.likelihood <- function(msa,
   
   PREV.SD = function(years, num){sqrt(measurement.error.cv.vs.sqrt.weight * (prevalence.cv*num)^2 + 
                                         (1-measurement.error.cv.vs.sqrt.weight) * (num^prevalence.exp)^2) *
-      measurement.error.sd.mult}
+      measurement.error.sd.mult * 1/sqrt(OBS.ERROR.WEIGHT)}
   
   
   #-- Elements for Mortality --#
@@ -129,40 +131,41 @@ create.msa.likelihood <- function(msa,
   
   #-- Elements for Awareness of Diagnosis --#
   TOTAL.SD.INFLATION.DX = 1/sqrt(DX.WEIGHT)/sqrt(EVERYTHING.WEIGHT)
-  DIAGNOSED.OBS.ERROR.SD=function(...){0.005}
+  DIAGNOSED.OBS.ERROR.SD=function(...){0.005 * 1/sqrt(OBS.ERROR.WEIGHT)}
   PROBABILITY.DIAGNOSIS.DECREASING = NA
   
   #-- Elements for Suppression --#
-  SUPPRESSION.OBS.ERROR.SD = function(...){SUPPRESSION.SD}
+  SUPPRESSION.OBS.ERROR.SD = function(...){SUPPRESSION.SD * 1/sqrt(OBS.ERROR.WEIGHT)}
   SUPPRESSION.SD.INFLATION = 1/sqrt(SUPPRESSION.WEIGHT)/sqrt(EVERYTHING.WEIGHT)
   PROBABILITY.SUPPRESSION.DECREASING = 0.05
   
   #-- Elements for Engagement --#
-  ENGAGEMENT.OBS.ERROR.SD = function(...){ENGAGEMENT.SD}
+  ENGAGEMENT.OBS.ERROR.SD = function(...){ENGAGEMENT.SD * 1/sqrt(OBS.ERROR.WEIGHT)}
   ENGAGEMENT.SD.INFLATION = 1/sqrt(ENGAGEMENT.WEIGHT)/sqrt(EVERYTHING.WEIGHT)
   PROBABILITY.ENGAGEMENT.DECREASING = 0.05
   
   
   #-- Elements for Linkage --#
-  LINKAGE.OBS.ERROR.SD = function(...){LINKAGE.SD}
+  LINKAGE.OBS.ERROR.SD = function(...){LINKAGE.SD * 1/sqrt(OBS.ERROR.WEIGHT)}
   LINKAGE.SD.INFLATION = 1/sqrt(LINKAGE.WEIGHT)/sqrt(EVERYTHING.WEIGHT)
   PROBABILITY.LINKAGE.DECREASING = 0.05
   
   #-- Elements for Retention --#
-  RETENTION.OBS.ERROR.SD = function(...){RETENTION.SD}
+  RETENTION.OBS.ERROR.SD = function(...){RETENTION.SD * 1/sqrt(OBS.ERROR.WEIGHT)}
   RETENTION.SD.INFLATION = 1/sqrt(RETENTION.WEIGHT)/sqrt(EVERYTHING.WEIGHT)
   PROBABILITY.RETENTION.DECREASING = NA
   
   
   #-- Elements for PrEP --#
-  PREP.SD = function(years, num){num^prep.exp}
+  PREP.SD = function(years, num){num^prep.exp * 1/sqrt(OBS.ERROR.WEIGHT)}
   PREP.SD.INFLATION = 1/sqrt(PREP.WEIGHT)/sqrt(EVERYTHING.WEIGHT)
   
   #-- Elements for Testing --#
   SD.INFLATION.TESTING = 1/sqrt(TESTING.WEIGHT)/sqrt(EVERYTHING.WEIGHT)
   TESTING.OBS.ERROR.SD=function(years,num,denom){
       #a binomial sd:
-      sqrt(num * (1-num) / denom)
+      
+      sqrt(num * (1-num) / denom) * 1/sqrt(OBS.ERROR.WEIGHT)
   }
   TESTING.ADDITIONAL.OBS.ERROR.SD = NULL
   #function(years, num)
@@ -185,7 +188,7 @@ create.msa.likelihood <- function(msa,
   #-- Elements for Historical Cumulative Mortality --#
   SD.INFLATION.CUM.MORT = 1/sqrt(EVERYTHING.WEIGHT) / sqrt(CUM.MORT.WEIGHT)
   #    CUM.MORT.SD = function(years,num){sqrt(5^2 + 0.5 * (0.065*num)^2 + 0.5 * (num^0.33)^2)}
-  CUM.MORT.SD = function(years, num){2 * sqrt(5^2 + 0.5 * (0.09*num)^2 + 0.5 * (num^0.69)^2)}
+  CUM.MORT.SD = function(years, num){2 * sqrt(5^2 + 0.5 * (0.09*num)^2 + 0.5 * (num^0.69)^2) * 1/sqrt(OBS.ERROR.WEIGHT)}
   
   cum.aids.mort.data = get.surveillance.data(msa.surveillance, msa, data.type='cumulative.aids.mortality', throw.error.if.missing.data = F,
                                              sex=T,race=T,risk=T)
@@ -226,6 +229,7 @@ create.msa.likelihood <- function(msa,
                                            idu.cv=0,
                                            sd.inflation=SD.INFLATION.NEW,
                                            year.to.year.correlation = 0,
+                                           include.msm.idu=include.new.msm.idu,
                                            numerator.year.to.year.chunk.correlation=year.to.year.chunk.correlation,
                                            numerator.year.to.year.off.correlation=year.to.year.off.correlation,
                                            numerator.chunk.years=new.correlated.year.chunks,

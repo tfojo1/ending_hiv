@@ -104,15 +104,6 @@ create.covid.scenario <- function(pandemic.effects.distribution=NULL,
         else if (pandemic.affects.suppression)
             stop("suppression.reduction.distribution cannot be null. Set pandemic.affects.suppression=F to omit")
         
-<<<<<<< HEAD
-<<<<<<< HEAD
-        pandemic.effects.distribution = join.distributions(sexual.transmission.reduction.distribution,
-                                                           suppression.reduction.distribution,
-                                                           testing.reduction.distribution,
-                                                           prep.reduction.distribution)
-=======
-=======
->>>>>>> 42461671cc2ceca64462160b88a8ed1b6fe3f42f
         if (!is.null(testing.reduction.distribution))
         {
             if (!is(testing.reduction.distribution, 'Distribution') ||
@@ -138,10 +129,6 @@ create.covid.scenario <- function(pandemic.effects.distribution=NULL,
             stop("testing.reduction.distribution cannot be null. Set pandemic.affects.prep=F to omit")
 
         pandemic.effects.distribution = join.distributions(to.join)
-<<<<<<< HEAD
->>>>>>> cd653bf0c14570643f9d595cd2a7ccacae9b37f3
-=======
->>>>>>> 42461671cc2ceca64462160b88a8ed1b6fe3f42f
     }
     
     if (!is(pandemic.effects.distribution, 'Distribution') &&

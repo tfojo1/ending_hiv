@@ -1,6 +1,6 @@
 
 source('code/calibration/target_msas.R')
-msa = SEATTLE.MSA
+msa = BATON.ROUGE.MSA
 source('code/processing/for_talks/talk_plot_settings.R')
 
 DO.RENDER = T

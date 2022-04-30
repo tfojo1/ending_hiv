@@ -67,7 +67,8 @@ create.likelihood.function <- function(data.type=c('new','prevalence','mortality
                                        adjust.rates.fn=NULL,
                                        corr.mat.fn=NULL,
                                        make.variance.fn=NULL,
-                                       make.cov.mat.fn=NULL)
+                                       make.cov.mat.fn=NULL,
+                                       include.msm.idu=T)
 {
 #    print(denominator.dimensions)
 
@@ -120,6 +121,7 @@ create.likelihood.function <- function(data.type=c('new','prevalence','mortality
                                                                    numerator.sd = numerator.sd,
                                                                    bias.fn = bias.fn,
                                                                    bias.sd = bias.sd,
+                                                                   include.msm.idu = include.msm.idu,
                                                                    numerator.year.to.year.chunk.correlation=numerator.year.to.year.chunk.correlation,
                                                                    numerator.year.to.year.off.correlation=numerator.year.to.year.off.correlation,
                                                                    numerator.chunk.years=numerator.chunk.years
@@ -220,7 +222,7 @@ create.likelihood.function <- function(data.type=c('new','prevalence','mortality
     ##-- Make and return the actual likelihood function --##
     ##----------------------------------------------------##
     
-    function(jheem.results, log=T){
+    function(jheem.results, log=T, debug=F){
         
         # Check if we terminated early
         if (jheem.results$terminated)
@@ -279,7 +281,8 @@ create.likelihood.function <- function(data.type=c('new','prevalence','mortality
                        transformation.mapping=transformation.mapping,
                        description = likelihood.elements$descriptions,
                        make.variance.fn = make.variance.fn,
-                       make.cov.mat.fn = make.cov.mat.fn)
+                       make.cov.mat.fn = make.cov.mat.fn,
+                       debug=debug)
     }
 }
 
@@ -1417,6 +1420,14 @@ create.aids.diagnoses.likelihood <- function(surv=msa.surveillance,
     obs = exp(log.mean + log.var/2)
     obs.var = (exp(log.var)-1) * exp(2*log.mean + log.var)
     
+    mask = !is.na(obs)
+    if (!any(mask))
+        stop("No data on aids diagnoses for requested years. Cannot create likelihood")
+    obs = obs[mask]
+    obs.var = obs.var[mask]
+    years = years[mask]
+    population = population[mask]
+    
     function(sim, log=T, verbose=F)
     {
         numerators = extract.new.diagnoses(sim, years=years, keep.dimensions = 'year', per.population = NA)
@@ -1427,17 +1438,23 @@ create.aids.diagnoses.likelihood <- function(surv=msa.surveillance,
         
         #  sds = sqrt(population * rates * (1-rates) * sd.inflation^2 + obs.var)
         
-        
-        cov.mat = make.compound.symmetry.matrix(sqrt(obs.var), rho) + 
-            diag(population * rates * (1-rates) * sd.inflation^2)
-        
         if (verbose)
             print(cbind(obs.aids=observed.aids, obs=obs, sim=rates*population))
         
-        dmvnorm(x=as.numeric(obs),
-                mean=as.numeric(observed.aids),
-                sigma=cov.mat, 
-                log=log)
+        if (length(obs)==1)
+        {
+            dnorm(obs, rates*population, sd=sqrt(obs.var), log=log)
+        }
+        else
+        {
+            cov.mat = make.compound.symmetry.matrix(sqrt(obs.var), rho) + 
+                diag(population * rates * (1-rates) * sd.inflation^2)
+        
+            dmvnorm(x=as.numeric(obs),
+                    mean=as.numeric(rates*population),
+                    sigma=cov.mat, 
+                    log=log)
+        }
         
     }
 }
@@ -1824,7 +1841,8 @@ likelihood.sub <- function(pre.transformation.rates,
                            sim=NULL, #these last two arguments are for debugging purposes
                            description=NULL,
                            make.variance.fn=NULL,
-                           make.cov.mat.fn=NULL)
+                           make.cov.mat.fn=NULL,
+                           debug=F)
 {
     pre.transformation.rates = as.numeric(pre.transformation.rates)
     
@@ -1965,6 +1983,9 @@ likelihood.sub <- function(pre.transformation.rates,
                                             log=log)))
     }
     
+    if (debug)
+        browser()
+    
     dmvnorm(x=as.numeric(response.vector),
             mean=as.numeric(mean.vector),
             sigma=covar.mat,
@@ -2001,6 +2022,7 @@ create.likelihood.elements.for.data.type <- function(data.type=c('new','prevalen
                                                      races=c('black','hispanic','other'),
                                                      sexes=c('heterosexual_male','msm','female'),
                                                      risks=c('never_IDU','active_IDU','IDU_in_remission'),
+                                                     include.msm.idu=T,
                                                      na.rm=F
 )
 {
@@ -2244,7 +2266,7 @@ create.likelihood.elements.for.data.type <- function(data.type=c('new','prevalen
                                                                   cdc.details=cdc.details,
                                                                   cdc.n=cdc.n,
                                                                   jheem.skeleton=jheem.skeleton)
-            
+       
             if (pass.n.to.numerator.sd)
                 sds = numerator.sd(years=tmrv$year, num=tmrv$response.vector, denom=tmrv$n)
             else
@@ -2502,6 +2524,16 @@ create.likelihood.elements.for.data.type <- function(data.type=c('new','prevalen
     
     if (all(numerator.covar.mat==0))
         numerator.covar.mat = NULL
+    
+    if (!include.msm.idu)
+    {
+        mask = !grepl('msm_idu', descriptions)
+        
+        transformation.matrix = transformation.matrix[mask,]
+        response.vector = response.vector[mask]
+        numerator.covar.mat = numerator.covar.mat[mask,mask]
+        descriptions = descriptions[mask]
+    }
     
     list(transformation.matrix = transformation.matrix,
          response.vector = response.vector,

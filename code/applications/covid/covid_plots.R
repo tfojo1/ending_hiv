@@ -46,16 +46,7 @@ make.covid.scatterplot <- function(results=outcomes.arr,
                                    var2='incidence',
                                    var1.years=2020:2025,
                                    var2.years=2020:2025,
-<<<<<<< HEAD
-<<<<<<< HEAD
-                                   scenario1='base',
-                                   intervention.name1=NA,
-=======
                                    scenario1='covid.delayed.mobility',
->>>>>>> cd653bf0c14570643f9d595cd2a7ccacae9b37f3
-=======
-                                   scenario1='covid.delayed.mobility',
->>>>>>> 42461671cc2ceca64462160b88a8ed1b6fe3f42f
                                    scenario2=scenario1,
                                    subtract.scenario1=NA,
                                    subtract.relative1=T,

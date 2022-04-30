@@ -49,6 +49,10 @@ ST.LOUIS.MSA = '41180'
 DENVER.MSA = '19740'
 PORTLAND.MSA = '38900'
 
+BIRMINGHAM.MSA = '13820'
+MOBILE.MSA = '33660'
+JACKSON.MSA = '27140'
+
 ##----------------------------##
 ##-- LUMP THEM INTO VECTORS --##
 ##----------------------------##

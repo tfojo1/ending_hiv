@@ -4,14 +4,7 @@ source('code/applications/covid/covid_plots.R')
 library(colorspace)
 
 ##-- SET-UP --##
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
 IMAGE.DIR = '../Manuscripts/covid_manuscript/CID submission/CID Revision/images'
->>>>>>> cd653bf0c14570643f9d595cd2a7ccacae9b37f3
-=======
-IMAGE.DIR = '../Manuscripts/covid_manuscript/CID submission/CID Revision/images'
->>>>>>> 42461671cc2ceca64462160b88a8ed1b6fe3f42f
 IMAGE.DIR = '../CROI/CROI 2022 JHEEM-COVID'
 library(ggsci)
 PALETTE = pal_jama()

@@ -6,8 +6,16 @@
 ##--------------------------------##
 ##--------------------------------##
 
-ALLOWED.NESTED.DATA.TYPES = c('suppression','engagement','linkage','diagnosed','retention','testing')
+NESTED.DATA.TYPES.FOR.N = c('suppression'='prevalence',
+                            'engagement'='prevalence',
+                            'linkage'='new',
+                            'diagnosed'='prevalence.all',
+                            'retention'='prevalence',
+                            'testing'='population')
+
+ALLOWED.NESTED.DATA.TYPES = names(NESTED.DATA.TYPES.FOR.N)
 BACKUP.DATA.TYPE.FOR.P.BIAS.AND.VARIANCE = c('retention'='engagement')
+BACKUP.DATA.TYPES.FOR.IN.V.EXTRA.MSA.SD.RATIO = list(testing=c('suppression','engagement'))
 create.nested.likelihood <- function(data.type=c('suppression','engagement','linkage','diagnosed')[1],
                                      msa,
                                      msa.surveillance,
@@ -79,11 +87,7 @@ create.nested.likelihood <- function(data.type=c('suppression','engagement','lin
         stop(paste0("data.type must be one of: ",
                     paste0("'", ALLOWED.NESTED.DATA.TYPES, "'", collapse=', ')))
     
-    data.type.for.n = 'prevalence'
-    if (data.type == 'linkage')
-        data.type.for.n = 'new'
-    else if (data.type == 'testing')
-        data.type.for.n = 'population'
+    data.type.for.n = NESTED.DATA.TYPES.FOR.N[data.type]
     
     
 #-- CHECK WHAT DATA WE HAVE --#
@@ -488,7 +492,7 @@ create.nested.likelihood <- function(data.type=c('suppression','engagement','lin
         
         response.vector[response.index+1:n.responses.per] = lik.elem$response.vector
         error.cov.mat[response.index+1:n.responses.per, response.index+1:n.responses.per] = lik.elem$numerator.covar.mat
-        
+
         response.description[response.index+1:n.responses.per] = paste0(obs.location.desriptions[loc], ": ",
                                                                         lik.elem$descriptions)
         response.year[response.index+1:n.responses.per] = as.numeric(substr(lik.elem$descriptions, 1, 4))
@@ -636,6 +640,7 @@ create.nested.likelihood <- function(data.type=c('suppression','engagement','lin
     if (verbose)
         cat('NSTLIK: Setting up "p-multipliers"...\n')
     
+    extra.county = NULL
     if (any(metalocation.type=='county-out-of-msa'))
     {
         extra.county = get.extra.msa.county.p.bias.and.variance(data.type,
@@ -683,16 +688,46 @@ create.nested.likelihood <- function(data.type=c('suppression','engagement','lin
         
         if (in.county$n < min.n.for.calculating.bias.and.variance)
         {
-            if (is.na(BACKUP.DATA.TYPE.FOR.P.BIAS.AND.VARIANCE[data.type]))
-                stop("There are ", in.county$n, " observation(s) from which to calculate ",
-                     "in-msa county bias and variance in '", data.type, "'. You have specified ",
-                     "a minimum of ", min.n.for.calculating.bias.and.variance, " observations.")
-            else
+            if (!is.na(BACKUP.DATA.TYPE.FOR.P.BIAS.AND.VARIANCE[data.type]))
                 in.county = get.in.msa.county.p.bias.and.variance(data.type = BACKUP.DATA.TYPE.FOR.P.BIAS.AND.VARIANCE[data.type],
                                                                   data.type.for.n = data.type.for.n,
                                                                   msa.surveillance = msa.surveillance,
                                                                   county.surveillance = county.surveillance,
                                                                   census=census.collapsed)
+            else if (!is.null(BACKUP.DATA.TYPES.FOR.IN.V.EXTRA.MSA.SD.RATIO[[data.type]]) &&
+                     !is.null(extra.county))
+            {
+                backup.in.msa = lapply(BACKUP.DATA.TYPES.FOR.IN.V.EXTRA.MSA.SD.RATIO[[data.type]], function(bdt){
+                    get.in.msa.county.p.bias.and.variance(data.type = bdt,
+                                                          data.type.for.n = NESTED.DATA.TYPES.FOR.N[bdt],
+                                                          msa.surveillance = msa.surveillance,
+                                                          county.surveillance = county.surveillance,
+                                                          census=ALL.DATA.MANAGERS$census.collapsed,
+                                                          fixed.bias = 0)
+                })
+                
+                backup.extra.msa = lapply(BACKUP.DATA.TYPES.FOR.IN.V.EXTRA.MSA.SD.RATIO[[data.type]], function(bdt){
+                    get.extra.msa.county.p.bias.and.variance(data.type = bdt,
+                                                             data.type.for.n = NESTED.DATA.TYPES.FOR.N[bdt],
+                                                             msa.surveillance = msa.surveillance,
+                                                             county.surveillance = county.surveillance,
+                                                             state.surveillance = state.surveillance,
+                                                             census=ALL.DATA.MANAGERS$census.collapsed)
+                })
+                
+                sd.ratio = mean(sapply(1:length(backup.in.msa), function(i){
+                    backup.in.msa[[i]]$sd / backup.extra.msa[[i]]$sd
+                }))
+                
+                in.county = extra.county
+                in.county$sd = in.county$sd * sd.ratio
+                in.county$variance = in.county$varian * sd.ratio^2
+                in.county$bias = 0
+            }
+            else
+                stop("There are ", in.county$n, " observation(s) from which to calculate ",
+                     "in-msa county bias and variance in '", data.type, "'. You have specified ",
+                     "a minimum of ", min.n.for.calculating.bias.and.variance, " observations.")
         }
         
         if (verbose)
@@ -1004,17 +1039,25 @@ create.nested.likelihood <- function(data.type=c('suppression','engagement','lin
             }
         else if (data.type=='retention')
         {
-            total.engagement = get.surveillance.data(msa.surveillance, location.codes = msa, data.type='engagement')
-            total.engagement = unlist(interpolate.parameters(values=total.engagement[!is.na(total.engagement)],
-                                                             value.times=attr(total.engagement, 'years')[!is.na(total.engagement)],
-                                                             desired.times = years))
+#            total.engagement = get.surveillance.data(msa.surveillance, location.codes = msa, data.type='engagement')
+#            total.engagement = unlist(interpolate.parameters(values=total.engagement[!is.na(total.engagement)],
+#                                                             value.times=attr(total.engagement, 'years')[!is.na(total.engagement)],
+#                                                             desired.times = years))
             
-            engaged.prevalence = total.prevalence * total.engagement
-            if (any(is.na(engaged.prevalence)))
-                stop('Unable to pull engaged prevalence')
+#            engaged.prevalence = total.prevalence * total.engagement
+#            if (any(is.na(engaged.prevalence)))
+#                stop('Unable to pull engaged prevalence')
             
             
             extract.np.fn = function(sim){
+                
+                p.total.engaged = do.extract.engagement(sim, years=years, keep.dimensions=c('year'),
+                                                  continuum = sim$diagnosed.continuum.states,
+                                                  per.population = 1, use.cdc.categorizations = F)
+                
+                engaged.prevalence = total.prevalence * p.total.engaged
+                
+                
                 engaged.states = attr(sim, 'components')$settings$ENGAGED_STATES
                 denominator = do.extract.prevalence(sim, years=years, 
                                                     keep.dimensions=c('year','age','race','sex','risk'),
@@ -1462,9 +1505,8 @@ nested.proportion.likelihood.sub <- function(
     
     gamma.by.stratum = lapply(1:n.strata, function(d){
         # page 8 of equations
-        
-        delta.Mt = delta.by.stratum[[d]][,mask] %*% Mt
-        B %*% delta.Mt %*% solve(M%*% delta.Mt[mask,])
+        delta.Mt = delta.by.stratum[[d]][,mask] %*% Mt #there is a problem here with the masking
+        B %*% delta.Mt[year.metalocation.to.year.obs.location.mask,] %*% solve(M%*% delta.Mt[mask,])
     })
     
     mean.year.obs.loc.by.stratum = lapply(1:n.strata, function(d){
@@ -1472,7 +1514,7 @@ nested.proportion.likelihood.sub <- function(
         alpha = alpha.by.stratum[[d]]
         o = n[,d] * p[,d] # we condition on what the sim total is
         
-        B %*% alpha + gamma.by.stratum[[d]] %*% (o - M %*% alpha[mask])
+        B %*% alpha[year.metalocation.to.year.obs.location.mask] + gamma.by.stratum[[d]] %*% (o - M %*% alpha[mask])
     })
     
     cov.mat.year.obs.loc.by.stratum = lapply(1:n.strata, function(d){
@@ -1487,7 +1529,9 @@ nested.proportion.likelihood.sub <- function(
             o.var[i] * gamma[,i]
         })
         
-        rv = B %*% delta %*% Bt - gamma %*% M %*% delta[mask,] %*% Bt + gamma.omega %*% t(gamma)
+        rv = B %*% delta[year.metalocation.to.year.obs.location.mask,year.metalocation.to.year.obs.location.mask] %*% Bt - 
+            gamma %*% M %*% delta[mask,year.metalocation.to.year.obs.location.mask] %*% Bt + 
+            gamma.omega %*% t(gamma)
 
         #to ensure symmetry from rounding errors (this is painful to have to do this)
         rv = sapply(1:nrow(rv), function(i){
@@ -1525,7 +1569,7 @@ nested.proportion.likelihood.sub <- function(
     obs.n = rowSums(sapply(1:n.strata, function(d){
         year.loc.stratum.to.obs.mapping[[d]] %*%
             (year.metalocation.to.year.obs.location.mapping[year.loc.stratum.to.obs.mask[[d]],] %*% 
-                 as.numeric(nu.by.stratum[[d]]))
+                 as.numeric(nu.by.stratum[[d]])[year.metalocation.to.year.obs.location.mask])
     }))
     
 #-- Inflate the SDs and add in the observation error --#    
@@ -1540,7 +1584,7 @@ nested.proportion.likelihood.sub <- function(
     
 #-- Map the obs n --#
     
-    obs.n = year.metalocation.stratum.to.obs.mapping %*% 
+    obs.n = year.metalocation.stratum.to.obs.mapping[,year.metalocation.to.year.obs.location.mask] %*% 
         unlist(nu.by.stratum)[year.metalocation.to.year.obs.location.mask]
 
     
@@ -1562,6 +1606,13 @@ nested.proportion.likelihood.sub <- function(
         round(cov2cor(cov.mat),2)
         sqrt(diag(cov.mat))/obs.n
     }
+    
+    if (any(is.na(obs.v)))
+        stop("NAs produced in obs.v")
+    if (any(is.na(mean.v)))
+        stop("NAs produced in mean.v")
+    if (any(is.na(cov.mat)))
+        stop("NAs produced in cov.mat")
     
     dmvnorm(x = obs.v,
             mean = mean.v,
@@ -1730,6 +1781,9 @@ calculate.outcome.differences <- function(data.type,
                                           collapse.idu.strata=T
 )
 {
+    if (data.type == 'prevalence.all')
+        data.type = 'prevalence'
+
     dimensions = list(age=ages,
                       race=races,
                       sex=sexes,
@@ -1923,9 +1977,19 @@ infer.state.population.from.stratifications <- function(state,
                                                         correct.to.yearly.total=T,
                                                         collapse.idu.strata = T)
 {
+    if (data.type == 'prevalence.all')
+    {
+        divide.by = as.numeric(get.surveillance.data(state.surveillance, state, data.type='diagnosed',
+                                                     years=years))
+        data.type = 'prevalence'
+    }
+    else
+        divide.by = 1
+    
     # Try 4-d
     rv = get.surveillance.data(state.surveillance, state, data.type=data.type, years=years,
-                               sex=T, age=T, race=T, risk=T)
+                               sex=T, age=T, race=T, risk=T) / divide.by
+    
     access(rv, sex='female', risk=c('msm','msm_idu')) = 0
     rv = apply(rv, desired.dimensions, function(x){x})
     
@@ -1935,11 +1999,11 @@ infer.state.population.from.stratifications <- function(state,
     if (any(is.na(rv)))
     {
         sar = get.surveillance.data(state.surveillance, state, data.type=data.type, years=years,
-                                   sex=T, age=T, race=T, risk=F)
+                                   sex=T, age=T, race=T, risk=F) / divide.by
         sak = get.surveillance.data(state.surveillance, state, data.type=data.type, years=years,
-                                    sex=T, age=T, race=F, risk=T)
+                                    sex=T, age=T, race=F, risk=T) / divide.by
         srk = get.surveillance.data(state.surveillance, state, data.type=data.type, years=years,
-                                    sex=T, age=F, race=T, risk=T)
+                                    sex=T, age=F, race=T, risk=T) / divide.by
         
         i1 = distribute.n.among.shared.dimensions(sar, sak, desired.dimensions = desired.dimensions)
         i2 = distribute.n.among.shared.dimensions(sak, sar, desired.dimensions = desired.dimensions)
@@ -1972,18 +2036,18 @@ infer.state.population.from.stratifications <- function(state,
     if (any(is.na(rv)))
     {
         sa = get.surveillance.data(state.surveillance, state, data.type=data.type, years=years,
-                                    sex=T, age=T, race=F, risk=F)
+                                    sex=T, age=T, race=F, risk=F) / divide.by
         rk = get.surveillance.data(state.surveillance, state, data.type=data.type, years=years,
-                                        sex=F, age=F, race=T, risk=T)
+                                        sex=F, age=F, race=T, risk=T) / divide.by
         
         i1 = distribute.n.among.shared.dimensions(sa, rk, desired.dimensions = desired.dimensions)
         i2 = distribute.n.among.shared.dimensions(rk, sa, desired.dimensions = desired.dimensions)
         
         
         ar = get.surveillance.data(state.surveillance, state, data.type=data.type, years=years,
-                                   sex=F, age=T, race=T, risk=F)
+                                   sex=F, age=T, race=T, risk=F) / divide.by
         sk = get.surveillance.data(state.surveillance, state, data.type=data.type, years=years,
-                                   sex=T, age=F, race=F, risk=T)
+                                   sex=T, age=F, race=F, risk=T) / divide.by
         
         i3 = distribute.n.among.shared.dimensions(ar, sk, desired.dimensions = desired.dimensions)
         i4 = distribute.n.among.shared.dimensions(sk, ar, desired.dimensions = desired.dimensions)
@@ -2005,7 +2069,7 @@ infer.state.population.from.stratifications <- function(state,
     
     if (correct.to.yearly.total)
         rv = rv / rowSums(rv) * 
-                as.numeric(get.surveillance.data(state.surveillance, state, data.type, years=years))
+                as.numeric(get.surveillance.data(state.surveillance, state, data.type, years=years) / divide.by)
     
     rv = recategorize.to.jheem.risk.strata(rv)
     calculated = recategorize.to.jheem.risk.strata(calculated) > 0
@@ -2100,6 +2164,14 @@ get.in.msa.county.p.bias.and.variance <- function(data.type,
                                                   fixed.bias=0,
                                                   weight.by.n=F)
 {
+    if (data.type.for.n=='prevalence.all')
+    {
+        data.type.for.n = 'prevalence'
+        divide.by.p = T
+    }
+    else
+        divide.by.p = F
+    
     matched.data = get.matched.msa.data(data.type1=data.type,
                                         data.type2=data.type.for.n,
                                         years=NULL,
@@ -2116,6 +2188,9 @@ get.in.msa.county.p.bias.and.variance <- function(data.type,
                                         by.sex=T,
                                         by.risk=T,
                                         require.msa.data = T)
+    
+    if (divide.by.p)
+        matched.data$location1.value2 = matched.data$location1.value2 / matched.data$location1.value1
     
     if (weight.by.n)
         weights = matched.data$location1.value2
@@ -2152,6 +2227,14 @@ get.extra.msa.county.p.bias.and.variance <- function(data.type,
                                                      weight.by.n=F,
                                                      use.county.p.if.missing.msa=T)
 {
+    if (data.type.for.n=='prevalence.all')
+    {
+        data.type.for.n = 'prevalence'
+        divide.by.p = T
+    }
+    else
+        divide.by.p = F
+    
     matched.data = get.matched.msa.data(data.type1=data.type,
                                      data.type2=data.type.for.n,
                                      years=NULL,
@@ -2178,7 +2261,16 @@ get.extra.msa.county.p.bias.and.variance <- function(data.type,
     n.msa[!one.state.msa] = matched.data$location2.value2[!one.state.msa]
     n.state = matched.data$location1.value2
     
-    np.extra.msa = n.state * p.state - n.msa * p.msa
+    if (divide.by.p)
+    {
+        np.extra.msa = n.state + n.msa
+        
+        n.msa = n.msa / p.msa
+        n.state = n.state / p.state
+    }
+    else
+        np.extra.msa = n.state * p.state - n.msa * p.msa
+    
     n.extra.msa = n.state - n.msa
     p.extra.msa = np.extra.msa / n.extra.msa
     
@@ -2199,6 +2291,7 @@ get.extra.msa.county.p.bias.and.variance <- function(data.type,
                              weights=weights[mask])
 }
 
+# we don't actually use this, but keeping it here for debugging/checking things out
 get.state.p.bias.and.variance <- function(data.type,
                                           data.type.for.n,
                                           msa.surveillance,
@@ -2207,6 +2300,14 @@ get.state.p.bias.and.variance <- function(data.type,
                                           fixed.bias=NA,
                                           weight.by.n=F)
 {
+    if (data.type.for.n=='prevalence.all')
+    {
+        data.type.for.n = 'prevalence'
+        divide.by.p = T
+    }
+    else
+        divide.by.p = F
+    
     matched.data = get.matched.msa.data(data.type1=data.type,
                                         data.type2=data.type.for.n,
                                         years=NULL,
@@ -2224,6 +2325,9 @@ get.state.p.bias.and.variance <- function(data.type,
                                         by.risk=T,
                                         require.msa.data = T)
     
+    
+    if (divide.by.p)
+        matched.data$location1.value2 = matched.data$location1.value2 / matched.data$location1.value1
     
     if (weight.by.n)
         weights = matched.data$location1.value2
@@ -2803,4 +2907,47 @@ pad.data.for.years <- function(data, years)
     dimnames(rv) = dim.names
     
     rv
+}
+
+
+# for seeing the relationship between in-msa and out-of-msa variance
+if (1==2)
+{
+    data.types = setdiff(ALLOWED.DATA.TYPES, c('testing','retention'))
+    data.types.for.n = rep('prevalence', length(data.types))
+    data.types.for.n[data.types=='linkage'] = 'new'
+    
+    in.msa = lapply(1:length(data.types), function(i){
+        get.in.msa.county.p.bias.and.variance(data.type = data.types[i],
+                                              data.type.for.n = data.types.for.n[i],
+                                              msa.surveillance = msa.surveillance,
+                                              county.surveillance = county.surveillance,
+                                              census=ALL.DATA.MANAGERS$census.collapsed,
+                                              fixed.bias = 0)
+    })
+    
+    extra.msa = lapply(1:length(data.types), function(i){
+        get.extra.msa.county.p.bias.and.variance(data.type = data.types[i],
+                                                 data.type.for.n = data.types.for.n[i],
+                                                 msa.surveillance = msa.surveillance,
+                                                 county.surveillance = county.surveillance,
+                                                 state.surveillance = state.surveillance,
+                                                 census=ALL.DATA.MANAGERS$census.collapsed)
+    })
+    
+    sds = sapply(1:length(data.types), function(i){
+        c(in.msa=in.msa[[i]]$sd,
+          extra.msa=extra.msa[[i]]$sd)
+    }); dimnames(sds)[[2]] = data.types
+    
+    sds[1,] / sds[2,]
+    sds[1,]^2 / sds[2,]^2
+    
+    
+    get.extra.msa.county.p.bias.and.variance(data.type = 'testing',
+                                             data.type.for.n = 'population',
+                                             msa.surveillance = msa.surveillance,
+                                             county.surveillance = county.surveillance,
+                                             state.surveillance = state.surveillance,
+                                             census=ALL.DATA.MANAGERS$census.collapsed)
 }

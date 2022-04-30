@@ -146,7 +146,8 @@ get.surveillance.data <- function(surv=msa.surveillance,
     if (any(missing.code))
     {
         if (throw.error.if.missing.data)
-            stop(paste0("The following location code(s) are not present in the requested data: ",
+            stop(paste0("The following location code(s) are not present in the requested data ('",
+                        data.type, "'): ",
                         paste0(location.codes[missing.code], collapse=', ')))
         else
             return (NULL)
@@ -302,13 +303,18 @@ get.surveillance.data.rate <- function(surv,
                                        race=F,
                                        sex=F,
                                        aggregate.years=F,
-                                       census)
+                                       census,
+                                       throw.error.if.missing.data=T)
 {
     numerators = get.surveillance.data(surv, location.codes=location.codes,
                                        years=years, data.type=data.type,
                                        age=age, race=race, sex=sex,
                                        aggregate.locations=T,
-                                       aggregate.years=aggregate.years)
+                                       aggregate.years=aggregate.years, 
+                                       throw.error.if.missing.data = throw.error.if.missing.data)
+
+    if (is.null(numerators) || all(is.na(numerators)))
+        return (NULL)
     
     years = attr(numerators, 'years')
     
@@ -319,9 +325,13 @@ get.surveillance.data.rate <- function(surv,
                                    aggregate.ages=!age,
                                    aggregate.races=!race,
                                    aggregate.sexes=!sex)
-    
+
     if (!is.null(dim(denominators)))
+    {
+        if (race)
+            denominators = collapse.races(denominators)
         denominators = apply(denominators, names(dimnames(numerators)), function(x){x})
+    }
     
     numerators / denominators
 }

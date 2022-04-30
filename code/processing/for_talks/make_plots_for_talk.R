@@ -1,9 +1,9 @@
 
 source('code/calibration/target_msas.R')
-msa = SEATTLE.MSA
+msa = BATON.ROUGE.MSA
 source('code/processing/for_talks/talk_plot_settings.R')
 
-DO.INTERVENTIONS = T
+DO.INTERVENTIONS = F
 DO.CALIBRATION = F
 DO.STRATIFIED.INTERVENTIONS = F
 

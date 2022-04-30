@@ -55,12 +55,8 @@ if (1==2)
 # to resume
 if (1==2)
 {
-<<<<<<< HEAD
-    mcmc = run.mcmc.from.cache(dir = file.path(SYSTEMATIC.ROOT.DIR, 'systematic_caches_expanded', '12580_1x25K_expanded_infl.nobs.wt2_2022-03-18'),
-=======
     list.files(file.path(SYSTEMATIC.ROOT.DIR, 'systematic_caches_expanded'))
     mcmc = run.mcmc.from.cache(dir = file.path(SYSTEMATIC.ROOT.DIR, 'systematic_caches_expanded', '12580_1x25K_expanded_2022-03-23'),
->>>>>>> 42461671cc2ceca64462160b88a8ed1b6fe3f42f
                         update.frequency = UPDATE.FREQ, update.detail = 'high')
     
     save(mcmc, file=paste0('Q:/Ending_HIV/mcmc_runs/systematic_initial_expanded', '/12580',suffix, '_', Sys.Date(),'.Rdata'))

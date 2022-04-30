@@ -52,60 +52,9 @@ setup.initial.mcmc.for.msa <- function(msa,
         likelihood = create.msa.likelihood(msa)
     }
     
-    # Start values:
-    # The order of preference for values is:
-    # 1) Start values for this version
-    # 2) A prior run for an earlier version
-    # 3) Start values for a prior version
 
-    starting.parameters = NULL
-    for (version.to.pull in c(version, get.prior.versions(version)))
-    {
-        prior.simset.filename = get.full.filename(location=msa)
-        prior.run.file = file.path(SYSTEMATIC.ROOT.DIR,
-                                   paste0('full_simsets', get.directory.suffix.for.version(version.to.pull)),
-                                   prior.simset.filename)
+    starting.parameters.to.use = get.initial.starting.parameters(msa=msa, version=version)
         
-        if (version != version.to.pull &&
-            file.exists(prior.run.file))
-        {
-            load(prior.run.file)
-            print(paste0("* Getting starting parameters from prior run for version '", version.to.pull))
-            starting.parameters = simset@parameters[simset@n.sim,]
-        }
-        else
-        {
-            start.value.file = file.path(SYSTEMATIC.ROOT.DIR, 
-                                         version.to.pull,
-                                         'start_values',
-                                         paste0(msa, '.Rdata'))
-            if (file.exists(start.value.file))
-            {
-                print(paste0("* Getting starting parameters from start_values file for version '", version.to.pull))
-                load(start.value.file)
-            }
-        }
-            
-        if (!is.null(starting.parameters))
-            break
-    }
-    
-    if (is.null(starting.parameters))
-        stop(paste0("Initial values have not been set for ", msa.names(msa), " for version '",
-                    version, "' and no prior versions have runs or initial values"))
-    
-    
-    # If the starting parameters don't match what we need for the version
-    #  start at the median values
-    
-    prior = get.parameters.prior.for.version(version=version)
-    starting.parameters.to.use = suppressWarnings(get.medians(prior))
-    matching.names = intersect(names(starting.parameters), names(starting.parameters.to.use))
-    starting.parameters.to.use[matching.names] = starting.parameters[matching.names]
-    
-    if (any(is.na(starting.parameters.to.use)))
-        stop("NA produced in starting.parameters.to.use")
-    
     start.value.generator = function(n){
         if (n==1)
             starting.parameters.to.use
@@ -182,6 +131,66 @@ setup.initial.mcmc.for.msa <- function(msa,
     )
 }
 
+get.initial.starting.parameters <- function(msa,
+                                            version)
+{
+    # Start values:
+    # The order of preference for values is:
+    # 1) Start values for this version
+    # 2) A prior run for an earlier version
+    # 3) Start values for a prior version
+    
+    starting.parameters = NULL
+    for (version.to.pull in c(version, get.prior.versions(version)))
+    {
+        prior.simset.filename = get.full.filename(location=msa)
+        prior.run.file = file.path(SYSTEMATIC.ROOT.DIR,
+                                   paste0('full_simsets', get.directory.suffix.for.version(version.to.pull)),
+                                   prior.simset.filename)
+
+        if (version != version.to.pull &&
+            file.exists(prior.run.file))
+        {
+            load(prior.run.file)
+            print(paste0("* Getting starting parameters from prior run for version '", version.to.pull))
+            starting.parameters = simset@parameters[simset@n.sim,]
+        }
+        else
+        {
+            start.value.file = file.path(SYSTEMATIC.ROOT.DIR, 
+                                         'start_values',
+                                         version.to.pull,
+                                         paste0(msa, '.Rdata'))
+            if (file.exists(start.value.file))
+            {
+                print(paste0("* Getting starting parameters from start_values file for version '", version.to.pull))
+                load(start.value.file)
+            }
+        }
+        
+        if (!is.null(starting.parameters))
+            break
+    }
+    
+    if (is.null(starting.parameters))
+        stop(paste0("Initial values have not been set for ", msa.names(msa), " for version '",
+                    version, "' and no prior versions have runs or initial values"))
+    
+    
+    # If the starting parameters don't match what we need for the version
+    #  start at the median values
+    
+    prior = get.parameters.prior.for.version(version=version)
+    starting.parameters.to.use = suppressWarnings(get.medians(prior))
+    matching.names = intersect(names(starting.parameters), names(starting.parameters.to.use))
+    starting.parameters.to.use[matching.names] = starting.parameters[matching.names]
+    
+    if (any(is.na(starting.parameters.to.use)))
+        stop("NA produced in starting.parameters.to.use")
+    
+    starting.parameters.to.use
+}
+
 create.start.value.generator.for.msa <- function(msa, 
                                                  version,
                                                  initial.dir='systematic_initial')
@@ -253,6 +262,7 @@ setup.parallel.mcmc.for.msa <- function(msa,
     full.files = list.files(initial.dir, full.names = T)
     
     mask = grepl(msa, files)
+    
     if (!any(mask))
         stop(paste0("No initial mcmc runs have been done for '", msa.names(msa), "' MSA (", msa, ')'))
     load(full.files[mask][sum(mask)])
@@ -381,7 +391,7 @@ setup.mcmc.for.msa <- function(msa,
             print("Running initial simulation to plot")
         init.sim = run.simulation(first.start.values)
 #        print(plot.calibration.risk(init.sim) + ggtitle(paste0("Initial Sim: ", msa.names(msa))))
-        print(simplot(init.sim, data.types=c('new','prevalence')) + ggtitle(paste0("Initial Sim: ", msa.names(msa))) +
+        print(simplot(init.sim, data.types=c('new','prevalence'), facet.by = 'risk') + ggtitle(paste0("Initial Sim: ", msa.names(msa))) +
             theme(plot.title=element_text(hjust=1)))
     }
     

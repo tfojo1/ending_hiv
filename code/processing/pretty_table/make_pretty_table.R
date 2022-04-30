@@ -95,10 +95,10 @@ plot.shaded.table <- function(tab,
     if (is.null(y.values))
         y.values = as.character(1:dim(tab)[1])
     
-    melted = suppressWarnings(reshape2::melt(tab))
+#    melted = suppressWarnings(reshape2::melt(tab))
     
     df = data.frame(
-        value = melted$value,
+        value = as.character(tab),
         x=rep(x.values, each=length(y.values)),
         y=rep(y.values, length(x.values)),
         color = names(color.mapping)
@@ -113,6 +113,20 @@ plot.shaded.table <- function(tab,
         geom_tile() + geom_text() +
         scale_fill_manual(values=color.mapping, guide='none') +
         xlab(x.lab) + ylab(y.lab)
+}
+
+make.pretty.table.legend <- function(colors,
+                                     thresholds=rep(1:length(colors)))
+{
+    df = data.frame(
+        x=as.character(thresholds),
+        y=rep(1, length(colors))
+    )
+    
+    names(colors) = df$x
+    
+    ggplot(df, aes(x,y,fill=x)) + geom_bar(stat='identity') +
+        scale_fill_manual(values=colors)
 }
 
 ##-------------##
