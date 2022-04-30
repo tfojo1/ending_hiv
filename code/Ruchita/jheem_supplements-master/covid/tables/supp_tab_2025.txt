@@ -1,0 +1,42 @@
+\begin{table}
+\begin{tabular}{|c|c|c|c|}
+\hline
+\textbf{Location} & \textbf{Absent COVID, 2025} & \textbf{Prolonged Barriers to Care, 2025} & \textbf{Rapid Resumption of Care, 2025}\\
+\hline\hline
+New York-Newark-Jersey City, NY-NJ-PA & 83\% [80 to 86\%] & 80\% [58 to 86\%] & 80\% [58 to 86\%]\\
+Miami-Fort Lauderdale-Pompano Beach, FL & 68\% [63 to 74\%] & 66\% [47 to 74\%] & 66\% [47 to 74\%]\\
+Los Angeles-Long Beach-Anaheim, CA & 68\% [64 to 74\%] & 66\% [46 to 74\%] & 66\% [46 to 74\%]\\
+Atlanta-Sandy Springs-Alpharetta, GA & 58\% [52 to 66\%] & 56\% [39 to 66\%] & 56\% [39 to 66\%]\\
+Houston-The Woodlands-Sugar Land, TX & 69\% [65 to 76\%] & 67\% [48 to 76\%] & 67\% [48 to 76\%]\\
+Dallas-Fort Worth-Arlington, TX & 73\% [68 to 78\%] & 70\% [50 to 78\%] & 70\% [50 to 78\%]\\
+Chicago-Naperville-Elgin, IL-IN-WI & 51\% [46 to 56\%] & 49\% [35 to 56\%] & 49\% [35 to 56\%]\\
+Washington-Arlington-Alexandria, DC-VA-MD-WV & 80\% [74 to 85\%] & 77\% [53 to 85\%] & 77\% [53 to 85\%]\\
+Philadelphia-Camden-Wilmington, PA-NJ-DE-MD & 64\% [57 to 72\%] & 62\% [43 to 72\%] & 62\% [43 to 72\%]\\
+Orlando-Kissimmee-Sanford, FL & 71\% [64 to 79\%] & 69\% [50 to 79\%] & 69\% [50 to 79\%]\\
+San Francisco-Oakland-Berkeley, CA & 82\% [79 to 86\%] & 79\% [55 to 86\%] & 79\% [55 to 86\%]\\
+Phoenix-Mesa-Chandler, AZ & 73\% [64 to 82\%] & 71\% [49 to 82\%] & 71\% [49 to 82\%]\\
+Tampa-St. Petersburg-Clearwater, FL & 74\% [68 to 81\%] & 72\% [52 to 81\%] & 72\% [52 to 81\%]\\
+Riverside-San Bernardino-Ontario, CA & 76\% [71 to 82\%] & 74\% [51 to 82\%] & 74\% [51 to 82\%]\\
+Detroit-Warren-Dearborn, MI & 83\% [78 to 87\%] & 80\% [57 to 87\%] & 80\% [57 to 87\%]\\
+Baltimore-Columbia-Towson, MD & 77\% [71 to 84\%] & 75\% [52 to 84\%] & 75\% [52 to 84\%]\\
+Las Vegas-Henderson-Paradise, NV & 61\% [51 to 73\%] & 59\% [39 to 73\%] & 59\% [39 to 73\%]\\
+Boston-Cambridge-Newton, MA-NH & 77\% [72 to 82\%] & 75\% [53 to 82\%] & 75\% [53 to 82\%]\\
+San Diego-Chula Vista-Carlsbad, CA & 80\% [74 to 86\%] & 78\% [54 to 86\%] & 78\% [54 to 86\%]\\
+Charlotte-Concord-Gastonia, NC-SC & 72\% [66 to 80\%] & 70\% [50 to 80\%] & 70\% [50 to 80\%]\\
+San Antonio-New Braunfels, TX & 70\% [65 to 76\%] & 68\% [49 to 76\%] & 68\% [49 to 76\%]\\
+Jacksonville, FL & 73\% [66 to 81\%] & 71\% [51 to 81\%] & 71\% [51 to 81\%]\\
+New Orleans-Metairie, LA & 76\% [68 to 83\%] & 73\% [53 to 83\%] & 73\% [53 to 83\%]\\
+Memphis, TN-MS-AR & 73\% [64 to 82\%] & 69\% [34 to 82\%] & 69\% [34 to 82\%]\\
+Seattle-Tacoma-Bellevue, WA & 88\% [87 to 89\%] & 85\% [60 to 89\%] & 85\% [60 to 89\%]\\
+Austin-Round Rock-Georgetown, TX & 82\% [78 to 86\%] & 79\% [58 to 86\%] & 79\% [58 to 86\%]\\
+Indianapolis-Carmel-Anderson, IN & 74\% [68 to 81\%] & 71\% [51 to 81\%] & 72\% [51 to 81\%]\\
+Cincinnati, OH-KY-IN & 58\% [49 to 70\%] & 56\% [38 to 70\%] & 56\% [38 to 70\%]\\
+Columbus, OH & 73\% [66 to 81\%] & 71\% [50 to 81\%] & 71\% [50 to 81\%]\\
+Baton Rouge, LA & 74\% [67 to 81\%] & 71\% [50 to 81\%] & 71\% [50 to 81\%]\\
+Sacramento-Roseville-Folsom, CA & 77\% [73 to 83\%] & 75\% [52 to 83\%] & 75\% [52 to 83\%]\\
+Cleveland-Elyria, OH & 76\% [65 to 85\%] & 73\% [51 to 85\%] & 73\% [51 to 85\%]\\
+
+Total & 73\% [69 to 78\%] & 70\% [50 to 78\%] & 71\% [50 to 78\%]\\
+\hline
+\end{tabular}
+\end{table}

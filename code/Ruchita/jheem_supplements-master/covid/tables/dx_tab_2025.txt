@@ -1,0 +1,42 @@
+\begin{table}
+\begin{tabular}{|c|c|c|c|}
+\hline
+\textbf{Location} & \textbf{Absent COVID, 2025} & \textbf{Prolonged Barriers to Care, 2025} & \textbf{Rapid Resumption of Care, 2025}\\
+\hline\hline
+New York-Newark-Jersey City, NY-NJ-PA & 96\% [95 to 97\%] & 96\% [95 to 97\%] & 96\% [95 to 97\%]\\
+Miami-Fort Lauderdale-Pompano Beach, FL & 93\% [90 to 97\%] & 93\% [89 to 97\%] & 93\% [90 to 97\%]\\
+Los Angeles-Long Beach-Anaheim, CA & 93\% [90 to 94\%] & 92\% [90 to 94\%] & 92\% [90 to 94\%]\\
+Atlanta-Sandy Springs-Alpharetta, GA & 93\% [90 to 96\%] & 93\% [90 to 96\%] & 93\% [90 to 96\%]\\
+Houston-The Woodlands-Sugar Land, TX & 90\% [87 to 93\%] & 90\% [86 to 93\%] & 90\% [87 to 93\%]\\
+Dallas-Fort Worth-Arlington, TX & 92\% [89 to 94\%] & 92\% [89 to 94\%] & 92\% [89 to 94\%]\\
+Chicago-Naperville-Elgin, IL-IN-WI & 94\% [91 to 96\%] & 94\% [91 to 96\%] & 94\% [91 to 96\%]\\
+Washington-Arlington-Alexandria, DC-VA-MD-WV & 97\% [96 to 98\%] & 97\% [96 to 98\%] & 97\% [96 to 98\%]\\
+Philadelphia-Camden-Wilmington, PA-NJ-DE-MD & 96\% [94 to 98\%] & 96\% [94 to 98\%] & 96\% [94 to 98\%]\\
+Orlando-Kissimmee-Sanford, FL & 93\% [90 to 95\%] & 92\% [90 to 95\%] & 93\% [90 to 95\%]\\
+San Francisco-Oakland-Berkeley, CA & 96\% [93 to 98\%] & 96\% [93 to 98\%] & 96\% [93 to 98\%]\\
+Phoenix-Mesa-Chandler, AZ & 91\% [87 to 94\%] & 91\% [87 to 94\%] & 91\% [87 to 94\%]\\
+Tampa-St. Petersburg-Clearwater, FL & 92\% [87 to 95\%] & 92\% [87 to 95\%] & 92\% [87 to 95\%]\\
+Riverside-San Bernardino-Ontario, CA & 91\% [85 to 95\%] & 91\% [85 to 95\%] & 91\% [85 to 95\%]\\
+Detroit-Warren-Dearborn, MI & 92\% [88 to 95\%] & 91\% [87 to 95\%] & 92\% [88 to 95\%]\\
+Baltimore-Columbia-Towson, MD & 97\% [95 to 98\%] & 97\% [95 to 98\%] & 97\% [95 to 98\%]\\
+Las Vegas-Henderson-Paradise, NV & 87\% [84 to 91\%] & 87\% [83 to 91\%] & 87\% [84 to 91\%]\\
+Boston-Cambridge-Newton, MA-NH & 95\% [91 to 97\%] & 95\% [91 to 97\%] & 95\% [91 to 97\%]\\
+San Diego-Chula Vista-Carlsbad, CA & 94\% [91 to 97\%] & 94\% [91 to 96\%] & 94\% [91 to 96\%]\\
+Charlotte-Concord-Gastonia, NC-SC & 91\% [87 to 94\%] & 91\% [87 to 94\%] & 91\% [87 to 94\%]\\
+San Antonio-New Braunfels, TX & 88\% [83 to 91\%] & 87\% [83 to 91\%] & 87\% [83 to 91\%]\\
+Jacksonville, FL & 92\% [87 to 95\%] & 92\% [87 to 95\%] & 92\% [87 to 95\%]\\
+New Orleans-Metairie, LA & 90\% [87 to 94\%] & 90\% [86 to 94\%] & 90\% [86 to 94\%]\\
+Memphis, TN-MS-AR & 93\% [90 to 96\%] & 93\% [89 to 95\%] & 93\% [89 to 95\%]\\
+Seattle-Tacoma-Bellevue, WA & 95\% [91 to 97\%] & 94\% [90 to 97\%] & 95\% [91 to 97\%]\\
+Austin-Round Rock-Georgetown, TX & 90\% [87 to 93\%] & 90\% [87 to 93\%] & 90\% [87 to 93\%]\\
+Indianapolis-Carmel-Anderson, IN & 88\% [83 to 91\%] & 87\% [83 to 91\%] & 87\% [83 to 91\%]\\
+Cincinnati, OH-KY-IN & 85\% [78 to 90\%] & 84\% [78 to 90\%] & 84\% [78 to 90\%]\\
+Columbus, OH & 90\% [85 to 93\%] & 89\% [85 to 93\%] & 90\% [85 to 93\%]\\
+Baton Rouge, LA & 89\% [85 to 93\%] & 89\% [85 to 93\%] & 89\% [85 to 93\%]\\
+Sacramento-Roseville-Folsom, CA & 91\% [87 to 94\%] & 91\% [87 to 94\%] & 91\% [87 to 94\%]\\
+Cleveland-Elyria, OH & 92\% [89 to 95\%] & 92\% [89 to 94\%] & 92\% [89 to 95\%]\\
+
+Total & 93\% [92 to 95\%] & 93\% [92 to 95\%] & 93\% [92 to 95\%]\\
+\hline
+\end{tabular}
+\end{table}
