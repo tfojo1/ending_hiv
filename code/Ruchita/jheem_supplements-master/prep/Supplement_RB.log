@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.19 (TeX Live 2018) (preloaded format=pdflatex 2018.9.27)  18 APR 2022 12:35
+This is pdfTeX, Version 3.14159265-2.6-1.40.19 (TeX Live 2018) (preloaded format=pdflatex 2018.9.27)  30 APR 2022 15:04
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -415,721 +415,726 @@ Package pdftex.def Info: images/FigureS1.png  used on input line 66.
 
 LaTeX Warning: Citation `fojo2021' on page 3 undefined on input line 68.
 
-<images/FigureS2.png, id=21, 747.79375pt x 608.2725pt>
-File: images/FigureS2.png Graphic file (type png)
-<use images/FigureS2.png>
-Package pdftex.def Info: images/FigureS2.png  used on input line 74.
-(pdftex.def)             Requested size: 406.51875pt x 330.67125pt.
-[3 <./images/FigureS1.png>]
-<images/FigureS3.png, id=27, 575.14874pt x 449.68pt>
-File: images/FigureS3.png Graphic file (type png)
-<use images/FigureS3.png>
-Package pdftex.def Info: images/FigureS3.png  used on input line 82.
+<images/FigureS2_Table.png, id=21, 575.14874pt x 449.68pt>
+File: images/FigureS2_Table.png Graphic file (type png)
+<use images/FigureS2_Table.png>
+Package pdftex.def Info: images/FigureS2_Table.png  used on input line 75.
 (pdftex.def)             Requested size: 406.51875pt x 317.84782pt.
- [4 <./images/FigureS2.png>]
-LaTeX Font Info:    Try loading font information for OMS+cmr on input line 86.
+[3 <./images/FigureS1.png>]
+LaTeX Font Info:    Try loading font information for OMS+cmr on input line 79.
 
 (/usr/local/texlive/2018/texmf-dist/tex/latex/base/omscmr.fd
 File: omscmr.fd 2014/09/29 v2.5h Standard LaTeX font definitions
 )
 LaTeX Font Info:    Font shape `OMS/cmr/m/n' in size <10> not available
-(Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 86.
-<images/FigureS4.png, id=32, 546.04pt x 447.6725pt>
+(Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 79.
+<images/FigureS3_Table.png, id=27, 546.04pt x 447.6725pt>
+File: images/FigureS3_Table.png Graphic file (type png)
+<use images/FigureS3_Table.png>
+Package pdftex.def Info: images/FigureS3_Table.png  used on input line 84.
+(pdftex.def)             Requested size: 406.51875pt x 333.28758pt.
+ [4 <./images/FigureS2_Table.png>]
+<images/FigureS4.png, id=33, 840.13875pt x 648.4225pt>
 File: images/FigureS4.png Graphic file (type png)
 <use images/FigureS4.png>
-Package pdftex.def Info: images/FigureS4.png  used on input line 91.
-(pdftex.def)             Requested size: 406.51875pt x 333.28758pt.
- [5 <./images/FigureS3.png>]
-<images/FigureS5_1.png, id=38, 474.77374pt x 541.02126pt>
-File: images/FigureS5_1.png Graphic file (type png)
-<use images/FigureS5_1.png>
-Package pdftex.def Info: images/FigureS5_1.png  used on input line 100.
-(pdftex.def)             Requested size: 406.51875pt x 463.26317pt.
- [6 <./images/FigureS4.png>] [7 <./images/FigureS5_1.png>]
-<images/FigureS5_2.png, id=48, 460.72125pt x 239.89626pt>
-File: images/FigureS5_2.png Graphic file (type png)
-<use images/FigureS5_2.png>
-Package pdftex.def Info: images/FigureS5_2.png  used on input line 108.
-(pdftex.def)             Requested size: 406.51875pt x 211.67307pt.
-<images/FigureS6_1.png, id=49, 526.96875pt x 581.17125pt>
+Package pdftex.def Info: images/FigureS4.png  used on input line 92.
+(pdftex.def)             Requested size: 406.51875pt x 313.75237pt.
+ [5 <./images/FigureS3_Table.png>]
+<images/FigureS5.png, id=38, 747.79375pt x 608.2725pt>
+File: images/FigureS5.png Graphic file (type png)
+<use images/FigureS5.png>
+Package pdftex.def Info: images/FigureS5.png  used on input line 101.
+(pdftex.def)             Requested size: 406.51875pt x 330.67125pt.
+ [6 <./images/FigureS4.png>]
+<images/FigureS6_1.png, id=43, 474.77374pt x 541.02126pt>
 File: images/FigureS6_1.png Graphic file (type png)
 <use images/FigureS6_1.png>
-Package pdftex.def Info: images/FigureS6_1.png  used on input line 116.
-(pdftex.def)             Requested size: 406.51875pt x 448.35457pt.
- [8 <./images/FigureS5_2.png>] [9 <./images/FigureS6_1.png>]
-<images/FigureS6_2.png, id=58, 524.96124pt x 292.09125pt>
+Package pdftex.def Info: images/FigureS6_1.png  used on input line 109.
+(pdftex.def)             Requested size: 406.51875pt x 463.26317pt.
+
+[7 <./images/FigureS5.png>] [8 <./images/FigureS6_1.png>]
+<images/FigureS6_2.png, id=53, 460.72125pt x 239.89626pt>
 File: images/FigureS6_2.png Graphic file (type png)
 <use images/FigureS6_2.png>
-Package pdftex.def Info: images/FigureS6_2.png  used on input line 123.
+Package pdftex.def Info: images/FigureS6_2.png  used on input line 117.
+(pdftex.def)             Requested size: 406.51875pt x 211.67307pt.
+<images/FigureS7_1.png, id=54, 526.96875pt x 581.17125pt>
+File: images/FigureS7_1.png Graphic file (type png)
+<use images/FigureS7_1.png>
+Package pdftex.def Info: images/FigureS7_1.png  used on input line 125.
+(pdftex.def)             Requested size: 406.51875pt x 448.35457pt.
+ [9 <./images/FigureS6_2.png>] [10 <./images/FigureS7_1.png>]
+<images/FigureS7_2.png, id=63, 524.96124pt x 292.09125pt>
+File: images/FigureS7_2.png Graphic file (type png)
+<use images/FigureS7_2.png>
+Package pdftex.def Info: images/FigureS7_2.png  used on input line 132.
 (pdftex.def)             Requested size: 406.51875pt x 226.19453pt.
-<images/FigureS7.png, id=59, 840.13875pt x 648.4225pt>
-File: images/FigureS7.png Graphic file (type png)
-<use images/FigureS7.png>
-Package pdftex.def Info: images/FigureS7.png  used on input line 131.
-(pdftex.def)             Requested size: 406.51875pt x 313.75237pt.
- [10 <./images/FigureS6_2.png> <./images/FigureS7.png>]
-Overfull \hbox (1.50848pt too wide) in paragraph at lines 510--510
+ [11 <./images/FigureS7_2.png>]
+Overfull \hbox (1.50848pt too wide) in paragraph at lines 517--517
  []\OT1/cmr/bx/n/10 Estimate| 
  []
 
 
-Overfull \hbox (4.75478pt too wide) in paragraph at lines 510--510
+Overfull \hbox (4.75478pt too wide) in paragraph at lines 517--517
  []\OT1/cmr/bx/n/10 Symbol/ 
  []
 
 
-Overfull \hbox (33.21632pt too wide) in alignment at lines 510--510
+Overfull \hbox (33.21632pt too wide) in alignment at lines 517--517
  [] [] [] [] [] 
  []
 
 
-Overfull \hbox (1.50848pt too wide) in paragraph at lines 510--510
+Overfull \hbox (1.50848pt too wide) in paragraph at lines 517--517
  []\OT1/cmr/bx/n/10 Estimate| 
  []
 
 
-Overfull \hbox (4.75478pt too wide) in paragraph at lines 510--510
+Overfull \hbox (4.75478pt too wide) in paragraph at lines 517--517
  []\OT1/cmr/bx/n/10 Symbol/ 
  []
 
 
-Overfull \hbox (33.21632pt too wide) in alignment at lines 510--510
+Overfull \hbox (33.21632pt too wide) in alignment at lines 517--517
  [] [] [] [] [] 
  []
 
 
-Overfull \hbox (33.21632pt too wide) in alignment at lines 510--510
+Overfull \hbox (33.21632pt too wide) in alignment at lines 517--517
  [] [] [] [] [] 
  []
 
 
-Overfull \hbox (33.21632pt too wide) in alignment at lines 510--510
+Overfull \hbox (33.21632pt too wide) in alignment at lines 517--517
  [] [] [] [] [] 
  []
 
 
-LaTeX Warning: Citation `hivatlas' on page 11 undefined on input line 510.
+LaTeX Warning: Citation `hivatlas' on page 12 undefined on input line 517.
 
 
-LaTeX Warning: Citation `hivatlas' on page 11 undefined on input line 510.
+LaTeX Warning: Citation `hivatlas' on page 12 undefined on input line 517.
 
 
-LaTeX Warning: Citation `hivatlas' on page 11 undefined on input line 510.
+LaTeX Warning: Citation `hivatlas' on page 12 undefined on input line 517.
 
 
-LaTeX Warning: Citation `twenge2017' on page 11 undefined on input line 510.
+LaTeX Warning: Citation `twenge2017' on page 12 undefined on input line 517.
 
 
-LaTeX Warning: Citation `abma2017' on page 11 undefined on input line 510.
+LaTeX Warning: Citation `abma2017' on page 12 undefined on input line 517.
 
 
-LaTeX Warning: Citation `twenge2017' on page 11 undefined on input line 510.
+LaTeX Warning: Citation `twenge2017' on page 12 undefined on input line 517.
 
 
-LaTeX Warning: Citation `abma2017' on page 11 undefined on input line 510.
+LaTeX Warning: Citation `abma2017' on page 12 undefined on input line 517.
 
 
-LaTeX Warning: Citation `nhbs24' on page 11 undefined on input line 510.
+LaTeX Warning: Citation `nhbs24' on page 12 undefined on input line 517.
 
 
-LaTeX Warning: Citation `strathdee1997' on page 11 undefined on input line 510.
+LaTeX Warning: Citation `strathdee1997' on page 12 undefined on input line 517.
 
 
 
-LaTeX Warning: Citation `nhbs24' on page 11 undefined on input line 510.
+LaTeX Warning: Citation `nhbs24' on page 12 undefined on input line 517.
 
 
-LaTeX Warning: Citation `shah2016' on page 11 undefined on input line 510.
+LaTeX Warning: Citation `shah2016' on page 12 undefined on input line 517.
 
 
-LaTeX Warning: Citation `nhbs19' on page 11 undefined on input line 510.
+LaTeX Warning: Citation `nhbs19' on page 12 undefined on input line 517.
 
 
-LaTeX Warning: Citation `shah2016' on page 11 undefined on input line 510.
+LaTeX Warning: Citation `shah2016' on page 12 undefined on input line 517.
 
 
-LaTeX Warning: Citation `marks2005' on page 11 undefined on input line 510.
+LaTeX Warning: Citation `marks2005' on page 12 undefined on input line 517.
 
 
-LaTeX Warning: Citation `marks2006' on page 11 undefined on input line 510.
+LaTeX Warning: Citation `marks2006' on page 12 undefined on input line 517.
 
 
-LaTeX Warning: Citation `eisinger2019' on page 11 undefined on input line 510.
+LaTeX Warning: Citation `eisinger2019' on page 12 undefined on input line 517.
 
 
-LaTeX Warning: Citation `pathela2006' on page 11 undefined on input line 510.
+LaTeX Warning: Citation `pathela2006' on page 12 undefined on input line 517.
 
 
-LaTeX Warning: Citation `pathela2006' on page 11 undefined on input line 510.
+LaTeX Warning: Citation `pathela2006' on page 12 undefined on input line 517.
 
 
-LaTeX Warning: Citation `jenness2010' on page 11 undefined on input line 510.
+LaTeX Warning: Citation `jenness2010' on page 12 undefined on input line 517.
 
 
-LaTeX Warning: Citation `bohl2011' on page 11 undefined on input line 510.
+LaTeX Warning: Citation `bohl2011' on page 12 undefined on input line 517.
 
 
-LaTeX Warning: Citation `mutanski2014' on page 11 undefined on input line 510.
+LaTeX Warning: Citation `mutanski2014' on page 12 undefined on input line 517.
 
 
-LaTeX Warning: Citation `fujimoto2015' on page 11 undefined on input line 510.
+LaTeX Warning: Citation `fujimoto2015' on page 12 undefined on input line 517.
 
 
-LaTeX Warning: Citation `hamilton2015' on page 11 undefined on input line 510.
+LaTeX Warning: Citation `hamilton2015' on page 12 undefined on input line 517.
 
 
-LaTeX Warning: Citation `chow2016' on page 11 undefined on input line 510.
+LaTeX Warning: Citation `chow2016' on page 12 undefined on input line 517.
 
 
-LaTeX Warning: Citation `abma2017' on page 11 undefined on input line 510.
+LaTeX Warning: Citation `abma2017' on page 12 undefined on input line 517.
 
 
-LaTeX Warning: Citation `lindau2007' on page 11 undefined on input line 510.
+LaTeX Warning: Citation `lindau2007' on page 12 undefined on input line 517.
 
 
-LaTeX Warning: Citation `smith2018' on page 11 undefined on input line 510.
+LaTeX Warning: Citation `smith2018' on page 12 undefined on input line 517.
 
 
-LaTeX Warning: Citation `glick2018' on page 11 undefined on input line 510.
+LaTeX Warning: Citation `glick2018' on page 12 undefined on input line 517.
 
 
-Overfull \hbox (1.47275pt too wide) in paragraph at lines 510--510
+Overfull \hbox (1.47275pt too wide) in paragraph at lines 517--517
  []\OT1/cmr/m/n/10 Estimated 
  []
 
 
-LaTeX Warning: Citation `smith2018' on page 11 undefined on input line 510.
+LaTeX Warning: Citation `smith2018' on page 12 undefined on input line 517.
 
 
-LaTeX Warning: Citation `nsduh' on page 11 undefined on input line 510.
+LaTeX Warning: Citation `nsduh' on page 12 undefined on input line 517.
 
 
-LaTeX Warning: Citation `nsduh' on page 11 undefined on input line 510.
+LaTeX Warning: Citation `nsduh' on page 12 undefined on input line 517.
 
 
-LaTeX Warning: Citation `nhbs8' on page 11 undefined on input line 510.
+LaTeX Warning: Citation `nhbs8' on page 12 undefined on input line 517.
 
 
-LaTeX Warning: Citation `nhbs11' on page 11 undefined on input line 510.
+LaTeX Warning: Citation `nhbs11' on page 12 undefined on input line 517.
 
 
-LaTeX Warning: Citation `nhbs13' on page 11 undefined on input line 510.
+LaTeX Warning: Citation `nhbs13' on page 12 undefined on input line 517.
 
 
-LaTeX Warning: Citation `nhbs15' on page 11 undefined on input line 510.
+LaTeX Warning: Citation `nhbs15' on page 12 undefined on input line 517.
 
 
-LaTeX Warning: Citation `nhbs18' on page 11 undefined on input line 510.
+LaTeX Warning: Citation `nhbs18' on page 12 undefined on input line 517.
 
 
-LaTeX Warning: Citation `nhbs19' on page 11 undefined on input line 510.
+LaTeX Warning: Citation `nhbs19' on page 12 undefined on input line 517.
 
 
-LaTeX Warning: Citation `nhbs22' on page 11 undefined on input line 510.
+LaTeX Warning: Citation `nhbs22' on page 12 undefined on input line 517.
 
 
-LaTeX Warning: Citation `nhbs24' on page 11 undefined on input line 510.
+LaTeX Warning: Citation `nhbs24' on page 12 undefined on input line 517.
 
 
-LaTeX Warning: Citation `brfss.13.17' on page 11 undefined on input line 510.
+LaTeX Warning: Citation `brfss.13.17' on page 12 undefined on input line 517.
 
 
-LaTeX Warning: Citation `cdc18.2' on page 11 undefined on input line 510.
+LaTeX Warning: Citation `cdc18.2' on page 12 undefined on input line 517.
 
 
-LaTeX Warning: Citation `cdc18.5' on page 11 undefined on input line 510.
+LaTeX Warning: Citation `cdc18.5' on page 12 undefined on input line 517.
 
 
-LaTeX Warning: Citation `cdc19.3' on page 11 undefined on input line 510.
+LaTeX Warning: Citation `cdc19.3' on page 12 undefined on input line 517.
 
 
-LaTeX Warning: Citation `cdc20.2' on page 11 undefined on input line 510.
+LaTeX Warning: Citation `cdc20.2' on page 12 undefined on input line 517.
 
 
-LaTeX Warning: Citation `cdc21.4' on page 11 undefined on input line 510.
+LaTeX Warning: Citation `cdc21.4' on page 12 undefined on input line 517.
 
 
-LaTeX Warning: Citation `cdc22.2' on page 11 undefined on input line 510.
+LaTeX Warning: Citation `cdc22.2' on page 12 undefined on input line 517.
 
 
-LaTeX Warning: Citation `cdc23.4' on page 11 undefined on input line 510.
+LaTeX Warning: Citation `cdc23.4' on page 12 undefined on input line 517.
 
 
-LaTeX Warning: Citation `cdc24.3' on page 11 undefined on input line 510.
+LaTeX Warning: Citation `cdc24.3' on page 12 undefined on input line 517.
 
 
-LaTeX Warning: Citation `cdc25.2' on page 11 undefined on input line 510.
+LaTeX Warning: Citation `cdc25.2' on page 12 undefined on input line 517.
 
 
-LaTeX Warning: Citation `finlayson2019' on page 11 undefined on input line 510.
+LaTeX Warning: Citation `finlayson2019' on page 12 undefined on input line 517.
 
 
 
-LaTeX Warning: Citation `holloway2017' on page 11 undefined on input line 510.
+LaTeX Warning: Citation `holloway2017' on page 12 undefined on input line 517.
 
 
-LaTeX Warning: Citation `nhbs22' on page 11 undefined on input line 510.
+LaTeX Warning: Citation `nhbs22' on page 12 undefined on input line 517.
 
 
-LaTeX Warning: Citation `nhbs19' on page 11 undefined on input line 510.
+LaTeX Warning: Citation `nhbs19' on page 12 undefined on input line 517.
 
 
-LaTeX Warning: Citation `nhbs24' on page 11 undefined on input line 510.
+LaTeX Warning: Citation `nhbs24' on page 12 undefined on input line 517.
 
 
-LaTeX Warning: Citation `finlayson2019' on page 11 undefined on input line 510.
+LaTeX Warning: Citation `finlayson2019' on page 12 undefined on input line 517.
 
 
 
-LaTeX Warning: Citation `holloway2017' on page 11 undefined on input line 510.
+LaTeX Warning: Citation `holloway2017' on page 12 undefined on input line 517.
 
 
-LaTeX Warning: Citation `nhbs22' on page 11 undefined on input line 510.
+LaTeX Warning: Citation `nhbs22' on page 12 undefined on input line 517.
 
 
-LaTeX Warning: Citation `nhbs24' on page 11 undefined on input line 510.
+LaTeX Warning: Citation `nhbs24' on page 12 undefined on input line 517.
 
 
-LaTeX Warning: Citation `nhbs22' on page 11 undefined on input line 510.
+LaTeX Warning: Citation `nhbs22' on page 12 undefined on input line 517.
 
 
-LaTeX Warning: Citation `nhbs24' on page 11 undefined on input line 510.
+LaTeX Warning: Citation `nhbs24' on page 12 undefined on input line 517.
 
 
-LaTeX Warning: Citation `nhbs22' on page 11 undefined on input line 510.
+LaTeX Warning: Citation `nhbs22' on page 12 undefined on input line 517.
 
 
-LaTeX Warning: Citation `coy2019' on page 11 undefined on input line 510.
+LaTeX Warning: Citation `coy2019' on page 12 undefined on input line 517.
 
 
-LaTeX Warning: Citation `mccormack2016' on page 11 undefined on input line 510.
+LaTeX Warning: Citation `mccormack2016' on page 12 undefined on input line 517.
 
 
 
-LaTeX Warning: Citation `baeten2012' on page 11 undefined on input line 510.
+LaTeX Warning: Citation `baeten2012' on page 12 undefined on input line 517.
 
 
-LaTeX Warning: Citation `choopanya2013' on page 11 undefined on input line 510.
+LaTeX Warning: Citation `choopanya2013' on page 12 undefined on input line 517.
 
 
 
-LaTeX Warning: Citation `grey2016' on page 11 undefined on input line 510.
+LaTeX Warning: Citation `grey2016' on page 12 undefined on input line 517.
 
 
-LaTeX Warning: Citation `lansky2015' on page 11 undefined on input line 510.
+LaTeX Warning: Citation `lansky2015' on page 12 undefined on input line 517.
 
 
-LaTeX Warning: Citation `bhaskaran2008' on page 11 undefined on input line 510.
+LaTeX Warning: Citation `bhaskaran2008' on page 12 undefined on input line 517.
 
 
 
-LaTeX Warning: Citation `cdc24.5' on page 11 undefined on input line 510.
+LaTeX Warning: Citation `cdc24.5' on page 12 undefined on input line 517.
 
 
-LaTeX Warning: Citation `cdc14' on page 11 undefined on input line 510.
+LaTeX Warning: Citation `cdc14' on page 12 undefined on input line 517.
 
 
-LaTeX Warning: Citation `cdc23' on page 11 undefined on input line 510.
+LaTeX Warning: Citation `cdc23' on page 12 undefined on input line 517.
 
 
-LaTeX Warning: Citation `cdc23' on page 11 undefined on input line 510.
+LaTeX Warning: Citation `cdc23' on page 12 undefined on input line 517.
 
 
-LaTeX Warning: Citation `cdc24.5' on page 11 undefined on input line 510.
+LaTeX Warning: Citation `cdc24.5' on page 12 undefined on input line 517.
 
 
-LaTeX Warning: Citation `cdc14' on page 11 undefined on input line 510.
+LaTeX Warning: Citation `cdc14' on page 12 undefined on input line 517.
 
 
-LaTeX Warning: Citation `cdc23' on page 11 undefined on input line 510.
+LaTeX Warning: Citation `cdc23' on page 12 undefined on input line 517.
 
 
-LaTeX Warning: Citation `cdc23' on page 11 undefined on input line 510.
+LaTeX Warning: Citation `cdc23' on page 12 undefined on input line 517.
 
 
-LaTeX Warning: Citation `cdc24.5' on page 11 undefined on input line 510.
+LaTeX Warning: Citation `cdc24.5' on page 12 undefined on input line 517.
 
 
-LaTeX Warning: Citation `cdc14' on page 11 undefined on input line 510.
+LaTeX Warning: Citation `cdc14' on page 12 undefined on input line 517.
 
 
-LaTeX Warning: Citation `cdc23' on page 11 undefined on input line 510.
+LaTeX Warning: Citation `cdc23' on page 12 undefined on input line 517.
 
 
-LaTeX Warning: Citation `cdc23' on page 11 undefined on input line 510.
+LaTeX Warning: Citation `cdc23' on page 12 undefined on input line 517.
 
 
-LaTeX Warning: Citation `mathers2014' on page 11 undefined on input line 510.
+LaTeX Warning: Citation `mathers2014' on page 12 undefined on input line 517.
 
 
-LaTeX Warning: Citation `nsduh' on page 11 undefined on input line 510.
+LaTeX Warning: Citation `nsduh' on page 12 undefined on input line 517.
 
 
-Overfull \hbox (33.21632pt too wide) in alignment at lines 510--510
+Overfull \hbox (33.21632pt too wide) in alignment at lines 517--517
  [] [] [] [] [] 
  []
 
-[11] [12] [13] [14] [15] [16] [17] [18]
+[12] [13] [14] [15] [16] [17] [18] [19]
 
-LaTeX Warning: Citation `hivatlas' on page 19 undefined on input line 533.
-
-
-LaTeX Warning: Citation `msa2010' on page 19 undefined on input line 533.
+LaTeX Warning: Citation `hivatlas' on page 20 undefined on input line 540.
 
 
-LaTeX Warning: Citation `msa2011' on page 19 undefined on input line 533.
+LaTeX Warning: Citation `msa2010' on page 20 undefined on input line 540.
 
 
-LaTeX Warning: Citation `msa2013' on page 19 undefined on input line 533.
+LaTeX Warning: Citation `msa2011' on page 20 undefined on input line 540.
 
 
-LaTeX Warning: Citation `msa2014' on page 19 undefined on input line 533.
+LaTeX Warning: Citation `msa2013' on page 20 undefined on input line 540.
 
 
-LaTeX Warning: Citation `msa2015' on page 19 undefined on input line 533.
+LaTeX Warning: Citation `msa2014' on page 20 undefined on input line 540.
 
 
-LaTeX Warning: Citation `msa2016' on page 19 undefined on input line 533.
+LaTeX Warning: Citation `msa2015' on page 20 undefined on input line 540.
 
 
-LaTeX Warning: Citation `cdc24.2' on page 19 undefined on input line 533.
+LaTeX Warning: Citation `msa2016' on page 20 undefined on input line 540.
 
 
-LaTeX Warning: Citation `hivatlas' on page 19 undefined on input line 538.
+LaTeX Warning: Citation `cdc24.2' on page 20 undefined on input line 540.
 
 
-LaTeX Warning: Citation `msa2010' on page 19 undefined on input line 538.
+LaTeX Warning: Citation `hivatlas' on page 20 undefined on input line 545.
 
 
-LaTeX Warning: Citation `msa2011' on page 19 undefined on input line 538.
+LaTeX Warning: Citation `msa2010' on page 20 undefined on input line 545.
 
 
-LaTeX Warning: Citation `msa2013' on page 19 undefined on input line 538.
+LaTeX Warning: Citation `msa2011' on page 20 undefined on input line 545.
 
 
-LaTeX Warning: Citation `msa2014' on page 19 undefined on input line 538.
+LaTeX Warning: Citation `msa2013' on page 20 undefined on input line 545.
 
 
-LaTeX Warning: Citation `msa2015' on page 19 undefined on input line 538.
+LaTeX Warning: Citation `msa2014' on page 20 undefined on input line 545.
 
 
-LaTeX Warning: Citation `msa2016' on page 19 undefined on input line 538.
+LaTeX Warning: Citation `msa2015' on page 20 undefined on input line 545.
 
 
-LaTeX Warning: Citation `cdc24.2' on page 19 undefined on input line 538.
+LaTeX Warning: Citation `msa2016' on page 20 undefined on input line 545.
 
 
-LaTeX Warning: Citation `msa2010' on page 19 undefined on input line 543.
+LaTeX Warning: Citation `cdc24.2' on page 20 undefined on input line 545.
 
 
-LaTeX Warning: Citation `msa2011' on page 19 undefined on input line 543.
+LaTeX Warning: Citation `msa2010' on page 20 undefined on input line 550.
 
 
-LaTeX Warning: Citation `msa2013' on page 19 undefined on input line 543.
+LaTeX Warning: Citation `msa2011' on page 20 undefined on input line 550.
 
 
-LaTeX Warning: Citation `msa2014' on page 19 undefined on input line 543.
+LaTeX Warning: Citation `msa2013' on page 20 undefined on input line 550.
 
 
-LaTeX Warning: Citation `msa2015' on page 19 undefined on input line 543.
+LaTeX Warning: Citation `msa2014' on page 20 undefined on input line 550.
 
 
-LaTeX Warning: Citation `msa2016' on page 19 undefined on input line 543.
+LaTeX Warning: Citation `msa2015' on page 20 undefined on input line 550.
 
 
-LaTeX Warning: Citation `cdc24.2' on page 19 undefined on input line 543.
+LaTeX Warning: Citation `msa2016' on page 20 undefined on input line 550.
 
 
-LaTeX Warning: Citation `hivatlas' on page 19 undefined on input line 546.
+LaTeX Warning: Citation `cdc24.2' on page 20 undefined on input line 550.
 
 
-LaTeX Warning: Citation `aidsvu_prep' on page 19 undefined on input line 554.
+LaTeX Warning: Citation `hivatlas' on page 20 undefined on input line 553.
 
 
-LaTeX Warning: Citation `brfss.13.17' on page 19 undefined on input line 559.
+LaTeX Warning: Citation `aidsvu_prep' on page 20 undefined on input line 561.
 
 
-LaTeX Warning: Citation `nsduh' on page 19 undefined on input line 562.
+LaTeX Warning: Citation `brfss.13.17' on page 20 undefined on input line 566.
 
 
-LaTeX Warning: Citation `apids' on page 19 undefined on input line 566.
+LaTeX Warning: Citation `nsduh' on page 20 undefined on input line 569.
 
 
-LaTeX Warning: Citation `apids' on page 19 undefined on input line 569.
+LaTeX Warning: Citation `apids' on page 20 undefined on input line 573.
 
-[19] [20] [21] [22] [23] [24]
-Overfull \hbox (14.4267pt too wide) in paragraph at lines 877--918
-[][] 
- []
 
-[25]
-Overfull \hbox (14.4267pt too wide) in paragraph at lines 923--964
+LaTeX Warning: Citation `apids' on page 20 undefined on input line 576.
+
+[20] [21] [22] [23] [24] [25]
+Overfull \hbox (14.4267pt too wide) in paragraph at lines 884--925
 [][] 
  []
 
 [26]
-Overfull \hbox (14.4267pt too wide) in paragraph at lines 969--1011
+Overfull \hbox (14.4267pt too wide) in paragraph at lines 930--971
 [][] 
  []
 
-[27] [28] [29] [30] [31] [32] [33] [34]
-<base/images/idu_transitions.png, id=149, 850.6179pt x 200.9106pt>
+[27]
+Overfull \hbox (14.4267pt too wide) in paragraph at lines 976--1018
+[][] 
+ []
+
+[28] [29] [30] [31] [32] [33] [34] [35]
+<base/images/idu_transitions.png, id=152, 850.6179pt x 200.9106pt>
 File: base/images/idu_transitions.png Graphic file (type png)
 <use base/images/idu_transitions.png>
 Package pdftex.def Info: base/images/idu_transitions.png  used on input line 13
-40.
+47.
 (pdftex.def)             Requested size: 406.51875pt x 96.01906pt.
 
-Underfull \hbox (badness 10000) in paragraph at lines 1350--1353
+Underfull \hbox (badness 10000) in paragraph at lines 1357--1360
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 1350--1353
+Underfull \hbox (badness 10000) in paragraph at lines 1357--1360
 
  []
 
-[35 <./base/images/idu_transitions.png>]
-Overfull \hbox (8.04794pt too wide) detected at line 1387
+[36 <./base/images/idu_transitions.png>]
+Overfull \hbox (8.04794pt too wide) detected at line 1394
 \OML/cmm/m/it/10 transmissibility[]\OT1/cmr/m/n/10 (\OML/cmm/m/it/10 t\OT1/cmr/
 m/n/10 ) = []
  []
 
-LaTeX Font Info:    Try loading font information for U+bbm on input line 1419.
+LaTeX Font Info:    Try loading font information for U+bbm on input line 1426.
 (/usr/local/texlive/2018/texmf-dist/tex/latex/bbm-macros/ubbm.fd
 File: ubbm.fd 1999/03/15 V 1.2 Font definition for bbm font - TH
-) [36] [37]
-[38] [39]
+) [37] [38]
+[39] [40]
 
-LaTeX Warning: Citation `haario2001' on page 40 undefined on input line 1594.
-
-
-LaTeX Warning: Citation `andrieu2008' on page 40 undefined on input line 1594.
-
-[40]
-
-LaTeX Warning: Citation `gelman2014' on page 41 undefined on input line 1619.
-
-[41] [42]
-
-LaTeX Warning: Citation `hanna2009' on page 43 undefined on input line 1776.
+LaTeX Warning: Citation `haario2001' on page 41 undefined on input line 1601.
 
 
-LaTeX Warning: Citation `trepka2011' on page 43 undefined on input line 1776.
+LaTeX Warning: Citation `andrieu2008' on page 41 undefined on input line 1601.
+
+[41]
+
+LaTeX Warning: Citation `gelman2014' on page 42 undefined on input line 1626.
+
+[42] [43]
+
+LaTeX Warning: Citation `hanna2009' on page 44 undefined on input line 1783.
 
 
-LaTeX Warning: Citation `fojo2017' on page 43 undefined on input line 1808.
-
-[43]
-
-LaTeX Warning: Citation `hivatlas' on page 44 undefined on input line 1830.
+LaTeX Warning: Citation `trepka2011' on page 44 undefined on input line 1783.
 
 
-LaTeX Warning: Citation `msa2010' on page 44 undefined on input line 1830.
-
-
-LaTeX Warning: Citation `msa2011' on page 44 undefined on input line 1830.
-
-
-LaTeX Warning: Citation `msa2013' on page 44 undefined on input line 1830.
-
-
-LaTeX Warning: Citation `msa2014' on page 44 undefined on input line 1830.
-
-
-LaTeX Warning: Citation `msa2015' on page 44 undefined on input line 1830.
-
-
-LaTeX Warning: Citation `msa2016' on page 44 undefined on input line 1830.
-
-
-LaTeX Warning: Citation `cdc24.2' on page 44 undefined on input line 1830.
-
-
-LaTeX Warning: Citation `hivatlas' on page 44 undefined on input line 1859.
-
-
-LaTeX Warning: Citation `msa2010' on page 44 undefined on input line 1859.
-
-
-LaTeX Warning: Citation `msa2011' on page 44 undefined on input line 1859.
-
-
-LaTeX Warning: Citation `msa2013' on page 44 undefined on input line 1859.
-
-
-LaTeX Warning: Citation `msa2014' on page 44 undefined on input line 1859.
-
-
-LaTeX Warning: Citation `msa2015' on page 44 undefined on input line 1859.
-
-
-LaTeX Warning: Citation `msa2016' on page 44 undefined on input line 1859.
-
-
-LaTeX Warning: Citation `cdc24.2' on page 44 undefined on input line 1859.
+LaTeX Warning: Citation `fojo2017' on page 44 undefined on input line 1815.
 
 [44]
 
-LaTeX Warning: Citation `msa2010' on page 45 undefined on input line 1887.
+LaTeX Warning: Citation `hivatlas' on page 45 undefined on input line 1837.
 
 
-LaTeX Warning: Citation `msa2011' on page 45 undefined on input line 1887.
+LaTeX Warning: Citation `msa2010' on page 45 undefined on input line 1837.
 
 
-LaTeX Warning: Citation `msa2013' on page 45 undefined on input line 1887.
+LaTeX Warning: Citation `msa2011' on page 45 undefined on input line 1837.
 
 
-LaTeX Warning: Citation `msa2014' on page 45 undefined on input line 1887.
+LaTeX Warning: Citation `msa2013' on page 45 undefined on input line 1837.
 
 
-LaTeX Warning: Citation `msa2015' on page 45 undefined on input line 1887.
+LaTeX Warning: Citation `msa2014' on page 45 undefined on input line 1837.
 
 
-LaTeX Warning: Citation `msa2016' on page 45 undefined on input line 1887.
+LaTeX Warning: Citation `msa2015' on page 45 undefined on input line 1837.
 
 
-LaTeX Warning: Citation `cdc24.2' on page 45 undefined on input line 1887.
+LaTeX Warning: Citation `msa2016' on page 45 undefined on input line 1837.
 
 
-LaTeX Warning: Citation `hanna2009' on page 45 undefined on input line 1895.
+LaTeX Warning: Citation `cdc24.2' on page 45 undefined on input line 1837.
 
 
-LaTeX Warning: Citation `trepka2011' on page 45 undefined on input line 1895.
+LaTeX Warning: Citation `hivatlas' on page 45 undefined on input line 1866.
 
 
-LaTeX Warning: Citation `hanna2009' on page 45 undefined on input line 1895.
+LaTeX Warning: Citation `msa2010' on page 45 undefined on input line 1866.
 
 
-LaTeX Warning: Citation `trepka2011' on page 45 undefined on input line 1895.
+LaTeX Warning: Citation `msa2011' on page 45 undefined on input line 1866.
+
+
+LaTeX Warning: Citation `msa2013' on page 45 undefined on input line 1866.
+
+
+LaTeX Warning: Citation `msa2014' on page 45 undefined on input line 1866.
+
+
+LaTeX Warning: Citation `msa2015' on page 45 undefined on input line 1866.
+
+
+LaTeX Warning: Citation `msa2016' on page 45 undefined on input line 1866.
+
+
+LaTeX Warning: Citation `cdc24.2' on page 45 undefined on input line 1866.
 
 [45]
 
-LaTeX Warning: Citation `hivatlas' on page 46 undefined on input line 1910.
+LaTeX Warning: Citation `msa2010' on page 46 undefined on input line 1894.
+
+
+LaTeX Warning: Citation `msa2011' on page 46 undefined on input line 1894.
+
+
+LaTeX Warning: Citation `msa2013' on page 46 undefined on input line 1894.
+
+
+LaTeX Warning: Citation `msa2014' on page 46 undefined on input line 1894.
+
+
+LaTeX Warning: Citation `msa2015' on page 46 undefined on input line 1894.
+
+
+LaTeX Warning: Citation `msa2016' on page 46 undefined on input line 1894.
+
+
+LaTeX Warning: Citation `cdc24.2' on page 46 undefined on input line 1894.
+
+
+LaTeX Warning: Citation `hanna2009' on page 46 undefined on input line 1902.
+
+
+LaTeX Warning: Citation `trepka2011' on page 46 undefined on input line 1902.
+
+
+LaTeX Warning: Citation `hanna2009' on page 46 undefined on input line 1902.
+
+
+LaTeX Warning: Citation `trepka2011' on page 46 undefined on input line 1902.
 
 [46]
 
-LaTeX Warning: Citation `aidsvu_prep' on page 47 undefined on input line 1979.
-
-
-LaTeX Warning: Citation `maccannell2015' on page 47 undefined on input line 198
-6.
-
-
-LaTeX Warning: Citation `sullivan2018' on page 47 undefined on input line 1986.
-
+LaTeX Warning: Citation `hivatlas' on page 47 undefined on input line 1917.
 
 [47]
 
-LaTeX Warning: Citation `maccannell2015' on page 48 undefined on input line 205
-1.
+LaTeX Warning: Citation `aidsvu_prep' on page 48 undefined on input line 1986.
 
 
-LaTeX Warning: Citation `siegler2018' on page 48 undefined on input line 2053.
+LaTeX Warning: Citation `maccannell2015' on page 48 undefined on input line 199
+3.
 
 
-LaTeX Warning: Citation `aidsvu_prep' on page 48 undefined on input line 2053.
+LaTeX Warning: Citation `sullivan2018' on page 48 undefined on input line 1993.
 
-
-LaTeX Warning: Citation `sullivan2018' on page 48 undefined on input line 2055.
-
-
-
-LaTeX Warning: `!h' float specifier changed to `!ht'.
 
 [48]
 
-LaTeX Warning: Citation `cdc_prep_guidelines' on page 49 undefined on input lin
-e 2068.
+LaTeX Warning: Citation `maccannell2015' on page 49 undefined on input line 205
+8.
 
 
-LaTeX Warning: Citation `nhbs24' on page 49 undefined on input line 2068.
+LaTeX Warning: Citation `siegler2018' on page 49 undefined on input line 2060.
 
 
-LaTeX Warning: Citation `nhbs22' on page 49 undefined on input line 2068.
+LaTeX Warning: Citation `aidsvu_prep' on page 49 undefined on input line 2060.
 
 
-LaTeX Warning: Citation `nhbs19' on page 49 undefined on input line 2068.
+LaTeX Warning: Citation `sullivan2018' on page 49 undefined on input line 2062.
 
-
-LaTeX Warning: Citation `nhbs22' on page 49 undefined on input line 2085.
-
-
-LaTeX Warning: Citation `nhbs24' on page 49 undefined on input line 2102.
-
-
-LaTeX Warning: Citation `nhbs19' on page 49 undefined on input line 2119.
-
-
-LaTeX Warning: Citation `mosher2005' on page 49 undefined on input line 2136.
-
-
-LaTeX Warning: Citation `lindau2007' on page 49 undefined on input line 2136.
 
 
 LaTeX Warning: `!h' float specifier changed to `!ht'.
 
 [49]
 
-LaTeX Warning: Citation `brfss.13.17' on page 50 undefined on input line 2152.
+LaTeX Warning: Citation `cdc_prep_guidelines' on page 50 undefined on input lin
+e 2075.
 
 
-LaTeX Warning: Citation `nhbs8' on page 50 undefined on input line 2188.
+LaTeX Warning: Citation `nhbs24' on page 50 undefined on input line 2075.
 
 
-LaTeX Warning: Citation `nhbs11' on page 50 undefined on input line 2188.
+LaTeX Warning: Citation `nhbs22' on page 50 undefined on input line 2075.
 
 
-LaTeX Warning: Citation `nhbs13' on page 50 undefined on input line 2188.
+LaTeX Warning: Citation `nhbs19' on page 50 undefined on input line 2075.
 
 
-LaTeX Warning: Citation `nhbs15' on page 50 undefined on input line 2188.
+LaTeX Warning: Citation `nhbs22' on page 50 undefined on input line 2092.
 
 
-LaTeX Warning: Citation `nhbs18' on page 50 undefined on input line 2188.
+LaTeX Warning: Citation `nhbs24' on page 50 undefined on input line 2109.
 
 
-LaTeX Warning: Citation `nhbs19' on page 50 undefined on input line 2188.
+LaTeX Warning: Citation `nhbs19' on page 50 undefined on input line 2126.
 
 
-LaTeX Warning: Citation `nhbs22' on page 50 undefined on input line 2188.
+LaTeX Warning: Citation `mosher2005' on page 50 undefined on input line 2143.
 
 
-LaTeX Warning: Citation `nhbs24' on page 50 undefined on input line 2188.
-
-[50] [51] [52]
-
-LaTeX Warning: Citation `nsduh' on page 53 undefined on input line 2324.
+LaTeX Warning: Citation `lindau2007' on page 50 undefined on input line 2143.
 
 
-LaTeX Warning: Citation `cdc14' on page 53 undefined on input line 2359.
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+[50]
+
+LaTeX Warning: Citation `brfss.13.17' on page 51 undefined on input line 2159.
 
 
-LaTeX Warning: Citation `cdc14' on page 53 undefined on input line 2366.
+LaTeX Warning: Citation `nhbs8' on page 51 undefined on input line 2195.
 
-[53]
 
-LaTeX Warning: Citation `cdc14' on page 54 undefined on input line 2412.
+LaTeX Warning: Citation `nhbs11' on page 51 undefined on input line 2195.
 
-[54] [55] [56] [57] [58]
 
-LaTeX Warning: Citation `nsduh' on page 59 undefined on input line 2693.
+LaTeX Warning: Citation `nhbs13' on page 51 undefined on input line 2195.
 
-[59]
-Underfull \hbox (badness 10000) in paragraph at lines 2728--2729
+
+LaTeX Warning: Citation `nhbs15' on page 51 undefined on input line 2195.
+
+
+LaTeX Warning: Citation `nhbs18' on page 51 undefined on input line 2195.
+
+
+LaTeX Warning: Citation `nhbs19' on page 51 undefined on input line 2195.
+
+
+LaTeX Warning: Citation `nhbs22' on page 51 undefined on input line 2195.
+
+
+LaTeX Warning: Citation `nhbs24' on page 51 undefined on input line 2195.
+
+[51] [52] [53]
+
+LaTeX Warning: Citation `nsduh' on page 54 undefined on input line 2331.
+
+
+LaTeX Warning: Citation `cdc14' on page 54 undefined on input line 2366.
+
+
+LaTeX Warning: Citation `cdc14' on page 54 undefined on input line 2373.
+
+[54]
+
+LaTeX Warning: Citation `cdc14' on page 55 undefined on input line 2419.
+
+[55] [56] [57] [58] [59]
+
+LaTeX Warning: Citation `nsduh' on page 60 undefined on input line 2700.
+
+[60]
+Underfull \hbox (badness 10000) in paragraph at lines 2735--2736
 
  []
 
-[60] [61]
+[61] [62]
 No file Supplement_RB.bbl.
-[62] (./Supplement_RB.aux)
+[63] (./Supplement_RB.aux)
 
 LaTeX Warning: There were undefined references.
+
+
+LaTeX Warning: Label(s) may have changed. Rerun to get cross-references right.
 
  ) 
 Here is how much of TeX's memory you used:
  5778 strings out of 492649
- 84167 string characters out of 6129622
+ 84227 string characters out of 6129622
  512313 words of memory out of 5000000
  9529 multiletter control sequences out of 15000+600000
  18532 words of font info for 67 fonts, out of 8000000 for 9000
@@ -1165,10 +1170,10 @@ e/2018/texmf-dist/fonts/type1/public/amsfonts/cm/cmr9.pfb></usr/local/texlive/2
 /texmf-dist/fonts/type1/public/amsfonts/cm/cmsy7.pfb></usr/local/texlive/2018/t
 exmf-dist/fonts/type1/public/amsfonts/cm/cmti10.pfb></usr/local/texlive/2018/te
 xmf-dist/fonts/type1/public/amsfonts/cm/cmti12.pfb>
-Output written on Supplement_RB.pdf (62 pages, 1991304 bytes).
+Output written on Supplement_RB.pdf (63 pages, 1991960 bytes).
 PDF statistics:
- 348 PDF objects out of 1000 (max. 8388607)
- 231 compressed objects within 3 object streams
+ 351 PDF objects out of 1000 (max. 8388607)
+ 233 compressed objects within 3 object streams
  0 named destinations out of 1000 (max. 500000)
  51 words of extra memory for PDF output out of 10000 (max. 10000000)
 
