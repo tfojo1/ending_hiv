@@ -70,11 +70,15 @@ do.get.raw.estimates <- function(dir.name=c('full','quick')[1],
         else
             print(paste0(" --> simulations were INCOMPLETE. Not saving"))
         
+        est
     }
     else if (verbose)
     {
         print(paste0("skipping '", suffix, "' run for ", msa.names(msa)))
+        
+        NULL
     }
+    
 }
 
 assemble.estimates.and.intervals <- function(dir.name=c('full','quick')[1],

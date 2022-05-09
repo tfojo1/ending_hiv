@@ -164,7 +164,7 @@ prepare.simset.for.interventions <- function(simset,
                                                               needle.exchange.rr = BASE_PARAMETER_VALUES['needle.exchange.rr'])
         }
         
-        get.components.fn = get.components.function.for.version(VERSION.MANAGER, components$settings$VERSION)
+        get.components.fn = get.components.function.for.version(components$settings$VERSION)
         components = get.components.fn(parameters, components)
         
 #        if (fix.components)

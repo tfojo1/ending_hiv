@@ -2,7 +2,7 @@
 source('code/source_code.R')
 
 msa = JACKSON.MSA
-chain = 2
+chain = 1
 
 # Get the cache and run it
 cache.dirs = list.dirs(file.path(SYSTEMATIC.ROOT.DIR, 'systematic_caches'), recursive = F)
@@ -16,7 +16,7 @@ if (sum(mask)>1)
 cache.dir = cache.dirs[mask]
 print(qplot(1,1) + ggtitle(paste0(msa.names(msa), " - ", chain)) + theme(plot.title=element_text(hjust=1)))
 
-set.seed(123456)
+set.seed(1234)
 mcmc = run.mcmc.for.msa.cache(cache.dir, chains=chain)
 
                               

@@ -3,18 +3,26 @@ source('code/source_code.R')
 source('code/execution/extract_and_run.R')
 source('code/applications/ehe/create_ehe_intervention_presets.R')
 source('code/applications/ehe/ehe_systematic_intervention_sets.R')
-msas = DENVER.MSA
+msas = JACKSON.MSA
+CHUNK = 1
 
-INTERVENTION.CODES.TO.DO = c(EHE.TALK.INTERVENTION.CODES,
-                             setdiff(WEB.TOOL.INTERVENTION.CODES, EHE.TALK.INTERVENTION.CODES))
-INTERVENTION.CODES.TO.DO = rev(c(INTERVENTION.CODES.TO.DO[!grepl('23.27', INTERVENTION.CODES.TO.DO)],
-                                 INTERVENTION.CODES.TO.DO[grepl('23.27', INTERVENTION.CODES.TO.DO)]))
+N.CHUNKS = 1
+
+INTERVENTION.CODES.TO.DO = c(setdiff(WEB.TOOL.INTERVENTION.CODES, EHE.TALK.INTERVENTION.CODES),
+                             EHE.TALK.INTERVENTION.CODES)
+#INTERVENTION.CODES.TO.DO = rev(c(INTERVENTION.CODES.TO.DO[!grepl('23.27', INTERVENTION.CODES.TO.DO)],
+#                                 INTERVENTION.CODES.TO.DO[grepl('23.27', INTERVENTION.CODES.TO.DO)]))
 INTERVENTIONS.TO.DO = lapply(INTERVENTION.CODES.TO.DO, intervention.from.code)
+
+mask = ((1:length(INTERVENTIONS.TO.DO)-1)%%N.CHUNKS+1) == CHUNK
+INTERVENTIONS.TO.DO = INTERVENTIONS.TO.DO[mask]
 
 for (msa in msas)
 {
     print("---------------------------------------------------------------------------")
     print(paste0("RUNNING FOR MSA ", toupper(msa.names(msa))))
+    if (N.CHUNKS>1)
+        print(paste0("Chunk ", CHUNK))
     print("---------------------------------------------------------------------------")
     
     print(qplot(1,1) + ggtitle(paste0(msa.names(msa), " (", msa, ")")) + theme(plot.title=element_text(hjust=1)))
