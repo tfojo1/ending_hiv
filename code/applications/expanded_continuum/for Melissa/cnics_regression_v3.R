@@ -1,4 +1,4 @@
-SAVE = T
+SAVE = F
 MELISSAS.FILE = "~/Dropbox/Documents_local/Hopkins/PhD/Dissertation/EHE/CNICS/synthetic_fixed_from2007_2021-12-07.Rdata"
 TODDS.FILE = 'Q:/CNICS/cleaned/2021/cnics_fixed_from2007_2021-12-07.Rdata'
 if (file.exists(MELISSAS.FILE))
@@ -698,16 +698,7 @@ output <- list(
     
     anchor.year=anchor.year)
 
-##-- ONE LAST CORRECTION for proportion lost --##
-
-print("CORRECTING THE LOST INTERCEPTS")
-
-DESIRED.OVERALL.P.RETAINED = 0.775 
-#this is the average of all four metric for https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4334738/
-# (since we're not taking a stance on which metric is most valid)
-
-desired.p.lost = 1-DESIRED.OVERALL.P.RETAINED
-#calculate the actual p lost
+##-- Correct proportion reengaged --##
 
 imputed.all = rbind(
     imputed.engaged.suppressed,
@@ -733,6 +724,24 @@ predict.from.coefficients <- function(coefs, df)
     
     1 / (1+exp(-lo))
 }
+
+DESIRED.OVERALL.P.REENGAGED = mean(
+    .482, #https://aidsrestherapy.biomedcentral.com/articles/10.1186/s12981-021-00398-0
+    .52 #Abrams, referenced in https://link.springer.com/article/10.1007/s10461-021-03365-y
+)
+
+
+##-- ONE LAST CORRECTION for proportion lost --##
+
+print("CORRECTING THE LOST INTERCEPTS")
+
+DESIRED.OVERALL.P.RETAINED = 0.775 
+#this is the average of all four metric for https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4334738/
+# (since we're not taking a stance on which metric is most valid)
+
+desired.p.lost = 1-DESIRED.OVERALL.P.RETAINED
+#calculate the actual p lost
+
 
 desired.lo.lost = log(desired.p.lost) - log(1-desired.p.lost)
 actual.p.lost = mean(imputed.all$lost.future)

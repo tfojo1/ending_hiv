@@ -61,7 +61,7 @@ source('code/calibration/likelihoods/likelihood_master.R')
 #-- Systematic --#
 source('code/processing//postprocessing.R')
 source('code/execution//systematic_calibration.R')
-source('code/calibration/starting_value_generator.R')
+source('code/execution/starting_values/starting_value_generator.R')
 source('code/core_code/setup/compression.R')
 source('code/core_code/time_text.R') #from commoncode, for printing updates
 

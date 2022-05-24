@@ -29,7 +29,7 @@ SETTINGS.COLLAPSED.CONTINUUM$VERSION = 'collapsed_1.0'
 VERSION.MANAGER = register.version(version=SETTINGS.COLLAPSED.CONTINUUM$VERSION,
                                    settings=SETTINGS.COLLAPSED.CONTINUUM,
                                    prior.versions=character(),
-                                   directory.suffix = '')
+                                   directory.suffix = '_collapsed')
 
 ##-- FOR EXPANDED CONTINUUM --#
 

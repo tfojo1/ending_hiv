@@ -132,39 +132,56 @@ setup.initial.mcmc.for.msa <- function(msa,
 }
 
 get.initial.starting.parameters <- function(msa,
-                                            version)
+                                            version,
+                                            verbose=T,
+                                            allow.beta.values=F)
 {
     # Start values:
     # The order of preference for values is:
     # 1) Start values for this version
-    # 2) A prior run for an earlier version
-    # 3) Start values for a prior version
+    # 2) beta start values for this version
+    # 3) A prior run for an earlier version
+    # 4) Start values for a prior version
+    # 5) beta start values for a prior version
     
     starting.parameters = NULL
     for (version.to.pull in c(version, get.prior.versions(version)))
     {
         prior.simset.filename = get.full.filename(location=msa)
-        prior.run.file = file.path(SYSTEMATIC.ROOT.DIR,
-                                   paste0('full_simsets', get.directory.suffix.for.version(version.to.pull)),
+        prior.run.file = file.path(SIMULATIONS.DIR,
+                                   paste0('baseline', get.directory.suffix.for.version(version.to.pull)),
                                    prior.simset.filename)
 
         if (version != version.to.pull &&
             file.exists(prior.run.file))
         {
             load(prior.run.file)
-            print(paste0("* Getting starting parameters from prior run for version '", version.to.pull))
+            if (verbose)
+                print(paste0("* Getting starting parameters from prior run for version '", version.to.pull))
             starting.parameters = simset@parameters[simset@n.sim,]
         }
         else
         {
-            start.value.file = file.path(SYSTEMATIC.ROOT.DIR, 
-                                         'start_values',
+            start.value.file = file.path(START.VALUES.DIR,
                                          version.to.pull,
                                          paste0(msa, '.Rdata'))
             if (file.exists(start.value.file))
             {
-                print(paste0("* Getting starting parameters from start_values file for version '", version.to.pull))
+                if (verbose)
+                    print(paste0("* Getting starting parameters from start_values file for version '", version.to.pull))
                 load(start.value.file)
+            }
+            else if (allow.beta.values)
+            {
+                beta.start.value.file = file.path(START.VALUES.DIR,
+                                                  paste0(version.to.pull, '_beta'),
+                                                  paste0(msa, '.Rdata'))
+                if (file.exists(beta.start.value.file))
+                {
+                    if (verbose)
+                        print(paste0("* Getting starting parameters from BETA start_values file for version '", version.to.pull))
+                    load(beta.start.value.file)
+                }
             }
         }
         
@@ -179,7 +196,6 @@ get.initial.starting.parameters <- function(msa,
     
     # If the starting parameters don't match what we need for the version
     #  start at the median values
-    
     prior = get.parameters.prior.for.version(version=version)
     starting.parameters.to.use = suppressWarnings(get.medians(prior))
     matching.names = intersect(names(starting.parameters), names(starting.parameters.to.use))

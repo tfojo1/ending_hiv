@@ -1,6 +1,7 @@
 
 source('code/calibration/target_msas.R')
-msa = BATON.ROUGE.MSA
+msa = BALTIMORE.MSA
+source('code/settings_and_files/systematic_settings.R')
 source('code/processing/for_talks/talk_plot_settings.R')
 
 DO.RENDER = T
@@ -16,7 +17,7 @@ COVID.YEARS = 2015:2025
 
 
 # load up and save the simsets
-if (is.desktop)
+if (ON.DESKTOP)
 {
     source('code/source_code.R')
     
@@ -26,22 +27,20 @@ if (is.desktop)
     delayed.filename = paste0('1.0_',msa,'_covid.delayed.mobility.Rdata')
     rapid.filename = paste0('1.0_',msa,'_covid.rapid.resumption.mobility.Rdata')
     
-    src.dir = 'Q:/Ending_HIV/mcmc_runs'
-    if (!file.exists(file.path(src.dir, 'covid_simsets', msa, delayed.filename)))
-        src.dir = 'Q:/Ending_HIV/full_runs_from_annals/mcmc_runs'
+    src.dir = 'Q:/JHEEM/simulations'
     
     #-- Load Simsets --#
     
-    load(file.path(src.dir, 'full_simsets', base.filename))
+    load(file.path(src.dir, 'baseline_collapsed', base.filename))
     base = simset
     
-    load(file.path(src.dir, 'full_simsets', msa, noint.filename))
+    load(file.path(src.dir, 'ehe', msa, noint.filename))
     noint = simset
     
-    load(file.path(src.dir, 'covid_simsets', msa, delayed.filename))
+    load(file.path(src.dir, 'covid', msa, delayed.filename))
     delayed = simset
     
-    load(file.path(src.dir, 'covid_simsets', msa, rapid.filename))
+    load(file.path(src.dir, 'covid', msa, rapid.filename))
     rapid = simset
     
     
@@ -95,13 +94,13 @@ if (is.desktop)
 
 #RUN ON LAPTOP - for making plots
 
-if (!is.desktop && !exists('base.all'))
+if (!ON.DESKTOP && !exists('base.all'))
 {
     x=load(file=paste0('tmp/covid_simsets_for_talk_plots_',msa,'.Rdata'))
 }
 
 
-if (!is.desktop && DO.RENDER)
+if (!ON.DESKTOP && DO.RENDER)
 {
     print("*** RENDERING ***")
     # All - individual lines
@@ -226,7 +225,7 @@ if (!is.desktop && DO.RENDER)
                                 label.axis.ci=F,
                                 y.axis.title.function = Y.TITLE.FUNCTION
     ); x.i$plot
-    print(paste0('ALL, WITH COVID: ', 
+    print(paste0('BAD, WITH COVID: ', 
                  format(ceiling(abs(x.i$change.df[2,3])),big.mark=','), ' ', 
                  "(", ceiling(100*abs(x.i$change.df[2,3])/x.i$change.df[1,6]), "%) ",
                  ifelse(x.i$change.df[2,3]<0, 'fewer', 'more'),
@@ -342,29 +341,33 @@ if (1==2)
 }
 
 
-# For the boxplots
 
-LOCATION.BOXPLOT.PANEL.HEIGHT = 5
-LOCATION.BOXPLOT.PANEL.WIDTH = 10
-BOXPLOT.THEME = THEME + theme(legend.position = 'none',
-                              text = element_text(size=24),
-                              axis.text.x = element_text(angle = 45, hjust=1))#, vjust = 0.5, hjust=1))
-
-COVID.COLORS = PALETTE(6)[-5]#[c(1,2,5,3,4)]
-#COLORS = PALETTE(7)[-c(5,6)]#[c(1,2,5,3,4)]
-names(COVID.COLORS) = c('baseline',
-                  'covid.rapid.resumption.mobility',
-                  'covid.delayed.mobility',
-                  'rebound.sexual.transmission',
-                  'rebound.sex.delayed.hiv.care')
-
-
-PNG.POINT.SIZE = 5
-RES = 600
 
 if (1==2)
 {
-  
+    library(ggsci)
+    PALETTE = pal_jama()
+    
+    # For the boxplots
+    LOCATION.BOXPLOT.PANEL.HEIGHT = 5
+    LOCATION.BOXPLOT.PANEL.WIDTH = 10
+    BOXPLOT.THEME = THEME + theme(legend.position = 'none',
+                                  text = element_text(size=24),
+                                  axis.text.x = element_text(angle = 45, hjust=1))#, vjust = 0.5, hjust=1))
+    
+    COVID.COLORS = PALETTE(6)[-5]#[c(1,2,5,3,4)]
+    #COLORS = PALETTE(7)[-c(5,6)]#[c(1,2,5,3,4)]
+    names(COVID.COLORS) = c('baseline',
+                            'covid.rapid.resumption.mobility',
+                            'covid.delayed.mobility',
+                            'rebound.sexual.transmission',
+                            'rebound.sex.delayed.hiv.care')
+    
+    
+    PNG.POINT.SIZE = 5
+    RES = 600
+    
+    
   load('results/covid/covid_4.2_results.Rdata')
   source('code/applications/covid/covid_plots.R')
     

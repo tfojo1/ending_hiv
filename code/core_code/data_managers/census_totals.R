@@ -73,6 +73,8 @@ get.census.totals <- function(census.totals, location, years=census.totals$years
         stop(paste0("The following locations are not present in the census totals data:",
                     paste0(location, collapse=', ')))
 
+    years.to.pull = years
+    years = sort(union(census.totals$years, years))
     
     rv = t(sapply(as.character(years), function(year){
         if (any(as.numeric(year)==census.totals$years))
@@ -93,15 +95,18 @@ get.census.totals <- function(census.totals, location, years=census.totals$years
         dimnames(rv) = list(year=as.character(years), location=location)
     }
     
-    if (any(is.na(rv)))
+    if (any(is.na(rv[as.character(years.to.pull),])))
     {
         if ((is.logical(interpolate.missing.years) && interpolate.missing.years) ||
             interpolate.missing.years=='all')
         {
             dim.names = dimnames(rv)
             dim.rv = dim(rv)
+            
             rv = apply(rv, 2, function(values){
-                if (any(is.na(values)))
+                if (all(is.na(values)))
+                    stop("No census total values")
+                else if (any(is.na(values)))
                     interpolate.parameters(values = values[!is.na(values)],
                                            value.times = as.numeric(years[!is.na(values)]),
                                            desired.times = as.numeric(years),
@@ -131,7 +136,6 @@ get.census.totals <- function(census.totals, location, years=census.totals$years
                 rv[to.interpolate.mask,] = apply(rv, 2, function(values){
                     if (any(is.na(values[to.interpolate.mask])))
                     {
-                        browser()
                         interpolate.parameters(values = values[to.interpolate.mask & !is.na(values)],
                                                value.times = as.numeric(years[to.interpolate.mask & !is.na(values)]),
                                                desired.times = as.numeric(years[to.interpolate.mask]),
@@ -145,29 +149,31 @@ get.census.totals <- function(census.totals, location, years=census.totals$years
         else
             stop("Invalid value for interpolate.missing.years")
     }
-
+    
+    dim.names = list(year=years, location=location)
+    dim(rv) = sapply(dim.names, length)
+    dimnames(rv) = dim.names
+    
+    # pull out just the years we're actually interested in
+    rv = rv[as.character(years.to.pull),]
+    dim.names = list(year=years.to.pull, location=location)
+    
+    dim(rv) = sapply(dim.names, length)
+    dimnames(rv) = dim.names
+    
     if (length(location)==1)
     {
-        if (!flatten.single.dim.array)
-        {
-            dim.names = list(year=years, location=location)
-            dim(rv) = c(year=length(years), location=1)
-            dimnames(rv) = dim.names
-        }
-        else
+        if (flatten.single.dim.array)
             rv = rv[,1]
     }
-    else
+    else if (collapse.counties)
     {
-        if (collapse.counties)
+        rv = rowSums(rv)
+        if (!flatten.single.dim.array)
         {
-            rv = rowSums(rv)
-            if (!flatten.single.dim.array)
-            {
-                dim.names = list(year=years, location=collapsed.name)
-                dim(rv) = c(year=length(years), location=1)
-                dimnames(rv) = dim.names
-            }
+            dim.names = list(year=years, location=collapsed.name)
+            dim(rv) = c(year=length(years), location=1)
+            dimnames(rv) = dim.names
         }
     }
 

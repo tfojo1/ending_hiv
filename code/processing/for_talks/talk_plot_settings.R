@@ -11,10 +11,10 @@ if (!exists('msa'))
 print('*****************************')
 print(paste0("** MSA is ", msa, " (", msa.names(msa), ") **"))
 
-is.desktop = dir.exists('Q:Ending_HIV')
-if (is.desktop)
+is.desktop = ON.DESKTOP
+if (ON.DESKTOP)
     print("** Running on DESKTOP **")
-if (!is.desktop)
+if (!ON.DESKTOP)
     print("** Running on LAPTOP **")
 
 print('*****************************')
@@ -64,11 +64,15 @@ names(INTERVENTION.COLORS) = c(
     'base',
     'int1',
     'int2',
+    'ex4',
     'ex1',
     'ex2',
-    'ex3',
-    'ex4'
+    'ex3'
 )
+
+# to visualize the colors:
+if (1==2)
+    qplot(1:8, fill=names(INTERVENTION.COLORS)) + scale_fill_manual(values=INTERVENTION.COLORS)
 
 ##-- RENDER A PLOTLY TO PNG WITH A SPECIFIC RESOLUTION --#
 do.save.plot <- function(plot,

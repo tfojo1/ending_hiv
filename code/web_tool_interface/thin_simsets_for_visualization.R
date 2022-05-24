@@ -10,6 +10,11 @@ if (1==2)
     prepare.simsets.for.visualization(locations=c(DENVER.MSA))
 }
 
+prepare.baseline.simsets.for.visualization <- function()
+{
+    
+}
+
 prepare.simsets.for.visualization <- function(locations=TARGET.MSAS,
                                               src.dir=file.path(SYSTEMATIC.ROOT.DIR, 'full_simsets'),
                                               dst.dir=file.path(SYSTEMATIC.ROOT.DIR, 'visualization_simsets'),

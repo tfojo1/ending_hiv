@@ -128,6 +128,8 @@ simplot <- function(...,
                     sim.linetype.by = c('auto','none','split','sim')[1],
                     sim.line.types = c('solid','dashed','dotted','twodash','longdash'),
                     
+                    ncol=NULL,
+                    
                     # Misc Low-level Settings
                     aggregate.statistic = 'mean',
                     ci.coverage=0.95,
@@ -775,7 +777,7 @@ simplot <- function(...,
     #-- The Facet Wrap --#
     facet.elements = c('data.type', facet.by)
     facet.formula = as.formula(paste0('~', paste0(facet.elements, collapse='+')))
-    rv = rv + facet_wrap(facet.formula, scales='free_y')    
+    rv = rv + facet_wrap(facet.formula, scales='free_y', ncol=ncol)    
 
     
     #-- Axis Titles and Labels --#

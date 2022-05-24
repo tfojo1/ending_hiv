@@ -1,21 +1,22 @@
 
 source('code/calibration/target_msas.R')
-msa = SEATTLE.MSA
+msa = BALTIMORE.MSA
+source('code/settings_and_files/systematic_settings.R')
 source('code/processing/for_talks/talk_plot_settings.R')
 
 DO.INTERVENTIONS = T
 
 #RUN ON DESKTOP - to save interventions
-if (is.desktop)
+if (ON.DESKTOP)
 {
     #expanded.int1 = 'mi.t2x_het.t1x_23.27'
     #expanded.int2 = 'all.p25_23.27'
     #expanded.int3 = 'all.s90_23.27'
     
-    expanded.int1 = 'all.p10_23.27'
-    expanded.int2 = 'all.p25_23.27'
-    expanded.int3 = 'mi.t2x_het.t1x_23.27'
-    expanded.int4 = 'all.s90_23.27'
+    expanded.int1 = 'all.p25_23.27'
+    expanded.int2 = 'mi.t2x_het.t1x_23.27'
+    expanded.int3 = 'all.s90_23.27'
+    expanded.int4 = 'all.marginal.t125.p05.s10_23.27'
     
     ex1.filename = paste0('1.0_',msa,'_', expanded.int1, '.Rdata')
     ex2.filename = paste0('1.0_',msa,'_', expanded.int2, '.Rdata')
@@ -23,9 +24,7 @@ if (is.desktop)
     ex4.filename = paste0('1.0_',msa,'_', expanded.int4, '.Rdata')
     
     
-    src.dir = 'Q:/Ending_HIV/mcmc_runs/full_simsets'
-    if (!file.exists(file.path(src.dir, msa, ex1.filename)))
-        src.dir = 'Q:/Ending_HIV/full_runs_from_annals/mcmc_runs/full_simsets'
+    src.dir = 'Q:/JHEEM/simulations/ehe'
     
     
     load(file.path(src.dir, msa, ex1.filename))
@@ -48,21 +47,21 @@ if (is.desktop)
 
 #RUN ON LAPTOP - for making plots
 
-if (!is.desktop &&
+if (!ON.DESKTOP &&
     (!exists('base') || 
     attr(base@simulations[[1]], 'location')!=msa))
 {
     load(file=paste0('tmp/simsets_for_talk_plots_',msa,'.Rdata'))
 }
 
-if (!is.desktop &&
+if (!ON.DESKTOP &&
     (!exists('ex1') || 
     attr(ex1@simulations[[1]], 'location')!=msa))
 {
     load(file=paste0('tmp/simsets_for_talk_expanded_plots_',msa,'.Rdata'))
 }
 
-if (DO.INTERVENTIONS && !is.desktop)
+if (DO.INTERVENTIONS && !ON.DESKTOP)
 {
     # EX 1
     y1.n = panel.b = plot.simulations.flex(list(base, noint, ex1), data.type='new', years=2010:2030,

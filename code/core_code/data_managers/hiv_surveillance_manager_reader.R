@@ -3105,7 +3105,7 @@ BRFSS.URLS = list(
 
 
 read.testing.from.brfss <- function(surv,
-                                    dir='Q:Ending_HIV/large_cleaned_data/brfss/brfss_msa/',
+                                    dir='Q:JHEEM/large_cleaned_data/brfss/brfss_msa/',
                                     src='BRFSS',
                                     geography=c('msa','state')[1],
                                     details= if (geography=='msa') 'BRFSS Smart Cities' else 'BRFSS',

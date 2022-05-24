@@ -1,9 +1,35 @@
 
-SYSTEMATIC.ROOT.DIR = '../work-tfojo1/Ending_HIV/mcmc_runs' #for the cluster
+##--------------------------------##
+##-- PATHS to MAJOR DIRECTORIES --##
+##--------------------------------##
+
+COMPUTER.LOCATION = 'cluster'
+SYSTEMATIC.ROOT.DIR = '../work-tfojo1/Ending_HIV/' #for the cluster
 if (!dir.exists(SYSTEMATIC.ROOT.DIR))
-    SYSTEMATIC.ROOT.DIR = 'Q:Ending_HIV/mcmc_runs'
+{
+    SYSTEMATIC.ROOT.DIR = 'Q:JHEEM'
+    COMPUTER.LOCATION = 'desktop'
+}
 if (!dir.exists(SYSTEMATIC.ROOT.DIR))
-    SYSTEMATIC.ROOT.DIR = 'mcmc_runs'
+{
+    SYSTEMATIC.ROOT.DIR = '.'
+    COMPUTER.LOCATION = 'laptop'
+}
+
+SIMULATIONS.DIR = file.path(SYSTEMATIC.ROOT.DIR, 'simulations')
+MCMC.DIR = file.path(SYSTEMATIC.ROOT.DIR, 'mcmc_runs')
+RESULTS.DIR = file.path(SYSTEMATIC.ROOT.DIR, 'results')
+START.VALUES.DIR = file.path(SYSTEMATIC.ROOT.DIR, 'start_values')
+
+ON.LAPTOP = COMPUTER.LOCATION == 'laptop'
+ON.DESKTOP = COMPUTER.LOCATION == 'desktop'
+ON.CLUSTER = COMPUTER.LOCATION == 'cluster'
+
+
+##------------------------------------------##
+##--      SOME CONVENIENCE FUNCTIONS      --##
+##-- (for pulling mcmc runs by location)  --##
+##------------------------------------------##
 
 load.mcmc.from.dir <- function(location, 
                               dir=file.path(SYSTEMATIC.ROOT.DIR, 'systematic_initial'))

@@ -27,11 +27,12 @@ if (1==2)
 
 SAVE.TO.DIR = '../Manuscripts/manuscript_1/Annals Submission/revision 1/tables/'
 
-do.get.raw.estimates <- function(dir.name=c('full','quick')[1],
+do.get.raw.estimates <- function(simulations.dir = file.path(SYSTEMATIC.ROOT.DIR, 'full_simsets'),
+                                 store.in.dir = file.path(SYSTEMATIC.ROOT.DIR, '..', 'results', 'scratch'),
                                  msa,
                                  suffix='',
                                  interventions=MAIN.INTERVENTIONS.23.27,
-                                 n.sim=c(full=1000, quick=50)[dir.name],
+                                 n.sim=1000,
                                  verbose=T,
                                  year1=2020,
                                  year2=2030,
@@ -42,16 +43,14 @@ do.get.raw.estimates <- function(dir.name=c('full','quick')[1],
     if (nchar(suffix) > 0 && !grepl("^_", suffix))
         suffix = paste0("_", suffix)
     
-    dir = file.path(SYSTEMATIC.ROOT.DIR, paste0(dir.name, "_simsets"))
-    save.dir = file.path(SYSTEMATIC.ROOT.DIR, '..', 'results', dir.name, 'scratch')
-    filename = file.path(save.dir, paste0(msa, suffix, '.Rdata'))
+    filename = file.path(store.in.dir, paste0(msa, suffix, '.Rdata'))
     
     if (overwrite || !file.exists(filename))
     {
         if (verbose)
             print(paste0("Doing '", suffix, "' run for ", msa.names(msa)))
         
-        est=get.raw.estimates(dir=dir,
+        est=get.raw.estimates(dir=simulations.dir,
                                     msas=msa,
                                     interventions=interventions,
                                     n.sim=n.sim,
@@ -63,8 +62,8 @@ do.get.raw.estimates <- function(dir.name=c('full','quick')[1],
         if (save.if.incomplete || sum(is.na(est))==0)
         {
             print(paste0(" --> Done. Saving"))
-            if (!dir.exists(save.dir))
-                dir.create(save.dir, recursive = T)
+            if (!dir.exists(store.in.dir))
+                dir.create(store.in.dir, recursive = T)
             save(est, file=filename)
         }
         else

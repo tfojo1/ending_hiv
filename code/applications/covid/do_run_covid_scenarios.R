@@ -13,7 +13,7 @@ SCENARIOS.TO.RUN = list(
 )
 
 
-locations = DENVER.MSA #TARGET.MSAS[(8-1)*4 + 1:4] #c(BALTIMORE.MSA, NYC.MSA)
+locations = BALTIMORE.MSA #TARGET.MSAS[(8-1)*4 + 1:4] #c(BALTIMORE.MSA, NYC.MSA)
 
 test = F
 run = T
@@ -26,10 +26,7 @@ if (run)
         loc = locations[i]
         print(paste0("RUNNING ", length(SCENARIOS.TO.RUN), " SCENARIO(s) FOR ", loc, " (", i, " of ", length(locations), ")"))
         
-        if (test)
-            dir = file.path(SYSTEMATIC.ROOT.DIR, 'quick_simsets')
-        else
-            dir = file.path(SYSTEMATIC.ROOT.DIR, 'full_simsets')
+        dir = file.path(SIMULATIONS.DIR, 'baseline_collapsed')
         
         file = file.path(dir, paste0('1.0_', loc, '_full.Rdata'))
         
@@ -37,12 +34,18 @@ if (run)
         if (test)
             simset = subset.simset(simset, 1:5)
         
+        if (test)
+            dst.dir = file.path(SIMULATIONS.DIR, 'covid_test')
+        else
+            dst.dir = file.path(SIMULATIONS.DIR, 'covid')
+        
         run.systematic.interventions(simset,
-                                     dst.dir = file.path(SYSTEMATIC.ROOT.DIR, 'covid_simsets'),
+                                     dst.dir = dst.dir,
                                      interventions = SCENARIOS.TO.RUN,
                                      compress = T,
                                      pare.components = T,
-                                     compress.cd4=F)
+                                     compress.cd4=F, 
+                                     save.baseline.and.seed = F)
     }
 }
 
@@ -53,7 +56,8 @@ if (process)
     {
         print(paste0("Processing ", loc))
         outcomes.sub.arr = process.covid.outcomes(locations=loc)
-        save(outcomes.sub.arr, file = paste0('results/covid/subs/covid_4.2_results_',loc,'.Rdata'))
+        save(outcomes.sub.arr,
+             file = file.path(RESULTS.DIR, 'covid','subs', paste0('covid_4.2_results_',loc,'.Rdata')))
     }
     
 }

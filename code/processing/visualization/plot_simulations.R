@@ -219,6 +219,7 @@ do.plot.simulations <- function(
                                     years=years,
                                     keep.dimensions=keep.dimensions,
                                     dimension.subsets = dimension.subsets)
+        
         if (!is.null(one.df.truth))
             one.df.truth$data.type = data.type #data.type.names[data.type]
         

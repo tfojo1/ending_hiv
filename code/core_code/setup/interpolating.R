@@ -3,6 +3,9 @@ interpolate.parameters <- function(values,
                                    desired.times,
                                    return.list=T)
 {
+    if (length(values)==0)
+        stop("'values' cannot be empty")
+    
     fn = function(time){
         
         n.times = length(value.times)
