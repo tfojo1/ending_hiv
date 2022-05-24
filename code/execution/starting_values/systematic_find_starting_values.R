@@ -242,7 +242,7 @@ do.test.starting.values <- function(run.simulation.function,
 #'@param beta Whether this should be saved as a beta starting parameters set
 save.starting.values <- function(sim.and.params,
                                  parameters=sim.and.params$parameters,
-                                 location=attr(sim.and.param$sim, 'location'),
+                                 location=attr(sim.and.params$sim, 'location'),
                                  version=sim.and.params$version,
                                  beta=F)
 {
