@@ -134,7 +134,8 @@ setup.initial.mcmc.for.msa <- function(msa,
 get.initial.starting.parameters <- function(msa,
                                             version,
                                             verbose=T,
-                                            allow.beta.values=F)
+                                            allow.beta.values=F,
+                                            require.beta.values=F)
 {
     # Start values:
     # The order of preference for values is:
@@ -153,7 +154,8 @@ get.initial.starting.parameters <- function(msa,
                                    prior.simset.filename)
 
         if (version != version.to.pull &&
-            file.exists(prior.run.file))
+            file.exists(prior.run.file) &&
+            !require.beta.values)
         {
             load(prior.run.file)
             if (verbose)
@@ -165,7 +167,7 @@ get.initial.starting.parameters <- function(msa,
             start.value.file = file.path(START.VALUES.DIR,
                                          version.to.pull,
                                          paste0(msa, '.Rdata'))
-            if (file.exists(start.value.file))
+            if (file.exists(start.value.file) && !require.beta.values)
             {
                 if (verbose)
                     print(paste0("* Getting starting parameters from start_values file for version '", version.to.pull))

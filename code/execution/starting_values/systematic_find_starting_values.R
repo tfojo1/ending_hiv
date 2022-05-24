@@ -14,11 +14,13 @@ source('code/execution/systematic_calibration.R')
 #' $version - the version number passed
 create.test.starting.values.function <- function(location,
                                                  version,
-                                                 verbose=F)
+                                                 verbose=F,
+                                                 from.beta.values=T)
 {
     starting.parameters = get.initial.starting.parameters(msa=location,
                                                           version=version,
                                                           allow.beta.values=T,
+                                                          require.beta.values=from.beta.values,
                                                           verbose=verbose)
     
     run.simulation.function = create.run.simulation.function(msa=location,
@@ -240,7 +242,7 @@ do.test.starting.values <- function(run.simulation.function,
 #'@param beta Whether this should be saved as a beta starting parameters set
 save.starting.values <- function(sim.and.params,
                                  parameters=sim.and.params$parameters,
-                                 location=attr(sim.and.parameters$sim, 'location'),
+                                 location=attr(sim.and.param$sim, 'location'),
                                  version=sim.and.params$version,
                                  beta=F)
 {
