@@ -725,11 +725,17 @@ predict.from.coefficients <- function(coefs, df)
     1 / (1+exp(-lo))
 }
 
-DESIRED.OVERALL.P.REENGAGED = mean(
-    .482, #https://aidsrestherapy.biomedcentral.com/articles/10.1186/s12981-021-00398-0
-    .52 #Abrams, referenced in https://link.springer.com/article/10.1007/s10461-021-03365-y
-)
+DESIRED.OVERALL.P.REENGAGED = mean(c(
+    .5759, #https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4120656/
+    .6284, #https://link.springer.com/article/10.1186/s12981-021-00398-0
+    .0991 #https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4607589/ 
+    ))
 
+actual.overall.p.reengaged = mean(predict.from.coefficients(output$disengaged.noslopes.coefficients, imputed.all))
+
+reengaged.correction = logit(DESIRED.OVERALL.P.REENGAGED) - logit(actual.overall.p.reengaged)
+
+output$disengaged.noslopes.coefficients[1] = output$disengaged.noslopes.coefficients[1] + reengaged.correction
 
 ##-- ONE LAST CORRECTION for proportion lost --##
 
