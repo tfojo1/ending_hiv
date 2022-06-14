@@ -280,7 +280,7 @@ parameters.prior = join.distributions(
 
     # (plus a term for from suppressed or from unsuppressed) 
     suppressed.vs.nonsuppressed.proportion.lost.or = Lognormal.Distribution(0, 0.5*log(2)),
-    already.lost.vs.nonsuppressed.proportion.lost.or = Lognormal.Distribution(0, 0.5*log(2)),
+    already.lost.vs.nonsuppressed.proportion.lost.or = Lognormal.Distribution(0, 0.5*log(4)),
 
     #-- PrEP --#
     

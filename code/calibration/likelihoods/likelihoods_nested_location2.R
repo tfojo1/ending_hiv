@@ -2586,8 +2586,6 @@ get.matched.msa.data.one.stratification <- function(data.type1,
                             years=years,
                             throw.error.if.missing.data=F)
     
-
-    
     if (require.msa.data)
     {
         missing.all.mask = sapply(data1.for.msas, function(data){

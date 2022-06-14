@@ -20,6 +20,8 @@ msa.surveillance = read.msa.surveillance.manager(use.adjusted.estimate = T, verb
 bk = msa.surveillance
 msa.surveillance = aggregate.surveillance.race.as.bho(msa.surveillance)
 msa.surveillance = aggregate.surveillance.other.risk.as.heterosexual(msa.surveillance)
+
+load('cached/county.surveillance.Rdata')
 msa.surveillance = correct.to.county.totals(msa.surveillance,
                                             county.surveillance=county.surveillance)
 prep.manager = read.prep.manager()
@@ -29,7 +31,6 @@ msa.surveillance = add.all.local.msa.data(msa.surveillance)
 
 bk2 = msa.surveillance
 msa.surveillance = import.one.county.msa.data(msa.surveillance,
-                                              geography='msa',
                                               county.surveillance = county.surveillance)
 
 msa.surveillance = read.testing.from.brfss(msa.surveillance,

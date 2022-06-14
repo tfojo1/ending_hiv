@@ -267,9 +267,65 @@ save.starting.values <- function(sim.and.params,
 }
 
 #'@description A function for Todd to use internally to sync up local starting values with the big data storage on the desktop
-sync.starting.values <- function()
+sync.starting.values <- function(versions=VERSION.MANAGER$versions,
+                                 verbose=T)
 {
+    stop("now start values are in the home dir - no need to sync")
+    if (!ON.DESKTOP)
+        stop("We only sync starting values from the big desktop")
     
+    for (version in versions)
+    {
+        if (verbose)
+            print(paste0("Sync-ing starting values for version '", version, "'"))
+        
+        dir1 = file.path(SYSTEMATIC.ROOT.DIR, 'start_values', version)
+        dir2 = file.path('start_values', version)
+        files1 = list.files(dir1)
+        files2 = list.files(dir2)
+        files.in.both = intersect(files1, files2)
+        
+        new.files.from.1 = setdiff(list.files(dir1), list.files(dir2))
+        if (length(new.files.from.1)>0)
+        {
+            file.copy(from=file.path(dir1, new.files.from.1),
+                      to=file.path(dir2, new.files.from.1))
+            if (verbose)
+                print(paste0(" - Copied start values for ", length(new.files.from.1), " location(s) to LOCAL from DESKTOP"))
+        }
+        
+        new.files.from.2 = setdiff(list.files(dir2), list.files(dir1))
+        if (length(new.files.from.2)>0)
+        {
+            file.copy(from=file.path(dir2, new.files.from.2),
+                      to=file.path(dir1, new.files.from.2))
+            if (verbose)
+                print(paste0(" - Copied start values for ", length(new.files.from.2), " location(s) to DESKTOP from LOCAL"))
+        }
+        
+        
+        time1 = file.info(file.path(dir1, files.in.both))$mtime
+        time2 = file.info(file.path(dir2, files.in.both))$mtime
+        overwrite.from.1.mask = time1 > time2
+        
+        overwrite.from.1.files = files.in.both[overwrite.from.1.mask]
+        if (length(overwrite.from.1.files)>0)
+        {
+            file.copy(from=file.path(dir2, overwrite.from.1.files),
+                      to=file.path(dir1, overwrite.from.1.files), overwrite = T)
+            if (verbose)
+                print(paste0(" - Overwrote start values for ", length(overwrite.from.1.files), " location(s) to DESKTOP from LOCAL"))
+        }
+        
+        overwrite.from.2.files = files.in.both[!overwrite.from.1.mask]
+        if (length(overwrite.from.2.files)>0)
+        {
+            file.copy(from=file.path(dir2, overwrite.from.2.files),
+                      to=file.path(dir1, overwrite.from.2.files), overwrite = T)
+            if (verbose)
+                print(paste0(" - Overwrote start values for ", length(overwrite.from.2.files), " location(s) to LOCAL from DESKTOP"))
+        }
+    }
 }
 
 #'@description A function to pull out starting values from prior versions  and save them as beta starting values to be modified for the current version

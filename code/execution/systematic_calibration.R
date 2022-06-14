@@ -19,10 +19,10 @@ setup.initial.mcmc.for.msa <- function(msa,
                                        thin=20,
                                        burn=0,
                                        max.sim.time=20,
-                                       save.dir=file.path(SYSTEMATIC.ROOT.DIR,
+                                       save.dir=file.path(MCMC.DIR,
                                                           paste0('systematic_initial', 
                                                                  get.directory.suffix.for.version(version))),
-                                       cache.dir=file.path(SYSTEMATIC.ROOT.DIR, 
+                                       cache.dir=file.path(MCMC.DIR, 
                                                            paste0('systematic_caches',
                                                                   get.directory.suffix.for.version(version))),
                                        update.frequency=200,
@@ -67,10 +67,7 @@ setup.initial.mcmc.for.msa <- function(msa,
     if (derive.step.size.from.prior.mcmc) #this chunk bases step sizes and initial cov mat on previous mcmc run
     {
         if (is.null(template.mcmc))
-        {
-            load(file.path(SYSTEMATIC.ROOT.DIR, 'test_runs/la.113c_revised.lik.v12_20K_2020-09-20.Rdata'))
-            template.mcmc = mcmc
-        }
+            stop("If derive.step.size.from.prior.mcmc==T, template.mcmc cannot be NULL")
         
         simset = extract.simset(template.mcmc, additional.burn=mcmc@n.iter/2)
         chain.state = template.mcmc@chain.states[[1]]
@@ -213,8 +210,8 @@ create.start.value.generator.for.msa <- function(msa,
                                                  version,
                                                  initial.dir='systematic_initial')
 {
-    files = list.files(file.path(SYSTEMATIC.ROOT.DIR, initial.dir))
-    full.files = list.files(file.path(SYSTEMATIC.ROOT.DIR, initial.dir), full.names = T)
+    files = list.files(file.path(MCMC.DIR, initial.dir))
+    full.files = list.files(file.path(MCMC.DIR, initial.dir), full.names = T)
     
     mask = grepl(msa, files)
     if (!any(mask))
@@ -225,7 +222,9 @@ create.start.value.generator.for.msa <- function(msa,
     prior = get.parameters.prior.for.version(version=version)
     
     sampling.dist = create.starting.sampling.distribution(simset, prior = prior)
-    save(sampling.dist, file=file.path(SYSTEMATIC.ROOT.DIR, 'starting_value_generators',
+    if (!dir.exists(file.path(MCMC.DIR, 'starting_value_generators')))
+        dir.create(file.path(MCMC.DIR, 'starting_value_generators'))
+    save(sampling.dist, file=file.path(MCMC.DIR, 'starting_value_generators',
                                        paste0(msa, '.Rdata')))
 }
 
@@ -244,13 +243,13 @@ setup.parallel.mcmc.for.msa <- function(msa,
                                         thin=100,
                                         burn=0,
                                         max.sim.time=20,
-                                        save.dir=file.path(SYSTEMATIC.ROOT.DIR,
+                                        save.dir=file.path(MCMC.DIR,
                                                            paste0('systematic_parallel', 
                                                                   get.directory.suffix.for.version(version))),
-                                        cache.dir=file.path(SYSTEMATIC.ROOT.DIR, 
+                                        cache.dir=file.path(MCMC.DIR, 
                                                             paste0('systematic_caches',
                                                                    get.directory.suffix.for.version(version))),
-                                        initial.dir=file.path(SYSTEMATIC.ROOT.DIR,
+                                        initial.dir=file.path(MCMC.DIR,
                                                               paste0('systematic_initial', 
                                                                      get.directory.suffix.for.version(version))),
                                         update.frequency=200,
@@ -345,8 +344,8 @@ setup.mcmc.for.msa <- function(msa,
                                thin=100,
                                burn=0,
                                max.sim.time=Inf,
-                               save.dir=file.path(SYSTEMATIC.ROOT.DIR, 'systematic_parallel'),
-                               cache.dir=file.path(SYSTEMATIC.ROOT.DIR, 'systematic_caches'),
+                               save.dir=file.path(MCMC.DIR, 'systematic_parallel'),
+                               cache.dir=file.path(MCMC.DIR, 'systematic_caches'),
                                update.frequency=200,
                                cache.frequency=CACHE.FREQUENCY,
                                save.suffix='',
@@ -379,7 +378,7 @@ setup.mcmc.for.msa <- function(msa,
     
     if (is.null(start.value.generator))
     {
-        load(file.path(SYSTEMATIC.ROOT.DIR, 'starting_value_generators',
+        load(file.path(MCMC.DIR, 'starting_value_generators',
                        paste0(msa, '.Rdata')))
         start.value.generator = sampling.dist
     }
@@ -571,7 +570,7 @@ create.run.simulation.function <- function(msa,
               cat("THERE WAS AN ERROR RUNNING THE SIMULATION:\n")
               cat(e$message, '\n')
               
-              error.file = file.path(SYSTEMATIC.ROOT.DIR, 'errors', paste0('error_', msa, '_', Sys.Date()))
+              error.file = file.path(MCMC.DIR, 'errors', paste0('error_', msa, '_', Sys.Date()))
               
               save(e,
                    parameters,

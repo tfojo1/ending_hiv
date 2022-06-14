@@ -4,7 +4,7 @@ msa = BALTIMORE.MSA
 source('code/settings_and_files/systematic_settings.R')
 source('code/processing/for_talks/talk_plot_settings.R')
 
-DO.RENDER = T
+DO.RENDER = F
 
 COVID.COLORS = c(INTERVENTION.COLORS[1:2], COLORS(7)[3+c(3,1,2,4)])
 
@@ -352,7 +352,7 @@ if (1==2)
     LOCATION.BOXPLOT.PANEL.HEIGHT = 5
     LOCATION.BOXPLOT.PANEL.WIDTH = 10
     BOXPLOT.THEME = THEME + theme(legend.position = 'none',
-                                  text = element_text(size=24),
+                                  text = element_text(size=20),
                                   axis.text.x = element_text(angle = 45, hjust=1))#, vjust = 0.5, hjust=1))
     
     COVID.COLORS = PALETTE(6)[-5]#[c(1,2,5,3,4)]
@@ -385,11 +385,11 @@ if (1==2)
     load('results/covid/covid_4.2_mountain_west_results.Rdata')
     MOUNTAIN.WEST.LOCATIONS = names(location.names)
     
-  png(file.path(COVID.IMAGE.DIR, '../..', 'mountain_west_covid_boxplot.png'), pointsize=PNG.POINT.SIZE, 
+  png(file.path(COVID.IMAGE.DIR, '../..', 'all_covid_boxplot.png'), pointsize=PNG.POINT.SIZE, 
       width=LOCATION.BOXPLOT.PANEL.WIDTH, height=LOCATION.BOXPLOT.PANEL.HEIGHT, res=RES, units='in')
   
   make.location.boxplot(colors=COVID.COLORS[3],
-                        locations = MOUNTAIN.WEST.LOCATIONS,
+                        locations = TARGET.MSAS,
                         scenarios = 'covid.delayed.mobility',
                         loc.names = MSA.BRIEF.NAMES,
                         include.total = F,

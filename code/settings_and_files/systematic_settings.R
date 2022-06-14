@@ -19,7 +19,7 @@ if (!dir.exists(SYSTEMATIC.ROOT.DIR))
 SIMULATIONS.DIR = file.path(SYSTEMATIC.ROOT.DIR, 'simulations')
 MCMC.DIR = file.path(SYSTEMATIC.ROOT.DIR, 'mcmc_runs')
 RESULTS.DIR = file.path(SYSTEMATIC.ROOT.DIR, 'results')
-START.VALUES.DIR = file.path(SYSTEMATIC.ROOT.DIR, 'start_values')
+START.VALUES.DIR = 'start_values'
 
 ON.LAPTOP = COMPUTER.LOCATION == 'laptop'
 ON.DESKTOP = COMPUTER.LOCATION == 'desktop'

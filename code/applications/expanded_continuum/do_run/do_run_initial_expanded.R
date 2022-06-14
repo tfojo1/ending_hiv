@@ -4,7 +4,7 @@ source("code/processing/visualization/sim_plots.R")
 
 set.seed(5557)
 
-msa=MIAMI.MSA
+msa=ATLANTA.MSA
 save.suffix = ''
 version='expanded_1.0'
 
@@ -16,8 +16,8 @@ if (RESUME)
     print(save.suffix)
     print('----------------------------------------------------')
     print(qplot(1,1) + ggtitle(paste0(msa.names(msa), ' - INITIAL')) + theme(plot.title=element_text(hjust=1)))
-    stop('set the dir')
-    mcmc = run.mcmc.for.msa.cache('Q:Ending_HIV/mcmc_runs/systematic_caches/19740_1x20K_manual_2022-02-20')
+    mcmc = run.mcmc.for.msa.cache(paste0('Q:JHEEM/mcmc_runs/systematic_caches_expanded/',
+                                         msa, '_1x25K_2022-06-07'))
 }
 if (!RESUME)
 {
@@ -32,13 +32,15 @@ if (!RESUME)
                                       run=T, 
                                       save.suffix = save.suffix, 
                                       likelihood=likelihood,
+                                      n.iter = 25000,
                                       target.acceptance.rate = 0.100, 
+                                      
                                       derive.step.size.from.prior.mcmc = F)
 }
 
 save.name = paste0(msa, save.suffix, '.Rdata')
 
-save.to.file = file.path(SYSTEMATIC.ROOT.DIR, 
+save.to.file = file.path(MCMC.DIR, 
                          paste0('systematic_initial', get.directory.suffix.for.version(version)), 
                          save.name)
 print(paste0("ALL DONE - SAVING TO:"))

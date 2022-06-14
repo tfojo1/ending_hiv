@@ -171,8 +171,8 @@ get.census.totals <- function(census.totals, location, years=census.totals$years
         rv = rowSums(rv)
         if (!flatten.single.dim.array)
         {
-            dim.names = list(year=years, location=collapsed.name)
-            dim(rv) = c(year=length(years), location=1)
+            dim.names = list(year=years.to.pull, location=collapsed.name)
+            dim(rv) = c(year=length(years.to.pull), location=1)
             dimnames(rv) = dim.names
         }
     }
