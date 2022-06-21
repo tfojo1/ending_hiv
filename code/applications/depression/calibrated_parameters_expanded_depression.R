@@ -368,10 +368,10 @@ parameters.prior = join.distributions(
     depression.incidence.rr = Lognormal.Distribution(0, log(2)/2),
     depression.remission.rr = Lognormal.Distribution(0, log(2)/2),
     
-    depression.rr.age1,
-    depression.rr.age2,
-    depression.rr.age4,
-    depression.rr.age5,
+    depression.rr.age1 = Lognormal.Distribution(0, log(2)/2),
+#    depression.rr.age2 = Lognormal.Distribution(0, log(2)/2),
+#    depression.rr.age4 = Lognormal.Distribution(0, log(2)/2),
+#    depression.rr.age5 = Lognormal.Distribution(0, log(2)/2),
     
     depression.incidence.hiv.vs.uninfected.rr = Lognormal.Distribution(0, log(2)/2, lower = 1),
     depression.remission.hiv.vs.uninfected.rr = Lognormal.Distribution(0, log(2)/2, upper = 1),
