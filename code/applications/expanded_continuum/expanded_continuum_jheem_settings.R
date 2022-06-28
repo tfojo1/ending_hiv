@@ -8,9 +8,8 @@ EXPANDED.CONTINUUM = c('undiagnosed',
                        'unengaged', 
                        'engaged_unsuppressed_naive',
                        'engaged_unsuppressed_failing', 
-                       'engaged_suppressed', 
-                       #'engaged_recently_suppressed',
-                       #'engaged_durably_suppressed',
+                       'engaged_recently_suppressed',
+                       'engaged_durably_suppressed',
                        'disengaged_naive',
                        'disengaged_failing')
 
@@ -37,21 +36,13 @@ EXPANDED.CONTINUUM.TRANSITION.MAPPING = register.transition(EXPANDED.CONTINUUM.T
                                                             from.state='engaged_unsuppressed_naive',
                                                             to.state='engaged_unsuppressed_failing',
                                                             rate = expression((1-naive.to.suppressed) / (time.to.suppression.on.art + start.art)),
-#                                                            rate = expression((1-naive.to.suppressed) / (time.to.suppression.on.art - 1/log(1-start.art))),
                                                             label = 'failure.to.suppress')
 EXPANDED.CONTINUUM.TRANSITION.MAPPING = register.transition(EXPANDED.CONTINUUM.TRANSITION.MAPPING,
-                                                            dimension='continuum',
-                                                            from.state='engaged_unsuppressed_naive',
-                                                            to.state='engaged_suppressed',
-                                                            rate = expression(naive.to.suppressed / (time.to.suppression.on.art + start.art)),
-#                                                            rate = expression(naive.to.suppressed / (time.to.suppression.on.art -1/log(1-start.art))),
-                                                            label = 'gain.of.suppression')
-#EXPANDED.CONTINUUM.TRANSITION.MAPPING = register.transition(EXPANDED.CONTINUUM.TRANSITION.MAPPING,
-#                                                                        dimension='continuum',
-#                                                                        from.state='engaged_unsuppressed_naive',
-#                                                                        to.state='engaged_recently_suppressed',
-#                                                                        rate = expression(new.art.suppressed.proportions / (time.to.suppression.on.art + start.art)),
-#                                                                        label = 'gain.of.suppression')
+                                                                        dimension='continuum',
+                                                                        from.state='engaged_unsuppressed_naive',
+                                                                        to.state='engaged_recently_suppressed',
+                                                                        rate = expression(new.art.suppressed.proportions / (time.to.suppression.on.art + start.art)),
+                                                                        label = 'gain.of.suppression')
 EXPANDED.CONTINUUM.TRANSITION.MAPPING = register.transition(EXPANDED.CONTINUUM.TRANSITION.MAPPING,
                                                             dimension='continuum',
                                                             from.state='engaged_unsuppressed_naive',
@@ -60,17 +51,11 @@ EXPANDED.CONTINUUM.TRANSITION.MAPPING = register.transition(EXPANDED.CONTINUUM.T
                                                             label = 'loss.to.care')
 
 EXPANDED.CONTINUUM.TRANSITION.MAPPING = register.transition(EXPANDED.CONTINUUM.TRANSITION.MAPPING,
-                                                            dimension='continuum',
-                                                            from.state='engaged_unsuppressed_failing',
-                                                            to.state='engaged_suppressed',
-                                                            rate = 'failing.to.suppressed',
-                                                            label = 'gain.of.suppression')
-#EXPANDED.CONTINUUM.TRANSITION.MAPPING = register.transition(EXPANDED.CONTINUUM.TRANSITION.MAPPING,
-#                                                                        dimension='continuum',
-#                                                                        from.state='engaged_unsuppressed_failing',
-#                                                                        to.state='engaged_recently_suppressed',
-#                                                                        rate = 'failing.to.suppressed',
-#                                                                        label = 'gain.of.suppression')
+                                                                        dimension='continuum',
+                                                                        from.state='engaged_unsuppressed_failing',
+                                                                        to.state='engaged_recently_suppressed',
+                                                                        rate = 'failing.to.suppressed',
+                                                                        label = 'gain.of.suppression')
 EXPANDED.CONTINUUM.TRANSITION.MAPPING = register.transition(EXPANDED.CONTINUUM.TRANSITION.MAPPING,
                                                             dimension='continuum',
                                                             from.state='engaged_unsuppressed_failing',
@@ -78,49 +63,37 @@ EXPANDED.CONTINUUM.TRANSITION.MAPPING = register.transition(EXPANDED.CONTINUUM.T
                                                             rate = 'failing.to.disengaged',
                                                             label = 'loss.to.care')
 
-#EXPANDED.CONTINUUM.TRANSITION.MAPPING = register.transition(EXPANDED.CONTINUUM.TRANSITION.MAPPING,
-#                                                                        dimension='continuum',
-#                                                                        from.state='engaged_recently_suppressed',
-#                                                                        to.state='engaged_durably_suppressed',
-#                                                                        rate = expression(1/time.to.durable.suppression),
-#                                                                        label = 'continuation.of.suppression')
 EXPANDED.CONTINUUM.TRANSITION.MAPPING = register.transition(EXPANDED.CONTINUUM.TRANSITION.MAPPING,
-                                                            dimension='continuum',
-                                                            from.state='engaged_suppressed',
-                                                            to.state='engaged_unsuppressed_failing',
-                                                            rate = 'suppressed.to.failing',
-                                                            label = 'loss.of.suppression')
-#EXPANDED.CONTINUUM.TRANSITION.MAPPING = register.transition(EXPANDED.CONTINUUM.TRANSITION.MAPPING,
-#                                                                        dimension='continuum',
-#                                                                        from.state='engaged_recently_suppressed',
-#                                                                        to.state='engaged_unsuppressed_failing',
-#                                                                        rate = 'recently.suppressed.to.failing',
-#                                                                        label = 'loss.of.suppression')
+                                                                        dimension='continuum',
+                                                                        from.state='engaged_recently_suppressed',
+                                                                        to.state='engaged_durably_suppressed',
+                                                                        rate = expression(1/time.to.durable.suppression),
+                                                                        label = 'continuation.of.suppression')
 EXPANDED.CONTINUUM.TRANSITION.MAPPING = register.transition(EXPANDED.CONTINUUM.TRANSITION.MAPPING,
-                                                            dimension='continuum',
-                                                            from.state='engaged_suppressed',
-                                                            to.state='disengaged_failing',
-                                                            rate = 'suppressed.to.disengaged',
-                                                            label = 'loss.to.care')
-#EXPANDED.CONTINUUM.TRANSITION.MAPPING = register.transition(EXPANDED.CONTINUUM.TRANSITION.MAPPING,
-#                                                                        dimension='continuum',
-#                                                                        from.state='engaged_recently_suppressed',
-#                                                                        to.state='disengaged_failing',
-#                                                                        rate = 'recently.suppressed.to.disengaged',
-#                                                                        label = 'loss.to.care')
+                                                                        dimension='continuum',
+                                                                        from.state='engaged_recently_suppressed',
+                                                                        to.state='engaged_unsuppressed_failing',
+                                                                        rate = 'recently.suppressed.to.failing',
+                                                                        label = 'loss.of.suppression')
+EXPANDED.CONTINUUM.TRANSITION.MAPPING = register.transition(EXPANDED.CONTINUUM.TRANSITION.MAPPING,
+                                                                        dimension='continuum',
+                                                                        from.state='engaged_recently_suppressed',
+                                                                        to.state='disengaged_failing',
+                                                                        rate = 'recently.suppressed.to.disengaged',
+                                                                        label = 'loss.to.care')
 
-#EXPANDED.CONTINUUM.TRANSITION.MAPPING = register.transition(EXPANDED.CONTINUUM.TRANSITION.MAPPING,
-#                                                                        dimension='continuum',
-#                                                                        from.state='engaged_durably_suppressed',
-#                                                                        to.state='engaged_unsuppressed_failing',
-#                                                                        rate = 'durably.suppressed.to.failing',
-#                                                                        label = 'loss.of.suppression')
-#EXPANDED.CONTINUUM.TRANSITION.MAPPING = register.transition(EXPANDED.CONTINUUM.TRANSITION.MAPPING,
-#                                                                        dimension='continuum',
-#                                                                        from.state='engaged_durably_suppressed',
-#                                                                        to.state='disengaged_failing',
-#                                                                        rate = 'durably.suppressed.to.disengaged',
-#                                                                        label = 'loss.to.care')
+EXPANDED.CONTINUUM.TRANSITION.MAPPING = register.transition(EXPANDED.CONTINUUM.TRANSITION.MAPPING,
+                                                                        dimension='continuum',
+                                                                        from.state='engaged_durably_suppressed',
+                                                                        to.state='engaged_unsuppressed_failing',
+                                                                        rate = 'durably.suppressed.to.failing',
+                                                                        label = 'loss.of.suppression')
+EXPANDED.CONTINUUM.TRANSITION.MAPPING = register.transition(EXPANDED.CONTINUUM.TRANSITION.MAPPING,
+                                                                        dimension='continuum',
+                                                                        from.state='engaged_durably_suppressed',
+                                                                        to.state='disengaged_failing',
+                                                                        rate = 'durably.suppressed.to.disengaged',
+                                                                        label = 'loss.to.care')
 
 EXPANDED.CONTINUUM.TRANSITION.MAPPING = register.transition(EXPANDED.CONTINUUM.TRANSITION.MAPPING,
                                                             dimension='continuum',
@@ -199,15 +172,7 @@ EXPANDED.CONTINUUM.TRANSITION.MAPPING = register.transition.element(EXPANDED.CON
                                                                     model.source = 'continuum.manager')
 
 EXPANDED.CONTINUUM.TRANSITION.MAPPING = register.transition.element(EXPANDED.CONTINUUM.TRANSITION.MAPPING,
-                                                                    name='suppressed.to.failing',
-                                                                    background.model.type = 'proportion',
-                                                                    ramp.type = 'proportion',
-                                                                    return.type = 'rate',
-                                                                    ramp.times = EXPANDED.RAMP.YEAR,
-                                                                    ramp.multipliers = 1,
-                                                                    model.source = 'continuum.manager')
-EXPANDED.CONTINUUM.TRANSITION.MAPPING = register.transition.element(EXPANDED.CONTINUUM.TRANSITION.MAPPING,
-                                                                    name='suppressed.to.disengaged',
+                                                                    name='reengagement',
                                                                     background.model.type = 'proportion',
                                                                     ramp.type = 'proportion',
                                                                     return.type = 'rate',
@@ -216,7 +181,45 @@ EXPANDED.CONTINUUM.TRANSITION.MAPPING = register.transition.element(EXPANDED.CON
                                                                     model.source = 'continuum.manager')
 
 EXPANDED.CONTINUUM.TRANSITION.MAPPING = register.transition.element(EXPANDED.CONTINUUM.TRANSITION.MAPPING,
-                                                                    name='reengagement',
+                                                                    name='new.art.suppressed.proportions',
+                                                                    type = 'proportion',
+                                                                    ramp.times = EXPANDED.RAMP.YEAR,
+                                                                    ramp.multipliers = 1,
+                                                                    model.source = 'continuum.manager')
+
+EXPANDED.CONTINUUM.TRANSITION.MAPPING = register.transition.element(EXPANDED.CONTINUUM.TRANSITION.MAPPING,
+                                                                    name='time.to.durable.suppression',
+                                                                    type = 'time',
+                                                                    required = F,
+                                                                    default.value = 2)
+
+EXPANDED.CONTINUUM.TRANSITION.MAPPING = register.transition.element(EXPANDED.CONTINUUM.TRANSITION.MAPPING,
+                                                                    name = 'recently.suppressed.to.failing',
+                                                                    background.model.type = 'proportion',
+                                                                    ramp.type = 'proportion',
+                                                                    return.type = 'rate',
+                                                                    ramp.times = EXPANDED.RAMP.YEAR,
+                                                                    ramp.multipliers = 1,
+                                                                    model.source = 'continuum.manager')
+EXPANDED.CONTINUUM.TRANSITION.MAPPING = register.transition.element(EXPANDED.CONTINUUM.TRANSITION.MAPPING,
+                                                                    name = 'recently.suppressed.to.disengaged',
+                                                                    background.model.type = 'proportion',
+                                                                    ramp.type = 'proportion',
+                                                                    return.type = 'rate',
+                                                                    ramp.times = EXPANDED.RAMP.YEAR,
+                                                                    ramp.multipliers = 1,
+                                                                    model.source = 'continuum.manager')
+
+EXPANDED.CONTINUUM.TRANSITION.MAPPING = register.transition.element(EXPANDED.CONTINUUM.TRANSITION.MAPPING,
+                                                                    name = 'durably.suppressed.to.failing',
+                                                                    background.model.type = 'proportion',
+                                                                    ramp.type = 'proportion',
+                                                                    return.type = 'rate',
+                                                                    ramp.times = EXPANDED.RAMP.YEAR,
+                                                                    ramp.multipliers = 1,
+                                                                    model.source = 'continuum.manager')
+EXPANDED.CONTINUUM.TRANSITION.MAPPING = register.transition.element(EXPANDED.CONTINUUM.TRANSITION.MAPPING,
+                                                                    name = 'durably.suppressed.to.disengaged',
                                                                     background.model.type = 'proportion',
                                                                     ramp.type = 'proportion',
                                                                     return.type = 'rate',
@@ -240,13 +243,11 @@ VERSION.MANAGER = copy.and.modify.jheem.settings(
     undiagnosed.no.prep.continuum.states='undiagnosed',
     engaged.continuum.states=c('engaged_unsuppressed_naive',
                                'engaged_unsuppressed_failing', 
-                               'engaged_suppressed'
-                               #'engaged_recently_suppressed',
-                               #'engaged_durably_suppressed'
+                               'engaged_recently_suppressed',
+                               'engaged_durably_suppressed'
     ),
-    suppressed.continuum.states=c('engaged_suppressed' 
-                                  #'engaged_recently_suppressed',
-                                  #'engaged_durably_suppressed'
+    suppressed.continuum.states=c('engaged_recently_suppressed',
+                                  'engaged_durably_suppressed'
     ),
     
     is.continuum.collapsed=F,
