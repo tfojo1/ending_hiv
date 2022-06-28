@@ -385,7 +385,7 @@ parameters.prior = join.distributions(
 )
 VERSION.MANAGER = register.parameters.prior(VERSION.MANAGER,
                                             prior=parameters.prior,
-                                            version='expanded_1.0')
+                                            version='expanded_0.1')
 
 PARAMETER.VAR.BLOCKS.1 = list(
   
@@ -647,7 +647,7 @@ PARAMETER.VAR.BLOCKS.1 = list(
 )
 VERSION.MANAGER = register.parameter.sampling.blocks(VERSION.MANAGER,
                                                      blocks=PARAMETER.VAR.BLOCKS.1,
-                                                     version='expanded_1.0')
+                                                     version='expanded_0.1')
 
 if (1==2)
 {
@@ -1411,7 +1411,7 @@ get.components.for.calibrated.parameters <- function(parameters, components,
 }
 VERSION.MANAGER = register.get.components.function(VERSION.MANAGER, 
                                                    fn=get.components.for.calibrated.parameters,
-                                                   version = 'expanded_1.0')
+                                                   version = 'expanded_0.1')
 
 
 

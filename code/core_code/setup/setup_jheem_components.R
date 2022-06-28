@@ -14,7 +14,7 @@
 ##-- INITIALIZATION --##
 ##--------------------##
 
-initialize.jheem.components <- function(settings,
+initialize.jheem.components <- function(version,
                                        fips,
                                        data.managers,
                                        population.years,
@@ -25,8 +25,12 @@ initialize.jheem.components <- function(settings,
     components$fixed = F
 
     #-- Store settings and fips--#
-    components$settings = settings
+    
+    components$version = version
     components$fips = fips
+    
+    #-- Enumerate dependencies --#
+    components = enumerate.components.dependencies(components)
     
     #-- By default, we will plan to model PrEP, IDU, and HIV transmission --#
     components$model.idu = T
@@ -34,7 +38,7 @@ initialize.jheem.components <- function(settings,
     components$model.prep = T
 
     components = setup.track.mortality(components)
-
+    
     #-- Pull Populations --#
     components = setup.populations(components, data.managers, population.years)
 
@@ -51,8 +55,45 @@ initialize.jheem.components <- function(settings,
     
     components = do.setup.jheem.skeleton(components)
     
+    #-- Extra Settings from Version --#
+    
+    components = c(components,
+                   get.components.settings(components)$additional.components.values)
+    
     #-- Return --#
+    class(components) = 'jheem.components'
     components
+}
+
+##------------------------------##
+##-- VERSION/SETTINGS GETTERS --##
+##------------------------------##
+
+#formulated for backwards compatibility
+get.components.version <- function(components)
+{
+    if (is.null(components[['version']]))
+    {
+        if (is.null(components[['settings']]) || is.null(components[['settings']]$VERSION))
+            'collapsed_1.0' #did not have version explicitly stored
+        else
+            components[['settings']]$VERSION
+    }
+    else
+        components$version
+}
+
+get.components.settings <- function(components, version.manager=VERSION.MANAGER)
+{
+    get.settings.for.version(get.components.version(components), version.manager=version.manager)
+}
+
+get.components.transition.mapping <- function(components, version.manager=VERSION.MANAGER)
+{
+    settings = get.components.settings(components, version.manager=version.manager)
+    transition.mapping = settings$transition.mapping
+    
+    transition.mapping
 }
 
 ##----------------------------------------------------##
@@ -111,7 +152,8 @@ setup.populations <- function(components, data.managers, population.years)
     #-- Slice and dice races and ages --#
     county.populations = get.census.data(data.managers$census.collapsed, fips=components$fips,
                                          year=population.years, aggregate.years = T) / length(population.years)
-    county.populations.collapsed = collapse.races(county.populations)
+    county.populations.collapsed = collapse.races(county.populations, 
+                                                  races=get.components.settings(components)$RACES)
     
     population.collapsed = colSums(county.populations.collapsed)
     population = colSums(county.populations)
@@ -119,7 +161,8 @@ setup.populations <- function(components, data.managers, population.years)
     population.full.age = get.census.data(data.managers$census.full, fips=components$fips,
                                           year=population.years,
                                           aggregate.counties = T, aggregate.years = T) / length(population.years)
-    population.full.age.collapsed = collapse.races(population.full.age)
+    population.full.age.collapsed = collapse.races(population.full.age,
+                                                   races=get.components.settings(components)$RACES)
     
     components$populations = list(years=population.years,
                                   by.county.all.races=county.populations,
@@ -264,7 +307,8 @@ setup.fertility <- function(components,
         birth.rates = array(birth.rates, dim=c(race=length(birth.rates)), dimnames=list(race=names(birth.rates)))
         pop.by.race = apply(components$populations$all.races, 'race', sum)
         pop.by.race = array(pop.by.race, dim=c(race=length(pop.by.race)), dimnames=list(race=names(pop.by.race)))
-        birth.rates = collapse.races.for.rates(pop.by.race, rates=birth.rates)
+        birth.rates = collapse.races.for.rates(pop.by.race, rates=birth.rates,
+                                               races=get.components.settings(components)$RACES)
         
         components$fertility = birth.rates
     }
@@ -731,7 +775,7 @@ set.background.hiv.testing.ors <- function(components,
     components
 }
 
-set.background.hiv.testing.ramp.up <- function(components,
+OLD.set.background.hiv.testing.ramp.up <- function(components,
                                                testing.ramp.up.vs.current.rr=0.5,
                                                testing.ramp.up.yearly.increase=2)
 {
@@ -746,6 +790,32 @@ set.background.hiv.testing.ramp.up <- function(components,
     
     components = clear.dependent.values(components, 'background.testing')
     components
+}
+
+set.background.hiv.testing.ramp.up <- function(components,
+                                               testing.ramp.up.vs.current.rr=0.5,
+                                               testing.ramp.up.yearly.increase=2)
+{
+    if (is.null(components$background.testing))
+        stop("background.testing has not been set up. Cannot set the testing ramp up until it has")
+    
+    if (!is.na(testing.ramp.up.yearly.increase))
+        components$background.testing$ramp.up.yearly.increase = testing.ramp.up.yearly.increase
+    
+    if (!is.na(testing.ramp.up.vs.current.rr))
+    {
+        if (is.null(components$background.testing$ramp.up.yearly.increase))
+            stop("Cannot set testing.ramp.up.vs.current.rr unless testing.ramp.up.yearly.increase has been previously set up ")
+      
+        do.set.ramp.multipliers(components,
+                                type='testing',
+                                indices=2:3,
+                                values=testing.ramp.up.vs.current.rr * 
+                                    c((1/components$background.testing$ramp.up.yearly.increase)^
+                                            (components$background.testing$ramp.years[3] -
+                                               components$background.testing$ramp.years[2]), 1)
+        )
+    }
 }
 
 setup.background.hiv.testing <- function(components,
@@ -793,13 +863,14 @@ set.foreground.rates <- function(components,
                                  start.years,
                                  end.years,
                                  apply.functions,
+                                 foreground.scale,
                                  foreground.min,
                                  foreground.max,
-                                 convert.proportions.to.rates,
+#                                 convert.proportions.to.rates,
                                  allow.foreground.less=F,
                                  allow.foreground.greater=T,
-                                 overwrite.previous=T,
-                                 invert.proportions=F)
+#                                 invert.proportions=F,
+                                 overwrite.previous=T)
 {
     
     type.name = paste0('foreground.', type)
@@ -823,22 +894,23 @@ set.foreground.rates <- function(components,
             components[[type.name]]$allow.foreground.greater = list()
             components[[type.name]]$foreground.min = list()
             components[[type.name]]$foreground.max = list()
-            components[[type.name]]$convert.proportions.to.rates = list()
+            components[[type.name]]$foreground.scale = list()
+         #   components[[type.name]]$convert.proportions.to.rates = list()
         }
         
         if (class(rates)!='list')
             rates = list(rates)
         
-        if (invert.proportions)
-        {
-            old.allow.less = allow.foreground.less
-            allow.foreground.less = allow.foreground.greater
-            allow.foreground.greater = old.allow.less
-            
-            rates = lapply(rates, function(r){
-                1-r
-            })
-        }
+#        if (invert.proportions)
+#        {
+#            old.allow.less = allow.foreground.less
+#            allow.foreground.less = allow.foreground.greater
+#            allow.foreground.greater = old.allow.less
+#            
+#            rates = lapply(rates, function(r){
+#                1-r
+#            })
+#        }
         
         names(rates) = as.character(years)
         
@@ -853,8 +925,9 @@ set.foreground.rates <- function(components,
         components[[type.name]]$allow.foreground.greater = c(components[[type.name]]$allow.foreground.greater, list(allow.foreground.greater))
         components[[type.name]]$foreground.min = c(components[[type.name]]$foreground.min, list(foreground.min))
         components[[type.name]]$foreground.max = c(components[[type.name]]$foreground.max, list(foreground.max))
-        components[[type.name]]$convert.proportions.to.rates = c(components[[type.name]]$convert.proportions.to.rates,
-                                                                 list(convert.proportions.to.rates))
+        components[[type.name]]$foreground.scale = c(components[[type.name]]$foreground.scale, list(foreground.scale))
+   #     components[[type.name]]$convert.proportions.to.rates = c(components[[type.name]]$convert.proportions.to.rates,
+    #                                                             list(convert.proportions.to.rates))
         
         # Clear dependencies
         if (any(type==get.prep.types(components)))
@@ -1086,14 +1159,14 @@ setup.sexual.susceptibility <- function(components,
                                         msm.age4.sexual.susceptibility.rr=1,
                                         msm.age5.sexual.susceptibility.rr=1)
 {
-    
+    settings = get.components.settings(components)
     components$sexual.susceptibility.rr.by.age = c(as.numeric(age1.sexual.susceptibility.rr),
                                                    as.numeric(age2.sexual.susceptibility.rr),
                                                    as.numeric(age3.sexual.susceptibility.rr),
                                                    as.numeric(age4.sexual.susceptibility.rr),
                                                    as.numeric(age5.sexual.susceptibility.rr))
     
-    names(components$sexual.susceptibility.rr.by.age) = components$settings$AGES$labels
+    names(components$sexual.susceptibility.rr.by.age) = settings$AGES$labels
     
     components$msm.sexual.susceptibility.rr.by.age = c(as.numeric(msm.age1.sexual.susceptibility.rr),
                                                        as.numeric(msm.age2.sexual.susceptibility.rr),
@@ -1101,7 +1174,7 @@ setup.sexual.susceptibility <- function(components,
                                                        as.numeric(msm.age4.sexual.susceptibility.rr),
                                                        as.numeric(msm.age5.sexual.susceptibility.rr))
     
-    names(components$msm.sexual.susceptibility.rr.by.age) = components$settings$AGES$labels
+    names(components$msm.sexual.susceptibility.rr.by.age) = settings$AGES$labels
     
     
     components = clear.dependent.values(components, c('susceptibility'))
@@ -1123,7 +1196,9 @@ setup.transmissibility <- function(components,
                                    black.idu.transmissibility.rr=1,
                                    hispanic.idu.transmissibility.rr=1)
 {
-    dim.names = list(sex=components$settings$SEXES, risk=components$settings$RISK_STRATA)
+    settings = get.components.settings(components)
+    
+    dim.names = list(sex=settings$SEXES, risk=settings$RISK_STRATA)
     components$acute.transmissibility.rr = array(heterosexual.acute.transmissibility.rr, dim=sapply(dim.names, length), dimnames = dim.names)
     components$acute.transmissibility.rr['msm',] = msm.acute.transmissibility.rr
     components$acute.transmissibility.rr[,'active_IDU'] = idu.acute.transmissibility.rr
@@ -1437,11 +1512,24 @@ set.future.background.slopes <- function(components,
     
     for (type in types)
     {
-        component.name = paste0('background.', type)
-        components[[component.name]]$future.slope.or = args[[type]]
-        components[[component.name]]$future.slope.after.year = after.year
-        components = clear.dependent.values(components, component.name)
+        components = do.set.future.background.slope(components,
+                                                    type=type,
+                                                    slope=args[[type]],
+                                                    after.year=after.year)
     }
+    
+    components
+}
+
+do.set.future.background.slope <- function(components,
+                                           type,
+                                           slope,
+                                           after.year)
+{
+    component.name = paste0('background.', type)
+    components[[component.name]]$future.slope.or = slope
+    components[[component.name]]$future.slope.after.year = after.year
+    components = clear.dependent.values(components, component.name)
     
     components
 }
@@ -1468,14 +1556,13 @@ setup.background.suppression <- function(components,
 }
 
 
-#-- LEAVE UNSUPPRESSED --#
 
 setup.background <- function(components,
                              type,
                              years,
                              location,
                              continuum.manager,
-                             convert.proportions.to.rates,
+  #                           convert.proportions.to.rates,
                              ramp.years,
                              ramp.multipliers)
 {
@@ -1490,7 +1577,7 @@ setup.background <- function(components,
                                                         type=type,
                                                         location)
     
-    components[[type.name]]$convert.proportions.to.rates = convert.proportions.to.rates
+  #  components[[type.name]]$convert.proportions.to.rates = convert.proportions.to.rates
     
     components[[type.name]]$ramp.years = ramp.years
     components[[type.name]]$ramp.multipliers = ramp.multipliers
@@ -1520,7 +1607,7 @@ setup.background.start.art <- function(components,
                                   years=years,
                                   location=location,
                                   continuum.manager=continuum.manager,
-                                  convert.proportions.to.rates=F,
+  #                                convert.proportions.to.rates=F,
                                   ramp.years=ramp.years,
                                   ramp.multipliers=ramp.multipliers)
     
@@ -1551,12 +1638,37 @@ set.time.to.suppression.on.art <- function(components,
     components
 }
 
+set.full.art.year <- function(components,
+                              full.art.year,
+                              start.towards.full.art.year=2010)
+{
+    
+    dim.names = dimnames(components$background.start.art$model$intercept)
+    
+    na.arr = array(as.numeric(NA), dim=sapply(dim.names, length), dimnames=dim.names)
+    one.arr = array(1, dim=sapply(dim.names, length), dimnames=dim.names)
+    set.foreground.rates(components,
+                         type='start.art',
+                         rates=list(na.arr, one.arr),
+                         years=c(start.towards.full.art.year, full.art.year),
+                         start.years=array(start.towards.full.art.year, dim=sapply(dim.names, length), dimnames=dim.names),
+                         end.years=array(Inf, dim=sapply(dim.names, length), dimnames=dim.names),
+                         apply.functions=array('absolute', dim=sapply(dim.names, length), dimnames=dim.names),
+                         foreground.min=one.arr,
+                         foreground.max=one.arr,
+                         foreground.scale = 'proportion',
+                         allow.foreground.less=array(T, dim=sapply(dim.names, length), dimnames=dim.names),
+                         allow.foreground.greater = array(T, dim=sapply(dim.names, length), dimnames=dim.names),
+                         overwrite.previous=T)
+}
+
 set.background.start.art.ramp.and.years <- function(components,
                                                 zero.art.year=NA,
                                                 full.art.year=NA,
                                                 ramp.years=NA,
                                                 ramp.multipliers=NA)
 {
+    stop('deprecated')
     if (!is.na(zero.art.year))
         components$background.start.art$zero.art.year = zero.art.year
     
@@ -1590,7 +1702,7 @@ setup.background.linkage <- function(components,
                                   years=years,
                                   location=location,
                                   continuum.manager=continuum.manager,
-                                  convert.proportions.to.rates=F,
+                                #  convert.proportions.to.rates=F,
                                   ramp.years=linkage.ramp.year,
                                   ramp.multipliers=linkage.ramp.multiplier)
     
@@ -1691,6 +1803,120 @@ setup.background.reengagement <- function(components,
     components
 }
 
+##-- GENERAL SET-UP BACKGROUND FUNCTIONS --##
+
+do.setup.background <- function(components,
+                                type,
+                                location,
+                                years,
+                                extra.slope.after.year,
+                                
+                                continuum.manager,
+                                prep.manager)
+{
+    transition.element = get.transition.element.by.name(get.components.transition.mapping(components), name=type)
+    
+    type.name = paste0('background.', type)
+    
+    if (is.null(components[[type.name]]))
+        components[[type.name]] = list()
+    else
+        stop(paste0("background for '", type, "' has already been set up"))
+    
+    components[[type.name]]$years = years
+    
+    model = get.transition.element.background.model(transition.element=transition.element,
+                                                    continuum.manager=continuum.manager,
+                                                    prep.manager=prep.manager,
+                                                    settings=get.components.settings(components),
+                                                    location=location)
+    components[[type.name]]$model = model
+    
+    components[[type.name]]$ramp.years = transition.element$ramp.times
+    components[[type.name]]$ramp.multipliers = transition.element$ramp.multipliers
+    
+    # for backwards compatibility - missing model type is presumed to be logistic or logistic tail
+    
+    if (is.null(model$model.type) || model$model.type == 'logistic' || model$model.type=='logistic.tail')
+    {
+        components = do.set.background.ors(components,
+                                           component.name = type.name,
+                                           msm.or.intercept=1,
+                                           heterosexual.or.intercept=1,
+                                           idu.or.intercept=1,
+                                           black.or.intercept=1,
+                                           hispanic.or.intercept=1,
+                                           other.or.intercept=1,
+                                           age1.or.intercept=1,
+                                           age2.or.intercept=1,
+                                           age3.or.intercept=1,
+                                           age4.or.intercept=1,
+                                           age5.or.intercept=1,
+                                           
+                                           total.or.slope=1,
+                                           msm.or.slope=1,
+                                           heterosexual.or.slope=1,
+                                           idu.or.slope=1,
+                                           black.or.slope=1,
+                                           hispanic.or.slope=1,
+                                           other.or.slope=1,
+                                           age1.or.slope=1,
+                                           age2.or.slope=1,
+                                           age3.or.slope=1,
+                                           age4.or.slope=1,
+                                           age5.or.slope=1)
+    }
+    
+    components = do.set.future.background.slope(components,
+                                                type=type,
+                                                slope=1,
+                                                after.year=extra.slope.after.year)
+    
+    components = clear.dependent.values(components,
+                                        dependent.on = type.name)
+    
+    components
+}
+
+do.set.ramp.multipliers <- function(components,
+                                    type,
+                                    indices=1,
+                                    values)
+{
+    if (!is.integer(indices) && !is.character(indices))
+        stop("indices must be an integer or character vector")
+    if (!is.numeric(values) || length(values) != length(indices))
+        stop("values must be a numeric vector with the same length as indices")
+    
+    
+    type.name = paste0('background.', type)
+    components[[type.name]]$ramp.multipliers[indices] = values
+    
+    components = clear.dependent.values(components,
+                                        dependent.on = type.name)
+    
+    components
+}
+
+do.set.ramp.times <- function(components,
+                              type,
+                              indices=1,
+                              values)
+{
+    if (!is.integer(indices) && !is.character(indices))
+        stop("indices must be an integer or character vector")
+    if (!is.numeric(values) || length(values) != length(indices))
+        stop("values must be a numeric vector with the same length as indices")
+    
+    
+    type.name = paste0('background.', type)
+    components[[type.name]]$ramp.times[indices] = values
+    
+    components = clear.dependent.values(components,
+                                        dependent.on = type.name)
+    
+    components
+}
 
 #-- CHANGE TO YEARS --#
 
@@ -1893,7 +2119,8 @@ setup.background.prep <- function(components,
     components$background.prep$years = years
     components$background.prep$zero.prep.year = zero.prep.year
     
-    components$background.prep$model = get.prep.model(prep.manager)
+    components$background.prep$model = get.prep.model(prep.manager,
+                                                      settings=get.components.settings(components))
     names(components$background.prep$model)[grepl('intercept', names(components$background.prep$model))] = 'intercept'
     names(components$background.prep$model)[grepl('slope', names(components$background.prep$model))] = 'slope'
     

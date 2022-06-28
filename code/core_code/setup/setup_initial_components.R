@@ -6,8 +6,8 @@ T1.IDU = 2010 #2008
 T0.5 = 2006
 YOUNG.T0=2000
 
-setup.initial.components <- function(msa=BALTIMORE.MSA,
-                                     settings=SETTINGS,
+setup.initial.components <- function(msa,
+                                     version,
                                      population.year=2007,
                                      max.smoothed.suppressed.proportion=0.8,
 
@@ -62,16 +62,24 @@ setup.initial.components <- function(msa=BALTIMORE.MSA,
                                      idu.transition.years = c(idu.post.spike.year,idu.t2),
 
                                      run.to.year = 2030,
-                                     fix=F)
+                                     fix=F,
+                                     verbose=F)
 {
     msa.components = setup.components.for.msa(msa,
-                                              settings=settings,
+                                              version=version,
                                               population.year=population.year,
                                               max.smoothed.suppressed.proportion = max.smoothed.suppressed.proportion,
                                               smooth.to.year = last.background.year,
                                               idu.transition.years=idu.transition.years,
-                                              idu.transition.end.year=run.to.year)
+                                              idu.transition.end.year=run.to.year,
+                                              verbose=verbose)
 
+    if (verbose)
+    {
+        print("")
+        print("**Setting up t-rate years")
+    }
+    
     msa.components = setup.trate.years(msa.components,
                                        routes=c('msm','msm.idu'),
                                        t.pre.peak=msm.pre.spike.year,
@@ -118,6 +126,8 @@ setup.initial.components <- function(msa=BALTIMORE.MSA,
                                        t2=idu.t2,
                                        t.end=run.to.year)
 
+    if (verbose)
+        print("**Setting up aging times")
 
     msa.components = set.aging.times(msa.components, route='msm',
                                      t.pre.spike=1980,
@@ -146,6 +156,8 @@ setup.initial.components <- function(msa=BALTIMORE.MSA,
                                        age.indices = 1:2,
                                        t0.end = idu.young.t0)
 
+    if (verbose)
+        print("**Setting up HIV mortality")
     msa.components = setup.hiv.mortality.years(msa.components,
                                                t.pre.peak=mortality.pre.spike.year,
                                                t.peak.start=mortality.spike.start.year,
@@ -156,10 +168,18 @@ setup.initial.components <- function(msa=BALTIMORE.MSA,
                                                t2=mortality.t2,
                                                t.end=run.to.year)
 
+    if (verbose)
+        print("**Setting up final t-rates")
     msa.components = setup.trates(msa.components, fraction.change.after.end=0.05)
 
     if (fix)
+    {
+        if (verbose)
+            print("**Fixing components")
         msa.components = fix.components.for.calibration(msa.components)
-
+    }
+    
+    if (verbose)
+        print("**Done setting up initial components")
     msa.components
 }

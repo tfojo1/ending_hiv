@@ -360,7 +360,7 @@ parameters.prior = join.distributions(
 )
 VERSION.MANAGER = register.parameters.prior(VERSION.MANAGER,
                                             prior=parameters.prior,
-                                            version=SETTINGS.EXPANDED.CONTINUUM$VERSION)
+                                            version='expanded_1.0')
 
 PARAMETER.VAR.BLOCKS.1 = list(
   
@@ -604,7 +604,7 @@ PARAMETER.VAR.BLOCKS.1 = list(
 )
 VERSION.MANAGER = register.parameter.sampling.blocks(VERSION.MANAGER,
                                                      blocks=PARAMETER.VAR.BLOCKS.1,
-                                                     version=SETTINGS.EXPANDED.CONTINUUM$VERSION)
+                                                     version='expanded_1.0')
 
 if (1==2)
 {

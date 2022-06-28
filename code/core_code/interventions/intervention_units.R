@@ -17,11 +17,14 @@ THROW.ERROR.IF.PAST.CHECK.YEAR = T
 #'@param apply.function The character name of the function that applies the intervention rate. Options are 'absolute' (the intervention rate is used as the new rate), 'multiplier' (the intervention rate is multiplied by the old rate), 'odds.ratio' (the intervention rate is treated as an odds ratio, and applied to the old rate, which is treated as a probability), 'additive' (the intervention rate is added to the old rate)
 #'@param allow.less.than.otherwse Whether the relevant rates are allowed to be less than they would have been without the intervention
 #'@param allow.greater.than.otherwse Whether the relevant rates are allowed to be greater than they would have been without the intervention
-#'
+#'@param scale Scale on which the effect takes place. Options are 'rate', 'proportion', 'proportion.leaving', 'proportion.staying', 'time'
+
+
 create.intervention.unit <- function(type=c('testing','prep','suppression','needle.exchange',''),
                                      start.year=2021,
                                      rates,
                                      years,
+                                     scale,
                                      end.year=Inf,
                                      apply.function=c('absolute','multiplier','odds.ratio','additive')[1],
                                      allow.less.than.otherwise = apply.function!='absolute',
@@ -60,6 +63,8 @@ create.intervention.unit <- function(type=c('testing','prep','suppression','need
         stop(paste0("apply.function must be one of: ",
                     paste0("'", ALLOWED.APPLY.FUNCTIONS, "'", collapse=', ')))
     
+    #-- Check scale --#
+    check.transition.element.type(scale, varname.for.error = 'scale')
     
     #-- Set up name metadata --#
     
@@ -80,6 +85,7 @@ create.intervention.unit <- function(type=c('testing','prep','suppression','need
               end.year=end.year,
               rates=rates,
               years=years,
+              scale=scale,
               apply.function=apply.function,
               allow.less.than.otherwise=allow.less.than.otherwise,
               allow.greater.than.otherwise=allow.greater.than.otherwise,
@@ -106,6 +112,7 @@ create.proportion.multiplier.intervention.unit <- function(type=c('testing','pre
                                                            proportions,
                                                            multipliers,
                                                            years,
+                                                           scale='proportion',
                                                            end.year=Inf,
                                                            apply.function=c('absolute','multiplier','odds.ratio','additive')[1],
                                                            allow.less.than.otherwise = apply.function!='absolute',
@@ -127,6 +134,7 @@ create.proportion.multiplier.intervention.unit <- function(type=c('testing','pre
                              start.year=start.year,
                              rates=rates,
                              years=years,
+                             scale=scale,
                              end.year=end.year,
                              apply.function = apply.function,
                              allow.less.than.otherwise=allow.less.than.otherwise,

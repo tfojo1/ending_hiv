@@ -215,12 +215,13 @@ create.covid.scenario <- function(pandemic.effects.distribution=NULL,
     
     #-- Package it up and return --#
     
-    make.details.object = function(type, start.normalize.time, normal.time){
+    make.details.object = function(type, start.normalize.time, normal.time, effect.scale){
         list(
             type = type,
             start.normalize.time=start.normalize.time,
            # normalize.span=normalize.span,
-            normal.time=normal.time#start.normalize.time %m+% months(normalize.span)
+            normal.time=normal.time,#start.normalize.time %m+% months(normalize.span)
+           effect.scale = effect.scale
         )
     }
     
@@ -228,22 +229,26 @@ create.covid.scenario <- function(pandemic.effects.distribution=NULL,
         make.details.object(
             type = 'sexual.transmission',
             start.normalize.time = start.sexual.transmission.normalize.time,
-            normal.time = sexual.transmission.normal.time
+            normal.time = sexual.transmission.normal.time,
+            effect.scale = 'rate'
         ),
         make.details.object(
             type = 'suppression',
             start.normalize.time = start.suppression.normalize.time,
-            normal.time = suppression.normal.time
+            normal.time = suppression.normal.time,
+            effect.scale = 'proportion'
         ),
         make.details.object(
             type = 'testing',
             start.normalize.time = start.testing.normalize.time,
-            normal.time = testing.normal.time
+            normal.time = testing.normal.time,
+            effect.scale = 'rate'
         ),
         make.details.object(
             type = 'prep',
             start.normalize.time = start.prep.normalize.time,
-            normal.time = prep.normal.time
+            normal.time = prep.normal.time,
+            effect.scale = 'proportion'
         ))[c(pandemic.affects.sexual.transmission,
              pandemic.affects.suppression,
              pandemic.affects.testing,
@@ -423,6 +428,7 @@ cast.covid.intervention.for.location <- function(intervention,
                   cast.covid.intervention.unit(type = details$type,
                                                start.time = intervention@start.time,
                                                onset.duration = intervention@onset.duration,
+                                               scale = details$effect.scale,
                                                
                                                start.normalize.time = details$start.normalize.time,
                                                normal.time = details$normal.time,
@@ -454,6 +460,7 @@ cast.covid.intervention.unit <- function(type,
                                          onset.duration,
                                          start.normalize.time,
                                          normal.time,
+                                         scale,
                                          mobility.times,
                                          mobility.deltas,
                                          effect.is.reduction=T,
@@ -470,6 +477,7 @@ cast.covid.intervention.unit <- function(type,
         create.intervention.unit(type=type,
                                  start.year=start.time,
                                  rates=parse(text=paste0("1-c(",effect.name,", ",effect.name,", 0)")),
+                                 scale = scale,
                                  years=c(start.time + onset.duration,
                                          start.normalize.time,
                                          normal.time),
@@ -518,6 +526,7 @@ cast.covid.intervention.unit <- function(type,
                start.year=start.time,
                rates=rates,
                years=times,
+               scale=scale,
                end.year = normal.time+.0001,
                apply.function = 'multiplier',
                allow.less.than.otherwise = T)

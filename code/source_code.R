@@ -39,10 +39,9 @@ load('cached/ALL.DATA.MANAGERS.Rdata')
 
 #-- Set-Up --#
 source('code/core_code/setup/interpolating.R')
-source('code/core_code/setup/jheem_settings.R')
 source('code/core_code/setup/base_parameters.R')
 source('code/core_code/setup/setup_helpers.R')
-source('code/core_code/setup/logit_transformations.R')
+source('code/core_code/meta_model_structures/logit_transformations.R')
 source('code/core_code/setup/setup_jheem_from_components.R')
 source('code/core_code/setup/setup_jheem_components.R')
 source('code/core_code/setup/setup_components_for_locale.R')
@@ -50,13 +49,24 @@ source('code/core_code/setup/setup_initial_components.R')
 
 #-- Calibration --#
 source('code/calibration/parameter_mappings/calibrated_parameters_113_helpers.R')
-source('code/calibration/parameter_mappings/calibrated_parameters_118.R')
-source('code/calibration/parameter_mappings/calibrated_parameters_expanded_2.R')
 
 source('code/calibration/likelihoods/estimate_cdc_errors.R')
 source('code/calibration/likelihoods/likelihoods_2.R')
 source('code/calibration/likelihoods/likelihoods_nested_location2.R')
 source('code/calibration/likelihoods/likelihood_master.R')
+
+#-- Versions --#
+source('code/core_code/meta_model_structures/jheem_settings.R')
+source('code/core_code/meta_model_structures/transition_mappings.R')
+
+# Original (EHE)
+source('code/applications/ehe/ehe_jheem_settings.R')
+source('code/calibration/parameter_mappings/calibrated_parameters_118.R')
+
+# Expanded Continuum
+source('code/applications/expanded_continuum/expanded_continuum_jheem_settings.R')
+source('code/calibration/parameter_mappings/calibrated_parameters_expanded_2.R')
+
 
 #-- Systematic --#
 source('code/processing//postprocessing.R')

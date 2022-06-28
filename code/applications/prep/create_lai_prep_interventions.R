@@ -53,12 +53,13 @@ create.lai.prep.interventions <- function(target.population,
         BASELINE = create.intervention.unit(type='prep',
                                             start.year=start.year,
                                             rates.expr,
-                                        #    rates=expression((baseline.mix[1] * discontinuation.to.coverage.fraction(inj.vs.oral.discontinuation.rr * (1-oral.prep.persistence)) +
-                                        #                          baseline.mix[2] * persistence.to.coverage.fraction(oral.prep.persistence)) /
-                                        #                         persistence.to.coverage.fraction(oral.prep.persistence)),
+                                            #    rates=expression((baseline.mix[1] * discontinuation.to.coverage.fraction(inj.vs.oral.discontinuation.rr * (1-oral.prep.persistence)) +
+                                            #                          baseline.mix[2] * persistence.to.coverage.fraction(oral.prep.persistence)) /
+                                            #                         persistence.to.coverage.fraction(oral.prep.persistence)),
                                             years=implemented.year,
                                             apply.function='multiplier',
-                                            allow.less.than.otherwise = T)
+                                            allow.less.than.otherwise = T,
+                                            scale = 'proportion')
         
     }
     
@@ -67,7 +68,8 @@ create.lai.prep.interventions <- function(target.population,
         BASELINE.EFFICACY = create.intervention.unit(type='rr.prep', start.year=2000,
                                                      rates='oral.prep.rr',
                                                      years=2000.001,
-                                                     allow.less.than.otherwise = T)
+                                                     allow.less.than.otherwise = T,
+                                                     scale = 'rate')
     }
     
     else if(baseline.mix[1] == 0){
@@ -75,7 +77,8 @@ create.lai.prep.interventions <- function(target.population,
                                                      start.year=start.year,
                                                      rates=expression(oral.prep.rr * inj.vs.oral.hr),
                                                      years=implemented.year,
-                                                     allow.less.than.otherwise = T)
+                                                     allow.less.than.otherwise = T,
+                                                     scale = 'rate')
     }
     else {
         rate.3.expr = parse(text=paste0(
@@ -89,7 +92,8 @@ create.lai.prep.interventions <- function(target.population,
                                                        #      expression(baseline.mix[1] * oral.prep.rr * persistence.to.coverage.fraction(oral.prep.persistence) +
                                                        #                     baseline.mix[2] * oral.prep.rr * inj.vs.oral.hr * persistence.to.coverage.fraction(1 - (1-oral.prep.persistence) * inj.vs.oral.discontinuation.rr))),
                                                      years=c(2000.001, start.year, implemented.year),
-                                                     allow.less.than.otherwise = T)
+                                                     allow.less.than.otherwise = T,
+                                                     scale = 'rate')
         
     }
     
@@ -113,7 +117,8 @@ create.lai.prep.interventions <- function(target.population,
                                             #      additional.mix[2] * persistence.to.coverage.fraction(1-(1-oral.prep.persistence)*inj.vs.oral.discontinuation.rr
                                              #     ))),
                                           years=implemented.year,
-                                          max.rate = 1)
+                                          max.rate = 1,
+                                          scale = 'proportion')
     
     rates.expr = parse(text=paste0(
         additional.mix[1], "* oral.prep.rr * persistence.to.coverage.fraction(oral.prep.persistence) + ",
@@ -121,12 +126,11 @@ create.lai.prep.interventions <- function(target.population,
     ))
     ADDITIONAL.EFFICACY = create.intervention.unit(type='rr.lai.prep', start.year=2000,
                                                    rates=rates.expr,
-#                                        rates=expression(additional.mix[1] * oral.prep.rr * persistence.to.coverage.fraction(oral.prep.persistence) +
- #                                                            additional.mix[2] * oral.prep.rr * inj.vs.oral.hr * persistence.to.coverage.fraction(1 - (1-oral.prep.persistence) * inj.vs.oral.discontinuation.rr)),
-                                        years=2000.001,
-                                        allow.less.than.otherwise = T)
-        
-   
+                                                   #                                        rates=expression(additional.mix[1] * oral.prep.rr * persistence.to.coverage.fraction(oral.prep.persistence) +
+                                                   #                                                            additional.mix[2] * oral.prep.rr * inj.vs.oral.hr * persistence.to.coverage.fraction(1 - (1-oral.prep.persistence) * inj.vs.oral.discontinuation.rr)),
+                                                   years=2000.001,
+                                                   allow.less.than.otherwise = T,
+                                                   scale = 'rate')
     
     
     #Create intervention

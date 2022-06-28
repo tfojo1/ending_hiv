@@ -29,6 +29,9 @@ register.version <- function(version,
     for (element.name in VERSION.MANAGER.ELEMENTS)
         version.manager[[version]][[element.name]] = NULL
     
+    if (!is(settings, 'jheem.settings'))
+        stop("'settings' must be an object of class 'jheem.settings'")
+    
     version.manager = do.register.for.version(version=version,
                                               element.name='settings',
                                               element.value=settings,
@@ -165,7 +168,7 @@ do.register.for.version <- function(version,
         other.versions = setdiff(version.manager$versions, version)
         if (length(other.versions)>0)
         {
-            matching.mask = sapply(version.manager[[element.name]][[other.versions]], function(elem){
+            matching.mask = sapply(version.manager[[element.name]][other.versions], function(elem){
                 elem==element.value
             })
             
@@ -201,3 +204,4 @@ do.get.for.version <- function(version,
 
 ##-- MAKE THE DEFAULT VERSION MANAGER --##
 VERSION.MANAGER = create.version.manager()
+

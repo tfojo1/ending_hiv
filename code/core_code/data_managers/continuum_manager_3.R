@@ -795,6 +795,7 @@ run.linkage.regressions <- function(cm,
     names(cm$linkage)[names(cm$linkage)=='stratified.log.odds.slope'] = 'slope'
     
     #-- Return it --#
+    cm$linkage$model.type = 'logistic'
     cm
 }
 
@@ -999,6 +1000,7 @@ run.suppression.regressions <- function(cm,
     names(cm$suppression)[names(cm$suppression)=='stratified.log.odds.slope'] = 'slope'
     
     #-- Return --#
+    cm$suppression$model.type = 'logistic'
     cm
 }
 
@@ -1194,6 +1196,7 @@ run.testing.regressions <- function(cm,
     names(cm$testing)[names(cm$testing)=='stratified.log.odds.slope'] = 'slope'
     
     #-- Return --#
+    cm$testing$model.type = 'logistic'
     cm
 }
 
@@ -1260,7 +1263,7 @@ setup.logistic.model <- function(anchor.year,
          min.proportion = min.proportion,
          max.proportion = max.proportion,
          mixed.linear = F,
-         
+         model.type = 'logistic',
          
          intercept=setup.array.from.coefficients(
              settings = settings,

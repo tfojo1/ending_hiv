@@ -11,35 +11,35 @@ register.standard.interventions.annals.revision <- function(start.year=2023,
     ##-- INTERVENTION UNITS --##
     ##------------------------##
     
-    TESTING.1x = create.intervention.unit('testing', start.year, 1, end.year)
-    TESTING.0.5x = create.intervention.unit('testing', start.year, 0.5, end.year)
-    TESTING.2x = create.intervention.unit('testing', start.year, 2, end.year)
+    TESTING.1x = create.intervention.unit('testing', start.year, 1, end.year, scale = 'rate')
+    TESTING.0.5x = create.intervention.unit('testing', start.year, 0.5, end.year, scale = 'rate')
+    TESTING.2x = create.intervention.unit('testing', start.year, 2, end.year, scale = 'rate')
     
-    PREP.10 = create.intervention.unit('prep', start.year, 0.1, end.year)
-    PREP.25 = create.intervention.unit('prep', start.year, 0.25, end.year)
-    PREP.50 = create.intervention.unit('prep', start.year, 0.5, end.year)
+    PREP.10 = create.intervention.unit('prep', start.year, 0.1, end.year, scale = 'proportion')
+    PREP.25 = create.intervention.unit('prep', start.year, 0.25, end.year, scale = 'proportion')
+    PREP.50 = create.intervention.unit('prep', start.year, 0.5, end.year, scale = 'proportion')
     
-    SUPPRESSION.80 = create.intervention.unit('suppression', start.year, 0.8, end.year)
-    SUPPRESSION.90 = create.intervention.unit('suppression', start.year, 0.9, end.year)
+    SUPPRESSION.80 = create.intervention.unit('suppression', start.year, 0.8, end.year, scale = 'proportion')
+    SUPPRESSION.90 = create.intervention.unit('suppression', start.year, 0.9, end.year, scale = 'proportion')
     
     MARGINAL.TESTING.1.25 = create.intervention.unit("testing", start.year, 1.25, end.year,
-                                                     apply.function = 'multiplier')
+                                                     apply.function = 'multiplier', scale = 'rate')
     MARGINAL.PREP.05 = create.intervention.unit("prep", start.year, 0.05, end.year,
                                                 apply.function = 'additive',
-                                                max.rate = 0.5)
+                                                max.rate = 0.5, scale = 'proportion')
     MARGINAL.SUPPRESSION.10 = create.intervention.unit("suppression", start.year, 0.10, end.year,
                                                        apply.function = 'additive',
-                                                       max.rate = 0.9)
+                                                       max.rate = 0.9, scale = 'proportion')
     
-    NEEDLE.EXCHANGE.10 = create.intervention.unit('needle.exchange', start.year, 0.1, end.year)
-    NEEDLE.EXCHANGE.25 = create.intervention.unit('needle.exchange', start.year, 0.25, end.year)
+    NEEDLE.EXCHANGE.10 = create.intervention.unit('needle.exchange', start.year, 0.1, end.year, scale = 'proportion')
+    NEEDLE.EXCHANGE.25 = create.intervention.unit('needle.exchange', start.year, 0.25, end.year, scale = 'proportion')
     
     MOUD.10 = create.moud.intervention(start.year=start.year,
-                                       coverages=0.1,
-                                       years=end.year)
+                                       years = end.year,
+                                       coverages=0.1)
     MOUD.25 = create.moud.intervention(start.year=start.year,
-                                       coverages=0.25,
-                                       years=end.year)
+                                       years = end.year,
+                                       coverages=0.25)
     
     ##------------------##
     ##-- TESTING ONLY --##
@@ -909,6 +909,7 @@ create.moud.intervention <- function(start.year,
                                                    apply.function = 'multiplier',
                                                    allow.less.than.otherwise = T,
                                                    years = years,
+                                                   scale = 'proportion',
                                                    raw.proportions = coverages,
                                                    name.as.pct = T,
                                                    name.apply.function = 'absolute',

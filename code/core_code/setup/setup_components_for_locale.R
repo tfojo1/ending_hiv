@@ -6,13 +6,15 @@
 #source('../code/parameters.R')
 
 setup.components.for.msa <- function(msa,
+                                     version,
                                      surv=msa.surveillance,
                                      population.year=2012,
                                      smooth.from.year=2010,
-                                     smooth.to.year=2025,
+                                     smooth.to.year=2030,
+#                                     default.last.background.year=2025,
+                                     default.extra.slope.after.year=2020,
                                      verbose=F,
                                      data.managers = ALL.DATA.MANAGERS,
-                                     settings = SETTINGS,
                                      parameters = BASE_PARAMETER_VALUES,
                                      fix.strata.sizes=T,
                                      idu.transitions=NULL,
@@ -35,6 +37,7 @@ setup.components.for.msa <- function(msa,
                                      ramp.year=1996)
 {
     msa.counties = counties.for.msa(msa)
+    settings = get.settings.for.version(version)
 
     ##----------------------##
     ##-- GET BEST GUESSES --##
@@ -99,19 +102,19 @@ setup.components.for.msa <- function(msa,
         idu.relapse = idu.transitions$idu.relapse
     }
 
-    ##------------------##
-    ##-- RUN THE TEST --##
-    ##------------------##
-
+    ##---------------------------------##
+    ##-- POPULATION/BIRTHS/MORTALITY --##
+    ##---------------------------------##
+    
     #-- Initialize --#
     if (verbose)
         print('**Initializing Components')
-    comps = initialize.jheem.components(settings=settings,
-                                       fips=msa.counties,
-                                       data.managers = data.managers,
-                                       population.year=population.year,
-                                       model.hiv.transmission = include.hiv)
-
+    comps = initialize.jheem.components(version = version,
+                                        fips=msa.counties,
+                                        data.managers = data.managers,
+                                        population.year=population.year,
+                                        model.hiv.transmission = include.hiv)
+    
     #-- Proportion MSM --#
     if (verbose)
         print('**Setting MSM Proportions')
@@ -132,7 +135,7 @@ setup.components.for.msa <- function(msa,
 
     #-- Mortality --#
     if (verbose)
-        print('**Setting up mortality')
+        print('**Setting up Mortality')
     comps = setup.general.mortality(comps, data.managers, parameters['idu.mortality'])
     comps = setup.hiv.mortality.rates(comps,
                                       r.peak=2*parameters['untreated.hiv.mortality'],
@@ -142,6 +145,8 @@ setup.components.for.msa <- function(msa,
                                       fraction.change.after.end = 0.025)
 
     #-- Initial Population already done by default --#
+    if (verbose)
+        print('**Setting up Initial Prevalence')
     if (seed.prevalence)
     {
         prevalence.sex.age = get.surveillance.data.rate(msa.surveillance,
@@ -193,8 +198,13 @@ setup.components.for.msa <- function(msa,
                                  seed.rate.per.stratum = min.prevalence)
     }
 
-
-    #-- Transitions --#
+    
+    ##-----------------##
+    ##-- TRANSITIONS --##
+    ##-----------------##
+    
+    #-- IDU and HIV base transitions --#
+    
     if (verbose)
         print('**Setting up IDU and HIV transitions')
 
@@ -209,50 +219,56 @@ setup.components.for.msa <- function(msa,
                                 acute.hiv.duration = parameters['acute.infection.duration'],
                                 prep.screening.frequency = parameters['prep.screening.frequency'])
     
+    
+    #-- General Transitions Set-Up --#
+    
+    if (verbose)
+        print('**Setting up General Transitions')
+    
+    # Figure out what years we are going to smooth
+    smooth.years = smooth.from.year:(smooth.to.year+1)
+    
+    transition.elements.to.set.up = get.all.transition.elements(get.components.transition.mapping(comps))
+    mask = sapply(transition.elements.to.set.up, transition.element.needs.background.model)
+    transition.elements.to.set.up = transition.elements.to.set.up[mask]
+    
+    for (tr.el in transition.elements.to.set.up)
+    {
+        if (verbose)
+            print(paste0('  -- ', tr.el$name))
+        
+        comps = do.setup.background(comps,
+                                    type = tr.el$name,
+                                    location = location,
+                                    years = smooth.years,
+                                    extra.slope.after.year=default.extra.slope.after.year,
+                                    
+                                    continuum.manager=ALL.DATA.MANAGERS$continuum,
+                                    prep.manager=ALL.DATA.MANAGERS$prep)
+    }
+    
+    
+    #-- Special Cases: Testing Ramp--#
+    
+    
+    if (verbose)
+        print('**Setting up Testing Ramp')
+    
     aids.dx = get.surveillance.data(location.codes = msa, data.type='aids.diagnoses', years=1985:1993)
     if (all(is.na(aids.dx)))
         aids.dx = get.surveillance.data(location.codes = '12580', data.type='aids.diagnoses', years=1985:1993)
     
     fit = lm(log(aids.dx) ~ attr(aids.dx, 'years'))
     ramp.yearly.increase = exp(fit$coefficients[2])
-    ramp.yearly.increase = min(2, max(1.2, ramp.yearly.increase))
-    comps = setup.background.hiv.testing(comps,
-                                         continuum.manager = data.managers$continuum,
-                                         location=msa,
-                                         years=smooth.from.year:(smooth.to.year+1))
+    
     comps = set.background.hiv.testing.ramp.up(comps,
                                                testing.ramp.up.yearly.increase=as.numeric(ramp.yearly.increase))
-    comps = set.background.hiv.testing.ors(comps,
-                                           msm.or.intercept=1,
-                                           heterosexual.or.intercept=1,
-                                           idu.or.intercept=1,
-                                           black.or.intercept=1,
-                                           hispanic.or.intercept=1,
-                                           other.or.intercept=1,
-                                           age1.or.intercept=1,
-                                           age2.or.intercept=1,
-                                           age3.or.intercept=1,
-                                           age4.or.intercept=1,
-                                           age5.or.intercept=1,
-                                           
-                                           total.or.slope=1,
-                                           msm.or.slope=1,
-                                           heterosexual.or.slope=1,
-                                           idu.or.slope=1,
-                                           black.or.slope=1,
-                                           hispanic.or.slope=1,
-                                           other.or.slope=1,
-                                           age1.or.slope=1,
-                                           age2.or.slope=1,
-                                           age3.or.slope=1,
-                                           age4.or.slope=1,
-                                           age5.or.slope=1)
     
-    #-- Suppression --#
+    #-- Special Cases: Suppression --#
     if (verbose)
         print('**Setting up suppression proportions')
     
-    if (is.null(settings$VERSION) || settings$VERSION=='collapsed_1.0')
+    if (version=='collapsed_1.0')
     {
         comps = setup.background.suppression(comps,
                                              continuum.manager=data.managers$continuum,
@@ -284,192 +300,17 @@ setup.components.for.msa <- function(msa,
                                                age3.or.slope=1,
                                                age4.or.slope=1,
                                                age5.or.slope=1)
+        
+        
+        if (is.null(settings$VERSION) || settings$VERSION=='collapsed_1.0')
+            comps = set.future.background.slopes(comps,
+                                                 suppression=1,
+                                                 after.year=default.extra.slope.after.year)
     }
-    
 
-    #-- PrEP --#
-    
-    comps = set.background.prep.ors(comps,
-                                           msm.or.intercept=1,
-                                           heterosexual.or.intercept=1,
-                                           idu.or.intercept=1)
-    
-        
-    #-- Newly Suppressed, Linkage, etc --#
-    
-    smooth.years = smooth.from.year:(smooth.to.year+1)
-    
-    if (!is.null(settings$VERSION) && settings$VERSION=='expanded_1.0')
-    {
-        #- Linkage -#
-        comps = setup.background.linkage(components=comps,
-                                         continuum.manager=data.managers$continuum,
-                                         location=msa,
-                                         years=smooth.years,
-                                         linkage.ramp.year=ramp.year,
-                                         linkage.ramp.multiplier=1,
-                                         time.to.link.vs.disengage=1/4 #3 months
-        )
-        
-        #- Naive -#
-        comps = setup.background(components=comps,
-                                 type='naive.to.suppressed',
-                                 years=smooth.years,
-                                 location=msa,
-                                 continuum.manager=data.managers$continuum,
-                                 convert.proportions.to.rates=F,
-                                 ramp.years=ramp.year,
-                                 ramp.multipliers=1
-        )
-        comps = setup.background(components=comps,
-                                 type='naive.to.disengaged',
-                                 years=smooth.years,
-                                 location=msa,
-                                 continuum.manager=data.managers$continuum,
-                                 convert.proportions.to.rates=T,
-                                 ramp.years=ramp.year,
-                                 ramp.multipliers=1
-        )
-        
-        #- Failing -#
-        comps = setup.background(components=comps,
-                                 type='failing.to.suppressed',
-                                 years=smooth.years,
-                                 location=msa,
-                                 continuum.manager=data.managers$continuum,
-                                 convert.proportions.to.rates=T,
-                                 ramp.years=ramp.year,
-                                 ramp.multipliers=1
-        )
-        comps = setup.background(components=comps,
-                                 type='failing.to.disengaged',
-                                 years=smooth.years,
-                                 location=msa,
-                                 continuum.manager=data.managers$continuum,
-                                 convert.proportions.to.rates=T,
-                                 ramp.years=ramp.year,
-                                 ramp.multipliers=1
-        )
-        
-        #- Suppressed -#
-        comps = setup.background(components=comps,
-                                 type='suppressed.to.failing',
-                                 years=smooth.years,
-                                 location=msa,
-                                 continuum.manager=data.managers$continuum,
-                                 convert.proportions.to.rates=T,
-                                 ramp.years=ramp.year,
-                                 ramp.multipliers=1
-        )
-        comps = setup.background(components=comps,
-                                 type='suppressed.to.disengaged',
-                                 years=smooth.years,
-                                 location=msa,
-                                 continuum.manager=data.managers$continuum,
-                                 convert.proportions.to.rates=T,
-                                 ramp.years=ramp.year,
-                                 ramp.multipliers=1
-        )
-        
-        #- Reengagement -#
-        comps = setup.background(components=comps,
-                                 type='reengagement',
-                                 years=smooth.years,
-                                 location=msa,
-                                 continuum.manager=data.managers$continuum,
-                                 convert.proportions.to.rates=T,
-                                 ramp.years=ramp.year,
-                                 ramp.multipliers=1
-        )
-        
-        #-- Starting ART --#
-        
-        comps = setup.background.start.art(components=comps,
-                                           continuum.manager=data.managers$continuum)
-        
-        #- ORs -#
-        
-        types.to.set = c('linkage',
-                         'naive.to.suppressed', 'naive.to.disengaged',
-                         'failing.to.suppressed', 'failing.to.disengaged',
-                         'suppressed.to.failing', 'suppressed.to.disengaged',
-                         'reengagement',
-                         'start.art')
-        
-        for (type in types.to.set)
-        {
-            do.set.background.ors(components=comps,
-                                  component.name=type,
-                                  msm.or.intercept=1,
-                                  heterosexual.or.intercept=1,
-                                  idu.or.intercept=1,
-                                  msm.idu.or.intercept=1,
-                                  black.or.intercept=1,
-                                  hispanic.or.intercept=1,
-                                  other.or.intercept=1,
-                                  age1.or.intercept=1,
-                                  age2.or.intercept=1,
-                                  age3.or.intercept=1,
-                                  age4.or.intercept=1,
-                                  age5.or.intercept=1,
-                                  
-                                  total.or.slope=1,
-                                  
-                                  msm.or.slope=1,
-                                  heterosexual.or.slope=1,
-                                  idu.or.slope=1,
-                                  msm.idu.or.slope=1,
-                                  black.or.slope=1,
-                                  hispanic.or.slope=1,
-                                  other.or.slope=1,
-                                  age1.or.slope=1,
-                                  age2.or.slope=1,
-                                  age3.or.slope=1,
-                                  age4.or.slope=1,
-                                  age5.or.slope=1
-            )
-        }
-    }
-    
-    #-- Future slopes --#
-    comps = set.future.background.slopes(comps,
-                                         testing=1,
-                                         prep=1,
-                                         after.year=2020)
-    
-    
-    if (is.null(settings$VERSION) || settings$VERSION=='collapsed_1.0')
-        comps = set.future.background.slopes(comps,
-                                             suppression=1,
-                                             after.year=2020)
-    
-    
-    if (!is.null(settings$VERSION) && settings$VERSION=='expanded_1.0')
-        comps = set.future.background.slopes(comps,
-                                             
-                                             linkage = 1,
-                                             
-                                             # naive
-                                             naive.to.suppressed = 1,
-                                             naive.to.disengaged = 1,
-                                             
-                                             # failing
-                                             failing.to.suppressed = 1,
-                                             failing.to.disengaged = 1,
-                                             
-                                             # to failing
-                                             suppressed.to.failing = 1,
-                                             suppressed.to.disengaged = 1,
-                                             
-                                             # reengagement
-                                             reengagement = 1,
-                                             
-                                             # start ART
-                                             start.art = 1,
-                                             
-                                             after.year=2020)
-    
-    #-- Needle Exchange --#
+    #-- Special Cases: Needle Exchange --#
+    if (verbose)
+        print('**Setting up Needle Exchange Proportions')
     
     # By default, no one using needle exchange
     comps = setup.background.needle.exchange(comps,
@@ -482,10 +323,10 @@ setup.components.for.msa <- function(msa,
                                                    needle.exchange.remission.rate.ratio=parameters['needle.exchange.remission.rate.ratio'])
     
     
-    #-- PrEP --#
+    #-- Special Cases: PrEP --#
     if (verbose)
         print('**Setting up PrEP')
-    prep.model = get.prep.model(ALL.DATA.MANAGERS$prep)
+    prep.model = get.prep.model(ALL.DATA.MANAGERS$prep, settings=get.components.settings(comps))
     if (prep.model$mixed.linear)
         comps = setup.background.prep(comps,
                                       prep.manager=ALL.DATA.MANAGERS$prep,
@@ -496,6 +337,11 @@ setup.components.for.msa <- function(msa,
                                       prep.manager=ALL.DATA.MANAGERS$prep,
                                       years = max(zero.prep.year+1, smooth.from.year):(smooth.to.year+1),
                                       zero.prep.year=zero.prep.year)
+    
+    comps = set.background.prep.ors(comps,
+                                    msm.or.intercept=1,
+                                    heterosexual.or.intercept=1,
+                                    idu.or.intercept=1)
     
     comps = set.background.change.to.years(comps,
                                            testing=smooth.to.year,
@@ -517,10 +363,13 @@ setup.components.for.msa <- function(msa,
                                            
                                            start.art = smooth.to.year)
     
+    comps = set.future.background.slopes(comps,
+                                         prep=1,
+                                         after.year=default.extra.slope.after.year)
+    
     #-- Transmission --#
     if (verbose)
         print('**Setting up Transmission')
-    
     
     comps = setup.prep.susceptibility(comps,
                                       prep.rr.heterosexual = parameters['prep.rr.heterosexual'],
@@ -620,5 +469,7 @@ setup.components.for.msa <- function(msa,
     attr(comps, 'location') = msa
     
     #-- Return --#
+    if (verbose)
+        print(paste0("**Done setting up components for ", msa))
     comps
 }

@@ -4,10 +4,13 @@
 ##-- COLLAPSING RACES --##
 ##----------------------##
 
-collapse.races <- function(arr)
+collapse.races <- function(arr, races)
 {
     dim.names = dimnames(arr)
-    dim.names[['race']] = BLACK.HISPANIC.OTHER
+    dim.names[['race']] = races
+    
+    if (!setequal(races, c('black','hispanic','other')))
+        stop("Right now, only set up to collapse to black/hispanic/other")
 
     rv = array(NA, dim = sapply(dim.names, length), dimnames = dim.names)
     access(rv, race='black') = access(arr, race='black')
@@ -17,10 +20,10 @@ collapse.races <- function(arr)
     rv
 }
 
-collapse.races.for.rates <- function(pop, rates)
+collapse.races.for.rates <- function(pop, rates, races)
 {
-    numerators = collapse.races(pop * rates)
-    denominators = collapse.races(pop)
+    numerators = collapse.races(pop * rates, races)
+    denominators = collapse.races(pop, races)
     numerators / denominators
 }
 

@@ -14,36 +14,42 @@ INTERVENTION.MANAGER = INTERVENTION.MANAGER.1.0
                                            rates=0,
                                            years=2015.001,
                                            apply.function='absolute',
-                                           max.rate = 1)
+                                           max.rate = 1,
+                                           scale = 'proportion')
   
   PREP.35.MARSHALL = create.intervention.unit(type='prep', start.year=2015,
                                               rates=.35,
                                               years=2015.001,
                                               apply.function='absolute',
-                                              max.rate = 1)
+                                              max.rate = 1,
+                                              scale = 'proportion')
   
   PREP.BASELINE.MALONEY = create.intervention.unit(type='prep', start.year=2018,
                                                     rates=0,
                                                     years=2018.001,
                                                     apply.function='absolute',
-                                                    max.rate = 1)
+                                                    max.rate = 1,
+                                                   scale = 'proportion')
   
   PREP.15.MALONEY = create.intervention.unit(type='prep', start.year=2018,
                                               rates=.15,
                                               years=2018.001,
                                               apply.function='absolute',
-                                              max.rate = 1)
+                                              max.rate = 1,
+                                             scale = 'proportion')
   
  
   #Injectable and Oral Variables 
   
   INJECTABLE.PREP.VARIABLE.MARSHALL = create.intervention.unit(type = "rr.prep", start.year = 2018, 
                                                                rates = 'inj.vs.oral.hr', years = 2018.001, 
-                                                               apply.function = "multiplier", allow.less.than.otherwise = T)
+                                                               apply.function = "multiplier", allow.less.than.otherwise = T,
+                                                               scale = 'proportion')
   
   INJECTABLE.PREP.VARIABLE.MALONEY = create.intervention.unit(type = "rr.prep", start.year = 2018, 
                                                       rates = 'inj.vs.oral.hr', years = 2018.001, 
-                                                      apply.function = "multiplier", allow.less.than.otherwise = T)
+                                                      apply.function = "multiplier", allow.less.than.otherwise = T,
+                                                      scale = 'proportion')
   
   
   # PUT THEM TOGETHER INTO INTERVENTIONS

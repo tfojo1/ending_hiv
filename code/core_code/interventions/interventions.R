@@ -9,7 +9,8 @@
 
 setClass('intervention',
          representation=list(
-             type='character'))
+             type='character',
+             code='character'))
 
 setClass('standard_intervention',
          contains='intervention',
@@ -92,6 +93,18 @@ create.intervention <- function(...)
             static.settings=static.settings,
             parameter.distributions=distributions)
     
+    for (type in names(int@raw))
+    {
+        unique.scales = unique(sapply(int@raw[[type]]$intervention.units, function(unit){
+            unit$scale
+        }))
+        
+        if (length(unique.scales)>1)
+            stop(paste0("Unable to create intervention; intervention.units for '", type, 
+                        "' are not all on the same scale: ",
+                        paste0("'", unique.scales, "'", collapse=', ')))
+    }
+    
     process.intervention(rv)
 }
 
@@ -152,6 +165,14 @@ def = function(int1, int2)
         sub = int2@raw[[type]]
         int1@raw[[type]]$target.populations = c(int1@raw[[type]]$target.populations, int2@raw[[type]]$target.populations)
         int1@raw[[type]]$intervention.units = c(int1@raw[[type]]$intervention.units, int2@raw[[type]]$intervention.units)
+        
+        unique.scales = unique(sapply(int1@raw[[type]]$intervention.units, function(unit){
+            unit$scale
+        }))
+        if (length(unique.scales)>1)
+            stop(paste0("Unable to join interventions; intervention.units for '", type, 
+                        "' are not all on the same scale: ",
+                        paste0("'", unique.scales, "'", collapse=', ')))
     }
     
     int1@static.settings = c(int1@static.settings,
@@ -183,7 +204,7 @@ intervention.consistency.check <- function(intervention, allow.multiple.interven
         pop.hashes = sapply(bucket$target.populations, logical.to.6.bit)
         if (!allow.multiple.interventions && max(table(pop.hashes))>1)
             stop("An intervention can only have one sub-intervention per population, but the intervention has more than one sub-intervention of type ", type,
-                 " for certain sub-populatfions")
+                 " for certain sub-populations")
     })
 }
 
@@ -493,6 +514,7 @@ register.intervention <- function(int,
     if (any(code==RESERVED.INTERVENTION.CODES))
         stop(paste0("'", code, "' is a reserved keyword and cannot be used as an intervention code"))
 
+    int@code = code
     # Check if already added under a different name or code
 
     if (!allow.intervention.multiple.names)
@@ -559,15 +581,20 @@ get.intervention.code <- function(int, manager=INTERVENTION.MANAGER.1.0,
     if (!is(int, 'intervention'))
         stop("int must be an object of class 'intervention' or a subclass of 'intervention'")
     
-    mask = sapply(manager$intervention, function(comp){
-        interventions.equal(int, comp)
-    })
-    if (any(mask))
-        as.character(manager$code[mask])
-    else if (throw.error.if.missing.intervention)
-        stop("The given intervention has not been registered with the intervention manager - cannot get code")
+    if (any(slotNames(int)=='code') && length(int@code)>0)
+        int@code
     else
-        NULL
+    {
+        mask = sapply(manager$intervention, function(comp){
+            interventions.equal(int, comp)
+        })
+        if (any(mask))
+            as.character(manager$code[mask])
+        else if (throw.error.if.missing.intervention)
+            stop("The given intervention has not been registered with the intervention manager - cannot get code")
+        else
+            NULL
+    }
 }
 
 get.intervention.name <- function(int, manager=INTERVENTION.MANAGER.1.0,
@@ -742,6 +769,16 @@ process.intervention <- function(intervention,
                                    lapply(to.process, function(type){
             sub = intervention@raw[[type]]
             
+            # check scales
+            unique.scales = unique(sapply(sub$intervention.units, function(unit){
+                unit$scale
+            }))
+            if (length(unique.scales)>1)
+                stop(paste0("Unable to process intervention; intervention.units for '", type, 
+                            "' are not all on the same scale: ",
+                            paste0("'", unique.scales, "'", collapse=', ')))
+            
+            # process the rest
             dim.names = dimnames(sub$target.populations[[1]])
             rv = list()
             rv$start.times = rv$end.times = 
@@ -760,6 +797,8 @@ process.intervention <- function(intervention,
                 sapply(sub$intervention.units, function(unit){unit$start.year})
                 )))
             rv$rates = lapply(rv$times, function(time){rate.template.arr})
+            
+            rv$scale = unique.scales
             
             for (j in length(sub$target.populations):1)
             {

@@ -1,9 +1,50 @@
+
+get.simset.intervention.code <- function(simset)
+{
+    code = attr(simset, 'intervention.code')
+    
+    # for backwards compatibility - early versions set the intervention object, not the code
+    if (is.null(code))
+        get.intervention.code(attr(simset, 'intervention'))
+    else
+        code
+}
+
+get.simset.intervention <- function(simset)
+{
+    code = attr(simset, 'intervention.code')
+    
+    if (!is.null(code))
+        intervention.from.code(code)
+    else # for backwards compatibility - early versions set the intervention object, not the code
+    {
+        int = attr(simset, 'intervention')
+        
+        if (is.null(int))
+            NULL
+        else
+        {
+            # if we can, run it through the intervention manager to get the latest defined intervention
+            code = get.intervention.code(int, throw.error.if.missing.intervention = F) 
+        
+            if (is.null(code))
+                int
+            else
+                intervention.from.code(code)
+        }
+    }
+}
+
+set.simset.intervention.code <- function(simset, code)
+{
+    attr(simset, 'intervention.code') = code
+}
+
 run.simset.intervention <- function(simset,
                                     intervention,
                                     run.from.year=attr(simset, 'run.from.year'),
                                     run.to.year=2030,
                                     keep.years=(run.from.year-1):run.to.year,
-                                    save.intervention=T,
                                     verbose=F,
                                     update.progress=if (verbose) function(n){print(paste0("Running simulation ", n, " of ", simset@n.sim))} else NULL,
                                     seed = 12343)
@@ -81,10 +122,7 @@ run.simset.intervention <- function(simset,
     if (verbose)
         print("Done")
     
-    if (save.intervention)
-        attr(simset, 'intervention') = original.intervention
-    
-    simset
+    set.simset.intervention.code(simset, get.intervention.code(original.intervention))
 }
 
 run.sim.intervention <- function(sim,
@@ -173,7 +211,7 @@ setup.components.for.intervention <- function(components,
         apply.functions = expand.character.array(expand.population.to.hiv.positive,
                                                  components$jheem,
                                                  intervention@processed$testing$apply.functions)
-        apply.functions[,,,,,diagnosed.states,,] = NA
+        apply.functions[,,,,,diagnosed.states,,] = NAtim
         allow.less = expand.population.to.hiv.positive(components$jheem, 
                                                        intervention@processed$testing$allow.less.than.otherwise)
         allow.greater = expand.population.to.hiv.positive(components$jheem, 
@@ -186,12 +224,13 @@ setup.components.for.intervention <- function(components,
                                           start.years = start.times,
                                           end.years = end.times,
                                           apply.functions = apply.functions,
+                                          foreground.scale=intervention@processed$testing$scale,
                                           allow.foreground.less = allow.less,
                                           allow.foreground.greater = allow.greater,
                                           overwrite.previous = overwrite.prior.intervention,
                                           foreground.min = min.rates,
-                                          foreground.max = max.rates,
-                                          convert.proportions.to.rates=F)
+                                          foreground.max = max.rates)
+#                                          convert.proportions.to.rates=F)
     }
     
     # Linkage
@@ -201,8 +240,8 @@ setup.components.for.intervention <- function(components,
                                                     components.element.name='linkage',
                                                     applies.to.continuum.states='unengaged',
                                                     overwrite.prior.intervention=overwrite.prior.intervention,
-                                                    not.applies.value = 0,
-                                                    convert.proportions.to.rates=F)
+                                                    not.applies.value = 0)
+#                                                    convert.proportions.to.rates=F)
     
     # Retention
     components = do.set.foreground.for.hiv.positive(components=components,
@@ -211,27 +250,27 @@ setup.components.for.intervention <- function(components,
                                                     components.element.name='naive.to.disengaged',
                                                     applies.to.continuum.states='engaged_unsuppressed_naive',
                                                     overwrite.prior.intervention=overwrite.prior.intervention,
-                                                    not.applies.value = 0,
-                                                    convert.proportions.to.rates=T,
-                                                    invert.proportions = T)
+                                                    not.applies.value = 0)
+#                                                    convert.proportions.to.rates=T,
+ #                                                   invert.proportions = T)
     components = do.set.foreground.for.hiv.positive(components=components,
                                                     intervention=intervention,
                                                     intervention.element.name='retention.failing',
                                                     components.element.name='failing.to.disengaged',
                                                     applies.to.continuum.states='engaged_unsuppressed_failing',
                                                     overwrite.prior.intervention=overwrite.prior.intervention,
-                                                    not.applies.value = 0,
-                                                    convert.proportions.to.rates=T,
-                                                    invert.proportions = T)
+                                                    not.applies.value = 0)
+#                                                    convert.proportions.to.rates=T,
+ #                                                   invert.proportions = T)
     components = do.set.foreground.for.hiv.positive(components=components,
                                                     intervention=intervention,
                                                     intervention.element.name='retention.suppressed',
                                                     components.element.name='suppressed.to.disengaged',
                                                     applies.to.continuum.states='engaged_suppressed',
                                                     overwrite.prior.intervention=overwrite.prior.intervention,
-                                                    not.applies.value = 0,
-                                                    convert.proportions.to.rates=T,
-                                                    invert.proportions = T)
+                                                    not.applies.value = 0)
+#                                                    convert.proportions.to.rates=T,
+ #                                                   invert.proportions = T)
 
     
     # Gain of Suppression
@@ -241,16 +280,16 @@ setup.components.for.intervention <- function(components,
                                                     components.element.name='naive.to.suppressed',
                                                     applies.to.continuum.states='engaged_unsuppressed_naive',
                                                     overwrite.prior.intervention=overwrite.prior.intervention,
-                                                    not.applies.value = 0,
-                                                    convert.proportions.to.rates=F)
+                                                    not.applies.value = 0)
+#                                                    convert.proportions.to.rates=F)
     components = do.set.foreground.for.hiv.positive(components=components,
                                                     intervention=intervention,
                                                     intervention.element.name='gain.of.suppression.failing',
                                                     components.element.name='failing.to.suppressed',
                                                     applies.to.continuum.states='engaged_unsuppressed_failing',
                                                     overwrite.prior.intervention=overwrite.prior.intervention,
-                                                    not.applies.value = 0,
-                                                    convert.proportions.to.rates=T)
+                                                    not.applies.value = 0)
+#                                                    convert.proportions.to.rates=T)
     
     # Suppression
     if (!is.null(intervention@processed$suppression))
@@ -289,12 +328,13 @@ setup.components.for.intervention <- function(components,
                                           start.years = start.times,
                                           end.years = end.times,
                                           apply.functions = apply.functions,
+                                          foreground.scale=intervention@processed$suppression$scale,
                                           allow.foreground.less = allow.less,
                                           allow.foreground.greater = allow.greater,
                                           overwrite.previous = overwrite.prior.intervention,
                                           foreground.min = min.rates,
-                                          foreground.max = max.rates,
-                                          convert.proportions.to.rates=F)
+                                          foreground.max = max.rates)
+#                                          convert.proportions.to.rates=F)
     }
     
     # PrEP Coverage
@@ -324,12 +364,13 @@ setup.components.for.intervention <- function(components,
                                               start.years = start.times,
                                               end.years = end.times,
                                               apply.functions = apply.functions,
+                                              foreground.scale=intervention@processed[[prep.type]]$scale,
                                               allow.foreground.less = allow.less,
                                               allow.foreground.greater = allow.greater,
                                               overwrite.previous = overwrite.prior.intervention,
                                               foreground.min = min.rates,
-                                              foreground.max = max.rates,
-                                              convert.proportions.to.rates=F)
+                                              foreground.max = max.rates)
+#                                              convert.proportions.to.rates=F)
         }
         
         
@@ -359,12 +400,13 @@ setup.components.for.intervention <- function(components,
                                               start.years = start.times,
                                               end.years = end.times,
                                               apply.functions = apply.functions,
+                                              foreground.scale=intervention@processed[[rr.type]]$scale,
                                               allow.foreground.less = allow.less,
                                               allow.foreground.greater = allow.greater,
                                               overwrite.previous = overwrite.prior.intervention,
                                               foreground.min = min.rates,
-                                              foreground.max = max.rates,
-                                              convert.proportions.to.rates=F)
+                                              foreground.max = max.rates)
+#                                              convert.proportions.to.rates=F)
         }
     }    
     
@@ -393,12 +435,13 @@ setup.components.for.intervention <- function(components,
                                           start.years = start.times,
                                           end.years = end.times,
                                           apply.functions = apply.functions,
+                                          foreground.scale=intervention@processed$needle.exchange$scale,
                                           allow.foreground.less = allow.less,
                                           allow.foreground.greater = allow.greater,
                                           overwrite.previous = overwrite.prior.intervention,
                                           foreground.min = min.rates,
-                                          foreground.max = max.rates,
-                                          convert.proportions.to.rates=F)
+                                          foreground.max = max.rates)
+#                                          convert.proportions.to.rates=F)
     }
     
     # IDU Transitions
@@ -432,12 +475,13 @@ setup.components.for.intervention <- function(components,
                                               start.years = start.times,
                                               end.years = end.times,
                                               apply.functions = apply.functions,
+                                              foreground.scale=intervention@processed[[idu.trans]]$scale,
                                               allow.foreground.less = allow.less,
                                               allow.foreground.greater = allow.greater,
                                               overwrite.previous = overwrite.prior.intervention,
                                               foreground.min = min.rates,
-                                              foreground.max = max.rates,
-                                              convert.proportions.to.rates=F)
+                                              foreground.max = max.rates)
+#                                              convert.proportions.to.rates=F)
         }
     }
     
@@ -507,18 +551,29 @@ setup.components.for.intervention <- function(components,
                                                                     msm.arr = intervention@processed$msm.transmission$allow.greater.than.otherwise,
                                                                     default.value = F)
         
+        sexual.transmission.scales = unique(c(intervention@processed$heterosexual.transmission$scale,
+                                              intervention@processed$msm.transmission$scale))
+        
+        if (length(sexual.transmission.scales)>1)
+            stop(paste0("Scales are different for heterosexual transmission ('",
+                        intervention@processed$heterosexual.transmission$scale, 
+                        "') and msm sexual transmission ('",
+                        intervention@processed$msm.transmission$scale,
+                        "')"))
+        
         components = set.foreground.rates(components, 'sexual.transmission',
                                           rates = rates,
                                           years = merged.times,
                                           start.years = start.times,
                                           end.years = end.times,
                                           apply.functions = apply.functions,
+                                          foreground.scale=sexual.transmission.scales,
                                           allow.foreground.less = allow.less,
                                           allow.foreground.greater = allow.greater,
                                           overwrite.previous = overwrite.prior.intervention,
                                           foreground.min = min.rates,
-                                          foreground.max = max.rates,
-                                          convert.proportions.to.rates=F)
+                                          foreground.max = max.rates)
+#                                          convert.proportions.to.rates=F)
     }
     
     # IDU Transmission
@@ -545,12 +600,13 @@ setup.components.for.intervention <- function(components,
                                           start.years = start.times,
                                           end.years = end.times,
                                           apply.functions = apply.functions,
+                                          foreground.scale=intervention@processed$idu.transmission$scale,
                                           allow.foreground.less = allow.less,
                                           allow.foreground.greater = allow.greater,
                                           overwrite.previous = overwrite.prior.intervention,
                                           foreground.min = min.rates,
-                                          foreground.max = max.rates,
-                                          convert.proportions.to.rates=F)
+                                          foreground.max = max.rates)
+#                                          convert.proportions.to.rates=F)
     }
     
     
@@ -561,11 +617,12 @@ do.set.foreground.for.hiv.positive <- function(components,
                                                intervention,
                                                intervention.element.name,
                                                components.element.name,
-                                               convert.proportions.to.rates,
+                                            #   convert.proportions.to.rates,
                                                applies.to.continuum.states,
                                                overwrite.prior.intervention,
-                                               not.applies.value = 0,
-                                               invert.proportions=F)
+                                               not.applies.value = 0
+                                              # invert.proportions=F
+                                               )
 {
     not.applies.states = setdiff(components$settings$CONTINUUM_OF_CARE, applies.to.continuum.states)
     if (!is.null(intervention@processed[[intervention.element.name]]))
@@ -604,13 +661,15 @@ do.set.foreground.for.hiv.positive <- function(components,
                                           start.years = start.times,
                                           end.years = end.times,
                                           apply.functions = apply.functions,
+                                          foreground.scale=intervention@processed[[intervention.element.name]]$scale,
                                           allow.foreground.less = allow.less,
                                           allow.foreground.greater = allow.greater,
                                           overwrite.previous = overwrite.prior.intervention,
                                           foreground.min = min.rates,
-                                          foreground.max = max.rates,
-                                          convert.proportions.to.rates=convert.proportions.to.rates,
-                                          invert.proportions=invert.proportions)
+                                          foreground.max = max.rates
+                                        #  convert.proportions.to.rates=convert.proportions.to.rates,
+                                        #  invert.proportions=invert.proportions
+                                          )
     }
     
     components

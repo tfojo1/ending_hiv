@@ -304,7 +304,7 @@ parameters.prior = join.distributions(
 )
 VERSION.MANAGER = register.parameters.prior(VERSION.MANAGER,
                                             prior=parameters.prior,
-                                            version=SETTINGS.COLLAPSED.CONTINUUM$VERSION)
+                                            version='collapsed_1.0')
 
 PARAMETER.VAR.BLOCKS.1 = list(
   
@@ -494,7 +494,7 @@ PARAMETER.VAR.BLOCKS.1 = list(
 )
 VERSION.MANAGER = register.parameter.sampling.blocks(VERSION.MANAGER,
                                                      blocks=PARAMETER.VAR.BLOCKS.1,
-                                                     version=SETTINGS.COLLAPSED.CONTINUUM$VERSION)
+                                                     version='collapsed_1.0')
 
 if (1==2)
 {
@@ -988,7 +988,7 @@ get.components.for.calibrated.parameters <- function(parameters, components,
 }
 VERSION.MANAGER = register.get.components.function(VERSION.MANAGER, 
                                                    fn=get.components.for.calibrated.parameters,
-                                                   version = SETTINGS.COLLAPSED.CONTINUUM$VERSION)
+                                                   version = 'collapsed_1.0')
 
 
 

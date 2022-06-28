@@ -329,7 +329,7 @@ get.surveillance.data.rate <- function(surv,
     if (!is.null(dim(denominators)))
     {
         if (race)
-            denominators = collapse.races(denominators)
+            denominators = collapse.races(denominators, races=dimnames(numerators)$race)
         denominators = apply(denominators, names(dimnames(numerators)), function(x){x})
     }
     

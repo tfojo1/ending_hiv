@@ -536,14 +536,11 @@ create.run.simulation.function <- function(msa,
                                            fix.components=T)
 {
     #-- Init Components --#
-    settings = get.settings.for.version(version)  
-  
-    base.components = setup.initial.components(msa=msa, settings = settings)
+    base.components = setup.initial.components(msa=msa, version=version)
     
     get.components.fn = get.components.function.for.version(version)
     
     init.components = get.components.fn(start.values, base.components)
-    
     if (fix.components)
         init.components = fix.components.for.calibration(components = init.components)
     

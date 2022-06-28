@@ -502,7 +502,7 @@ logical.to.6.bit <- function(v,
 ##-- CREATING TARGET POPULATIONS FROM SCRATCH --##
 ##----------------------------------------------##
 
-create.target.population <- function(settings=SETTINGS,
+create.target.population <- function(settings=get.settings.for.version('collapsed_1.0'),
                                      ages=settings$AGES$labels,
                                      races=settings$RACES,
                                      sexes=settings$SEXES,
