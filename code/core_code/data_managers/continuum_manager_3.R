@@ -391,7 +391,11 @@ setup.expanded.continuum.models <- function(cm,
                                                     age5.intercept=output$failing.to.lost.noslopes.coefficients['age.category55+'],
                                                     
                                                     total.slope = output$failing.to.lost.noslopes.coefficients['relative.year'])
+
     
+#@melissa - split these suppressed out as recent and durable 
+    # should be
+    # recently.suppressed.to.failing or durably.suppressed.to.failing, etc
     if (verbose)
       print("Setting up suppressed-to-failing")
     cm$suppressed.to.failing = setup.logistic.model(anchor.year=output$anchor.year,

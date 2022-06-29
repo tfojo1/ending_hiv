@@ -3,8 +3,7 @@ MELISSAS.FILE = "~/Dropbox/Documents_local/Hopkins/PhD/Dissertation/EHE/CNICS/sy
 TODDS.FILE = 'Q:/CNICS/cleaned/2021/cnics_fixed_from2007_2021-12-07.Rdata'
 
 #to get from backup
-TODDS.FILE = 'R:/WD Backup.swstor/tfojo1/NGE2NzRlYTZjOTIzNGJmYz/Volume{baccb07e-97f3-498c-89dd-d6f3a161e400}/CNICS/cleaned/2021/cnics_fixed_from2007_2022-06-18.Rdata'
-TODDS.FILE = 'R:/WD Backup.swstor/tfojo1/NGE2NzRlYTZjOTIzNGJmYz/Volume{baccb07e-97f3-498c-89dd-d6f3a161e400}/CNICS/cleaned/2021/synthetic_fixed_from2007_2021-12-07.Rdata'
+TODDS.FILE = 'R:/WD Backup.swstor/tfojo1/NGE2NzRlYTZjOTIzNGJmYz/Volume{baccb07e-97f3-498c-89dd-d6f3a161e400}/CNICS/cleaned/2021/cnics_fixed_from2007_2022-06-28.Rdata'
 if (file.exists(MELISSAS.FILE))
 {
     load(MELISSAS.FILE)
@@ -266,7 +265,7 @@ if (1==2)
 
 imputed.unsuppressed.naive$suppressed.future = as.numeric(imputed.unsuppressed.naive$future.state=='suppress')
 imputed.unsuppressed.naive$lost.future = as.numeric(imputed.unsuppressed.naive$future.state=='lost')
-
+unsuppressed.naive$lost.future = as.numeric(unsuppressed.naive$future.state=='lost')
 
 #### Logistic models for Unsuppressed-Naive  ####
 
@@ -302,6 +301,8 @@ if (use.gee==T)
     print("Fitting logistic model for unsuppressed-naive --> lost, WITHOUT individual slopes, no GEE")
     model.naive.to.lost.noslopes <- glm(lost.future ~ age.category + sex.risk + race + relative.year,
                                           data=imputed.unsuppressed.naive, family=binomial)
+    unimputed.naive.to.lost.noslopes <- glm(lost.future ~ age.category + sex.risk + race + relative.year,
+                                        data=unsuppressed.naive, family=binomial)
 }  
 
 
@@ -394,6 +395,7 @@ for (i in 1:N.IMPUTATIONS)
 
 imputed.unsuppressed.failing$suppressed.future = as.numeric(imputed.unsuppressed.failing$future.state=='suppress')
 imputed.unsuppressed.failing$lost.future = as.numeric(imputed.unsuppressed.failing$future.state=='lost')
+unsuppressed.failing$lost.future = as.numeric(unsuppressed.failing$future.state=='lost')
 
 #### Logistic models for Engaged-Unsuppressed ####
 if (use.gee==T)
@@ -441,7 +443,9 @@ if (use.gee==T)
     
     print("Fitting logistic model for unsuppressed-failing --> lost, WITHOUT individual slopes, no GEE")
     model.failing.to.lost.noslopes <- glm(lost.future ~ age.category + sex.risk + race + relative.year,
-                                         data=imputed.unsuppressed.failing, family=binomial)
+                                          data=imputed.unsuppressed.failing, family=binomial)
+    unimputed.failing.to.lost.noslopes <- glm(lost.future ~ age.category + sex.risk + race + relative.year,
+                                              data=unsuppressed.failing, family=binomial)
 }  
 
 
@@ -485,6 +489,20 @@ length.of.suppression = sapply(1:n.suppressed, function(i){
     else
         NA
 })
+
+print(paste0("Of the ", format(length(length.of.suppression), big.mark=','),
+             " suppressed records, we are unable to assess durability of suppression in ",
+             round(100*mean(is.na(length.of.suppression))), '% (',
+             format(sum(is.na(length.of.suppression)), big.mark=','),
+             "). Of the remaining ", sum(!is.na(length.of.suppression)), " records, ",
+             round(100*mean(length.of.suppression=='recent', na.rm=T)), "% (",
+             format(sum(length.of.suppression=='recent', na.rm=T), big.mark=','), 
+             ") were RECENTLY suppressed. The remaining ",
+             round(100*mean(length.of.suppression=='durable', na.rm=T)), "% (",
+             format(sum(length.of.suppression=='durable', na.rm=T), big.mark=','), 
+             ") were DURABLY suppressed."
+             ))
+
 engaged.suppressed$length.of.suppression = length.of.suppression
 
 # some code to check what is above
@@ -500,7 +518,7 @@ if (1==2)
 # Split the dataset into durable and recent
 # and do all the code below for both
 
-if(separate.durable.recent==T){
+
     recent.suppressed = engaged.suppressed[!is.na(engaged.suppressed$length.of.suppression) & 
                                                engaged.suppressed$length.of.suppression=="recent",]
     
@@ -563,6 +581,7 @@ if(separate.durable.recent==T){
     
     imputed.recent.suppressed$suppressed.future = as.numeric(imputed.recent.suppressed$future.state=='unsuppress')
     imputed.recent.suppressed$lost.future = as.numeric(imputed.recent.suppressed$future.state=='lost')
+    recent.suppressed$lost.future = as.numeric(recent.suppressed$future.state=='lost')
     
     #### Logistic models for Recent-Suppressed ####
     if (use.gee==T)
@@ -611,6 +630,8 @@ if(separate.durable.recent==T){
         print("Fitting logistic model for recent-suppressed --> lost, WITHOUT individual slopes, no GEE")
         model.recent.to.lost.noslopes <- glm(lost.future ~ age.category + sex.risk + race + relative.year,
                                            data=imputed.recent.suppressed, family=binomial)
+        unimputed.recent.to.lost.noslopes <- glm(lost.future ~ age.category + sex.risk + race + relative.year,
+                                             data=recent.suppressed, family=binomial)
         
     }
     
@@ -670,6 +691,7 @@ if(separate.durable.recent==T){
     
     imputed.durable.suppressed$suppressed.future = as.numeric(imputed.durable.suppressed$future.state=='unsuppress')
     imputed.durable.suppressed$lost.future = as.numeric(imputed.durable.suppressed$future.state=='lost')
+    durable.suppressed$lost.future = as.numeric(durable.suppressed$future.state=='lost')
     
     #### Logistic models for Durable-Suppressed ####
     if (use.gee==T)
@@ -717,7 +739,9 @@ if(separate.durable.recent==T){
         
         print("Fitting logistic model for durable-suppressed --> lost, WITHOUT individual slopes, no GEE")
         model.durable.to.lost.noslopes <- glm(lost.future ~ age.category + sex.risk + race + relative.year,
-                                             data=imputed.durable.suppressed, family=binomial)
+                                              data=imputed.durable.suppressed, family=binomial)
+        unimputed.durable.to.lost.noslopes <- glm(lost.future ~ age.category + sex.risk + race + relative.year,
+                                              data=durable.suppressed, family=binomial)
         
     }
     
@@ -727,8 +751,8 @@ if(separate.durable.recent==T){
     
     
     
-} else # old code for engaged.suppressed as one dataset
-{
+    engaged.suppressed$length.of.suppression = factor(engaged.suppressed$length.of.suppression, levels=c('durable','recent'))
+    
     
     engaged.suppressed$future.state[!is.na(engaged.suppressed$engaged.future) & !is.na(engaged.suppressed$suppressed.future) 
                                     & engaged.suppressed$engaged.future & engaged.suppressed$suppressed.future] ="remain"
@@ -781,6 +805,11 @@ if(separate.durable.recent==T){
     
     imputed.engaged.suppressed$suppressed.future = as.numeric(imputed.engaged.suppressed$future.state=='unsuppress')
     imputed.engaged.suppressed$lost.future = as.numeric(imputed.engaged.suppressed$future.state=='lost')
+    engaged.suppressed$lost.future = as.numeric(engaged.suppressed$future.state=='lost')
+    
+    
+    imputed.engaged.suppressed = imputed.engaged.suppressed[!is.na(imputed.engaged.suppressed$length.of.suppression),]
+    engaged.suppressed = engaged.suppressed[!is.na(engaged.suppressed),]
     
     #### Logistic models for Engaged-Suppressed ####
     if (use.gee==T)
@@ -788,53 +817,63 @@ if(separate.durable.recent==T){
         ## --> Failing
         print("Fitting logistic model for engaged-suppressed --> unsuppressed-failing, WITH individual slopes")
         model.supp.to.failing.slopes <- geeglm(suppressed.future ~ age.category + sex.risk + race + relative.year
-                                               + age.category*relative.year + sex.risk*relative.year + race*relative.year,
+                                               + age.category*relative.year + sex.risk*relative.year + race*relative.year +
+                                                   length.of.suppression,
                                                data=imputed.engaged.suppressed, id=id, family=binomial, corstr="exchangeable")
         
         print("Fitting logistic model for engaged-suppressed --> unsuppressed-failing, WITHOUT individual slopes")
-        model.supp.to.failing.noslopes <- geeglm(suppressed.future ~ age.category + sex.risk + race + relative.year,
+        model.supp.to.failing.noslopes <- geeglm(suppressed.future ~ age.category + sex.risk + race + relative.year +
+                                                     length.of.suppression,
                                                  data=imputed.engaged.suppressed, id=id, family=binomial, corstr="exchangeable")
         
         ## --> Lost
         print("Fitting logistic model for engaged-suppressed --> lost, WITH individual slopes")
         model.supp.to.lost.slopes <- geeglm(lost.future ~ age.category + sex.risk + race + relative.year
-                                            + age.category*relative.year + sex.risk*relative.year + race*relative.year,
+                                            + age.category*relative.year + sex.risk*relative.year + race*relative.year +
+                                                length.of.suppression,
                                             data=imputed.engaged.suppressed, id=id, family=binomial, corstr="exchangeable")
         
         print("Fitting logistic model for engaged-suppressed --> lost, WITHOUT individual slopes")
-        model.supp.to.lost.noslopes <- geeglm(lost.future ~ age.category + sex.risk + race + relative.year,
+        model.supp.to.lost.noslopes <- geeglm(lost.future ~ age.category + sex.risk + race + relative.year +
+                                                  length.of.suppression,
                                               data=imputed.engaged.suppressed, id=id, family=binomial, corstr="exchangeable")
         
         engaged.suppressed$lost.future = engaged.suppressed$future.state=='lost'
-        unimputed.supp.to.lost.noslopes <- geeglm(lost.future ~ age.category + sex.risk + race + relative.year,
+        unimputed.supp.to.lost.noslopes <- geeglm(lost.future ~ age.category + sex.risk + race + relative.year +
+                                                      length.of.suppression,
                                                   data=engaged.suppressed, id=id, family=binomial, corstr="exchangeable")
     } else
     {
         ## --> Failing
         print("Fitting logistic model for engaged-suppressed --> unsuppressed-failing, WITH individual slopes, no GEE")
         model.supp.to.failing.slopes <- glm(suppressed.future ~ age.category + sex.risk + race + relative.year
-                                            + age.category*relative.year + sex.risk*relative.year + race*relative.year,
+                                            + age.category*relative.year + sex.risk*relative.year + race*relative.year +
+                                                length.of.suppression,
                                             data=imputed.engaged.suppressed, family=binomial)
         
         print("Fitting logistic model for engaged-suppressed --> engaged-suppressed, WITHOUT individual slopes, no GEE")
-        model.supp.to.failing.noslopes <- glm(suppressed.future ~ age.category + sex.risk + race + relative.year,
+        model.supp.to.failing.noslopes <- glm(suppressed.future ~ age.category + sex.risk + race + relative.year +
+                                                  length.of.suppression,
                                               data=imputed.engaged.suppressed, family=binomial)
         
         ## --> Lost
         print("Fitting logistic model for engaged-suppressed --> lost, WITH individual slopes, no GEE")
         model.supp.to.lost.slopes <- glm(lost.future ~ age.category + sex.risk + race + relative.year
-                                         + age.category*relative.year + sex.risk*relative.year + race*relative.year,
+                                         + age.category*relative.year + sex.risk*relative.year + race*relative.year +
+                                             length.of.suppression,
                                          data=imputed.engaged.suppressed, family=binomial)
         
         print("Fitting logistic model for engaged-suppressed --> lost, WITHOUT individual slopes, no GEE")
-        model.supp.to.lost.noslopes <- glm(lost.future ~ age.category + sex.risk + race + relative.year,
+        model.supp.to.lost.noslopes <- glm(lost.future ~ age.category + sex.risk + race + relative.year +
+                                               length.of.suppression,
                                            data=imputed.engaged.suppressed, family=binomial)
+        unimputed.supp.to.lost.noslopes <- glm(lost.future ~ age.category + sex.risk + race + relative.year +
+                                               length.of.suppression,
+                                           data=engaged.suppressed, family=binomial)
         
     }
     
-}
 
-stop("let's stop here for now")
 
 ##------------------------------------##
 ##------- DATASET 4: Disengaged ------##
@@ -934,6 +973,8 @@ adjust.slope.coefficients <- function(coefficients,
 ##------------- Output ---------------##
 ##------------------------------------##
 
+print("Putting the Output together")
+
 output <- list(
     #Naive, coefficients
     naive.to.suppressed.slopes.coefficients=model.naive.to.supp.slopes$coefficients,
@@ -969,14 +1010,44 @@ output <- list(
     
     anchor.year=anchor.year)
 
-
+use.joint.durable.recent.model = T
 if(separate.durable.recent==T){
+    
+    if (use.joint.durable.recent.model)
+    {
+        n.covariates = length(model.supp.to.failing.noslopes$coefficients)
+        
+        
+        recent.to.failing.noslopes = model.supp.to.failing.noslopes$coefficients[-n.covariates]
+        recent.to.failing.noslopes[1] = recent.to.failing.noslopes[1] + model.supp.to.failing.noslopes$coefficients[n.covariates]
+        recent.to.lost.noslopes = (model.supp.to.failing.noslopes$coefficients +
+                                        unimputed.supp.to.lost.noslopes$coefficients)[-n.covariates]/2
+        recent.to.lost.noslopes[1] = recent.to.lost.noslopes[1] + (model.supp.to.lost.noslopes$coefficients[n.covariates] +
+                                                                       unimputed.supp.to.lost.noslopes$coefficients[n.covariates])/2
+        
+        
+        durable.to.failing.noslopes = model.supp.to.failing.noslopes$coefficients[-n.covariates]
+        durable.to.lost.noslopes = (model.supp.to.failing.noslopes$coefficients +
+                                        unimputed.supp.to.lost.noslopes$coefficients)[-n.covariates]/2
+    }
+    else
+    {
+        recent.to.failing.noslopes = model.recent.to.failing.noslopes$coefficients
+        recent.to.lost.noslopes = (model.recent.to.lost.noslopes$coefficients +
+                                       unimputed.recent.to.lost.noslopes$coefficients)/2
+        
+        durable.to.failing.noslopes = model.durable.to.failing.noslopes$coefficients
+        durable.to.lost.noslopes = (model.durable.to.lost.noslopes$coefficients +
+                                        unimputed.durable.to.lost.noslopes$coefficients)/2
+        
+        #NOTE - we are ignoring the variance here
+    }
+    
     #Recent, coefficients
     output$recent.to.failing.slopes.coefficients=model.recent.to.failing.slopes$coefficients
-    output$recent.to.failing.noslopes.coefficients=model.recent.to.failing.noslopes$coefficients
+    output$recent.to.failing.noslopes.coefficients=recent.to.failing.noslopes
     output$recent.to.lost.slopes.coefficients=model.recent.to.lost.slopes$coefficients
-    output$recent.to.lost.noslopes.coefficients=(model.recent.to.lost.noslopes$coefficients +
-                                                         unimputed.recent.to.lost.noslopes$coefficients)/2
+    output$recent.to.lost.noslopes.coefficients=recent.to.lost.noslopes
     
     #Recent, variance
     output$recent.to.failing.slopes.variance=model.recent.to.failing.slopes$robust.variance
@@ -986,10 +1057,9 @@ if(separate.durable.recent==T){
     
     #Durable, coefficients
     output$durable.to.failing.slopes.coefficients=model.durable.to.failing.slopes$coefficients
-    output$durable.to.failing.noslopes.coefficients=model.durable.to.failing.noslopes$coefficients
+    output$durable.to.failing.noslopes.coefficients=durable.to.failing.noslopes
     output$durable.to.lost.slopes.coefficients=model.durable.to.lost.slopes$coefficients
-    output$durable.to.lost.noslopes.coefficients=(model.durable.to.lost.noslopes$coefficients +
-                                                     unimputed.durable.to.lost.noslopes$coefficients)/2
+    output$durable.to.lost.noslopes.coefficients=durable.to.lost.noslopes
     
     #Durable, variance
     output$durable.to.failing.slopes.variance=model.durable.to.failing.slopes$robust.variance
@@ -1016,20 +1086,29 @@ if(separate.durable.recent==T){
 
 ##-- Correct proportion reengaged --##
 
+print("CORRECTING THE REENGAGEMENT INTERCEPTS")
+
 if(separate.durable.recent==T){
+    cols = intersect(intersect(names(imputed.recent.suppressed), names(imputed.durable.suppressed)),
+                     intersect(names(imputed.unsuppressed.failing), names(imputed.unsuppressed.naive)))
     imputed.all = rbind(
-        imputed.recent.suppressed,
-        imputed.durable.suppressed,
-        imputed.unsuppressed.failing,
-        imputed.unsuppressed.naive[imputed.unsuppressed.naive$relative.year>2,]
+        imputed.recent.suppressed[,cols],
+        imputed.durable.suppressed[,cols],
+        imputed.unsuppressed.failing[,cols],
+        imputed.unsuppressed.naive[imputed.unsuppressed.naive$relative.year>2,cols]
     )
 } else{
+    cols = intersect(names(imputed.engaged.suppressed),
+                     intersect(names(imputed.unsuppressed.failing), names(imputed.unsuppressed.naive)))
     imputed.all = rbind(
-        imputed.engaged.suppressed,
-        imputed.unsuppressed.failing,
-        imputed.unsuppressed.naive[imputed.unsuppressed.naive$relative.year>2,]
+        imputed.engaged.suppressed[,cols],
+        imputed.unsuppressed.failing[,cols],
+        imputed.unsuppressed.naive[imputed.unsuppressed.naive$relative.year>2,cols]
     )
 }
+
+logit = function(p){log(p) - log(1-p)}
+expit = function(lo){1 / (1+exp(-lo))}
 
 predict.from.coefficients <- function(coefs, df)
 {
@@ -1080,7 +1159,7 @@ actual.lo.lost = log(actual.p.lost) - log(1-actual.p.lost)
 
 if(separate.durable.recent==T){
     probs = c(
-        predict.from.coefficients(output$naive.to.lost.noslopes.coefficients, imputed.unsuppressed.naive[imputed.unsuppressed.naive$relative.year>2,]),
+   #     predict.from.coefficients(output$naive.to.lost.noslopes.coefficients, imputed.unsuppressed.naive[imputed.unsuppressed.naive$relative.year>2,]),
         predict.from.coefficients(output$failing.to.lost.noslopes.coefficients, imputed.unsuppressed.failing),
         predict.from.coefficients(output$recent.to.lost.noslopes.coefficients, imputed.recent.suppressed),
         predict.from.coefficients(output$durable.to.lost.noslopes.coefficients, imputed.durable.suppressed)
@@ -1088,7 +1167,7 @@ if(separate.durable.recent==T){
 
 } else{
     probs = c(
-        predict.from.coefficients(output$naive.to.lost.noslopes.coefficients, imputed.unsuppressed.naive[imputed.unsuppressed.naive$relative.year>2,]),
+     #   predict.from.coefficients(output$naive.to.lost.noslopes.coefficients, imputed.unsuppressed.naive[imputed.unsuppressed.naive$relative.year>2,]),
         predict.from.coefficients(output$failing.to.lost.noslopes.coefficients, imputed.unsuppressed.failing),
         predict.from.coefficients(output$suppressed.to.lost.noslopes.coefficients, imputed.engaged.suppressed)
     )
@@ -1100,23 +1179,23 @@ mean.indiv.correction = mean(desired.lo.lost -
 
 mean.correction = desired.lo.lost - actual.lo.lost
 
-lo.correction = (mean.indiv.correction + mean.correction) / 2 
+#lo.correction = (mean.indiv.correction + mean.correction) / 2 
                    
+lo.correction = mean.indiv.correction
+
 # apply the correction
 
 if(separate.durable.recent==T){
-    output$naive.to.lost.noslopes.coefficients[1] = output$naive.to.lost.noslopes.coefficients[1] + lo.correction
+   # output$naive.to.lost.noslopes.coefficients[1] = output$naive.to.lost.noslopes.coefficients[1] + lo.correction
     output$failing.to.lost.noslopes.coefficients[1] = output$failing.to.lost.noslopes.coefficients[1] + lo.correction
     output$recent.to.lost.noslopes.coefficients[1] = output$recent.to.lost.noslopes.coefficients[1] + lo.correction
     output$durable.to.lost.noslopes.coefficients[1] = output$durable.to.lost.noslopes.coefficients[1] + lo.correction
     
 } else{
-    output$naive.to.lost.noslopes.coefficients[1] = output$naive.to.lost.noslopes.coefficients[1] + lo.correction
+ #   output$naive.to.lost.noslopes.coefficients[1] = output$naive.to.lost.noslopes.coefficients[1] + lo.correction
     output$failing.to.lost.noslopes.coefficients[1] = output$failing.to.lost.noslopes.coefficients[1] + lo.correction
     output$suppressed.to.lost.noslopes.coefficients[1] = output$suppressed.to.lost.noslopes.coefficients[1] + lo.correction
 }
-
-
 
 
 

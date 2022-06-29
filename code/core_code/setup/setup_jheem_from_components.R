@@ -2293,63 +2293,6 @@ get.background.proportions <- function(base.model,
     })
 }
 
-# a test for the code below
-if (1==2)
-{
-    dim.names = list(age=1:5,
-                     race=c('black','hispanic','other'),
-                     sex=c('heterosexual_male','msm','female'))
-    
-    arr = array(1:prod(sapply(dim.names[c(1,3)], length)),
-                dim=sapply(dim.names[c(1,3)], length),
-                dimnames = dim.names[c(1,3)])
-    
-    betas = lapply(dim.names, function(dn){
-        rv=rep(0, length(dn))
-        names(rv) = dn
-        rv
-    })
-    
-    z=add.betas.to.array.NEW(arr, betas);z
-}
-
-add.betas.to.array.NEW <- function(arr,
-                                   betas)
-{
-    # a list with one element for each dimension
-    n.dim = length(betas)
-    dims = sapply(betas, length)
-    n = prod(dims)
-    n.before = sapply(1:n.dim, function(d){
-        prod(dims[1:d]) / dims[d]
-    })
-    
-    n.dim.arr = length(dim(arr))
-    d.beta.for.d.arr = sapply(1:n.dim.arr, function(d.arr){
-        (1:n.dim)[names(dimnames(arr))[d.arr]==names(betas)]
-    })
-    dims.arr = dim(arr)
-    n.before.arr = sapply(1:n.dim.arr, function(d.arr){
-        prod(dims.arr[1:d.arr]) / dims.arr[d.arr]
-    })
-    
-    rv = sapply(1:n, function(i){
-        indices.for.dimensions = floor((i-1)/n.before) %% dims + 1
-        indices.for.arr = indices.for.dimensions[d.beta.for.d.arr]
-        arr.index = 1+sum((indices.for.arr-1) * n.before.arr)
-        
-        arr[arr.index] + sum(sapply(1:n.dim, function(d){
-            betas[[d]][indices.for.dimensions[d]]
-        }))
-    })
-    
-    dim(rv) = dims
-    dimnames(rv) = sapply(betas, function(b){
-        names(b)
-    })
-    
-    rv
-}
 
 add.additional.betas.to.array <- function(arr, additional.betas,
                                           idu.applies.to.in.remission=T,
