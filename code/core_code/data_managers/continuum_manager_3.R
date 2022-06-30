@@ -171,17 +171,20 @@ create.continuum.manager <- function(dir='cleaned_data/',
                                      
                                      max.naive.to.suppressed.proportion = 0.95,
                                      max.failing.to.suppressed.proportion = 0.9,
-                                     min.suppressed.to.failing.proportion = 0.01,
+                                     min.recently.suppressed.to.failing.proportion = 0.01,
+                                     min.durably.suppressed.to.failing.proportion = 0.01,
                                      
                                      max.reengaged.proportion = 0.5,
                                      
                                      min.naive.retention = 0.5,
                                      min.failing.retention = 0.5,
-                                     min.suppressed.retention = 0.5,
+                                     min.recently.suppressed.retention = 0.5,
+                                     min.durably.suppressed.retention = 0.5,
                                      
                                      max.naive.retention = 0.98,
                                      max.failing.retention = 0.95,
-                                     max.suppressed.retention = 0.98,
+                                     max.recently.suppressed.retention = 0.98,
+                                     max.durably.suppressed.retention = 0.98,
                                      
                                      verbose=T
 )
@@ -196,17 +199,20 @@ create.continuum.manager <- function(dir='cleaned_data/',
                                          
                                          max.naive.to.suppressed.proportion = max.naive.to.suppressed.proportion,
                                          max.failing.to.suppressed.proportion = max.failing.to.suppressed.proportion,
-                                         min.suppressed.to.failing.proportion = min.suppressed.to.failing.proportion,
+                                         min.recently.suppressed.to.failing.proportion = min.recently.suppressed.to.failing.proportion,
+                                         min.durably.suppressed.to.failing.proportion = min.durably.suppressed.to.failing.proportion,
                                          
                                          max.reengaged.proportion = max.reengaged.proportion,
                                          
                                          min.naive.retention = min.naive.retention,
                                          min.failing.retention = min.failing.retention,
-                                         min.suppressed.retention = min.suppressed.retention,
+                                         min.recently.suppressed.retention = min.recently.suppressed.retention,
+                                         min.durably.suppressed.retention = min.durably.suppressed.retention,
                                          
                                          max.naive.retention = max.naive.retention,
                                          max.failing.retention = max.failing.retention,
-                                         max.suppressed.retention = max.suppressed.retention,
+                                         max.recently.suppressed.retention = max.recently.suppressed.retention,
+                                         max.durably.suppressed.retention = max.durably.suppressed.retention,
                                          
                                          verbose=verbose)
     
@@ -248,24 +254,26 @@ create.continuum.manager <- function(dir='cleaned_data/',
 ##-- Sub-Function to Set Up Models For Expanded Continuum --##
 ##----------------------------------------------------------##
 
-#@melissa - fill in here
 setup.expanded.continuum.models <- function(cm,
                                             file, 
                                             settings,
                                             
                                             max.naive.to.suppressed.proportion,
                                             max.failing.to.suppressed.proportion,
-                                            min.suppressed.to.failing.proportion,
+                                            min.recently.suppressed.to.failing.proportion,
+                                            min.durably.suppressed.to.failing.proportion,
                                             
                                             max.reengaged.proportion,
                                             
                                             min.naive.retention,
                                             min.failing.retention,
-                                            min.suppressed.retention,
+                                            min.recently.suppressed.retention,
+                                            min.durably.suppressed.retention,
                                             
                                             max.naive.retention,
                                             max.failing.retention,
-                                            max.suppressed.retention,
+                                            max.recently.suppressed.retention,
+                                            max.durably.suppressed.retention,
                                             
                                             verbose=T)
 {
@@ -279,7 +287,6 @@ setup.expanded.continuum.models <- function(cm,
     
     if (verbose)
       print("Setting up naive-to-suppressed")
-    
     cm$naive.to.suppressed = setup.logistic.model(anchor.year=output$anchor.year,
                                                   settings = settings,
                                                   max.proportion=max.naive.to.suppressed.proportion,
@@ -392,66 +399,119 @@ setup.expanded.continuum.models <- function(cm,
                                                     
                                                     total.slope = output$failing.to.lost.noslopes.coefficients['relative.year'])
 
-    
-#@melissa - split these suppressed out as recent and durable 
-    # should be
-    # recently.suppressed.to.failing or durably.suppressed.to.failing, etc
     if (verbose)
-      print("Setting up suppressed-to-failing")
-    cm$suppressed.to.failing = setup.logistic.model(anchor.year=output$anchor.year,
-                                              min.proportion=min.suppressed.to.failing.proportion,     
-                                              settings=settings,
-                                              
-                                              total.intercept = output$suppressed.to.failing.noslopes.coefficients['(Intercept)'],
-                                              msm.intercept = 0,
-                                              msm.idu.intercept = output$suppressed.to.failing.noslopes.coefficients['sex.riskmsm_idu'],
-                                              heterosexual.intercept = 0,
-                                              male.heterosexual.intercept=output$suppressed.to.failing.noslopes.coefficients['sex.riskheterosexual_male'],
-                                              female.heterosexual.intercept=output$suppressed.to.failing.noslopes.coefficients['sex.riskheterosexual_female'],
-                                              idu.intercept = 0,
-                                              male.idu.intercept = output$suppressed.to.failing.noslopes.coefficients['sex.riskidu_male'],
-                                              female.idu.intercept = output$suppressed.to.failing.noslopes.coefficients['sex.riskidu_female'],
-                                              
-                                              black.intercept=output$suppressed.to.failing.noslopes.coefficients['raceblack'],
-                                              hispanic.intercept=output$suppressed.to.failing.noslopes.coefficients['racehispanic'],
-                                              other.intercept=0,
-                                              
-                                              age1.intercept=output$suppressed.to.failing.noslopes.coefficients['age.category13-25'],
-                                              age2.intercept=output$suppressed.to.failing.noslopes.coefficients['age.category25-35'],
-                                              age3.intercept=0,
-                                              age4.intercept=output$suppressed.to.failing.noslopes.coefficients['age.category45-55'],
-                                              age5.intercept=output$suppressed.to.failing.noslopes.coefficients['age.category55+'],
-                                              
-                                              total.slope = output$suppressed.to.failing.noslopes.coefficients['relative.year'])
+      print("Setting up recently-suppressed-to-failing")
+    cm$recently.suppressed.to.failing = setup.logistic.model(anchor.year=output$anchor.year,
+                                                             min.proportion=min.recently.suppressed.to.failing.proportion,     
+                                                             settings=settings,
+                                                             
+                                                             total.intercept = output$recent.to.failing.noslopes.coefficients['(Intercept)'],
+                                                             msm.intercept = 0,
+                                                             msm.idu.intercept = output$recent.to.failing.noslopes.coefficients['sex.riskmsm_idu'],
+                                                             heterosexual.intercept = 0,
+                                                             male.heterosexual.intercept=output$recent.to.failing.noslopes.coefficients['sex.riskheterosexual_male'],
+                                                             female.heterosexual.intercept=output$recent.to.failing.noslopes.coefficients['sex.riskheterosexual_female'],
+                                                             idu.intercept = 0,
+                                                             male.idu.intercept = output$recent.to.failing.noslopes.coefficients['sex.riskidu_male'],
+                                                             female.idu.intercept = output$recent.to.failing.noslopes.coefficients['sex.riskidu_female'],
+                                                             
+                                                             black.intercept=output$recent.to.failing.noslopes.coefficients['raceblack'],
+                                                             hispanic.intercept=output$recent.to.failing.noslopes.coefficients['racehispanic'],
+                                                             other.intercept=0,
+                                                             
+                                                             age1.intercept=output$recent.to.failing.noslopes.coefficients['age.category13-25'],
+                                                             age2.intercept=output$recent.to.failing.noslopes.coefficients['age.category25-35'],
+                                                             age3.intercept=0,
+                                                             age4.intercept=output$recent.to.failing.noslopes.coefficients['age.category45-55'],
+                                                             age5.intercept=output$recent.to.failing.noslopes.coefficients['age.category55+'],
+                                                             
+                                                             total.slope = output$recent.to.failing.noslopes.coefficients['relative.year'])
     
     if (verbose)
-      print("Setting up suppressed-to-lost")
-    cm$suppressed.to.disengaged = setup.logistic.model(anchor.year=output$anchor.year,
-                                                    max.proportion=1-min.suppressed.retention,
-                                                    min.proportion=1-max.suppressed.retention,     
-                                                    settings=settings,
-                                                    
-                                                    total.intercept = output$suppressed.to.lost.noslopes.coefficients['(Intercept)'],
-                                                    msm.intercept = 0,
-                                                    msm.idu.intercept = output$suppressed.to.lost.noslopes.coefficients['sex.riskmsm_idu'],
-                                                    heterosexual.intercept = 0,
-                                                    male.heterosexual.intercept=output$suppressed.to.lost.noslopes.coefficients['sex.riskheterosexual_male'],
-                                                    female.heterosexual.intercept=output$suppressed.to.lost.noslopes.coefficients['sex.riskheterosexual_female'],
-                                                    idu.intercept = 0,
-                                                    male.idu.intercept = output$suppressed.to.lost.noslopes.coefficients['sex.riskidu_male'],
-                                                    female.idu.intercept = output$suppressed.to.lost.noslopes.coefficients['sex.riskidu_female'],
-                                                    
-                                                    black.intercept=output$suppressed.to.lost.noslopes.coefficients['raceblack'],
-                                                    hispanic.intercept=output$suppressed.to.lost.noslopes.coefficients['racehispanic'],
-                                                    other.intercept=0,
-                                                    
-                                                    age1.intercept=output$suppressed.to.lost.noslopes.coefficients['age.category13-25'],
-                                                    age2.intercept=output$suppressed.to.lost.noslopes.coefficients['age.category25-35'],
-                                                    age3.intercept=0,
-                                                    age4.intercept=output$suppressed.to.lost.noslopes.coefficients['age.category45-55'],
-                                                    age5.intercept=output$suppressed.to.lost.noslopes.coefficients['age.category55+'],
-                                                    
-                                                    total.slope = output$suppressed.to.lost.noslopes.coefficients['relative.year'])
+      print("Setting up recently-suppressed-to-lost")
+    cm$recently.suppressed.to.disengaged = setup.logistic.model(anchor.year=output$anchor.year,
+                                                                max.proportion=1-min.recently.suppressed.retention,
+                                                                min.proportion=1-max.recently.suppressed.retention,     
+                                                                settings=settings,
+                                                                
+                                                                total.intercept = output$recent.to.lost.noslopes.coefficients['(Intercept)'],
+                                                                msm.intercept = 0,
+                                                                msm.idu.intercept = output$recent.to.lost.noslopes.coefficients['sex.riskmsm_idu'],
+                                                                heterosexual.intercept = 0,
+                                                                male.heterosexual.intercept=output$recent.to.lost.noslopes.coefficients['sex.riskheterosexual_male'],
+                                                                female.heterosexual.intercept=output$recent.to.lost.noslopes.coefficients['sex.riskheterosexual_female'],
+                                                                idu.intercept = 0,
+                                                                male.idu.intercept = output$recent.to.lost.noslopes.coefficients['sex.riskidu_male'],
+                                                                female.idu.intercept = output$recent.to.lost.noslopes.coefficients['sex.riskidu_female'],
+                                                                
+                                                                black.intercept=output$recent.to.lost.noslopes.coefficients['raceblack'],
+                                                                hispanic.intercept=output$recent.to.lost.noslopes.coefficients['racehispanic'],
+                                                                other.intercept=0,
+                                                                
+                                                                age1.intercept=output$recent.to.lost.noslopes.coefficients['age.category13-25'],
+                                                                age2.intercept=output$recent.to.lost.noslopes.coefficients['age.category25-35'],
+                                                                age3.intercept=0,
+                                                                age4.intercept=output$recent.to.lost.noslopes.coefficients['age.category45-55'],
+                                                                age5.intercept=output$recent.to.lost.noslopes.coefficients['age.category55+'],
+                                                                
+                                                                total.slope = output$recent.to.lost.noslopes.coefficients['relative.year'])
+    
+    if (verbose)
+      print("Setting up durably-suppressed-to-failing")
+    cm$durably.suppressed.to.failing = setup.logistic.model(anchor.year=output$anchor.year,
+                                                             min.proportion=min.durably.suppressed.to.failing.proportion,     
+                                                             settings=settings,
+                                                             
+                                                             total.intercept = output$durable.to.failing.noslopes.coefficients['(Intercept)'],
+                                                             msm.intercept = 0,
+                                                             msm.idu.intercept = output$durable.to.failing.noslopes.coefficients['sex.riskmsm_idu'],
+                                                             heterosexual.intercept = 0,
+                                                             male.heterosexual.intercept=output$durable.to.failing.noslopes.coefficients['sex.riskheterosexual_male'],
+                                                             female.heterosexual.intercept=output$durable.to.failing.noslopes.coefficients['sex.riskheterosexual_female'],
+                                                             idu.intercept = 0,
+                                                             male.idu.intercept = output$durable.to.failing.noslopes.coefficients['sex.riskidu_male'],
+                                                             female.idu.intercept = output$durable.to.failing.noslopes.coefficients['sex.riskidu_female'],
+                                                             
+                                                             black.intercept=output$durable.to.failing.noslopes.coefficients['raceblack'],
+                                                             hispanic.intercept=output$durable.to.failing.noslopes.coefficients['racehispanic'],
+                                                             other.intercept=0,
+                                                             
+                                                             age1.intercept=output$durable.to.failing.noslopes.coefficients['age.category13-25'],
+                                                             age2.intercept=output$durable.to.failing.noslopes.coefficients['age.category25-35'],
+                                                             age3.intercept=0,
+                                                             age4.intercept=output$durable.to.failing.noslopes.coefficients['age.category45-55'],
+                                                             age5.intercept=output$durable.to.failing.noslopes.coefficients['age.category55+'],
+                                                             
+                                                             total.slope = output$durable.to.failing.noslopes.coefficients['relative.year'])
+    
+    if (verbose)
+      print("Setting up durably-suppressed-to-lost")
+    cm$durably.suppressed.to.disengaged = setup.logistic.model(anchor.year=output$anchor.year,
+                                                                max.proportion=1-min.durably.suppressed.retention,
+                                                                min.proportion=1-max.durably.suppressed.retention,     
+                                                                settings=settings,
+                                                                
+                                                                total.intercept = output$durable.to.lost.noslopes.coefficients['(Intercept)'],
+                                                                msm.intercept = 0,
+                                                                msm.idu.intercept = output$durable.to.lost.noslopes.coefficients['sex.riskmsm_idu'],
+                                                                heterosexual.intercept = 0,
+                                                                male.heterosexual.intercept=output$durable.to.lost.noslopes.coefficients['sex.riskheterosexual_male'],
+                                                                female.heterosexual.intercept=output$durable.to.lost.noslopes.coefficients['sex.riskheterosexual_female'],
+                                                                idu.intercept = 0,
+                                                                male.idu.intercept = output$durable.to.lost.noslopes.coefficients['sex.riskidu_male'],
+                                                                female.idu.intercept = output$durable.to.lost.noslopes.coefficients['sex.riskidu_female'],
+                                                                
+                                                                black.intercept=output$durable.to.lost.noslopes.coefficients['raceblack'],
+                                                                hispanic.intercept=output$durable.to.lost.noslopes.coefficients['racehispanic'],
+                                                                other.intercept=0,
+                                                                
+                                                                age1.intercept=output$durable.to.lost.noslopes.coefficients['age.category13-25'],
+                                                                age2.intercept=output$durable.to.lost.noslopes.coefficients['age.category25-35'],
+                                                                age3.intercept=0,
+                                                                age4.intercept=output$durable.to.lost.noslopes.coefficients['age.category45-55'],
+                                                                age5.intercept=output$durable.to.lost.noslopes.coefficients['age.category55+'],
+                                                                
+                                                                total.slope = output$durable.to.lost.noslopes.coefficients['relative.year'])
     
     if (verbose)
       print("Setting up disengaged-to-reengage")
