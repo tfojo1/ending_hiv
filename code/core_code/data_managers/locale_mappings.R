@@ -87,6 +87,30 @@ create.locale.mappings <- function(dir='cleaned_data/mappings')
     invalid.county = is.na(county.names(rv$zip_codes$combined_fips, rv))
     rv$zip_codes = rv$zip_codes[!invalid.county,]
 
+    #nsduh substate
+    
+    print('Reading in Substate-Region-to-County Mapping')
+    keep.cols = c('sbst16n','sbst16','sbsta16n', 'sbstag16', 'county','state')
+    mapping.44 = read.sas7bdat('../data2/IDU/substate_county141516.sas7bdat')
+    mapping.44 = mapping.44[,keep.cols]
+    mapping.7 = read.sas7bdat('../data2/IDU/substate_tract141516.sas7bdat')
+    mapping.7 = mapping.7[,keep.cols]
+    mapping.7 = unique(mapping.7)
+    
+    nsduh.substate.regions = rbind(mapping.44, mapping.7)
+    nsduh.substate.regions$combined.fips = combined.fips(nsduh.substate.regions$state, nsduh.substate.regions$county)
+    nsduh.substate.regions$state.abbreviation = state.fips.to.abbreviation(nsduh.substate.regions$state)
+    
+    nsduh.substate.regions$region.code = nsduh.substate.regions$sbst16
+    nsduh.substate.regions$region.name = nsduh.substate.regions$sbst16n
+    
+    nsduh.substate.regions$region.name = as.character(nsduh.substate.regions$region.name)
+    
+    nsduh.substate.regions$substate.code = combined.fips(nsduh.substate.regions$state, nsduh.substate.regions$region.code)
+    
+    
+    rv$nsduh.substate.regions = nsduh.substate.regions
+    
     #return the value
     rv
 }
@@ -877,6 +901,75 @@ state.to.region.division <- function(states)
       rv[is.na(rv)] = mapping[state.name.to.abbreviation(states[is.na(rv)])]
     
     rv
+}
+
+
+#-- NSDUH Substate Regions --#
+
+counties.for.nsduh.substate.regions <- function(region.codes,
+                                                mappings=DEFAULT.LOCALE.MAPPING)
+{
+    unlist(lapply(region.codes, function(code){
+        mask = mappings$nsduh.substate.regions$substate.code == code
+        if (any(mask))
+            mappings$nsduh.substate.regions$combined.fips[mask]
+    }))
+}
+
+states.for.nsduh.substate.regions <- function(region.codes,
+                                              mappings=DEFAULT.LOCALE.MAPPING)
+{
+    sapply(region.codes, function(code){
+        mask = mappings$nsduh.substate.regions$substate.code == code
+        if (any(mask))
+            mappings$nsduh.substate.regions$state.abbreviation[mask][1]
+        else
+            NA
+    })
+}
+
+nsduh.substate.region.names <- function(region.codes,
+                                        mappings=DEFAULT.LOCALE.MAPPING)
+{
+    sapply(region.codes, function(code){
+        mask = mappings$nsduh.substate.regions$substate.code == code
+        if (any(mask))
+            mappings$nsduh.substate.regions$region.name[mask][1]
+        else
+            NA
+    })
+}
+
+ndsuh.substate.regions.for.counties <- function(county.fips,
+                                                mappings=DEFAULT.LOCALE.MAPPING)
+{
+    sapply(county.fips, function(code){
+        mask = mappings$nsduh.substate.regions$combined.fips == code
+        if (any(mask))
+            mappings$nsduh.substate.regions$substate.code[mask]
+        else
+            NA
+    })
+}
+
+# states should be two-letter state abbreviations
+state.and.region.name.to.nsduh.region.code <- function(states,
+                                                       region.names,
+                                                       mappings=DEFAULT.LOCALE.MAPPING)
+{
+    if (length(states) == 1)
+        rep(states, length(region.names))
+    if (length(states) != length(region.names))
+        stop("states must be either a single value, or a vector with the same length as region.names")
+    
+    sapply(1:length(states), function(i){
+        mask = tolower(states[i]) == tolower(mappings$nsduh.substate.regions$state.abbreviation) &
+            tolower(region.names[i]) == tolower(mappings$nsduh.substate.regions$region.name)
+        if (any(mask))
+            mappings$nsduh.substate.regions$substate.code[mask][1]
+        else
+            NA
+    })
 }
 
 ##------------------------------##
