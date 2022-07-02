@@ -31,11 +31,11 @@ dist = join.distributions(
     testing.untreated.vs.no.depression.or = Lognormal.Distribution(0, 1),
     testing.treated.vs.untreated.depression.or = Lognormal.Distribution(0, 1),
     
-    idu.incidence.untreated.vs.no.depression.rr,
-    idu.remission.untreated.vs.no.depression.rr,
-    idu.relapse.untreated.vs.no.depression.rr,
+    idu.incidence.untreated.vs.no.depression.rr= Lognormal.Distribution(0, log(2)/2),
+    idu.remission.untreated.vs.no.depression.rr= Lognormal.Distribution(0, log(2)/2),
+    idu.relapse.untreated.vs.no.depression.rr= Lognormal.Distribution(0, log(2)/2),
     
-    idu.incidence.treated.vs.untreated.depression.rr,
-    idu.remission.treated.vs.untreated.depression.rr,
-    idu.relapse.treated.vs.untreated.depression.rr
+    idu.incidence.treated.vs.untreated.depression.rr= Lognormal.Distribution(0, log(2)/2),
+    idu.remission.treated.vs.untreated.depression.rr= Lognormal.Distribution(0, log(2)/2),
+    idu.relapse.treated.vs.untreated.depression.rr= Lognormal.Distribution(0, log(2)/2)
 )
