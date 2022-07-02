@@ -20,11 +20,22 @@ read.depression.prevalence <- function(dir)
     year[a] = map_data[[a]]$years[1]
   }
   #Extract age 
-  age = unique(map_data$age_group)
-  #Extract region 
-  geography = unique(map_data$geography)
-  codes = get.substate.region.codes(geography) #proper mapping to code? cannot find function
+  age = unique(map_data[[1]]$age_group)
   
+  #Extract region 
+  
+  states = cbind(state.name,state.abb)
+  geography = as.character(unique(map_data[[1]]$geography))
+  rexp <- "^(\\w+)\\s?(.*)$"
+  geography_split = cbind(sub(rexp,"\\1",geography),sub(rexp,"\\2",geography))
+  geography_split[,1] <-states[match(geography_split[,1],states[,1]),2]
+  geography_split = as.data.frame( geography_split)
+  geography_split <-geography_split %>% mutate_all(na_if,"")
+  geography_split = geography_split[!is.na(geography_split[,1]),]
+  geography_split = geography_split[!is.na(geography_split[,2]),]
+  codes = state.and.region.name.to.nsduh.region.code(geography_split[,1],geography_split[,2]) #proper mapping to code? not all region codes split properly 
+  
+  #Create empty array 
   rv = array(0, dim = c(length(year),length(age),length(geography)))
   dim.names = list(year=year,
                    geography = geography,
@@ -45,8 +56,6 @@ read.depression.prevalence <- function(dir)
   return(rv)
 
 }
-
-
 
 get.substate.region.codes <- function(state.abbreviations,
                                       regions)
