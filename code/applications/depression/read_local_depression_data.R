@@ -36,7 +36,12 @@ read.depression.prevalence <- function(dir)
   codes = state.and.region.name.to.nsduh.region.code(geography_split[,1],geography_split[,2]) #proper mapping to code? not all region codes split properly 
   
   #Create empty array 
-  rv = array(0, dim = c(length(year),length(age),length(geography)))
+  rv = list(
+      prevalence = array(0, dim = c(length(year),length(age),length(geography))),
+      prevalence.lower = array(0, dim = c(length(year),length(age),length(geography))),
+      prevalence.upper = array(0, dim = c(length(year),length(age),length(geography)))
+  )
+  
   dim.names = list(year=year,
                    geography = geography,
                    age=age) 
@@ -46,7 +51,9 @@ read.depression.prevalence <- function(dir)
     for(b in 1:length(geography)){
       for(c in 1:length(age)){
         matrix = map_data[which(map_data$geography == geography[a] && map_data$age_group == age[b]),]
-        rv[a,b,c] = matrix[,c(5:7)] #How to specify length of matrix in third element of array? (1X3 matrix)
+        rv$prevalence[a,b,c] = matrix[,5] #How to specify length of matrix in third element of array? (1X3 matrix)
+        rv$prevalence.lower[a,b,c] = matrix[,6] #How to specify length of matrix in third element of array? (1X3 matrix)
+        rv$prevalence.upper[a,b,c] = matrix[,7] #How to specify length of matrix in third element of array? (1X3 matrix)
         
       }
     }
