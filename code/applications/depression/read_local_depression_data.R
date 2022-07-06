@@ -36,13 +36,9 @@ read.depression.prevalence <- function(dir)
   codes = state.and.region.name.to.nsduh.region.code(geography_split[,1],geography_split[,2]) #proper mapping to code? not all region codes split properly 
   
   #Create empty array 
-  rv = vector("list", length = 3)
-  names(rv) = c("prevalence","prevalence.lower","prevalence.upper")
-  rv$prevalence = array(0, dim = c(length(year),length(age),length(geography)))
-  rv$prevalence.lower = array(0, dim = c(length(year),length(age),length(geography)))
-  rv$prevalence.upper = array(0, dim = c(length(year),length(age),length(geography)))
- 
-   dim.names = list(year=year,
+
+  
+  dim.names = list(year=year,
                    geography = geography,
                    age=age) 
   dim(rv$prevalence) = sapply(dim.names, length)
@@ -56,9 +52,7 @@ read.depression.prevalence <- function(dir)
     for(b in 1:length(geography)){
       for(c in 1:length(age)){
         matrix = map_data[which(map_data$geography == geography[a] && map_data$age_group == age[b]),]
-        rv$prevalence[a,b,c] = matrix[,5] 
-        rv$prevalence.lower[a,b,c] = matrix[,6] 
-        rv$prevalence.upper[a,b,c] = matrix[,7] 
+
       }
     }
     

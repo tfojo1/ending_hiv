@@ -1,7 +1,10 @@
 
 
 # Return an array indexed [age, race, sex, risk]
-# Where age is: 13-24yo, 
+# Where age is: 13-24 years, 25-34 years, 35-44 years, 45-54 years, 55+ years
+#       race is: black, hispanic, other
+#       sex is: heterosexual_male, msm, female
+#       risk is: never_IDU, active_IDU, IDU_in_remission
 
 #figure out age, race, sex, risk lengths/breakdowns 
 get.estimated.depression.incidence <- function(version='expanded_1.0',
@@ -22,15 +25,49 @@ get.estimated.depression.incidence <- function(version='expanded_1.0',
     dimnames(rv) = dim.names
     return(rv)
     
+<<<<<<< HEAD
 
+=======
+    age = '13-24 years'
+    race = 'black'
+    sex = 'heterosexual_male'
+    risk = 'never_IDU'
+    values = c(.1413, .1, .2)
+    
+    rv[age, race, sex, risk] = values[1]
+    
+    rv[, races, sex, risk]
+    
+    # @Ruchita: populate this array
+    
+    # to load a file - called example.csv
+    # put it in the dir referenced above
+    # data = read.csv(file.path(dir, 'example.csv))
+    
+    # Return
+    rv
+>>>>>>> 3a716bbcee27fd8084619f7d68a1b60955674107
 }
 
 get.estimated.depression.remission <- function(version='expanded_1.0',
                                                dir='code/applications/depression/')
 {
     rv = setup.depression.array.skeleton(version)
+<<<<<<< HEAD
     rv[] = .05
     return(rv)
+=======
+    
+    # @Ruchita: populate this array
+    rv[] = 2
+    
+    # to load a file - called example.csv
+    # put it in the dir referenced above
+    # data = read.csv(file.path(dir, 'example.csv))
+    
+    # Return
+    rv
+>>>>>>> 3a716bbcee27fd8084619f7d68a1b60955674107
 }
 
 get.estimated.depression.treatment.initiation <- function(version='expanded_1.0',
