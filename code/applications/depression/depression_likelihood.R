@@ -15,11 +15,11 @@ make.depression.likelihood <- function(location,
                                        
                                        # prevalence.ratio
                                        prevalence.ratio = 3.08,
-                                       prevalence.ratio.log.sd = 0.1, #sd from normal distribution is .1 ==> transform to log sd? 
+                                       prevalence.ratio.log.sd = .014, 
                                        
                                        # treatment.proportion
                                        treatment.proportion=0.18,
-                                       treatment.proportion.sd=log(2)/2 
+                                       treatment.proportion.log.sd=log(2)/2 
                                        )
 {
     
@@ -40,13 +40,13 @@ make.depression.likelihood <- function(location,
         
         sim.prevalence.general.total = rep(.05, length(total.prevalence.years))
         sim.prevalence.hiv.total = rep(.14, length(total.prevalence.years))
-        sim.treated.prevalence.hiv.total = sim.prevalence.hiv.total * 0.2
+        sim.treated.prevalence.hiv.total = sim.prevalence.hiv.total * treatment.proportion
         
         # Calculate the likelihoods
-        lik.prevalence.general.age1 = prod(dlnorm(sim.prvealence.general.age1,obs.prevalence.age1,sd = .2)) #Ok to just use dlnorm?, assume likelihood sd of .2
-        lik.prevalence.general.age2 = prod(dlnorm(sim.prvealence.general.age2,obs.prevaleence.age2,sd = .2)) 
-        lik.prevalence.ratio = prod(dnorm(sim.prevalence.hiv.total/sim.prevalence.general.total,prevalence.ratio,sd = .2))
-        lik.treatment.proportion = prod(sim.treated.prevalence.hiv.total/sim.prevalence.hiv.total,treatment.proportion)
+        lik.prevalence.general.age1 = prod(dlnorm(obs.prevalence.age1,meanlog =  (log(sim.prevalence.general.age1)-.5*(log((log.sd.prevalence.age1/sim.prevalence.general.age1)^2+1))),sdlog  =  log.sd.prevalence.age1, log = log)) 
+        lik.prevalence.general.age2 = prod(dlnorm(obs.prevalence.age2,meanlog =  (log(sim.prevalence.general.age2)-.5*(log((log.sd.prevalence.age2/sim.prevalence.general.age2)^2+1))),sdlog  =  log.sd.prevalence.age2, log = log)) 
+        lik.prevalence.ratio = prod(dlnorm(prevalence.ratio,meanlog = (log(sim.prevalence.hiv.total/sim.prevalence.general.total)-.5*(log((prevalence.ratio.log.sd/sim.prevalence.hiv.total/sim.prevalence.general.total)^2+1))),sdlog =  prevalence.ratio.log.sd, log = log))
+        lik.treatment.proportion = prod(dlnorm(treatment.proportion,meanlog= (log(sim.treated.prevalence.hiv.total/sim.prevalence.hiv.total)-.5*(log((treatment.proportion.log.sd/sim.treated.prevalence.hiv.total/sim.prevalence.hiv.total)^2+1))),sdlog=treatment.proportion.log.sd, log = log))
         
         #Correlation 
         
@@ -55,9 +55,7 @@ make.depression.likelihood <- function(location,
         N_treatment_proportion = length(treatment.proportion.years)
         
         #Correlation Matrices 
-        total.prevalence.error.correlation=0.5
-        prevalence.ratio.error.correlation=0.8
-        treatment.proportion.error.correlation=0.8
+  
         
         cor_obs_total_prevealence = matrix(total.prevalence.error.correlation, nrow = N_total_prevalence , ncol = N_total_prevalence)
         diag(cor_obs_total_prevealence) = 1
@@ -66,9 +64,10 @@ make.depression.likelihood <- function(location,
         cor_obs_treatment_proportion = matrix(treatment.proportion.error.correlation, nrow = N_treatment_proportion, ncol = N_treatment_proportion)
         diag(cor_obs_treatment_proportion) = 1
         
-        #Stadard deviation observation errors (change)
+        #Stadard deviation observation errors
         
-        sd.obs_total_prevalence = rep(.06, length(total.prevalence.years))
+        sd.obs_total_prevalence.age1 = rep(.06, length(total.prevalence.years))
+        sd.obs_total_prevalence.age2 =
         sd.obs_prevalence_ratio = rep(prevalence.ratio.log.sd, length(prevalence.ratio.years))
         sd.obs_treatment_proportion = rep(treatment.proportion.sd, length(treatment.proportion.years))
         
@@ -77,7 +76,9 @@ make.depression.likelihood <- function(location,
         S_obs_prevalence_ratio = (sd.obs_prevalence_ratio) %*% t(sd.obs_prevalence_ratio) * cor_obs_prevalence_ratio
         S_obs_treatment_proportion = (sd.obs_treatment_proportion) %*% t(sd.obs_treatment_proportion) * cor_obs_treatment_proportion
         
-  
+        #?dmunorm where log = TRUE?
+        
+        
         # Put them together
         if (log)
             lik.prevalence.general.age1 + lik.prevalence.general.age2 + lik.prevalence.ratio + lik.treatment.proportion
