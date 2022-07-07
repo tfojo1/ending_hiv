@@ -8,14 +8,19 @@
 
 #figure out age, race, sex, risk lengths/breakdowns, still need IDU status 
 get.estimated.depression.incidence <- function(version='expanded_1.0',
-                                               dir='/code/applications/depression/',
+                                               dir="/Users/Ruchita/Documents/JHU/HIV Compartmental Model/ending_hiv/code/applications/depression/",
                                                Prop.less.1.year = .71,
                                                MSM.Ratio.age1 = 2.142288557, 
                                                MSM.Ratio.age2 = 2.108974359)
 {
-    incidence_white = read.csv(paste0(dir,"White_Incidence.csv")) #try to reconvert the actual incidence file instead for the proper age groups
-    incidence_black = read.csv(paste0(dir,"Black_Incidence.csv")) #read files correctly
-    incidence_hispanic = read.csv(paste0(dir,"Hispanic_Incidence.csv")) #initialize matrix correctly 
+    incidence_white = read.csv(paste0(dir,"White_Incidence.csv"),header = TRUE, row.names = 1) 
+    incidence_black = read.csv(paste0(dir,"Black_Incidence.csv"),header = TRUE, row.names = 1) 
+    incidence_hispanic = read.csv(paste0(dir,"Hispanic_Incidence.csv"),header = TRUE, row.names = 1)
+    
+    incidence_white = incidence_white[,c(1:2)]
+    incidence_black = incidence_black[,c(1:2)]
+    incidence_hispanic = incidence_hispanic[,c(1:2)]
+    
     rv = setup.depression.array.skeleton(version)
    
     #White incidence 

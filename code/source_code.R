@@ -14,7 +14,7 @@ source('code/settings_and_files/file_manager.R')
 
 #-- Source Data Managers --#
 load('cached/DEFAULT.LOCALE.MAPPING.Rdata')
-load('cached/SUBSTATE.TO.COUNTY.MAPPING.Rdata')
+#load('cached/SUBSTATE.TO.COUNTY.MAPPING.Rdata')
 
 source('code/core_code/data_managers/locale_mappings.R')
 source('code/core_code/data_managers/census_manager.R')
