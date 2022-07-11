@@ -134,14 +134,14 @@ create.jheem.settings <- function(version,
               
               DIMENSION.NAMES = list(age=age.strata$labels,
                                      race=races,
-                                     location=locations,
+                                    # location=locations,
                                      subpopulation=subpopulations,
                                      sex=sexes,
                                      risk=risks,
                                      non.hiv.subset=non.hiv.subsets,
                                      continuum=continuum.of.care,
                                      cd4=cd4.strata,
-                                     hiv.subsets=hiv.subsets),
+                                     hiv.subset=hiv.subsets),
               
               FIRST_DIAGNOSED_STATE = first.diagnosed.continuum.states,
               DIAGNOSED_STATES = diagnosed.continuum.states,
@@ -158,11 +158,18 @@ create.jheem.settings <- function(version,
               
               IS_CONTINUUM_COLLAPSED = is.continuum.collapsed,
               
-              transition.mapping = transition.mapping,
               additional.components.values = additional.components.values
-              )
+    )
     
-    check.transition.mapping.against.settings(transition.mapping, settings)
+    settings$dimension.names.by.subgroup = list(
+        hiv.negative = settings$DIMENSION.NAMES[c('age','race',#'location',
+                                                  'subpopulation','sex','risk','non.hiv.subset')],
+        hiv.positive = settings$DIMENSION.NAMES[c('age','race',#'location',
+                                                  'subpopulation','sex','risk','continuum','cd4','hiv.subset')]
+    )
+    
+    settings$transition.mapping = check.transition.mapping.against.settings(transition.mapping, settings)
+    
     
     class(settings) = 'jheem.settings'
     

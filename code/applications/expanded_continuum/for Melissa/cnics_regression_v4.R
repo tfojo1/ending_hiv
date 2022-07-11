@@ -1207,7 +1207,7 @@ if (!SAVE)
 if (SAVE)
 {
     print("Done - saving output")
-    save(output, file=file.path('code','for Melissa', 'CNICS analysis', 
+    save(output, file=file.path('code/applications/expanded_continuum/for Melissa/', 'CNICS analysis', 
                                 paste0('logistic_output_adj_', dataset.type, '_', analysis, '_', Sys.Date())))
     
     if (dataset.type=='real')

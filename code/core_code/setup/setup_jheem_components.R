@@ -96,6 +96,14 @@ get.components.transition.mapping <- function(components, version.manager=VERSIO
     transition.mapping
 }
 
+get.sim.settings <- function(sim)
+{
+    if (!is(sim, 'jheem.results'))
+        stop("'sim' must be an object of class 'jheem.results'")
+    
+    get.components.s
+}
+
 ##----------------------------------------------------##
 ##--              MAJOR CONTROL SETTINGS            --##
 ##-- (Whether to model HIV transmission, IDU, PrEP) --##
@@ -1388,9 +1396,9 @@ set.background.suppression.ors <- function(components,
                                        age4.or.slope=age4.or.slope,
                                        age5.or.slope=age5.or.slope
                                        )
-    
     components
 }
+
 
 do.set.background.ors <- function(components,
                                   component.name,
@@ -1527,7 +1535,22 @@ do.set.future.background.slope <- function(components,
                                            after.year)
 {
     component.name = paste0('background.', type)
-    components[[component.name]]$future.slope.or = slope
+    if (is.null(components[[component.name]]))
+        stop(paste0("background has not set up for '", type, "'. Use do.setup.background to set up before setting background future slope"))
+    if (is.null(components[[component.name]]$model))
+        stop(paste0("A background model has not been set for '", type, "'"))
+    
+    if (is(components[[component.name]]$model, 'model'))
+    {
+        slope.transformation = get.model.scale.transformation.function(components[[component.name]]$model)
+        if (!is.null(slope.transformation))
+            slope = slope.transformation(slope)
+    
+        components[[component.name]]$future.slope = slope
+    }
+    else #for backwards compatibility for components that don't use a formal model object
+        components[[component.name]]$future.slope.or = slope
+    
     components[[component.name]]$future.slope.after.year = after.year
     components = clear.dependent.values(components, component.name)
     
@@ -1712,71 +1735,6 @@ setup.background.linkage <- function(components,
 }
 
 
-set.background.linkage.ors <- function(components,
-                                                msm.or.intercept=NA,
-                                                heterosexual.or.intercept=NA,
-                                                idu.or.intercept=NA,
-                                                msm.idu.or.intercept=NA,
-                                                black.or.intercept=NA,
-                                                hispanic.or.intercept=NA,
-                                                other.or.intercept=NA,
-                                                age1.or.intercept=NA,
-                                                age2.or.intercept=NA,
-                                                age3.or.intercept=NA,
-                                                age4.or.intercept=NA,
-                                                age5.or.intercept=NA,
-                                                
-                                                total.or.slope=NA,
-                                                
-                                                msm.or.slope=NA,
-                                                heterosexual.or.slope=NA,
-                                                idu.or.slope=NA,
-                                                msm.idu.or.slope=NA,
-                                                black.or.slope=NA,
-                                                hispanic.or.slope=NA,
-                                                other.or.slope=NA,
-                                                age1.or.slope=NA,
-                                                age2.or.slope=NA,
-                                                age3.or.slope=NA,
-                                                age4.or.slope=NA,
-                                                age5.or.slope=NA)
-{
-    components = do.set.background.ors(components,
-                                       component.name='background.linkage',
-                                       
-                                       msm.or.intercept=msm.or.intercept,
-                                       heterosexual.or.intercept=heterosexual.or.intercept,
-                                       idu.or.intercept=idu.or.intercept,
-                                       msm.idu.or.intercept=msm.idu.or.intercept,
-                                       black.or.intercept=black.or.intercept,
-                                       hispanic.or.intercept=hispanic.or.intercept,
-                                       other.or.intercept=other.or.intercept,
-                                       age1.or.intercept=age1.or.intercept,
-                                       age2.or.intercept=age2.or.intercept,
-                                       age3.or.intercept=age3.or.intercept,
-                                       age4.or.intercept=age4.or.intercept,
-                                       age5.or.intercept=age5.or.intercept,
-                                       
-                                       total.or.slope=total.or.slope,
-                                       
-                                       msm.or.slope=msm.or.slope,
-                                       heterosexual.or.slope=heterosexual.or.slope,
-                                       idu.or.slope=idu.or.slope,
-                                       msm.idu.or.slope=msm.idu.or.slope,
-                                       black.or.slope=black.or.slope,
-                                       hispanic.or.slope=hispanic.or.slope,
-                                       other.or.slope=other.or.slope,
-                                       age1.or.slope=age1.or.slope,
-                                       age2.or.slope=age2.or.slope,
-                                       age3.or.slope=age3.or.slope,
-                                       age4.or.slope=age4.or.slope,
-                                       age5.or.slope=age5.or.slope
-    )
-    
-    components = clear.dependent.values(components, 'background.linkage')
-    components
-}
-
 
 
 #-- REENGAGEMENT --#
@@ -1805,16 +1763,256 @@ setup.background.reengagement <- function(components,
 
 ##-- GENERAL SET-UP BACKGROUND FUNCTIONS --##
 
+
+# the helper - actually executes for intercepts or slopes
+# (so as not to duplicate code)
+# 
+#'@param values - a numeric vector of the alphas
+#'@param dim.values - a list or vector. Each element is the index into the list
+#'@param dimensions - a character vector with length 1 or length equal to dim.values
+do.set.alphas.for.category <- function(components,
+                                       type,
+                                       category=c('intercept','slope')[1],
+                                       values,
+                                       dim.values=names(values),
+                                       dimensions,
+                                       interact.sex.risk,
+                                       as.interaction=F,
+                                       var.name.for.error=category)
+{
+    #-- Pull/set up the basics --#
+    transition.element = get.transition.element.by.name(get.components.transition.mapping(components), name=type)
+    if (is.null(transition.element))
+        stop("No transition element for '", type, "' has been registered with the transition.manager")
+    
+    settings = get.components.settings(components)
+    
+    type.name = paste0('background.', type)
+    if (is.null(components[[type.name]]))
+        stop(paste0("background has not set up for '", type, "'. Use do.setup.background to set up before setting background alphas."))
+    if (is.null(components[[type.name]]$model))
+        stop(paste0("A background model has not been set for '", type, "'"))
+    
+    
+    #-- Set-up target dim.names and Check interact.sex.risk --#
+    target.dim.names = transition.element$dim.names
+    if (interact.sex.risk && (all(names(target.dim.names)!='sex') || all(names(target.dim.names)!='risk')))
+        stop(paste0("Can only have interact.sex.risk = TRUE when both 'sex' and 'risk' are dimensions included in the dimensions needed for '", type, "'"))
+    
+    if (interact.sex.risk)
+        target.dim.names = collapse.dim.names.sex.risk(target.dim.names)
+    
+    
+    #-- Check the values argument --#
+    if (length(values)==0)
+        stop("No values have been supplied to set as alphas")
+    if (as.interaction && length(values) != 1)
+        stop("For setting interaction alphas, values must be a single numeric value")
+    if (!is.numeric(values) || any(is.na(values)))
+        stop("values must be a numeric, non-NA vector")
+    
+    value.transformation = get.model.scale.transformation.function(components[[type.name]]$model)
+    if (!is.null(value.transformation))
+        values = value.transformation(values)
+    
+    
+    #-- Check the dimensions argument --#
+    if (is.null(dimensions))
+    {
+        if (any(!sapply(dim.values, is.character)))
+            stop("dimensions can only be none if dim.values are all characters")
+        
+        dimensions = sapply(dim.values, get.dimension.for.dimension.value,
+                            dim.names=target.dim.names)
+    }
+    else if (length(dimensions)==1)
+        dimensions = rep(dimensions, length(dim.values))
+    else if (length(dimensions) != length(dim.values))
+        stop("If specified, dimensions must be either length 1 or the same length as dim.values")
+    
+    if (interact.sex.risk && (any(dimensions=='sex') || any(dimensions=='risk')))
+        stop(paste0("when interact.sex.risk = TRUE, dimensions cannot be either 'sex' or 'risk' alone (you must use '",
+                    collapse.dim.values('sex','risk'), "')"))
+    if (!interact.sex.risk && any(dimensions==collapse.dim.values('sex','risk')))
+        stop(paste0("when interact.sex.risk = FALSE< dimensions cannot contain '",
+                    collapse.dim.values('sex','risk'), "'. You must use 'sex' and 'risk' separately."))
+    
+    invalid.dimensions = setdiff(dimensions, names(target.dim.names))
+    if (length(invalid.dimensions)>0)
+        stop(paste0("Invalid dimension(s) for alphas for type '",
+                    type, "': ",
+                    paste0("'", invalid.dimensions, "'", collapse=', ')))
+
+    #-- Check the dim.values argument --#
+    if (!as.interaction && length(dim.values) != length(values))
+        stop("dim.values must be the same length as values")
+    if (as.interaction && length(dim.values) < 2)
+        stop('for interactions, dim.values must have at least two elements')
+    if (is.list(dim.values))
+        dim.values = sapply(1:length(dim.values), function(i){
+            dv = dim.values[[i]]
+            if (length(dv) != 1 || is.na(dv) || 
+                (!is.character(dv) && !is.integer(dv)))
+                stop("the elements of dim.values must be non-na, single character or integer values")
+            
+            if (is.character(dv))
+            {
+                if (all(dv != target.dim.names[[ dimensions[i] ]]))
+                    stop(paste0("Error in settings ", category, " alphas for '", type,
+                                "' - '", dv, "' is not a valid value for the '", dimensions[[i]], "' dimension."))
+                dv
+            }
+            else # is integer
+                target.dim.names[[ dimensions[i] ]][dv]
+        })
+    else
+    {
+        if (any(is.na(dim.values)))
+            stop("dim.values cannot contain NA values")
+        
+        if (is.integer(dim.values))
+            dim.values = sapply(1:length(dim.values), function(i){
+                target.dim.names[[ dimensions[i] ]][ dim.values[i] ]
+            })
+        else if (is.character(dim.values))
+        {
+            for (d in unique(dimensions))
+            {
+                mask = dimensions == d
+                invalid.dim.values = setdiff(dim.values[mask],
+                                             target.dim.names[[d]])
+                if (length(invalid.dim.values)>0)
+                    stop(paste0("Invalid dim.value(s) for ", category, " alphas for the '",
+                                d, "' dimension in type '", type, "': ",
+                                paste0("'", invalid.dim.values, "'", collapse=', ')))
+            }
+        }
+        else
+            stop("'dim.values' must either be an integer vector, a character vector, or a list containing only integers and/or characters")
+    }
+    # now dim values is a character vector
+    
+    #-- Set up the alpha container if needed --#
+    if (is.null(components[[type.name]]$alphas))
+        components[[type.name]]$alphas = list()
+    
+    if (is.null(components[[type.name]]$alphas[[category]]))
+        components[[type.name]]$alphas[[category]] = list(interact.sex.risk=interact.sex.risk)
+    else if (components[[type.name]]$alphas[[category]]$interact.sex.risk != interact.sex.risk)
+        stop(paste0("The current call to do.set.alphas for ", category, 
+                    " alphas for '", type, "' has interact.sex.risk = ",
+                    interact.sex.risk, ". But ", category, " alphas for '", type,
+                    "' have previously been set up with interact.sex.risk = ", !interact.sex.risk))
+    
+
+    #-- Set the value --#
+    if (as.interaction)
+    {
+        if (is.null(components[[type.name]]$alphas[[category]]$interaction.effects))
+            components[[type.name]]$alphas[[category]]$interaction.effects = list()
+        
+        unique.dimensions = intersect(names(target.dim.names), dimensions) #intersecting puts them in the right order
+        
+        dim.values.by.dimension = lapply(unique.dimensions, function(d){
+            dim.values[dimensions==d]
+        })
+        names(dim.values.by.dimension) = unique.dimensions
+        
+        dim.values.combos = expand.grid(dim.values.by.dimension, stringsAsFactors = F)
+        for (i in 1:dim(dim.values.combos)[1])
+        {
+            dim.values.for.i = as.character(dim.values.combos[i,])
+            names(dim.values.for.i) = unique.dimensions
+            
+            interaction.name = paste0(unique.dimensions, '=', dim.values.for.i, collapse='__')
+            
+            components[[type.name]]$alphas[[category]]$interaction.effects[[interaction.name]] = list(
+                dim.values = dim.values.for.i,
+                value = values
+            )
+        }
+    }
+    else
+    {
+        if (is.null(components[[type.name]]$alphas[[category]]$main.effects))
+            components[[type.name]]$alphas[[category]]$main.effects = list()
+        
+        for (d in unique(dimensions))
+        {
+            if (is.null(components[[type.name]]$alphas[[category]]$main.effects[[d]]))
+                components[[type.name]]$alphas[[category]]$main.effects[[d]] = numeric()
+            
+            mask = dimensions == d
+            
+            components[[type.name]]$alphas[[category]]$main.effects[[d]][ dim.values[mask] ] = values[mask]
+        }
+    }    
+    
+    components = clear.dependent.values(components,
+                                        dependent.on = type.name)
+
+    components
+}
+
+set.static.value <- function(components,
+                             type,
+                             value)
+{
+    transition.element = get.transition.element.by.name(get.components.transition.mapping(components), name=type)
+    if (is.null(transition.element))
+        stop("No transition element for '", type, "' has been registered with the transition.manager")
+    
+    # check the dimensions
+    if (is.null(dim(value)))
+    {
+        if (length(value) != 1 || !is.numeric(value) || is.na(value))
+            stop(paste0("The static value - given for '",
+                        type, "' must either be an array or a scalar, numeric, non-NA value"))
+    }
+    else if (!named.lists.equal(dimnames(value), transition.element$dim.names))
+    {
+        if (!is.named.list.subset(dimnames(value),
+                                   transition.element$dim.names))
+            stop(paste0("The dimensions for the static value for '", type,
+                        "' are not a subset of the expected dimensions"))
+        
+        value = expand.population(value, target.dim.names = transition.element$dim.names)
+    }
+    
+    # set it
+    components[[type]] = value
+    
+    # clear dependencies and return
+    components = clear.dependent.values(components, type)
+    components
+}
+
+get.dimension.for.dimension.value <- function(dim.names,
+                                              dim.value,
+                                              type)
+{
+    rv = names(dim.names)[sapply(dim.names, function(elem){any(elem==dim.value)})]
+    if (length(rv)==0)
+        stop(paste0("No dimensions contain the given value ('", dim.value, "')"))
+    if (length(rv)>1)
+        stop(paste0("Multiple dimensions (",
+                    paste0("'", rv, "'", collapse=', '),
+                    ") contain the given value ('", dim.value, "')"))
+    
+    rv
+}
+
 do.setup.background <- function(components,
                                 type,
                                 location,
                                 years,
                                 extra.slope.after.year,
-                                
                                 continuum.manager,
                                 prep.manager)
 {
     transition.element = get.transition.element.by.name(get.components.transition.mapping(components), name=type)
+    if (is.null(transition.element))
+        stop("No transition element for '", type, "' has been registered with the transition.manager")
     
     type.name = paste0('background.', type)
     
@@ -1830,6 +2028,17 @@ do.setup.background <- function(components,
                                                     prep.manager=prep.manager,
                                                     settings=get.components.settings(components),
                                                     location=location)
+    
+    # check that the dim.names are allowed
+    model.dim.names = get.model.dim.names(model)
+    invalid.dimensions = setdiff(names(model.dim.names), transition.element$dimensions)
+    if (length(invalid.dimensions)>0)
+        stop(paste0("Invalid dimension(s) specified in the background model for type '", type, "': ",
+                    paste0("'", invalid.dimensions, "'", collapse=', ')))
+    if (!is.named.list.subset(model.dim.names, transition.element$dim.names))
+        stop(paste0("the dimnames of the model are not a subset of the dimnames for type '",
+                    type, "' per the settings"))
+    
     components[[type.name]]$model = model
     
     components[[type.name]]$ramp.years = transition.element$ramp.times
@@ -1837,7 +2046,7 @@ do.setup.background <- function(components,
     
     # for backwards compatibility - missing model type is presumed to be logistic or logistic tail
     
-    if (is.null(model$model.type) || model$model.type == 'logistic' || model$model.type=='logistic.tail')
+    if (!is(model, 'model'))
     {
         components = do.set.background.ors(components,
                                            component.name = type.name,
@@ -1867,10 +2076,10 @@ do.setup.background <- function(components,
                                            age5.or.slope=1)
     }
     
-    components = do.set.future.background.slope(components,
-                                                type=type,
-                                                slope=1,
-                                                after.year=extra.slope.after.year)
+ #   components = do.set.future.background.slope(components,
+ #                                               type=type,
+ #                                               slope=1,
+ #                                               after.year=extra.slope.after.year)
     
     components = clear.dependent.values(components,
                                         dependent.on = type.name)

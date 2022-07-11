@@ -2,7 +2,7 @@
 
 if (1==2)
 {
-    # source this file AFTER sourcing source_code
+    # source this file (continuum_manager3.R) AFTER sourcing source_code
     cm = create.continuum.manager(national.surveillance = national.surveillance,
                                   suppression.anchor.year = 2020,
                                   testing.anchor.year = 2010)
@@ -20,6 +20,9 @@ get.continuum.model<- function(continuum.manager,
                                type,
                                location)
 {
+    if (is.null(continuum.manager[[type]]))
+        stop(paste0("No model has been set for type '", type, "' in the continuum manager"))
+    
     continuum.manager[[type]]
 }
 
@@ -158,7 +161,7 @@ get.proportion.ever.tested.in.states <- function(cm,
 
 create.continuum.manager <- function(dir='cleaned_data/', 
                                      expanded.continuum.file = 'cleaned_data/continuum/cnics_regression.Rdata',
-                                     settings = SETTINGS,
+                                     settings = get.settings.for.version('collapsed_1.0'),
                                      national.surveillance = national.surveillance,
                                      
                                      suppression.anchor.year = 2020,
@@ -171,10 +174,10 @@ create.continuum.manager <- function(dir='cleaned_data/',
                                      
                                      max.naive.to.suppressed.proportion = 0.95,
                                      max.failing.to.suppressed.proportion = 0.9,
-                                     min.recently.suppressed.to.failing.proportion = 0.01,
-                                     min.durably.suppressed.to.failing.proportion = 0.01,
+                                     min.recently.suppressed.to.failing.proportion = 0.05,
+                                     min.durably.suppressed.to.failing.proportion = 0,
                                      
-                                     max.reengaged.proportion = 0.5,
+                                     max.reengaged.proportion = 0.8,
                                      
                                      min.naive.retention = 0.5,
                                      min.failing.retention = 0.5,
@@ -580,7 +583,7 @@ run.linkage.regressions <- function(cm,
                                     dir='cleaned_data',
                                     anchor.year=2020,
                                     max.linked.proportion=0.95,
-                                    settings=SETTINGS
+                                    settings=get.settings.for.version('collapsed_1.0')
 )
 {
     df = read.csv(file.path(dir, 'continuum/national/linkage/national_linkage.csv'),
@@ -761,11 +764,7 @@ run.linkage.regressions <- function(cm,
     
     #-- Put it all together --#
     
-    cm$linkage = list(anchor.year = anchor.year,
-                      max.proportion = max.linked.proportion,
-                      min.proportion = 0,
-                      mixed.linear=F,
-                      log.ors = numeric())
+    cm$linkage = list(log.ors = numeric())
     
     dim.names = list(age=settings$AGES$labels, race=settings$RACES, sex=settings$SEXES, risk=settings$RISK_STRATA)
     cm$linkage$stratified.log.odds.slope = cm$linkage$stratified.log.odds.intercept =
@@ -855,11 +854,16 @@ run.linkage.regressions <- function(cm,
     cm$linkage$log.ors['idu_female_slope'] = fit.sex.risk$coefficients['idu_female:year']
     
     
-    names(cm$linkage)[names(cm$linkage)=='stratified.log.odds.intercept'] = 'intercept'
-    names(cm$linkage)[names(cm$linkage)=='stratified.log.odds.slope'] = 'slope'
+   # names(cm$linkage)[names(cm$linkage)=='stratified.log.odds.intercept'] = 'intercept'
+#    names(cm$linkage)[names(cm$linkage)=='stratified.log.odds.slope'] = 'slope'
     
     #-- Return it --#
-    cm$linkage$model.type = 'logistic'
+    cm$linkage = create.logistic.model(intercept = cm$linkage$stratified.log.odds.intercept,
+                                       slope = cm$linkage$stratified.log.odds.slope,
+                                       anchor.year = anchor.year,
+                                       max.proportion = max.linked.proportion,
+                                       min.proportion = 0,
+                                       log.ors = cm$linkage$log.ors)
     cm
 }
 
@@ -871,7 +875,7 @@ run.suppression.regressions <- function(cm,
                                         national.surveillance,
                                         max.suppressed.proportion=0.9,
                                         anchor.year=2020,
-                                        settings = SETTINGS)
+                                        settings = get.settings.for.version('collapsed_1.0'))
 {   
     #-- Fit Sex x Risk --#
     
@@ -962,13 +966,10 @@ run.suppression.regressions <- function(cm,
     
     
     #-- Unpack the intercepts and slopes into arrays indexed [age,race,sex,risk] --#
-    cm$suppression = list(anchor.year=anchor.year,
-                          max.proportion=max.suppressed.proportion,
-                          min.proportion=0,
-                          mixed.linear=F)
+    cm$suppression = list()
     
     # Save the log ORs for readability/reference (NOT used by model)
-    cm$testing$log.ors = numeric()
+    cm$suppression$log.ors = numeric()
     
     dim.names = list(age=settings$AGES$labels, race=settings$RACES, sex=settings$SEXES, risk=settings$RISK_STRATA)
     cm$suppression$stratified.log.odds.intercept = cm$suppression$stratified.log.odds.slope =
@@ -1060,11 +1061,16 @@ run.suppression.regressions <- function(cm,
     cm$suppression$log.ors['msm_idu_slope'] = fit.sex.risk$coefficients['year:msm_idu']
     
     
-    names(cm$suppression)[names(cm$suppression)=='stratified.log.odds.intercept'] = 'intercept'
-    names(cm$suppression)[names(cm$suppression)=='stratified.log.odds.slope'] = 'slope'
+ #   names(cm$suppression)[names(cm$suppression)=='stratified.log.odds.intercept'] = 'intercept'
+ #   names(cm$suppression)[names(cm$suppression)=='stratified.log.odds.slope'] = 'slope'
     
     #-- Return --#
-    cm$suppression$model.type = 'logistic'
+    cm$suppression = create.logistic.model(intercept = cm$suppression$stratified.log.odds.intercept,
+                                           slope = cm$suppression$stratified.log.odds.slope,
+                                           anchor.year=anchor.year,
+                                           max.proportion=max.suppressed.proportion,
+                                           min.proportion=0,
+                                           log.ors = cm$suppression$log.ors)
     cm
 }
 
@@ -1077,7 +1083,7 @@ run.testing.regressions <- function(cm,
                                     verbose=T,
                                     anchor.year=2020,
                                     max.tested.proportion=0.9,
-                                    settings=SETTINGS)
+                                    settings=get.settings.for.version('collapsed_1.0'))
 {
     # We our working towards a model such that
     # logit(p_12mo_s) = logit(p_12mo_prime_s) + mu
@@ -1095,10 +1101,6 @@ run.testing.regressions <- function(cm,
     #BRFSS at state level (ever tested by race)
     
     cm$testing = list()
-    cm$testing$anchor.year = anchor.year
-    cm$testing$max.proportion = max.tested.proportion
-    cm$testing$min.proportion = 0
-    cm$testing$mixed.linear = F
     
     #Save the BRFSS files
     cm$testing$total.ever.tested = brfss.msa
@@ -1256,11 +1258,16 @@ run.testing.regressions <- function(cm,
     
     cm$testing$log.ors['base'] = base.log.or
     
-    names(cm$testing)[names(cm$testing)=='stratified.log.odds.intercept'] = 'intercept'
-    names(cm$testing)[names(cm$testing)=='stratified.log.odds.slope'] = 'slope'
+ #   names(cm$testing)[names(cm$testing)=='stratified.log.odds.intercept'] = 'intercept'
+ #   names(cm$testing)[names(cm$testing)=='stratified.log.odds.slope'] = 'slope'
     
     #-- Return --#
-    cm$testing$model.type = 'logistic'
+    cm$testing = create.logistic.model(intercept = cm$testing$stratified.log.odds.intercept,
+                                       slope = cm$testing$stratified.log.odds.slope,
+                                       anchor.year=anchor.year,
+                                       max.proportion=max.tested.proportion,
+                                       min.proportion=0,
+                                       log.ors = cm$testing$log.ors)
     cm
 }
 
@@ -1322,111 +1329,108 @@ setup.logistic.model <- function(anchor.year,
                                  
 )
 {
-    list(type='logistic',
-         anchor.year = anchor.year,
-         min.proportion = min.proportion,
-         max.proportion = max.proportion,
-         mixed.linear = F,
-         model.type = 'logistic',
-         
-         intercept=setup.array.from.coefficients(
-             settings = settings,
-             
-             all=total.intercept,
-             
-             age1=age1.intercept,
-             age2=age2.intercept,
-             age3=age3.intercept,
-             age4=age4.intercept,
-             age5=age5.intercept,
-             
-             black=black.intercept,
-             hispanic=hispanic.intercept,
-             other=other.intercept,
-             
-             heterosexual = heterosexual.intercept,
-             idu = idu.intercept,
-             
-             heterosexual.male = male.heterosexual.intercept,
-             heterosexual.male.idu = male.idu.intercept,
-             msm = msm.intercept,
-             msm.idu = msm.idu.intercept,
-             female = female.heterosexual.intercept,
-             female.idu = female.idu.intercept,
-             
-             idu.in.remission.is.idu=idu.in.remission.is.idu
-         ),
-         
-         slope = setup.array.from.coefficients(
-             settings = settings,
-             
-             all=total.slope,
-             
-             age1=age1.slope,
-             age2=age2.slope,
-             age3=age3.slope,
-             age4=age4.slope,
-             age5=age5.slope,
-             
-             black=black.slope,
-             hispanic=hispanic.slope,
-             other=other.slope,
-             
-             heterosexual = heterosexual.slope,
-             idu = idu.slope,
-             
-             heterosexual.male = male.heterosexual.slope,
-             heterosexual.male.idu = male.idu.slope,
-             msm = msm.slope,
-             msm.idu = msm.idu.slope,
-             female = female.heterosexual.slope,
-             female.idu = female.idu.slope,
-             
-             idu.in.remission.is.idu=idu.in.remission.is.idu
-         ),
-         
-         log.ors = c(
-             total.intercept = total.intercept,
-             msm.intercept = msm.intercept,
-             msm.idu.intercept = msm.idu.intercept,
-             heterosexual.intercept = heterosexual.intercept,
-             male.heterosexual.intercept=male.heterosexual.intercept,
-             female.heterosexual.intercept=female.heterosexual.intercept,
-             idu.intercept = idu.intercept,
-             male.idu.intercept = male.idu.intercept,
-             female.idu.intercept = female.idu.intercept,
-             
-             black.intercept=black.intercept,
-             hispanic.intercept=hispanic.intercept,
-             other.intercept=other.intercept,
-             
-             age1.intercept=age1.intercept,
-             age2.intercept=age2.intercept,
-             age3.intercept=age3.intercept,
-             age4.intercept=age4.intercept,
-             age5.intercept=age5.intercept,
-             
-             # Slopes
-             total.slope = total.slope,
-             msm.slope = msm.slope,
-             msm.idu.slope = msm.idu.slope,
-             heterosexual.slope = heterosexual.slope,
-             male.heterosexual.slope=male.heterosexual.slope,
-             female.heterosexual.slope=female.heterosexual.slope,
-             idu.slope = idu.slope,
-             male.idu.slope = male.idu.slope,
-             female.idu.slope = female.idu.slope,
-             
-             black.slope=black.slope,
-             hispanic.slope=hispanic.slope,
-             other.slope=other.slope,
-             
-             age1.slope=age1.slope,
-             age2.slope=age2.slope,
-             age3.slope=age3.slope,
-             age4.slope=age4.slope,
-             age5.slope=age5.slope
-         )
+    create.logistic.model(anchor.year = anchor.year,
+                          min.proportion = min.proportion,
+                          max.proportion = max.proportion,
+                          
+                          intercept=setup.array.from.coefficients(
+                              settings = settings,
+                              
+                              all=total.intercept,
+                              
+                              age1=age1.intercept,
+                              age2=age2.intercept,
+                              age3=age3.intercept,
+                              age4=age4.intercept,
+                              age5=age5.intercept,
+                              
+                              black=black.intercept,
+                              hispanic=hispanic.intercept,
+                              other=other.intercept,
+                              
+                              heterosexual = heterosexual.intercept,
+                              idu = idu.intercept,
+                              
+                              heterosexual.male = male.heterosexual.intercept,
+                              heterosexual.male.idu = male.idu.intercept,
+                              msm = msm.intercept,
+                              msm.idu = msm.idu.intercept,
+                              female = female.heterosexual.intercept,
+                              female.idu = female.idu.intercept,
+                              
+                              idu.in.remission.is.idu=idu.in.remission.is.idu
+                          ),
+                          
+                          slope = setup.array.from.coefficients(
+                              settings = settings,
+                              
+                              all=total.slope,
+                              
+                              age1=age1.slope,
+                              age2=age2.slope,
+                              age3=age3.slope,
+                              age4=age4.slope,
+                              age5=age5.slope,
+                              
+                              black=black.slope,
+                              hispanic=hispanic.slope,
+                              other=other.slope,
+                              
+                              heterosexual = heterosexual.slope,
+                              idu = idu.slope,
+                              
+                              heterosexual.male = male.heterosexual.slope,
+                              heterosexual.male.idu = male.idu.slope,
+                              msm = msm.slope,
+                              msm.idu = msm.idu.slope,
+                              female = female.heterosexual.slope,
+                              female.idu = female.idu.slope,
+                              
+                              idu.in.remission.is.idu=idu.in.remission.is.idu
+                          ),
+                          
+                          log.ors = c(
+                              total.intercept = total.intercept,
+                              msm.intercept = msm.intercept,
+                              msm.idu.intercept = msm.idu.intercept,
+                              heterosexual.intercept = heterosexual.intercept,
+                              male.heterosexual.intercept=male.heterosexual.intercept,
+                              female.heterosexual.intercept=female.heterosexual.intercept,
+                              idu.intercept = idu.intercept,
+                              male.idu.intercept = male.idu.intercept,
+                              female.idu.intercept = female.idu.intercept,
+                              
+                              black.intercept=black.intercept,
+                              hispanic.intercept=hispanic.intercept,
+                              other.intercept=other.intercept,
+                              
+                              age1.intercept=age1.intercept,
+                              age2.intercept=age2.intercept,
+                              age3.intercept=age3.intercept,
+                              age4.intercept=age4.intercept,
+                              age5.intercept=age5.intercept,
+                              
+                              # Slopes
+                              total.slope = total.slope,
+                              msm.slope = msm.slope,
+                              msm.idu.slope = msm.idu.slope,
+                              heterosexual.slope = heterosexual.slope,
+                              male.heterosexual.slope=male.heterosexual.slope,
+                              female.heterosexual.slope=female.heterosexual.slope,
+                              idu.slope = idu.slope,
+                              male.idu.slope = male.idu.slope,
+                              female.idu.slope = female.idu.slope,
+                              
+                              black.slope=black.slope,
+                              hispanic.slope=hispanic.slope,
+                              other.slope=other.slope,
+                              
+                              age1.slope=age1.slope,
+                              age2.slope=age2.slope,
+                              age3.slope=age3.slope,
+                              age4.slope=age4.slope,
+                              age5.slope=age5.slope
+                          )
     ) 
 }
 

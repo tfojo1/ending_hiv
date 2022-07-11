@@ -540,9 +540,13 @@ create.run.simulation.function <- function(msa,
     
     get.components.fn = get.components.function.for.version(version)
     
-    init.components = get.components.fn(start.values, base.components)
+    init.components = set.track.cleared.dependencies(base.components, track=T)
+    init.components = get.components.fn(start.values, init.components)
+    
     if (fix.components)
         init.components = fix.components.for.calibration(components = init.components)
+    
+    init.components = set.track.cleared.dependencies(init.components, track=F)
     
     #-- Run Function --#
     

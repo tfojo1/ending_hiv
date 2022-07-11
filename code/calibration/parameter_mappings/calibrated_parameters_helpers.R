@@ -4,7 +4,9 @@
 ##-- HELPERS FOR MANAGING DEPENDENCIES AND FIXING COMPONENTS --##
 ##-------------------------------------------------------------##
 
-clear.calibration.dependencies <- function(components)
+# This function is no longer in use
+# Keeping the code around for a bit until we're sure we no longer need it
+OLD.clear.calibration.dependencies <- function(components)
 {
     dependencies = list(base.heterosexual.transmission=c('male.to.female.sexual.transmission',
                                                          'female.to.male.sexual.transmission'),
@@ -81,7 +83,8 @@ clear.calibration.dependencies <- function(components)
 fix.components.for.calibration <- function(components)
 {
     components = crunch.all.jheem.components(components)
-    components = clear.calibration.dependencies(components)
+    dependencies.to.clear = get.tracked.cleared.dependencies(components)
+    components = clear.dependent.values(components, dependencies.to.clear)
     fix.jheem.components(components)
 }
 
@@ -177,4 +180,153 @@ create.mortality.prior.distribution <- function(mort2.log.mean = log(23/1000),
     Multivariate.Lognormal.Distribution(mu = M %*% mean,
                                         sigma = M %*% var.mat %*% t(M),
                                         var.names = c('peak.hiv.mortality','hiv.mortality.0','hiv.mortality.2'))
+}
+
+
+#-- SETTING ALPHAS --#
+
+set.intercept.and.slope.alphas.from.parameters <- function(components,
+                                                           type,
+                                                           parameters,
+                                                           intercept.parameter.suffix,
+                                                           slope.parameter.suffix,
+                                                           idu.applies.to.in.remission,
+                                                           transformation = 'identity',
+                                                           sex.risk.intercept.multiplier = 1,
+                                                           exclude.from.check = character())
+{
+    components = set.alphas.from.parameters(components,
+                                            type=type,
+                                            category='intercept',
+                                            parameters=parameters,
+                                            parameter.suffix=intercept.parameter.suffix,
+                                            idu.applies.to.in.remission = idu.applies.to.in.remission,
+                                            transformation=transformation,
+                                            sex.risk.multiplier=sex.risk.intercept.multiplier,
+                                            exclude.from.check=exclude.from.check)
+    
+    if (!is.null(slope.parameter.suffix))
+        components = set.alphas.from.parameters(components,
+                                                type=type,
+                                                category='slope',
+                                                parameters=parameters,
+                                                parameter.suffix=slope.parameter.suffix,
+                                                idu.applies.to.in.remission = idu.applies.to.in.remission,
+                                                transformation=transformation,
+                                                sex.risk.multiplier=1,
+                                                exclude.from.check=exclude.from.check)
+    
+    components
+}
+
+# sex.risk.multiplier gets applied (multiplied in) BEFORE applying transformation
+set.alphas.from.parameters <- function(components,
+                                       type,
+                                       category,
+                                       parameters,
+                                       parameter.suffix,
+                                       idu.applies.to.in.remission,
+                                       transformation,
+                                       sex.risk.multiplier,
+                                       exclude.from.check=character())
+{
+    if (length(sex.risk.multiplier)!=1 || is.na(sex.risk.multiplier))
+        stop("Sex risk multiplier must a single value that is not NA")
+    
+    #-- Set up parameter names --#
+    
+    # By Race
+    race.prefixes = c(
+        # Race
+        black = 'black',
+        hispanic = 'hispanic'
+    )
+    
+    # By Sex/Risk
+    non.idu.sex.prefixes = c(
+        heterosexual_male = 'heterosexual',
+        female = 'heterosexual',
+        msm = 'msm'
+    )
+    active.idu.sex.prefixes = c(
+        heterosexual_male = 'idu',
+        female = 'idu',
+        msm = 'msm.idu'
+    )
+    if (idu.applies.to.in.remission)
+        idu.in.remission.sex.prefixes = active.idu.sex.prefixes
+    else
+        idu.in.remission.sex.prefixes = non.idu.sex.prefixes
+    
+    names(non.idu.sex.prefixes) = collapse.dim.values(names(non.idu.sex.prefixes), 'never_IDU')
+    names(active.idu.sex.prefixes) = collapse.dim.values(names(active.idu.sex.prefixes), 'active_IDU')
+    names(idu.in.remission.sex.prefixes) = collapse.dim.values(names(idu.in.remission.sex.prefixes), 'IDU_in_remission')
+    
+    sex.risk.prefixes = c(non.idu.sex.prefixes,
+                          active.idu.sex.prefixes,
+                          idu.in.remission.sex.prefixes)
+    
+    # By Age
+    age.strata = c(1,2,4,5)
+    age.prefixes = paste0('age', age.strata)
+    names(age.prefixes) = get.components.settings(components)$DIMENSION.NAMES$age[age.strata]
+    
+    # Pull it together
+    all.prefixes = c(age.prefixes,
+                     race.prefixes,
+                     sex.risk.prefixes)
+    
+    all.parameter.names = paste0(all.prefixes, ".", parameter.suffix)
+    names(all.parameter.names) = names(all.prefixes)
+    
+    all.dimensions = c(rep('age', length(age.prefixes)),
+                       rep('race', length(race.prefixes)),
+                       rep(collapse.dim.values('sex','risk'), length(sex.risk.prefixes)))
+
+    
+    # A check to make sure we're neglecting to use any matching parameters
+    matching.suffix.mask = paste0('.', parameter.suffix) ==
+        substr(names(parameters), nchar(names(parameters))-nchar(parameter.suffix), nchar(names(parameters)))
+    matching.suffix.names = names(parameters)[matching.suffix.mask]
+    unused.parameter.names = setdiff(matching.suffix.names, all.parameter.names)
+    unused.parameter.names = setdiff(unused.parameter.names, exclude.from.check)
+    if (length(unused.parameter.names)>0)
+    {
+        stop(paste0("When setting ", category, " alphas on '", type, 
+                    "', we are not using the following parameter(s): ",
+                    paste0("'", unused.parameter.names, "'", collapse=', '),
+                    ". Is this intentional?"))
+    }
+    
+    # Pull the values
+    all.parameter.values = parameters[all.parameter.names]
+    names(all.parameter.values) = names(all.parameter.names)
+    all.parameter.values[names(sex.risk.prefixes)] = all.parameter.values[names(sex.risk.prefixes)] * sex.risk.multiplier
+    
+    values.present = !is.na(all.parameter.values)
+    all.parameter.values = all.parameter.values[values.present]
+    all.dimensions = all.dimensions[values.present]
+    all.prefixes = all.prefixes[values.present]
+    
+    if (!any(values.present))
+        stop(paste0("No values are present with the suffix '", parameter.suffix,
+                    "' in the given parameters vector."))
+    
+    if (transformation=='reciprocal')
+        all.parameter.values = 1/all.parameter.values
+    else if (transformation!='identity')
+        stop(paste0("Invalid transformation for setting alphas: '", transformation, "'"))
+    
+    # Set it to components
+    components = do.set.alphas.for.category(components,
+                                            type=type,
+                                            category=category,
+                                            values=all.parameter.values,
+                                            dim.values=names(all.prefixes),
+                                            dimensions=all.dimensions,
+                                            interact.sex.risk=T,
+                                            as.interaction=F)
+
+    # Return
+    components
 }

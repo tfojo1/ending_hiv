@@ -202,6 +202,20 @@ do.get.for.version <- function(version,
 }
 
 
+##-- TO DAISY-CHAIN COMPONENTS FUNCTIONS --##
+
+join.get.components.functions <- function(f1, f2)
+{
+    function(parameters, components,
+             data.managers = ALL.DATA.MANAGERS)
+    {
+        components = f1(parameters, components, data.managers)
+        components = f2(parameters, components, data.managers)
+        
+        components
+    }
+}
+
 ##-- MAKE THE DEFAULT VERSION MANAGER --##
 VERSION.MANAGER = create.version.manager()
 

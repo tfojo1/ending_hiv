@@ -275,6 +275,10 @@ setup.components.for.msa <- function(msa,
                                              location=msa,
                                              years=smooth.from.year:(smooth.to.year+1))
         
+        comps = set.future.background.slopes(comps,
+                                             suppression=1,
+                                             after.year=default.extra.slope.after.year)
+        
         comps = set.background.suppression.ors(comps,
                                                msm.or.intercept=1,
                                                heterosexual.or.intercept=1,
@@ -300,12 +304,7 @@ setup.components.for.msa <- function(msa,
                                                age3.or.slope=1,
                                                age4.or.slope=1,
                                                age5.or.slope=1)
-        
-        
-        if (is.null(settings$VERSION) || settings$VERSION=='collapsed_1.0')
-            comps = set.future.background.slopes(comps,
-                                                 suppression=1,
-                                                 after.year=default.extra.slope.after.year)
+           
     }
 
     #-- Special Cases: Needle Exchange --#

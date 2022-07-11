@@ -38,7 +38,11 @@ TRANSITION.MAPPING.SCHEMA = list(
     create.transition.mapping.schema(dimension='continuum',
                                      subgroups=c('hiv.positive'),
                                      always.required=T,
-                                     settings.name='CONTINUUM_OF_CARE')
+                                     settings.name='CONTINUUM_OF_CARE'),
+    create.transition.mapping.schema(dimension='subpopulation',
+                                     subgroups=c('hiv.negative','hiv.positive'),
+                                     always.required=F,
+                                     settings.name='SUBPOPULATIONS')
 )
 names(TRANSITION.MAPPING.SCHEMA) = sapply(TRANSITION.MAPPING.SCHEMA, function(sch){sch$dimension})
 
@@ -145,7 +149,7 @@ create.transition.element <- function(name,
                                       ramp.type=type,
                                       return.type=type,
                                       required=T,
-                                      default.value=NA,
+                                      default.value=NULL,
                                       ramp.times=numeric(),
                                       ramp.multipliers=numeric(),
                                       ramp.interpolate.scales=character(),
@@ -164,10 +168,10 @@ create.transition.element <- function(name,
         stop("required must be a non-na logical scalar")
     if (!required && (length(default.value)==0 || any(is.na(default.value))))
         stop("if required is FALSE, default value must be set")
-    if (required && any(!is.na(default.value)))
+    if (required && !is.null(default.value))
         stop("default.value only applies if required is FALSE")
     if (required)
-        default.value = NA
+        default.value = NULL
     
     # Check ramp
     if (length(ramp.times)>0)
@@ -533,8 +537,8 @@ register.transition.element <- function(transition.mapping,
                                         background.model.type=type,
                                         ramp.type=type,
                                         return.type=type,
-                                        required=T,
-                                        default.value=NA,
+                                        required=is.null(default.value),
+                                        default.value=NULL,
                                         ramp.times=numeric(),
                                         ramp.multipliers=numeric(),
                                         ramp.interpolate.scales='identity',
@@ -777,5 +781,61 @@ check.transition.mapping.against.settings <- function(transition.mapping,
     if (length(unused.elements)>0)
         print(paste0("WARNING: The following transition element(s) have been registered, but are not used in any transitions: ",
                      paste0("'", unused.elements, "'", collapse=', ')))
+    
+    for (elem.name in names(transition.mapping$transition.elements))
+    {
+        dimensions = calculate.transition.element.dimensions(transition.mapping,
+                                                             elem.name=elem.name,
+                                                             settings = settings)
+        
+        transition.mapping$transition.elements[[elem.name]]$dimensions = dimensions
+        
+        transition.mapping$transition.elements[[elem.name]]$dim.names = settings$DIMENSION.NAMES[dimensions]
+        
+        tr.el = transition.mapping$transition.elements[[elem.name]]
+        if (!is.null(tr.el$default.value))
+        {
+            if (is.null(dim(tr.el$default.value)))
+            {
+                if (length(tr.el$default.value) != 1 || !is.numeric(tr.el$default.value) || is.na(tr.el$default.value))
+                    stop(paste0("The default value - given for '",
+                                elem.name, "' must either be an array or a scalar, numeric, non-NA value"))
+            }
+            else if (!named.lists.equal(dimnames(tr.el$default.value), tr.el$dim.names))
+            {
+                if (!is.named.list.subset(dimnames(tr.el$default.value),
+                                          tr.el$dim.names))
+                    stop(paste0("The dimensions for the default value for '", elem.name,
+                                "' are not a subset of the expected dimensions"))
+                
+                tr.el$default.value = expand.population(tr.el$default.value, target.dim.names = tr.el$dim.names)
+            }
+        }
+    }
+    
+    transition.mapping
 }
 
+# the dim.names for an element is an intersection of the dim.names for that element in each subgroup
+# the dim.names for an element in a subgroup is the union of dim.
+calculate.transition.element.dimensions <- function(transition.mapping,
+                                                   elem.name,
+                                                   settings)
+{
+    subgroups = transition.mapping$elements.to.subgroups.and.dimensions[[elem.name]]$subgroup
+    
+    rv = names(settings$DIMENSION.NAMES)
+    
+    for (sub in unique(subgroups))
+    {
+        dimensions = transition.mapping$elements.to.subgroups.and.dimensions[[elem.name]]$dimension[subgroups==sub]
+        if (length(dimensions)>1)
+            rv = intersect(rv, names(settings$dimension.names.by.subgroup[[sub]]))
+        else
+            rv = intersect(rv, setdiff(names(settings$dimension.names.by.subgroup[[sub]]),
+                                       dimensions))
+    }
+    
+    rv
+    
+}
