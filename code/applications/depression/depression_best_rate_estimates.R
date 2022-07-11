@@ -11,11 +11,20 @@ get.estimated.depression.incidence <- function(version='expanded_1.0',
                                                dir="/Users/Ruchita/Documents/JHU/HIV Compartmental Model/ending_hiv/code/applications/depression/",
                                                Prop.less.1.year = .71,
                                                MSM.Ratio.age1 = 2.142288557, 
-                                               MSM.Ratio.age2 = 2.108974359)
+                                               MSM.Ratio.age2 = 2.108974359,
+                                               Male.age1.prevIDU.ratio = 0.152317881,
+                                               Male.age1.activeIDU.ratio = 1.743046358,
+                                               Female.age1.prevIDU.ratio = 0.80110935,
+                                               Female.age1.activeIDU.ratio = 2.788431062,
+                                               Male.age2.prevIDU.ratio = 2.229885057,
+                                               Male.age2.activeIDU.ratio = 5.00862069,
+                                               Female.age2.prevIDU.ratio = 2.229885057,
+                                               Female.age2.activeIDU.ratio = 5.00862069,
+                                               )
 {
-    incidence_white = read.csv(paste0(dir,"White_Incidence.csv"),header = TRUE, row.names = 1) 
-    incidence_black = read.csv(paste0(dir,"Black_Incidence.csv"),header = TRUE, row.names = 1) 
-    incidence_hispanic = read.csv(paste0(dir,"Hispanic_Incidence.csv"),header = TRUE, row.names = 1)
+    incidence_white = read.csv(paste0(dir,"White_Incidence_Never_IDU.csv"),header = TRUE, row.names = 1) 
+    incidence_black = read.csv(paste0(dir,"Black_Incidence_Never_IDU.csv"),header = TRUE, row.names = 1) 
+    incidence_hispanic = read.csv(paste0(dir,"Hispanic_Incidence_Never_IDU.csv"),header = TRUE, row.names = 1)
     
     incidence_white = incidence_white[,c(1:2)]
     incidence_black = incidence_black[,c(1:2)]
@@ -23,20 +32,20 @@ get.estimated.depression.incidence <- function(version='expanded_1.0',
     
     rv = setup.depression.array.skeleton(version)
    
-    #White incidence 
+    #White incidence Never IDU
     sapply(1:length(age), function(i){
       sapply(1:length(sex), function(j){
         if(j == 1){
-          rv[i,"other",j,] = -log(1-(incdence_white[i,j]*Prop.less.1.year))
+          rv[i,"other",j,"never_IDU"] = -log(1-(incdence_white[i,j]*Prop.less.1.year))
         } else if (j == 2){
           if (i = 1){
-            rv[i,"other",j,] = -log(1-(incdence_white[i,1]*Prop.less.1.year)*MSM.Ratio.age1) 
+            rv[i,"other",j,"never_IDU"] = -log(1-(incdence_white[i,1]*Prop.less.1.year)*MSM.Ratio.age1) 
           } else{
-            rv[i,"other",j,] = -log(1-(incdence_white[i,1]*Prop.less.1.year)*MSM.Ratio.age2) 
+            rv[i,"other",j,"never_IDU"] = -log(1-(incdence_white[i,1]*Prop.less.1.year)*MSM.Ratio.age2) 
           }
           
         } else if (j == 3) {
-          rv[i,"other",j,] = -log(1-(incdence_white[i,j-1]*Prop.less.1.year))
+          rv[i,"other",j,"never_IDU"] = -log(1-(incdence_white[i,j-1]*Prop.less.1.year))
         }
         
         
@@ -44,20 +53,20 @@ get.estimated.depression.incidence <- function(version='expanded_1.0',
       
     })
     
-    #Black incidence 
+    #Black incidence Never IDU
     sapply(1:length(age), function(i){
       sapply(1:length(sex), function(j){
         if(j == 1){
-          rv[i,"black",j,] = -log(1-(incdence_black[i,j]*Prop.less.1.year))
+          rv[i,"black",j,"never_IDU"] = -log(1-(incdence_black[i,j]*Prop.less.1.year))
         } else if (j == 2){
           if (i = 1){
-            rv[i,"black",j,] = -log(1-(incdence_black[i,1]*Prop.less.1.year)*MSM.Ratio.age1) 
+            rv[i,"black",j,"never_IDU"] = -log(1-(incdence_black[i,1]*Prop.less.1.year)*MSM.Ratio.age1) 
           } else{
-            rv[i,"black",j,] = -log(1-(incdence_black[i,1]*Prop.less.1.year)*MSM.Ratio.age2) 
+            rv[i,"black",j,"never_IDU"] = -log(1-(incdence_black[i,1]*Prop.less.1.year)*MSM.Ratio.age2) 
           }
           
         } else if (j == 3) {
-          rv[i,"black",j,] = -log(1-(incdence_black[i,j-1]*Prop.less.1.year))
+          rv[i,"black",j,"never_IDU"] = -log(1-(incdence_black[i,j-1]*Prop.less.1.year))
         }
         
         
@@ -65,26 +74,94 @@ get.estimated.depression.incidence <- function(version='expanded_1.0',
       
     })
     
-    #Hispanic incidence 
+    #Hispanic incidence Never IDU
     sapply(1:length(age), function(i){
       sapply(1:length(sex), function(j){
         if(j == 1){
-          rv[i,"hispanic",j,] = -log(1-(incdence_hispanic[i,j]*Prop.less.1.year))
+          rv[i,"hispanic",j,"never_IDU"] = -log(1-(incdence_hispanic[i,j]*Prop.less.1.year))
         } else if (j == 2){
           if (i = 1){
-            rv[i,"hispanic",j,] = -log(1-(incdence_hispanic[i,1]*Prop.less.1.year)*MSM.Ratio.age1) 
+            rv[i,"hispanic",j,"never_IDU"] = -log(1-(incdence_hispanic[i,1]*Prop.less.1.year)*MSM.Ratio.age1) 
           } else{
-            rv[i,"hispanic",j,] = -log(1-(incdence_hispanic[i,1]*Prop.less.1.year)*MSM.Ratio.age2) 
+            rv[i,"hispanic",j,"never_IDU"] = -log(1-(incdence_hispanic[i,1]*Prop.less.1.year)*MSM.Ratio.age2) 
           }
           
         } else if (j == 3) {
-          rv[i,"hispanic",j,] = -log(1-(incdence_hispanic[i,j-1]*Prop.less.1.year))
+          rv[i,"hispanic",j,"never_IDU"] = -log(1-(incdence_hispanic[i,j-1]*Prop.less.1.year))
         }
         
         
       })
       
     })
+    
+    #Active/Previous IDU usage 
+    sapply(1:length(age), function(i){
+      sapply(1:length(sex), function(j){
+        if(i == 1){
+          if(j ==1){
+            rv[i,"other",j,"IDU_in_remission"] = -log(1-(incdence_white[i,1]*Prop.less.1.year)*Male.age1.prevIDU.ratio) 
+            rv[i,"black",j,"IDU_in_remission"] = -log(1-(incdence_black[i,1]*Prop.less.1.year)*Male.age1.prevIDU.ratio) 
+            rv[i,"hispanic",j,"IDU_in_remission"] = -log(1-(incdence_hispanic[i,1]*Prop.less.1.year)*Male.age1.prevIDU.ratio) 
+              
+            rv[i,"other",j,"active_IDU"] = -log(1-(incdence_black[i,1]*Prop.less.1.year)*Male.age1.activeIDU.ratio) 
+            rv[i,"black",j,"active_IDU"] = -log(1-(incdence_black[i,1]*Prop.less.1.year)*Male.age1.activeIDU.ratio) 
+            rv[i,"hispanic",j,"active_IDU"] = -log(1-(incdence_black[i,1]*Prop.less.1.year)*Male.age1.activeIDU.ratio) 
+          } else if (j == 2){
+            
+            rv[i,"other",j,"IDU_in_remission"] = -log(1-(incdence_white[i,1]*Prop.less.1.year)*Male.age1.prevIDU.ratio*MSM.Ratio.age1) 
+            rv[i,"black",j,"IDU_in_remission"] = -log(1-(incdence_black[i,1]*Prop.less.1.year)*Male.age1.prevIDU.ratio*MSM.Ratio.age1) 
+            rv[i,"hispanic",j,"IDU_in_remission"] = -log(1-(incdence_hispanic[i,1]*Prop.less.1.year)*Male.age1.prevIDU.ratio*MSM.Ratio.age1) 
+            
+            rv[i,"other",j,"active_IDU"] = -log(1-(incdence_black[i,1]*Prop.less.1.year)*Male.age1.activeIDU.ratio*MSM.Ratio.age1) 
+            rv[i,"black",j,"active_IDU"] = -log(1-(incdence_black[i,1]*Prop.less.1.year)*Male.age1.activeIDU.ratio*MSM.Ratio.age1) 
+            rv[i,"hispanic",j,"active_IDU"] = -log(1-(incdence_black[i,1]*Prop.less.1.year)*Male.age1.activeIDU.ratio*MSM.Ratio.age1) 
+          } else if ( j == 3){
+            rv[i,"other",j,"IDU_in_remission"] = -log(1-(incdence_white[i,1]*Prop.less.1.year)*Female.age1.prevIDU.ratio) 
+            rv[i,"black",j,"IDU_in_remission"] = -log(1-(incdence_black[i,1]*Prop.less.1.year)*Female.age1.prevIDU.ratio) 
+            rv[i,"hispanic",j,"IDU_in_remission"] = -log(1-(incdence_hispanic[i,1]*Prop.less.1.year)*Female.age1.prevIDU.ratio) 
+            
+            rv[i,"other",j,"active_IDU"] = -log(1-(incdence_black[i,1]*Prop.less.1.year)*Female.age1.activeIDU.ratio) 
+            rv[i,"black",j,"active_IDU"] = -log(1-(incdence_black[i,1]*Prop.less.1.year)*Female.age1.activeIDU.ratio) 
+            rv[i,"hispanic",j,"active_IDU"] = -log(1-(incdence_black[i,1]*Prop.less.1.year)*Female.age1.activeIDU.ratio) 
+          }
+          
+        }
+        else{ 
+          if(j == 1){
+            rv[i,"other",j,"IDU_in_remission"] = -log(1-(incdence_white[i,1]*Prop.less.1.year)*Male.age2.prevIDU.ratio) 
+            rv[i,"black",j,"IDU_in_remission"] = -log(1-(incdence_black[i,1]*Prop.less.1.year)*Male.age2.prevIDU.ratio) 
+            rv[i,"hispanic",j,"IDU_in_remission"] = -log(1-(incdence_hispanic[i,1]*Prop.less.1.year)*Male.age2.prevIDU.ratio) 
+            
+            rv[i,"other",j,"active_IDU"] = -log(1-(incdence_black[i,1]*Prop.less.1.year)*Male.age2.activeIDU.ratio) 
+            rv[i,"black",j,"active_IDU"] = -log(1-(incdence_black[i,1]*Prop.less.1.year)*Male.age2.activeIDU.ratio) 
+            rv[i,"hispanic",j,"active_IDU"] = -log(1-(incdence_black[i,1]*Prop.less.1.year)*Male.age2.activeIDU.ratio) 
+          } else if(j == 2){
+            rv[i,"other",j,"IDU_in_remission"] = -log(1-(incdence_white[i,1]*Prop.less.1.year)*Male.age2.prevIDU.ratio*MSM.Ratio.age2) 
+            rv[i,"black",j,"IDU_in_remission"] = -log(1-(incdence_black[i,1]*Prop.less.1.year)*Male.age2.prevIDU.ratio*MSM.Ratio.age2) 
+            rv[i,"hispanic",j,"IDU_in_remission"] = -log(1-(incdence_hispanic[i,1]*Prop.less.1.year)*Male.age2.prevIDU.ratio*MSM.Ratio.age2) 
+            
+            rv[i,"other",j,"active_IDU"] = -log(1-(incdence_black[i,1]*Prop.less.1.year)*Male.age2.activeIDU.ratio*MSM.Ratio.age2) 
+            rv[i,"black",j,"active_IDU"] = -log(1-(incdence_black[i,1]*Prop.less.1.year)*Male.age2.activeIDU.ratio*MSM.Ratio.age2) 
+            rv[i,"hispanic",j,"active_IDU"] = -log(1-(incdence_black[i,1]*Prop.less.1.year)*Male.age2.activeIDU.ratio*MSM.Ratio.age2) 
+            
+            
+          } else if ( j == 3){
+            rv[i,"other",j,"IDU_in_remission"] = -log(1-(incdence_white[i,1]*Prop.less.1.year)*Female.age2.prevIDU.ratio) 
+            rv[i,"black",j,"IDU_in_remission"] = -log(1-(incdence_black[i,1]*Prop.less.1.year)*Female.age2.prevIDU.ratio) 
+            rv[i,"hispanic",j,"IDU_in_remission"] = -log(1-(incdence_hispanic[i,1]*Prop.less.1.year)*Female.age2.prevIDU.ratio) 
+            
+            rv[i,"other",j,"active_IDU"] = -log(1-(incdence_black[i,1]*Prop.less.1.year)*Female.age2.activeIDU.ratio) 
+            rv[i,"black",j,"active_IDU"] = -log(1-(incdence_black[i,1]*Prop.less.1.year)*Female.age2.activeIDU.ratio) 
+            rv[i,"hispanic",j,"active_IDU"] = -log(1-(incdence_black[i,1]*Prop.less.1.year)*Female.age2.activeIDU.ratio) 
+          }
+          
+          
+        }
+        
+      })
+    })
+    
     return(rv)
     
   
