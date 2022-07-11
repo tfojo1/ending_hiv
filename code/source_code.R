@@ -7,6 +7,10 @@ library(jheem)
 library(bayesian.simulations)
 library(ggplot2)
 
+#-- Source Low-Level Helpers --#
+source('code/helpers/list_helpers.R')
+source('code/helpers/access_helpers.R')
+
 #-- Source Settings --#
 source('code/settings_and_files/version_manager.R')
 source('code/settings_and_files/systematic_settings.R')
@@ -38,17 +42,19 @@ load('cached/ALL.DATA.MANAGERS.Rdata')
 
 
 #-- Set-Up --#
+source('code/core_code/meta_model_structures/logit_transformations.R')
+source('code/core_code/meta_model_structures/models.R')
+
 source('code/core_code/setup/interpolating.R')
 source('code/core_code/setup/base_parameters.R')
 source('code/core_code/setup/setup_helpers.R')
-source('code/core_code/meta_model_structures/logit_transformations.R')
 source('code/core_code/setup/setup_jheem_from_components.R')
 source('code/core_code/setup/setup_jheem_components.R')
 source('code/core_code/setup/setup_components_for_locale.R')
 source('code/core_code/setup/setup_initial_components.R')
 
 #-- Calibration --#
-source('code/calibration/parameter_mappings/calibrated_parameters_113_helpers.R')
+source('code/calibration/parameter_mappings/calibrated_parameters_helpers.R')
 
 source('code/calibration/likelihoods/estimate_cdc_errors.R')
 source('code/calibration/likelihoods/likelihoods_2.R')

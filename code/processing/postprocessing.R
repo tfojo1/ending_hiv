@@ -940,7 +940,8 @@ extract.suppression <- function(sim,
         stop("Cannot keep the continuum dimension in calculating suppression")
     
     components = attr(sim, 'components')
-    if (components$settings$IS_CONTINUUM_COLLAPSED)
+    settings = get.components.settings(components)
+    if (settings$IS_CONTINUUM_COLLAPSED)
     {
         if (is.null(years))
         {
@@ -983,7 +984,7 @@ extract.suppression <- function(sim,
                 years = sim$years[-1]
         }
         
-        suppressed.states = intersect(components$settings$SUPPRESSED_STATES, continuum)
+        suppressed.states = intersect(settings$SUPPRESSED_STATES, continuum)
         if (length(suppressed.states)==0)
             stop(paste0("None of the specified continuum states (",
                         paste0("'", continuum, "'", collapse=', '),
@@ -1061,7 +1062,8 @@ extract.linkage <- function(sim,
                                        throw.error=throw.error.if.missing.years)
     
     components = attr(sim, 'components')
-    if (components$settings$IS_CONTINUUM_COLLAPSED)
+    settings = get.components.settings(components)
+    if (settings$IS_CONTINUUM_COLLAPSED)
         stop("Simulation uses a collapsed continuum - cannot extract linkage")
     
     extract.fn = function(fn.years)
@@ -1631,6 +1633,8 @@ extract.testing.rates <- function(sim,
     {
         raw.testing.rates = calculate.testing.rates(attr(sim, 'components'))
         raw.testing.rates$rates = lapply(raw.testing.rates$rates, function(r){
+            if (any(names(dim(r))=='continuum'))
+                r = single.dim.access(r, dim='continuum', dim.value='undiagnosed')
             dim.names = dimnames(r)[1:5]
             r = r[,,,,,'undiagnosed',1,1]
             dim(r) = sapply(dim.names, length)
@@ -1683,8 +1687,10 @@ extract.testing.proportions <- function(sim,
     {
         raw.testing = calculate.testing.rates(attr(sim, 'components'))
         raw.testing$rates = lapply(raw.testing$rates, function(r){
+            if (any(names(dim(r))=='continuum'))
+                r = single.dim.access(r, dim='continuum', dim.value='undiagnosed')
             dim.names = dimnames(r)[1:5]
-            r = r[,,,,,'undiagnosed',1,1]
+            r = r[,,,,,1,1]
             dim(r) = sapply(dim.names, length)
             dimnames(r) = dim.names
             1-exp(-r)

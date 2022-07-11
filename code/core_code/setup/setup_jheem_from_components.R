@@ -737,6 +737,12 @@ clear.dependent.values <- function(components,
         stop("The following are not valid parameters for DEPENDENCIES: ",
              paste0("'", dependent.on[missing.dependency], "'", collapse=', '))
     
+    # Track (if we are tracking)
+    if (!is.null(components$tracked.dependencies) && components$tracked.dependencies$track)
+        components$tracked.dependencies$dependencies = union(components$tracked.dependencies$dependencies,
+                                                             dependent.on)
+    
+    # Clear the dependendent items
     for (d in dependent.on)
     {
         #        if (any(ALL.DEPENDENT.NAMES==d))
@@ -754,6 +760,34 @@ clear.dependent.values <- function(components,
     }
     
     components
+}
+
+
+#-- Tracking Dependencies --#
+# (functions provided so that we can know what parameters/settings we are going to change
+#  before we produce a fixed components object)
+set.track.cleared.dependencies <- function(components,
+                                           track)
+{
+    if (is.null(components$tracked.dependencies))
+        components$tracked.dependencies = list()
+
+    # indicate our tracking status
+    components$tracked.dependencies$track = track
+    
+    # clear the tracked list
+    components$tracked.dependencies$dependencies = character()
+    
+    # Return
+    components
+}
+
+get.tracked.cleared.dependencies <- function(components)
+{
+    if (is.null(components$tracked.dependencies) || !components$tracked.dependencies$track)
+        stop("The components object is not currently tracking cleared dependencies")
+    
+    components$tracked.dependencies$dependencies
 }
 
 ##----------------------------------##
@@ -1491,16 +1525,39 @@ do.calculate.suppression <- function(components)
     if (get.components.version(components)=='collapsed_1.0')
     {
         #Pull background suppression proportions from logistic model
-        background.suppression = get.background.proportions(base.model = components$background.suppression$model,
-                                                            years = components$background.suppression$years,
-                                                            additional.intercepts = log(components$background.suppression$additional.intercept.ors),
-                                                            additional.slopes = log(components$background.suppression$additional.slope.ors),
-                                                            future.slope = log(components$background.suppression$future.slope.or),
-                                                            future.slope.after.year = components$background.suppression$future.slope.after.year,
-                                                            idu.applies.to.in.remission = T,
-                                                            idu.applies.to.msm.idu=T,
-                                                            msm.applies.to.msm.idu=T,
-                                                            jheem=components$jheem)
+        if (is(components$background.suppression$model, 'model') &&
+            !is.null(components$background.suppression$alphas))
+        {
+            background.values = project.from.model(model = components$background.suppression$model,
+                                                   years = components$background.suppression$years,
+                                                   alphas = components$background.suppression$alphas,
+                                                   future.slope = components$background.suppression[['future.slope']],
+                                                   future.slope.after.year = components$background.suppression$future.slope.after.year,
+                                                   dim.names = settings$dimension.names.by.subgroup$hiv.positive)
+        }
+        else
+        {
+            if (is.null(components$background.suppression$future.slope.or))
+            {
+                if (is.null(components$background.suppression[['future.slope']]))
+                    stop(paste0("Background has not been fully set up for 'suppression' (future.slope is missing)"))
+                else
+                    future.slope = components$background.suppression[['future.slope']]
+            }
+            else
+                future.slope = log(components$background.suppression$future.slope.or)
+   
+            background.suppression = get.background.proportions(base.model = components$background.suppression$model,
+                                                                years = components$background.suppression$years,
+                                                                additional.intercepts = log(components$background.suppression$additional.intercept.ors),
+                                                                additional.slopes = log(components$background.suppression$additional.slope.ors),
+                                                                future.slope = future.slope,
+                                                                future.slope.after.year = components$background.suppression$future.slope.after.year,
+                                                                idu.applies.to.in.remission = T,
+                                                                idu.applies.to.msm.idu=T,
+                                                                msm.applies.to.msm.idu=T,
+                                                                jheem=components$jheem)
+        }
         
         #Add in zero suppression
         
@@ -1866,11 +1923,11 @@ do.calculate.rates <- function(components, type,
     if (any(type==special.cases))
         stop(paste0("Calculating '", type, "' rates cannot be handled with a call to 'do.calculate.rates'. You must invoke the specific function"))
     
-    
     tr.el = get.transition.element.by.name(get.components.transition.mapping(components),
                                            name=type, allow.missing=T)
     if (is.null(tr.el))
     {
+        stop('missing transition element from transition mapping')
         background.model.type = ramp.type = return.type = 'rate'
         tr.el$required = T
     }
@@ -1881,6 +1938,8 @@ do.calculate.rates <- function(components, type,
         return.type = tr.el$return.type
         required = tr.el$required
         default.value.if.missing = tr.el$default.value
+        
+        target.dim.names = tr.el$dim.names
     }
     
     #-- PART 1: Pull out the background --#
@@ -1889,7 +1948,6 @@ do.calculate.rates <- function(components, type,
     src.name = paste0('background.', type)
     foreground.name = paste0('foreground.', type)
     sub.component = components[[src.name]]
-    
     
     if (is.null(sub.component))
     {
@@ -1900,7 +1958,7 @@ do.calculate.rates <- function(components, type,
                 stop(paste0("No background values have been set for '", type, "' in components"))
             else
             {
-                background.values = default.value.if.missing
+                background.values = list(default.value.if.missing)
                 background.years = default.year
             }
         }
@@ -1923,15 +1981,23 @@ do.calculate.rates <- function(components, type,
     {
         if (is.null(sub.component$model))
             stop(paste0("Background has not been fully set up for '", type, "' (model is missing)"))
-        if (is.null(sub.component$additional.intercept.ors) || is.null(sub.component$additional.slope.ors))
-            stop(paste0("Background has not been fully set up for '", type, "' (additional ors is missing)"))
-        if (is.null(sub.component$future.slope.or))
-            stop(paste0("Background has not been fully set up for '", type, "' (future.slope is missing)"))
         
-        #Pull background proportions from logistic model
-        if (is.null(sub.component$model$model.type) || 
-            sub.component$model$model.type=='logistic' ||
-            sub.component$model$model.type=='logistic.tail')
+        if (is(sub.component$model, 'model'))
+        {
+            background.values = project.from.model(model = sub.component$model,
+                                                   years = sub.component$years,
+                                                   alphas = sub.component$alphas,
+                                                   future.slope = sub.component[['future.slope']],
+                                                   future.slope.after.year = sub.component$future.slope.after.year,
+                                                   dim.names = tr.el$dim.names)
+        }
+        else
+        {
+            if (is.null(sub.component$additional.intercept.ors) || is.null(sub.component$additional.slope.ors))
+                stop(paste0("Background has not been fully set up for '", type, "' (additional ors is missing)"))
+            if (is.null(sub.component$future.slope.or))
+                stop(paste0("Background has not been fully set up for '", type, "' (future.slope is missing)"))
+            
             background.values = get.background.proportions(base.model = sub.component$model,
                                                            years = sub.component$years,
                                                            additional.intercepts = log(sub.component$additional.intercept.ors),
@@ -1942,11 +2008,27 @@ do.calculate.rates <- function(components, type,
                                                            idu.applies.to.msm.idu=T,
                                                            msm.applies.to.msm.idu=T,
                                                            jheem=components$jheem)
-        else
-            stop(paste0("Do not know how to actualize a model of type '", sub.component$model$model.type, "'"))
+            
+            extra.dim = setdiff(names(dimnames(background.values[[1]])), target.dim.names)
+            if (length(extra.dim)==0) # then hydrate up to our target dimensions
+                background.values = lapply(background.values, function(v){
+                    expand.population(v, target.dim.names = target.dim.names)
+                })
+            else if (length(extra.dim)==1) # need to strip out the extra dimension and then hydrate
+                background.values = lapply(background.values, function(v){
+                    expand.population(single.dim.access(v, dim=extra.dim, dim.value=1),
+                                      target.dim.names = target.dim.names)
+                })
+            else # uh-oh
+                stop(paste0("In calculating '", type, "' rates, too many surplus dimensions in legacy background: ",
+                            paste0("'", extra.dim, "'", collapse=', ')))
+        }
         
         data.type = background.model.type
-        
+        if (length(background.values[[1]])>0)
+            background.values = lapply(background.values, function(values){
+                expand.population(values, target.dim.names = target.dim.names)
+            })
         
         #-- Add in ramp up (in the past) --#
         
@@ -1995,7 +2077,7 @@ do.calculate.rates <- function(components, type,
     
 
     #-- PART 2: Fold in the foreground --#
-    
+
     rates.and.times = do.get.rates.from.background.and.foreground(background.rates = background.values,
                                                         background.times = background.years,
                                                         background.data.type = data.type,
@@ -3242,8 +3324,7 @@ do.setup.transitions <- function(components,
                                  subgroup,
                                  dimension)
 {
-#print('temporary fix on time to suppression')
-#components$time.to.suppression.on.art = components$time.to.suppression.on.art$latency.to.suppression.in.years
+  #  print(paste0("Starting setup of transitions for '", dimension, "' ('", subgroup, "')"))
     
     if (all(names(TRANSITION.MAPPING.SCHEMA)!=dimension))
         stop(paste0("Have not set up Transition Mapping Schema for dimension of '", dimension, "'"))
@@ -3258,9 +3339,10 @@ do.setup.transitions <- function(components,
                                   dimension=dimension)
       
     rate.elements = get.transition.element.names(transitions)
-
+    
     rate.components = list()
     rate.component.times = list()
+    
     for (type in rate.elements)
     {
         if (!is.rate.calculated(components, type))
@@ -3289,10 +3371,9 @@ do.setup.transitions <- function(components,
     else
         trans.skeleton = get.hiv.positive.transition.array.skeleton(components$jheem,
                                                                     transition.dimension = dimension)
-    transition.dim.names = dimnames(trans.skeleton)
+    dim.names = transition.dim.names = dimnames(trans.skeleton)
     transition.dim.names = transition.dim.names[names(transition.dim.names) != paste0(dimension, '.from') &
                                                     names(transition.dim.names) != paste0(dimension, '.to')]
-
     
     # iterate through each time
     rates = lapply(1:length(all.times), function(i){
@@ -3309,18 +3390,22 @@ do.setup.transitions <- function(components,
             })
             names(rate.components.for.time) = transition$element.names
             
-have.na = sapply(rate.components, function(rc){any(is.na(rc))})
-if (any(have.na))
-    browser()
                 
             #   resolve expressions/references
             t.rate = resolve.transition(transition, bindings=rate.components.for.time)
             
             #   plug in
-            if (dimension=='continuum')
-                rv[,,,,,transition$from,,,transition$to] = t.rate
-            else
-                stop("Have not yet implemented do.setup.transitions except for dimension=continuum")
+            mask = get.two.dim.access.indices(dim.names = dim.names,
+                                              dim1 = paste0(dimension, '.from'),
+                                              dim.value1 = transition$from,
+                                              dim2 = paste0(dimension, '.to'),
+                                              dim.value2 = transition$to)
+            rv[mask] = t.rate
+            
+#            if (dimension=='continuum')
+ #               rv[,,,,,transition$from,,,transition$to] = t.rate
+  #          else
+   #             stop("Have not yet implemented do.setup.transitions except for dimension=continuum")
         }
         
         rv
@@ -3333,6 +3418,8 @@ if (any(have.na))
     
     components[[comps.names$name]] = rates
     components[[comps.names$years.name]] = all.times
+    
+  #  print(paste0("Finished setup of transitions for '", dimension, "' ('", subgroup, "')"))
     
     components
 }
@@ -3372,16 +3459,13 @@ prepare.rate.components <- function(rate.components,
     { 
         extra.dim = setdiff(names(dimnames(rate.components)), names(target.dim.names))
         if (length(extra.dim)==0)
-            expand.population(rate.components, target.dim.names)
+            rv = rate.components
         else if (length(extra.dim)==1)
-        {
-            if (extra.dim=='continuum')
-                expand.population(rate.components[,,,,,access.if.extra.dim,,], target.dim.names)
-            else
-                stop(paste0("Have not added code to handle '", extra.dim, "' as an extra dimension"))
-        }
+            rv = single.dim.access(rate.components, extra.dim, access.if.extra.dim)
         else
             stop("Cannot handle rate.components array - too many dimensions")
+        
+        rv = expand.population(rv, target.dim.names=target.dim.names)
     }
 }
 

@@ -7,7 +7,7 @@ mcmc = assemble.mcmc.from.cache(paste0('Q:JHEEM/mcmc_runs/systematic_caches_expa
                                                               msa, '_1x25K_2022-06-07'),T)
 
 mcmc@n.iter
-simset = extract.simset(mcmc, additional.burn=600, additional.thin=6)
+simset = extract.simset(mcmc, additional.burn=625, additional.thin=10)
 simset@n.sim
 
 simplot(simset)

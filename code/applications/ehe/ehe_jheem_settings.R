@@ -48,10 +48,10 @@ VERSION.MANAGER = create.jheem.settings(
     subpopulations='all_subpopulations',
     sexes= c('heterosexual_male', 'msm', 'female'),
     risks = c('never_IDU', 'active_IDU', 'IDU_in_remission'),
-    non.hiv.subsets='all_non_hiv_subsets',
+    non.hiv.subsets='all_hiv_negative',
     continuum.of.care = c('undiagnosed', 'undiagnosed_from_prep', 'diagnosed'), # 'unsuppressed', 'suppressed'),
     cd4.strata = c('acute', 'chronic'),
-    hiv.subsets='all_hiv_subsets',
+    hiv.subsets='all_hiv_positive',
     
     first.diagnosed.continuum.states='diagnosed',
     diagnosed.continuum.states='diagnosed',
