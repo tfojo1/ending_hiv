@@ -16,10 +16,24 @@ source('code/settings_and_files/version_manager.R')
 source('code/settings_and_files/systematic_settings.R')
 source('code/settings_and_files/file_manager.R')
 
-#-- Source Data Managers --#
-load('cached/DEFAULT.LOCALE.MAPPING.Rdata')
+#-- Load cached data managers --#
+source('code/core_code/data_managers/cache_manager.R')
+load.elements.from.cache(elements.to.load = c('msa.surveillance',
+                                              'county.surveillance',
+                                              'state.surveillance',
+                                              'national.surveillance',
+                                              'ALL.DATA.MANAGERS',
+                                              'DEFAULT.LOCALE.MAPPING')
+                         )
+#load('cached/msa.surveillance.Rdata')
+#load('cached/county.surveillance.Rdata')
+#oad('cached/state.surveillance.Rdata')
+#load('cached/national.surveillance.Rdata')
+#load('cached/ALL.DATA.MANAGERS.Rdata')   
+#load('cached/DEFAULT.LOCALE.MAPPING.Rdata')
 #load('cached/SUBSTATE.TO.COUNTY.MAPPING.Rdata') # can we get rid of this? maybe
 
+#-- Source Data Managers --#
 source('code/core_code/data_managers/locale_mappings.R')
 source('code/core_code/data_managers/census_manager.R')
 source('code/core_code/data_managers/census_totals.R')
@@ -32,14 +46,6 @@ source('code/core_code/data_managers/continuum_manager_3.R')
 source('code/core_code/data_managers/hiv_surveillance_manager.R')
 
 source('code/calibration/target_msas.R')
-
-#-- Load cached data managers --#
-load('cached/msa.surveillance.Rdata')
-load('cached/county.surveillance.Rdata')
-load('cached/state.surveillance.Rdata')
-load('cached/national.surveillance.Rdata')
-load('cached/ALL.DATA.MANAGERS.Rdata')   
-
 
 #-- Set-Up --#
 source('code/core_code/meta_model_structures/logit_transformations.R')
