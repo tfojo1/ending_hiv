@@ -298,7 +298,8 @@ EXPANDED.CONTINUUM.PARAMETERS.PRIOR = join.distributions(
     age5.proportion.lost.slope.or = Lognormal.Distribution(0, 0.5*log(2)/5),
     
     # (plus a term for from suppressed or from unsuppressed) 
-    suppressed.vs.failing.proportion.lost.or = Lognormal.Distribution(0, 0.5*log(4)),
+    recently.suppressed.vs.failing.proportion.lost.or = Lognormal.Distribution(0, 0.5*log(4)),
+    durably.suppressed.vs.failing.proportion.lost.or = Lognormal.Distribution(0, 0.5*log(4)),
     naive.vs.failing.proportion.lost.or = Lognormal.Distribution(0, 0.5*log(4)),
     already.lost.vs.failing.proportion.lost.or = Lognormal.Distribution(0, 0.5*log(4)),
     

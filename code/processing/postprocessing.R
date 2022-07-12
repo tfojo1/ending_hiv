@@ -1103,7 +1103,47 @@ extract.retention <- function(sim,
                               subpopulations=NULL,
                               sexes=NULL,
                               risks=NULL,
-                              continuum=attr(sim, 'components')$settings$ENGAGED_STATES,
+                              continuum=get.sim.settings(sim)$ENGAGED_STATES,
+                              cd4=NULL,
+                              hiv.subsets=NULL,
+                              use.cdc.categorizations=F,
+                              year.anchor=c('start','mid','end')[3],
+                              throw.error.if.missing.years=T)
+{
+    settings = get.sim.settings(sim)
+    do.extract.transition.by.to.from(sim=sim,
+                                     dimension='continuum',
+                                     subgroup='hiv.positive',
+                                     to=settings$DISENGAGED_STATES,
+                                     from=settings$ENGAGED_STATES,
+                                     scale='proportion.staying',
+                                     group.by='from',
+                                     years=years,
+                                     keep.dimensions=keep.dimensions,
+                                     per.population=per.population,
+                                     ages=ages,
+                                     races=races,
+                                     subpopulations=subpopulations,
+                                     sexes=sexes,
+                                     risks=risks,
+                                     continuum=continuum,
+                                     cd4=cd4,
+                                     hiv.subsets=hiv.subsets,
+                                     use.cdc.categorizations=use.cdc.categorizations,
+                                     year.anchor=year.anchor,
+                                     throw.error.if.missing.years=throw.error.if.missing.years)
+}
+
+OLD.extract.retention <- function(sim,
+                              years=NULL,
+                              keep.dimensions='year',
+                              per.population=1,
+                              ages=NULL,
+                              races=NULL,
+                              subpopulations=NULL,
+                              sexes=NULL,
+                              risks=NULL,
+                              continuum=get.sim.settings(sim)$ENGAGED_STATES,
                               cd4=NULL,
                               hiv.subsets=NULL,
                               use.cdc.categorizations=F,
@@ -1117,10 +1157,11 @@ extract.retention <- function(sim,
                                        throw.error=throw.error.if.missing.years)
     
     components = attr(sim, 'components')
-    if (components$settings$IS_CONTINUUM_COLLAPSED)
+    settings = get.components.settings(components)
+    if (settings$IS_CONTINUUM_COLLAPSED)
         stop("Simulation uses a collapsed continuum - cannot extract retention")
     
-    invalid.states = setdiff(continuum, components$settings$ENGAGED_STATES)
+    invalid.states = setdiff(continuum, settings$ENGAGED_STATES)
     if (length(invalid.states)>0)
         stop(paste0("The following are not engaged states in the continuum: ",
                     paste0(invalid.states, collapse=', ')))
@@ -1236,8 +1277,8 @@ extract.gain.of.suppression <- function(sim,
                               subpopulations=NULL,
                               sexes=NULL,
                               risks=NULL,
-                              continuum=setdiff(attr(sim, 'components')$settings$ENGAGED_STATES,
-                                                attr(sim, 'components')$settings$SUPPRESSED_STATES),
+                              continuum=setdiff(get.sim.settings(sim)$ENGAGED_STATES,
+                                                get.sim.settings(sim)$SUPPRESSED_STATES),
                               cd4=NULL,
                               hiv.subsets=NULL,
                               use.cdc.categorizations=F,
@@ -1251,11 +1292,12 @@ extract.gain.of.suppression <- function(sim,
                                        throw.error=throw.error.if.missing.years)
     
     components = attr(sim, 'components')
-    if (components$settings$IS_CONTINUUM_COLLAPSED)
+    settings = get.components.settings(components)
+    if (settings$IS_CONTINUUM_COLLAPSED)
         stop("Simulation uses a collapsed continuum - cannot extract retention")
     
-    allowed.states = setdiff(attr(sim, 'components')$settings$ENGAGED_STATES,
-                             attr(sim, 'components')$settings$SUPPRESSED_STATES)
+    allowed.states = setdiff(settings$ENGAGED_STATES,
+                             settings$SUPPRESSED_STATES)
     invalid.states = setdiff(continuum, allowed.states)
     if (length(invalid.states)>0)
         stop(paste0("The following are not engaged/unsuppressed states in the continuum: ",
@@ -1371,10 +1413,11 @@ do.extract.engagement <- function(sim,
         stop("Cannot keep the continuum dimension in calculating suppression")
     
     components = attr(sim, 'components')
-    if (components$settings$IS_CONTINUUM_COLLAPSED)
+    settings = get.components.settings(components)
+    if (settings$IS_CONTINUUM_COLLAPSED)
         stop("Simulation uses a collapsed continuum - cannot extract linkage")
     
-    engaged.states = intersect(components$settings$ENGAGED_STATES, continuum)
+    engaged.states = intersect(settings$ENGAGED_STATES, continuum)
     if (length(engaged.states)==0)
         stop(paste0("None of the specified continuum states (",
                     paste0("'", continuum, "'", collapse=', '),
@@ -1610,6 +1653,48 @@ extract.testing.period <- function(sim,
                               year.anchor = year.anchor)
 }
 
+
+new.extract.testing.rates <- function(sim,
+                                      years=NULL,
+                                      keep.dimensions='year',
+                                      per.population=1,
+                                      ages=NULL,
+                                      races=NULL,
+                                      subpopulations=NULL,
+                                      sexes=NULL,
+                                      risks=NULL,
+                                      continuum=NULL,
+                                      cd4=NULL,
+                                      hiv.subsets=NULL,
+                                      use.cdc.categorizations=F,
+                                      year.anchor=c('start','mid','end')[3],
+                                      throw.error.if.missing.years=T)
+{
+    settings = get.sim.settings(sim)
+    do.extract.transition.by.to.from(sim=sim,
+                                     dimension='continuum',
+                                     subgroup='hiv.positive',
+                                     to=settings$FIRST_DIAGNOSED_STATE,
+                                     from=settings$UNDIAGNOSED_NO_PREP,
+                                     scale='rate',
+                                     group.by='from',
+                                     years=years,
+                                     keep.dimensions=keep.dimensions,
+                                     per.population=per.population,
+                                     ages=ages,
+                                     races=races,
+                                     subpopulations=subpopulations,
+                                     sexes=sexes,
+                                     risks=risks,
+                                     continuum=continuum,
+                                     cd4=cd4,
+                                     hiv.subsets=hiv.subsets,
+                                     use.cdc.categorizations=use.cdc.categorizations,
+                                     year.anchor=year.anchor,
+                                     throw.error.if.missing.years=throw.error.if.missing.years)
+}
+
+
 extract.testing.rates <- function(sim,
                                   years=NULL,
                                   keep.dimensions='year',
@@ -1636,7 +1721,7 @@ extract.testing.rates <- function(sim,
             if (any(names(dim(r))=='continuum'))
                 r = single.dim.access(r, dim='continuum', dim.value='undiagnosed')
             dim.names = dimnames(r)[1:5]
-            r = r[,,,,,'undiagnosed',1,1]
+            r = r[,,,,,1,1]
             dim(r) = sapply(dim.names, length)
             dimnames(r) = dim.names
             r
@@ -1807,7 +1892,6 @@ do.extract.rates <- function(raw.rates,
         length(setdiff(dimnames(prevalence)[[d]], dimnames(stratified.arr)[[d]]))>0
     })
     
-   
     if (sum(not.subset.dimension.mask)==1 && 
         names(dimnames(prevalence))[not.subset.dimension.mask]=='cd4' &&
         length(dim(prevalence)['cd4'])==1) #a faster hack for the common use
@@ -1947,6 +2031,262 @@ do.extract.rates <- function(raw.rates,
         
         rv
     }
+}
+
+
+##-- SUB-FUNCTIONS THAT GENERICALLY ACCESS TRANSITIONS BASED ON MAPPINGS --##
+
+do.extract.transition.by.label <- function(sim,
+                                           label,
+                                           scale,
+                                           aggregate.on.scale=scale,
+                                           group.by=c('from','to')[1],
+                                           years=NULL,
+                                           keep.dimensions='year',
+                                           per.population=1,
+                                           ages=NULL,
+                                           races=NULL,
+                                           subpopulations=NULL,
+                                           sexes=NULL,
+                                           risks=NULL,
+                                           continuum=NULL,
+                                           cd4=NULL,
+                                           hiv.subsets=NULL,
+                                           use.cdc.categorizations=F,
+                                           year.anchor=c('start','mid','end')[3],
+                                           throw.error.if.missing.years=T)
+{
+    # Pull the transitions for the label
+    transition.mapping = get.sim.settings(sim)$transition.mapping
+    transitions = get.transitions.by.labels(transition.mapping, labels=label)
+    if (length(transitions)==0)
+        stop(paste0("No transitions have been registered under the label '",
+                    label, "'. Unable to extract transition."))
+    
+    do.extract.transition.from.transition.list(sim=sim,
+                                               transitions=transitions,
+                                               scale=scale,
+                                               aggregate.on.scale=aggregate.on.scale,
+                                               group.by=group.by,
+                                               years=years,
+                                               keep.dimensions=keep.dimensions,
+                                               per.population=per.population,
+                                               ages=ages,
+                                               races=races,
+                                               subpopulations=subpopulations,
+                                               sexes=sexes,
+                                               risks=risks,
+                                               continuum=continuum,
+                                               cd4=cd4,
+                                               hiv.subsets=hiv.subsets,
+                                               use.cdc.categorizations=use.cdc.categorizations,
+                                               year.anchor=year.anchor,
+                                               throw.error.if.missing.years=throw.error.if.missing.years
+    )
+}
+
+do.extract.transition.by.to.from <- function(sim,
+                                             dimension,
+                                             subgroup,
+                                             to,
+                                             from,
+                                             scale,
+                                             aggregate.on.scale=scale,
+                                             group.by=c('from','to')[1],
+                                             years=NULL,
+                                             keep.dimensions='year',
+                                             per.population=1,
+                                             ages=NULL,
+                                             races=NULL,
+                                             subpopulations=NULL,
+                                             sexes=NULL,
+                                             risks=NULL,
+                                             continuum=NULL,
+                                             cd4=NULL,
+                                             hiv.subsets=NULL,
+                                             use.cdc.categorizations=F,
+                                             year.anchor=c('start','mid','end')[3],
+                                             throw.error.if.missing.years=T)
+{
+    # Pull transitions by to-from
+    transition.mapping = get.sim.settings(sim)$transition.mapping
+    transitions = get.transitions.by.to.from(transition.mapping,
+                                             dimension=dimension,
+                                             subgroup=subgroup,
+                                             to=to,
+                                             from=from)
+    
+    if (length(transitions)==0)
+        stop(paste0("No ", subgroup, " transitions have been registered from <",
+                    paste0("'", from, "'", collapse=', '), 
+                    "> to <",
+                    paste0("'", to, "'", collapse=', '), 
+                    " in the '", dimension,
+                    "' dimension. Unable to extract transition."))
+        
+    do.extract.transition.from.transition.list(sim=sim,
+                                               transitions=transitions,
+                                               scale=scale,
+                                               aggregate.on.scale=aggregate.on.scale,
+                                               group.by=group.by,
+                                               years=years,
+                                               keep.dimensions=keep.dimensions,
+                                               per.population=per.population,
+                                               ages=ages,
+                                               races=races,
+                                               subpopulations=subpopulations,
+                                               sexes=sexes,
+                                               risks=risks,
+                                               continuum=continuum,
+                                               cd4=cd4,
+                                               hiv.subsets=hiv.subsets,
+                                               use.cdc.categorizations=use.cdc.categorizations,
+                                               year.anchor=year.anchor,
+                                               throw.error.if.missing.years=throw.error.if.missing.years
+    )
+}
+
+
+do.extract.transition.from.transition.list <- function(sim,
+                                                       transitions,
+                                                       scale,
+                                                       aggregate.on.scale=scale,
+                                                       group.by=c('from','to')[1],
+                                                       years=NULL,
+                                                       keep.dimensions='year',
+                                                       per.population=1,
+                                                       ages=NULL,
+                                                       races=NULL,
+                                                       subpopulations=NULL,
+                                                       sexes=NULL,
+                                                       risks=NULL,
+                                                       continuum=get.sim.settings(sim)$ENGAGED_STATES,
+                                                       cd4=NULL,
+                                                       hiv.subsets=NULL,
+                                                       use.cdc.categorizations=F,
+                                                       year.anchor=c('start','mid','end')[3],
+                                                       throw.error.if.missing.years=T)
+{
+    # Check years argument
+    years = check.postprocessing.years(sim,
+                                       data.type='generic transition',
+                                       years=years,
+                                       year.anchor=year.anchor,
+                                       throw.error=throw.error.if.missing.years)
+    
+    # Check that we are only looking at one dimension
+    transition.dimension = unique(sapply(transitions, function(tr){tr$dimension}))
+    if (length(transition.dimension)>1)
+        stop(paste0("The label '", label, "' applies to transitions in more than one dimension (",
+                    paste0("'", transition.dimension, "'", collapse=', '), 
+                    "). Cannot extract transition across multiple dimensions"))
+    
+    # For now, only allow rates for a single subgroup (otherwise its going to get too tricky)
+    subgroups = unique(sapply(transitions, function(tr){tr$subgroup}))
+    if (length(subgroups)>1)
+        stop("Unable to extract transition for '", label, 
+             "' - for now, we can only extract transitions that span one subgroup")
+    
+    # A little prep work
+    
+    from.values = sapply(transitions, function(tr){tr$from})
+    to.values = sapply(transitions, function(tr){tr$to})
+    
+    
+    # check dimensions
+    dim.values = list(
+        ages=ages,
+        races=races,
+        subpopulations=subpopulations,
+        sexes=sexes,
+        risks=risks,
+        continuum=continuum,
+        cd4=cd4,
+        hiv.subsets=hiv.subsets
+    )
+    
+    if (group.by=='to')
+        valid.dim.values = unique(to.values)
+    else
+        valid.dim.values = unique(from.values)
+    
+    if (is.null(dim.values[[transition.dimension]]))
+        dim.values[[transition.dimension]] = valid.dim.values
+    else if (length(setdiff(dim.values[[transition.dimension]], valid.dim.values))>0)
+        stop(paste0("Invalid ", transition.dimension,
+                    " value(s) for this transition: ",
+                    paste0("'", setdiff(dim.values[[transition.dimension]], valid.dim.values), "'", collapse=', ')))
+   
+    extract.fn = function(fn.years)
+    {
+        # Pull the corresponding rates and times
+        # This presupposes only one subgroup
+        components = get.sim.components(sim)
+        comps.names = get.transition.component.names(transition.dimension, subgroup=subgroups)
+        if (is.null(components[[comps.names$name]]))
+            components = do.setup.transitions(components, subgroup=subgroups, dimension=transition.dimension)
+        
+        full.values = components[[comps.names$name]]
+        full.years = components[[comps.names$years.name]]
+        
+        if (length(setdiff(fn.years, full.years))==0) # we can do a quick subset and save ourselves some calculations
+        {
+            indices = sapply(fn.years, function(y){
+                (1:length(full.years))[full.years==y]
+            })
+            full.values = full.values[indices]
+        }
+        else
+            full.values = interpolate.parameters(values=full.values,
+                                                 value.times = full.years,
+                                                 desired.times = fn.years)
+     
+        # Pare down rates
+        full.values = lapply(full.values, function(vv){
+            pairwise.access.transitions(arr=vv,
+                                        dimension=transition.dimension,
+                                        from.values=from.values,
+                                        to.values=to.values,
+                                        allow.unoptimized=F,
+                                        group.by=group.by)
+        })
+        
+        
+        # Convert to desired scale for aggregating
+        full.values = convert.transition.element.type(full.values,
+                                                      convert.from.type='rate',
+                                                      convert.to.type=aggregate.on.scale)
+        
+        raw.rates = list(
+            times = fn.years,
+            rates = full.values
+        )
+        
+        
+        # do extract    
+        do.extract.rates(raw.rates = raw.rates,
+                         sim=sim,
+                         years=fn.years,
+                         population.years.offset = -1,
+                         keep.dimensions=keep.dimensions,
+                         per.population=per.population,
+                         ages=dim.values$ages,
+                         races=dim.values$races,
+                         subpopulations=dim.values$subpopulations,
+                         sexes=dim.values$sexes,
+                         risks=dim.values$risks,
+                         continuum=dim.values$continuum,
+                         cd4=dim.values$cd4,
+                         hiv.subsets=dim.values$hiv.subsets,
+                         use.cdc.categorizations=use.cdc.categorizations,
+                         include.hiv.negative = subgroups=='hiv.negative')
+    }    
+    
+    do.extract.for.year.anchor(years=years,
+                               year.anchor=year.anchor,
+                               raw.year.is.start=T,
+                               extract.fn=extract.fn,
+                               keep.dimensions=keep.dimensions)
 }
 
 ##-------------##

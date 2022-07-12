@@ -113,7 +113,6 @@ run.simulation = create.run.simulation.function(attr(simset@simulations[[1]], 'l
                                                 catch.errors = F
 )
 sim = run.simulation(params)
-c2 = attr(sim, 'components')
 source('code/processing/visualization/sim_plots.R')
 simplot(sim, simset@simulations[[1]])
 simplot(sim, simset@simulations[[1]], data.types = 'suppression')

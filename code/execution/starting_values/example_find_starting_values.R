@@ -2,7 +2,7 @@
 source('code/source_code.R')
 source('code/execution/starting_values/systematic_find_starting_values.R')
 
-test.fn = create.test.starting.values.function(location=LA.MSA, version='expanded_1.0')
+test.fn = create.test.starting.values.function(location=ATLANTA.MSA, version='expanded_1.0')
 
 # Original values 
 test = test.fn(lost.or.mult = 1, reengagement.or.mult=1, lost.or.slope.mult = 1)

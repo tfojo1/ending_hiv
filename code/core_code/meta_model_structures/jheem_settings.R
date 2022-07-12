@@ -150,6 +150,7 @@ create.jheem.settings <- function(version,
               UNDIAGNOSED_NO_PREP = undiagnosed.no.prep.continuum.states,
               SUPPRESSED_STATES = suppressed.continuum.states,
               ENGAGED_STATES = engaged.continuum.states,
+              DISENGAGED_STATES = setdiff(continuum.of.care, engaged.continuum.states),
               
               ACUTE_STATES = acute.cd4.strata,
               CHRONIC_STATES = chronic.cd4.strata,

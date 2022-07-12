@@ -96,13 +96,6 @@ get.components.transition.mapping <- function(components, version.manager=VERSIO
     transition.mapping
 }
 
-get.sim.settings <- function(sim)
-{
-    if (!is(sim, 'jheem.results'))
-        stop("'sim' must be an object of class 'jheem.results'")
-    
-    get.components.s
-}
 
 ##----------------------------------------------------##
 ##--              MAJOR CONTROL SETTINGS            --##

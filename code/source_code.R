@@ -44,6 +44,7 @@ load('cached/ALL.DATA.MANAGERS.Rdata')
 #-- Set-Up --#
 source('code/core_code/meta_model_structures/logit_transformations.R')
 source('code/core_code/meta_model_structures/models.R')
+source('code/core_code/meta_model_structures/jheem_sim_interface.R')
 
 source('code/core_code/setup/interpolating.R')
 source('code/core_code/setup/base_parameters.R')

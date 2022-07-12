@@ -231,7 +231,7 @@ set.alphas.from.parameters <- function(components,
                                        exclude.from.check=character())
 {
     if (length(sex.risk.multiplier)!=1 || is.na(sex.risk.multiplier))
-        stop("Sex risk multiplier must a single value that is not NA")
+        stop("sex.risk.multiplier must be a single value that is not NA")
     
     #-- Set up parameter names --#
     

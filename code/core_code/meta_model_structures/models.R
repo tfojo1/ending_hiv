@@ -293,7 +293,7 @@ add.alphas.to.array <- function(arr,
         prod(dims.arr[1:d.arr]) / dims.arr[d.arr]
     })
     
-    if (is.null(alphas))
+    if (is.null(alphas) || length(alphas)==0)
     {
         rv = sapply(1:n, function(i){
             indices.for.arr = floor((i-1)/n.before.target) %% dims.target + 1

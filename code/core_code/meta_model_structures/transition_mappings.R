@@ -531,6 +531,60 @@ get.transitions <- function(transition.mapping,
     rv
 }
 
+get.transitions.by.labels <- function(transition.mapping,
+                                     labels)
+{
+    if (!is(transition.mapping, 'transition.mapping'))
+        stop("transition.mapping must be an object of class 'transition.mapping'")
+    
+    rv = list()
+    {
+        for (subgroup in names(transition.mapping$by.subgroup))
+        {
+            for (dim in names(transition.mapping$by.subgroup[[subgroup]]))
+            {
+                mask = sapply(transition.mapping$by.subgroup[[subgroup]][[dim]]$transitions, function(tr){
+                    any(tr$label == labels)
+                })
+                
+                rv = c(rv, transition.mapping$by.subgroup[[subgroup]][[dim]]$transitions[mask])
+            }
+        }
+    }
+    
+    rv
+}
+
+get.transitions.by.to.from <- function(transition.mapping,
+                                       dimension,
+                                       subgroup,
+                                       to,
+                                       from)
+{
+    if (!is(transition.mapping, 'transition.mapping'))
+        stop("transition.mapping must be an object of class 'transition.mapping'")
+    
+    
+    if (!is.character(subgroup) || length(subgroup)!=1 || is.na(subgroup))
+        stop("subgroup must be a non.na, single character value")
+    
+    if (!is.character(dimension) || length(dimension)!=1 || is.na(dimension))
+        stop("dimension must be a non.na character scalar")
+    
+    if (all(dimension != names(TRANSITION.MAPPING.SCHEMA)))
+        stop(paste0("Invalid dimension ('", dimension, "') - must be one of: ",
+                    paste0("'", names(TRANSITION.MAPPING.SCHEMA), "'", collapse=', ')))
+    
+    if (all(subgroup != TRANSITION.MAPPING.SCHEMA[[dimension]]$subgroups))
+        stop(paste0("'", subgroup, "' is not a valid subgroup for transitions in the '", dimension, "' dimension"))
+    
+    mask = sapply(transition.mapping$by.subgroup[[subgroup]][[dimension]]$transitions, function(tr){
+        any(tr$from == from) && any(tr$to==to)
+    })
+    
+    transition.mapping$by.subgroup[[subgroup]][[dimension]]$transitions[mask]
+}
+
 register.transition.element <- function(transition.mapping,
                                         name,
                                         type,
@@ -719,6 +773,8 @@ get.transition.element.names <- function(transitions)
     else
         transitions$element.names
 }
+
+
 
 ##----------------------------##
 ##-- CHECK AGAINST SETTINGS --##

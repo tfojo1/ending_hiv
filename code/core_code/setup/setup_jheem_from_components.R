@@ -3414,7 +3414,7 @@ do.setup.transitions <- function(components,
     
     # package up and return the updated components
     
-    comps.names = get.transition.component.names(dimension,)
+    comps.names = get.transition.component.names(dimension, subgroup=subgroup)
     
     components[[comps.names$name]] = rates
     components[[comps.names$years.name]] = all.times
@@ -3434,6 +3434,9 @@ get.transition.component.names <- function(dimension,
     
     if (length(TRANSITION.MAPPING.SCHEMA[[dimension]]$subgroups)>1)
     {
+        if (length(subgroup)>1)
+            stop("'subgroup' must be a single value")
+        
         rv$name = paste0(dimension, '.transitions.', subgroup)
         rv$years.name = paste0(rv$name, '.years')
     }
