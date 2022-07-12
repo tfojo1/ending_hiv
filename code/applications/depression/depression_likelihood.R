@@ -1,15 +1,18 @@
 
 
 # return a function that takes one argument - sim - and returns the log-likelihood
+library(emdbook)
+
 make.depression.likelihood <- function(location,
                                        
                                        # years
-                                       total.prevalence.years,
-                                       prevalence.ratio.years,
-                                       treatment.proportion.years,
+                                       total.prevalence.years =3,
+                                       prevalence.ratio.years = 3,
+                                       treatment.proportion.years =3,
                                        
                                        # correlation
-                                       total.prevalence.error.correlation=0.5,
+                                       total.prevalence.error.correlation.age=0.5,
+                                       total.prevalence.error.correlation.time=0.5,
                                        prevalence.ratio.error.correlation=0.8,
                                        treatment.proportion.error.correlation=0.8,
                                        
@@ -24,11 +27,11 @@ make.depression.likelihood <- function(location,
 {
     
 
-    obs.prevalence.age1 = rep(.05, length(total.prevalence.years))
-    obs.prevalence.age2 = rep(.03, length(total.prevalence.years))
+    obs.prevalence.age1 = rep(.05,total.prevalence.years)
+    obs.prevalence.age2 = rep(.03,total.prevalence.years)
     
-    log.sd.prevalence.age1 = rep(.01, length(total.prevalence.years))
-    log.sd.prevalence.age2 = rep(.01, length(total.prevalence.years))
+    log.sd.prevalence.age1 = rep(.01, total.prevalence.years)
+    log.sd.prevalence.age2 = rep(.01, total.prevalence.years)
     
     
     function(sim, log=T)
@@ -59,11 +62,19 @@ make.depression.likelihood <- function(location,
         #Correlation Matrices 
   
         #Create new correaltion matrix to consolidate age 
-        cor_obs_total_prevalence = matrix(total.prevalence.error.correlation, nrow = N_total_prevalence , ncol = N_total_prevalence)
-        for(a in 1:N_total_prevalence){
-          cor_obs_total_prevealence[a,N_total_prevalence-a] = total.prevalence.error.correlation*total.prevalence.error.correlation
-        }
-        diag(cor_obs_total_prevalence) = 1
+        cor_obs_total_prevalence.age = matrix(total.prevalence.error.correlation.age1, nrow = N_total_prevalence, ncol = N_total_prevalence)
+        diag(cor_obs_total_prevalence.age) = 1
+        
+        cor_obs_total_prevalence.time = matrix(total.prevalence.error.correlation.time, nrow = N_total_prevalence, ncol = N_total_prevalence)
+        diag(cor_obs_total_prevalence.time) = 1
+        
+        cor_obs_total_combined = matrix(total.prevalence.error.correlation.age1*total.prevalence.error.correlation.age2, nrow = N_total_prevalence,ncol = N_total_prevalence )
+        diag(cor_obs_total_combined) = 1
+        
+        cor_obs_total_combined.1 = cbind(cor_obs_total_prevalence.age1, cor_obs_total_combined)
+        cor_obs_total_combined.2 = cbind(cor_obs_total_combined,cor_obs_total_prevalence.age2)
+        
+        cor_obs_total_prevalence = rbind(cor_obs_total_combined.1,cor_obs_total_combined.2 )
         
         cor_obs_prevalence_ratio = matrix(prevalence.ratio.error.correlation, nrow = N_prevalence_ratio , ncol = N_prevalence_ratio)
         diag(cor_obs_prevalence_ratio) = 1
@@ -74,7 +85,7 @@ make.depression.likelihood <- function(location,
         
         sd.obs_total_prevalence = c(log.sd.prevalence.age1,log.sd.prevalence.age2)
         sd.obs_prevalence_ratio = rep(prevalence.ratio.log.sd, length(prevalence.ratio.years))
-        sd.obs_treatment_proportion = rep(treatment.proportion.sd, length(treatment.proportion.years))
+        sd.obs_treatment_proportion = rep(treatment.proportion.log.sd, length(treatment.proportion.years))
         
         #Use instead for sd 
         S_obs_total_prevalence = (sd.obs_total_prevalence) %*% t(sd.obs_total_prevalence) * cor_obs_total_prevalence
@@ -90,17 +101,20 @@ make.depression.likelihood <- function(location,
         } else{
           mult.lik.prevalence.general = dmvnorm(log(obs.prevalence), mean = log(sim.prevalence), S_obs_total_prevalence)*(1/prod(obs.prevalence)) 
           mult.lik.prevalence.ratio = dmvnorm(log(prevalence.ratio), mean = log(sim.prevalence.hiv.total/sim.prevalence.general.total), S_obs_prevalence_ratio)*(1/prod(prevalence.ratio)) 
-          mult.lik.treatment.proportion = dmvnorm(log(treatment.proportion), mean = log(sim.treated.prevalence.hiv.total/sim.prevalence.hiv.total), S_obs_treatment_proportion)*(1/prod(treatment.proportion)) 
           
         }
        
         
         # Put them together
-        if (log)
-            lik.prevalence.general.age1 + lik.prevalence.general.age2 + lik.prevalence.ratio + lik.treatment.proportion
-            mult.lik.prevalence.general + mult.lik.prevalence.ratio + mult.lik.treatment.proportion
-        else
-            lik.prevalence.general.age1 * lik.prevalence.general.age2 * lik.prevalence.ratio * lik.treatment.proportion
-            mult.lik.prevalence.general*mult.lik.prevalence.ratio*mult.lik.treatment.proportion
+        if (log) {
+          lik.prevalence.general.age1 + lik.prevalence.general.age2 + lik.prevalence.ratio + lik.treatment.proportion
+          mult.lik.prevalence.general + mult.lik.prevalence.ratio + mult.lik.treatment.proportion
+        }
+            
+        else{
+          lik.prevalence.general.age1 * lik.prevalence.general.age2 * lik.prevalence.ratio * lik.treatment.proportion
+          mult.lik.prevalence.general*mult.lik.prevalence.ratio*mult.lik.treatment.proportion
+        }
+            
     }
 }
