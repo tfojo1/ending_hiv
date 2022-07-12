@@ -492,6 +492,7 @@ read.idu.manager <- function(dir='../data2/IDU/NSDUH_2016',
     if (verbose)
         print('Reading in Substate Heroin Use Prevalences...')
 
+    # if this is breaking, it's because we changed to use the locale mappings object
     heroin.all.ages = read.csv(paste0(dir, '/substate_heroin_all_ages.csv'), stringsAsFactors = F)
     heroin.all.ages$substate.code = substate.region.code(region=heroin.all.ages$Substate.Region,
                                                          state=heroin.all.ages$State)
@@ -898,7 +899,8 @@ get.idu.availability.13.24 <- function(dir='../data2/IDU', years=2015:2018)
 ##------------------------------------------##
 
 #Set up the mapping
-if (!exists('SUBSTATE.TO.COUNTY.MAPPING'))
+#if (!exists('SUBSTATE.TO.COUNTY.MAPPING'))
+if (1==2) #DEPRECATED - now in locale mappings
 {
 print('Reading in Substate-Region-to-County Mapping')
 keep.cols = c('sbst16n','sbst16','sbsta16n', 'sbstag16', 'county','state')
@@ -920,6 +922,9 @@ SUBSTATE.TO.COUNTY.MAPPING$substate.code = combined.fips(SUBSTATE.TO.COUNTY.MAPP
 
 counties.for.substate.region <- function(substate.codes)
 {
+    return (counties.for.nsduh.substate.regions(region.codes = substate.codes))
+    
+    # DEPRECATED
     substate.codes = as.character(substate.codes)
     unique(unlist(lapply(substate.codes, function(code){
         mask = code == SUBSTATE.TO.COUNTY.MAPPING$substate.code
@@ -932,6 +937,9 @@ counties.for.substate.region <- function(substate.codes)
 
 county.to.substate.codes <- function(combined.fips)
 {
+    return (ndsuh.substate.regions.for.counties(county.fips = combined.fips))
+    
+    # DEPRECATED
     combined.fips = format.combined.fips(combined.fips)
     unique(unlist(lapply(combined.fips, function(fips){
         mask = fips == SUBSTATE.TO.COUNTY.MAPPING$combined.fips
@@ -945,6 +953,10 @@ county.to.substate.codes <- function(combined.fips)
 #region can be either the name or the numeric code
 substate.region.code <- function(region, state)
 {
+    state = convert.to.state.abbreviation(state)
+    return (state.and.region.name.to.nsduh.region.code(states=state, region.names=region))
+    
+    # DEPRECATED
     state = convert.to.state.abbreviation(state)
 
     match.region.name = class(region)=='character'
