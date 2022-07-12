@@ -1947,36 +1947,36 @@ do.set.alphas.for.category <- function(components,
     components
 }
 
-set.static.value <- function(components,
-                             type,
-                             value)
+set.static.parameter <- function(components,
+                             parameter.name,
+                             parameter.value)
 {
-    transition.element = get.transition.element.by.name(get.components.transition.mapping(components), name=type)
+    transition.element = get.transition.element.by.name(get.components.transition.mapping(components), name=parameter.name)
     if (is.null(transition.element))
-        stop("No transition element for '", type, "' has been registered with the transition.manager")
+        stop("No transition element for '", parameter.name, "' has been registered with the transition.manager")
     
     # check the dimensions
-    if (is.null(dim(value)))
+    if (is.null(dim(parameter.value)))
     {
-        if (length(value) != 1 || !is.numeric(value) || is.na(value))
+        if (length(parameter.value) != 1 || !parameter.value(value) || is.na(value))
             stop(paste0("The static value - given for '",
-                        type, "' must either be an array or a scalar, numeric, non-NA value"))
+                        parameter.name, "' must either be an array or a scalar, numeric, non-NA value"))
     }
-    else if (!named.lists.equal(dimnames(value), transition.element$dim.names))
+    else if (!named.lists.equal(dimnames(parameter.value), transition.element$dim.names))
     {
-        if (!is.named.list.subset(dimnames(value),
+        if (!is.named.list.subset(dimnames(parameter.value),
                                    transition.element$dim.names))
-            stop(paste0("The dimensions for the static value for '", type,
+            stop(paste0("The dimensions for the static value for '", parameter.name,
                         "' are not a subset of the expected dimensions"))
         
-        value = expand.population(value, target.dim.names = transition.element$dim.names)
+        parameter.value = expand.population(parameter.value, target.dim.names = transition.element$dim.names)
     }
     
     # set it
-    components[[type]] = value
+    components[[parameter.name]] = parameter.value
     
     # clear dependencies and return
-    components = clear.dependent.values(components, type)
+    components = clear.dependent.values(components, parameter.name)
     components
 }
 

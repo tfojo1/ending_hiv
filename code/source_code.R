@@ -20,7 +20,6 @@ source('code/settings_and_files/file_manager.R')
 load('cached/DEFAULT.LOCALE.MAPPING.Rdata')
 #load('cached/SUBSTATE.TO.COUNTY.MAPPING.Rdata') # can we get rid of this? maybe
 
-
 source('code/core_code/data_managers/locale_mappings.R')
 source('code/core_code/data_managers/census_manager.R')
 source('code/core_code/data_managers/census_totals.R')
@@ -74,7 +73,6 @@ source('code/calibration/parameter_mappings/calibrated_parameters_118.R')
 # Expanded Continuum
 source('code/applications/expanded_continuum/expanded_continuum_jheem_settings.R')
 source('code/calibration/parameter_mappings/calibrated_parameters_expanded_2.R')
-
 
 #-- Systematic --#
 source('code/processing//postprocessing.R')
