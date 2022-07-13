@@ -12,33 +12,34 @@ get.estimated.depression.incidence <- function(version='expanded_1.0',
                                                Prop.less.1.year = .71,
                                                MSM.Ratio.age1 = 2.142288557, 
                                                MSM.Ratio.age2 = 2.108974359,
-                                               Male.age1.prevIDU.ratio = 0.152317881,
-                                               Male.age1.activeIDU.ratio = 1.743046358,
-                                               Female.age1.prevIDU.ratio = 0.80110935,
-                                               Female.age1.activeIDU.ratio = 2.788431062,
-                                               Male.age2.prevIDU.ratio = 2.229885057,
-                                               Male.age2.activeIDU.ratio = 5.00862069,
-                                               Female.age2.prevIDU.ratio = 2.229885057,
-                                               Female.age2.activeIDU.ratio = 5.00862069,
+                                               Male.age1.prevIDU.ratio = 3.886486,
+                                               Male.age1.activeIDU.ratio = 7.218919,
+                                               Female.age1.prevIDU.ratio =  1.857143,
+                                               Female.age1.activeIDU.ratio = 3.906475,
+                                               Male.age2.prevIDU.ratio = 4.158218,
+                                               Male.age2.activeIDU.ratio = 6.9170511,
+                                               Female.age2.prevIDU.ratio = 4.158218,
+                                               Female.age2.activeIDU.ratio = 6.9170511
                                                )
 {
     incidence_white = read.csv(paste0(dir,"White_Incidence_Never_IDU.csv"),header = TRUE, row.names = 1) 
     incidence_black = read.csv(paste0(dir,"Black_Incidence_Never_IDU.csv"),header = TRUE, row.names = 1) 
     incidence_hispanic = read.csv(paste0(dir,"Hispanic_Incidence_Never_IDU.csv"),header = TRUE, row.names = 1)
     
-    incidence_white = incidence_white[,c(1:2)]
+    incidence_white = incidence_white[,c(1:2)] 
     incidence_black = incidence_black[,c(1:2)]
     incidence_hispanic = incidence_hispanic[,c(1:2)]
     
     rv = setup.depression.array.skeleton(version)
+    age = 
    
     #White incidence Never IDU
-    sapply(1:length(age), function(i){
-      sapply(1:length(sex), function(j){
+    sapply(1:length(dim(rv)["age"]), function(i){
+      sapply(1:length(dim(rv)["sex"]), function(j){
         if(j == 1){
           rv[i,"other",j,"never_IDU"] = -log(1-(incdence_white[i,j]*Prop.less.1.year))
         } else if (j == 2){
-          if (i = 1){
+          if (i == 1){
             rv[i,"other",j,"never_IDU"] = -log(1-(incdence_white[i,1]*Prop.less.1.year)*MSM.Ratio.age1) 
           } else{
             rv[i,"other",j,"never_IDU"] = -log(1-(incdence_white[i,1]*Prop.less.1.year)*MSM.Ratio.age2) 
@@ -54,12 +55,12 @@ get.estimated.depression.incidence <- function(version='expanded_1.0',
     })
     
     #Black incidence Never IDU
-    sapply(1:length(age), function(i){
-      sapply(1:length(sex), function(j){
+    sapply(1:length(dim(rv)["age"]), function(i){
+      sapply(1:length(dim(rv)["sex"]), function(j){
         if(j == 1){
           rv[i,"black",j,"never_IDU"] = -log(1-(incdence_black[i,j]*Prop.less.1.year))
         } else if (j == 2){
-          if (i = 1){
+          if (i == 1){
             rv[i,"black",j,"never_IDU"] = -log(1-(incdence_black[i,1]*Prop.less.1.year)*MSM.Ratio.age1) 
           } else{
             rv[i,"black",j,"never_IDU"] = -log(1-(incdence_black[i,1]*Prop.less.1.year)*MSM.Ratio.age2) 
@@ -75,12 +76,12 @@ get.estimated.depression.incidence <- function(version='expanded_1.0',
     })
     
     #Hispanic incidence Never IDU
-    sapply(1:length(age), function(i){
-      sapply(1:length(sex), function(j){
+    sapply(1:length(dim(rv)["age"]), function(i){
+      sapply(1:length(dim(rv)["sex"]), function(j){
         if(j == 1){
           rv[i,"hispanic",j,"never_IDU"] = -log(1-(incdence_hispanic[i,j]*Prop.less.1.year))
         } else if (j == 2){
-          if (i = 1){
+          if (i == 1){
             rv[i,"hispanic",j,"never_IDU"] = -log(1-(incdence_hispanic[i,1]*Prop.less.1.year)*MSM.Ratio.age1) 
           } else{
             rv[i,"hispanic",j,"never_IDU"] = -log(1-(incdence_hispanic[i,1]*Prop.less.1.year)*MSM.Ratio.age2) 
@@ -195,7 +196,7 @@ get.estimated.depression.treatment.initiation <- function(version='expanded_1.0'
 }
 
 get.estimated.depression.treatment.discontinuation <- function(version='expanded_1.0',
-                                                          dir=dir='code/applications/depression/')
+                                                          dir='code/applications/depression/')
 {
     rv = setup.depression.array.skeleton(version)
     rv[] = .47
