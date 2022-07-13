@@ -23,6 +23,8 @@ make.depression.likelihood <- function(location,
                                        # treatment.proportion
                                        treatment.proportion=0.18,
                                        treatment.proportion.log.sd=log(2)/2 
+                                       
+                        
                                        )
 {
     
@@ -38,8 +40,8 @@ make.depression.likelihood <- function(location,
     {
         # Pull from sim
 
-        sim.prevalence.general.age1 = rep(.06, length(total.prevalence.years))
-        sim.prevalence.general.age2 = rep(.04, length(total.prevalence.years))
+        sim.prevalence.general.age1 = rep(.06,total.prevalence.years)
+        sim.prevalence.general.age2 = rep(.04, total.prevalence.years)
         sim.prevalence.general = c(sim.prevalence.general.age1,sim.prevalence.general.age2)
         
         sim.prevalence.general.total = rep(.05, length(total.prevalence.years))
@@ -93,17 +95,16 @@ make.depression.likelihood <- function(location,
         S_obs_treatment_proportion = (sd.obs_treatment_proportion) %*% t(sd.obs_treatment_proportion) * cor_obs_treatment_proportion
         
         if (log){
-          mult.lik.prevalence.general = dmvnorm(log(obs.prevalence), mean = log(sim.prevalence), S_obs_total_prevalence, log = T) + sum(-log(obs.prevalence))
+          mult.lik.prevalence.general = dmvnorm(log(obs.prevalence), mean = log(sim.prevalence.general), S_obs_total_prevalence, log = T) + sum(-log(obs.prevalence))
           mult.lik.prevalence.ratio = dmvnorm(log(prevalence.ratio), mean = log(sim.prevalence.hiv.total/sim.prevalence.general.total), S_obs_prevalence_ratio, log = T) + sum(-log(prevalence.ratio)) 
           mult.lik.treatment.proportion = dmvnorm(log(treatment.proportion), mean = log(sim.treated.prevalence.hiv.total/sim.prevalence.hiv.total), S_obs_treatment_proportion, log = T) + sum(-log(treatment.proportion)) 
         
           
         } else{
-          mult.lik.prevalence.general = dmvnorm(log(obs.prevalence), mean = log(sim.prevalence), S_obs_total_prevalence)*(1/prod(obs.prevalence)) 
+          mult.lik.prevalence.general = dmvnorm(log(obs.prevalence), mean = log(sim.prevalence.general), S_obs_total_prevalence)*(1/prod(obs.prevalence)) 
           mult.lik.prevalence.ratio = dmvnorm(log(prevalence.ratio), mean = log(sim.prevalence.hiv.total/sim.prevalence.general.total), S_obs_prevalence_ratio)*(1/prod(prevalence.ratio)) 
-          
+          mult.lik.treatment.proportion = dmvnorm(log(treatment.proportion), mean = log(sim.treated.prevalence.hiv.total/sim.prevalence.hiv.total), S_obs_treatment_proportion)*(1/prod(treatment.proportion)) 
         }
-       
         
         # Put them together
         if (log) {

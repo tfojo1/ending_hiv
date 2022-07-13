@@ -67,13 +67,13 @@ read.depression.prevalence <- function(dir)
   geography = geography[!is.na(geography_split[,2])]
   geography_split = geography_split[!is.na(geography_split[,2]),]
   
-  codes = state.and.region.name.to.nsduh.region.code(geography_split[,1],geography_split[,2]) #proper mapping to code? not all region codes split properly 
-  
+  codes = state.and.region.name.to.nsduh.region.code(geography_split[,1],geography_split[,2]) 
+   
   #Create empty array 
   rv = list(
-    prevalence = array(0, dim = c(length(year),length(age),length(codes))),
-    prevalence.lower = array(0, dim = c(length(year),length(age),length(codes))),
-    prevalence.upper = array(0, dim = c(length(year),length(age),length(codes)))
+    prevalence = array(NA, dim = c(length(year),length(age),length(codes))),
+    prevalence.lower = array(NA, dim = c(length(year),length(age),length(codes))),
+    prevalence.upper = array(NA, dim = c(length(year),length(age),length(codes)))
   )
   dim.names = list(year=year,
                    codes = codes,
@@ -89,10 +89,13 @@ read.depression.prevalence <- function(dir)
     map_data_yr = map_data[[a]]
     for(b in 1:length(codes)){
       for(c in 1:length(age)){
-        matrix = map_data_yr[intersect(which(map_data_yr$age_group == age[c]),which(map_data_yr$geography == geography[b])),]
-        rv$prevalence[a,b,c] = matrix[,5]
-        rv$prevalence.lower[a,b,c] = matrix[,6]
-        rv$prevalence.upper[a,b,c] = matrix[,7]
+        data = map_data_yr[intersect(which(map_data_yr$age_group == age[c]),which(map_data_yr$geography == geography[b])),]
+        if(dim(data)[1]>0){
+          rv$prevalence[a,b,c] = data[,5]
+          rv$prevalence.lower[a,b,c] = data[,6]
+          rv$prevalence.upper[a,b,c] = data[,7]
+        }
+        
       }
     }
     
