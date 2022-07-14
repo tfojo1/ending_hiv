@@ -57,7 +57,7 @@ get.estimated.depression.incidence <- function(version='expanded_1.0',
     sapply(1:length(dimnames(rv)$age), function(i){
       sapply(1:length(dimnames(rv)$sex), function(j){
         if(j == 1){
-          rv[i,"other",j,"never_IDU"] = -log(1-(incidence_white[i,j]*Prop.less.1.year))#-1-parameter creates negative value, log produces NaNs
+          rv[i,"other",j,"never_IDU"] = -log(1-(incidence_white[i,j]*Prop.less.1.year))
         } else if (j == 2){
           if (i == 1){
             rv[i,"other",j,"never_IDU"] = -log(1-(incidence_white[i,1]*Prop.less.1.year)*MSM.Ratio.age1) 
