@@ -56,7 +56,6 @@ make.depression.likelihood <- function(location,
         
         #Correlation 
         obs.prevalence = c(obs.prevalence.age1,obs.prevalence.age2)
-        N_total_prevalence = length(obs.prevalence)
         
         N_prevalence_ratio = length(prevalence.ratio.years)
         N_treatment_proportion = length(treatment.proportion.years)
@@ -64,17 +63,17 @@ make.depression.likelihood <- function(location,
         #Correlation Matrices 
   
         #Create new correaltion matrix to consolidate age 
-        cor_obs_total_prevalence.age = matrix(total.prevalence.error.correlation.age1, nrow = N_total_prevalence, ncol = N_total_prevalence)
+        cor_obs_total_prevalence.age = matrix(total.prevalence.error.correlation.age, nrow = total.prevalence.years, ncol = total.prevalence.years)
         diag(cor_obs_total_prevalence.age) = 1
         
-        cor_obs_total_prevalence.time = matrix(total.prevalence.error.correlation.time, nrow = N_total_prevalence, ncol = N_total_prevalence)
+        cor_obs_total_prevalence.time = matrix(total.prevalence.error.correlation.time, nrow = total.prevalence.years, ncol = total.prevalence.years)
         diag(cor_obs_total_prevalence.time) = 1
         
-        cor_obs_total_combined = matrix(total.prevalence.error.correlation.age1*total.prevalence.error.correlation.age2, nrow = N_total_prevalence,ncol = N_total_prevalence )
+        cor_obs_total_combined = matrix(total.prevalence.error.correlation.age*total.prevalence.error.correlation.time, nrow = total.prevalence.years,ncol = total.prevalence.years)
         diag(cor_obs_total_combined) = 1
         
-        cor_obs_total_combined.1 = cbind(cor_obs_total_prevalence.age1, cor_obs_total_combined)
-        cor_obs_total_combined.2 = cbind(cor_obs_total_combined,cor_obs_total_prevalence.age2)
+        cor_obs_total_combined.1 = cbind(cor_obs_total_prevalence.age, cor_obs_total_combined)
+        cor_obs_total_combined.2 = cbind(cor_obs_total_combined,cor_obs_total_prevalence.time)
         
         cor_obs_total_prevalence = rbind(cor_obs_total_combined.1,cor_obs_total_combined.2 )
         
