@@ -54,8 +54,10 @@ get.estimated.depression.incidence <- function(version='expanded_1.0',
 
    
     #White incidence Never IDU
-    sapply(1:length(dimnames(rv)$age), function(i){
-      sapply(1:length(dimnames(rv)$sex), function(j){
+    for ( i in 1: length(dimnames(rv)$age)){
+      for(j in 1:length(dimnames(rv)$sex)){
+        
+        
         if(j == 1){
           rv[i,"other",j,"never_IDU"] = -log(1-(incidence_white[i,j]*Prop.less.1.year))
         } else if (j == 2){
@@ -70,13 +72,14 @@ get.estimated.depression.incidence <- function(version='expanded_1.0',
         }
         
         
-      })
+      }
+    }
       
-    })
+    
     
     #Black incidence Never IDU
-    sapply(1:length(dimnames(rv)$age), function(i){
-      sapply(1:length(dimnames(rv)$sex), function(j){
+    for(i in 1:length(dimnames(rv)$age)){
+      for(j in 1:length(dimnames(rv)$sex)){
         if(j == 1){
           rv[i,"black",j,"never_IDU"] = -log(1-(incidence_black[i,j]*Prop.less.1.year))
         } else if (j == 2){
@@ -91,13 +94,13 @@ get.estimated.depression.incidence <- function(version='expanded_1.0',
         }
         
         
-      })
+      }
       
-    })
+    }
     
     #Hispanic incidence Never IDU
-    sapply(1:length(dimnames(rv)$age), function(i){
-      sapply(1:length(dimnames(rv)$sex), function(j){
+    for(i in 1:length(dimnames(rv)$age)){
+      for(j in 1:length(dimnames(rv)$sex)){
         if(j == 1){
           rv[i,"hispanic",j,"never_IDU"] = -log(1-(incidence_hispanic[i,j]*Prop.less.1.year))
         } else if (j == 2){
@@ -112,13 +115,13 @@ get.estimated.depression.incidence <- function(version='expanded_1.0',
         }
         
         
-      })
+      }
       
-    })
+    }
     
     #Active/Previous IDU usage 
-    sapply(1:length(dimnames(rv)$age), function(i){
-      sapply(1:length(dimnames(rv)$sex), function(j){
+    for (i in 1:length(dimnames(rv)$age)){
+      for(j in 1:length(dimnames(rv)$sex)){
         if(i == 1){
           if(j ==1){
             rv[i,"other",j,"IDU_in_remission"] = -log(1-(incidence_white[i,1]*Prop.less.1.year)*Male.age1.prevIDU.ratio) 
@@ -180,8 +183,8 @@ get.estimated.depression.incidence <- function(version='expanded_1.0',
           
         }
         
-      })
-    })
+      }
+    }
     
     return(rv)
     
@@ -194,7 +197,7 @@ get.estimated.depression.incidence <- function(version='expanded_1.0',
     # data = read.csv(file.path(dir, 'example.csv))
     
     # Return
-    rv
+    
 }
 
 get.estimated.depression.remission <- function(version='expanded_1.0',
