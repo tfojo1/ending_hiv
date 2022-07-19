@@ -124,14 +124,14 @@ LAART.CONTINUUM.TRANSITION.MAPPING = register.transition(LAART.CONTINUUM.TRANSIT
                                                          dimension='continuum',
                                                          from.state='laart_recently_suppressed',
                                                          to.state='disengaged_failing',
-                                                         rate = expression((1-laart.recent.to.resistant.disengaged)*recently.suppressed.to.disengaged*laart.versus.oral.disengagement.rr),
+                                                         rate = expression((1-laart.recently.suppressed.to.resistant.disengaged)*recently.suppressed.to.disengaged*laart.versus.oral.disengagement.rr),
                                                          label = 'loss.to.care')
 
 LAART.CONTINUUM.TRANSITION.MAPPING = register.transition(LAART.CONTINUUM.TRANSITION.MAPPING,
                                                          dimension='continuum',
                                                          from.state='laart_recently_suppressed',
                                                          to.state='resistant_disengaged',
-                                                         rate = expression((laart.recent.to.resistant.disengaged)*recently.suppressed.to.disengaged*laart.versus.oral.disengagement.rr),
+                                                         rate = expression((laart.recently.suppressed.to.resistant.disengaged)*recently.suppressed.to.disengaged*laart.versus.oral.disengagement.rr),
                                                          label = 'loss.to.care')
 
 LAART.CONTINUUM.TRANSITION.MAPPING = register.transition(LAART.CONTINUUM.TRANSITION.MAPPING,
@@ -159,14 +159,14 @@ LAART.CONTINUUM.TRANSITION.MAPPING = register.transition(LAART.CONTINUUM.TRANSIT
                                                          dimension='continuum',
                                                          from.state='laart_durably_suppressed',
                                                          to.state='disengaged_failing',
-                                                         rate = expression((1-laart.durably.to.resistant.disengaged)*durably.suppressed.to.disengaged*laart.versus.oral.disengagement.rr),
+                                                         rate = expression((1-laart.durably.suppressed.to.resistant.disengaged)*durably.suppressed.to.disengaged*laart.versus.oral.disengagement.rr),
                                                          label = 'loss.to.care')
 
 LAART.CONTINUUM.TRANSITION.MAPPING = register.transition(LAART.CONTINUUM.TRANSITION.MAPPING,
                                                          dimension='continuum',
                                                          from.state='laart_durably_suppressed',
                                                          to.state='resistant_disengaged',
-                                                         rate = expression((laart.durably.to.resistant.disengaged)*durably.suppressed.to.disengaged*laart.versus.oral.disengagement.rr),
+                                                         rate = expression((laart.durably.suppressed.to.resistant.disengaged)*durably.suppressed.to.disengaged*laart.versus.oral.disengagement.rr),
                                                          label = 'loss.to.care')
 
 LAART.CONTINUUM.TRANSITION.MAPPING = register.transition(LAART.CONTINUUM.TRANSITION.MAPPING,
@@ -266,7 +266,7 @@ LAART.CONTINUUM.TRANSITION.MAPPING = register.transition(LAART.CONTINUUM.TRANSIT
                                                          dimension='continuum',
                                                          from.state='resistant_unsuppressed',
                                                          to.state='resistant_recently_suppressed',
-                                                         rate = expression(failing.to.suppressed*resistant.versus.gain.of.suppression.rr),
+                                                         rate = expression(failing.to.suppressed*resistant.versus.oral.gain.of.suppression.rr),
                                                          label = 'gain.of.suppression')
 
 LAART.CONTINUUM.TRANSITION.MAPPING = register.transition(LAART.CONTINUUM.TRANSITION.MAPPING,
@@ -311,7 +311,7 @@ LAART.CONTINUUM.TRANSITION.MAPPING = register.transition(LAART.CONTINUUM.TRANSIT
 
 #ignore ramp; should be optional
 LAART.CONTINUUM.TRANSITION.MAPPING = register.transition.element(LAART.CONTINUUM.TRANSITION.MAPPING,
-                                                                    name='laart.recent.to.resistant.disengaged',
+                                                                    name='laart.recently.suppressed.to.resistant.disengaged',
                                                                     type = 'proportion', 
                                                                     model.source = 'continuum.manager')
 
@@ -348,7 +348,7 @@ LAART.CONTINUUM.TRANSITION.MAPPING = register.transition.element(LAART.CONTINUUM
                                                                  required=F)
 
 LAART.CONTINUUM.TRANSITION.MAPPING = register.transition.element(LAART.CONTINUUM.TRANSITION.MAPPING,
-                                                                 name='laart.durably.to.resistant.disengaged',
+                                                                 name='laart.durably.suppressed.to.resistant.disengaged',
                                                                  type = 'proportion',
                                                                  model.source = 'continuum.manager')
 
@@ -400,7 +400,7 @@ LAART.CONTINUUM.TRANSITION.MAPPING = register.transition.element(LAART.CONTINUUM
                                                                  model.source = 'continuum.manager')
 
 LAART.CONTINUUM.TRANSITION.MAPPING = register.transition.element(LAART.CONTINUUM.TRANSITION.MAPPING,
-                                                                 name='resistant.versus.gain.of.suppression.rr',
+                                                                 name='resistant.versus.oral.gain.of.suppression.rr',
                                                                  type = 'rate', 
                                                                  model.source = 'continuum.manager')
 

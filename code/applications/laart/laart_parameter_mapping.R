@@ -15,12 +15,33 @@ GET.COMPONENTS.FOR.LAART.PARAMETERS <- join.get.components.functions(
         
         components = set.static.parameter(components,
                                           parameter.name='laart.recently.suppressed.to.engaged.recently.suppressed',
-                                          parameter.value = parameters['rate.of.switching.back.to.oral'])
+                                          parameter.value = parameters['laart.recently.suppressed.to.engaged.recently.suppressed'])
+        
         components = set.static.parameter(components,
                                           parameter.name='laart.durably.suppressed.to.engaged.recently.suppressed',
-                                          parameter.value = parameters['rate.of.switching.back.to.oral'])
+                                          parameter.value = parameters['laart.recently.suppressed.to.engaged.recently.suppressed'])
         
+        components = set.static.parameter(components,
+                                          parameter.name='laart.unsuppressed.to.engaged.unsuppressed.failing',
+                                          parameter.value = parameters['laart.recently.suppressed.to.engaged.recently.suppressed'])
         
+        components = set.static.parameter(components,
+                                          parameter.name='laart.recently.suppressed.to.resistant.disengaged',
+                                          parameter.value = parameters['laart.recently.suppressed.to.resistant.disengaged'])
+        
+        components = set.static.parameter(components,
+                                          parameter.name='laart.recently.suppressed.to.resistant.unsuppressed',
+                                          parameter.value = parameters['laart.recently.suppressed.to.resistant.unsuppressed'])
+        
+        components = set.static.parameter(components,
+                                          parameter.name='laart.durably.suppressed.to.resistant.disengaged',
+                                          parameter.value = parameters['laart.durably.suppressed.to.resistant.disengaged'])
+        
+        components = set.static.parameter(components,
+                                          parameter.name='laart.durably.suppressed.to.resistant.unsuppressed',
+                                          parameter.value = parameters['laart.durably.suppressed.to.resistant.unsuppressed'])
+        
+      
         p.resistance = parameters['laart.recently.suppressed.to.resistant.disengaged']
         o.resistance = p.resistance / (1-p.resistance)
         o.resistance = o.resistance * parameters['unsuppressed.vs.recently.suppressed.resistance.disengaged.or']
@@ -28,6 +49,26 @@ GET.COMPONENTS.FOR.LAART.PARAMETERS <- join.get.components.functions(
         components = set.static.parameter(components,
                                           parameter.name='laart.unsuppressed.to.resistant.disengaged',
                                           parameter.value = p.resistance)
+        
+        components = set.static.parameter(components,
+                                          parameter.name='resistant.versus.oral.loss.of.suppression.rr',
+                                          parameter.value = 'resistant.versus.oral.loss.of.suppression.rr')
+        
+        components = set.static.parameter(components,
+                                          parameter.name='resistant.versus.oral.disengagement.rr',
+                                          parameter.value = 'resistant.versus.oral.disengagement.rr')
+        
+        components = set.static.parameter(components,
+                                          parameter.name='laart.unsuppressed.to.laart.recently.suppressed',
+                                          parameter.value = 'laart.unsuppressed.to.laart.recently.suppressed')
+        
+        components = set.static.parameter(components,
+                                          parameter.name='resistant.versus.gain.of.suppression.rr',
+                                          parameter.value = 'resistant.versus.gain.of.suppression.rr')
+        
+        components = set.static.parameter(components,
+                                          parameter.name='resistant.versus.reengagement.rr',
+                                          parameter.value = 'resistant.versus.reengagement.rr')
         
         # Return
         components
