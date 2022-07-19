@@ -41,3 +41,18 @@ dist = join.distributions(
     idu.remission.treated.vs.untreated.depression.rr= Lognormal.Distribution(0, log(2)/2),
     idu.relapse.treated.vs.untreated.depression.rr= Lognormal.Distribution(0, log(2)/2)
 )
+
+
+# parameters is a vector, with names the same as the distribution above
+# this function needs to tell the components object about each of the parameters
+DEPRESSION.GET.COMPONENTS.FOR.PARAMETERS <- function(parameters, components,
+                                                     data.managers = ALL.DATA.MANAGERS)
+{
+    # Parameters that affect the HIV continuum of care
+    
+    # Parameters that affect moving between depression states
+    
+    #@Ruchita save these for later
+    # Parameters that affect HIV transmission/susceptibility
+    # Parameters that affect incidence/remission of IDU
+}

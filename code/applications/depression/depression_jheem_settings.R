@@ -105,7 +105,22 @@ DEPRESSION.TRANSITION.MAPPING = register.transition(DEPRESSION.TRANSITION.MAPPIN
 
 
 # Need to register the transition elements
+DEPRESSION.TRANSITION.MAPPING = register.transition.element(DEPRESSION.TRANSITION.MAPPING,
+                                                            name='depression.incidence',
+                                                            type = 'rate',
+                                                            model.source = 'comorbidities.manager')
 
+DEPRESSION.TRANSITION.MAPPING = register.transition.element(DEPRESSION.TRANSITION.MAPPING,
+                                                            name='hiv.vs.nonhiv.depression.incidence.rr',
+                                                            type='rate')
+
+
+
+
+#@ Ruchita - fill in all you other parameters
+
+
+# Put it all together
 VERSION.MANAGER = copy.and.modify.jheem.settings(
     template.settings = get.settings.for.version('expanded_1.0'),
     
