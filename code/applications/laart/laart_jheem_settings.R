@@ -391,8 +391,7 @@ LAART.CONTINUUM.TRANSITION.MAPPING = register.transition.element(LAART.CONTINUUM
 
 LAART.CONTINUUM.TRANSITION.MAPPING = register.transition.element(LAART.CONTINUUM.TRANSITION.MAPPING,
                                                                  name='resistant.versus.oral.loss.of.suppression.rr',
-                                                                 type = 'rate', 
-                                                                 model.source = 'continuum.manager')
+                                                                 type = 'rate')
 
 LAART.CONTINUUM.TRANSITION.MAPPING = register.transition.element(LAART.CONTINUUM.TRANSITION.MAPPING,
                                                                  name='resistant.versus.oral.disengagement.rr',
@@ -419,7 +418,8 @@ LAART.CONTINUUM.TRANSITION.MAPPING = register.transition.element(LAART.CONTINUUM
                                                                  background.model.type = 'proportion',
                                                                  ramp.type = 'proportion',
                                                                  return.type = 'rate',
-                                                                 model.source = 'continuum.manager')
+                                                                 default.value = 0,
+                                                                 required = F)
 
 LAART.CONTINUUM.TRANSITION.MAPPING = register.transition.element(LAART.CONTINUUM.TRANSITION.MAPPING,
                                                                  name='engaged.unsuppressed.switch.to.laart.successful',

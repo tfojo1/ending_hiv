@@ -44,7 +44,6 @@ make.depression.likelihood <- function(location,
         sim.prevalence.general.age2 = rep(.04, total.prevalence.years)
         sim.prevalence.general = c(sim.prevalence.general.age1,sim.prevalence.general.age2)
         
-        sim.prevalence.general.total = rep(.05, length(total.prevalence.years))
         sim.prevalence.hiv.total = rep(.14, length(total.prevalence.years))
         sim.treated.prevalence.hiv.total = sim.prevalence.hiv.total * treatment.proportion
         
@@ -56,7 +55,6 @@ make.depression.likelihood <- function(location,
         
         #Correlation 
         obs.prevalence = c(obs.prevalence.age1,obs.prevalence.age2)
-        N_total_prevalence = length(obs.prevalence)
         
         N_prevalence_ratio = length(prevalence.ratio.years)
         N_treatment_proportion = length(treatment.proportion.years)
@@ -64,17 +62,17 @@ make.depression.likelihood <- function(location,
         #Correlation Matrices 
   
         #Create new correaltion matrix to consolidate age 
-        cor_obs_total_prevalence.age = matrix(total.prevalence.error.correlation.age1, nrow = N_total_prevalence, ncol = N_total_prevalence)
+        cor_obs_total_prevalence.age = matrix(total.prevalence.error.correlation.age, nrow = total.prevalence.years, ncol = total.prevalence.years)
         diag(cor_obs_total_prevalence.age) = 1
         
-        cor_obs_total_prevalence.time = matrix(total.prevalence.error.correlation.time, nrow = N_total_prevalence, ncol = N_total_prevalence)
+        cor_obs_total_prevalence.time = matrix(total.prevalence.error.correlation.time, nrow = total.prevalence.years, ncol = total.prevalence.years)
         diag(cor_obs_total_prevalence.time) = 1
         
-        cor_obs_total_combined = matrix(total.prevalence.error.correlation.age1*total.prevalence.error.correlation.age2, nrow = N_total_prevalence,ncol = N_total_prevalence )
-        diag(cor_obs_total_combined) = 1
+        cor_obs_total_combined = matrix(total.prevalence.error.correlation.age*total.prevalence.error.correlation.time, nrow = total.prevalence.years,ncol = total.prevalence.years)
+        diag(cor_obs_total_combined) = total.prevalence.error.correlation.time
         
-        cor_obs_total_combined.1 = cbind(cor_obs_total_prevalence.age1, cor_obs_total_combined)
-        cor_obs_total_combined.2 = cbind(cor_obs_total_combined,cor_obs_total_prevalence.age2)
+        cor_obs_total_combined.1 = cbind(cor_obs_total_prevalence.age, cor_obs_total_combined)
+        cor_obs_total_combined.2 = cbind(cor_obs_total_combined,cor_obs_total_prevalence.time)
         
         cor_obs_total_prevalence = rbind(cor_obs_total_combined.1,cor_obs_total_combined.2 )
         
@@ -95,15 +93,15 @@ make.depression.likelihood <- function(location,
         S_obs_treatment_proportion = (sd.obs_treatment_proportion) %*% t(sd.obs_treatment_proportion) * cor_obs_treatment_proportion
         
         if (log){
-          mult.lik.prevalence.general = dmvnorm(log(obs.prevalence), mean = log(sim.prevalence.general), S_obs_total_prevalence, log = T) + sum(-log(obs.prevalence))
-          mult.lik.prevalence.ratio = dmvnorm(log(prevalence.ratio), mean = log(sim.prevalence.hiv.total/sim.prevalence.general.total), S_obs_prevalence_ratio, log = T) + sum(-log(prevalence.ratio)) 
-          mult.lik.treatment.proportion = dmvnorm(log(treatment.proportion), mean = log(sim.treated.prevalence.hiv.total/sim.prevalence.hiv.total), S_obs_treatment_proportion, log = T) + sum(-log(treatment.proportion)) 
+          mult.lik.prevalence.general = dmvnorm(log(obs.prevalence),log(sim.prevalence.general), S_obs_total_prevalence, log = T) + sum(-log(obs.prevalence))
+          mult.lik.prevalence.ratio = dmvnorm(log(prevalence.ratio), log(sim.prevalence.hiv.total/sim.prevalence.general.total), S_obs_prevalence_ratio, log = T) + sum(-log(prevalence.ratio)) 
+          mult.lik.treatment.proportion = dmvnorm(log(treatment.proportion), log(sim.treated.prevalence.hiv.total/sim.prevalence.hiv.total), S_obs_treatment_proportion, log = T) + sum(-log(treatment.proportion)) 
         
           
         } else{
-          mult.lik.prevalence.general = dmvnorm(log(obs.prevalence), mean = log(sim.prevalence.general), S_obs_total_prevalence)*(1/prod(obs.prevalence)) 
-          mult.lik.prevalence.ratio = dmvnorm(log(prevalence.ratio), mean = log(sim.prevalence.hiv.total/sim.prevalence.general.total), S_obs_prevalence_ratio)*(1/prod(prevalence.ratio)) 
-          mult.lik.treatment.proportion = dmvnorm(log(treatment.proportion), mean = log(sim.treated.prevalence.hiv.total/sim.prevalence.hiv.total), S_obs_treatment_proportion)*(1/prod(treatment.proportion)) 
+          mult.lik.prevalence.general = dmvnorm(log(obs.prevalence), log(sim.prevalence.general), S_obs_total_prevalence)*(1/prod(obs.prevalence)) 
+          mult.lik.prevalence.ratio = dmvnorm(log(prevalence.ratio), log(sim.prevalence.hiv.total/sim.prevalence.general.total), S_obs_prevalence_ratio)*(1/prod(prevalence.ratio)) 
+          mult.lik.treatment.proportion = dmvnorm(log(treatment.proportion),  log(sim.treated.prevalence.hiv.total/sim.prevalence.hiv.total), S_obs_treatment_proportion)*(1/prod(treatment.proportion)) 
         }
         
         # Put them together
