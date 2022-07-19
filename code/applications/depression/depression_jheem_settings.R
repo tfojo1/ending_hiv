@@ -34,7 +34,7 @@ DEPRESSION.TRANSITION.MAPPING = register.transition(DEPRESSION.TRANSITION.MAPPIN
                                                     subgroups = 'hiv.negative',
                                                     from.state = 'untreated_depression',
                                                     to.state = 'treated_depression',
-                                                    rate = 'depression.treatment.rate',#change
+                                                    rate = 'depression.treatment.rate',
                                                     label = 'treated.depression')
 
 
@@ -43,7 +43,7 @@ DEPRESSION.TRANSITION.MAPPING = register.transition(DEPRESSION.TRANSITION.MAPPIN
                                                     subgroups = 'hiv.positive',
                                                     from.state = 'untreated_depression',
                                                     to.state = 'treated_depression',
-                                                    rate = 'depression.treatment.rate',#change
+                                                    rate = 'depression.treatment.rate',
                                                     label = 'treated.depression')
 
 
@@ -52,7 +52,7 @@ DEPRESSION.TRANSITION.MAPPING = register.transition(DEPRESSION.TRANSITION.MAPPIN
                                                     subgroups = 'hiv.negative',
                                                     from.state = 'treated_depression',
                                                     to.state = 'untreated_depression',
-                                                    rate = 'discontinuation.rate',#change
+                                                    rate = 'discontinuation.rate',
                                                     label = 'discontinued.depression')
 
 
@@ -61,7 +61,7 @@ DEPRESSION.TRANSITION.MAPPING = register.transition(DEPRESSION.TRANSITION.MAPPIN
                                                     subgroups = 'hiv.positive',
                                                     from.state = 'treated_depression',
                                                     to.state = 'untreated_depression',
-                                                    rate = 'discontinuation.rate',#change
+                                                    rate = 'discontinuation.rate',
                                                     label = 'discontinued.depression')
 
 DEPRESSION.TRANSITION.MAPPING = register.transition(DEPRESSION.TRANSITION.MAPPING,
@@ -69,7 +69,7 @@ DEPRESSION.TRANSITION.MAPPING = register.transition(DEPRESSION.TRANSITION.MAPPIN
                                                     subgroups = 'hiv.negative',
                                                     from.state = 'treated_depression',
                                                     to.state = 'no_depression',
-                                                    rate = 'remission.rate',#change
+                                                    rate = 'remission.rate',
                                                     label = 'treated.depression.remission')
 
 
@@ -78,7 +78,7 @@ DEPRESSION.TRANSITION.MAPPING = register.transition(DEPRESSION.TRANSITION.MAPPIN
                                                     subgroups = 'hiv.positive',
                                                     from.state = 'treated_depression',
                                                     to.state = 'no_depression',
-                                                    rate = 'remission.rate',#change
+                                                    rate = 'remission.rate',
                                                     label = 'treated.depression.remission')
 
 
@@ -88,7 +88,7 @@ DEPRESSION.TRANSITION.MAPPING = register.transition(DEPRESSION.TRANSITION.MAPPIN
                                                     subgroups = 'hiv.negative',
                                                     from.state = 'untreated_depression',
                                                     to.state = 'no_depression',
-                                                    rate = 'remission.rate',#change
+                                                    rate = 'remission.rate',
                                                       label = 'untreated.depression.remission')
 
 
@@ -96,8 +96,8 @@ DEPRESSION.TRANSITION.MAPPING = register.transition(DEPRESSION.TRANSITION.MAPPIN
                                                     dimension = 'subpopulation',
                                                     subgroups = 'hiv.positive',
                                                     from.state = 'untreated_depression',
-                                                    to.state = 'no_depression',
-                                                    rate = 'remission.rate',#change
+                                                    to.state = 'no_depression', #add multiplier
+                                                    rate = 'remission.rate',
                                                     label = 'untreated.depression.remission')
 
 
