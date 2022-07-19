@@ -44,9 +44,11 @@ create.intervention.unit <- function(type=c('testing','prep','suppression','need
     #-- Check Types --#
     if (!is(type, 'character') || !length(type)==1)
         stop("'type' must be a single character value")
-    if (all(type != ALLOWED.INTERVENTION.UNIT.TYPES))
-        stop(paste0("'", type, "' is not a valid value for the 'type' argument. It must be one of: ",
-                    paste0("'", ALLOWED.INTERVENTION.UNIT.TYPES, "'", collapse=', ')))
+ 
+# Disallowing until we do a smarter check based on transition manager
+#    if (all(type != ALLOWED.INTERVENTION.UNIT.TYPES))
+#        stop(paste0("'", type, "' is not a valid value for the 'type' argument. It must be one of: ",
+#                    paste0("'", ALLOWED.INTERVENTION.UNIT.TYPES, "'", collapse=', ')))
     
     #-- Check years --#
     check.unit.years(start.year, end.year, years, resolved.bindings=numeric())

@@ -92,10 +92,10 @@ create.intervention <- function(...)
             processed=list(),
             static.settings=static.settings,
             parameter.distributions=distributions)
-    
-    for (type in names(int@raw))
+   
+    for (type in names(rv@raw))
     {
-        unique.scales = unique(sapply(int@raw[[type]]$intervention.units, function(unit){
+        unique.scales = unique(sapply(rv@raw[[type]]$intervention.units, function(unit){
             unit$scale
         }))
         
@@ -105,7 +105,9 @@ create.intervention <- function(...)
                         paste0("'", unique.scales, "'", collapse=', ')))
     }
     
-    process.intervention(rv)
+    # going to save the processing for later
+#    process.intervention(rv)
+    rv 
 }
 
 join.interventions <- function(...)
@@ -182,7 +184,8 @@ def = function(int1, int2)
     
     
     intervention.consistency.check(int1)
-    process.intervention(int1, overwrite.previous.processed = T)
+  #  process.intervention(int1, overwrite.previous.processed = T)
+    int1
 })
 
 setMethod('do.join.interventions',
@@ -220,38 +223,42 @@ setMethod('interventions.equal',
           signature = 'standard_intervention',
 def = function(int1, int2)
 {
-    if (!is(int2, 'standard_intervention'))
-        return (F)
-    
-    # Test that overall lengths match
-    if (length(int1@raw) != length(int2@raw) ||
-        length(int1@static.settings) != length(int2@static.settings) || 
-        length(int1@parameter.distributions) != length(int2@parameter.distributions))
-        return (F)
-    
-    if (length(int1@raw)>0 && length(setdiff(names(int1@raw), names(int2@raw)))>0)
-        return (F)
-
-    # Test static settings for equality    
-    if (length(int1@static.settings)>0)
+    #this block is for current intervention classes
+    if (!(is(int2, 'intervention') && !isS4(int2)))
     {
-        static.settings.equality.matrix = sapply(1:length(int1@static.settings), function(i){
-            sapply(1:length(int2@static.settings), function(j){
-                static.settings.equal(int1@static.settings[[i]], int2@static.settings[[j]])
-            })
-        })
-        dim(static.settings.equality.matrix) = rep(length(int1@static.settings),2)
-        if (any(rowSums(static.settings.equality.matrix)!=1) ||
-            any(colSums(static.settings.equality.matrix)!=1))
+        if (!is(int2, 'standard_intervention'))
             return (F)
-    }
-    
-    # Test Distributions for equality
-    
-    # Test intervention units/target populations for equality
-    if (length(int1@raw)>0)
-    {
-        if (any(!sapply(names(int1@raw), function(type){
+        
+        # Test that overall lengths match
+        if (length(int1@raw) != length(int2@raw) ||
+            length(int1@static.settings) != length(int2@static.settings) || 
+            length(int1@parameter.distributions) != length(int2@parameter.distributions))
+            return (F)
+        
+        if (length(int1@raw)>0 && length(setdiff(names(int1@raw), names(int2@raw)))>0)
+            return (F)
+        
+        # Test static settings for equality    
+        if (length(int1@static.settings)>0)
+        {
+            static.settings.equality.matrix = sapply(1:length(int1@static.settings), function(i){
+                sapply(1:length(int2@static.settings), function(j){
+                    static.settings.equal(int1@static.settings[[i]], int2@static.settings[[j]])
+                })
+            })
+            dim(static.settings.equality.matrix) = rep(length(int1@static.settings),2)
+            if (any(rowSums(static.settings.equality.matrix)!=1) ||
+                any(colSums(static.settings.equality.matrix)!=1))
+                return (F)
+        }
+        
+        # Test Distributions for equality
+        if (!is.null())
+        
+        # Test intervention units/target populations for equality
+        if (length(int1@raw)>0)
+        {
+            if (any(!sapply(names(int1@raw), function(type){
                 t1 = int1@raw[[type]]
                 t2 = int2@raw[[type]]
                 
@@ -261,22 +268,65 @@ def = function(int1, int2)
                     return (F)
                 
                 if (any(!sapply(1:length(t1$target.populations), function(i){
-                        target.populations.equal(t1$target.populations[[i]], t2$target.populations[[i]])
-                    })))
+                    target.populations.equal(t1$target.populations[[i]], t2$target.populations[[i]])
+                })))
                     return (F)
                 
                 if (any(!sapply(1:length(t1$intervention.units), function(i){
-                        intervention.units.equal(t1$intervention.units[[i]], t2$intervention.units[[i]])
-                    })))
+                    intervention.units.equal(t1$intervention.units[[i]], t2$intervention.units[[i]])
+                })))
                     return (F)
                 
                 return(T)
             })))
             return (F)
+        }
+        
+        # Return true if we haven't flagged anything up to now
+        return (T)
     }
+    #this block is for backwards compatibility
+    else
+    {
+        # Test that overall lengths match
+        if (length(int1@raw) != length(int2$raw) ||
+            length(int1@static.settings) == 0 || 
+            length(int1@parameter.distributions) == 0)
+            return (F)
+        
+        if (length(int1@raw)>0 && length(setdiff(names(int1@raw), names(int2$raw)))>0)
+            return (F)
     
-    # Return true if we haven't flagged anything up to now
-    return (T)
+        # Test intervention units/target populations for equality
+        if (length(int1@raw)>0)
+        {
+            if (any(!sapply(names(int1@raw), function(type){
+                    t1 = int1@raw[[type]]
+                    t2 = int2$raw[[type]]
+                    
+                    if (length(t1$target.populations) != length(t2$target.populations))
+                        return (F)
+                    if (length(t1$intervention.units) != length(t2$intervention.units))
+                        return (F)
+                    
+                    if (any(!sapply(1:length(t1$target.populations), function(i){
+                            target.populations.equal(t1$target.populations[[i]], t2$target.populations[[i]])
+                        })))
+                        return (F)
+                    
+                    if (any(!sapply(1:length(t1$intervention.units), function(i){
+                            intervention.units.equal(t1$intervention.units[[i]], t2$intervention.units[[i]])
+                        })))
+                        return (F)
+                    
+                    return(T)
+                })))
+                return (F)
+        }
+        
+        # Return true if we haven't flagged anything up to now
+        return (T)
+    }
 })
 
 is.null.intervention <- function(int)
@@ -586,7 +636,7 @@ get.intervention.code <- function(int, manager=INTERVENTION.MANAGER.1.0,
     else
     {
         mask = sapply(manager$intervention, function(comp){
-            interventions.equal(int, comp)
+            interventions.equal(comp, int)
         })
         if (any(mask))
             as.character(manager$code[mask])
