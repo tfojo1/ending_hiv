@@ -391,8 +391,7 @@ LAART.CONTINUUM.TRANSITION.MAPPING = register.transition.element(LAART.CONTINUUM
 
 LAART.CONTINUUM.TRANSITION.MAPPING = register.transition.element(LAART.CONTINUUM.TRANSITION.MAPPING,
                                                                  name='resistant.versus.oral.loss.of.suppression.rr',
-                                                                 type = 'rate', 
-                                                                 model.source = 'continuum.manager')
+                                                                 type = 'rate')
 
 LAART.CONTINUUM.TRANSITION.MAPPING = register.transition.element(LAART.CONTINUUM.TRANSITION.MAPPING,
                                                                  name='resistant.versus.oral.disengagement.rr',
