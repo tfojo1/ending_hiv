@@ -204,7 +204,8 @@ get.estimated.depression.remission <- function(version='expanded_1.0',
                                                dir='code/applications/depression/')
 {
     rv = setup.depression.array.skeleton(version)
-    rv[] = .05
+    
+    rv[] = -log(1-(.05))
     return(rv)
     
   
@@ -214,7 +215,7 @@ get.estimated.depression.treatment.initiation <- function(version='expanded_1.0'
                                                           dir='code/applications/depression/')
 {
     rv = setup.depression.array.skeleton(version)
-    rv[] = .753
+    rv[] = -log(1-(.753))
     return(rv)
 }
 
@@ -222,7 +223,7 @@ get.estimated.depression.treatment.discontinuation <- function(version='expanded
                                                           dir='code/applications/depression/')
 {
     rv = setup.depression.array.skeleton(version)
-    rv[] = .47
+    rv[] = -log(1-(.47))
     return(rv)
 }
 
