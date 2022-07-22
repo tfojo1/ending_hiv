@@ -1,36 +1,36 @@
 
 source('code/calibration/target_msas.R')
-msa = BATON.ROUGE.MSA
+msa = DALLAS.MSA
 source('code/processing/for_talks/talk_plot_settings.R')
 
 DO.INTERVENTIONS = F
-DO.CALIBRATION = F
+DO.CALIBRATION = T
 DO.STRATIFIED.INTERVENTIONS = F
 
 #RUN ON DESKTOP - to save interventions
 if (is.desktop)
 {
-    base.filename = paste0('/1.0_',msa,'_full.Rdata')
+    base.filename = paste0('1.0_',msa,'_full.Rdata')
     noint.filename = paste0('1.0_',msa,'_noint.Rdata')
     int1.filename = paste0('1.0_',msa,'_ybhm.t1x.p10.s80_23.27.Rdata')
     int2.filename = paste0('1.0_',msa,'_mi.t2x.p25.s90_23.27.Rdata')
     
-    src.dir = 'Q:/Ending_HIV/mcmc_runs/full_simsets'
-    if (!file.exists(file.path(src.dir, msa, int2.filename)))
-        src.dir = 'Q:/Ending_HIV/full_runs_from_annals/mcmc_runs/full_simsets'
+    src.dir = SIMULATIONS.DIR
+#    if (!file.exists(file.path(src.dir, msa, int2.filename)))
+#        src.dir = file.path(SYSTEMATIC.ROOT.DIR, 'full_runs_from_annals/mcmc_runs/full_simsets')
     
     
-    load(file.path(src.dir, base.filename))
+    load(file.path(src.dir, 'baseline_collapsed', base.filename))
     simset = flatten.simset(simset)
     base = subset.simset(thin.simset(simset, floor(simset@n.sim/THIN.TO)), 1:THIN.TO)
     
-    load(file.path(src.dir, msa, noint.filename))
+    load(file.path(src.dir, 'ehe', msa, noint.filename))
     noint = subset.simset(thin.simset(simset, floor(simset@n.sim/THIN.TO)), 1:THIN.TO)
     
-    load(file.path(src.dir, msa, int1.filename))
+    load(file.path(src.dir, 'ehe', msa, int1.filename))
     int1 = subset.simset(thin.simset(simset, floor(simset@n.sim/THIN.TO)), 1:THIN.TO)
     
-    load(file.path(src.dir, msa, int2.filename))
+    load(file.path(src.dir, 'ehe', msa, int2.filename))
     int2 = subset.simset(thin.simset(simset, floor(simset@n.sim/THIN.TO)), 1:THIN.TO)
     
     save(base, noint, int1, int2, file=paste0('tmp/simsets_for_talk_plots_',msa,'.Rdata'))

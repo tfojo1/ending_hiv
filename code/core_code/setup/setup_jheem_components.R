@@ -65,36 +65,6 @@ initialize.jheem.components <- function(version,
     components
 }
 
-##------------------------------##
-##-- VERSION/SETTINGS GETTERS --##
-##------------------------------##
-
-#formulated for backwards compatibility
-get.components.version <- function(components)
-{
-    if (is.null(components[['version']]))
-    {
-        if (is.null(components[['settings']]) || is.null(components[['settings']]$VERSION))
-            'collapsed_1.0' #did not have version explicitly stored
-        else
-            components[['settings']]$VERSION
-    }
-    else
-        components$version
-}
-
-get.components.settings <- function(components, version.manager=VERSION.MANAGER)
-{
-    get.settings.for.version(get.components.version(components), version.manager=version.manager)
-}
-
-get.components.transition.mapping <- function(components, version.manager=VERSION.MANAGER)
-{
-    settings = get.components.settings(components, version.manager=version.manager)
-    transition.mapping = settings$transition.mapping
-    
-    transition.mapping
-}
 
 
 ##----------------------------------------------------##
@@ -826,6 +796,7 @@ setup.background.hiv.testing <- function(components,
                                          first.testing.year=1981,
                                          testing.ramp.up.year=1993)
 {
+    stop('deprecated')
     if (is.null(components$background.testing))
         components$background.testing = list()
     
@@ -1587,7 +1558,8 @@ setup.background <- function(components,
     if (is.null(components[[type.name]]))
         components[[type.name]] = list()
     
-    components[[type.name]]$years = years
+    o = order(years)
+    components[[type.name]]$years = years[o]
     
     components[[type.name]]$model = get.continuum.model(continuum.manager,
                                                         type=type,
@@ -1595,8 +1567,12 @@ setup.background <- function(components,
     
   #  components[[type.name]]$convert.proportions.to.rates = convert.proportions.to.rates
     
-    components[[type.name]]$ramp.years = ramp.years
-    components[[type.name]]$ramp.multipliers = ramp.multipliers
+    if (max(ramp.years)>=min(years))
+        stop("ramp years must precede years")
+    
+    o = order(ramp.years)
+    components[[type.name]]$ramp.years = ramp.years[o]
+    components[[type.name]]$ramp.multipliers = ramp.multipliers[o]
     
     
     components = clear.dependent.values(components,
@@ -1618,6 +1594,7 @@ setup.background.start.art <- function(components,
                                        latency.to.suppression.in.years=1/4,
                                        years.at.which.latency.applies=2010)
 {
+    stop('deprecated')
     components = setup.background(components=components,
                                   type='start.art',
                                   years=years,
@@ -2014,7 +1991,7 @@ do.setup.background <- function(components,
     else
         stop(paste0("background for '", type, "' has already been set up"))
     
-    components[[type.name]]$years = years
+    components[[type.name]]$years = sort(years)
     
     model = get.transition.element.background.model(transition.element=transition.element,
                                                     continuum.manager=continuum.manager,
@@ -2034,6 +2011,8 @@ do.setup.background <- function(components,
     
     components[[type.name]]$model = model
     
+    if (max(transition.element$ramp.times) >= min(years))
+        stop("ramp years must precede model years")
     components[[type.name]]$ramp.years = transition.element$ramp.times
     components[[type.name]]$ramp.multipliers = transition.element$ramp.multipliers
     
@@ -2113,6 +2092,9 @@ do.set.ramp.times <- function(components,
     
     type.name = paste0('background.', type)
     components[[type.name]]$ramp.times[indices] = values
+    
+    if (!all(sort(components[[type.name]]$ramp.times)==components[[type.name]]$ramp.times))
+        stop("the resulting ramp times must be in increasing order")
     
     components = clear.dependent.values(components,
                                         dependent.on = type.name)

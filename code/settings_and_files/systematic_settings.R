@@ -7,8 +7,8 @@ COMPUTER.LOCATION = 'cluster'
 SYSTEMATIC.ROOT.DIR = '../work-tfojo1/Ending_HIV/' #for the cluster
 if (!dir.exists(SYSTEMATIC.ROOT.DIR))
 {
-#    SYSTEMATIC.ROOT.DIR = 'Q:JHEEM'
-    SYSTEMATIC.ROOT.DIR = 'R:/WD Backup.swstor/tfojo1/NGE2NzRlYTZjOTIzNGJmYz/Volume{baccb07e-97f3-498c-89dd-d6f3a161e400}/JHEEM'
+    SYSTEMATIC.ROOT.DIR = 'Q:JHEEM'
+#    SYSTEMATIC.ROOT.DIR = 'R:/WD Backup.swstor/tfojo1/NGE2NzRlYTZjOTIzNGJmYz/Volume{baccb07e-97f3-498c-89dd-d6f3a161e400}/JHEEM'
     COMPUTER.LOCATION = 'desktop'
 }
 if (!dir.exists(SYSTEMATIC.ROOT.DIR))

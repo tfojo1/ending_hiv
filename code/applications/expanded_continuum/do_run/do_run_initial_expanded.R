@@ -16,8 +16,12 @@ if (RESUME)
     print(save.suffix)
     print('----------------------------------------------------')
     print(qplot(1,1) + ggtitle(paste0(msa.names(msa), ' - INITIAL')) + theme(plot.title=element_text(hjust=1)))
-    mcmc = run.mcmc.for.msa.cache(paste0('Q:JHEEM/mcmc_runs/systematic_caches_expanded/',
-                                         msa, '_1x25K_2022-06-07'))
+    
+    dir = file.path(MCMC.DIR,
+                    paste0('systematic_caches', get.directory.suffix.for.version(version)))
+    
+    
+    mcmc = resume.most.recent.mcmc.for.location(dir, location=msa)
 }
 if (!RESUME)
 {

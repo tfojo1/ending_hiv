@@ -358,9 +358,9 @@ EXPANDED.CONTINUUM.PARAMETERS.PRIOR = join.distributions(
     #non-AIDS mortality in hiv-negative from table 3'
     
     #-- HIV-Specific Mortality --#
-    hiv.mortality.0 = Lognormal.Distribution(log(9.5/6.1 * 23/1000), log(2)/4),
-    hiv.mortality.2 = Lognormal.Distribution(log(23/1000), log(2)/4),
-    peak.hiv.mortality = Lognormal.Distribution(log(41/6.1 * 23/1000), log(2)/4),
+    hiv.mortality.0 = Lognormal.Distribution(log(9.5/6.1 * 23/1000), log(2)/2),
+    hiv.mortality.2 = Lognormal.Distribution(log(23/1000), log(2)),
+    peak.hiv.mortality = Lognormal.Distribution(log(41/6.1 * 23/1000), log(2)/2),
     #http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.688.1831&rep=rep1&type=pdf
     
     #-- Sexual Mixing by Age --#
@@ -620,10 +620,12 @@ EXPANDED.CONTINUUM.PARAMETER.VAR.BLOCKS.1 = list(
                  'age5.proportion.lost.or',
                  'age5.proportion.lost.slope.or'),
     
-    suppressed.vs.nonsuppressed.continuum = c('recently.suppressed.vs.failing.proportion.adherent.or',
+    suppressed.vs.nonsuppressed.adherence = c('recently.suppressed.vs.failing.proportion.adherent.or',
                                               'durably.suppressed.vs.failing.proportion.adherent.or',
-                                              'naive.vs.failing.proportion.adherent.or',
-                                              'suppressed.vs.failing.proportion.lost.or',
+                                              'naive.vs.failing.proportion.adherent.or'),
+    
+    suppressed.vs.nonsuppressed.retention = c('recently.suppressed.vs.failing.proportion.lost.or',
+                                              'durably.suppressed.vs.failing.proportion.lost.or',
                                               'naive.vs.failing.proportion.lost.or',
                                               'already.lost.vs.failing.proportion.lost.or'),
     
@@ -654,9 +656,9 @@ VERSION.MANAGER = register.parameter.sampling.blocks(VERSION.MANAGER,
 
 if (1==2)
 {
-    length(PARAMETER.VAR.BLOCKS.1)
-    setdiff(unique(unlist(PARAMETER.VAR.BLOCKS.1)), parameters.prior@var.names)    
-    setdiff(parameters.prior@var.names, unique(unlist(PARAMETER.VAR.BLOCKS.1)))    
+    length(EXPANDED.CONTINUUM.PARAMETER.VAR.BLOCKS.1)
+    setdiff(unique(unlist(EXPANDED.CONTINUUM.PARAMETER.VAR.BLOCKS.1)), EXPANDED.CONTINUUM.PARAMETERS.PRIOR@var.names)    
+    setdiff(EXPANDED.CONTINUUM.PARAMETERS.PRIOR@var.names, unique(unlist(EXPANDED.CONTINUUM.PARAMETER.VAR.BLOCKS.1)))    
 }
 
 

@@ -1,6 +1,6 @@
 
 source('code/calibration/target_msas.R')
-msa = BALTIMORE.MSA
+msa = DALLAS.MSA
 source('code/settings_and_files/systematic_settings.R')
 source('code/processing/for_talks/talk_plot_settings.R')
 
@@ -24,7 +24,7 @@ if (ON.DESKTOP)
     ex4.filename = paste0('1.0_',msa,'_', expanded.int4, '.Rdata')
     
     
-    src.dir = 'Q:/JHEEM/simulations/ehe'
+    src.dir = file.path(SIMULATIONS.DIR, 'ehe')
     
     
     load(file.path(src.dir, msa, ex1.filename))

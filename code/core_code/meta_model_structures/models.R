@@ -87,30 +87,22 @@ project.from.logistic.model <- function(model, years,
                                         future.slope, future.slope.after.year,
                                         dim.names)
 {
-    intercept.alphas = map.alphas(raw.alphas=alphas$intercept$main.effects, dim.names=dim.names,
-                                  collapse.sex.risk = alphas$intercept$interact.sex.risk)
     intercept = add.alphas.to.array(arr=model$intercept,
-                                    alphas=intercept.alphas,
-                                    target.dim.names = dim.names)
+                                        alphas=alphas$intercept$main.effects,
+                                        target.dim.names = dim.names,
+                                        collapse.sex.risk = alphas$intercept$interact.sex.risk)
     if (!is.null(alphas$intercept$interaction.effects))
         intercept = add.interaction.alphas.to.array(arr=intercept,
                                                     interaction.alphas=alphas$intercept$interaction.effects)
     
-    if (is.null(alphas$slope))
-        slope = add.alphas.to.array(arr=model$slope,
-                                    alphas=NULL,
-                                    target.dim.names = dim.names)
-    else
-    {
-        slope.alphas = map.alphas(raw.alphas=alphas$slope$main.effects, dim.names=dim.names,
-                                  collapse.sex.risk = alphas$slope$interact.sex.risk)
-        slope = add.alphas.to.array(arr=model$slope,
-                                    alphas=slope.alphas,
-                                    target.dim.names = dim.names)
-        if (!is.null(alphas$intercept$interaction.effects))
-            slope = add.interaction.alphas.to.array(arr=slope,
-                                                    interaction.alphas=alphas$slope$interaction.effects)
-    }
+    slope = add.alphas.to.array(arr=model$slope,
+                                        alphas=alphas$slope$main.effects,
+                                        target.dim.names = dim.names,
+                                        collapse.sex.risk = alphas$slope$interact.sex.risk)
+    if (!is.null(alphas$intercept$interaction.effects))
+        slope = add.interaction.alphas.to.array(arr=slope,
+                                                interaction.alphas=alphas$slope$interaction.effects)
+   
     
     lapply(years, function(year){
         
@@ -224,7 +216,8 @@ get.model.scale.transformation.function <- function(model)
 
 #-- HELPERS --#
 
-map.alphas <- function(raw.alphas,
+
+OLD.map.alphas <- function(raw.alphas,
                        dim.names,
                        collapse.sex.risk,
                        missing.value=0)
@@ -253,9 +246,58 @@ map.alphas <- function(raw.alphas,
     alphas
 }
 
+add.alphas.to.array <- function(arr,
+                                    alphas,
+                                    target.dim.names,
+                                    collapse.sex.risk)
+{
+    arr = expand.population(arr, target.dim.names)
+    
+    if (!is.null(alphas))
+    {
+        if (collapse.sex.risk)
+            dim.names = collapse.dim.names.sex.risk(target.dim.names)
+        else
+            dim.names = target.dim.names
+        
+        alpha.dims = lapply(names(alphas), function(alpha.name){
+            dim = (1:length(dim.names))[names(dim.names)==alpha.name]
+            if (length(dim)==0)
+                stop(paste0("Could not add alphas to array. Dimension '", alpha.name, "' is not present in the target array"))
+            
+            rep(dim, length(alphas[[alpha.name]]))
+        })
+        
+        alpha.indices = lapply(1:length(alphas), function(i){
+            dim.values = dim.names[[ names(alphas)[i] ]]
+            sapply(names(alphas[[i]]), function(alpha.value.name){
+                mask = dim.values==alpha.value.name
+                if (!any(mask))
+                    stop("Could not add alphas to array. The '", names(alphas)[i],
+                         "' dimension does not contain the value '", alpha.value.name,
+                         "' in the target array")
+                (1:length(dim.values))[mask][1]
+            })
+        })
+        
+        n.in.dim = sapply(dim.names, length)
+        n.before.dim = cumprod(n.in.dim) / n.in.dim
+        n.after.dim = rev(cumprod(rev(n.in.dim))) / n.in.dim
+        
+        arr = arr + do_add_alphas_to_arr(alpha_values = as.numeric(unlist(alphas)),
+                                         alpha_dims = as.integer(unlist(alpha.dims)),
+                                         alpha_indices = as.integer(unlist(alpha.indices)),
+                                         n_before_dim = as.integer(n.before.dim),
+                                         n_in_dim = as.integer(n.in.dim),
+                                         n_after_dim = as.integer(n.after.dim))
+    }
+    
+    arr
+}
+
 # alphas - a named list of named numeric vectors
 # returns an array with dimnames the names of each element of alphas
-add.alphas.to.array <- function(arr,
+OLD.add.alphas.to.array <- function(arr,
                                 alphas,
                                 target.dim.names)
 {

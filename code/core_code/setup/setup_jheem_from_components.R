@@ -1156,11 +1156,16 @@ do.setup.idu.transitions <- function(components)
         
         
         # Merge all the rates by time, with needle exchange        
-        components$interpolated.idu.transition.years = sort(unique(union(needle.exchange$times,
-                                                                         union(idu.relapse$times,
-                                                                               union(idu.incidence$times, 
-                                                                                     idu.remission$times)
-                                                                               ))))
+    #    components$interpolated.idu.transition.years = sort(unique(union(needle.exchange$times,
+     #                                                                    union(idu.relapse$times,
+      #                                                                         union(idu.incidence$times, 
+       #                                                                              idu.remission$times)
+        #                                                                       ))))
+        components$interpolated.idu.transition.years = union_sorted_vectors(list(needle.exchange$times,
+                                                                                 idu.relapse$times,
+                                                                                 idu.incidence$times, 
+                                                                                 idu.remission$times))
+        
         
         if (!setequal(components$interpolated.idu.transition.years, idu.incidence$times))
             idu.incidence$rates = interpolate.parameters(values=idu.incidence$rates,
@@ -1341,17 +1346,17 @@ do.setup.continuum.transitions <- function(components)
             
         ##-- INTERPOLATE THE RATES --##
             
-            all.times = sort(unique(c(testing.rates$times,
-                                      linkage.rates$times,
-                                      non.linkage.rates$times,
-                                      naive.to.failing.rates$times,
-                                      naive.to.suppressed.rates$times,
-                                      naive.to.disengaged.rates$times,
-                                      failing.to.suppressed.rates$times,
-                                      failing.to.disengaged.rates$times,
-                                      suppressed.to.failing.rates$times,
-                                      suppressed.to.disengaged.rates$times,
-                                      reengagement.rates$times)))
+            all.times = union_sorted_vectors(list(testing.rates$times,
+                                                  linkage.rates$times,
+                                                  non.linkage.rates$times,
+                                                  naive.to.failing.rates$times,
+                                                  naive.to.suppressed.rates$times,
+                                                  naive.to.disengaged.rates$times,
+                                                  failing.to.suppressed.rates$times,
+                                                  failing.to.disengaged.rates$times,
+                                                  suppressed.to.failing.rates$times,
+                                                  suppressed.to.disengaged.rates$times,
+                                                  reengagement.rates$times))
             
             
             #-- From Undiagnosed --#
@@ -1797,9 +1802,12 @@ do.calculate.prep.coverage <- function(components)
     #-- Baseline PrEP RRs --#
     components$prep.rrs.and.times = do.calculate.prep.rrs(components)
 
-    all.times = sort(unique(c(components$prep.rates.and.times$times,
-                              components$prep.rrs.and.times$times)))
-    
+#    all.times = sort(unique(c(components$prep.rates.and.times$times,
+ #                             components$prep.rrs.and.times$times)))
+  
+    all.times = union_sorted_vectors(list(components$prep.rates.and.times$times,
+                                          components$prep.rrs.and.times$times))
+      
     #-- Other Types of PrEP --#
     if (length(get.prep.types(components))>1)
     {
@@ -1814,9 +1822,12 @@ do.calculate.prep.coverage <- function(components)
             
             components$additional.prep[[type]]$rrs.and.times = do.calculate.prep.rrs(components, type=type)
             
-            all.times = sort(unique(c(all.times,
-                                      components$additional.prep[[type]]$rates.and.times$times,
-                                      components$additional.prep[[type]]$rrs.and.times$times)))
+            all.times = union_sorted_vectors(list(all.times,
+                                                  components$additional.prep[[type]]$rates.and.times$times,
+                                                  components$additional.prep[[type]]$rrs.and.times$times))
+ #           all.times = sort(unique(c(all.times,
+#                                      components$additional.prep[[type]]$rates.and.times$times,
+  #                                    components$additional.prep[[type]]$rrs.and.times$times)))
         }
     }
     
@@ -3354,7 +3365,8 @@ do.setup.transitions <- function(components,
     }
     
     # merge all rates for times
-    all.times = sort(unique(unlist(rate.component.times)))
+#    all.times = sort(unique(unlist(rate.component.times)))
+    all.times = union_sorted_vectors(rate.component.times)
     rate.components = lapply(1:length(rate.components), function(i){
         rv = interpolate.parameters(values=rate.components[[i]],
                                     value.times=rate.component.times[[i]],
@@ -3376,11 +3388,23 @@ do.setup.transitions <- function(components,
                                                     names(transition.dim.names) != paste0(dimension, '.to')]
     
     # iterate through each time
+    
+    masks.for.transitions = lapply(transitions, function(transition){
+        
+        mask = get.two.dim.access.indices(dim.names = dim.names,
+                                          dim1 = paste0(dimension, '.from'),
+                                          dim.value1 = transition$from,
+                                          dim2 = paste0(dimension, '.to'),
+                                          dim.value2 = transition$to)
+    })
+    
     rates = lapply(1:length(all.times), function(i){
         
         rv = trans.skeleton
-        for (transition in transitions)
+        for (j in 1:length(transitions))
         {
+            transition = transitions[[j]]
+            
             #   map the rates for that time to a list
             rate.components.for.time = lapply(transition$element.names, function(elem){
                 prepare.rate.components(rate.components[[elem]][[i]], 
@@ -3395,12 +3419,7 @@ do.setup.transitions <- function(components,
             t.rate = resolve.transition(transition, bindings=rate.components.for.time)
             
             #   plug in
-            mask = get.two.dim.access.indices(dim.names = dim.names,
-                                              dim1 = paste0(dimension, '.from'),
-                                              dim.value1 = transition$from,
-                                              dim2 = paste0(dimension, '.to'),
-                                              dim.value2 = transition$to)
-            rv[mask] = t.rate
+            rv[ masks.for.transitions[[j]] ] = t.rate
             
 #            if (dimension=='continuum')
  #               rv[,,,,,transition$from,,,transition$to] = t.rate
@@ -3464,7 +3483,7 @@ prepare.rate.components <- function(rate.components,
         if (length(extra.dim)==0)
             rv = rate.components
         else if (length(extra.dim)==1)
-            rv = single.dim.access(rate.components, extra.dim, access.if.extra.dim)
+            rv = single.dim.access(rate.components, extra.dim, access.if.extra.dim, allow.unoptimized = F)
         else
             stop("Cannot handle rate.components array - too many dimensions")
         
@@ -3560,6 +3579,7 @@ get.rates.from.background.and.foreground <- function(background.rates,
                                                                convert.from.type = background.data.type,
                                                                convert.to.type = this.foreground.data.type)
         
+        # this could be optimized - we'd have to do better on the foreground.start.times and end.times
         all.times = sort(unique(c(background.times, 
                                   this.foreground.times, 
                                   as.numeric(this.foreground.start.times), 
@@ -3700,7 +3720,9 @@ merge.rates <- function(rates1,
                         times2)
 {
     rv = list()
-    rv$times = sort(unique(c(times1,times2)))
+    
+#    rv$times = sort(unique(c(times1,times2)))
+    rv$times = union_sorted_vectors(list(times1, times2))
     
     interpolate.fn = function(times, rates){
         lapply(rv$times, function(time){
@@ -3734,7 +3756,8 @@ array.merge.rates <- function(skeleton.array,
                               array.indices.into.list)
 {
     rv = list()
-    rv$times = unique(sort(unlist(sapply(rates.and.times.list, function(rt){rt$times}))))
+#    rv$times = unique(sort(unlist(sapply(rates.and.times.list, function(rt){rt$times}))))
+    rv$times = union_sorted_vectors(lapply(rates.and.times.list, function(rt){rt$times}))
     
     interpolate.fn = function(times, rates){
         lapply(rv$times, function(time){
@@ -3786,8 +3809,9 @@ merge.three.rates <- function(rates1,
                               times3)
 {
     rv = list()
-    rv$times = sort(unique(c(times1,times2,times3)))
-    
+#    rv$times = sort(unique(c(times1,times2,times3)))
+    rv$times = union_sorted_vectors(list(times1, times2, times3))
+       
     interpolate.fn = function(times, rates){
         lapply(rv$times, function(time){
             n.times = length(times)

@@ -1,8 +1,30 @@
 CACHE.FREQUENCY = 500
 
 
+##----------------------##
+##-- RESUME PRIOR RUN --##
+##----------------------##
 
-
+resume.most.recent.mcmc.for.location <- function(dir,
+                                                 location)
+{
+    cache.dirs = list.files(dir, include.dirs = T)
+    cache.dirs = cache.dirs[substr(cache.dirs, 1, nchar(location))==location]
+    if (length(cache.dirs)==0)
+        stop(paste0("No caches have been set up for location '", location, "' in directory '", dir, "'"))
+    
+    date.for.cache.dirs = as.Date(substr(cache.dirs, nchar(cache.dirs)-9, nchar(cache.dirs)))
+    index = order(date.for.cache.dirs, decreasing = T)[1]
+    
+    if (sum(date.for.cache.dirs==date.for.cache.dirs[index])>1)
+        stop(paste0("More than one cache has been set up for '", location,
+                    "' on the most recent day caches were set up (", date.for.cache.dirs[index], ")"))
+    
+    dir.to.resume = cache.dirs[index]
+    print(paste0("Resuming MCMC run from cache '", dir.to.resume, "'"))
+    
+    run.mcmc.for.msa.cache(file.path(dir, dir.to.resume))
+}
 
 ##-----------------##
 ##-- RUN INITIAL --##

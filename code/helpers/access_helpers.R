@@ -13,9 +13,9 @@ single.dim.access <- function(arr,
     dim.names = dimnames(arr)
     
     dim.index = (1:length(dim.names))[names(dim.names)==dim]
-    n.dim = length(dim.names[[dim]])
+    num.dims = length(dim.names)
     
-    if (n.dim==8)
+    if (num.dims==8)
     {
         arr = switch(dim.index,
                      arr[dim.value,,,,,,,], #1
@@ -28,7 +28,7 @@ single.dim.access <- function(arr,
                      arr[,,,,,,,dim.value] #8
         )
     }
-    else if (n.dim==6)
+    else if (num.dims==6)
     {
         arr = switch(dim.index,
                      arr[dim.value,,,,,], #1
@@ -39,7 +39,7 @@ single.dim.access <- function(arr,
                      arr[,,,,,dim.value] #6
         )
     }
-    else if (n.dim==5)
+    else if (num.dims==5)
     {
         arr = switch(dim.index,
                      arr[dim.value,,,,], #1
@@ -56,6 +56,8 @@ single.dim.access <- function(arr,
         else if (is.logical(dim.value))
             dim.value = (1:length(dim.names[[dim]]))[dim.value][1]
         
+        n.dim = length(dim.names[[dim]])
+        
         n.before = prod(sapply(dim.names[1:dim.index], length)) / n.dim
         n = prod(sapply(dim.names, length))
         
@@ -64,7 +66,9 @@ single.dim.access <- function(arr,
         arr = arr[mask]
     }
     else
+    {
         stop("No optimized implementation exists for the given array configuration ")
+    }
     
     dim.names = dim.names[names(dim.names) != dim]
     dim(arr) = sapply(dim.names, length)
@@ -327,6 +331,7 @@ pairwise.access.transitions <- function(arr,
     }
 }
 
+
 get.two.dim.access.indices <- function(dim.names,
                                        dim1,
                                        dim.value1,
@@ -334,6 +339,12 @@ get.two.dim.access.indices <- function(dim.names,
                                        dim.value2)
 {
     # get the values as indices
+    
+    if (is.character(dim1))
+        dim1 = (1:length(dim.names))[names(dim.names)==dim1]
+    
+    if (is.character(dim2))
+        dim2 = (1:length(dim.names))[names(dim.names)==dim2]
     
     if (is.character(dim.value1))
         dim.value1 = (1:length(dim.names[[dim1]]))[dim.names[[dim1]]==dim.value1]
@@ -345,6 +356,31 @@ get.two.dim.access.indices <- function(dim.names,
     else if (is.logical(dim.value2))
         dim.value2 = (1:length(dim.names[[dim2]]))[dim.value2][1]
     
+    1 + do_get_two_dim_access_indices(dims = as.integer(sapply(dim.names, length)),
+                                  dim1 = as.integer(dim1),
+                                  dim1_value = as.integer(dim.value1),
+                                  dim2 = as.integer(dim2),
+                                  dim2_value = as.integer(dim.value2))
+}
+
+OLD.get.two.dim.access.indices <- function(dim.names,
+                                       dim1,
+                                       dim.value1,
+                                       dim2,
+                                       dim.value2)
+{
+    # get the values as indices
+    
+    if (is.character(dim.value1))
+        dim.value1 = (1:length(dim.names[[dim1]]))[dim.names[[dim1]]==dim.value1]
+    else if (is.logical(dim.value1))
+        dim.value1 = (1:length(dim.names[[dim1]]))[dim.value1][1]
+  
+    if (is.character(dim.value2))
+        dim.value2 = (1:length(dim.names[[dim2]]))[dim.names[[dim2]]==dim.value2]
+    else if (is.logical(dim.value2))
+        dim.value2 = (1:length(dim.names[[dim2]]))[dim.value2][1]
+
     # set up pre-calculation stuff
     
     n = prod(sapply(dim.names, length))

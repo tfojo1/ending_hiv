@@ -22,12 +22,12 @@ if (ON.DESKTOP)
     source('code/source_code.R')
     
     
-    base.filename = paste0('/1.0_',msa,'_full.Rdata')
+    base.filename = paste0('1.0_',msa,'_full.Rdata')
     noint.filename = paste0('1.0_',msa,'_noint.Rdata')
     delayed.filename = paste0('1.0_',msa,'_covid.delayed.mobility.Rdata')
     rapid.filename = paste0('1.0_',msa,'_covid.rapid.resumption.mobility.Rdata')
     
-    src.dir = 'Q:/JHEEM/simulations'
+    src.dir = SIMULATIONS.DIR
     
     #-- Load Simsets --#
     

@@ -60,7 +60,8 @@ TRANSITION.ELEMENT.TYPES = c('rate',
                              'time')
 
 TRANSITION.ELEMENT.MODEL.SOURCES = c('continuum.manager',
-                                     'prep.manager')
+                                     'prep.manager',
+                                     'comorbidities.manager')
 
 TRANSITION.ELEMENT.RAMP.SCALES = c('identity','log','exp')
 
@@ -183,6 +184,9 @@ create.transition.element <- function(name,
         
         if (!is.numeric(ramp.times))
             stop("ramp.times must be a numeric vector")
+        if (!all(ramp.times==sort(ramp.times)))
+            stop("ramp.times must be in increasing order")
+        
         if (!is.numeric(ramp.multipliers))
             stop("ramp.times must be a numeric vector")
         if (!is.character(ramp.interpolate.scales))
