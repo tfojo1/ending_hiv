@@ -7,12 +7,15 @@ library(jheem)
 library(bayesian.simulations)
 library(ggplot2)
 
+library(Rcpp)
+
 #-- Source Low-Level Helpers --#
+sourceCpp('code/helpers/misc_helpers.cpp')
 source('code/helpers/list_helpers.R')
+sourceCpp('code/helpers/access_helpers.cpp')
 source('code/helpers/access_helpers.R')
 
 #-- Source Settings --#
-source('code/settings_and_files/version_manager.R')
 source('code/settings_and_files/systematic_settings.R')
 source('code/settings_and_files/file_manager.R')
 
@@ -48,9 +51,10 @@ source('code/core_code/data_managers/hiv_surveillance_manager.R')
 source('code/calibration/target_msas.R')
 
 #-- Set-Up --#
-source('code/core_code/meta_model_structures/logit_transformations.R')
-source('code/core_code/meta_model_structures/models.R')
 source('code/core_code/meta_model_structures/jheem_sim_interface.R')
+source('code/core_code/meta_model_structures/logit_transformations.R')
+sourceCpp('code/core_code/meta_model_structures/models.cpp')
+source('code/core_code/meta_model_structures/models.R')
 
 source('code/core_code/setup/interpolating.R')
 source('code/core_code/setup/base_parameters.R')
@@ -61,24 +65,14 @@ source('code/core_code/setup/setup_components_for_locale.R')
 source('code/core_code/setup/setup_initial_components.R')
 
 #-- Calibration --#
-source('code/calibration/parameter_mappings/calibrated_parameters_helpers.R')
-
+sourceCpp('code/calibration/likelihoods/likelihoods.cpp')
 source('code/calibration/likelihoods/estimate_cdc_errors.R')
 source('code/calibration/likelihoods/likelihoods_2.R')
 source('code/calibration/likelihoods/likelihoods_nested_location2.R')
 source('code/calibration/likelihoods/likelihood_master.R')
 
 #-- Versions --#
-source('code/core_code/meta_model_structures/jheem_settings.R')
-source('code/core_code/meta_model_structures/transition_mappings.R')
-
-# Original (EHE)
-source('code/applications/ehe/ehe_jheem_settings.R')
-source('code/calibration/parameter_mappings/calibrated_parameters_118.R')
-
-# Expanded Continuum
-source('code/applications/expanded_continuum/expanded_continuum_jheem_settings.R')
-source('code/calibration/parameter_mappings/calibrated_parameters_expanded_2.R')
+source('code/settings_and_files/setup_versions.R')
 
 #-- Systematic --#
 source('code/processing//postprocessing.R')

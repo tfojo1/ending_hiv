@@ -16,15 +16,15 @@ create.msa.likelihood <- function(msa,
                                   
                                   NEW.WEIGHT = 1/4,#1/2,
                                   PREV.WEIGHT = 1,#2,
-                                  MORT.WEIGHT = 1,
+                                  MORT.WEIGHT = 1/16,
                                   CUM.MORT.WEIGHT = 1,
                                   IDU.WEIGHT = 1,
                                   AIDS.DX.WEIGHT = 1,
-                                  DX.WEIGHT = 1,#1/4,
+                                  DX.WEIGHT = 1/4,#1/4,
                                   SUPPRESSION.WEIGHT = 1/16,
                                   ENGAGEMENT.WEIGHT = 1/16,
                                   LINKAGE.WEIGHT = 1/16,
-                                  RETENTION.WEIGHT = 1/2,
+                                  RETENTION.WEIGHT = 1/4,
                                   PREP.WEIGHT = 1,
                                   
                                   TESTING.WEIGHT = 1,
@@ -82,6 +82,7 @@ create.msa.likelihood <- function(msa,
                                   verbose=F)
 { 
   parameters = as.list(environment())
+  settings = get.settings.for.version(version)
   
   #-- SETTINGS --#
   
@@ -233,7 +234,8 @@ create.msa.likelihood <- function(msa,
                                            numerator.year.to.year.chunk.correlation=year.to.year.chunk.correlation,
                                            numerator.year.to.year.off.correlation=year.to.year.off.correlation,
                                            numerator.chunk.years=new.correlated.year.chunks,
-                                           numerator.sd = NEW.SD)
+                                           numerator.sd = NEW.SD,
+                                           settings=settings)
       
       if (!is.null(debug.component))
           return (new.lik)
@@ -266,7 +268,8 @@ create.msa.likelihood <- function(msa,
                                             numerator.year.to.year.chunk.correlation=year.to.year.chunk.correlation,
                                             numerator.year.to.year.off.correlation=year.to.year.off.correlation,
                                             numerator.chunk.years=prevalence.correlated.year.chunks,
-                                            numerator.sd = PREV.SD)
+                                            numerator.sd = PREV.SD,
+                                            settings=settings)
       
       if (!is.null(debug.component))
           return (prev.lik)
@@ -294,7 +297,8 @@ create.msa.likelihood <- function(msa,
                                             numerator.chunk.years=mortality.correlated.year.chunks,
                                             numerator.sd = MORT.SD,
                                             bias.fn = MORT.BIAS,
-                                            bias.sd = MORT.BIAS.SD
+                                            bias.sd = MORT.BIAS.SD,
+                                            settings=settings
       )
       
       if (!is.null(debug.component))
@@ -442,7 +446,8 @@ create.msa.likelihood <- function(msa,
                                         by.age=T,
                                         by.sex=T,
                                         p.indicated.cv=prep.indicated.cv,
-                                        p.indicated.rho=prep.indicated.rho)
+                                        p.indicated.rho=prep.indicated.rho,
+                                        settings=settings)
       
       if (verbose)
         print("Creating 'diagnosed' likelihood")

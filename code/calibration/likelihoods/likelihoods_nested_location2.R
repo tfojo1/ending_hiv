@@ -511,6 +511,14 @@ create.nested.likelihood <- function(data.type=c('suppression','engagement','lin
         response.index = response.index + n.responses.per
     }
     
+    response.year.index = sapply(response.year, function(y){
+        rv = (1:length(years))[y==years]
+        if (length(rv)!=1)
+            stop("could not map year")
+        
+        rv
+    })
+    
     dim(transformation.array) = c(n.responses, n.years*n.obs.locations, n.strata)
     
     #add in additional, correlated error
@@ -922,17 +930,19 @@ create.nested.likelihood <- function(data.type=c('suppression','engagement','lin
     dim(year.loc.stratum.to.obs.mapping.as.mat) = c(n.responses, n.years * n.obs.locations * n.strata)
     t.year.loc.stratum.to.obs.mapping.as.mat = t(year.loc.stratum.to.obs.mapping.as.mat)
     
-    # in list form (and mask)
-    year.loc.stratum.to.obs.mapping = lapply(1:n.strata, function(d){
+    # in list form (no mask)
+    full.year.loc.stratum.to.obs.mapping = lapply(1:n.strata, function(d){
         rv = transformation.array[,,d]
         dim(rv) = c(n.responses, n.years * n.obs.locations)
         rv
     })
-    year.loc.stratum.to.obs.mask = lapply(year.loc.stratum.to.obs.mapping, function(mapping){
+    
+    # in list form (and mask)
+    year.loc.stratum.to.obs.mask = lapply(full.year.loc.stratum.to.obs.mapping, function(mapping){
         apply(mapping!=0, 2, any)
     })
     year.loc.stratum.to.obs.mapping = lapply(1:n.strata, function(d){
-        year.loc.stratum.to.obs.mapping[[d]][, year.loc.stratum.to.obs.mask[[d]] ]
+        full.year.loc.stratum.to.obs.mapping[[d]][, year.loc.stratum.to.obs.mask[[d]] ]
     })
     
     #--  year x metalocation to year x obs.location --#
@@ -945,6 +955,11 @@ create.nested.likelihood <- function(data.type=c('suppression','engagement','lin
     pre.mask.year.metalocation.to.year.obs.location.mapping = year.metalocation.to.year.obs.location.mapping
     year.metalocation.to.year.obs.location.mapping = 
         year.metalocation.to.year.obs.location.mapping[,year.metalocation.to.year.obs.location.mask]
+    
+    full.year.metalocation.to.obs.mapping = lapply(1:n.strata, function(d){
+        year.loc.stratum.to.obs.mapping[[d]] %*%
+            pre.mask.year.metalocation.to.year.obs.location.mapping[year.loc.stratum.to.obs.mask[[d]],]
+    })
     
     #-- the map from metalocations to obs --#
     
@@ -1120,18 +1135,22 @@ create.nested.likelihood <- function(data.type=c('suppression','engagement','lin
                 obs.n = obs.n,
                 obs.n.plus.conditioned.error.variances = obs.n.plus.conditioned.error.variances,
                 
-                year.metalocation.to.year.condition.on.location.mask,
-                year.metalocation.to.year.condition.on.location.mapping,
+                year.metalocation.to.year.condition.on.location.mask=year.metalocation.to.year.condition.on.location.mask,
+                year.metalocation.to.year.condition.on.location.mapping=year.metalocation.to.year.condition.on.location.mapping,
                 
                 year.metalocation.to.year.obs.location.mask = year.metalocation.to.year.obs.location.mask,
                 year.metalocation.to.year.obs.location.mapping = year.metalocation.to.year.obs.location.mapping,
                 
-                year.loc.stratum.to.obs.mask = year.loc.stratum.to.obs.mask,
-                year.loc.stratum.to.obs.mapping = year.loc.stratum.to.obs.mapping,
-                t.year.loc.stratum.to.obs.mapping.as.mat = t.year.loc.stratum.to.obs.mapping.as.mat,
+                full.year.loc.stratum.to.obs.mapping = full.year.loc.stratum.to.obs.mapping,
+                full.year.metalocation.to.obs.mapping = full.year.metalocation.to.obs.mapping,
                 
-                year.metalocation.stratum.to.obs.mapping = year.metalocation.stratum.to.obs.mapping,
+             #   year.loc.stratum.to.obs.mask = year.loc.stratum.to.obs.mask,
+             #   year.loc.stratum.to.obs.mapping = year.loc.stratum.to.obs.mapping,
+             #   t.year.loc.stratum.to.obs.mapping.as.mat = t.year.loc.stratum.to.obs.mapping.as.mat,
                 
+             #   year.metalocation.stratum.to.obs.mapping = year.metalocation.stratum.to.obs.mapping,
+                
+                obs.year.index = response.year.index,
                 obs.p = response.vector,
                 obs.error = error.cov.mat,
                 
@@ -1202,6 +1221,216 @@ create.nested.likelihood <- function(data.type=c('suppression','engagement','lin
 #       real-world location (state, city, county) where we have at least one observation at some time
 
 nested.proportion.likelihood.sub <- function(
+        
+    #-- SET-UP ARGUMENTS --#
+    
+    p, #array, indexed [year, stratum]
+    n, #array, indexed [year, stratum]
+    
+    # Each of the next four arguments are a list
+    # One element for each stratum
+    # Each element is a matrix indexed [year, metalocation]
+    year.metalocation.n.multipliers, 
+    year.metalocation.n.multiplier.sd,
+    year.metalocation.p.bias,
+    year.metalocation.p.sd,
+    
+    # The next two are scalar arguments
+    metalocation.p.correlation,
+    metalocation.n.multiplier.correlation,
+    
+    
+    #-- CONDITION ON N ARGUMENTS --#
+    #   We condition on two things: 
+    #       (a) the metalocation n's for the MSA
+    #       (b) some (arbitrary) number of observations which are a combination of metalocations
+    
+    
+    # A list with one element for each stratum
+    # Each element is a matrix indexed [obs, year x metalocation] 
+    year.metalocation.to.year.obs.n.mapping,
+    
+    
+    # The next two arguments are lists with on element per stratum
+    # each element is a vector indexed [obs]
+    obs.n,
+    
+    obs.n.plus.conditioned.error.variances, #also has zero's post-pended - one for each year
+    # to go with the n[,d] 
+    
+    
+    #-- CONDITION ON MSA ARGUMENTS --#
+    
+    # a mask that isolates just the year x metalocation elements in each stratum that we need to map
+    #   to the msa that we will condition on
+    # a vector of length year x metalocation
+    year.metalocation.to.year.condition.on.location.mask,
+    
+    
+    # A matrix indexed [year, year x metalocation] 
+    # the year x metalocation is AFTER applying the above mask
+    year.metalocation.to.year.condition.on.location.mapping,
+    
+    
+    #-- TRANSFORM TO OBS LOCATION --#
+    
+    # a mask that isolates just the year x metalocation elements in each stratum that we need to map
+    #   to the observed locations
+    # a vector of length year x metalocation
+    year.metalocation.to.year.obs.location.mask,
+    
+    # indexed [year x obs location, year x metalocation] 
+    # the year x metalocation is AFTER applying the above mask
+    year.metalocation.to.year.obs.location.mapping,
+    
+    #-- AGGREGATE (ACROSS STRATA) TO OBS --#
+    
+    # a list, one element for each stratum
+    # each element is a vector mask, indexed [year x obs.location]
+# *NOT USING IN CPP VERSION *
+#    year.loc.stratum.to.obs.mask,
+    
+    # An list, one element for each stratum
+    # Each element is a matrix that aggregates maps from year x obs.location to observations,
+    #       for that stratum
+    # indexed [obs, year x obs.location]
+    # year x obs.location AFTER applying the above mask
+# *NOT USING IN CPP VERSION *
+#    year.loc.stratum.to.obs.mapping, # used only in the R version
+    
+    # A transposed matrix which is the matrix version of the list above
+    # indexed [year x obs.location x stratum, obs]
+    # No masks applied
+# *NOT USING IN CPP VERSION *
+#    t.year.loc.stratum.to.obs.mapping.as.mat,
+    
+    # A matrix, indexed [obs, year x metalocation x stratum]
+    #  (this is a pre-computed:
+    #        year.loc.stratum.to.obs.mapping %*% year.metalocation.to.year.obs.location.mapping)
+    # Applies AFTER year.metalocation.to.year.obs.location.mask
+# *NOT USING IN CPP VERSION *
+#  year.metalocation.stratum.to.obs.mapping,
+    
+    
+    # An list, one element for each stratum
+    # Each element is a matrix that aggregates maps from year x obs.location to observations,
+    #       for that stratum
+    # indexed [obs, year x obs.location]
+    # year x obs.location BEFORE applying the above mask
+    # (used for the C++ version of code only)
+    full.year.loc.stratum.to.obs.mapping,
+    
+    # An list, one element for each stratum
+    # Each element is a matrix that aggregates maps from year x metalocations to observations,
+    #       for that stratum
+    # indexed [obs, year x metalocation]
+    # year x obs.location BEFORE applying any masks
+    # (used for the C++ version of code only)
+    full.year.metalocation.to.obs.mapping,
+    
+    # A vector of length n obs
+    # Each value is the index into years for the year to which each observation corresponds
+    obs.year.index,
+    
+    # A numeric vector with one value for each observation
+    obs.p,
+    
+    # A covariance matrix with dimension length(obs.p) x length(obs.p)
+    obs.error,
+    
+    # A matrix of dimension n.obs x n.obs
+    #   how much to inflate the variance-covariance matrix (before factoring in obs.error)
+    var.inflation=NULL,
+    sd.inflation=NULL, #keeping the old one for backward compatibility for now
+    
+    #-- MISC ARGUMENTS --#
+    obs.descriptions, #for debugging purposes
+    log=T,
+    debug=F
+)
+{
+    #-- Pull from CPP code --#
+        likelihood.elements = get_nested_proportion_likelihood_components(p = p,
+                                                                          n = n,
+                                                                          
+                                                                          year_metalocation_n_multipliers = year.metalocation.n.multipliers,
+                                                                          year_metalocation_n_multiplier_sd = year.metalocation.n.multiplier.sd,
+                                                                          year_metalocation_p_bias = year.metalocation.p.bias,
+                                                                          year_metalocation_p_sd = year.metalocation.p.sd,
+                                                                          
+                                                                          metalocation_p_correlation = metalocation.p.correlation,
+                                                                          metalocation_n_multiplier_correlation = metalocation.n.multiplier.correlation,
+                                                                          
+                                                                          year_metalocation_to_year_obs_n_mapping = year.metalocation.to.year.obs.n.mapping,
+                                                                          
+                                                                          obs_n = obs.n,
+                                                                          
+                                                                          obs_n_plus_conditioned_error_variances = obs.n.plus.conditioned.error.variances,
+                                                                          
+                                                                          year_metalocation_to_year_condition_on_location_mask = year.metalocation.to.year.condition.on.location.mask,
+                                                                          
+                                                                          year_metalocation_to_year_condition_on_location_mapping = year.metalocation.to.year.condition.on.location.mapping,
+                                                                          
+                                                                          year_metalocation_to_year_obs_location_mask = year.metalocation.to.year.obs.location.mask,
+                                                                          
+                                                                          year_metalocation_to_year_obs_location_mapping = year.metalocation.to.year.obs.location.mapping,
+                                                                          
+                                                                          #        year_loc_stratum_to_obs_mask = year.loc.stratum.to.obs.mask,
+                                                                          
+                                                                          year_loc_stratum_to_obs_mapping = full.year.loc.stratum.to.obs.mapping,
+                                                                          
+                                                                          #          year_metalocation_stratum_to_obs_mapping = year.metalocation.stratum.to.obs.mapping,
+                                                                          
+                                                                          year_metalocation_to_obs_mapping = full.year.metalocation.to.obs.mapping,
+                                                                          
+                                                                          obs_year_index = obs.year.index,
+                                                                          
+                                                                          obs_p = obs.p,
+                                                                          
+                                                                          obs_error = obs.error,
+                                                                          
+                                                                          var_inflation = var.inflation
+        )
+        
+        if (debug)
+            print("Ran successfully through cpp function")
+    
+        
+        #-- for checking/debugging --#
+        
+        if (debug)
+        {
+            summ = data.frame(obs=obs.descriptions, 
+                              obs=round(obs.p,3),
+                              mean=round(likelihood.elements$mean.v / likelihood.elements$obs.n,3),
+                              sd=round(sqrt(diag(likelihood.elements$cov.mat)) / likelihood.elements$obs.n,3))
+            print(summ)
+            
+            browser()
+            
+            round(cov2cor(likelihood.elements$cov.mat),2)
+            sqrt(diag(likelihood.elements$cov.mat))/likelihood.elements$obs.n
+        }
+        
+        if (any(is.na(likelihood.elements$obs.v)))
+            stop("NAs produced in obs.v")
+        if (any(is.na(likelihood.elements$mean.v)))
+            stop("NAs produced in mean.v")
+        if (any(is.na(likelihood.elements$cov.mat)))
+            stop("NAs produced in cov.mat")
+        
+        
+        #-- Compute the density --#
+        
+        dmvnorm(x = likelihood.elements$obs.v,
+                mean = likelihood.elements$mean.v,
+                sigma = likelihood.elements$cov.mat,
+                log=log)
+    
+}
+
+# This is the code that was used in running the R implementation
+OLD.nested.proportion.likelihood.sub <- function(
     
     #-- SET-UP ARGUMENTS --#
     
@@ -1275,7 +1504,7 @@ nested.proportion.likelihood.sub <- function(
     #       for that stratum
     # indexed [obs, year x obs.location]
     # year x obs.location AFTER applying the above mask
-    year.loc.stratum.to.obs.mapping,
+    year.loc.stratum.to.obs.mapping, # used only in the R version
     
     # A transposed matrix which is the matrix version of the list above
     # indexed [year x obs.location x stratum, obs]
@@ -1287,6 +1516,27 @@ nested.proportion.likelihood.sub <- function(
     #        year.loc.stratum.to.obs.mapping %*% year.metalocation.to.year.obs.location.mapping)
     # Applies AFTER year.metalocation.to.year.obs.location.mask
     year.metalocation.stratum.to.obs.mapping,
+    
+    
+    # An list, one element for each stratum
+    # Each element is a matrix that aggregates maps from year x obs.location to observations,
+    #       for that stratum
+    # indexed [obs, year x obs.location]
+    # year x obs.location BEFORE applying the above mask
+    # (used for the C++ version of code only)
+    full.year.loc.stratum.to.obs.mapping,
+    
+    # An list, one element for each stratum
+    # Each element is a matrix that aggregates maps from year x metalocations to observations,
+    #       for that stratum
+    # indexed [obs, year x metalocation]
+    # year x obs.location BEFORE applying any masks
+    # (used for the C++ version of code only)
+    full.year.metalocation.to.obs.mapping,
+    
+    # A vector of length n obs
+    # Each value is the index into years for the year to which each observation corresponds
+    obs.year.index,
     
     # A numeric vector with one value for each observation
     obs.p,
@@ -1305,8 +1555,6 @@ nested.proportion.likelihood.sub <- function(
     debug=F
 )
 {
-    
-    
 #-- Some general variables --#
     
     n.years = dim(p)[1]
@@ -1332,7 +1580,7 @@ nested.proportion.likelihood.sub <- function(
     tau.by.stratum = lapply(1:n.strata, function(d){
         n[,d] * year.metalocation.n.multiplier.sd[[d]]
     })
-    
+
     # list, one element per dimension
     # each element is a matrix, indexed [year x metalocation, year x metalocation]
     T.by.stratum = lapply(1:n.strata, function(d){
@@ -1379,7 +1627,6 @@ nested.proportion.likelihood.sub <- function(
     obs.n = lapply(1:n.strata, function(d){
         c(obs.n[[d]], n[,d])
     })
-    
     
 #-- Condition on obs n --#
     
@@ -1429,7 +1676,8 @@ nested.proportion.likelihood.sub <- function(
         dim(rv) = c(n.years, n.metalocations, n.years, n.metalocations)
         rv
     })
-
+    
+    
 #-- Set up the mean vectors and covariance matrices for metalocations --#
     
     # indexed [metalocation]
@@ -1494,7 +1742,6 @@ nested.proportion.likelihood.sub <- function(
         rv
     })
     
-    
 #-- Condition on MSA totals --#
 
     M = year.metalocation.to.year.condition.on.location.mapping
@@ -1546,6 +1793,7 @@ nested.proportion.likelihood.sub <- function(
         rv
     })
     
+    
 #-- Aggregate across strata within obs locations --#    
 
     mean.v = rowSums(sapply(1:n.strata, function(d){
@@ -1571,11 +1819,9 @@ nested.proportion.likelihood.sub <- function(
             (year.metalocation.to.year.obs.location.mapping[year.loc.stratum.to.obs.mask[[d]],] %*% 
                  as.numeric(nu.by.stratum[[d]])[year.metalocation.to.year.obs.location.mask])
     }))
-    
+
+
 #-- Inflate the SDs and add in the observation error --#    
-    
-  #  cov.mat = cov.mat * var.inflation + 
-   #     ( obs.n %*% t(obs.n) ) * obs.error
     
     cov.mat = cov.mat + 
         ( obs.n %*% t(obs.n) ) * obs.error  
@@ -1584,8 +1830,8 @@ nested.proportion.likelihood.sub <- function(
     
 #-- Map the obs n --#
     
-    obs.n = year.metalocation.stratum.to.obs.mapping[,year.metalocation.to.year.obs.location.mask] %*% 
-        unlist(nu.by.stratum)[year.metalocation.to.year.obs.location.mask]
+ #   obs.n = year.metalocation.stratum.to.obs.mapping[,year.metalocation.to.year.obs.location.mask] %*% 
+  #      unlist(nu.by.stratum)[year.metalocation.to.year.obs.location.mask]
 
     
 #-- Compute the density --#
@@ -1606,7 +1852,7 @@ nested.proportion.likelihood.sub <- function(
         round(cov2cor(cov.mat),2)
         sqrt(diag(cov.mat))/obs.n
     }
-    
+
     if (any(is.na(obs.v)))
         stop("NAs produced in obs.v")
     if (any(is.na(mean.v)))
@@ -1677,7 +1923,7 @@ get.population.for.likelihood <- function(location,
     }
     
     #-- Aggregate Races --#
-    population = collapse.races(population)
+    population = collapse.races(population, races=races)
     
     #-- IDU Prevalence --#
 
@@ -1866,7 +2112,8 @@ calculate.outcome.differences <- function(data.type,
             }
             else
             {
-                delta = smooth.scale(values1) - smooth.scale(values2)
+                delta = suppressWarnings(smooth.scale(values1) - smooth.scale(values2))
+                
                 if (is.null(dim(delta)) || length(dim(delta))==1)
                     dim(delta) = c(year=length(years), all=1)
                 

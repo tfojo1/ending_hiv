@@ -68,7 +68,8 @@ create.likelihood.function <- function(data.type=c('new','prevalence','mortality
                                        corr.mat.fn=NULL,
                                        make.variance.fn=NULL,
                                        make.cov.mat.fn=NULL,
-                                       include.msm.idu=T)
+                                       include.msm.idu=T,
+                                       settings)
 {
 #    print(denominator.dimensions)
 
@@ -84,10 +85,10 @@ create.likelihood.function <- function(data.type=c('new','prevalence','mortality
 #    population = apply(population, c('year','age','race','sex','risk'), sum)[as.character(years),,,,]
     population = access(population, year=as.character(years))
     target.dim.names = list(year=years,
-                            age=SETTINGS$AGES$labels,
-                            race=SETTINGS$RACES,
-                            sex=SETTINGS$SEXES,
-                            risk=SETTINGS$RISK_STRATA)#dimnames(population)
+                            age=settings$AGES$labels,
+                            race=settings$RACES,
+                            sex=settings$SEXES,
+                            risk=settings$RISK_STRATA)#dimnames(population)
     population = apply(population, denominator.dimensions, sum)
     population = expand.population(population, target.dim.names = target.dim.names)
     if ((aggregate.denominator.males || use.sim.msm.proportions) && any(denominator.dimensions=='sex'))
@@ -214,7 +215,7 @@ create.likelihood.function <- function(data.type=c('new','prevalence','mortality
         transformation.mapping = NULL
     
     if (data.type=='prep')
-        prep.multiplier = get.prep.indications.estimate(ALL.DATA.MANAGERS$prep, location)
+        prep.multiplier = get.prep.indications.estimate(ALL.DATA.MANAGERS$prep, location, settings=settings)
     else
         prep.multiplier = NULL
     
@@ -556,7 +557,8 @@ create.prep.likelihood <- function(location,
                                    by.sex=T,
                                    p.indicated.cv=0.25,
                                    p.indicated.rho=0.9,
-                                   use.uncertain.persistence=F)
+                                   use.uncertain.persistence=F,
+                                   settings)
 {
     
     if (!use.uncertain.persistence)
@@ -688,7 +690,8 @@ create.prep.likelihood <- function(location,
                                adjust.likelihood.elements.fn = adjust.fn,
                                corr.mat.fn = corr.mat.fn,
                                make.variance.fn = make.variance.fn,
-                               make.cov.mat.fn = make.cov.mat.fn)
+                               make.cov.mat.fn = make.cov.mat.fn,
+                               settings=settings)
 }
 
 
