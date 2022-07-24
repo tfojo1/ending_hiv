@@ -35,7 +35,7 @@ LAART.PARAMETER.DISTRIBUTION = join.distributions(
   #recently.suppressed.to.failing = , expanded continuum parameter
   resistant.versus.oral.loss.of.suppression.rr = Lognormal.Distribution(meanlog=-0.03045921, sdlog=0.2421124), 
   #recently.suppressed.to.disengaged = , expanded continuum parameter
-  resistant.versus.oral.disengagement.rr = , #look into medication complexity and adherence
+  resistant.versus.oral.disengagement.rr = Lognormal.Distribution(meanlog=0.2350018, sdlog=0.1198989), #look into medication complexity and adherence
   resistant.versus.oral.gain.of.suppression.rr = Lognormal.Distribution(meanlog=0.03045921, sdlog=0.2421124),
   resistant.versus.reengagement.rr = 1
 )
