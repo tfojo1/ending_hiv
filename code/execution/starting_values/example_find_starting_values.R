@@ -12,7 +12,9 @@ simplot(test$sim, data.types=c('engagement','suppression','suppression.of.engage
 
 
 # Increasing lost.or.mult increases proportion lost; increasing reengagement.or.mult increases re-engagement
-test = test.fn(msm.trate.1.mult = 0.97, msm.trate.2.mult = 0.94, supp.or.mult = 1.1, lost.or.mult = 1.15, 
+test = test.fn(msm.trate.1.mult = 0.97, msm.trate.2.mult = 0.91, 
+               het.trate.mult = 1.2, het.trate.2.mult = 1.1,
+               supp.or.mult = 1.3, lost.or.mult = 1.15, 
                reengagement.or.mult = 1.5) 
 # time 0 2000; time 1 2010; time 2 2020
 
@@ -33,7 +35,9 @@ save.starting.values(sim.and.params = test)
 # Atlanta - need to increase suppression; maybe decrease retention slope
 # supp.or.mult = 1.35, supp.or.slope.mult = 1.1
 
-# LA - need to decrease cases (msm in later period; also heterosexual); increase suppression; decrease retention
-# msm.trate.1.mult = 0.97, msm.trate.2.mult = 0.94, supp.or.mult = 1.1, lost.or.mult = 1.15, 
+# LA - need to decrease cases (msm in later period); increase suppression; decrease retention
+# msm.trate.1.mult = 0.97, msm.trate.2.mult = 0.91, 
+# het.trate.mult = 1.2, het.trate.2.mult = 1.1,
+# supp.or.mult = 1.3, lost.or.mult = 1.15, 
 # reengagement.or.mult = 1.5
 
