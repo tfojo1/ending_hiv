@@ -37,13 +37,49 @@ log.sds.suppression.treated.vs.no = (log(cis.suppression.treated.vs.no[,2]) - lo
 final.log.mean.suppression.treated.vs.no = mean(log.means.suppression.treated.vs.no)
 final.log.sd.suppression.treated.vs.no = mean(log.sds.suppression.treated.vs.no)
 
+
+##-- OR Retention, untreated vs no depression --##
+
+cis.retention.dep.vs.no = rbind(
+  c(1.24, 1.39), # https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6408233/
+  c(.80,.97) # https://www.tandfonline.com/doi/abs/10.1080/09540120220149993a
+)
+
+log.means.retention.dep.vs.no = rowMeans(log(cis.retention.dep.vs.no))
+log.sds.retention.dep.vs.no = (log(cis.retention.dep.vs.no[,2]) - log(cis.retention.dep.vs.no[,1])) / 2 / qnorm(0.975)
+
+final.log.mean.retention.dep.vs.no = mean(log.means.retention.dep.vs.no)
+final.log.sd.retention.dep.vs.no = mean(log.sds.retention.dep.vs.no)
+
 # summarize the resulting pooled distribution
-print(paste0("RR of suppression (treated vs untreated depression): ",
-             round(exp(final.log.mean.suppression.treated.vs.no),2),
+print(paste0("OR of suppression (untreated vs no depression): ",
+             round(exp(final.log.mean.retention.dep.vs.no),2),
              " [",
-             round(exp(final.log.mean.suppression.treated.vs.no + qnorm(0.025)*final.log.sd.suppression.treated.vs.no),2),
+             round(exp(final.log.sd.retention.dep.vs.no + qnorm(0.025)*final.log.sd.retention.dep.vs.no),2),
              " - ",
-             round(exp(final.log.mean.suppression.treated.vs.no + qnorm(0.975)*final.log.sd.suppression.treated.vs.no),2),
+             round(exp(final.log.sd.retention.dep.vs.no + qnorm(0.975)*final.log.sd.retention.dep.vs.no),2),
+             "]"))
+
+##-- OR Retention, treated vs untreated --##
+
+cis.retention.treated.vs.no = rbind(
+  c(1.18, 1.24), # https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6408233/
+  c(1.36,1.57) # https://www.tandfonline.com/doi/abs/10.1080/09540120220149993a
+)
+
+log.means.retention.treated.vs.no = rowMeans(log(cis.retention.treated.vs.no))
+log.sds.retention.treated.vs.no = (log(cis.retention.treated.vs.no[,2]) - log(cis.retention.treated.vs.no[,1])) / 2 / qnorm(0.975)
+
+final.log.mean.retention.treated.vs.no = mean(log.means.retention.treated.vs.no)
+final.log.sd.retention.treated.vs.no = mean(log.sds.retention.treated.vs.no)
+
+# summarize the resulting pooled distribution
+print(paste0("OR of suppression (untreated vs no depression): ",
+             round(exp(final.log.mean.retention.treated.vs.no),2),
+             " [",
+             round(exp(final.log.sd.retention.treated.vs.no + qnorm(0.025)*final.log.sd.retention.treated.vs.no),2),
+             " - ",
+             round(exp(final.log.sd.retention.treated.vs.no + qnorm(0.975)*final.log.sd.retention.treated.vs.no),2),
              "]"))
 
 
