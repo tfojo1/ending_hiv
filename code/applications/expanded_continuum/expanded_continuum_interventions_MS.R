@@ -22,15 +22,15 @@ LINKAGE.90 = create.intervention.unit(type = "linkage", rates = .9, start.year =
 LINKAGE.95 = create.intervention.unit(type = "linkage", rates = .95, start.year = 2023, years = 2027)
 
 RETENTION.SUPP.90 = create.intervention.unit(type = "retention.suppressed", rates = .9, start.year = 2023, years = 2027)
-RETENTION.UNSUPP.90 = create.intervention.unit(type = "retention.unsuppressed", rates = .9, start.year = 2023, years = 2027)
+RETENTION.UNSUPP.90 = create.intervention.unit(type = "retention.failing", rates = .9, start.year = 2023, years = 2027)
 RETENTION.NAIVE.90 = create.intervention.unit(type = "retention.naive", rates = .9, start.year = 2023, years = 2027)
 RETENTION.SUPP.95 = create.intervention.unit(type = "retention.suppressed", rates = .95, start.year = 2023, years = 2027)
-RETENTION.UNSUPP.95 = create.intervention.unit(type = "retention.unsuppressed", rates = .95, start.year = 2023, years = 2027)
+RETENTION.UNSUPP.95 = create.intervention.unit(type = "retention.failing", rates = .95, start.year = 2023, years = 2027)
 RETENTION.NAIVE.95 = create.intervention.unit(type = "retention.naive", rates = .95, start.year = 2023, years = 2027)
 
 
-ANNUAL.SUPP.90 = create.intervention.unit(type = "gain.of.suppression", rates = .9, start.year = 2023, years = 2027)
-ANNUAL.SUPP.95 = create.intervention.unit(type = "gain.of.suppression", rates = .95, start.year = 2023, years = 2027)
+ANNUAL.SUPP.90 = create.intervention.unit(type = "gain.of.suppression.failing", rates = .9, start.year = 2023, years = 2027)
+ANNUAL.SUPP.95 = create.intervention.unit(type = "gain.of.suppression.failing", rates = .95, start.year = 2023, years = 2027)
 
 
 
@@ -87,7 +87,7 @@ WHOLEPOP.L95 = create.intervention(WHOLE.POPULATION, LINKAGE.95)
 INTERVENTION.MANAGER.1.0 = register.intervention(WHOLEPOP.L95, code = "wholepop.l95",
                                                  name = 'All MSM, IDU, and heterosexual 95% linkage')
 
-#### Retention (combining suppressed/unsuppressed/naive retention) ####
+#### Retention (combining suppressed/failing/naive retention) ####
 YBHMSM.RS90 = create.intervention(YOUNG.BLACK.HISPANIC.MSM, RETENTION.SUPP.90)
 YBHMSM.RU90 = create.intervention(YOUNG.BLACK.HISPANIC.MSM, RETENTION.UNSUPP.90)
 YBHMSM.RN90 = create.intervention(YOUNG.BLACK.HISPANIC.MSM, RETENTION.NAIVE.90)
@@ -131,7 +131,7 @@ INTERVENTION.MANAGER.1.0 = register.intervention(WHOLEPOP.R95, code = "wholepop.
                                                  name = 'All MSM, IDU, and heterosexual 95% retention')
 
 
-#### Gain of suppression (unsuppressed only) ####
+#### Gain of suppression (failing only) ####
 YBHMSM.AS90 = create.intervention(YOUNG.BLACK.HISPANIC.MSM, ANNUAL.SUPP.90)
 INTERVENTION.MANAGER.1.0 = register.intervention(YBHMSM.AS90, code = "ybhmsm.as90",
                                                  name = 'Young Black and Hispanic MSM 90% annual suppression')
@@ -213,7 +213,7 @@ INTERVENTION.MANAGER.1.0 = register.intervention(WHOLEPOP.C.P.HIGH, code = "whol
 
 EXPANDED.CONTINUUM.INTERVENTIONS = list(YBHMSM.P10, YBHMSM.P25, MSMIDU.P10, MSMIDU.P25, WHOLEPOP.P10, WHOLEPOP.P25,
                                         YBHMSM.L90, YBHMSM.L95, MSMIDU.L90, MSMIDU.L95, WHOLEPOP.L90, WHOLEPOP.L95,
-                                        YBHMSM.R80, YBHMSM.R90, MSMIDU.R80, MSMIDU.R90, WHOLEPOP.R80, WHOLEPOP.R90,
+                                        YBHMSM.R90, YBHMSM.R95, MSMIDU.R90, MSMIDU.R95, WHOLEPOP.R90, WHOLEPOP.R95,
                                         YBHMSM.AS90, YBHMSM.AS95, MSMIDU.AS90, MSMIDU.AS95, WHOLEPOP.AS90, WHOLEPOP.AS95,
                                         YBHMSM.C.LOW, YBHMSM.C.HIGH, MSMIDU.C.LOW, MSMIDU.C.HIGH, WHOLEPOP.C.LOW, WHOLEPOP.C.HIGH,
                                         YBHMSM.C.P.LOW, YBHMSM.C.P.HIGH, MSMIDU.C.P.LOW, MSMIDU.C.P.HIGH, WHOLEPOP.C.P.LOW, WHOLEPOP.C.P.HIGH,
