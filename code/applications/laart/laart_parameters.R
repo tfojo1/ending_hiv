@@ -22,7 +22,7 @@ LAART.PARAMETER.DISTRIBUTION = join.distributions(
   #use jeffrey prior for exact LAART values, use getbetaparams when more uncertain and multipley ets.siga by 2 or level of uncertainty
   laart.versus.oral.disengagement.rr = Lognormal.Distribution(meanlog = 0.03183364, sdlog = 0.02772465),
   laart.recently.suppressed.to.resistant.disengaged = Beta.Distribution(alpha=3.5, beta=280.5), #3/283 Flair, set flair as lower limit and make 12.89% upper limit?
-  laart.recently.suppressed.to.engaged.recently.suppressed = Beta.Distribution(alpha=6.414881, beta=189.959034), #switch to art ci 2.05 to 4.53
+  laart.discontinuation = Beta.Distribution(alpha=6.414881, beta=189.959034), #switch to art ci 2.05 to 4.53
   laart.recently.suppressed.to.resistant.unsuppressed = Beta.Distribution(alpha=0.5 + 3, beta=0.5 + 280), #3/283 Flair
   laart.durably.suppressed.to.resistant.disengaged = Beta.Distribution(alpha=3.5, beta=305.5), #3/308 Atlas,set atlas as lower limit and make 12.89% upper limit?
   laart.durably.suppressed.to.resistant.unsuppressed = Beta.Distribution(alpha=3.5, beta=305.5), #3/308 Atlas,
@@ -37,9 +37,13 @@ LAART.PARAMETER.DISTRIBUTION = join.distributions(
   #recently.suppressed.to.disengaged = , expanded continuum parameter
   resistant.versus.oral.disengagement.rr = Lognormal.Distribution(meanlog=0.2350018, sdlog=0.1198989), #look into medication complexity and adherence
   resistant.versus.oral.gain.of.suppression.rr = Lognormal.Distribution(meanlog=0.03045921, sdlog=0.2421124),
-  resistant.versus.reengagement.rr = 1
+  resistant.versus.reengagement.rr = Constant.Distribution(1)
 )
 
+VERSION.MANAGER = register.projection.parameters.distribution(VERSION.MANAGER,
+                                                              version='laart',
+                                                              distribution = LAART.PARAMETER.DISTRIBUTION,
+                                                              join.with.previous.version.distribution = T)
 
 # hr.of.viral.rebound
 # 
@@ -57,6 +61,15 @@ getlognormalparams<- function(sample.vals, ci){
     log.sigma = (log.ci[2] - log.ci[1]) / 2 / 1.96
   }
   return(c(log.mu, log.sigma))
+}
+
+if (1==2)
+{
+    reported.est = 3
+    ci = c(2,4)
+    log.mean = log(reported.est)
+    log.mean = mean(log(ci))
+    log.sd = (log(ci[2])-log(ci[1])) / 2 / qnorm(.975)
 }
 
 # rands = rlnorm(100000, log.mu, log.sigma)

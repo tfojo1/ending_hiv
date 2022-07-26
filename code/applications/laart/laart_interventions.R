@@ -12,6 +12,18 @@ create.laart.interventions <- function(target.population=WHOLE.POPULATION,
     
     
     #-- Define Intervention Units --#
+    
+    rate.10 = -log(1-0.1)/(implemented.year-start.year)
+    u.DURABLE.LAART.10 = create.intervention.unit(type = 'engaged.durably.suppressed.switch.to.laart',
+                                                  start.year = start.year,
+                                                  years = c(start.year+0.0001, implemented.year, implemented.year+0.001),
+                                                  rates = expr{c(rate.10, rate.10, 0.1 / (1-.1) * engaged.durably.suppressed.switch.to.laart)},
+                                                  scale = 'rate',
+                                                  apply.function = 'absolute')
+    #@preetham redo all as above
+    
+    
+    
     u.DURABLE.LAART.05py = create.intervention.unit(type = 'engaged.durably.suppressed.switch.to.laart',
                                                     start.year = start.year,
                                                     years = c(start.year+0.0001, implemented.year, implemented.year+0.001),

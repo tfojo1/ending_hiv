@@ -315,13 +315,6 @@ LAART.CONTINUUM.TRANSITION.MAPPING = register.transition.element(LAART.CONTINUUM
                                                                  )
 
 LAART.CONTINUUM.TRANSITION.MAPPING = register.transition.element(LAART.CONTINUUM.TRANSITION.MAPPING,
-                                                                 name='recently.suppressed.to.disengaged',
-                                                                 background.model.type = 'proportion',
-                                                                 ramp.type = 'proportion', 
-                                                                 return.type = 'rate',
-                                                                 )
-
-LAART.CONTINUUM.TRANSITION.MAPPING = register.transition.element(LAART.CONTINUUM.TRANSITION.MAPPING,
                                                                  name='laart.versus.oral.disengagement.rr',
                                                                  type = 'rate', 
                                                                  )
@@ -410,13 +403,12 @@ LAART.CONTINUUM.TRANSITION.MAPPING = register.transition.element(LAART.CONTINUUM
 
 LAART.CONTINUUM.TRANSITION.MAPPING = register.transition.element(LAART.CONTINUUM.TRANSITION.MAPPING,
                                                                  name='engaged.durably.suppressed.switch.to.laart.successful',
-                                                                 type = 'proportion',
+                                                                 type = 'proportion'
                                                                  )
 
 LAART.CONTINUUM.TRANSITION.MAPPING = register.transition.element(LAART.CONTINUUM.TRANSITION.MAPPING,
                                                                  name='engaged.durably.suppressed.switch.to.laart',
-                                                                 background.model.type = 'proportion',
-                                                                 ramp.type = 'proportion',
+                                                                 type = 'rate',
                                                                  default.value = 0,
                                                                  required=F)#double check required
 
@@ -427,8 +419,7 @@ LAART.CONTINUUM.TRANSITION.MAPPING = register.transition.element(LAART.CONTINUUM
 
 LAART.CONTINUUM.TRANSITION.MAPPING = register.transition.element(LAART.CONTINUUM.TRANSITION.MAPPING,
                                                                  name='engaged.unsuppressed.switch.to.laart',
-                                                                 background.model.type = 'proportion',
-                                                                 ramp.type = 'proportion',
+                                                                 type='rate',
                                                                  default.value = 0,
                                                                  required=F)#double check required
 
