@@ -56,3 +56,5 @@ DEPRESSION.GET.COMPONENTS.FOR.PARAMETERS <- function(parameters, components,
     # Parameters that affect HIV transmission/susceptibility
     # Parameters that affect incidence/remission of IDU
 }
+
+round(cbind(get.means(dist), t(get.intervals(dist))),2)
