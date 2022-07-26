@@ -45,3 +45,16 @@ print(paste0("RR of suppression (treated vs untreated depression): ",
              " - ",
              round(exp(final.log.mean.suppression.treated.vs.no + qnorm(0.975)*final.log.sd.suppression.treated.vs.no),2),
              "]"))
+
+
+##-- Rate of Discontinuing Treatment --##
+overall.proportion.discontinued = 84/147
+treatment.discontinuation.rate = -log(1-overall.proportion.discontinued)
+
+ci.proportion.discontinued = qbeta(c(0.025, 0.975), 0.5+84, 0.5 + 147-84)
+ci.treatment.discontinuation.rate = -log(1-ci.proportion.discontinued)
+log.mean.proportion.discontinued = mean(log(ci.treatment.discontinuation.rate))
+log.sd.proportion.discontinued = (log(ci.treatment.discontinuation.rate[2])-log(ci.treatment.discontinuation.rate[1])) / 2 / qnorm(0.975)
+
+dist1 = Lognormal.Distribution(log.mean.proportion.discontinued, log.sd.proportion.discontinued)
+dist2 = Lognormal.Distribution(log(treatment.discontinuation.rate), log(4)/2)
