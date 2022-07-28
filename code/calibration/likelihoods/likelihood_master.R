@@ -30,7 +30,7 @@ create.msa.likelihood <- function(msa,
                                   TESTING.WEIGHT = 1,
                                   PROB.TESTING.DECREASING = 0.05,
                                   
-                                  nested.sd.inflation.extra.ms.to.msa=1,
+                                  nested.sd.inflation.extra.msa.to.msa=1,
                                   
                                   TOTAL.TESTING.WEIGHT = 1/32,
                                   STRATIFIED.TESTING.WEIGHT = 1/32,#1/16
@@ -325,7 +325,7 @@ create.msa.likelihood <- function(msa,
                                                 
                                                 observation.error.fn = SUPPRESSION.OBS.ERROR.SD,
                                                 sd.inflation = SUPPRESSION.SD.INFLATION,
-                                                sd.inflation.extra.msa.to.msa = nested.sd.inflation.extra.ms.to.msa,
+                                                sd.inflation.extra.msa.to.msa = SUPPRESSION.SD.INFLATION*nested.sd.inflation.extra.msa.to.msa,
                                                 
                                                 probability.decreasing.slope=PROBABILITY.SUPPRESSION.DECREASING
       )
@@ -355,7 +355,7 @@ create.msa.likelihood <- function(msa,
                                                
                                                observation.error.fn = ENGAGEMENT.OBS.ERROR.SD,
                                                sd.inflation = ENGAGEMENT.SD.INFLATION,
-                                               sd.inflation.extra.msa.to.msa = nested.sd.inflation.extra.ms.to.msa,
+                                               sd.inflation.extra.msa.to.msa = ENGAGEMENT.SD.INFLATION * nested.sd.inflation.extra.msa.to.msa,
                                                
                                                probability.decreasing.slope=PROBABILITY.ENGAGEMENT.DECREASING
         )
@@ -384,7 +384,7 @@ create.msa.likelihood <- function(msa,
                                                
                                                observation.error.fn = LINKAGE.OBS.ERROR.SD,
                                                sd.inflation = LINKAGE.SD.INFLATION,
-                                               sd.inflation.extra.msa.to.msa = nested.sd.inflation.extra.ms.to.msa,
+                                               sd.inflation.extra.msa.to.msa = LINKAGE.SD.INFLATION * nested.sd.inflation.extra.msa.to.msa,
                                                
                                                probability.decreasing.slope=PROBABILITY.LINKAGE.DECREASING
         )
@@ -419,7 +419,7 @@ create.msa.likelihood <- function(msa,
                                                  
                                                  observation.error.fn = RETENTION.OBS.ERROR.SD,
                                                  sd.inflation = RETENTION.SD.INFLATION,
-                                                 sd.inflation.extra.msa.to.msa = nested.sd.inflation.extra.ms.to.msa,
+                                                 sd.inflation.extra.msa.to.msa = RETENTION.SD.INFLATION * nested.sd.inflation.extra.msa.to.msa,
                                                  
                                                  probability.decreasing.slope=PROBABILITY.RETENTION.DECREASING
         )
@@ -491,7 +491,7 @@ create.msa.likelihood <- function(msa,
                                         
                                         observation.error.fn = DIAGNOSED.OBS.ERROR.SD,
                                         sd.inflation = TOTAL.SD.INFLATION.DX,
-                                        sd.inflation.extra.msa.to.msa = nested.sd.inflation.extra.ms.to.msa,
+                                        sd.inflation.extra.msa.to.msa = TOTAL.SD.INFLATION.DX * nested.sd.inflation.extra.msa.to.msa,
                                         state.to.msa.p.sd.multiplier = DX.STATE.TO.MSA.ERROR.SD.MULTIPLIER,
                                         
                                         probability.decreasing.slope=PROBABILITY.DIAGNOSIS.DECREASING,
@@ -537,7 +537,7 @@ create.msa.likelihood <- function(msa,
                                              observation.error.fn = TESTING.OBS.ERROR.SD,
                                              pass.n.to.obs.error.fn = T,
                                              sd.inflation = SD.INFLATION.TESTING,
-                                             sd.inflation.extra.msa.to.msa = nested.sd.inflation.extra.ms.to.msa,
+                                             sd.inflation.extra.msa.to.msa = SD.INFLATION.TESTING * nested.sd.inflation.extra.msa.to.msa,
                                              error.chunk.correlation = 0,
                                              error.off.correlation = 0,
                                              

@@ -42,6 +42,7 @@ source('code/core_code/data_managers/idu_manager.R')
 source('code/core_code/data_managers/pairing_manager.R')
 source('code/core_code/data_managers/prep_manager_2.R')
 source('code/core_code/data_managers/continuum_manager_3.R')
+source('code/core_code/data_managers/comorbidities_manager.R')
 source('code/core_code/data_managers/hiv_surveillance_manager.R')
 
 source('code/calibration/target_msas.R')

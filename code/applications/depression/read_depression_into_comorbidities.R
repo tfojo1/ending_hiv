@@ -1,21 +1,4 @@
 
-
-create.comorbidities.manager <- function()
-{
-    rv = list()
-    class(rv) = 'comorbidities.manager'
-    
-    rv
-}
-
-get.comorbidities.model <- function(comorbidities.manager,
-                                    type,
-                                    location)
-{
-    comorbidities.manager[[type]]
-}
-
-
 read.depression.data.into.comorbidities.manager <- function(comorbidities.manager,
                                                             dir='cleaned_data/depression/',
                                                             base.version='expanded_1.0')
