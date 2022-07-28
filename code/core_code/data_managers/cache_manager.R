@@ -43,12 +43,12 @@ update.cache.consistency.check <- function(elements = gsub("\\.Rdata$", '', list
         not.newer.mask = as.numeric(consistency.check[in.both]) < as.numeric(prior.consistency.check[in.both])
         if (any(not.newer.mask))
             stop(paste0("Error updating consistency.check. The following element(s) in the current cache are older than stated in the prior consistency.check: ",
-                        pasteo("'", in.both[not.newer.mask], "'", collapse=', ')))
+                        paste0("'", in.both[not.newer.mask], "'", collapse=', ')))
     }
     
     save(consistency.check, file=consistency.file)
     
-    print(paste0("Done Updating Consistency Check (", length(consistency.check), " elements)"))
+    print(paste0("Done Updating Cache Consistency Check (", length(consistency.check), " elements)"))
 }
 
 load.elements.from.cache <- function(elements.to.load = CACHE.ELEMENTS,
@@ -61,7 +61,7 @@ load.elements.from.cache <- function(elements.to.load = CACHE.ELEMENTS,
     missing.files = !sapply(files.to.load, file.exists)
     if (any(missing.files))
         stop(paste0("Cannot load the following element(s) from cache: ",
-                    paste0("'", elements.to.load, "'", collapse=', '),
+                    paste0("'", elements.to.load[missing.files], "'", collapse=', '),
                     ". File(s) do not exist in '", cache.dir, "'."))
     
     # Figure out when they were created
@@ -70,6 +70,8 @@ load.elements.from.cache <- function(elements.to.load = CACHE.ELEMENTS,
     })
     
     # Load the consistency check
+    if (!file.exists(consistency.file))
+        stop(paste0("No file exists at '", consistency.file, "'. Cannot load the cache consistency check."))
     load(consistency.file)
     
     # Check if too old

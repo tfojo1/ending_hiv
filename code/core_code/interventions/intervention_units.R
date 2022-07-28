@@ -155,6 +155,27 @@ create.proportion.multiplier.intervention.unit <- function(type=c('testing','pre
                              )
 }
 
+##------------------------##
+##-- MANAGING DIMENSIONS --##
+##------------------------##
+
+get.dim.names.for.intervention.unit <- function(unit, settings)
+{
+    if (any(names(settings$transition.mapping$transition.elements) == unit$type))
+    {
+        tr.el = settings$transition.mapping$transition.elements[[type]]
+        tr.el$dim.names
+    }
+    else if (any(names(REGISTERED.INTERVENTION.UNIT.METADATA) == unit$type))
+    {
+        metadata = REGISTERED.INTERVENTION.UNIT.METADATA[[unit$type]]
+        settings$DIMENSION.NAMES[metadata$dimensions]
+    }
+    else
+        stop(paste0("Invalid unit type: '", unit$type, "' for the given settings. No transition element named '",
+                    unit$type, "' has been registered for model version '", settings$VERSION,
+                    "', nor has it been registered as a global intervention unit type."))
+}
 
 ##------------------------##
 ##-- CHECKING FUNCTIONS --##
@@ -457,9 +478,23 @@ resolve.element <- function(elem, resolved.bindings, parameters)
         stop("Error resolving intervention unit: expressions and functions must resolve to numeric values")
 }
 
-##----------------##
-##-- UNIT NAMES --##
-##----------------##
+##--------------------##
+##-- UNIT META-DATA --##
+##--------------------##
+
+
+ALLOWED.UNIT.METADATA.DIMENSIONS = c('age','race','subpopulation','sex','risk','non.hiv.subset')
+create.unit.metadata <- function(type,
+                                 pct,
+                                 dimensions)
+{
+    
+}
+
+REGISTERED.INTERVENTION.UNIT.METADATA = list(
+    
+)
+
 
 ADDITIONAL.PREP.TYPES = c(
     'lai.prep'

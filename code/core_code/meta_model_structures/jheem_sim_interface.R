@@ -31,6 +31,52 @@ get.sim.components <- function(sim)
     attr(sim, 'components')
 }
 
+set.sim.components <- function(sim, components)
+{
+    if (!is(sim, 'jheem.results'))
+        stop("sim must be an object of class 'jheem.results'")
+    if (!is(components, 'jheem.components'))
+        stop("components must be an object of class 'jheem.components'")
+    
+    attr(sim, 'components') = components
+    sim
+}
+
+get.sim.location <- function(sim)
+{
+    if (!is(sim, 'jheem.results'))
+        stop("sim must be an object of class 'jheem.results'")
+    
+    attr(sim, 'location')
+}
+
+
+##-----------------##
+##-- FROM SIMSET --##
+##-----------------##
+
+get.simset.version <- function(simset)
+{
+    if (!is(simset, 'simset') || !is(simset@simulations[[1]], 'jheem.results'))
+        stop("simset must be an object of class 'simset', and its simulations must be of class 'jheem.results'")
+    
+    get.sim.version(simset@simulations[[1]])
+}
+
+get.simset.settings <- function(simset, version.manager=VERSION.MANAGER)
+{
+    get.settings.for.version(get.simset.version(sim), version.manager=version.manager)
+}
+
+get.simset.location <- function(simset)
+{
+    if (!is(simset, 'simset') || !is(simset@simulations[[1]], 'jheem.results'))
+        stop("simset must be an object of class 'simset', and its simulations must be of class 'jheem.results'")
+    
+    get.sim.location(simset@simulations[[1]])
+}
+
+
 
 ##---------------------##
 ##-- FROM COMPONENTS --##

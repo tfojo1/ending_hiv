@@ -5,7 +5,7 @@ compress.simset <- function(simset,
                             keep.years=2008:2030,
                             keep.cd4=F,
                             keep.dimensions=c('year','age','race','subpopulation','sex','risk','continuum','cd4')[c(T,T,T,T,T,T,T,keep.cd4)],
-                            compress.continuum.to.diagnosed.vs.undiagnosed=T)
+                            compress.continuum.to.diagnosed.vs.undiagnosed=get.simset.version(simset)=='collapsed_1.0')
 {
     extend.simulations(simset, function(sim, parameters){
         compress.jheem.results(sim,
@@ -22,7 +22,7 @@ compress.jheem.results <- function(sim,
                                    keep.non.cdc=T,
                                    keep.years=2000:2030,
                                    keep.dimensions=c('year','age','race','subpopulation','sex','risk','continuum'),
-                                   compress.continuum.to.diagnosed.vs.undiagnosed=T)
+                                   compress.continuum.to.diagnosed.vs.undiagnosed=get.sim.version(sim)=='collapsed_1.0')
 {
     keep.dimensions = union('year', keep.dimensions)
     arr.mask = sapply(sim, is, 'array')
@@ -110,6 +110,20 @@ compress.jheem.results <- function(sim,
     
     #-- Return --#
     sim
+}
+
+is.sim.compressed <- function(sim)
+{
+    settings = get.sim.settings(sim)
+    
+    sim.dim.names = c(dimnames(sim$hiv.positive)[names(settings$dimension.names.by.subgroup$hiv.positive)],
+                      dimnames(sim$hiv.negative)[setdiff(names(dim(sim$hiv.negative)), names(dim(sim$hiv.positive)))])
+    settings.dim.names = settings$DIMENSION.NAMES[names(sim.dim.names)]
+    
+    any(sapply(1:length(sim.dim.names), function(i){
+        length(sim.dim.names[[i]]) != length(settings.dim.names[[i]]) &&
+            any(sim.dim.names[[i]] != settings.dim.names[[i]])
+    }))
 }
 
 subset.simset.by.year <- function(sim, years=2018:2020)

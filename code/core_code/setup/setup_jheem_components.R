@@ -1521,6 +1521,30 @@ do.set.future.background.slope <- function(components,
     components
 }
 
+get.future.background.after.years <- function(components,
+                                              types=NULL)
+{
+    if (is.null(types))
+    {
+        types = names(components)[grepl('^background\\.', names(components))]
+        types = substr(types, 12, nchar(types))
+    }
+    
+    
+    rv = sapply(types, function(type){
+        component.name = paste0('background.', type)
+        val = components[[component.name]]$future.slope.after.year
+        if (is.null(val))
+            NA
+        else
+            val
+    })
+    
+    names(rv) = types
+    
+    rv
+}
+
 setup.background.suppression <- function(components,
                                          continuum.manager,
                                          location,
@@ -1935,7 +1959,7 @@ set.static.parameter <- function(components,
     # check the dimensions
     if (is.null(dim(parameter.value)))
     {
-        if (length(parameter.value) != 1 || !parameter.value(value) || is.na(value))
+        if (length(parameter.value) != 1 || !is.numeric(parameter.value) || is.na(parameter.value))
             stop(paste0("The static value - given for '",
                         parameter.name, "' must either be an array or a scalar, numeric, non-NA value"))
     }
@@ -1978,7 +2002,8 @@ do.setup.background <- function(components,
                                 years,
                                 extra.slope.after.year,
                                 continuum.manager,
-                                prep.manager)
+                                prep.manager,
+                                comorbidities.manager)
 {
     transition.element = get.transition.element.by.name(get.components.transition.mapping(components), name=type)
     if (is.null(transition.element))
@@ -1996,9 +2021,10 @@ do.setup.background <- function(components,
     model = get.transition.element.background.model(transition.element=transition.element,
                                                     continuum.manager=continuum.manager,
                                                     prep.manager=prep.manager,
+                                                    comorbidities.manager=comorbidities.manager,
                                                     settings=get.components.settings(components),
                                                     location=location)
-    
+
     # check that the dim.names are allowed
     model.dim.names = get.model.dim.names(model)
     invalid.dimensions = setdiff(names(model.dim.names), transition.element$dimensions)
@@ -2123,6 +2149,12 @@ set.background.change.to.years <- function(components,
     }
     
     components
+}
+
+get.background.change.to.years <- function(components,
+                                           types=names(components$background.change.to.years))
+{
+    unlist(components$background.change.to.years[types])
 }
 
 ##-- PREP --##

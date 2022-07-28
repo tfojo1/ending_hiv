@@ -18,7 +18,8 @@ setClass('standard_intervention',
              raw='list',
              processed='list',
              static.settings='list',
-             parameter.distributions='list'
+             parameter.distributions='list',
+             processed.dim.names='list'
         ))
 
 setClass('null_intervention',
@@ -797,10 +798,29 @@ intervention.is.processed <- function(intervention)
     setequal(names(intervention@raw), names(intervention@processed))
 }
 
+clear.processed.intervention <- function(intervention)
+{
+    intervention@processed.dim.names = NULL
+    intervention@processed = NULL
+    
+    intervention
+}
+
 process.intervention <- function(intervention,
+                                 settings,
                                  to.process = names(intervention@raw),
                                  overwrite.previous.processed=F)
 {
+    stop('need to replace dim.names with settings')
+    if (length(intervention@processed.dim.names)==0 || overwrite.previous.processed)
+        intervention@processed.dim.names = dim.names
+    else if (length(intervention@processed.dim.names) != length(dim.names) ||
+             any(sapply(1:length(dim.names), function(i){
+                 length(intervention@processed.dim.names[[i]]) != length(dim.names[[i]]) ||
+                     any(intervention@processed.dim.names[[i]] != dim.names[[i]])
+             })))
+        stop(paste0("This intervention has already been processed with different dim.names than those given in this call to process.intervention"))
+    
     if (is.null.intervention(intervention))# || intervention.is.resolved(intervention))
         intervention@processed = list()
     else
@@ -852,7 +872,7 @@ process.intervention <- function(intervention,
             
             for (j in length(sub$target.populations):1)
             {
-                tpop = sub$target.populations[[j]]
+                tpop = resolve.target.population(sub$target.populations[[j]])
                 unit = sub$intervention.units[[j]]
                 rv$start.times[tpop] = unit$start.year
                 rv$end.times[tpop] = unit$end.year
@@ -905,7 +925,7 @@ resolve.intervention <- function(intervention, parameters)
                                 parameters=parameters)
     })
     
-    intervention = process.intervention(intervention, overwrite.previous.processed = T)
+#    intervention = process.intervention(intervention, overwrite.previous.processed = T)
     intervention
 }
 

@@ -549,26 +549,45 @@ setup.mcmc.for.msa <- function(msa,
     }
 }
 
+create.initial.components <- function(location,
+                                      version,
+                                      start.values,
+                                      fix.components,
+                                      verbose=F)
+{
+    if (is.null(start.values) && fix.components)
+        stop("Cannot fix components unless start values are passed")
+    
+    #-- Init Components --#
+    base.components = setup.initial.components(msa=location, version=version, verbose=verbose)
+    get.components.fn = get.components.function.for.version(version)
+    
+    if (fix.components)
+    {
+        init.components = set.track.cleared.dependencies(base.components, track=T)
+        init.components = get.components.fn(start.values, init.components)
+        init.components = fix.components.for.calibration(components = init.components)
+        init.components = set.track.cleared.dependencies(init.components, track=F)
+    }
+    else
+        init.components = base.components
+    
+    init.components
+}
 
 create.run.simulation.function <- function(msa,
-                                           start.values,
+                                           start.values=NULL,
                                            version = 'collapsed_1.0',
                                            max.sim.time=Inf,
                                            catch.errors=T,
-                                           fix.components=T)
+                                           fix.components=!is.null(start.values))
 {
-    #-- Init Components --#
-    base.components = setup.initial.components(msa=msa, version=version)
+    init.components = create.initial.components(location=msa,
+                                                version=version,
+                                                start.values=start.values,
+                                                fix.components=fix.components)
     
     get.components.fn = get.components.function.for.version(version)
-    
-    init.components = set.track.cleared.dependencies(base.components, track=T)
-    init.components = get.components.fn(start.values, init.components)
-    
-    if (fix.components)
-        init.components = fix.components.for.calibration(components = init.components)
-    
-    init.components = set.track.cleared.dependencies(init.components, track=F)
     
     #-- Run Function --#
     

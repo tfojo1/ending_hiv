@@ -244,7 +244,8 @@ setup.components.for.msa <- function(msa,
                                     extra.slope.after.year=default.extra.slope.after.year,
                                     
                                     continuum.manager=ALL.DATA.MANAGERS$continuum,
-                                    prep.manager=ALL.DATA.MANAGERS$prep)
+                                    prep.manager=ALL.DATA.MANAGERS$prep,
+                                    comorbidities.manager=ALL.DATA.MANAGERS$comorbidities)
     }
     
     

@@ -12,12 +12,14 @@ run.jheem.from.components <- function(components,
                                       max.run.time.seconds=Inf,
                                       prior.results=NULL,
                                       keep.components=T,
-                                      pare.components=F,
+                                      pare.components=T,
                                       keep.years=start.year:end.year,
                                       atol=atol, rtol=rtol)
 {
     #-- Pull JHEEM --#
-    jheem = setup.jheem.from.components(components)
+    comps.and.jheem = setup.jheem.from.components(components, return.components.with.jheem = T)
+    jheem = comps.and.jheem$jheem
+    components = comps.and.jheem$components
     
     #-- Run it -_#
     results = run.jheem(jheem,
@@ -27,7 +29,7 @@ run.jheem.from.components <- function(components,
                         max.run.time.seconds=max.run.time.seconds,
                         keep.years=keep.years, 
                         atol = DEFAULT.JHEEM.ATOL, rtol=DEFAULT.JHEEM.RTOL)
-    
+
     #-- Store some attributes --#
     attr(results, 'msm.proportions.by.race') = components$proportions.msm.of.male
     attr(results, 'smoothed.suppressed.proportions') = attr(components, 'smoothed.suppressed.proportions')
@@ -37,7 +39,7 @@ run.jheem.from.components <- function(components,
     
     if (keep.components)
     {
-        components = crunch.intervention.rates(components)
+      #  components = crunch.intervention.rates(components)
         if (pare.components)
             components = pare.jheem.components(components)
         attr(results, 'components') = components
@@ -88,11 +90,12 @@ unfix.simset.components <- function(simset)
     })
 }
 
-setup.jheem.from.components <- function(components, verbose=F)
+setup.jheem.from.components <- function(components, verbose=F, return.components.with.jheem=F)
 {
     do.setup.crunch.or.fix(components,
                            setting=PRODUCE.JHEEM,
-                           verbose=verbose)
+                           verbose=verbose,
+                           return.components.with.jheem=return.components.with.jheem)
 }
 #just does the rates we might intervene on (for pre-caching for plots)
 crunch.intervention.rates <- function(components)
@@ -124,7 +127,10 @@ pare.jheem.components <- function(components,
     # Decide what we're going to keep
     to.keep = character()
     if (keep.rates.and.times)
-        to.keep = ALL.DEPENDENT.NAMES[grepl('rates.and.times', components$ALL.DEPENDENT.NAMES)]
+    {
+        to.keep = components$ALL.DEPENDENT.NAMES[grepl('rates.and.times', components$ALL.DEPENDENT.NAMES)]
+        to.keep = c(to.keep, 'continuum.transitions', 'continuum.transition.years')
+    }
     
     # Decide what we're going to remove
     if (aggressive)
@@ -158,7 +164,8 @@ PRODUCE.JHEEM = 5
 
 do.setup.crunch.or.fix <- function(components,
                                    setting,
-                                   verbose)
+                                   verbose,
+                                   return.components.with.jheem=F)
 {
     if (setting==PRODUCE.JHEEM)
     {
@@ -173,6 +180,10 @@ do.setup.crunch.or.fix <- function(components,
     # fix -> set up no components, set all non-null components to jheem
     # crunch -> set up all null components, set nothing to jheem
     
+    if (setting==CRUNCH && components$fixed)
+    {
+        stop("Cannot crunch fixed components. Must first un-crunch")
+    }
     
     #-- SET-UP JHEEM --#
     if (setting == PRODUCE.FROM.FIXED)
@@ -196,6 +207,7 @@ do.setup.crunch.or.fix <- function(components,
             print('Setting up Initial Population')
         components = do.setup.initial.population(components)
     }
+    
     if (setting == PRODUCE.FROM.UNFIXED ||
         (setting == PRODUCE.FROM.FIXED && comp.was.null) ||
         (setting == FIX && !comp.was.null))
@@ -562,7 +574,13 @@ do.setup.crunch.or.fix <- function(components,
         print('All done! Returning')
     
     if (setting == PRODUCE.FROM.FIXED || setting == PRODUCE.FROM.UNFIXED)
-        jheem
+    {
+        if (return.components.with.jheem)
+            list(components=components,
+                 jheem=jheem)
+        else
+            jheem
+    }
     else
         components
 }

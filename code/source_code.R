@@ -3,17 +3,20 @@
 # necessary to run simulations
 
 #-- Libraries --#
-library(jheem)
-library(bayesian.simulations)
-library(ggplot2)
 
+library(ggplot2)
 library(Rcpp)
+source('code/core_code/data_managers/package_manager.R')
+load.packages(packages.to.load = c('jheem',
+                                   'distributions',
+                                   'bayesian.simulations'))
 
 #-- Source Low-Level Helpers --#
 sourceCpp('code/helpers/misc_helpers.cpp')
 source('code/helpers/list_helpers.R')
 sourceCpp('code/helpers/access_helpers.cpp')
 source('code/helpers/access_helpers.R')
+source('code/helpers/distribution_helpers.R')
 
 #-- Source Settings --#
 source('code/settings_and_files/systematic_settings.R')
@@ -28,13 +31,6 @@ load.elements.from.cache(elements.to.load = c('msa.surveillance',
                                               'ALL.DATA.MANAGERS',
                                               'DEFAULT.LOCALE.MAPPING')
                          )
-#load('cached/msa.surveillance.Rdata')
-#load('cached/county.surveillance.Rdata')
-#oad('cached/state.surveillance.Rdata')
-#load('cached/national.surveillance.Rdata')
-#load('cached/ALL.DATA.MANAGERS.Rdata')   
-#load('cached/DEFAULT.LOCALE.MAPPING.Rdata')
-#load('cached/SUBSTATE.TO.COUNTY.MAPPING.Rdata') # can we get rid of this? maybe
 
 #-- Source Data Managers --#
 source('code/core_code/data_managers/locale_mappings.R')

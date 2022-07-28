@@ -5,10 +5,13 @@ source("code/processing/visualization/sim_plots.R")
 set.seed(5557)
 
 msa=ATLANTA.MSA
+RESUME=T
+
 save.suffix = ''
 version='expanded_1.0'
 
-RESUME=F
+print(paste0("Starting script at ", Sys.time()))
+
 if (RESUME)
 {
     print('----------------------------------------------------')
@@ -30,7 +33,10 @@ if (!RESUME)
     print(save.suffix)
     print('----------------------------------------------------')
     
+    print('creating likelihood...')
     likelihood = create.msa.likelihood(msa=msa, version = version)
+    print(' - Done creating likelihood')
+    
     print(qplot(1,1) + ggtitle(paste0(msa.names(msa), ' - INITIAL')) + theme(plot.title=element_text(hjust=1)))
     mcmc = setup.initial.mcmc.for.msa(msa, version = version,
                                       run=T, 

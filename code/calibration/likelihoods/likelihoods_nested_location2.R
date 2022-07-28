@@ -45,7 +45,8 @@ create.nested.likelihood <- function(data.type=c('suppression','engagement','lin
                                      within.location.p.error.correlation = 0.5,
                                      within.location.n.error.correlation = 0.5,
                                      
-                                     sd.inflation = 1,
+                                     sd.inflation = 1, #applies to everything EXCEPT state-vs-msa p, county-vs-msa p, and n multipliers
+                                     sd.inflation.extra.msa.to.msa=1, #applies to state-vs-msa p, county-vs-msa p, and n multipliers
                                      
                                      n.error.function=sqrt, #takes a vector of numbers and returns the error for each
                                      n.error.inflation.if.calculated = 2,
@@ -636,9 +637,8 @@ create.nested.likelihood <- function(data.type=c('suppression','engagement','lin
     })
     
     n.multipliers.sd = lapply(n.multipliers, function(mult){
-        mult * n.multiplier.cv
+        mult * n.multiplier.cv * sd.inflation.extra.msa.to.msa / sd.inflation
     })
-    
     
     if (verbose)
         cat("Done\n")
@@ -678,8 +678,8 @@ create.nested.likelihood <- function(data.type=c('suppression','engagement','lin
                 sep='')
             
             if (state.to.msa.p.sd.multiplier != 1)
-                cat(" Multiplying by ", round(state.to.msa.p.sd.multiplier,3), 
-                    " --> ", round(sqrt(extra.county$variance)*state.to.msa.p.sd.multiplier,3), ".", sep='')
+                cat(" Multiplying by ", round(state.to.msa.p.sd.multiplier* sd.inflation.extra.msa.to.msa / sd.inflation,3), 
+                    " --> ", round(sqrt(extra.county$variance)*state.to.msa.p.sd.multiplier* sd.inflation.extra.msa.to.msa / sd.inflation,3), ".", sep='')
             
             cat("\n")
         }
@@ -729,7 +729,7 @@ create.nested.likelihood <- function(data.type=c('suppression','engagement','lin
                 
                 in.county = extra.county
                 in.county$sd = in.county$sd * sd.ratio
-                in.county$variance = in.county$varian * sd.ratio^2
+                in.county$variance = in.county$variance * sd.ratio^2
                 in.county$bias = 0
             }
             else
@@ -745,8 +745,8 @@ create.nested.likelihood <- function(data.type=c('suppression','engagement','lin
                 sep='')
             
             if (county.to.msa.p.sd.multiplier != 1)
-                cat(" Multiplying by ", round(county.to.msa.p.sd.multiplier,3), 
-                    " --> ", round(sqrt(in.county$variance)*county.to.msa.p.sd.multiplier,3), ".", sep='')
+                cat(" Multiplying by ", round(county.to.msa.p.sd.multiplier* sd.inflation.extra.msa.to.msa / sd.inflation,3), 
+                    " --> ", round(sqrt(in.county$variance)*county.to.msa.p.sd.multiplier* sd.inflation.extra.msa.to.msa / sd.inflation,3), ".", sep='')
             
             cat("\n")
         }
@@ -763,19 +763,17 @@ create.nested.likelihood <- function(data.type=c('suppression','engagement','lin
         })
     })
     
-    
     p.sd = lapply(1:n.strata, function(d){
         sapply(metalocation.type, function(type){
             if (type=='county-in-msa')
-                rep(sqrt(in.county$variance)*county.to.msa.p.sd.multiplier, n.years)
+                rep(sqrt(in.county$variance)*county.to.msa.p.sd.multiplier * sd.inflation.extra.msa.to.msa / sd.inflation, n.years)
             else if (type=='county-out-of-msa')
-                rep(sqrt(extra.county$variance)*state.to.msa.p.sd.multiplier, n.years)
+                rep(sqrt(extra.county$variance)*state.to.msa.p.sd.multiplier * sd.inflation.extra.msa.to.msa / sd.inflation, n.years)
             else #type=='msa'
                 rep(0, n.years)
         })
     })
-    
-    
+      
     if (verbose)
         cat("        - Done\n")
     
@@ -926,9 +924,10 @@ create.nested.likelihood <- function(data.type=c('suppression','engagement','lin
     ##-- aggregating across strata --#
     
     # in matrix form (and transpose)
-    year.loc.stratum.to.obs.mapping.as.mat = transformation.array
-    dim(year.loc.stratum.to.obs.mapping.as.mat) = c(n.responses, n.years * n.obs.locations * n.strata)
-    t.year.loc.stratum.to.obs.mapping.as.mat = t(year.loc.stratum.to.obs.mapping.as.mat)
+    # was only used for the R version
+ #   year.loc.stratum.to.obs.mapping.as.mat = transformation.array
+ #   dim(year.loc.stratum.to.obs.mapping.as.mat) = c(n.responses, n.years * n.obs.locations * n.strata)
+ #   t.year.loc.stratum.to.obs.mapping.as.mat = t(year.loc.stratum.to.obs.mapping.as.mat)
     
     # in list form (no mask)
     full.year.loc.stratum.to.obs.mapping = lapply(1:n.strata, function(d){
@@ -969,10 +968,11 @@ create.nested.likelihood <- function(data.type=c('suppression','engagement','lin
     #
     # *pre.mask.year.metalocation.to.year.obs.location.mapping here is taken to be the (repeated)
     #  block in a blockwise diagonal matrix
-    year.metalocation.stratum.to.obs.mapping = sapply(1:n.strata, function(d){
-        transformation.array[,,d] %*% pre.mask.year.metalocation.to.year.obs.location.mapping
-    })
-    dim(year.metalocation.stratum.to.obs.mapping) = c(n.responses, n.years*n.metalocations*n.strata)
+    # Was only used for R version
+#    year.metalocation.stratum.to.obs.mapping = sapply(1:n.strata, function(d){
+#        transformation.array[,,d] %*% pre.mask.year.metalocation.to.year.obs.location.mapping
+#    })
+#    dim(year.metalocation.stratum.to.obs.mapping) = c(n.responses, n.years*n.metalocations*n.strata)
     
 #-- SET UP THE EXTRACT FUNCTIONS --#
     

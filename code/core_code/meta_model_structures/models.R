@@ -51,6 +51,38 @@ create.logistic.model <- function(intercept,
     rv
 }
 
+create.log.rate.model <- function(intercept,
+                                  slope,
+                                  anchor.year)
+{
+    if (!is.array(intercept))
+        stop("'intercept' must be an array")
+    
+    if (is.null(slope))
+        slope = array(0, dim=dim(intercept), dimnames=dimnames(intercept))
+    
+    if (!is.array(slope) || length(dim(intercept))!=length(dim(slope)) || !all(dim(intercept)==dim(slope)))
+        stop("'slope' must be an array with the same dimensions as 'intercept'")
+    if (length(anchor.year)!=1 || !is.numeric(anchor.year) || is.na(anchor.year))
+        stop("anchor.year must be a single, non-NA numeric value")
+    
+    
+    if (is.null(dimnames(intercept)) || is.null(dimnames(slope)) ||
+        is.null(names(dimnames(intercept))) || is.null(names(dimnames(slope))) ||
+        !named.lists.equal(dimnames(intercept), dimnames(slope)))
+        stop("'intercept' and 'slope' must have named dimnames which are the same for both")
+    
+    rv = list(type='log.rate.model',
+              intercept=intercept,
+              slope=slope,
+              anchor.year=anchor.year,
+              dim.names = dimnames(intercept),
+              scale='log')
+    
+    class(rv) = c('log.rate.model','model')
+    rv
+}
+
 #-- PROJECT FROM MODEL --#
 
 #'@param future.slope May be NULL (missing)
@@ -78,6 +110,11 @@ project.from.model <- function(model,
                                     future.slope=future.slope,
                                     future.slope.after.year=future.slope.after.year,
                                     dim.names=dim.names)
+    else if (model$type=='time.invariant.log.rate.model')
+        project.from.time.invariant.log.rate.model(model=model,
+                                                   years=years,
+                                                   alphas=alphas,
+                                                   )
     else
         stop(paste0("Do not know how to project from model of type '", model$type, "'"))
 }
@@ -86,6 +123,40 @@ project.from.logistic.model <- function(model, years,
                                         alphas,
                                         future.slope, future.slope.after.year,
                                         dim.names)
+{
+    transformation.fn = function(x){
+        model$min.proportion + (model$max.proportion-model$min.proportion) / (1+exp(-x))
+    }
+    
+    project.from.transformed.intercept.slope.model(model=model,
+                                                   years=years,
+                                                   alphas=alphas,
+                                                   future.slope=future.slope,
+                                                   future.slope.after.year=future.slope.after.year,
+                                                   dim.names=dim.names,
+                                                   transformation.fn=transformation.fn)
+}
+project.from.log.rate.model <- function(model, years, 
+                                        alphas,
+                                        future.slope, future.slope.after.year,
+                                        dim.names)
+{
+    transformation.fn = exp
+    
+    project.from.transformed.intercept.slope.model(model=model,
+                                                   years=years,
+                                                   alphas=alphas,
+                                                   future.slope=future.slope,
+                                                   future.slope.after.year=future.slope.after.year,
+                                                   dim.names=dim.names,
+                                                   transformation.fn=transformation.fn)
+}
+
+project.from.transformed.intercept.slope.model <- function(model, years, 
+                                                           alphas,
+                                                           future.slope, future.slope.after.year,
+                                                           dim.names,
+                                                           transformation.fn)
 {
     intercept = add.alphas.to.array(arr=model$intercept,
                                         alphas=alphas$intercept$main.effects,
@@ -110,13 +181,13 @@ project.from.logistic.model <- function(model, years,
         #    slope * (min(year, future.slope.after.year) - model$anchor.year) +
         #    future.slope * max(0,year-future.slope.after.year)
         
-        lo = intercept + 
+        x = intercept + 
             slope * (year - model$anchor.year)
         
         if (!is.null(future.slope) && year > future.slope.after.year)
-            lo = lo + future.slope * (year - future.slope.after.year)
+            x = x + future.slope * (year - future.slope.after.year)
         
-        model$min.proportion + (model$max.proportion-model$min.proportion) / (1+exp(-lo))
+        transformation.fn(x)
     })
 }
 

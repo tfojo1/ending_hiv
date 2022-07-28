@@ -2,7 +2,122 @@
 CURRENT.GAINS.END.BY.YEAR = Uniform.Distribution(2020,2025)
 TOTAL.FUTURE.SLOPE.OR.DIST = Lognormal.Distribution(0, log(1.05))
 
-prepare.simset.for.interventions <- function(simset,
+prepare.simset.for.intervention <- function(simset,
+                                            update.version=NULL,
+                                            crunch.components=F,
+                                            seed = 234321,
+                                            max.run.from.year=Inf,
+                                            verbose=F)
+{
+    if (is.null(update.version))
+        version = get.simset.version(simset)
+    else
+        version = update.version
+    
+    
+    #-- Sample the projection parameters --#
+    
+    if (verbose)
+        cat("Adding new parameters...")
+    
+    projection.parameters.distribution = get.projection.prarameters.distribution.for.version(version)
+    new.params = simulate.values.from.distribution.fixed.seed(distributions = projection.parameters.distribution,
+                                                              n = simset@n.sim,
+                                                              seed = seed)
+    simset = add.parameters(simset, 
+                            parameters=new.params$values,
+                            parameter.names = new.params$names,
+                            parameter.lower.bounds = new.params$lower.bounds,
+                            parameter.upper.bounds = new.params$upper.bounds)
+    
+    
+    if (verbose)
+        cat("done.\n")
+    
+    update.components.fn = get.projection.update.components.function.for.version(version)
+    
+    #-- Set up for if we need to update version --#
+    
+    need.to.update.version = !is.null(update.version) && update.version != get.simset.version(simset)
+    if (need.to.update.version)
+    {
+        init.components = create.initial.components(location = get.simset.location(simset),
+                                                    version = update.version,
+                                                    start.values = simset@parameters[1,],
+                                                    fix.components = T)
+        
+        get.components.fn = get.components.function.for.version(update.version)
+    }
+    
+    
+    if (verbose)
+        cat("Preparing to update simulations...\n")
+    
+    # Push through to the sims
+    counter = 1
+    simset = extend.simulations(simset, function(sim, parameters){
+        
+        if (is.sim.compressed(sim))
+            stop("simset simulations are compressed - cannot prepare for projections")
+        
+        if (verbose)
+            cat("preparing simulation ", counter, " of ", simset@n.sim, "...", sep='')
+        
+        if (need.to.update.version)
+        {            
+            if (verbose)
+                cat("redoing components...")
+            # redo components
+            components = get.components.fn(parameters, init.components)
+            
+            if (verbose)
+                cat("expanding prior results...")
+            # expand sim
+            sim = expand.jheem.results(sim, components$jheem)
+        }
+        else
+        {
+            components = get.sim.components(sim)
+            components = unfix.jheem.components(components)
+        }
+        
+        components = update.components.fn(parameters, components)
+        
+        if (crunch.components)
+            components = crunch.all.jheem.components(components)
+        
+        counter <<- counter + 1
+        if (verbose)
+            cat('done.\n')
+        
+        set.sim.components(sim, components)
+    })
+    
+#    min.future.slope.after.or.change.to.year = min(sapply(simset@simulations, function(sim){
+#        components = get.sim.components(sim)
+#        min(c(get.future.background.after.years(components),
+#              get.background.change.to.years(components)),
+#            na.rm=T)
+#    }), na.rm=T)
+    
+    parameters.for.run.from = grepl('year', new.params$names)
+    if (any(parameters.for.run.from))
+        min.future.slope.after.or.change.to.year = min(new.params$lower.bounds[parameters.for.run.from])
+    else
+        min.future.slope.after.or.change.to.year = Inf
+    
+    run.from.year = min(max.run.from.year,
+                        min.future.slope.after.or.change.to.year,
+                        as.numeric(max(ALL.DATA.MANAGERS$census.totals$years)))
+    
+    attr(simset, 'run.from.year') = run.from.year
+    
+    # Return
+    simset
+}
+
+
+OLD.prepare.simset.for.interventions <- function(simset,
                                              
                                              testing.gains.end.by.year.dist = CURRENT.GAINS.END.BY.YEAR,
                                              prep.gains.end.by.year.dist = CURRENT.GAINS.END.BY.YEAR,

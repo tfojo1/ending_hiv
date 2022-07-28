@@ -324,6 +324,7 @@ transition.element.needs.background.model <- function(transition.element)
 get.transition.element.background.model <- function(transition.element,
                                                     continuum.manager=NULL,
                                                     prep.manager=NULL,
+                                                    comorbidities.manager=NULL,
                                                     settings=NULL,
                                                     ...)
 {
@@ -344,6 +345,21 @@ get.transition.element.background.model <- function(transition.element,
         get.continuum.model(continuum.manager = continuum.manager,
                             type=transition.element$name,
                             ...)
+    }
+    else if (transition.element$model.source=='comorbidities.manager')
+    {
+        if (is.null(comorbidities.manager))
+            stop(paste0("comorbidities.manager must be specified for this transition element ('",
+                        transition.element$name, "'). Cannot pull background model"))
+        
+        rv = get.comorbidities.model(comorbidities.manager = comorbidities.manager,
+                                type=transition.element$name,
+                                ...)
+        
+        if (is.null(rv))
+            stop(paste0("The comorbidities manager does not contain a model for '", transition.element$name, "'"))
+        
+        rv
     }
     else if (transition.element$model.source=='prep.manager')
     {
