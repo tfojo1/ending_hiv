@@ -5,8 +5,8 @@
 ##-- RUN FOR COMPONENTS --##
 ##------------------------##
 
-DEFAULT.JHEEM.ATOL = 1e-04
-DEFAULT.JHEEM.RTOL = 1e-04
+DEFAULT.JHEEM.ATOL = 1e-03
+DEFAULT.JHEEM.RTOL = 1e-03
 run.jheem.from.components <- function(components,
                                       start.year=1970, end.year=2020,
                                       max.run.time.seconds=Inf,
@@ -2107,6 +2107,9 @@ do.calculate.rates <- function(components, type,
 
     #-- PART 2: Fold in the foreground --#
 
+    if (!is.null(components[[foreground.name]]))
+        background.values = lapply(background.values, expand.population, tr.el$dim.names)
+    
     rates.and.times = do.get.rates.from.background.and.foreground(background.rates = background.values,
                                                         background.times = background.years,
                                                         background.data.type = data.type,
@@ -2751,7 +2754,7 @@ do.setup.susceptibility <- function(components)
     
     if (components$model.prep)
     {
-        if (is.null(components$prep.rates.and.times))
+        if (is.null(components$prep.rates.and.times) || is.null(components$prep.rrs.and.times))
             components = do.calculate.prep.coverage(components)
         
         prep.rates.and.times = calculate.aggregate.prep.coverage.and.risk(components)

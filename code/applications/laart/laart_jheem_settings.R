@@ -440,10 +440,20 @@ VERSION.MANAGER = copy.and.modify.jheem.settings(
   engaged.continuum.states=c('engaged_unsuppressed_naive',
                              'engaged_unsuppressed_failing', 
                              'engaged_recently_suppressed',
-                             'engaged_durably_suppressed'
+                             'engaged_durably_suppressed',
+                             'laart_unsuppressed', 
+                             'laart_recently_suppressed', 
+                             'laart_durably_suppressed', 
+                             'resistant_unsuppressed', 
+                             'resistant_recently_suppressed', 
+                             'resistant_durably_suppressed'
   ),
   suppressed.continuum.states=c('engaged_recently_suppressed',
-                                'engaged_durably_suppressed'
+                                'engaged_durably_suppressed',
+                                'laart_recently_suppressed', 
+                                'laart_durably_suppressed', 
+                                'resistant_recently_suppressed', 
+                                'resistant_durably_suppressed'
   ),
   
   is.continuum.collapsed=F,

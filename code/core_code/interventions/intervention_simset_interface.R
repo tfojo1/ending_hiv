@@ -51,6 +51,12 @@ run.simset.intervention <- function(simset,
                                     update.progress=if (verbose) function(n){print(paste0("Running simulation ", n, " of ", simset@n.sim))} else NULL,
                                     seed = 12343)
 {
+    if (is.null(run.from.year))
+    {
+        run.from.year = max(as.numeric(ALL.DATA.MANAGERS$census.totals$years))
+        print(paste0("** run.from.year was missing - using ", run.from.year, " **"))
+    }
+    
     # If we need to prepare intervention, do so
     original.intervention = intervention
     intervention = prepare.intervention.for.simset(intervention, simset)
@@ -172,7 +178,7 @@ setup.components.for.intervention <- function(components,
     
     #-- Make sure we are processed --#
     if (!intervention.is.processed(intervention))
-        intervention = process.intervention(intervention, dim.names = settings$DIMENSION.NAMES)
+        intervention = process.intervention(intervention, settings=settings)
     if (!intervention.is.processed(intervention))
         stop("Unable to process intervention")
     
@@ -182,15 +188,28 @@ setup.components.for.intervention <- function(components,
     for (tr.el in transition.mapping$transition.elements)
     {
         element.name = tr.el$name
-        if (!is.null(intervention@processed[[element.name]]))
+        sub.elem = intervention@processed[[element.name]]
+        if (!is.null(sub.elem))
         {
-            components = set.foreground.rates(components, 'suppression',
-                                              rates = suppressed.proportions,
-                                              years = intervention@processed$suppression$times,
+            rates = lapply(sub.elem$rates, expand.population, target.dim.names = tr.el$dim.names)
+
+            start.times = expand.population(sub.elem$start.times, target.dim.names = tr.el$dim.names)
+            end.times = expand.population(sub.elem$end.times, target.dim.names = tr.el$dim.names)
+
+            min.rates = expand.population(sub.elem$min.rates, target.dim.names = tr.el$dim.names)
+            max.rates = expand.population(sub.elem$max.rates, target.dim.names = tr.el$dim.names)
+            
+            apply.functions = expand.population(sub.elem$apply.functions, target.dim.names = tr.el$dim.names)
+            allow.less = expand.population(sub.elem$allow.less.than.otherwise, target.dim.names = tr.el$dim.names)
+            allow.greater = expand.population(sub.elem$allow.greater.than.otherwise, target.dim.names = tr.el$dim.names)
+
+            components = set.foreground.rates(components, element.name,
+                                              rates = rates,
+                                              years = sub.elem$times,
                                               start.years = start.times,
                                               end.years = end.times,
                                               apply.functions = apply.functions,
-                                              foreground.scale=intervention@processed$suppression$scale,
+                                              foreground.scale=sub.elem$scale,
                                               allow.foreground.less = allow.less,
                                               allow.foreground.greater = allow.greater,
                                               overwrite.previous = overwrite.prior.intervention,
@@ -222,9 +241,8 @@ setup.components.for.intervention <- function(components,
         max.rates = expand.population.to.hiv.positive(components$jheem, intervention@processed$suppression$max.rates)
         max.rates[,,,,,undiagnosed.states,,] = -Inf
         
-        apply.functions = expand.character.array(expand.population.to.hiv.positive,
-                                                 components$jheem,
-                                                 intervention@processed$suppression$apply.functions)
+        apply.functions = expand.population.to.hiv.positive(components$jheem,
+                                                            intervention@processed$suppression$apply.functions)
         apply.functions[,,,,,undiagnosed.states,,] = NA
         allow.less = expand.population.to.hiv.positive(components$jheem, 
                                                        intervention@processed$suppression$allow.less.than.otherwise)
@@ -258,9 +276,8 @@ setup.components.for.intervention <- function(components,
             end.times = expand.population.to.hiv.negative(components$jheem, intervention@processed[[prep.type]]$end.times)
             min.rates = expand.population.to.hiv.negative(components$jheem, intervention@processed[[prep.type]]$min.rates)
             max.rates = expand.population.to.hiv.negative(components$jheem, intervention@processed[[prep.type]]$max.rates)
-            apply.functions = expand.character.array(expand.population.to.hiv.negative,
-                                                     components$jheem,
-                                                     intervention@processed[[prep.type]]$apply.functions)
+            apply.functions = expand.population.to.hiv.negative(components$jheem,
+                                                                intervention@processed[[prep.type]]$apply.functions)
             allow.less = expand.population.to.hiv.negative(components$jheem, 
                                                            intervention@processed[[prep.type]]$allow.less.than.otherwise)
             allow.greater = expand.population.to.hiv.negative(components$jheem, 
@@ -294,9 +311,8 @@ setup.components.for.intervention <- function(components,
             end.times = expand.population.to.hiv.negative(components$jheem, intervention@processed[[rr.type]]$end.times)
             min.rates = expand.population.to.hiv.negative(components$jheem, intervention@processed[[rr.type]]$min.rates)
             max.rates = expand.population.to.hiv.negative(components$jheem, intervention@processed[[rr.type]]$max.rates)
-            apply.functions = expand.character.array(expand.population.to.hiv.negative,
-                                                     components$jheem,
-                                                     intervention@processed[[rr.type]]$apply.functions)
+            apply.functions = expand.population.to.hiv.negative(components$jheem,
+                                                                intervention@processed[[rr.type]]$apply.functions)
             allow.less = expand.population.to.hiv.negative(components$jheem, 
                                                            intervention@processed[[rr.type]]$allow.less.than.otherwise)
             allow.greater = expand.population.to.hiv.negative(components$jheem, 
@@ -330,9 +346,8 @@ setup.components.for.intervention <- function(components,
         end.times = expand.population.to.general(components$jheem, intervention@processed$needle.exchange$end.times)[,,,,idu.states]
         min.rates = expand.population.to.general(components$jheem, intervention@processed$needle.exchange$min.rates)[,,,,idu.states]
         max.rates = expand.population.to.general(components$jheem, intervention@processed$needle.exchange$max.rates)[,,,,idu.states]
-        apply.functions = expand.character.array(expand.population.to.general,
-                                                 components$jheem,
-                                                 intervention@processed$needle.exchange$apply.functions)[,,,,idu.states]
+        apply.functions = expand.population.to.general(components$jheem,
+                                                       intervention@processed$needle.exchange$apply.functions)[,,,,idu.states]
         allow.less = expand.population.to.general(components$jheem, 
                                                   intervention@processed$needle.exchange$allow.less.than.otherwise)[,,,,idu.states]
         allow.greater = expand.population.to.general(components$jheem, 
@@ -370,9 +385,8 @@ setup.components.for.intervention <- function(components,
             end.times = expand.population.to.general(components$jheem, intervention@processed[[idu.trans]]$end.times)[,,,,state.for.trans]
             min.rates = expand.population.to.general(components$jheem, intervention@processed[[idu.trans]]$min.rates)[,,,,state.for.trans]
             max.rates = expand.population.to.general(components$jheem, intervention@processed[[idu.trans]]$max.rates)[,,,,state.for.trans]
-            apply.functions = expand.character.array(expand.population.to.general,
-                                                     components$jheem,
-                                                     intervention@processed[[idu.trans]]$apply.functions)[,,,,state.for.trans]
+            apply.functions = expand.population.to.general(components$jheem,
+                                                           intervention@processed[[idu.trans]]$apply.functions)[,,,,state.for.trans]
             allow.less = expand.population.to.general(components$jheem, 
                                                       intervention@processed[[idu.trans]]$allow.less.than.otherwise)[,,,,state.for.trans]
             allow.greater= expand.population.to.general(components$jheem, 
@@ -577,9 +591,8 @@ OLD.setup.components.for.intervention <- function(components,
         max.rates = expand.population.to.hiv.positive(components$jheem, intervention@processed$testing$max.rates)
         max.rates[,,,,,diagnosed.states,,] = -Inf
         
-        apply.functions = expand.character.array(expand.population.to.hiv.positive,
-                                                 components$jheem,
-                                                 intervention@processed$testing$apply.functions)
+        apply.functions = expand.population.to.hiv.positive(components$jheem,
+                                                            intervention@processed$testing$apply.functions)
         apply.functions[,,,,,diagnosed.states,,] = NAtim
         allow.less = expand.population.to.hiv.positive(components$jheem, 
                                                        intervention@processed$testing$allow.less.than.otherwise)
@@ -682,9 +695,8 @@ OLD.setup.components.for.intervention <- function(components,
         max.rates = expand.population.to.hiv.positive(components$jheem, intervention@processed$suppression$max.rates)
         max.rates[,,,,,undiagnosed.states,,] = -Inf
         
-        apply.functions = expand.character.array(expand.population.to.hiv.positive,
-                                                 components$jheem,
-                                                 intervention@processed$suppression$apply.functions)
+        apply.functions = expand.population.to.hiv.positive(components$jheem,
+                                                            intervention@processed$suppression$apply.functions)
         apply.functions[,,,,,undiagnosed.states,,] = NA
         allow.less = expand.population.to.hiv.positive(components$jheem, 
                                                        intervention@processed$suppression$allow.less.than.otherwise)
@@ -718,9 +730,8 @@ OLD.setup.components.for.intervention <- function(components,
             end.times = expand.population.to.hiv.negative(components$jheem, intervention@processed[[prep.type]]$end.times)
             min.rates = expand.population.to.hiv.negative(components$jheem, intervention@processed[[prep.type]]$min.rates)
             max.rates = expand.population.to.hiv.negative(components$jheem, intervention@processed[[prep.type]]$max.rates)
-            apply.functions = expand.character.array(expand.population.to.hiv.negative,
-                                                     components$jheem,
-                                                     intervention@processed[[prep.type]]$apply.functions)
+            apply.functions = expand.population.to.hiv.negative(components$jheem,
+                                                                intervention@processed[[prep.type]]$apply.functions)
             allow.less = expand.population.to.hiv.negative(components$jheem, 
                                                            intervention@processed[[prep.type]]$allow.less.than.otherwise)
             allow.greater = expand.population.to.hiv.negative(components$jheem, 
@@ -754,9 +765,8 @@ OLD.setup.components.for.intervention <- function(components,
             end.times = expand.population.to.hiv.negative(components$jheem, intervention@processed[[rr.type]]$end.times)
             min.rates = expand.population.to.hiv.negative(components$jheem, intervention@processed[[rr.type]]$min.rates)
             max.rates = expand.population.to.hiv.negative(components$jheem, intervention@processed[[rr.type]]$max.rates)
-            apply.functions = expand.character.array(expand.population.to.hiv.negative,
-                                                     components$jheem,
-                                                     intervention@processed[[rr.type]]$apply.functions)
+            apply.functions = expand.population.to.hiv.negative(components$jheem,
+                                                                intervention@processed[[rr.type]]$apply.functions)
             allow.less = expand.population.to.hiv.negative(components$jheem, 
                                                            intervention@processed[[rr.type]]$allow.less.than.otherwise)
             allow.greater = expand.population.to.hiv.negative(components$jheem, 
@@ -790,9 +800,8 @@ OLD.setup.components.for.intervention <- function(components,
         end.times = expand.population.to.general(components$jheem, intervention@processed$needle.exchange$end.times)[,,,,idu.states]
         min.rates = expand.population.to.general(components$jheem, intervention@processed$needle.exchange$min.rates)[,,,,idu.states]
         max.rates = expand.population.to.general(components$jheem, intervention@processed$needle.exchange$max.rates)[,,,,idu.states]
-        apply.functions = expand.character.array(expand.population.to.general,
-                                                 components$jheem,
-                                                 intervention@processed$needle.exchange$apply.functions)[,,,,idu.states]
+        apply.functions = expand.population.to.general(components$jheem,
+                                                       intervention@processed$needle.exchange$apply.functions)[,,,,idu.states]
         allow.less = expand.population.to.general(components$jheem, 
                                                   intervention@processed$needle.exchange$allow.less.than.otherwise)[,,,,idu.states]
         allow.greater = expand.population.to.general(components$jheem, 
@@ -830,9 +839,8 @@ OLD.setup.components.for.intervention <- function(components,
             end.times = expand.population.to.general(components$jheem, intervention@processed[[idu.trans]]$end.times)[,,,,state.for.trans]
             min.rates = expand.population.to.general(components$jheem, intervention@processed[[idu.trans]]$min.rates)[,,,,state.for.trans]
             max.rates = expand.population.to.general(components$jheem, intervention@processed[[idu.trans]]$max.rates)[,,,,state.for.trans]
-            apply.functions = expand.character.array(expand.population.to.general,
-                                                     components$jheem,
-                                                     intervention@processed[[idu.trans]]$apply.functions)[,,,,state.for.trans]
+            apply.functions = expand.population.to.general(components$jheem,
+                                                           intervention@processed[[idu.trans]]$apply.functions)[,,,,state.for.trans]
             allow.less = expand.population.to.general(components$jheem, 
                                                       intervention@processed[[idu.trans]]$allow.less.than.otherwise)[,,,,state.for.trans]
             allow.greater= expand.population.to.general(components$jheem, 
@@ -1014,9 +1022,8 @@ do.set.foreground.for.hiv.positive <- function(components,
         max.rates = expand.population.to.hiv.positive(components$jheem, intervention@processed[[intervention.element.name]]$max.rates)
         max.rates[,,,,,not.applies.states,,] = -Inf
         
-        apply.functions = expand.character.array(expand.population.to.hiv.positive,
-                                                 components$jheem,
-                                                 intervention@processed[[intervention.element.name]]$apply.functions)
+        apply.functions = expand.population.to.hiv.positive(components$jheem,
+                                                            intervention@processed[[intervention.element.name]]$apply.functions)
         apply.functions[,,,,,not.applies.states,,] = NA
         allow.less = expand.population.to.hiv.positive(components$jheem, 
                                                        intervention@processed[[intervention.element.name]]$allow.less.than.otherwise)
@@ -1074,23 +1081,6 @@ get.intervention.filename <- function(int)
 ##-- HELPERS --##
 ##-------------##
 
-expand.character.array <- function(expand.fn, jheem, arr)
-{
-    char.values = unique(as.character(arr))
-    value.indices = 1:length(char.values)
-    names(value.indices) = char.values
-    
-    int.arr = value.indices[arr]
-    dim(int.arr) = dim(arr)
-    dimnames(int.arr) = dimnames(arr)
-    
-    int.expanded = expand.fn(jheem, int.arr)
-    
-    rv = char.values[int.expanded]
-    dim(rv) = dim(int.expanded)
-    dimnames(rv) = dimnames(int.expanded)
-    rv
-}
 
 merge.heterosexual.and.msm.transmission.arrays <- function(jheem, heterosexual.arr, msm.arr,
                                                            default.value=NaN)

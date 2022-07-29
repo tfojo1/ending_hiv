@@ -44,7 +44,7 @@ prepare.simset.for.intervention <- function(simset,
         init.components = create.initial.components(location = get.simset.location(simset),
                                                     version = update.version,
                                                     start.values = simset@parameters[1,],
-                                                    fix.components = T)
+                                                    fix.components = F)
         
         get.components.fn = get.components.function.for.version(update.version)
     }
@@ -89,6 +89,10 @@ prepare.simset.for.intervention <- function(simset,
         counter <<- counter + 1
         if (verbose)
             cat('done.\n')
+        
+        #for backwards compatibility with G1 models
+        if (!is(components, 'jheem.components') && is.list(components))
+            class(components) = 'jheem.components'
         
         set.sim.components(sim, components)
     })

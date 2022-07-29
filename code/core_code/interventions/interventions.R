@@ -19,7 +19,7 @@ setClass('standard_intervention',
              processed='list',
              static.settings='list',
              parameter.distributions='list',
-             processed.dim.names='list'
+             processed.version='character'
         ))
 
 setClass('null_intervention',
@@ -203,13 +203,16 @@ create.null.intervention <- function()
 
 intervention.consistency.check <- function(intervention, allow.multiple.interventions=T)
 {
-    sapply(names(intervention@raw), function(type){
-        bucket = intervention@raw[[type]]
-        pop.hashes = sapply(bucket$target.populations, logical.to.6.bit)
-        if (!allow.multiple.interventions && max(table(pop.hashes))>1)
-            stop("An intervention can only have one sub-intervention per population, but the intervention has more than one sub-intervention of type ", type,
-                 " for certain sub-populations")
-    })
+    
+    # This code is not doing anything right now
+    
+#    sapply(names(intervention@raw), function(type){
+#        bucket = intervention@raw[[type]]
+#        pop.hashes = sapply(bucket$target.populations, logical.to.6.bit)
+#        if (!allow.multiple.interventions && max(table(pop.hashes))>1)
+#            stop("An intervention can only have one sub-intervention per population, but the intervention has more than one sub-intervention of type ", type,
+#                 " for certain sub-populations")
+#    })
 }
 
 setGeneric('interventions.equal',
@@ -254,7 +257,17 @@ def = function(int1, int2)
         }
         
         # Test Distributions for equality
-        if (!is.null())
+        if (length(int1@parameter.distributions) != length(int2@parameter.distributions))
+            return (F)
+        
+        if (length(int1@parameter.distributions)>0)
+        {
+            for (i in 1:length(int1@parameter.distributions))
+            {
+                if (!distributions.equal(int1@parameter.distributions[[i]], int2@parameter.distributions[[i]]))
+                    return (F)
+            }
+        }
         
         # Test intervention units/target populations for equality
         if (length(int1@raw)>0)
@@ -600,10 +613,10 @@ register.intervention <- function(int,
                     code, "'. Intervention codes must be unique"))
     
     # Add it in and return
-    manager$intervention = c(manager$intervention, list(int))
-    names(manager$intervention) = code
-    
     manager$code = c(manager$code, code)
+    
+    manager$intervention = c(manager$intervention, list(int))
+    names(manager$intervention) = manager$code
     
     manager$name = c(manager$name, name)
     names(manager$name) = manager$code
@@ -800,7 +813,7 @@ intervention.is.processed <- function(intervention)
 
 clear.processed.intervention <- function(intervention)
 {
-    intervention@processed.dim.names = NULL
+    intervention@processed.version = NULL
     intervention@processed = NULL
     
     intervention
@@ -811,20 +824,19 @@ process.intervention <- function(intervention,
                                  to.process = names(intervention@raw),
                                  overwrite.previous.processed=F)
 {
-    stop('need to replace dim.names with settings')
-    if (length(intervention@processed.dim.names)==0 || overwrite.previous.processed)
-        intervention@processed.dim.names = dim.names
-    else if (length(intervention@processed.dim.names) != length(dim.names) ||
-             any(sapply(1:length(dim.names), function(i){
-                 length(intervention@processed.dim.names[[i]]) != length(dim.names[[i]]) ||
-                     any(intervention@processed.dim.names[[i]] != dim.names[[i]])
-             })))
-        stop(paste0("This intervention has already been processed with different dim.names than those given in this call to process.intervention"))
+    if (!is(intervention, 'null_intervention') && !is(intervention, 'standard_intervention'))
+        stop("'intervention' must be either a 'null_intervention' or 'standard_intervention' object")
     
     if (is.null.intervention(intervention))# || intervention.is.resolved(intervention))
         intervention@processed = list()
     else
     {
+        if (length(intervention@processed.version)==0 || overwrite.previous.processed)
+            intervention@processed.version = settings$VERSION
+        else if (settings$VERSION != intervention@processed.version)
+            stop(paste0("This intervention has already been processed with a different settings version than settings passed to this call to process.intervention"))
+        
+        
         all.resolved.by.type = sapply(to.process, function(type){
             sub.units = intervention@raw[[type]]$intervention.units
             all(sapply(sub.units, intervention.unit.is.resolved))
@@ -837,6 +849,8 @@ process.intervention <- function(intervention,
         
         intervention@processed = c(intervention@processed,
                                    lapply(to.process, function(type){
+                                       
+            dim.names = get.dim.names.for.intervention.unit(unit.type=type, settings=settings)
             sub = intervention@raw[[type]]
             
             # check scales
@@ -849,7 +863,6 @@ process.intervention <- function(intervention,
                             paste0("'", unique.scales, "'", collapse=', ')))
             
             # process the rest
-            dim.names = dimnames(sub$target.populations[[1]])
             rv = list()
             rv$start.times = rv$end.times = 
               rv$min.rates = rv$max.rates =
@@ -872,7 +885,7 @@ process.intervention <- function(intervention,
             
             for (j in length(sub$target.populations):1)
             {
-                tpop = resolve.target.population(sub$target.populations[[j]])
+                tpop = resolve.target.population(sub$target.populations[[j]], dim.names = dim.names)
                 unit = sub$intervention.units[[j]]
                 rv$start.times[tpop] = unit$start.year
                 rv$end.times[tpop] = unit$end.year
