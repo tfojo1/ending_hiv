@@ -53,8 +53,8 @@ load.packages <- function(packages.to.load = CUSTOM.PACKAGES,
     packages.to.load = packages.to.load[!missing.packages.mask]
 
     # Figure out when they were created
-    times.packages.built = lapply(packages.to.load, function(file){
-        asDateBuilt(packageDescription('distributions')$Built)
+    times.packages.built = lapply(packages.to.load, function(pkg){
+        asDateBuilt(packageDescription(pkg)$Built)
     })
     
     # Load the consistency check
