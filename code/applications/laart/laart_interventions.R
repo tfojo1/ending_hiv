@@ -12,6 +12,14 @@ create.laart.interventions <- function(target.population=WHOLE.POPULATION,
     
     
     #-- Define Intervention Units --#
+    rate.05 = -log(1-0.05)/(implemented.year-start.year)
+    u.DURABLE.LAART.05 = create.intervention.unit(type = 'engaged.durably.suppressed.switch.to.laart',
+                                                  start.year = start.year,
+                                                  years = c(start.year+0.0001, implemented.year, implemented.year+0.001),
+                                                  rates = expr{c(rate.05, rate.05, 0.05 / (1-.05) * engaged.durably.suppressed.switch.to.laart)},
+                                                  scale = 'rate',
+                                                  apply.function = 'absolute') 
+    
     
     rate.10 = -log(1-0.1)/(implemented.year-start.year)
     u.DURABLE.LAART.10 = create.intervention.unit(type = 'engaged.durably.suppressed.switch.to.laart',
@@ -20,51 +28,83 @@ create.laart.interventions <- function(target.population=WHOLE.POPULATION,
                                                   rates = expr{c(rate.10, rate.10, 0.1 / (1-.1) * engaged.durably.suppressed.switch.to.laart)},
                                                   scale = 'rate',
                                                   apply.function = 'absolute')
+    
+    rate.20 = -log(1-0.2)/(implemented.year-start.year)
+    u.DURABLE.LAART.20 = create.intervention.unit(type = 'engaged.durably.suppressed.switch.to.laart',
+                                                  start.year = start.year,
+                                                  years = c(start.year+0.0001, implemented.year, implemented.year+0.001),
+                                                  rates = expr{c(rate.20, rate.20, 0.2 / (1-.2) * engaged.durably.suppressed.switch.to.laart)},
+                                                  scale = 'rate',
+                                                  apply.function = 'absolute') 
+    
+    
+    u.UNSUPPRESSED.LAART.05 = create.intervention.unit(type = 'engaged.unsuppressed.switch.to.laart',
+                                                  start.year = start.year,
+                                                  years = c(start.year+0.0001, implemented.year, implemented.year+0.001),
+                                                  rates = expr{c(rate.05, rate.05, 0.05 / (1-.05) * engaged.unsuppressed.switch.to.laart)},
+                                                  scale = 'rate',
+                                                  apply.function = 'absolute') 
+    
+    u.UNSUPPRESSED.LAART.10 = create.intervention.unit(type = 'engaged.unsuppressed.switch.to.laart',
+                                                       start.year = start.year,
+                                                       years = c(start.year+0.0001, implemented.year, implemented.year+0.001),
+                                                       rates = expr{c(rate.10, rate.10, 0.10 / (1-.10) * engaged.unsuppressed.switch.to.laart)},
+                                                       scale = 'rate',
+                                                       apply.function = 'absolute') 
+    
+    u.UNSUPPRESSED.LAART.20 = create.intervention.unit(type = 'engaged.unsuppressed.switch.to.laart',
+                                                       start.year = start.year,
+                                                       years = c(start.year+0.0001, implemented.year, implemented.year+0.001),
+                                                       rates = expr{c(rate.20, rate.20, 0.20 / (1-.20) * engaged.unsuppressed.switch.to.laart)},
+                                                       scale = 'rate',
+                                                       apply.function = 'absolute') 
+    
+    
     #@preetham redo all as above
-    
-    
-    
-    u.DURABLE.LAART.05py = create.intervention.unit(type = 'engaged.durably.suppressed.switch.to.laart',
-                                                    start.year = start.year,
-                                                    years = c(start.year+0.0001, implemented.year, implemented.year+0.001),
-                                                    rates = expr{c(0.05, 0.05, 0.1 / (1-.1) * engaged.durably.suppressed.switch.to.laart)},
-                                                    scale = 'proportion',
-                                                    apply.function = 'absolute')
-    
-    u.DURABLE.LAART.10py = create.intervention.unit(type = 'engaged.durably.suppressed.switch.to.laart',
-                                                    start.year = start.year,
-                                                    years = c(start.year+0.0001, implemented.year, implemented.year+0.001),
-                                                    rates = expr{c(0.1, 0.1, 0.25 / (1-.25) * engaged.durably.suppressed.switch.to.laart)},
-                                                    scale = 'proportion',
-                                                    apply.function = 'absolute')
-    
-    u.DURABLE.LAART.20py = create.intervention.unit(type = 'engaged.durably.suppressed.switch.to.laart',
-                                                    start.year = start.year,
-                                                    years = c(start.year+0.0001, implemented.year, implemented.year+0.001),
-                                                    rates = expr{c(0.2, 0.2, 0.5 / (1-.5) * engaged.durably.suppressed.switch.to.laart)},
-                                                    scale = 'proportion',
-                                                    apply.function = 'absolute')
-
-    u.UNSUPPRESSED.LAART.05py = create.intervention.unit(type = 'engaged.unsuppressed.switch.to.laart',
-                                                    start.year = start.year,
-                                                    years = c(start.year+0.0001, implemented.year, implemented.year+0.001),
-                                                    rates = expr{c(0.05, 0.05, 0.1 / (1-.1) * engaged.unsuppressed.switch.to.laart)},
-                                                    scale = 'proportion',
-                                                    apply.function = 'absolute')
-    
-    u.UNSUPPRESSED.LAART.10py = create.intervention.unit(type = 'engaged.unsuppressed.switch.to.laart',
-                                                    start.year = start.year,
-                                                    years = c(start.year+0.0001, implemented.year, implemented.year+0.001),
-                                                    rates = expr{c(0.1, 0.1, 0.25 / (1-.25) * engaged.unsuppressed.switch.to.laart)},
-                                                    scale = 'proportion',
-                                                    apply.function = 'absolute')
-    
-    u.UNSUPPRESSED.LAART.20py = create.intervention.unit(type = 'engaged.unsuppressed.switch.to.laart',
-                                                    start.year = start.year,
-                                                    years = c(start.year+0.0001, implemented.year, implemented.year+0.001),
-                                                    rates = expr{c(0.2, 0.2, 0.5 / (1-.5) * engaged.unsuppressed.switch.to.laart)},
-                                                    scale = 'proportion',
-                                                    apply.function = 'absolute')
+    # 
+    # 
+    # 
+    # u.DURABLE.LAART.05py = create.intervention.unit(type = 'engaged.durably.suppressed.switch.to.laart',
+    #                                                 start.year = start.year,
+    #                                                 years = c(start.year+0.0001, implemented.year, implemented.year+0.001),
+    #                                                 rates = expr{c(0.05, 0.05, 0.1 / (1-.1) * engaged.durably.suppressed.switch.to.laart)},
+    #                                                 scale = 'proportion',
+    #                                                 apply.function = 'absolute')
+    # 
+    # u.DURABLE.LAART.10py = create.intervention.unit(type = 'engaged.durably.suppressed.switch.to.laart',
+    #                                                 start.year = start.year,
+    #                                                 years = c(start.year+0.0001, implemented.year, implemented.year+0.001),
+    #                                                 rates = expr{c(0.1, 0.1, 0.25 / (1-.25) * engaged.durably.suppressed.switch.to.laart)},
+    #                                                 scale = 'proportion',
+    #                                                 apply.function = 'absolute')
+    # 
+    # u.DURABLE.LAART.20py = create.intervention.unit(type = 'engaged.durably.suppressed.switch.to.laart',
+    #                                                 start.year = start.year,
+    #                                                 years = c(start.year+0.0001, implemented.year, implemented.year+0.001),
+    #                                                 rates = expr{c(0.2, 0.2, 0.5 / (1-.5) * engaged.durably.suppressed.switch.to.laart)},
+    #                                                 scale = 'proportion',
+    #                                                 apply.function = 'absolute')
+    # 
+    # u.UNSUPPRESSED.LAART.05py = create.intervention.unit(type = 'engaged.unsuppressed.switch.to.laart',
+    #                                                 start.year = start.year,
+    #                                                 years = c(start.year+0.0001, implemented.year, implemented.year+0.001),
+    #                                                 rates = expr{c(0.05, 0.05, 0.1 / (1-.1) * engaged.unsuppressed.switch.to.laart)},
+    #                                                 scale = 'proportion',
+    #                                                 apply.function = 'absolute')
+    # 
+    # u.UNSUPPRESSED.LAART.10py = create.intervention.unit(type = 'engaged.unsuppressed.switch.to.laart',
+    #                                                 start.year = start.year,
+    #                                                 years = c(start.year+0.0001, implemented.year, implemented.year+0.001),
+    #                                                 rates = expr{c(0.1, 0.1, 0.25 / (1-.25) * engaged.unsuppressed.switch.to.laart)},
+    #                                                 scale = 'proportion',
+    #                                                 apply.function = 'absolute')
+    # 
+    # u.UNSUPPRESSED.LAART.20py = create.intervention.unit(type = 'engaged.unsuppressed.switch.to.laart',
+    #                                                 start.year = start.year,
+    #                                                 years = c(start.year+0.0001, implemented.year, implemented.year+0.001),
+    #                                                 rates = expr{c(0.2, 0.2, 0.5 / (1-.5) * engaged.unsuppressed.switch.to.laart)},
+    #                                                 scale = 'proportion',
+    #                                                 apply.function = 'absolute')
     
 
 
