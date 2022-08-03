@@ -6,7 +6,7 @@
 setClass('target.population',
          slots=c(
              dim.names='list',
-             code=character()
+             code='character'
          ))
 
 setClass('simple.target.population',
@@ -44,21 +44,24 @@ def = function(.Object, dim.names, invert=F)
         stop('dim.names must be a named list')
     
     if (any(sapply(dim.names, function(elem){
-        !is.character(elem) && !is.integer(elem) && !is.logical(elem)
+        !is.character(elem) && !is.logical(elem) &&
+            !(is.numeric(elem) && all(round(elem)==elem)) && !is.null(elem)
     })))
         stop("dim.names must contain only character, integer, or logical vectors")
     
+        
     if (!is.logical(invert) || length(invert) != 1 || is.na(invert))
         stop("invert must be a single TRUE or FALSE value")
     
-    .Object@dim.names = dim.names[sapply(dim.names, function(elem){length(elem)>0})]
+    .Object@dim.names = dim.names[sapply(dim.names, length)>0]
+    .Object@invert = invert
     
     .Object
 })
 
 setMethod('initialize',
           signature = 'combination.target.population',
-def = function(.object, subpop1, subpop2, combine.function)
+def = function(.Object, subpop1, subpop2, combine.function)
 {
     if (!is.character(combine.function) || length(combine.function) != 1 || is.na(combine.function))
         stop("combine.function must be a single character value")
@@ -136,7 +139,7 @@ diff.target.populations <- function(pop1, pop2)
 ##--------------------------##
 
 setGeneric('target.populations.equal',
-           def=function(target.population, dim.names){standardGeneric('target.populations.equal')})
+           def=function(tpop1, tpop2){standardGeneric('target.populations.equal')})
 
 setMethod('target.populations.equal',
           signature = 'simple.target.population',
@@ -166,7 +169,8 @@ setMethod('target.populations.equal',
           signature = 'combination.target.population',
 def = function(tpop1, tpop2)
 {
-    length(tpop1@combine.function) == length(tpop2@combine.function) &&
+    is (tpop2, 'combination.target.population') &&
+        length(tpop1@combine.function) == length(tpop2@combine.function) &&
         all(tpop1@combine.function == tpop2@combine.function) &&
         target.populations.equal(tpop1@subpop1, tpop2@subpop1) &&
         target.populations.equal(tpop1@subpop2, tpop2@subpop2)

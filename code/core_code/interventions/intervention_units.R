@@ -39,7 +39,8 @@ create.intervention.unit <- function(type=c('testing','prep','suppression','need
                                      name.post.descriptor=UNIT.NAME.POST.DESCRIPTOR[type],
                                      name.rate.suffix=UNIT.NAME.RATE.SUFFIX[type],
                                      name.apply.function=apply.function,
-                                     name.transformation.function=NULL)
+                                     name.transformation.function=NULL,
+                                     expression.parameters=NULL)
 {
     #-- Check Types --#
     if (!is(type, 'character') || !length(type)==1)
@@ -68,6 +69,13 @@ create.intervention.unit <- function(type=c('testing','prep','suppression','need
     #-- Check scale --#
     check.transition.element.type(scale, varname.for.error = 'scale')
     
+    #-- Check expression.parameters --#
+    if (is.null(expression.parameters))
+        expression.parameters = list()
+    else if (!is.list(expression.parameters) || is.null(names(expression.parameters)) || 
+             any(names(expression.parameters)==''))
+        stop("expression.parameters must be a named list")
+    
     #-- Set up name metadata --#
     
     name.metadata = list(
@@ -95,7 +103,7 @@ create.intervention.unit <- function(type=c('testing','prep','suppression','need
               max.rate = max.rate,
               raw.rates = raw.rates,
               name.metadata = name.metadata,
-              resolved.bindings=list())
+              resolved.bindings=expression.parameters)
 
     #-- Set up names to resolve --#
     
@@ -159,21 +167,21 @@ create.proportion.multiplier.intervention.unit <- function(type=c('testing','pre
 ##-- MANAGING DIMENSIONS --##
 ##------------------------##
 
-get.dim.names.for.intervention.unit <- function(unit, settings)
+get.dim.names.for.intervention.unit <- function(unit.type, settings)
 {
-    if (any(names(settings$transition.mapping$transition.elements) == unit$type))
+    if (any(names(settings$transition.mapping$transition.elements) == unit.type))
     {
-        tr.el = settings$transition.mapping$transition.elements[[type]]
+        tr.el = settings$transition.mapping$transition.elements[[unit.type]]
         tr.el$dim.names
     }
-    else if (any(names(REGISTERED.INTERVENTION.UNIT.METADATA) == unit$type))
+    else if (any(names(REGISTERED.INTERVENTION.UNIT.METADATA) == unit.type))
     {
-        metadata = REGISTERED.INTERVENTION.UNIT.METADATA[[unit$type]]
+        metadata = REGISTERED.INTERVENTION.UNIT.METADATA[[unit.type]]
         settings$DIMENSION.NAMES[metadata$dimensions]
     }
     else
-        stop(paste0("Invalid unit type: '", unit$type, "' for the given settings. No transition element named '",
-                    unit$type, "' has been registered for model version '", settings$VERSION,
+        stop(paste0("Invalid unit type: '", unit.type, "' for the given settings. No transition element named '",
+                    unit.type, "' has been registered for model version '", settings$VERSION,
                     "', nor has it been registered as a global intervention unit type."))
 }
 
@@ -483,10 +491,11 @@ resolve.element <- function(elem, resolved.bindings, parameters)
 ##--------------------##
 
 
+INTERVENTION.UNIT.SUBGROUPS = c('hiv.negative', 'hiv.positive')
 ALLOWED.UNIT.METADATA.DIMENSIONS = c('age','race','subpopulation','sex','risk','non.hiv.subset')
 create.unit.metadata <- function(type,
-                                 pct,
-                                 dimensions)
+                                 applies.to.subgroups,
+                                 affects.dimensions=character())
 {
     
 }

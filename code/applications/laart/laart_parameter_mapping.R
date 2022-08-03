@@ -65,8 +65,8 @@ GET.COMPONENTS.FOR.LAART.PARAMETERS <- join.get.components.functions(
                                       parameter.value = parameters['resistant.versus.oral.gain.of.suppression.rr'])
     
     components = set.static.parameter(components,
-                                      parameter.name='resistant.versus.reengagement.rr',
-                                      parameter.value = parameters['resistant.versus.reengagement.rr'])
+                                      parameter.name='resistant.versus.oral.reengagement.rr',
+                                      parameter.value = parameters['resistant.versus.oral.reengagement.rr'])
     
     p.resistance = parameters['laart.recently.suppressed.to.resistant.unsuppressed']
     o.resistance = p.resistance / (1-p.resistance)

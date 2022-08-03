@@ -16,7 +16,6 @@ params = simset@parameters[1,]
 
 
 source('code/source_code.R')
-ALL.DATA.MANAGERS$comorbidities = comorbidities.manager
 
 source('code/settings_and_files/setup_versions.R')
 source('code/applications/depression/depression_jheem_settings.R')

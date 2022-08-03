@@ -4,7 +4,7 @@ source("code/processing/visualization/sim_plots.R")
 
 set.seed(5557)
 
-msa=ATLANTA.MSA
+msa=LA.MSA
 RESUME=T
 
 save.suffix = ''

@@ -778,6 +778,12 @@ set.background.hiv.testing.ramp.up <- function(components,
         if (is.null(components$background.testing$ramp.up.yearly.increase))
             stop("Cannot set testing.ramp.up.vs.current.rr unless testing.ramp.up.yearly.increase has been previously set up ")
       
+        # For backwards compatibility with G1 (Annals) fitted models
+        if (is.null(components$background.testing$ramp.years))
+            components$background.testing$ramp.years = c(components$background.testing$first.testing.year,
+                                                         components$background.testing$first.testing.year+1,
+                                                         components$background.testing$ramp.up.year)
+        
         do.set.ramp.multipliers(components,
                                 type='testing',
                                 indices=2:3,
@@ -1805,6 +1811,18 @@ do.set.alphas.for.category <- function(components,
     if (!is.numeric(values) || any(is.na(values)))
         stop("values must be a numeric, non-NA vector")
     
+    #For backwards compatbility for simulations that were created before the use of formal model objects
+    # the models in these were all logistic models
+    if (!is(components[[type.name]]$model, 'model'))
+    {
+        old.model = components[[type.name]]$model
+        components[[type.name]]$model = create.logistic.model(intercept = old.model$intercept,
+                                                              slope = old.model$slope,
+                                                              anchor.year = old.model$anchor.year,
+                                                              min.proportion = 0,
+                                                              max.proportion = old.model$max.proportion,
+                                                              log.ors = numeric())
+    }
     value.transformation = get.model.scale.transformation.function(components[[type.name]]$model)
     if (!is.null(value.transformation))
         values = value.transformation(values)

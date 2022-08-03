@@ -338,23 +338,6 @@ copy.and.modify.jheem.settings <- function(template.settings,
     )
 }
 
-# A helper to get the JHEEM version from a sim
-# This is a separate function to be backwards compatible with sims from 
-#   version 'collapsed_1.0' which did not have an explicit version stored
-get.sim.version <- function(sim)
-{
-    if (!is(sim, 'jheem.results'))
-        stop("sim must be of class 'jheem.results'")
-    else if (is.null(sim$version))
-    {
-        if (get.settings.for.version$IS_CONTINUUM_COLLAPSED)
-            'collapsed_1.0'
-        else
-            stop("No version was set for this simulation")
-    }
-    else
-        sim$version
-}
 
 # low level helper for checking
 tail.subset.equal <- function(set, tail)

@@ -12,19 +12,16 @@ update.cache.consistency.check <- function(elements = gsub("\\.Rdata$", '', list
                                            consistency.file = 'code/core_code/data_managers/cache.consistency.check.Rdata',
                                            cache.dir='cached',
                                            first.time=F,
-                                           allow.to.run=F) # A flag you have to set manually so we don't run by accident
+                                           allow.to.run=first.time) # A flag you have to set manually so we don't run by accident
 {
     if (!allow.to.run)
         stop("Make sure NOT TO RUN update.cache.consistency.check BY ACCIDENT. You need to set the allow to run flag to be able to run this function.")
     
-    if (!file.exists(consistency.file))
-    {
-        if (first.time)
-            prior.consistency.check = NULL
-        else
-            stop(paste0("We need a prior consistency.check to update. No consistency check exists at '",
+    if (first.time)
+        prior.consistency.check = NULL
+    else if (!file.exists(consistency.file))
+        stop(paste0("We need a prior consistency.check to update. No consistency check exists at '",
              consistency.file, "'"))
-    }
     else
     {
         load(consistency.file)

@@ -13,7 +13,7 @@ get.sim.version <- function(sim)
         stop("sim must be an object of class 'jheem.results'")
     
     if (is.null(sim$version))
-        get.components.version(attr(sim, 'components'))
+        get.components.version(get.sim.components(sim))
     else
         sim$version
 }

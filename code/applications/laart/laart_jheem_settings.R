@@ -273,7 +273,7 @@ LAART.CONTINUUM.TRANSITION.MAPPING = register.transition(LAART.CONTINUUM.TRANSIT
                                                          dimension='continuum',
                                                          from.state='resistant_disengaged',
                                                          to.state='resistant_unsuppressed',
-                                                         rate = expression(reengagement*resistant.versus.reengagement.rr),
+                                                         rate = expression(reengagement*resistant.versus.oral.reengagement.rr),
                                                          label = 'reengagement')
 
 LAART.CONTINUUM.TRANSITION.MAPPING = register.transition(LAART.CONTINUUM.TRANSITION.MAPPING,
@@ -397,7 +397,7 @@ LAART.CONTINUUM.TRANSITION.MAPPING = register.transition.element(LAART.CONTINUUM
                                                                  )
 
 LAART.CONTINUUM.TRANSITION.MAPPING = register.transition.element(LAART.CONTINUUM.TRANSITION.MAPPING,
-                                                                 name='resistant.versus.reengagement.rr',
+                                                                 name='resistant.versus.oral.reengagement.rr',
                                                                  type = 'rate', 
                                                                  )
 
@@ -410,7 +410,7 @@ LAART.CONTINUUM.TRANSITION.MAPPING = register.transition.element(LAART.CONTINUUM
                                                                  name='engaged.durably.suppressed.switch.to.laart',
                                                                  type = 'rate',
                                                                  default.value = 0,
-                                                                 required=F)#double check required
+                                                                 required=F)
 
 LAART.CONTINUUM.TRANSITION.MAPPING = register.transition.element(LAART.CONTINUUM.TRANSITION.MAPPING,
                                                                  name='engaged.unsuppressed.switch.to.laart.successful',
@@ -421,7 +421,7 @@ LAART.CONTINUUM.TRANSITION.MAPPING = register.transition.element(LAART.CONTINUUM
                                                                  name='engaged.unsuppressed.switch.to.laart',
                                                                  type='rate',
                                                                  default.value = 0,
-                                                                 required=F)#double check required
+                                                                 required=F)
 
 
 VERSION.MANAGER = copy.and.modify.jheem.settings(
@@ -440,10 +440,20 @@ VERSION.MANAGER = copy.and.modify.jheem.settings(
   engaged.continuum.states=c('engaged_unsuppressed_naive',
                              'engaged_unsuppressed_failing', 
                              'engaged_recently_suppressed',
-                             'engaged_durably_suppressed'
+                             'engaged_durably_suppressed',
+                             'laart_unsuppressed', 
+                             'laart_recently_suppressed', 
+                             'laart_durably_suppressed', 
+                             'resistant_unsuppressed', 
+                             'resistant_recently_suppressed', 
+                             'resistant_durably_suppressed'
   ),
   suppressed.continuum.states=c('engaged_recently_suppressed',
-                                'engaged_durably_suppressed'
+                                'engaged_durably_suppressed',
+                                'laart_recently_suppressed', 
+                                'laart_durably_suppressed', 
+                                'resistant_recently_suppressed', 
+                                'resistant_durably_suppressed'
   ),
   
   is.continuum.collapsed=F,

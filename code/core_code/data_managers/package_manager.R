@@ -8,19 +8,16 @@ CUSTOM.PACKAGES = c(
 update.package.consistency.check <- function(packages = CUSTOM.PACKAGES,
                                              consistency.file = 'code/core_code/data_managers/package.consistency.check.Rdata',
                                              first.time=F,
-                                             allow.to.run=F) # A flag you have to set manually so we don't run by accident
+                                             allow.to.run=first.time) # A flag you have to set manually so we don't run by accident
 {
     if (!allow.to.run)
         stop("Make sure NOT TO RUN update.package.consistency.check BY ACCIDENT. You need to set the allow to run flag to be able to run this function.")
     
-    if (!file.exists(consistency.file))
-    {
-        if (first.time)
-            prior.consistency.check = NULL
-        else
-            stop(paste0("We need a prior consistency.check to update. No consistency check exists at '",
-                        consistency.file, "'"))
-    }
+    if (first.time)
+        prior.consistency.check = NULL
+    else if (!file.exists(consistency.file))
+        stop(paste0("We need a prior consistency.check to update. No consistency check exists at '",
+                    consistency.file, "'"))
     else
     {
         load(consistency.file)
@@ -56,8 +53,8 @@ load.packages <- function(packages.to.load = CUSTOM.PACKAGES,
     packages.to.load = packages.to.load[!missing.packages.mask]
 
     # Figure out when they were created
-    times.packages.built = lapply(packages.to.load, function(file){
-        asDateBuilt(packageDescription('distributions')$Built)
+    times.packages.built = lapply(packages.to.load, function(pkg){
+        asDateBuilt(packageDescription(pkg)$Built)
     })
     
     # Load the consistency check
