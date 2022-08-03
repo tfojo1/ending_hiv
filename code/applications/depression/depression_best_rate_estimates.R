@@ -40,10 +40,15 @@ get.estimated.depression.incidence <- function(version='expanded_1.0',
                                                Female.age2.activeIDU.ratio = 6.9170511
                                                )
 {
-    incidence_white = read.csv(paste0(dir,"White_Incidence_Never_IDU.csv"),header = TRUE, row.names = 1) 
-    incidence_black = read.csv(paste0(dir,"Black_Incidence_Never_IDU.csv"),header = TRUE, row.names = 1) 
-    incidence_hispanic = read.csv(paste0(dir,"Hispanic_Incidence_Never_IDU.csv"),header = TRUE, row.names = 1)
+    #incidence_white = read.csv(paste0(dir,"White_Incidence_Never_IDU.csv"),header = TRUE, row.names = 1) 
+    #incidence_black = read.csv(paste0(dir,"Black_Incidence_Never_IDU.csv"),header = TRUE, row.names = 1) 
+    #incidence_hispanic = read.csv(paste0(dir,"Hispanic_Incidence_Never_IDU.csv"),header = TRUE, row.names = 1)
     
+    incidence_white = read.csv(paste0(dir,"White_Incidence.csv"),header = TRUE, row.names = 1) 
+    incidence_black = read.csv(paste0(dir,"Black_Incidence.csv"),header = TRUE, row.names = 1) 
+    incidence_hispanic = read.csv(paste0(dir,"Hispanic_Incidence.csv"),header = TRUE, row.names = 1)
+  
+  
     incidence_white = incidence_white[,c(1:2)] 
     incidence_black = incidence_black[,c(1:2)]
     incidence_hispanic = incidence_hispanic[,c(1:2)]
