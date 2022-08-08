@@ -94,7 +94,15 @@ load.packages <- function(packages.to.load = CUSTOM.PACKAGES,
         
         packages.to.get = c(missing.packages, too.old.packages)
         
-        error.msg = paste0(error.msg, "\n\nUse the following code to update packages:\n\nlibrary(devtools)",
+        if (any(missing.packages.mask) && any(too.old.mask))
+            verb = 'install/update'
+        else if (any(missing.packages.mask))
+            verb = 'install'
+        else
+            verb = 'update'
+        
+        error.msg = paste0(error.msg, "\n\nUse the following code to ", verb,
+                           " packages:\n\nlibrary(devtools)",
                            paste0("\ninstall_github('tfojo1/", packages.to.get, "')", collapse=''))
         stop(error.msg)
     }

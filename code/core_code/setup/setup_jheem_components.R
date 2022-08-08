@@ -2149,7 +2149,8 @@ do.set.ramp.times <- function(components,
 #-- CHANGE TO YEARS --#
 
 set.background.change.to.years <- function(components,
-                                           ...)
+                                           ...,
+                                           allow.set.if.type.missing=F)
 {
     args = list(...)
     types = names(args)
@@ -2158,6 +2159,16 @@ set.background.change.to.years <- function(components,
     
     if (is.null(components$background.change.to.years))
         components$background.change.to.years = list()
+    
+    if (!allow.set.if.type.missing)
+    {
+        component.names = paste0('background.', types)
+        missing.type.mask = sapply(components[component.names], is.null)
+        missing.types = types[missing.type.mask]
+        if (any(missing.type.mask))
+            stop(paste0("Trying to set background change-to years for the following type(s), but rates for those type(s) have not been set up: ",
+                        paste0("'", missing.types, "'", collapse=', ')))
+    }
     
     for (type in types)
     {

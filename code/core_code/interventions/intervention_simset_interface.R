@@ -49,8 +49,22 @@ run.simset.intervention <- function(simset,
                                     version=NULL,
                                     verbose=F,
                                     update.progress=if (verbose) function(n){print(paste0("Running simulation ", n, " of ", simset@n.sim))} else NULL,
-                                    seed = 12343)
+                                    seed = 12343,
+                                    allow.run.on.uprepared.simset=F)
 {
+    # Check classes of arguments
+    if (!is(simset, 'simset') || !is(simset@simulations[[1]], 'jheem.results'))
+        stop("simset must be an object of class 'simset' which contains 'jheem.results' objects as its simulations")
+    if (is.null(intervention))
+        stop("intervention cannot be NULL. Use the NO.INTERVENTION object if you want to run projections where nothing from the status quo is changed")
+    if (!is(intervention, 'intervention'))
+        stop("intervention must be an object of class 'intervention'")
+    
+    # Check that simset is prepared for intervention
+    if (!allow.run.on.uprepared.simset && !is.simset.prepared.for.projection(simset))
+        stop("simset has not been prepared for projections. Use the prepare.simset.for.intervention function to do so. If you truly intended to project on an unprepared simset, set the 'allow.run.on.uprepared.simset' flag to TRUE")
+    
+    # Check the run from year
     if (is.null(run.from.year))
     {
         run.from.year = max(as.numeric(ALL.DATA.MANAGERS$census.totals$years))

@@ -120,6 +120,14 @@ prepare.simset.for.intervention <- function(simset,
     simset
 }
 
+is.simset.prepared.for.projection <- function(simset)
+{
+    version = get.simset.version(simset)
+    projection.parameters.distribution = get.projection.prarameters.distribution.for.version(version)
+    
+    length(setdiff(projection.parameters.distribution@var.names, simset@parameter.names))==0
+}
+
 
 OLD.prepare.simset.for.interventions <- function(simset,
                                              

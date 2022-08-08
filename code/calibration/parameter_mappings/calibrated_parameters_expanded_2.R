@@ -417,8 +417,11 @@ EXPANDED.CONTINUUM.UPDATE.COMPONENTS.FUNCTION <- function(parameters, components
                                                 failing.to.disengaged = parameters['continuum.gains.end.by.year'],
                                                 failing.to.suppressed = parameters['continuum.gains.end.by.year'],
                                                 
-                                                suppressed.to.disengaged = parameters['continuum.gains.end.by.year'],
-                                                suppressed.to.failing = parameters['continuum.gains.end.by.year'],
+                                                recently.suppressed.to.disengaged = parameters['continuum.gains.end.by.year'],
+                                                recently.suppressed.to.failing = parameters['continuum.gains.end.by.year'],
+                                                
+                                                durably.suppressed.to.disengaged = parameters['continuum.gains.end.by.year'],
+                                                durably.suppressed.to.failing = parameters['continuum.gains.end.by.year'],
                                                 
                                                 reengagement = parameters['continuum.gains.end.by.year']
     )
@@ -438,6 +441,7 @@ EXPANDED.CONTINUUM.UPDATE.COMPONENTS.FUNCTION <- function(parameters, components
                                               # to disengaged
                                               failing.to.disengaged = parameters['total.future.disengagement.slope.or'],
                                               naive.to.disengaged = parameters['total.future.disengagement.slope.or'],
+                                              
                                               recently.suppressed.to.disengaged = parameters['total.future.disengagement.slope.or'],
                                               durably.suppressed.to.disengaged = parameters['total.future.disengagement.slope.or'],
                                               
