@@ -94,3 +94,9 @@ log.sd.proportion.discontinued = (log(ci.treatment.discontinuation.rate[2])-log(
 
 dist1 = Lognormal.Distribution(log.mean.proportion.discontinued, log.sd.proportion.discontinued)
 dist2 = Lognormal.Distribution(log(treatment.discontinuation.rate), log(4)/2)
+
+##-- Treatment Rate for Depression --##
+proportion.treated = .753 #https://www.mhanational.org/issues/state-mental-health-america
+treatment.rate = -log(1-proportion.treated)
+ci.proportion.treated = qbeta(c(0.025, 0.975), 0.5+.753, 0.5 + 1-.753)
+ci.treatment.rate = -log(1-ci.proportion.treated)
