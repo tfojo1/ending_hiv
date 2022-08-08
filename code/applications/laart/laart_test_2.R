@@ -20,11 +20,12 @@ noint = run.simset.intervention(prepared, NO.INTERVENTION)
 simplot(noint)
 
 sim = noint@simulations[[1]]
-
+implemented.year=2028
+start.year = 2025
 rate.10 = -log(1-0.1)/(implemented.year-start.year)
 u.DURABLE.LAART.10 = create.intervention.unit(type = 'engaged.durably.suppressed.switch.to.laart',
                                               start.year = start.year,
                                               years = c(start.year+0.0001, implemented.year, implemented.year+0.001),
-                                              rates = expr{c(rate.10, rate.10, 0.1 / (1-.1) * engaged.durably.suppressed.switch.to.laart)},
+                                              rates = expression(c(rate.10, rate.10, 0.1 / (1-.1) * engaged.durably.suppressed.switch.to.laart)),
                                               scale = 'rate',
                                               apply.function = 'absolute')

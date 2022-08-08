@@ -1,31 +1,31 @@
 library('ggplot2')
 library('betareg')
+getlognormalparams<- function(ci){
+  log.mu = mean(log(ci))
+  log.ci = log(c(min(ci), max(ci)))
+  log.sigma = (log.ci[2] - log.ci[1]) / 2 / 1.96
+  return(c(log.mu, log.sigma))
+}
+
+getbetaparams<- function(ci, confidence) {
+  if(confidence == 1){
+    est.mu <- mean(ci)
+    ci = c(min(ci), max(ci))
+    est.sigma <- (ci[2]-ci[1])/2/1.96
+    alpha<-((1 - est.mu) / (est.sigma^2) - (1 / est.mu)) * (est.mu ^ 2)
+    beta<-alpha * (1 / est.mu - 1)}
+  else{est.mu <- mean(ci)
+  ci = c(min(ci), max(ci))
+  est.sigma <- 2*((ci[2]-ci[1])/2/1.96)
+  alpha<-((1 - est.mu) / (est.sigma^2) - (1 / est.mu)) * (est.mu ^ 2)
+  beta<-alpha * (1 / est.mu - 1)}
+  return(c(alpha, beta))
+}
 
 LAART.PARAMETER.DISTRIBUTION = join.distributions(
   
   #for multiple studies jeffreys, sum up alpha = 0.5 + sum of success, beta = 0.5 + sum of failure
   #use jeffrey prior for exact LAART values, use getbetaparams when more uncertain and multipley ets.siga by 2 or level of uncertainty
-  getlognormalparams<- function(ci){
-    log.mu = mean(log(ci))
-    log.ci = log(c(min(ci), max(ci)))
-    log.sigma = (log.ci[2] - log.ci[1]) / 2 / 1.96
-    return(c(log.mu, log.sigma))
-  }
-  
-  getbetaparams<- function(ci, confidence) {
-    if(confidence == 1){
-      est.mu <- mean(ci)
-      ci = c(min(ci), max(ci))
-      est.sigma <- (ci[2]-ci[1])/2/1.96
-      alpha<-((1 - est.mu) / (est.sigma^2) - (1 / est.mu)) * (est.mu ^ 2)
-      beta<-alpha * (1 / est.mu - 1)}
-    else{est.mu <- mean(ci)
-    ci = c(min(ci), max(ci))
-    est.sigma <- 2*((ci[2]-ci[1])/2/1.96)
-    alpha<-((1 - est.mu) / (est.sigma^2) - (1 / est.mu)) * (est.mu ^ 2)
-    beta<-alpha * (1 / est.mu - 1)}
-    return(c(alpha, beta))
-  }
 
   laart.versus.oral.disengagement.rr = Lognormal.Distribution(meanlog = getlognormalparams(c(0.993421, 1.120315582))[1], sdlog = getlognormalparams(c(0.993421, 1.120315582))[2]),
   
@@ -48,6 +48,7 @@ LAART.PARAMETER.DISTRIBUTION = join.distributions(
   
   #Using Jeffrey Prior Distribution with % maintaining suppression from Flair trial 
   laart.unsuppressed.to.laart.recently.suppressed = Beta.Distribution(alpha=280.5, beta=3.5), 
+  #laart.unsuppressed.to.laart.recently.suppressed = Beta.Distribution(alpha=12.5, beta=3.5) #Ward 86 trial
   
   
   resistant.versus.oral.loss.of.suppression.rr = Lognormal.Distribution(meanlog=getlognormalparams(c(0.6,1.55))[1], sdlog=getlognormalparams(c(0.6,1.55))[2]), 
