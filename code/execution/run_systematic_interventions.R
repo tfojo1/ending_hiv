@@ -25,7 +25,7 @@ run.multiple.systematic.interventions <- function(version,
                          msa.names(loc), " (", loc, ") ***"))
         
         
-        full.filename = get.full.filename(location=location, version=version)
+        full.filename = get.full.filename(location=loc, version=version)
         load(file=file.path(src.dir, full.filename))
         
         run.systematic.interventions(simset =  simset,

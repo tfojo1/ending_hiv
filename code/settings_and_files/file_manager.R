@@ -108,7 +108,7 @@ save.simset <- function(simset,
         (!full || !save.full.in.master.directory))
         dir = file.path(dir, location)
     if (!dir.exists(dir))
-        dir.create(dir)
+        dir.create(dir, recursive = T)
     
     save(simset, file=file.path(dir, filename))
 }
