@@ -12,52 +12,60 @@ create.laart.interventions <- function(target.population=WHOLE.POPULATION,
     
     
     #-- Define Intervention Units --#
-    rate.05 = -log(1-0.05)/(implemented.year-start.year)
-    u.DURABLE.LAART.05 = create.intervention.unit(type = 'engaged.durably.suppressed.switch.to.laart',
-                                                  start.year = start.year,
-                                                  years = c(start.year+0.0001, implemented.year, implemented.year+0.001),
-                                                  rates = expr{c(rate.05, rate.05, 0.05 / (1-.05) * engaged.durably.suppressed.switch.to.laart)},
-                                                  scale = 'rate',
-                                                  apply.function = 'absolute') 
     
     
     rate.10 = -log(1-0.1)/(implemented.year-start.year)
     u.DURABLE.LAART.10 = create.intervention.unit(type = 'engaged.durably.suppressed.switch.to.laart',
                                                   start.year = start.year,
-                                                  years = c(start.year+0.0001, implemented.year, implemented.year+0.001),
-                                                  rates = expr{c(rate.10, rate.10, 0.1 / (1-.1) * engaged.durably.suppressed.switch.to.laart)},
+                                                  years = c(start.year+0.0001, implemented.year, implemented.year+0.001),#engaged.durably.suppressed.switch.to.laart
+                                                  rates = expression(c(rate.10, rate.10, 0.1 / (1-.1) * laart.discontinuation)),
                                                   scale = 'rate',
-                                                  apply.function = 'absolute')
+                                                  apply.function = 'absolute',
+                                                  expression.parameters = list(rate.10=rate.10))
     
-    rate.20 = -log(1-0.2)/(implemented.year-start.year)
-    u.DURABLE.LAART.20 = create.intervention.unit(type = 'engaged.durably.suppressed.switch.to.laart',
+    rate.25 = -log(1-0.25)/(implemented.year-start.year)
+    u.DURABLE.LAART.25 = create.intervention.unit(type = 'engaged.durably.suppressed.switch.to.laart',
                                                   start.year = start.year,
-                                                  years = c(start.year+0.0001, implemented.year, implemented.year+0.001),
-                                                  rates = expr{c(rate.20, rate.20, 0.2 / (1-.2) * engaged.durably.suppressed.switch.to.laart)},
+                                                  years = c(start.year+0.0001, implemented.year, implemented.year+0.001),#engaged.durably.suppressed.switch.to.laart
+                                                  rates = expression(c(rate.25, rate.25, 0.25 / (1-.25) * laart.discontinuation)),
                                                   scale = 'rate',
-                                                  apply.function = 'absolute') 
+                                                  apply.function = 'absolute',
+                                                  expression.parameters = list(rate.25=rate.25))
     
-    
-    u.UNSUPPRESSED.LAART.05 = create.intervention.unit(type = 'engaged.unsuppressed.switch.to.laart',
+    rate.50 = -log(1-0.50)/(implemented.year-start.year)
+    u.DURABLE.LAART.50 = create.intervention.unit(type = 'engaged.durably.suppressed.switch.to.laart',
                                                   start.year = start.year,
-                                                  years = c(start.year+0.0001, implemented.year, implemented.year+0.001),
-                                                  rates = expr{c(rate.05, rate.05, 0.05 / (1-.05) * engaged.unsuppressed.switch.to.laart)},
+                                                  years = c(start.year+0.0001, implemented.year, implemented.year+0.001),#engaged.durably.suppressed.switch.to.laart
+                                                  rates = expression(c(rate.50, rate.50, 0.50 / (1-.50) * laart.discontinuation)),
                                                   scale = 'rate',
-                                                  apply.function = 'absolute') 
+                                                  apply.function = 'absolute',
+                                                  expression.parameters = list(rate.50=rate.50))
+    
     
     u.UNSUPPRESSED.LAART.10 = create.intervention.unit(type = 'engaged.unsuppressed.switch.to.laart',
                                                        start.year = start.year,
                                                        years = c(start.year+0.0001, implemented.year, implemented.year+0.001),
-                                                       rates = expr{c(rate.10, rate.10, 0.10 / (1-.10) * engaged.unsuppressed.switch.to.laart)},
+                                                       rates = expression(c(rate.10, rate.10, 0.10 / (1-.10) * laart.discontinuation)),#engaged.durably.suppressed.switch.to.laart
                                                        scale = 'rate',
-                                                       apply.function = 'absolute') 
+                                                       apply.function = 'absolute',
+                                                       expression.parameters = list(rate.10=rate.10)) 
     
-    u.UNSUPPRESSED.LAART.20 = create.intervention.unit(type = 'engaged.unsuppressed.switch.to.laart',
-                                                       start.year = start.year,
-                                                       years = c(start.year+0.0001, implemented.year, implemented.year+0.001),
-                                                       rates = expr{c(rate.20, rate.20, 0.20 / (1-.20) * engaged.unsuppressed.switch.to.laart)},
-                                                       scale = 'rate',
-                                                       apply.function = 'absolute') 
+    u.UNSUPPRESSED.LAART.25 = create.intervention.unit(type = 'engaged.unsuppressed.switch.to.laart',
+                                                  start.year = start.year,
+                                                  years = c(start.year+0.0001, implemented.year, implemented.year+0.001),#engaged.durably.suppressed.switch.to.laart
+                                                  rates = expression(c(rate.25, rate.25, 0.25 / (1-.25) * laart.discontinuation)),
+                                                  scale = 'rate',
+                                                  apply.function = 'absolute',
+                                                  expression.parameters = list(rate.25=rate.25))
+    
+    u.UNSUPPRESSED.LAART.50 = create.intervention.unit(type = 'engaged.unsuppressed.switch.to.laart',
+                                                  start.year = start.year,
+                                                  years = c(start.year+0.0001, implemented.year, implemented.year+0.001),#engaged.durably.suppressed.switch.to.laart
+                                                  rates = expression(c(rate.50, rate.50, 0.50 / (1-.50) * laart.discontinuation)),
+                                                  scale = 'rate',
+                                                  apply.function = 'absolute',
+                                                  expression.parameters = list(rate.50=rate.50))
+    
     
     
     #@preetham redo all as above
@@ -109,49 +117,54 @@ create.laart.interventions <- function(target.population=WHOLE.POPULATION,
 
 
     #-- Create Interventions --#
-    durable.laart.05py = create.intervention(target.population, 
-                                             u.DURABLE.LAART.05py)
     
-    durable.laart.10py = create.intervention(target.population, 
-                                             u.DURABLE.LAART.10py)
+    durable.laart.10 = create.intervention(target.population, 
+                                             u.DURABLE.LAART.10)
     
-    durable.laart.20py = create.intervention(target.population, 
-                                             u.DURABLE.LAART.20py)
+    durable.laart.25 = create.intervention(target.population, 
+                                           u.DURABLE.LAART.25)
     
-    unsuppressed.laart.05py = create.intervention(target.population, 
-                                             u.UNSUPPRESSED.LAART.05py)
+    durable.laart.50 = create.intervention(target.population, 
+                                           u.DURABLE.LAART.50)
     
-    unsuppressed.laart.10py = create.intervention(target.population, 
-                                             u.UNSUPPRESSED.LAART.10py)
+    unsuppressed.laart.10 = create.intervention(target.population, 
+                                             u.UNSUPPRESSED.LAART.10)
     
-    unsuppressed.laart.20py = create.intervention(target.population, 
-                                             u.UNSUPPRESSED.LAART.20py)
+    unsuppressed.laart.25 = create.intervention(target.population, 
+                                                u.UNSUPPRESSED.LAART.25)
     
-    INTERVENTION.MANAGER = register.intervention(durable.laart.05py, code=paste0('durable.laart.05py', suffix),
-                                                 name='5% of durably suppressed start LAART per year',
-                                                 manager = INTERVENTION.MANAGER)
+    unsuppressed.laart.50 = create.intervention(target.population, 
+                                                u.UNSUPPRESSED.LAART.50)
     
-    INTERVENTION.MANAGER = register.intervention(durable.laart.10py, code=paste0('durable.laart.10py', suffix),
+    
+    INTERVENTION.MANAGER = register.intervention(durable.laart.10, code=paste0('durable.laart.10', suffix),
                                                  name='10% of durably suppressed start LAART per year',
                                                  manager = INTERVENTION.MANAGER)
     
-    INTERVENTION.MANAGER = register.intervention(durable.laart.20py, code=paste0('durable.laart.20py', suffix),
-                                                 name='20% of durably suppressed start LAART per year',
+    INTERVENTION.MANAGER = register.intervention(durable.laart.25, code=paste0('durable.laart.25', suffix),
+                                                 name='25% of durably suppressed start LAART',
                                                  manager = INTERVENTION.MANAGER)
     
-    INTERVENTION.MANAGER = register.intervention(unsuppressed.laart.05py, code=paste0('unsuppressed.laart.05py', suffix),
-                                                 name='5% of unsuppressed start LAART per year',
+    INTERVENTION.MANAGER = register.intervention(durable.laart.50, code=paste0('durable.laart.50', suffix),
+                                                 name='50% of durably suppressed start LAART',
                                                  manager = INTERVENTION.MANAGER)
     
-    INTERVENTION.MANAGER = register.intervention(unsuppressed.laart.10py, code=paste0('unsuppressed.laart.10py', suffix),
+    INTERVENTION.MANAGER = register.intervention(unsuppressed.laart.10, code=paste0('unsuppressed.laart.10', suffix),
                                                  name='10% of unsuppressed start LAART per year',
                                                  manager = INTERVENTION.MANAGER)
     
-    INTERVENTION.MANAGER = register.intervention(unsuppressed.laart.20py, code=paste0('unsuppressed.laart.20py', suffix),
-                                                 name='20% of unsuppressed start LAART per year',
+    INTERVENTION.MANAGER = register.intervention(unsuppressed.laart.25, code=paste0('unsuppressed.laart.25', suffix),
+                                                 name='25% of unsuppressed start LAART',
+                                                 manager = INTERVENTION.MANAGER)
+    INTERVENTION.MANAGER = register.intervention(unsuppressed.laart.50, code=paste0('unsuppressed.laart.50', suffix),
+                                                 name='50% of unsuppressed start LAART',
                                                  manager = INTERVENTION.MANAGER)
     
     
     #-- Return the intervention manager --#
     INTERVENTION.MANAGER
 }
+
+INTERVENTION.MANAGER.1.0 = create.laart.interventions()
+LAART.INTERVENTION.CODES = c("noint", "durable.laart.10", "durable.laart.25", "durable.laart.50", "unsuppressed.laart.10", "unsuppressed.laart.25", "unsuppressed.laart.50")
+LAART.INTERVENTIONS = lapply(LAART.INTERVENTION.CODES, intervention.from.code)
