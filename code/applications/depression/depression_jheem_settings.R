@@ -150,8 +150,10 @@ VERSION.MANAGER = copy.and.modify.jheem.settings(
     
     version='depression_1.0',
     directory.suffix='_depression',
+    file.version='dep1.0',
     
     subpopulations = DEPRESSION.SUBPOPULATIONS,
+    subpopulation.birth.proportions = 'no_depression',
     
     transition.mapping = DEPRESSION.TRANSITION.MAPPING
 )

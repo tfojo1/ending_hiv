@@ -334,23 +334,63 @@ do.setup.crunch.or.fix <- function(components,
         jheem = set.transition.array.hiv.positive(jheem, components$cd4.transitions)
     }
     
+    # Transitions
+    transition.mapping = get.components.settings(components)$transition.mapping
+    for (subgroup in names(transition.mapping$by.subgroup))
+    {
+        for (dimension in names(transition.mapping$by.subgroup[[subgroup]]))
+        {
+            transition.names = get.transition.component.names(dimension=dimension, subgroup=subgroup)
+            component.name = transition.names$name
+            years.name = transition.names$years.name
+            
+            
+            comp.was.null = is.null(components[[component.name]])
+            
+            if (comp.was.null && setting != FIX)
+            {
+                if (verbose)
+                    print(paste0("Setting up ", dimension, " Transitions for ", subgroup))
+                components = do.setup.transitions(components,
+                                                  subgroup=subgroup,
+                                                  dimension=dimension)
+            }
+            if (setting == PRODUCE.FROM.UNFIXED ||
+                (setting == PRODUCE.FROM.FIXED && comp.was.null) ||
+                (setting == FIX && !comp.was.null))
+            {
+                for (i in 1:length(components[[years.name]]))
+                {
+                    if (subgroup=='hiv.positive')
+                        jheem = set.transition.array.hiv.positive(jheem,
+                                                                  components[[component.name]][[i]],
+                                                                  time=components[[years.name]][i])
+                    else
+                        jheem = set.transition.array.hiv.negative(jheem,
+                                                                  components[[component.name]][[i]],
+                                                                  time=components[[years.name]][i])
+                }
+            }
+        }
+    }
+    
     # Continuum
-    comp.was.null = is.null(components$continuum.transitions)
-    if (comp.was.null && setting != FIX)
-    {
-        if (verbose)
-            print("Setting up Continuum Transitions")
-        components = do.setup.continuum.transitions(components)
-    }
-    if (setting == PRODUCE.FROM.UNFIXED ||
-        (setting == PRODUCE.FROM.FIXED && comp.was.null) ||
-        (setting == FIX && !comp.was.null))
-    {
-        for (i in 1:length(components$continuum.transition.years))
-            jheem = set.transition.array.hiv.positive(jheem,
-                                                      components$continuum.transitions[[i]],
-                                                      time=components$continuum.transition.years[i])
-    }
+ #   comp.was.null = is.null(components$continuum.transitions)
+ #   if (comp.was.null && setting != FIX)
+ #   {
+ #       if (verbose)
+ #           print("Setting up Continuum Transitions")
+ #       components = do.setup.continuum.transitions(components)
+ #   }
+ #   if (setting == PRODUCE.FROM.UNFIXED ||
+ #       (setting == PRODUCE.FROM.FIXED && comp.was.null) ||
+ #       (setting == FIX && !comp.was.null))
+ #   {
+ #       for (i in 1:length(components$continuum.transition.years))
+ #           jheem = set.transition.array.hiv.positive(jheem,
+ #                                                     components$continuum.transitions[[i]],
+ #                                                     time=components$continuum.transition.years[i])
+ #   }
     
     
     #-- TRANSMISSION --#
@@ -910,31 +950,43 @@ do.setup.initial.population <- function(components)
     {
         components$initial.population = list(hiv.negative=population, hiv.positive=0)
     }
-    else if (components$seed.one.other.msm)
-    {
-        components$initial.population = get.seeded.initial.populations(components$jheem, population,
-                                                                       cases.per=components$num.to.seed.per.race,
-                                                                       seed.to.races = settings$RACES,
-                                                                       #                                                                       seed.to.races = 'other',
-                                                                       seed.to.sexes = 'msm')
-    }
-    else if (!is.null(components$seed.rate.per.stratum))
-    {
-        population = expand.population.to.general(components$jheem, population)
-        to.seed = expand.population.to.general(components$jheem, components$seed.rate.per.stratum) * population
-        
-        hiv.positive = get.hiv.positive.population.skeleton(components$jheem)
-        hiv.positive[,,,,,1,1,1] = to.seed
-        #        access(hiv.positive, cd4=1, continuum=1, hiv.subset=1) = to.seed
-        
-        components$initial.population = list(hiv.negative=population-to.seed,
-                                             hiv.positive=hiv.positive)
-    }
     else
     {
-        components$initial.population = get.seeded.initial.populations(components$jheem, population,
-                                                                       cases.per=components$num.to.seed.per.race,
-                                                                       seed.to.races=components$jheem$race)
+        population = expand.population.to.general(components$jheem, population)
+        
+        if (is.null(components$initial.subpopulation.proportions))
+            components$initial.subpopulation.proportions = c(1,
+                                                             rep(0, length(settings$SUBPOPULATIONS)-1))
+        
+        for (i in 1:length(settings$SUBPOPULATIONS))
+            population[,,i,,] = population[,,i,,] * components$initial.subpopulation.proportions[i]
+        
+        
+        if (components$seed.one.other.msm)
+        {
+            components$initial.population = get.seeded.initial.populations(components$jheem, population,
+                                                                           cases.per=components$num.to.seed.per.race,
+                                                                           seed.to.races = settings$RACES,
+                                                                           #                                                                       seed.to.races = 'other',
+                                                                           seed.to.sexes = 'msm')
+        }
+        else if (!is.null(components$seed.rate.per.stratum))
+        {
+            to.seed = expand.population.to.general(components$jheem, components$seed.rate.per.stratum) * population
+            
+            hiv.positive = get.hiv.positive.population.skeleton(components$jheem)
+            hiv.positive[,,,,,1,1,1] = to.seed
+            #        access(hiv.positive, cd4=1, continuum=1, hiv.subset=1) = to.seed
+            
+            components$initial.population = list(hiv.negative=population-to.seed,
+                                                 hiv.positive=hiv.positive)
+        }
+        else
+        {
+            components$initial.population = get.seeded.initial.populations(components$jheem, population,
+                                                                           cases.per=components$num.to.seed.per.race,
+                                                                           seed.to.races=components$jheem$race)
+        }
     }
     
     #-- Return --#
@@ -945,17 +997,19 @@ do.setup.initial.population <- function(components)
 do.setup.birth.proportions <- function(components)
 {
     #-- Check parameters --#
-    
-    #if (is.null(components$settings))
-     #   stop("components has not been initialized as JHEEM components")
-    
+    settings = get.components.settings(components)
+
     if (is.null(components$proportions.msm.of.male))
         stop("MSM proportions have not been set up in the components to make the JHEEM")
-    #stop("MSM proportions must be set before setting birth proportions")
-    
+
     if (is.null(components$male.to.female.birth.ratio))
         stop("Parameters for birth proportions (male.to.female.birth.ratio) have not been set up in the components to make the JHEEM")
+
+    if (length(settings$SUBPOPULATIONS)>1 && is.null(components$subpopulation.birth.proportions))
+        stop("subpopulation.birth.proportions have not been set up in the components to make the JHEEM")
     
+    if (length(settings$NON_HIV_SUBSETS)>1)
+        stop("we have not yet set up code for birth proportions for multiple non.hiv.subsets")
     
     #-- Set up the array --#
     
@@ -978,6 +1032,9 @@ do.setup.birth.proportions <- function(components)
         #        access(components$birth.proportions, sex.to='msm', risk.to=risk.to, race.from=race) = as.numeric(proportion.male * components$proportions.msm.of.male[race])
         components$birth.proportions[race,,,'msm',risk.to,] = as.numeric(proportion.male * components$proportions.msm.of.male[race])
     }
+    
+    if (length(settings$SUBPOPULATIONS)>1)
+        components$birth.proportions = components$birth.proportions * components$subpopulation.birth.proportions
     
     components
 }
@@ -2102,6 +2159,8 @@ do.calculate.rates <- function(components, type,
             background.years = background.years[o]
             background.values = background.values[o]
         }
+        else
+            background.years = sub.component$years
     }
     
 
@@ -2744,6 +2803,17 @@ do.setup.susceptibility <- function(components)
 {
     base.sexual.susceptibility = base.idu.susceptibility = get.hiv.negative.population.skeleton(components$jheem, 1)
     
+    #fold in alphas
+    base.sexual.susceptibility = add.multiplicative.alphas(arr=base.sexual.susceptibility,
+                                                            alphas=components$sexual.transmission$alphas$susceptibility,
+                                                            target.dim.names=dimnames(base.sexual.susceptibility))
+    
+    if (components$model.idu)
+        base.idu.susceptibility = multiply.alphas.into.array(arr=base.idu.susceptibility,
+                                                             alphas=components$idu.transmission$alphas$susceptibility,
+                                                             target.dim.names=dimnames(base.idu.susceptibility))
+    
+    
     for (age in names(components$sexual.susceptibility.rr.by.age))
         base.sexual.susceptibility[age,,,,,] = base.sexual.susceptibility[age,,,,,] *
             components$sexual.susceptibility.rr.by.age[age]
@@ -3055,6 +3125,7 @@ do.setup.sexual.contact <- function(components)
         
         components$sexual.contact.years = sexual.transmission.arrays$times
         
+        
         # Set up the time-specific transmission per sex act, and put together with the rest
         components$sexual.contact.arrays = lapply(1:length(components$sexual.contact.years), function(i){
             
@@ -3065,7 +3136,6 @@ do.setup.sexual.contact <- function(components)
                                                 sexual.transmission.by.risk,
                                                 sexual.transmission.by.race,
                                                 sexual.transmission.by.sex)
-            
         })
         
         if (!is.null(components$foreground.sexual.transmission))

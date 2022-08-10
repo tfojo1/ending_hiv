@@ -98,7 +98,7 @@ project.from.model <- function(model,
         stop("model must be an object of class 'model'")
     if (length(years)==0 || !is.numeric(years) || any(is.na(years)))
         stop("years must be a non-empty, non-NA numeric vector")
-    if (!is.list(alphas))
+    if (!is.null(alphas) && !is.list(alphas))
         stop("alphas must be a list")
     if (!is.list(dim.names) || length(dim.names)==0 || is.null(names(dim.names)) || any(names(dim.names)==''))
         stop("dim.names must be a non-empty, named list")
@@ -115,6 +115,13 @@ project.from.model <- function(model,
                                                    years=years,
                                                    alphas=alphas,
                                                    )
+    else if (model$type=='log.rate.model')
+        project.from.log.rate.model(model, 
+                                    years=years, 
+                                    alphas=alphas,
+                                    future.slope=future.slope,
+                                    future.slope.after.year=future.slope.after.year,
+                                    dim.names=dim.names)
     else
         stop(paste0("Do not know how to project from model of type '", model$type, "'"))
 }
@@ -234,6 +241,24 @@ project.from.logistic.tail.model <- function(model, years,
     })
 }
 
+#-- MULTIPLICATIVE ALPHAS --#
+
+add.multiplicative.alphas <- function(arr,
+                                      alphas,
+                                      target.dim.names)
+{
+    arr = multiply.alphas.into.array(arr=arr,
+                                     alphas=alphas$main.effects,
+                                     target.dim.names = target.dim.names,
+                                     collapse.sex.risk = alphas$interact.sex.risk)
+    
+    if (!is.null(alphas$interaction.effects))
+        arr = multiply.interaction.alphas.into.array(arr=arr,
+                                                     interaction.alphas=alphas$interaction.effects)
+    
+    arr
+}
+
 
 #-- GET MODEL DIMENSIONS --#
 
@@ -318,9 +343,35 @@ OLD.map.alphas <- function(raw.alphas,
 }
 
 add.alphas.to.array <- function(arr,
-                                    alphas,
-                                    target.dim.names,
-                                    collapse.sex.risk)
+                                alphas,
+                                target.dim.names,
+                                collapse.sex.risk)
+{
+    do.join.alphas.to.array(arr=arr,
+                            alphas=alphas,
+                            target.dim.names=target.dim.names,
+                            collapse.sex.risk=collapse.sex.risk,
+                            join.function='add')
+}
+
+
+multiply.alphas.into.array <- function(arr,
+                                       alphas,
+                                       target.dim.names,
+                                       collapse.sex.risk)
+{
+    do.join.alphas.to.array(arr=arr,
+                            alphas=alphas,
+                            target.dim.names=target.dim.names,
+                            collapse.sex.risk=collapse.sex.risk,
+                            join.function='multiply')
+}
+
+do.join.alphas.to.array <- function(arr,
+                                alphas,
+                                target.dim.names,
+                                collapse.sex.risk,
+                                join.function=c('add','multiply')[1])
 {
     arr = expand.population(arr, target.dim.names)
     
@@ -331,40 +382,71 @@ add.alphas.to.array <- function(arr,
         else
             dim.names = target.dim.names
         
-        alpha.dims = lapply(names(alphas), function(alpha.name){
-            dim = (1:length(dim.names))[names(dim.names)==alpha.name]
-            if (length(dim)==0)
-                stop(paste0("Could not add alphas to array. Dimension '", alpha.name, "' is not present in the target array"))
-            
-            rep(dim, length(alphas[[alpha.name]]))
-        })
+        all.alpha = alphas$all
+        if (!is.null(all.alpha))
+        {
+            if (join.function=='add')
+                arr = arr + all.alpha
+            else if (join.function=='multiply')
+                arr = arr * all.alpha
+            else
+                stop("join.function must be either 'add' or 'multiply'")
+        }
+        alphas = alphas[names(alphas)!='all']
         
-        alpha.indices = lapply(1:length(alphas), function(i){
-            dim.values = dim.names[[ names(alphas)[i] ]]
-            sapply(names(alphas[[i]]), function(alpha.value.name){
-                mask = dim.values==alpha.value.name
-                if (!any(mask))
-                    stop("Could not add alphas to array. The '", names(alphas)[i],
-                         "' dimension does not contain the value '", alpha.value.name,
-                         "' in the target array")
-                (1:length(dim.values))[mask][1]
+        if (length(alphas)>0)
+        {
+            alpha.dims = lapply(names(alphas), function(alpha.name){
+                dim = (1:length(dim.names))[names(dim.names)==alpha.name]
+                if (length(dim)==0)
+                    stop(paste0("Could not add alphas to array. Dimension '", alpha.name, "' is not present in the target array"))
+                
+                rep(dim, length(alphas[[alpha.name]]))
             })
-        })
-        
-        n.in.dim = sapply(dim.names, length)
-        n.before.dim = cumprod(n.in.dim) / n.in.dim
-        n.after.dim = rev(cumprod(rev(n.in.dim))) / n.in.dim
-        
-        arr = arr + do_add_alphas_to_arr(alpha_values = as.numeric(unlist(alphas)),
-                                         alpha_dims = as.integer(unlist(alpha.dims)),
-                                         alpha_indices = as.integer(unlist(alpha.indices)),
-                                         n_before_dim = as.integer(n.before.dim),
-                                         n_in_dim = as.integer(n.in.dim),
-                                         n_after_dim = as.integer(n.after.dim))
+            
+            alpha.indices = lapply(1:length(alphas), function(i){
+                dim.values = dim.names[[ names(alphas)[i] ]]
+                sapply(names(alphas[[i]]), function(alpha.value.name){
+                    mask = dim.values==alpha.value.name
+                    if (!any(mask))
+                        stop("Could not add alphas to array. The '", names(alphas)[i],
+                             "' dimension does not contain the value '", alpha.value.name,
+                             "' in the target array")
+                    (1:length(dim.values))[mask][1]
+                })
+            })
+            
+            n.in.dim = sapply(dim.names, length)
+            n.before.dim = cumprod(n.in.dim) / n.in.dim
+            n.after.dim = rev(cumprod(rev(n.in.dim))) / n.in.dim
+            
+            if (join.function=='add')
+            {
+                arr = arr + do_add_alphas_to_arr(alpha_values = as.numeric(unlist(alphas)),
+                                                 alpha_dims = as.integer(unlist(alpha.dims)),
+                                                 alpha_indices = as.integer(unlist(alpha.indices)),
+                                                 n_before_dim = as.integer(n.before.dim),
+                                                 n_in_dim = as.integer(n.in.dim),
+                                                 n_after_dim = as.integer(n.after.dim))
+            }
+            else if (join.function=='multiply')
+            {
+                arr = arr * do_multiply_alphas_into_arr(alpha_values = as.numeric(unlist(alphas)),
+                                                        alpha_dims = as.integer(unlist(alpha.dims)),
+                                                        alpha_indices = as.integer(unlist(alpha.indices)),
+                                                        n_before_dim = as.integer(n.before.dim),
+                                                        n_in_dim = as.integer(n.in.dim),
+                                                        n_after_dim = as.integer(n.after.dim))
+            }
+            else
+                stop("join.function must be either 'add' or 'multiply'")
+        }
     }
     
     arr
 }
+
+
 
 # alphas - a named list of named numeric vectors
 # returns an array with dimnames the names of each element of alphas
@@ -458,6 +540,28 @@ add.interaction.alphas.to.array <- function(arr,
                                           dim2=names(one.alpha$dim.values)[2],
                                           dim.value2=one.alpha$dim.values[2])
         arr[mask] = arr[mask] + one.alpha$value
+    }
+    
+    arr
+}
+
+multiply.interaction.alphas.into.array <- function(arr,
+                                            interaction.alphas)
+{
+    for (one.alpha in interaction.alphas)
+    {
+        if (length(one.alpha$dim.values)!=2)
+            stop(paste0("We are only set up to do interaction alphas for two-way interactions at this point. ",
+                        "Cannot multiply alphas for ", 
+                        paste0(names(one.alpha$dim.values), "='", one.alpha$dim.values, "'",
+                               collapse = ' x ')))
+        
+        mask = get.two.dim.access.indices(dim.names=dimnames(arr),
+                                          dim1=names(one.alpha$dim.values)[1],
+                                          dim.value1=one.alpha$dim.values[1],
+                                          dim2=names(one.alpha$dim.values)[2],
+                                          dim.value2=one.alpha$dim.values[2])
+        arr[mask] = arr[mask] * one.alpha$value
     }
     
     arr

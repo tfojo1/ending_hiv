@@ -211,7 +211,10 @@ source('code/source_code.R')
 
 source('code/settings_and_files/setup_versions.R')
 source('code/applications/depression/depression_jheem_settings.R')
+source('code/applications/depression/depression_parameters.R')
 
+params = c(params,
+           get.medians(DEPRESSION.PARAMETERS.PRIOR))
 
 run.simulation = create.run.simulation.function('12580', params,
                                                 version='depression_1.0')
@@ -223,7 +226,9 @@ source('code/processing/visualization/sim_plots.R')
 simplot(sim)
 
 round(extract.new.diagnoses(sim, keep.dimensions = c('year','subpopulation'), per.population = NA))
+do.extract.population.subset(sim, keep.dimensions = c('year','subpopulation')) / do.extract.population.subset(sim)
 
+print("ALL DONE!")
 
 if (1==2)
 {

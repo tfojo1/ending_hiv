@@ -29,6 +29,8 @@ initialize.jheem.components <- function(version,
     components$version = version
     components$fips = fips
     
+    settings = get.components.settings(components)
+    
     #-- Enumerate dependencies --#
     components = enumerate.components.dependencies(components)
     
@@ -45,7 +47,12 @@ initialize.jheem.components <- function(version,
     #-- Default settings --#
     if (verbose)
         print("Using default settings for birth proportions, fertility, and initial population")
-    components = setup.birth.proportions(components)
+    
+    
+    components = do.setup.jheem.skeleton(components)
+    
+    components = setup.birth.proportions(components,
+                                         subpopulation.birth.proportions = settings$subpopulation.birth.proportions)
     components = setup.initial.population(components)
     components = setup.fertility(components, data.managers)
     components = setup.aging(components)
@@ -53,7 +60,6 @@ initialize.jheem.components <- function(version,
     
     components = setup.global.trates(components, global.sexual.trate = 1, global.idu.trate = 1)
     
-    components = do.setup.jheem.skeleton(components)
     
     #-- Extra Settings from Version --#
     
@@ -235,11 +241,31 @@ setup.fix.strata.sizes <- function(components,
 setup.initial.population <- function(components,
                                      seed.rate.per.stratum=NULL,
                                      num.to.seed.per.race=1,
-                                     seed.one.other.msm=F)
+                                     seed.one.other.msm=F,
+                                     subpopulation.proportions=NULL #if NULL, seeds all to the first subpopulation state
+                                     )
 {
     components$seed.rate.per.stratum = seed.rate.per.stratum
     components$num.to.seed.per.race = num.to.seed.per.race
     components$seed.one.other.msm = seed.one.other.msm
+    
+    if (is.null(subpopulation.proportions))
+        components$initial.subpopulation.proportions = NULL
+    else
+    {
+        settings = get.components.settings(components)
+        if (length(subpopulation.proportions) != length(settings$SUBPOPULATIONS))
+            stop(paste0("subpopulation.proportions must have length ",
+                        length(settings$SUBPOPULATIONS), " - the number of subppulations"))
+        
+        if (is.null(names(subpopulation.proportions)))
+            names(subpopulation.proportions) = settings$SUBPOPULATIONS
+        else if (length(setdiff(settings$SUBPOPULATIONS, names(subpopulation.proportions)))>0)
+            stop(paste0("missing proportion for the following subpopulation(s) in subpopulation.proportions: ",
+                        paste0("'", setdiff(settings$SUBPOPULATIONS, names(subpopulation.proportions)), "'", collapse=', ')))
+        
+        components$initial.subpopulation.proportions = subpopulation.proportions[settings$SUBPOPULATIONS]
+    }
     
     components = clear.dependent.values(components, c('seed.rate.per.stratum','num.to.seed.per.race'))
     
@@ -294,6 +320,7 @@ setup.fertility <- function(components,
 }
 
 setup.birth.proportions <- function(components,
+                                    subpopulation.birth.proportions,
                                     male.to.female.birth.ratio=105/100)
 {
     if (male.to.female.birth.ratio < 0)
@@ -301,7 +328,48 @@ setup.birth.proportions <- function(components,
     
     components$male.to.female.birth.ratio = male.to.female.birth.ratio
     
-    components = clear.dependent.values(components, 'male.to.female.birth.ratio')
+    
+    settings = get.components.settings(components)
+    if (length(settings$SUBPOPULATIONS)>1)
+    {
+        if (is.null(subpopulation.birth.proportions))
+            stop("If there is more than one subpopulation, subpopulation.birth.proportions cannot be NULL")
+        
+        if (is.character(subpopulation.birth.proportions))
+        {
+            if (length(subpopulation.birth.proportions) != 1 || is.na(subpopulation.birth.proportions) ||
+                (subpopulation.birth.proportions != 'inherited' && all(subpopulation.birth.proportions != settings$SUBPOPULATIONS)))                stop(paste0("If subpopulation.birth.proportions is specified as a character string, it must be either 'inherited' or the name of ONE of the subpopulations in the model (",
+                     paste0("'", settings$SUBPOPULATIONS, "'", collapse=', '), ")"))
+            
+            if (subpopulation.birth.proportions=='inherited')
+            {
+                subpopulation.birth.proportions = diag(1, length(settings$SUBPOPULATIONS))
+                dimnames(subpopulation.birth.proportions) = list(subpopulation.from=settings$SUBPOPULATIONS,
+                                                                 subpopulation.to=settings$SUBPOPULATIONS)
+            }
+            else # set to a specific value
+            {
+                dim.names = list(subpopulation.from=settings$SUBPOPULATIONS,
+                                 subpopulation.to=settings$SUBPOPULATIONS)
+                arr.subpopulation.birth.proportions = array(0, dim=sapply(dim.names, length), dimnames=dim.names)
+                arr.subpopulation.birth.proportions[,subpopulation.birth.proportions] = 1
+                subpopulation.birth.proportions = arr.subpopulation.birth.proportions
+            }
+        }
+        
+        target.dim.names = dimnames(get.birth.proportions.to.hiv.negative.skeleton(components$jheem))
+        components$subpopulation.birth.proportions = expand.population(subpopulation.birth.proportions,
+                                                                       target.dim.names = target.dim.names)
+        
+        # check
+        proportion.sums = apply(components$subpopulation.birth.proportions, 
+                                setdiff(names(target.dim.names), 'subpopulation.to'), sum)
+        if (any(proportion.sums != 1))
+            stop("subpopulation.birth.proportions must sum to 1 across subpopulation.to for all other strata combinations")
+    }
+    
+    components = clear.dependent.values(components, c('male.to.female.birth.ratio',
+                                                      'birth.proportions'))
     
     components
 }
@@ -1763,6 +1831,106 @@ setup.background.reengagement <- function(components,
 
 ##-- GENERAL SET-UP BACKGROUND FUNCTIONS --##
 
+set.susceptibility.alphas <- function(components,
+                                       mode,
+                                       values,
+                                       dim.values=names(values),
+                                       dimensions,
+                                      interact.sex.risk=NULL,
+                                       as.interaction=F)
+{
+    settings = get.components.settings(components)
+    do.set.susceptbility.or.transmissibility.alphas(components=components,
+                                                    mode=mode,
+                                                    category='susceptibility',
+                                                    target.dim.names = settings$dimension.names.by.subgroup$hiv.negative,
+                                                    values=values,
+                                                    dim.values=dim.values,
+                                                    dimensions=dimensions,
+                                                    interact.sex.risk=interact.sex.risk,
+                                                    as.interaction=as.interaction)
+}
+
+set.transmissibility.alphas <- function(components,
+                                           mode,
+                                           values,
+                                           dim.values=names(values),
+                                           dimensions,
+                                        interact.sex.risk=NULL,
+                                           as.interaction=F)
+{
+    settings = get.components.settings(components)
+    do.set.susceptbility.or.transmissibility.alphas(components=components,
+                                                    mode=mode,
+                                                    category='transmissibility',
+                                                    target.dim.names = settings$dimension.names.by.subgroup$hiv.positive,
+                                                    values=values,
+                                                    dim.values=dim.values,
+                                                    dimensions=dimensions,
+                                                    interact.sex.risk=interact.sex.risk,
+                                                    as.interaction=as.interaction)
+}
+
+do.set.susceptbility.or.transmissibility.alphas <- function(components,
+                                                            mode,
+                                                            category,
+                                                            target.dim.names,
+                                                            values,
+                                                            dim.values=names(values),
+                                                            dimensions,
+                                                            interact.sex.risk,
+                                                            as.interaction=F)
+{
+    #-- Pull/set up the basics --#
+    transmission.component.name = paste0(mode, '.transmission')
+    if (is.null(components[[transmission.component.name]]))
+        stop(paste0("Trying to set alphas for ", mode, " ", category, ", but no transmission elements have been set up for '", mode, "'"))
+   
+    
+    do.set.alphas.for.category(components,
+                               type = mode,
+                               type.name = transmission.component.name,
+                               category=category,
+                               target.dim.names=target.dim.names,
+                               values=values,
+                               dim.values=dim.values,
+                               dimensions=dimensions,
+                               interact.sex.risk=interact.sex.risk,
+                               value.transformation=NULL,
+                               as.interaction=as.interaction)
+}
+
+set.transition.intercept.alphas <- function(components,
+                                              type,
+                                              values,
+                                              dimension,
+                                              interact.sex.risk=NULL)
+{
+    do.set.transition.alphas.for.category(components,
+                               type=type,
+                               category='intercept',
+                               values=values,
+                               dim.values=names(values),
+                               dimensions=dimension,
+                               interact.sex.risk=interact.sex.risk,
+                               as.interaction=F)
+}
+
+set.transition.slope.alphas <- function(components,
+                                        type,
+                                        values,
+                                        dimension,
+                                        interact.sex.risk=NULL)
+{
+    do.set.transition.alphas.for.category(components,
+                               type=type,
+                               category='slope',
+                               values=values,
+                               dim.values=names(values),
+                               dimensions=dimension,
+                               interact.sex.risk=interact.sex.risk,
+                               as.interaction=F)
+}
 
 # the helper - actually executes for intercepts or slopes
 # (so as not to duplicate code)
@@ -1770,7 +1938,7 @@ setup.background.reengagement <- function(components,
 #'@param values - a numeric vector of the alphas
 #'@param dim.values - a list or vector. Each element is the index into the list
 #'@param dimensions - a character vector with length 1 or length equal to dim.values
-do.set.alphas.for.category <- function(components,
+orig.do.set.alphas.for.category <- function(components,
                                        type,
                                        category=c('intercept','slope')[1],
                                        values,
@@ -1795,6 +1963,11 @@ do.set.alphas.for.category <- function(components,
     
     
     #-- Set-up target dim.names and Check interact.sex.risk --#
+    if (is.null(interact.sex.risk))
+        interact.sex.risk = components[[type.name]]$alphas[[category]]$interact.sex.risk
+    if (is.null(interact.sex.risk))
+        interact.sex.risk = T
+    
     target.dim.names = transition.element$dim.names
     if (interact.sex.risk && (all(names(target.dim.names)!='sex') || all(names(target.dim.names)!='risk')))
         stop(paste0("Can only have interact.sex.risk = TRUE when both 'sex' and 'risk' are dimensions included in the dimensions needed for '", type, "'"))
@@ -1966,6 +2139,255 @@ do.set.alphas.for.category <- function(components,
     components
 }
 
+do.set.transition.alphas.for.category <- function(components,
+                                                  type,
+                                                  category=c('intercept','slope')[1],
+                                                  values,
+                                                  dim.values=names(values),
+                                                  dimensions,
+                                                  interact.sex.risk,
+                                                  as.interaction=F)
+{
+    #-- Pull/set up the basics --#
+    transition.element = get.transition.element.by.name(get.components.transition.mapping(components), name=type)
+    if (is.null(transition.element))
+        stop("No transition element for '", type, "' has been registered with the transition.manager")
+    
+    type.name = paste0('background.', type)
+    if (is.null(components[[type.name]]))
+        stop(paste0("background has not set up for '", type, "'. Use do.setup.background to set up before setting background alphas."))
+    if (is.null(components[[type.name]]$model))
+        stop(paste0("A background model has not been set for '", type, "'"))
+    
+    target.dim.names = transition.element$dim.names
+    
+    # For backwards compatbility for simulations that were created before the use of formal model objects
+    #  the models in these were all logistic models
+    if (!is(components[[type.name]]$model, 'model'))
+    {
+        old.model = components[[type.name]]$model
+        components[[type.name]]$model = create.logistic.model(intercept = old.model$intercept,
+                                                              slope = old.model$slope,
+                                                              anchor.year = old.model$anchor.year,
+                                                              min.proportion = 0,
+                                                              max.proportion = old.model$max.proportion,
+                                                              log.ors = numeric())
+    }
+    value.transformation = get.model.scale.transformation.function(components[[type.name]]$model)
+    
+    do.set.alphas.for.category(components,
+                               type = type,
+                               type.name = type.name,
+                               category=category,
+                               target.dim.names=target.dim.names,
+                               values=values,
+                               dim.values=dim.values,
+                               dimensions=dimensions,
+                               interact.sex.risk=interact.sex.risk,
+                               value.transformation=value.transformation,
+                               as.interaction=as.interaction)
+}
+
+do.set.alphas.for.category <- function(components,
+                                       type,
+                                       type.name,
+                                       category=c('intercept','slope')[1],
+                                       target.dim.names,
+                                       values,
+                                       dim.values=names(values),
+                                       dimensions,
+                                       interact.sex.risk,
+                                       value.transformation=NULL,
+                                       as.interaction=F,
+                                       var.name.for.error=category)
+{
+    #-- Pull/set up the basics --#
+    
+    settings = get.components.settings(components)
+ 
+       
+    #-- Set-up target dim.names and Check interact.sex.risk --#
+    if (is.null(interact.sex.risk))
+        interact.sex.risk = components[[type.name]]$alphas[[category]]$interact.sex.risk
+    if (is.null(interact.sex.risk))
+        interact.sex.risk = T
+    
+    if (interact.sex.risk && (all(names(target.dim.names)!='sex') || all(names(target.dim.names)!='risk')))
+        stop(paste0("Can only have interact.sex.risk = TRUE when both 'sex' and 'risk' are dimensions included in the dimensions needed for '", type, "'"))
+    
+    if (interact.sex.risk)
+        target.dim.names = collapse.dim.names.sex.risk(target.dim.names)
+    
+    
+    #-- Check the values argument --#
+    if (length(values)==0)
+        stop("No values have been supplied to set as alphas")
+    if (as.interaction && length(values) != 1)
+        stop("For setting interaction alphas, values must be a single numeric value")
+    if (!is.numeric(values) || any(is.na(values)))
+        stop("values must be a numeric, non-NA vector")
+    
+    
+    #-- Transform --#
+    if (!is.null(value.transformation))
+        values = value.transformation(values)
+    
+    
+    #-- Check the dimensions argument --#
+    if (is.null(dimensions))
+    {
+        if (any(!sapply(dim.values, is.character)))
+            stop("dimensions can only be none if dim.values are all characters")
+        
+        dimensions = sapply(dim.values, get.dimension.for.dimension.value,
+                            dim.names=target.dim.names)
+    }
+    else if (length(dimensions)==1)
+        dimensions = rep(dimensions, length(dim.values))
+    else if (length(dimensions) != length(dim.values))
+        stop("If specified, dimensions must be either length 1 or the same length as dim.values")
+    
+    if (interact.sex.risk && (any(dimensions=='sex') || any(dimensions=='risk')))
+        stop(paste0("when interact.sex.risk = TRUE, dimensions cannot be either 'sex' or 'risk' alone (you must use '",
+                    collapse.dim.values('sex','risk'), "')"))
+    if (!interact.sex.risk && any(dimensions==collapse.dim.values('sex','risk')))
+        stop(paste0("when interact.sex.risk = FALSE< dimensions cannot contain '",
+                    collapse.dim.values('sex','risk'), "'. You must use 'sex' and 'risk' separately."))
+    
+    invalid.dimensions = setdiff(dimensions, c('all', names(target.dim.names)))
+    if (length(invalid.dimensions)>0)
+        stop(paste0("Invalid dimension(s) for alphas for type '",
+                    type, "': ",
+                    paste0("'", invalid.dimensions, "'", collapse=', ')))
+    
+    if (as.interaction && any(dimensions=='all'))
+        stop("Cannot have dimension 'all' for interactions")
+    
+    #-- Check the dim.values argument --#
+    if (!as.interaction && length(dim.values) != length(values))
+        stop("dim.values must be the same length as values")
+    if (as.interaction && length(dim.values) < 2)
+        stop('for interactions, dim.values must have at least two elements')
+    if (is.list(dim.values))
+        dim.values = sapply(1:length(dim.values), function(i){
+            dv = dim.values[[i]]
+            if (length(dv) != 1 || is.na(dv) || 
+                (!is.character(dv) && !is.integer(dv)))
+                stop("the elements of dim.values must be non-na, single character or integer values")
+            
+            if (dimensions[i]=='all')
+            {
+                if (length(dv) != 1)
+                    stop("there can only be a single dimension value for 'all")
+                
+                'all'
+            }
+            else if (is.character(dv))
+            {
+                if (all(dv != target.dim.names[[ dimensions[i] ]]))
+                    stop(paste0("Error in setting ", category, " alphas for '", type,
+                                "' - '", dv, "' is not a valid value for the '", dimensions[[i]], "' dimension."))
+                dv
+            }
+            else # is integer
+                target.dim.names[[ dimensions[i] ]][dv]
+        })
+    else
+    {
+        if (any(is.na(dim.values)))
+            stop("dim.values cannot contain NA values")
+        
+        if (is.integer(dim.values))
+            dim.values = sapply(1:length(dim.values), function(i){
+                if (dimensions[i]=='all')
+                    'all'
+                else
+                    target.dim.names[[ dimensions[i] ]][ dim.values[i] ]
+            })
+        else if (is.character(dim.values))
+        {
+            for (d in unique(setdiff(dimensions, 'all')))
+            {
+                mask = dimensions == d
+                invalid.dim.values = setdiff(dim.values[mask],
+                                             target.dim.names[[d]])
+                if (length(invalid.dim.values)>0)
+                    stop(paste0("Invalid dim.value(s) for ", category, " alphas for the '",
+                                d, "' dimension in type '", type, "': ",
+                                paste0("'", invalid.dim.values, "'", collapse=', ')))
+            }
+        }
+        else
+            stop("'dim.values' must either be an integer vector, a character vector, or a list containing only integers and/or characters")
+    }
+    # now dim values is a character vector
+    
+    #-- Set up the alpha container if needed --#
+    if (is.null(components[[type.name]]$alphas))
+        components[[type.name]]$alphas = list()
+    
+    if (is.null(components[[type.name]]$alphas[[category]]))
+        components[[type.name]]$alphas[[category]] = list(interact.sex.risk=interact.sex.risk)
+    else if (components[[type.name]]$alphas[[category]]$interact.sex.risk != interact.sex.risk)
+        stop(paste0("The current call to do.set.alphas for ", category, 
+                    " alphas for '", type, "' has interact.sex.risk = ",
+                    interact.sex.risk, ". But ", category, " alphas for '", type,
+                    "' have previously been set up with interact.sex.risk = ", !interact.sex.risk))
+    
+    
+    #-- Set the value --#
+    if (as.interaction)
+    {
+        if (is.null(components[[type.name]]$alphas[[category]]$interaction.effects))
+            components[[type.name]]$alphas[[category]]$interaction.effects = list()
+        
+        unique.dimensions = intersect(names(target.dim.names), dimensions) #intersecting puts them in the right order
+        
+        dim.values.by.dimension = lapply(unique.dimensions, function(d){
+            dim.values[dimensions==d]
+        })
+        names(dim.values.by.dimension) = unique.dimensions
+        
+        dim.values.combos = expand.grid(dim.values.by.dimension, stringsAsFactors = F)
+        for (i in 1:dim(dim.values.combos)[1])
+        {
+            dim.values.for.i = as.character(dim.values.combos[i,])
+            names(dim.values.for.i) = unique.dimensions
+            
+            interaction.name = paste0(unique.dimensions, '=', dim.values.for.i, collapse='__')
+            
+            components[[type.name]]$alphas[[category]]$interaction.effects[[interaction.name]] = list(
+                dim.values = dim.values.for.i,
+                value = values
+            )
+        }
+    }
+    else #not an interaction
+    {   
+        if (is.null(components[[type.name]]$alphas[[category]]$main.effects))
+            components[[type.name]]$alphas[[category]]$main.effects = list()
+        
+        for (d in unique(dimensions))
+        {
+            if (is.null(components[[type.name]]$alphas[[category]]$main.effects[[d]]))
+                components[[type.name]]$alphas[[category]]$main.effects[[d]] = numeric()
+            
+            mask = dimensions == d
+            
+            if (d == 'all' && sum(mask) > 1)
+                stop("Can only have a single value for dimension 'all'")
+            
+            components[[type.name]]$alphas[[category]]$main.effects[[d]][ dim.values[mask] ] = values[mask]
+        }
+    }    
+    
+    components = clear.dependent.values(components,
+                                        dependent.on = type.name)
+    
+    components
+}
+
+
 set.static.parameter <- function(components,
                              parameter.name,
                              parameter.value)
@@ -2055,7 +2477,7 @@ do.setup.background <- function(components,
     
     components[[type.name]]$model = model
     
-    if (max(transition.element$ramp.times) >= min(years))
+    if (suppressWarnings(max(transition.element$ramp.times)) >= min(years))
         stop("ramp years must precede model years")
     components[[type.name]]$ramp.years = transition.element$ramp.times
     components[[type.name]]$ramp.multipliers = transition.element$ramp.multipliers

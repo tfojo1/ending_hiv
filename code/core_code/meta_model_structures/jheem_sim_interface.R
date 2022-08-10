@@ -76,7 +76,10 @@ get.simset.location <- function(simset)
     get.sim.location(simset@simulations[[1]])
 }
 
-
+get.simset.file.version <- function(simset)
+{
+    get.file.version(get.simset.version(simset))
+}
 
 ##---------------------##
 ##-- FROM COMPONENTS --##

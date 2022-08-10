@@ -6,10 +6,9 @@
 
 make.filenames.from.elements <- function(location,
                                         intervention.code,
-                                        version=VERSION)
+                                        version)
 {
-    if (grepl('_', version))
-        stop("version cannot contain '_' (underscore)")
+    version = check.version.for.file(version)
     
     paste0(version, "_", location, "_", intervention.code, ".Rdata")
 }
@@ -57,12 +56,11 @@ get.interventions.from.filenames <- function(filenames,
     rv
 }
 
-VERSION = '1.0'
 get.simset.filename <- function(simset,
                                 location=attr(simset@simulations[[1]], 'location'),
                                 intervention=attr(simset, 'intervention'),
                                 intervention.code=NULL,
-                                version=VERSION)
+                                version=get.simset.file.version(simset))
 {
     if (is.null(intervention.code))
     {
@@ -91,7 +89,7 @@ save.simset <- function(simset,
                         compress.cd4=T,
                         #compress.years=max(attr(simset, 'run.from.year'), min(simset@simulations[[1]]$years)):max(simset@simulations[[1]]$years),
                         full=F,
-                        version=VERSION,
+                        version=get.simset.file.version(simset),
                         save.full.in.master.directory=F)
 {
     if (compress)
@@ -119,10 +117,9 @@ save.seed.simset <- function(simset,
                              dir,
                              min.seed.keep.to.year=2020,
                              max.seed.keep.from.year=2018, #for census totals
-                             version=VERSION)
+                             version=get.simset.file.version(simset))
 {
-    if (grepl('_', version))
-        stop("version cannot contain '_' (underscore)")
+    version = check.version.for.file(version)
     
     if (is.null(attr(simset, 'run.from.year')))
         simset = prepare.simset.for.interventions(simset)
@@ -145,7 +142,7 @@ save.seed.simset <- function(simset,
 }
 
 get.seed.filename <- function(location,
-                              version=VERSION)
+                              version)
 {
     make.filenames.from.elements(version=version,
                                  location=location,
@@ -153,7 +150,7 @@ get.seed.filename <- function(location,
 }
 
 get.full.filename <- function(location,
-                              version=VERSION)
+                              version)
 {
     make.filenames.from.elements(version=version,
                                  location=location,
@@ -161,7 +158,7 @@ get.full.filename <- function(location,
 }
 
 get.baseline.filename <- function(location,
-                                  version=VERSION)
+                                  version)
 {
     get.simset.filename(simset=NULL,
                         location=location,
@@ -184,4 +181,30 @@ parse.simset.filenames <- function(filenames, remove.rdata.extension=T)
         rv[,1]
     else
         t(rv)
+}
+
+check.version.for.file <- function(version, version.manager=VERSION.MANAGER)
+{
+    if (!is.character(version) || length(version) != 1 || is.na(version) || version=='')
+        stop('version must be a non-empty, non-NA, single character value')
+    
+    if (any(version.manager$file.version==version))
+    {
+        if (grepl('_', version))
+            stop("version cannot contain the character '_'")
+        version
+    }
+    else if (any(version.manager$versions==version))
+    {
+        rv = get.file.version(version, version.manager = version.manager)
+        
+        if (grepl('_', rv))
+            stop(paste0("file.version ('", rv, "') for version cannot contain the character '_'"))
+        
+        rv
+    }
+    else
+        stop(paste0("'", version, "' has not been registered as a valid JHEEM version or a file.version with the version manager"))
+    
+    
 }

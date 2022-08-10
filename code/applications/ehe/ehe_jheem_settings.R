@@ -41,6 +41,7 @@ VERSION.MANAGER = create.jheem.settings(
     version='collapsed_1.0',
     prior.versions=character(),
     directory.suffix='_collapsed',
+    file.version='1.0',
     
     age.cutoffs=c(13,25,35,45,55,Inf),
     races=c('black','hispanic','other'),

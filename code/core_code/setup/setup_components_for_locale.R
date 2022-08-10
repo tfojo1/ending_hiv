@@ -305,7 +305,6 @@ setup.components.for.msa <- function(msa,
                                                age3.or.slope=1,
                                                age4.or.slope=1,
                                                age5.or.slope=1)
-           
     }
 
     #-- Special Cases: Needle Exchange --#
@@ -342,26 +341,6 @@ setup.components.for.msa <- function(msa,
                                     msm.or.intercept=1,
                                     heterosexual.or.intercept=1,
                                     idu.or.intercept=1)
-    
-    comps = set.background.change.to.years(comps,
-                                           testing=smooth.to.year,
-                                           suppression=smooth.to.year,
-                                           prep=smooth.to.year,
-                                           
-                                           linkage=smooth.to.year,
-                                           
-                                           naive.to.suppressed=smooth.to.year,
-                                           naive.to.disengaged=smooth.to.year,
-                                           
-                                           failing.to.suppressed=smooth.to.year,
-                                           failing.to.disengaged=smooth.to.year,
-                                           
-                                           suppressed.to.failing=smooth.to.year,
-                                           suppressed.to.disengaged=smooth.to.year,
-                                           
-                                           reengagement=smooth.to.year,
-                                           
-                                           start.art = smooth.to.year)
     
     comps = set.future.background.slopes(comps,
                                          prep=1,

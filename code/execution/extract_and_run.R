@@ -46,12 +46,13 @@ do.check.interventions.done <- function(dir,
 
 
 do.run.interventions <- function(location,
+                                 version,
                                  simset.dir=file.path(SYSTEMATIC.ROOT.DIR, 'full_simsets'),
                                  dst.dir=file.path(SYSTEMATIC.ROOT.DIR, 'full_simsets'),
                                  interventions=ALL.INTERVENTIONS,
                                  overwrite=F)
 {
-    full.filename = get.full.filename(location=location)
+    full.filename = get.full.filename(location=location, version)
     load(file=file.path(simset.dir, full.filename))
     
     print("Running Systematic Interventions...")

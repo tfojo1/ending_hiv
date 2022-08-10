@@ -4,13 +4,16 @@ source("code/processing/visualization/sim_plots.R")
 
 set.seed(5557)
 
-msa=LA.MSA
+msa=ORLANDO.MSA
 RESUME=T
+SAVE.INITIAL.SIMSET = T
 
 save.suffix = ''
 version='expanded_1.0'
 
 print(paste0("Starting script at ", Sys.time()))
+
+
 
 if (RESUME)
 {
@@ -56,3 +59,9 @@ save.to.file = file.path(MCMC.DIR,
 print(paste0("ALL DONE - SAVING TO:"))
 print(paste0("   '", save.to.file, "'"))
 save(mcmc, file=save.to.file)
+
+if (SAVE.INITIAL.SIMSET)
+{
+    simset = extract.simset(mcmc, additional.burn=750, additional.thin=5)
+    save.simset(simset, dir='Q:JHEEM/simulations/baseline_quick_expanded', full = T, save.full.in.master.directory = T)
+}

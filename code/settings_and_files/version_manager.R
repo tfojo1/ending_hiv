@@ -15,7 +15,7 @@ create.version.manager <- function()
 VERSION.MANAGER.ELEMENTS = c(
     'settings', 'get.components.function', 'parameters.prior','parameter.sampling.blocks',
     'projection.update.components.function', 'projection.parameters.distribution',
-    'directory.suffix','prior.versions'
+    'directory.suffix','prior.versions', 'file.version'
 )
 
 ##-- TO REGISTER A VERSION --##
@@ -23,6 +23,7 @@ VERSION.MANAGER.ELEMENTS = c(
 register.version <- function(version,
                              settings,
                              directory.suffix,
+                             file.version,
                              prior.versions=character(),
                              version.manager = VERSION.MANAGER)
 {
@@ -32,6 +33,7 @@ register.version <- function(version,
     
     if (!is(settings, 'jheem.settings'))
         stop("'settings' must be an object of class 'jheem.settings'")
+    
     
     version.manager = do.register.for.version(version=version,
                                               element.name='settings',
@@ -46,10 +48,20 @@ register.version <- function(version,
                                               require.unique = T,
                                               version.manager=version.manager)
     version.manager = do.register.for.version(version=version,
+                                              element.name='file.version',
+                                              element.value=file.version,
+                                              element.class='character',
+                                              element.length=1,
+                                              require.unique = T,
+                                              version.manager=version.manager)
+    version.manager = do.register.for.version(version=version,
                                               element.name='prior.versions',
                                               element.value=prior.versions,
                                               element.class='character',
                                               version.manager=version.manager)
+    
+    if (grepl('_', file.version))
+        stop("file.version cannot contain the character '_'")
     
     version.manager
 }
@@ -88,6 +100,13 @@ get.settings.for.version <- function(version, version.manager = VERSION.MANAGER)
                        version.manager=version.manager)
 }
 
+get.file.version <- function(version, version.manager = VERSION.MANAGER)
+{
+    do.get.for.version(version=version,
+                       element.name='file.version',
+                       version.manager = version.manager)
+}
+
 get.directory.suffix.for.version <- function(version, version.manager = VERSION.MANAGER)
 {
     do.get.for.version(version=version,
@@ -97,12 +116,29 @@ get.directory.suffix.for.version <- function(version, version.manager = VERSION.
 
 
 get.components.function.for.version <- function(version, version.manager = VERSION.MANAGER,
+                                                include.parameters.check=T,
                                                 pull.previous.version.value.if.missing = T)
 {
-    do.get.for.version(version=version,
+    fn = do.get.for.version(version=version,
                        element.name='get.components.function',
                        version.manager=version.manager,
                        pull.previous.version.value.if.missing = pull.previous.version.value.if.missing)
+    
+    if (include.parameters.check)
+    {
+        param.names = get.parameters.prior.for.version(version, version.manager=version.manager)@var.names
+        function(parameters, components, data.managers = ALL.DATA.MANAGERS) {
+            missing.parameters = setdiff(param.names, names(parameters))
+            if (length(missing.parameters)>0)
+                stop(paste0("Missing values in parameters vector: ",
+                            paste0("'", missing.parameters, "'", collapse=', '),
+                            ". Cannot execute get.components function for version '", version, "'"))
+            
+            fn(parameters, components, data.managers)
+        }
+    }
+    else
+            fn
 }
 
 get.parameters.prior.for.version <- function(version, version.manager = VERSION.MANAGER,
@@ -134,13 +170,31 @@ get.projection.prarameters.distribution.for.version <- function(version,
 }
 
 get.projection.update.components.function.for.version <- function(version, 
+                                                                  include.parameters.check=T,
                                                       pull.from.previous.version.if.missing=T,
                                                       version.manager = VERSION.MANAGER)
 {
-    do.get.for.version(version=version,
+    fn = do.get.for.version(version=version,
                        element.name='projection.update.components.function',
                        pull.previous.version.value.if.missing = pull.from.previous.version.if.missing,
                        version.manager=version.manager)
+    
+    
+    if (include.parameters.check)
+    {
+        param.names = get.projection.prarameters.distribution.for.version(version, version.manager=version.manager)@var.names
+        function(parameters, components, data.managers = ALL.DATA.MANAGERS) {
+            missing.parameters = setdiff(param.names, names(parameters))
+            if (length(missing.parameters)>0)
+                stop(paste0("Missing values in parameters vector: ",
+                            paste0("'", missing.parameters, "'", collapse=', '),
+                            ". Cannot execute get.projection.update.components function for version '", version, "'"))
+            
+            fn(parameters, components, data.managers)
+        }
+    }
+    else
+        fn
 }
 
 

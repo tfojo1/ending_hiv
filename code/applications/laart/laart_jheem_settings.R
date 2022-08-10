@@ -429,6 +429,7 @@ VERSION.MANAGER = copy.and.modify.jheem.settings(
   
   version='laart',
   directory.suffix='laart',
+  file.version='laart',
   
   continuum.of.care = LAART.CONTINUUM,
   

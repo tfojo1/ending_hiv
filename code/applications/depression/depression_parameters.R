@@ -1,4 +1,4 @@
-dist = join.distributions(
+DEPRESSION.PARAMETERS.PRIOR = join.distributions(
     suppression.untreated.vs.no.depression.or = Lognormal.Distribution((log(.96)+log(.89))/2, (log(.96)-log(.89))/4), #https://link.springer.com/article/10.1007/s10461-019-02613-6
     suppression.treated.vs.untreated.depression.or = Lognormal.Distribution((log(1.03)+log(1.06))/2,(log(1.06)-log(1.03))/4), 
     
@@ -42,19 +42,100 @@ dist = join.distributions(
     idu.relapse.treated.vs.untreated.depression.rr= Lognormal.Distribution(0, log(2)/2)
 )
 
+VERSION.MANAGER = register.parameters.prior('depression_1.0',
+                                            prior=DEPRESSION.PARAMETERS.PRIOR,
+                                            join.with.previous.version.prior = T)
 
 # parameters is a vector, with names the same as the distribution above
 # this function needs to tell the components object about each of the parameters
 DEPRESSION.GET.COMPONENTS.FOR.PARAMETERS <- function(parameters, components,
                                                      data.managers = ALL.DATA.MANAGERS)
 {
-    # Parameters that affect the HIV continuum of care
+    #-- Parameters that affect the HIV continuum of care --#
+    
+    # Suppression
+    suppression.ors = c('untreated_depression' = parameters['suppression.untreated.vs.no.depression.or'],
+                        'treated_depression' = parameters['suppression.treated.vs.untreated.depression.or'] * 
+                            parameters['suppression.untreated.vs.no.depression.or'])
+    names(suppression.ors) = c('untreated_depression', 'treated_depression')
+    
+    components = set.transition.intercept.alphas(components,
+                                                 type='failing.to.suppressed',
+                                                 values=suppression.ors,
+                                                 dimension='subpopulation')
+    components = set.transition.intercept.alphas(components,
+                                                 type='recently.suppressed.to.failing',
+                                                 values=1/suppression.ors,
+                                                 dimension='subpopulation')
+    components = set.transition.intercept.alphas(components,
+                                                 type='durably.suppressed.to.failing',
+                                                 values=1/suppression.ors,
+                                                 dimension='subpopulation')
+    components = set.transition.intercept.alphas(components,
+                                                 type='naive.to.suppressed',
+                                                 values=suppression.ors,
+                                                 dimension='subpopulation')
+    
+    # Retention / Reengagement
+    lost.ors = c('untreated_depression' = parameters['lost.untreated.vs.no.depression.or'],
+                 'treated_depression' = parameters['lost.treated.vs.untreated.depression.or'] * 
+                     parameters['lost.untreated.vs.no.depression.or'])
+    names(lost.ors) = c('untreated_depression', 'treated_depression')
+    
+    components = set.transition.intercept.alphas(components,
+                                                 type='recently.suppressed.to.disengaged',
+                                                 values=lost.ors,
+                                                 dimension='subpopulation')
+    components = set.transition.intercept.alphas(components,
+                                                 type='durably.suppressed.to.disengaged',
+                                                 values=lost.ors,
+                                                 dimension='subpopulation')
+    components = set.transition.intercept.alphas(components,
+                                                 type='failing.to.disengaged',
+                                                 values=lost.ors,
+                                                 dimension='subpopulation')
+    components = set.transition.intercept.alphas(components,
+                                                 type='naive.to.disengaged',
+                                                 values=lost.ors,
+                                                 dimension='subpopulation')
+    
+    components = set.transition.intercept.alphas(components,
+                                                 type='reengagement',
+                                                 values=1/lost.ors,
+                                                 dimension='subpopulation')
     
     # Parameters that affect moving between depression states
+    
+    components = set.transition.intercept.alphas(components,
+                                                 type='depression.incidence',
+                                                 values=parameters['depression.incidence.rr'],
+                                                 dimension='all')
+    
+    components = set.static.parameter(components, 
+                                      parameter.name = 'hiv.vs.nonhiv.depression.incidence.rr',
+                                      parameter.value = parameters['depression.incidence.hiv.vs.uninfected.rr'])
+    
+    components = set.static.parameter(components, 
+                                      parameter.name = 'hiv.vs.nonhiv.depression.remission.rate.rr',
+                                      parameter.value = parameters['depression.remission.hiv.vs.uninfected.rr'])
+    
+    components = set.static.parameter(components, 
+                                      parameter.name = 'hiv.vs.nonhiv.depression.treatment.rr',
+                                      parameter.value = parameters['depression.treatment.initiation.rr'])
+    
+    components = set.static.parameter(components, 
+                                      parameter.name = 'hiv.vs.nonhiv.depression.treatment.discontinuation.rate.rr',
+                                      parameter.value = parameters['depression.treatment.discontinuation.rr'])
     
     #@Ruchita save these for later
     # Parameters that affect HIV transmission/susceptibility
     # Parameters that affect incidence/remission of IDU
+    
+    
+    # Return
+    components
 }
 
-round(cbind(get.means(dist), t(get.intervals(dist))),2)
+VERSION.MANAGER = register.get.components.function('depression_1.0',
+                                                   fn = DEPRESSION.GET.COMPONENTS.FOR.PARAMETERS,
+                                                   join.with.previous.version.function = T)

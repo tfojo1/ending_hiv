@@ -318,7 +318,7 @@ set.alphas.from.parameters <- function(components,
         stop(paste0("Invalid transformation for setting alphas: '", transformation, "'"))
     
     # Set it to components
-    components = do.set.alphas.for.category(components,
+    components = do.set.transition.alphas.for.category(components,
                                             type=type,
                                             category=category,
                                             values=all.parameter.values,

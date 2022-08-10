@@ -167,7 +167,7 @@ get.initial.starting.parameters <- function(msa,
     starting.parameters = NULL
     for (version.to.pull in c(version, get.prior.versions(version)))
     {
-        prior.simset.filename = get.full.filename(location=msa)
+        prior.simset.filename = get.full.filename(location=msa, version=version)
         prior.run.file = file.path(SIMULATIONS.DIR,
                                    paste0('baseline', get.directory.suffix.for.version(version.to.pull)),
                                    prior.simset.filename)

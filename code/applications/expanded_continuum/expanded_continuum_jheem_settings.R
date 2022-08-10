@@ -226,6 +226,7 @@ VERSION.MANAGER = copy.and.modify.jheem.settings(
     
     version='expanded_1.0',
     directory.suffix='_expanded',
+    file.version='ex1.0',
     
     continuum.of.care = EXPANDED.CONTINUUM,
     

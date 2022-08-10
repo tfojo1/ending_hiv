@@ -2,11 +2,62 @@
 MAX.FIRST.KEEP.YEAR = 2018 #so that census totals can map
 
 
+run.multiple.systematic.interventions <- function(version,
+                                                  locations,
+                                                  interventions,
+                                                  src.dir=file.path(SIMULATIONS.DIR, paste0('baseline', get.directory.suffix.for.version(version))),
+                                                  dst.dir=file.path(SIMULATIONS.DIR, gsub("^_", "", get.directory.suffix.for.version(version))),
+                                                  overwrite=F,
+                                                  compress=T,
+                                                  pare.components=T,
+                                                  compress.cd4=T,
+                                                  run.from.year=NULL,
+                                                  run.to.year=2030,
+                                                  keep.years=NULL,
+                                                  verbose=T,
+                                                  save.baseline.and.seed=T,
+                                                  seed=123415)
+{
+    for (loc in locations)
+    {
+        if (verbose)
+            print(paste0("*** RUNNING ", length(interventions), " INTERVENTION(S) FOR ",
+                         msa.names(loc), " (", loc, ") ***"))
+        
+        
+        full.filename = get.full.filename(location=location, version=version)
+        load(file=file.path(src.dir, full.filename))
+        
+        run.systematic.interventions(simset =  simset,
+                                     dst.dir = dst.dir,
+                                     version = version,
+                                     interventions = interventions,
+                                     overwrite=overwrite,
+                                     compress=compress,
+                                     pare.components=pare.components,
+                                     compress.cd4=compress.cd4,
+                                     run.from.year=run.from.year,
+                                     run.to.year=run.to.year,
+                                     keep.years=keep.years,
+                                     verbose=verbose,
+                                     save.baseline.and.seed=save.baseline.and.seed,
+                                     seed=seed)
+        
+        
+        if (verbose)
+        {
+            print(paste0("*** DONE WITH  ",
+                         msa.names(loc), " (", loc, ") ***"))
+            print("")
+        }
+    }
+}
 
-
+# interventions - a list of intervention objects OR a vector of intervention codes
 run.systematic.interventions <- function(simset,
                                          dst.dir,
                                          interventions=ALL.INTERVENTIONS,
+                                         version=get.simset.version(),
                                          overwrite=F,
                                          compress=T,
                                          pare.components=T,
@@ -30,7 +81,11 @@ run.systematic.interventions <- function(simset,
     
     if (!is.na(seed))
         set.seed(seed)
-    base.simset = prepare.simset.for.interventions(simset)
+    
+    if (is.simset.prepared.for.projection(simset))
+        base.simset = simset
+    else
+        base.simset = prepare.simset.for.interventions(simset, update.version=version)
     
     location = attr(base.simset@simulations[[1]], 'location')
     if (is.null(run.from.year))
@@ -58,6 +113,9 @@ run.systematic.interventions <- function(simset,
             save.seed.simset(simset, dir=dst.dir)
         }
     }
+    
+    if (is.character(interventions))
+        interventions = lapply(interventions, intervention.from.code)
     
     start.time = Sys.time()
     n.total.sim=0

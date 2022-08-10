@@ -8,6 +8,7 @@
 create.jheem.settings <- function(version,
                                   prior.versions,
                                   directory.suffix,
+                                  file.version,
                                   
                                   age.cutoffs,
                                   races,
@@ -35,6 +36,8 @@ create.jheem.settings <- function(version,
                                   is.continuum.collapsed,
                                   
                                   transition.mapping,
+                                  
+                                  subpopulation.birth.proportions = NULL,
                                   
                                   additional.components.values = list(), #will be passed whole-hog to components objects
                                   
@@ -115,6 +118,22 @@ create.jheem.settings <- function(version,
         )
         stop("additional.components.values must be a named list")
     
+    if (length(subpopulations)>1)
+    {
+        if (is.null(subpopulation.birth.proportions))
+            stop("If there is more than one subpopulation, subpopulation.birth.proportions must be specified")
+        
+        if (!is.character(subpopulation.birth.proportions) && !is.array(subpopulation.birth.proportions))
+            stop("subpopulation.birth.proportions must be either a single character value or an array of birth proportions")
+            
+    }
+    else
+    {
+        if (!is.null(subpopulation.birth.proportions))
+            print("**WARNING: subpopulation.birth.proportions has been specified, but there is only one subpopulation, so it will be ignored")
+        subpopulation.birth.proportions = NULL
+    }
+    
     # Make the settings object
     age.strata = make.age.strata(age.cutoffs)
     settings = list(VERSION = version,
@@ -159,6 +178,7 @@ create.jheem.settings <- function(version,
               
               IS_CONTINUUM_COLLAPSED = is.continuum.collapsed,
               
+              subpopulation.birth.proportions = subpopulation.birth.proportions,
               additional.components.values = additional.components.values
     )
     
@@ -179,6 +199,7 @@ create.jheem.settings <- function(version,
                                        settings=settings,
                                        prior.versions=prior.versions,
                                        directory.suffix = directory.suffix,
+                                       file.version=file.version,
                                        version.manager = version.manager)
     
     version.manager
@@ -193,6 +214,7 @@ copy.and.modify.jheem.settings <- function(template.settings,
                                            version,
                                            prior.versions=template.settings$VERSION,
                                            directory.suffix,
+                                           file.version,
                                            
                                            age.cutoffs=c(template.settings$AGE_CUTOFFS, extra.age.cutoffs),
                                            races=c(template.settings$RACES, extra.races),
@@ -220,6 +242,8 @@ copy.and.modify.jheem.settings <- function(template.settings,
                                            is.continuum.collapsed=template.settings$IS_CONTINUUM_COLLAPSED,
                                            
                                            transition.mapping=template.settings$transition.mapping,
+                                           
+                                           subpopulation.birth.proportions = template.settings$subpopulation.birth.proportions,
                                            
                                            additional.components.values = c(template.settings$additional.components.values,
                                                                             extra.additional.components.values),
@@ -304,6 +328,7 @@ copy.and.modify.jheem.settings <- function(template.settings,
     create.jheem.settings(version=version,
                           prior.versions=prior.versions,
                           directory.suffix=directory.suffix,
+                          file.version=file.version,
                           
                           age.cutoffs=age.cutoffs,
                           races=races,
@@ -332,6 +357,7 @@ copy.and.modify.jheem.settings <- function(template.settings,
                           
                           transition.mapping = transition.mapping,
                           
+                          subpopulation.birth.proportions = subpopulation.birth.proportions,
                           additional.components.values = additional.components.values,
                           
                           version.manager = version.manager
