@@ -1,7 +1,7 @@
 
 
 # return a function that takes one argument - sim - and returns the log-likelihood
-library(emdbook)
+#library(emdbook)
 
 make.depression.likelihood <- function(location,
                                        
@@ -116,4 +116,48 @@ make.depression.likelihood <- function(location,
         }
             
     }
+}
+
+
+#-- HELPERS --#
+
+get.population.depression.prevalence <- function(sim,
+                                                       years,
+                                                       get.for.under.26=T,
+                                                       age.bracket.indices=if(get.for.under.26) 1 else 2:5,
+                                                       include.hiv.positive=T,
+                                                 include.hiv.negative=T)
+{
+    
+    stratified.pop = do.extract.population.subset(sim, years=years, 
+                                                  keep.dimensions = c('subpopulation'), 
+                                                  ages=age.bracket.indices,
+                                                  include.hiv.negative = include.hiv.negative,
+                                                  include.hiv.positive = include.hiv.positive) 
+    
+    (stratified.pop['untreated_depression'] + stratified.pop['treated_depression']) / sum(stratified.pop)
+}
+
+get.hiv.positive.to.negative.depression.prevalence.ratio <- function(sim,
+                                                                     years)
+{
+    get.population.depression.prevalence(sim, year=years,
+                                         age.bracket.indices=1:5,
+                                         include.hiv.positive = T,
+                                         include.hiv.negative = F) /
+        get.population.depression.prevalence(sim, year=years,
+                                             age.bracket.indices=1:5,
+                                             include.hiv.positive = F,
+                                             include.hiv.negative = T)
+}
+
+get.hiv.positive.treated.depression.proportion <- function(sim,
+                                                           years)
+{
+    stratified.pop = do.extract.population.subset(sim, years=years, 
+                                                  keep.dimensions = c('subpopulation'), 
+                                                  include.hiv.negative = F,
+                                                  include.hiv.positive = T) 
+    
+    stratified.pop['treated_depression'] / (stratified.pop['untreated_depression'] + stratified.pop['treated_depression'])
 }

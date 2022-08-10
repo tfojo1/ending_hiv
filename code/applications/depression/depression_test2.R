@@ -225,8 +225,14 @@ sim = run.simulation(params)
 source('code/processing/visualization/sim_plots.R')
 simplot(sim)
 
-round(extract.new.diagnoses(sim, keep.dimensions = c('year','subpopulation'), per.population = NA))
-do.extract.population.subset(sim, keep.dimensions = c('year','subpopulation')) / do.extract.population.subset(sim)
+c(young=get.population.depression.prevalence(sim, years=2016:2018, get.for.under.26 = T),
+  old=get.population.depression.prevalence(sim, years=2016:2018, get.for.under.26 = F))
+
+params2 = params
+params2['depression.incidence.rr'] = .5
+sim2 = run.simulation(params2)
+c(young=get.population.depression.prevalence(sim2, years=2016:2018, get.for.under.26 = T),
+  old=get.population.depression.prevalence(sim2, years=2016:2018, get.for.under.26 = F))
 
 print("ALL DONE!")
 
