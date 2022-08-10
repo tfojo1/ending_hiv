@@ -1,10 +1,11 @@
  
 
 
-SRC.DIRECTORY = 'Q:JHEEM/simulations/quick_laart'
-DST.DIRECTORY = 'Q:JHEEM/results/laart'
-
 source('code/source_code.R')
+
+SRC.DIRECTORY = file.path(SIMULATIONS.DIR, 'quick_laart')
+DST.DIRECTORY = file.path(RESULTS.DIR, 'laart')
+
 source('code/processing/generalized_extract_results.R')
 
 source('code/applications/laart/laart_jheem_settings.R')

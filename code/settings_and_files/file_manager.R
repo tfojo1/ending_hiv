@@ -90,7 +90,7 @@ save.simset <- function(simset,
                         #compress.years=max(attr(simset, 'run.from.year'), min(simset@simulations[[1]]$years)):max(simset@simulations[[1]]$years),
                         full=F,
                         version=get.simset.file.version(simset),
-                        save.full.in.master.directory=F)
+                        save.full.in.master.directory=T)
 {
     if (compress)
         simset = compress.simset(simset, keep.cd4=!compress.cd4)#, keep.years=compress.years)

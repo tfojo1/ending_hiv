@@ -1,8 +1,11 @@
 
-SRC.DIRECTORY = 'Q:JHEEM/simulations/baseline_quick_expanded'
-DST.DIRECTORY = 'Q:JHEEM/simulations/baseline_quick_laart'
 
 source('code/source_code.R')
+
+SRC.DIRECTORY = file.path(SIMULATIONS.DIR, 'baseline_quick_expanded')
+DST.DIRECTORY = file.path(SIMULATIONS.DIR, 'baseline_quick_laart')
+
+
 source('code/applications/laart/laart_jheem_settings.R')
 source('code/applications/laart/laart_parameters.R')
 source('code/applications/laart/laart_parameter_mapping.R')

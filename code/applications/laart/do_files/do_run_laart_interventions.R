@@ -1,13 +1,13 @@
 
-
-SRC.DIRECTORY = 'Q:JHEEM/simulations/baseline_quick_laart'
-DST.DIRECTORY = 'Q:JHEEM/simulations/quick_laart'
-
 source('code/source_code.R')
+
+SRC.DIRECTORY = file.path(SIMULATIONS.DIR, 'baseline_quick_laart')
+DST.DIRECTORY = file.path(SIMULATIONS.DIR, 'quick_laart')
+
 source('code/applications/laart/laart_jheem_settings.R')
 source('code/applications/laart/laart_parameters.R')
 source('code/applications/laart/laart_parameter_mapping.R')
-source('code/applications/laart/create_laart_interventions.R')
+source('code/applications/laart/laart_interventions.R')
 
 LOCATIONS = c(BALTIMORE.MSA, LA.MSA, ATLANTA.MSA) #eventually will be = TARGET.MSAS
 
