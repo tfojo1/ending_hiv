@@ -211,7 +211,8 @@ source('code/source_code.R')
 
 source('code/settings_and_files/setup_versions.R')
 source('code/applications/depression/depression_jheem_settings.R')
-source('code/applications/depression/depression_parameters.R')
+source('code/applications/depression/depression_parameters2.R')
+source('code/applications/depression/read_local_depression_data.R')
 
 params = c(params,
            get.medians(DEPRESSION.PARAMETERS.PRIOR))
@@ -229,8 +230,11 @@ c(young=get.population.depression.prevalence(sim, years=2016:2018, get.for.under
   old=get.population.depression.prevalence(sim, years=2016:2018, get.for.under.26 = F))
 
 params2 = params
-params2['depression.incidence.rr'] = .5
+params2['global.trate'] = 0.135
+#params2['depression.incidence.rr'] = .5
 sim2 = run.simulation(params2)
+simplot(sim, sim2)
+
 c(young=get.population.depression.prevalence(sim2, years=2016:2018, get.for.under.26 = T),
   old=get.population.depression.prevalence(sim2, years=2016:2018, get.for.under.26 = F))
 

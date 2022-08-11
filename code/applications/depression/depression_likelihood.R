@@ -5,8 +5,10 @@
 
 make.depression.likelihood <- function(location,
                                        
+                                       year.lowers = c(2010, 2012, 2014, 2016),
+                                       year.uppers = year.lowers + 1,
+                                       
                                        # years
-                                       total.prevalence.years =length(years),
                                        prevalence.ratio.years = length(years),
                                        treatment.proportion.years =length(years),
                                        
@@ -22,9 +24,7 @@ make.depression.likelihood <- function(location,
                                        
                                        # treatment.proportion
                                        treatment.proportion=0.18,
-                                       treatment.proportion.log.sd=log(2)/2,
-                                       
-                                       years = years
+                                       treatment.proportion.log.sd=log(2)/2
                                        
                         
                                        )

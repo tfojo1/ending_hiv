@@ -6,16 +6,18 @@
 # $prevalence
 # $prevalence.lower
 # $prevalence.upper
-load("/Users/Ruchita/Documents/JHU/HIV Compartmental Model/ending_hiv/cached/DEFAULT.LOCALE.MAPPING.Rdata")
-dir = c("~/Documents/JHU/HIV Compartmental Model/Depression/map_data_2010_2012.csv","~/Documents/JHU/HIV Compartmental Model/Depression/map_data_2012_2014.csv","~/Documents/JHU/HIV Compartmental Model/Depression/map_data_2014_2016.csv","~/Documents/JHU/HIV Compartmental Model/Depression/map_data_2016_2018.csv")
-read.depression.prevalence <- function(dir)
+#load("/Users/Ruchita/Documents/JHU/HIV Compartmental Model/ending_hiv/cached/DEFAULT.LOCALE.MAPPING.Rdata")
+
+library(dplyr)
+
+read.depression.prevalence <- function(dir = 'code/applications/depression/local_depression_data/')
 {
   #Read dir
-  map_data = vector("list", length = length(dir))
-  #Extract year and read csvs
-  year = vector(length = length(dir))
-  for (a in 1:length(dir)){
-    map_data[[a]] = read.csv(dir[a])[-c(1:20),]
+  files = file.path(dir, list.files(dir))
+  map_data = vector("list", length = length(files))
+  year = vector(length = length(files))
+  for (a in 1:length(files)){
+    map_data[[a]] = read.csv(files[a], stringsAsFactors = F)[-c(1:20),]
     year[a] = as.character(map_data[[a]]$years[1])
   }
   
@@ -85,15 +87,17 @@ read.depression.prevalence <- function(dir)
   dim(rv$prevalence.lower) = sapply(dim.names, length)
   dimnames(rv$prevalence.lower) = dim.names
   
+  
   for(a in 1:length(year)){
     map_data_yr = map_data[[a]]
     for(b in 1:length(codes)){
       for(c in 1:length(age)){
         data = map_data_yr[intersect(which(map_data_yr$age_group == age[c]),which(map_data_yr$geography == geography[b])),]
+        data[data=='suppressed'] = NA
         if(dim(data)[1]>0){
-          rv$prevalence[a,b,c] = data[,5]
-          rv$prevalence.lower[a,b,c] = data[,6]
-          rv$prevalence.upper[a,b,c] = data[,7]
+          rv$prevalence[a,b,c] = as.numeric(data[,5])
+          rv$prevalence.lower[a,b,c] = as.numeric(data[,6])
+          rv$prevalence.upper[a,b,c] = as.numeric(data[,7])
         }
         
       }
@@ -101,6 +105,81 @@ read.depression.prevalence <- function(dir)
     
   }
   
+  print("for now we are stripping out unmatched codes - we need to come back and fix this")
+  rv$prevalence = rv$prevalence[,!is.na(codes),]
+  rv$prevalence.lower = rv$prevalence.lower[,!is.na(codes),]
+  rv$prevalence.upper = rv$prevalence.upper[,!is.na(codes),]
+  
   return(rv)
 
 }
+
+get.msa.depression.prevalence.under.26 <- function(msa,
+                                                   year.lower,
+                                                   year.upper,
+                                                   local.data=LOCAL.DEPRESSION.DATA,
+                                                   census=ALL.DATA.MANAGERS$census.full)
+{
+    # for each county in the MSA
+    # get the prevalences that correspond to the NSDUH region the county falls in
+    # aggregate population weighted
+    
+    year.range.label = paste0(year.lower, '-', substr(as.character(year.upper+1), 3, 4))
+    counties = counties.for.msa(msa)
+    nsduh.regions.for.counties = ndsuh.substate.regions.for.counties(counties)
+    if (any(is.na(nsduh.regions.for.counties)))
+        stop(paste0("Cannot find the NSDUH substate regions for these counties: ",
+                    paste0("'", counties[is.na(nsduh.regions.for.counties)], "'", collapse=', ')))
+    
+    missing.codes = setdiff(nsduh.regions.for.counties, dimnames(local.data$prevalence)$code)
+    if (length(missing.codes)>0)
+        stop(paste0("Missing local depression data for NSDUH region(s):",
+                    paste0("'", missing.codes, "'", collapse=', ')))
+    
+    # get the prevalences
+    prevalence.12.to.17 = local.data$prevalence[year.range.label, nsduh.regions.for.counties, '12 to 17']
+    prevalence.18.to.25 = local.data$prevalence[year.range.label, nsduh.regions.for.counties, '18 to 25']
+    
+    # get the sds
+    log.sds.12.to.17 = (log(local.data$prevalence.upper[year.range.label, nsduh.regions.for.counties, '12 to 17']) -
+                            log(local.data$prevalence.lower[year.range.label, nsduh.regions.for.counties, '12 to 17'])) /
+        2 / qnorm(.975)
+    log.mean.12.to.17 = (log(local.data$prevalence.upper[year.range.label, nsduh.regions.for.counties, '12 to 17']) +
+                             log(local.data$prevalence.lower[year.range.label, nsduh.regions.for.counties, '12 to 17'])) / 2
+    var.12.to.17 = (exp(log.sds.12.to.17^2) - 1) * exp(2*log.mean.12.to.17 + log.sds.12.to.17^2)
+    
+    log.sds.18.to.25 = (log(local.data$prevalence.upper[year.range.label, nsduh.regions.for.counties, '18 to 25']) -
+                            log(local.data$prevalence.lower[year.range.label, nsduh.regions.for.counties, '18 to 25'])) /
+        2 / qnorm(.975)
+    log.mean.18.to.25 = (log(local.data$prevalence.upper[year.range.label, nsduh.regions.for.counties, '18 to 25']) +
+                             log(local.data$prevalence.lower[year.range.label, nsduh.regions.for.counties, '18 to 25'])) / 2
+    var.18.to.25 = (exp(log.sds.18.to.25^2) - 1) * exp(2*log.mean.18.to.25 + log.sds.18.to.25^2)
+    
+    
+    
+    population.12.to.17 = get.census.data(census, years=year.lower:year.upper, 
+                                          fips=counties, ages = 12:17, 
+                                          aggregate.years = T, aggregate.ages = T,
+                                          aggregate.races = T, aggregate.sexes = T)
+    population.18.to.25 = get.census.data(census, years=year.lower:year.upper, 
+                                          fips=counties, ages = 18:25, 
+                                          aggregate.years = T, aggregate.ages = T,
+                                          aggregate.races = T, aggregate.sexes = T)
+    
+    prevalence = sum(prevalence.12.to.17 * population.12.to.17 + prevalence.18.to.25 * population.18.to.25) / sum(population.12.to.17 + population.18.to.25)
+    variance = sum(var.12.to.17 * population.12.to.17^2 + var.18.to.25 * population.18.to.25^2) / sum(population.12.to.17 + population.18.to.25)^2
+    
+    list(prevalence = prevalence,
+         sd = sqrt(variance))
+}
+
+get.msa.depression.prevalence.over.26 <- function(msa,
+                                                   year.lower,
+                                                   year.upper,
+                                                  local.data=LOCAL.DEPRESSION.DATA,
+                                                   census=ALL.DATA.MANAGERS$census.full)
+{
+    
+}
+
+LOCAL.DEPRESSION.DATA = read.depression.prevalence()
