@@ -6,9 +6,9 @@
 make.depression.likelihood <- function(location,
                                        
                                        # years
-                                       total.prevalence.years =3,
-                                       prevalence.ratio.years = 3,
-                                       treatment.proportion.years =3,
+                                       total.prevalence.years =length(years),
+                                       prevalence.ratio.years = length(years),
+                                       treatment.proportion.years =length(years),
                                        
                                        # correlation
                                        total.prevalence.error.correlation.age=0.5,
@@ -22,14 +22,16 @@ make.depression.likelihood <- function(location,
                                        
                                        # treatment.proportion
                                        treatment.proportion=0.18,
-                                       treatment.proportion.log.sd=log(2)/2 
+                                       treatment.proportion.log.sd=log(2)/2,
+                                       
+                                       years = years
                                        
                         
                                        )
 {
     
 
-    obs.prevalence.age1 = rep(.05,total.prevalence.years)
+    obs.prevalence.age1 = rep(.05,total.prevalence.years) #what is obs?
     obs.prevalence.age2 = rep(.03,total.prevalence.years)
     
     log.sd.prevalence.age1 = rep(.01, total.prevalence.years)
@@ -40,12 +42,27 @@ make.depression.likelihood <- function(location,
     {
         # Pull from sim
 
-        sim.prevalence.general.age1 = rep(.06,total.prevalence.years)
-        sim.prevalence.general.age2 = rep(.04, total.prevalence.years)
+        sim.prevalence.general.age1 = get.population.depression.prevalence(sim,
+                                                                           years,
+                                                                           get.for.under.26=T,
+                                                                           include.hiv.positive=T,
+                                                                           include.hiv.negative=T)
+        sim.prevalence.general.age2 = get.population.depression.prevalence(sim,
+                                                                           years,
+                                                                           get.for.under.26=F,
+                                                                           age.bracket.indices=if(get.for.under.26) 1 else 2:5,
+                                                                           include.hiv.positive=T,
+                                                                           include.hiv.negative=T)
+        
         sim.prevalence.general = c(sim.prevalence.general.age1,sim.prevalence.general.age2)
         
-        sim.prevalence.hiv.total = rep(.14, length(total.prevalence.years))
-        sim.treated.prevalence.hiv.total = sim.prevalence.hiv.total * treatment.proportion
+        sim.prevalence.hiv.total = get.population.depression.prevalence(sim,
+                                                                        years,
+                                                                        get.for.under.26=T,
+                                                                        include.hiv.positive=T,
+                                                                        include.hiv.negative=F)
+        
+        sim.treated.prevalence.hiv.total = sim.prevalence.hiv.total * get.hiv.positive.treated.depression.proportion(sim,years)
         
         # Calculate the likelihoods
         lik.prevalence.general.age1 = prod(dlnorm(obs.prevalence.age1,meanlog =  (log(sim.prevalence.general.age1)-.5*(log((log.sd.prevalence.age1/sim.prevalence.general.age1)^2+1))),sdlog  =  log.sd.prevalence.age1, log = log)) 

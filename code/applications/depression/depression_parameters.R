@@ -21,7 +21,7 @@ DEPRESSION.PARAMETERS.PRIOR = join.distributions(
     
     depression.treatment.initiation.hiv.vs.uninfected.rr = Lognormal.Distribution(0, log(2)/2),
     depression.treatment.discontinuation.hiv.vs.uninfected.rr = Lognormal.Distribution(0, log(2)/2),
-    #From here continue
+    
     sexual.susceptibility.untreated.vs.no.depression.male.or = Lognormal.Distribution((log(.69)+log(1.11))/2, (log(1.11)-log(.69))/4),
     sexual.susceptibility.untreated.vs.no.depression.female.or = Lognormal.Distribution((log(.93)+log(.63))/2, (log(.93)-log(.63))/4),
     sexual.susceptibility.treated.vs.untreated.depression.or = Lognormal.Distribution(0, 1), #Unable to find
@@ -129,7 +129,28 @@ DEPRESSION.GET.COMPONENTS.FOR.PARAMETERS <- function(parameters, components,
     
     #@Ruchita save these for later
     # Parameters that affect HIV transmission/susceptibility
-    # Parameters that affect incidence/remission of IDU
+    
+    #consolidate across male/female?
+  
+    
+    sexual.susceptibility.ors = c('untreated_depression_male' = parameters['sexual.susceptibility.untreated.vs.no.depression.male.or'],
+                           'untreated_depression_female' = parameters['sexual.susceptibility.untreated.vs.no.depression.female.or'],
+                 'treated_depression_male' = parameters['sexual.susceptibility.treated.vs.untreated.depression.or'] * 
+                   parameters['sexual.susceptibility.untreated.vs.no.depression.male.or'],
+                 'treated_depression_female' = parameters['sexual.susceptibility.treated.vs.untreated.depression.or'] * 
+                   parameters['sexual.susceptibility.untreated.vs.no.depression.female.or'])
+    names(sexual.susceptibility.ors) = c('untreated_depression_male', 'untreated_depression_female','treated_depression_male','treated_depression_female')
+    
+    
+    idu.susceptibility.ors = c('untreated_depression' = parameters['idu.susceptibility.untreated.vs.no.depression.male.rr'],
+                                  'untreated_depression_female' = parameters['idu.susceptibility.untreated.vs.no.depression.female.rr'],
+                                  'treated_depression_male' = parameters['du.susceptibility.treated.vs.untreated.depression.rr'] * 
+                                    parameters['idu.susceptibility.untreated.vs.no.depression.male.rr'],
+                                  'treated_depression_female' = parameters['du.susceptibility.treated.vs.untreated.depression.rr'] * 
+                                    parameters['idu.susceptibility.untreated.vs.no.depression.female.rr'])
+    names(idu.susceptibility.ors) = c('untreated_depression_male', 'untreated_depression_female','treated_depression_male','treated_depression_female')
+    
+   
     
     
     # Return
