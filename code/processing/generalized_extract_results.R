@@ -20,12 +20,15 @@ generalized.extract.results <- function(dir,
                                         interventions,
                                         outcomes,
                                         years,
+                                        version,
                                         keep.dimensions='year',
                                         use.cdc.categorizations=F,
-                                        ages=c('13-24 years','25-34 years','35-44 years','45-54 years','55+ years'),
-                                        races=c('black','hispanic','other'),
+                                        ages=get.settings.for.version(version)$AGES$labels,#c('13-24 years','25-34 years','35-44 years','45-54 years','55+ years'),
+                                        races=get.settings.for.version(version)$RACES,#c('black','hispanic','other'),
+                                        subpopulations=get.settings.for.version(version)$SUBPOPULATIONS,
                                         sexes=if (use.cdc.categorizations) c('male','female') else c('heterosexual_male','msm','female'),
                                         risks=if (use.cdc.categorizations) c('msm','idu','msm_idu','heterosexual') else c('never_IDU','active_IDU','IDU_in_remission'),
+                                        continuum=get.settings.for.version(version)$CONTINUUM,
                                         n.sim=NULL,
                                         throw.error.if.missing.sims=T,
                                         census.totals=ALL.DATA.MANAGERS$census.totals,
@@ -46,8 +49,10 @@ generalized.extract.results <- function(dir,
         year=as.character(years),
         age=ages,
         race=races,
+        subpopulation=subpopulations,
         sex=sexes,
-        risk=risks
+        risk=risks,
+        continuum=continuum
     )
     
     invalid.keep.dimensions.mask = sapply(keep.dimensions, function(dim){
@@ -63,8 +68,11 @@ generalized.extract.results <- function(dir,
     # Set up dimension subsets
     dimension.subsets=list(age=ages,
                            race=races,
+                           subpopulation=subpopulations,
                            sex=sexes,
-                           risk=risks)
+                           risk=risks,
+                           continuum=continuum
+                           )
     
     # set up intervention names
     if (is.null(interventions))
@@ -91,16 +99,18 @@ generalized.extract.results <- function(dir,
         
         sapply(1:length(locations), function(loc.index){
             loc = locations[loc.index]
+            
             # Load the simset
             if (is.na(int.code))
             {
-                filename = get.full.filename(location=loc)
+                filename = get.full.filename(location=loc, version = version)
                 file = file.path(dir, filename)
             }
             else
             {
                 filename = get.simset.filename(location=loc,
-                                               intervention.code=int.code)
+                                               intervention.code=int.code,
+                                               version = version)
                 file = file.path(dir, loc, filename)
             }
             
@@ -146,8 +156,8 @@ generalized.extract.results <- function(dir,
                                           dimension.subsets=dimension.subsets,
                                           total.population=total.population,
                                           year.anchor=year.anchor,
-                                          use.cdc.categorizations=use.cdc.categorizations)
-                    
+                                          use.cdc.categorizations=use.cdc.categorizations,
+                                          throw.error.if.missing.years = T)
                     
                     if (any(sapply(inner.dim.names, is.null)))
                     {
@@ -169,7 +179,8 @@ generalized.extract.results <- function(dir,
                         )[keep.dimensions]
                         
                         n.inner <<- prod(sapply(inner.dim.names, length))
-                    }                    
+                    }
+                    
                     sub.rv
                 })
                 
@@ -177,20 +188,22 @@ generalized.extract.results <- function(dir,
                     cat('Done\n')
                 rv
             }
-            else if (throw.error.if.missing.sims)
+            else if (throw.error.if.missing.sims || is.null(n.sim) || any(sapply(inner.dim.names, is.null)))
             {
-                stop("There is no simset for location '", loc, "' and intervention '",
-                     int.code, " ('", file, "')")
-            }
-            else if (is.null(n.sim))
-            {
-                stop("There is no simset for location '", loc, "' and intervention '",
-                     int.code, " ('", file, "'). This is the first location and intervention, so cannot infer the number of simulations")
-            }
-            else if (any(sapply(inner.dim.names, is.null)))
-            {
-                stop("There is no simset for location '", loc, "' and intervention '",
-                     int.code, " ('", file, "'). This is the first location and intervention, so cannot infer the values of NULL dimensions")
+                if (is.na(int.code))
+                    msg = paste0("There is no full simset for location '", loc, " ('", file, "')")
+                else
+                    msg = paste0("There is no simset for location '", loc, "' and intervention '",
+                                 int.code, " ('", file, "')")
+            
+                if (is.null(n.sim))
+                    msg = paste0(msg, 
+                                 " This is the first location and intervention, so cannot infer the number of simulations")
+                else if (any(sapply(inner.dim.names, is.null)))
+                    msg = paste0(msg, 
+                                 " This is the first location and intervention, so cannot infer the values of NULL dimensions")
+                
+                stop(msg)
             }
             else
                 rep(NaN, n.sim * n.inner * length(outcomes))
@@ -375,7 +388,8 @@ get.arr.for.data.type <- function(simset,
                                   dimension.subsets,
                                   total.population,
                                   year.anchor,
-                                  use.cdc.categorizations=T)
+                                  use.cdc.categorizations=T,
+                                  throw.error.if.missing.years=F)
 {
     total.population = total.population[as.character(years),]
     dim(total.population) = c(year=length(years), sim=length(total.population)/length(years))
@@ -388,42 +402,48 @@ get.arr.for.data.type <- function(simset,
                                            all.dimensions = keep.dimensions,
                                            dimension.subsets = dimension.subsets,
                                            total.population = total.population,
-                                           use.cdc.categorizations = use.cdc.categorizations)
+                                           use.cdc.categorizations = use.cdc.categorizations,
+                                           throw.error.if.missing.years=throw.error.if.missing.years)
     else if (data.type=='incidence')
         arr = extract.simset.incidence(simset,
                                        years = years, 
                                        all.dimensions = keep.dimensions,
                                        dimension.subsets = dimension.subsets,
                                        total.population = total.population,
-                                       use.cdc.categorizations = use.cdc.categorizations)
+                                       use.cdc.categorizations = use.cdc.categorizations,
+                                       throw.error.if.missing.years=throw.error.if.missing.years)
     else if (data.type=='prevalence')
         arr = extract.simset.prevalence(simset,
                                         years = years, 
                                         all.dimensions = keep.dimensions,
                                         dimension.subsets = dimension.subsets,
                                         total.population = total.population,
-                                        use.cdc.categorizations = use.cdc.categorizations)
+                                        use.cdc.categorizations = use.cdc.categorizations,
+                                        throw.error.if.missing.years=throw.error.if.missing.years)
     else if (data.type=='mortality')
         arr = extract.simset.hiv.mortality(simset,
                                            years = years, 
                                            all.dimensions = keep.dimensions,
                                            dimension.subsets = dimension.subsets,
                                            total.population = total.population,
-                                           use.cdc.categorizations = use.cdc.categorizations)
+                                           use.cdc.categorizations = use.cdc.categorizations,
+                                           throw.error.if.missing.years=throw.error.if.missing.years)
     else if (data.type=='suppression')
         arr = extract.simset.suppression(simset,
                                          years = years, 
                                          all.dimensions = keep.dimensions,
                                          dimension.subsets = dimension.subsets,
                                          year.anchor=year.anchor,
-                                         use.cdc.categorizations = use.cdc.categorizations)
+                                         use.cdc.categorizations = use.cdc.categorizations,
+                                         throw.error.if.missing.years=throw.error.if.missing.years)
     else if (data.type=='engagement')
         arr = extract.simset.engagement(simset,
                                         years = years, 
                                         all.dimensions = keep.dimensions,
                                         dimension.subsets = dimension.subsets,
                                         year.anchor=year.anchor,
-                                        use.cdc.categorizations = use.cdc.categorizations)
+                                        use.cdc.categorizations = use.cdc.categorizations,
+                                        throw.error.if.missing.years=throw.error.if.missing.years)
     else if (data.type=='suppression.of.engaged')
     {
         arr = extract.simset.suppression(simset,
@@ -431,13 +451,15 @@ get.arr.for.data.type <- function(simset,
                                          all.dimensions = keep.dimensions,
                                          dimension.subsets = dimension.subsets,
                                          year.anchor=year.anchor,
-                                         use.cdc.categorizations = use.cdc.categorizations) / 
+                                         use.cdc.categorizations = use.cdc.categorizations,
+                                         throw.error.if.missing.years=throw.error.if.missing.years) / 
             extract.simset.engagement(simset,
                                       years = years, 
                                       all.dimensions = keep.dimensions,
                                       dimension.subsets = dimension.subsets,
                                       year.anchor=year.anchor,
-                                      use.cdc.categorizations = use.cdc.categorizations)
+                                      use.cdc.categorizations = use.cdc.categorizations,
+                                      throw.error.if.missing.years=throw.error.if.missing.years)
     }
     else if (data.type=='linkage')
         arr = extract.simset.linkage(simset,
@@ -445,69 +467,87 @@ get.arr.for.data.type <- function(simset,
                                      all.dimensions = keep.dimensions,
                                      dimension.subsets = dimension.subsets,
                                      year.anchor=year.anchor,
-                                     use.cdc.categorizations = use.cdc.categorizations)
+                                     use.cdc.categorizations = use.cdc.categorizations,
+                                     throw.error.if.missing.years=throw.error.if.missing.years)
     else if (data.type=='retention')
         arr = extract.simset.retention(simset,
                                        years = years, 
                                        all.dimensions = keep.dimensions,
                                        dimension.subsets = dimension.subsets,
                                        year.anchor=year.anchor,
-                                       use.cdc.categorizations = use.cdc.categorizations)
+                                       use.cdc.categorizations = use.cdc.categorizations,
+                                       throw.error.if.missing.years=throw.error.if.missing.years)
     else if (data.type=='gain.of.suppression')
         arr = extract.simset.gain.of.suppression(simset,
                                                  years = years, 
                                                  all.dimensions = keep.dimensions,
                                                  dimension.subsets = dimension.subsets,
                                                  year.anchor=year.anchor,
-                                                 use.cdc.categorizations = use.cdc.categorizations)
+                                                 use.cdc.categorizations = use.cdc.categorizations,
+                                                 throw.error.if.missing.years=throw.error.if.missing.years)
     else if (data.type=='diagnosed')
         arr = extract.simset.knowledge.of.status(simset,
                                                  years = years, 
                                                  all.dimensions = keep.dimensions,
                                                  dimension.subsets = dimension.subsets,
-                                                 use.cdc.categorizations = use.cdc.categorizations)
+                                                 use.cdc.categorizations = use.cdc.categorizations,
+                                                 throw.error.if.missing.years=throw.error.if.missing.years)
     else if (data.type=='testing.period')
         arr = extract.simset.testing.period(simset,
                                             years = years, 
                                             all.dimensions = keep.dimensions,
                                             dimension.subsets = dimension.subsets,
                                             year.anchor=year.anchor,
-                                            use.cdc.categorizations = use.cdc.categorizations)
+                                            use.cdc.categorizations = use.cdc.categorizations,
+                                            throw.error.if.missing.years=throw.error.if.missing.years)
     else if (data.type=='testing.rate')
         arr = extract.simset.testing.rates(simset,
                                            years = years, 
                                            all.dimensions = keep.dimensions,
                                            dimension.subsets = dimension.subsets,
                                            year.anchor=year.anchor,
-                                           use.cdc.categorizations = use.cdc.categorizations)
+                                           use.cdc.categorizations = use.cdc.categorizations,
+                                           throw.error.if.missing.years=throw.error.if.missing.years)
     else if (data.type=='testing')
         arr = extract.simset.testing.proportions(simset,
                                                  years = years, 
                                                  all.dimensions = keep.dimensions,
                                                  dimension.subsets = dimension.subsets,
                                                  year.anchor=year.anchor,
-                                                 use.cdc.categorizations = use.cdc.categorizations)
+                                                 use.cdc.categorizations = use.cdc.categorizations,
+                                                 throw.error.if.missing.years=throw.error.if.missing.years)
     else if (data.type=='prep')
         arr = extract.simset.prep.coverage(simset,
                                            years = years, 
                                            all.dimensions = keep.dimensions,
                                            dimension.subsets = dimension.subsets,
                                            year.anchor=year.anchor,
-                                           use.cdc.categorizations = use.cdc.categorizations)
+                                           use.cdc.categorizations = use.cdc.categorizations,
+                                           throw.error.if.missing.years=throw.error.if.missing.years)
     else if (data.type=='aids.diagnoses')
         arr = extract.simset.aids.diagnoses(simset,
                                             years = years, 
                                             all.dimensions = keep.dimensions,
                                             dimension.subsets = dimension.subsets,
                                             total.population = total.population,
-                                            use.cdc.categorizations = use.cdc.categorizations)
+                                            use.cdc.categorizations = use.cdc.categorizations,
+                                            throw.error.if.missing.years=throw.error.if.missing.years)
     else if (data.type=='population')
         arr = extract.simset.population(simset,
                                         years = years, 
                                         all.dimensions = keep.dimensions,
                                         dimension.subsets = dimension.subsets,
                                         total.population = total.population,
-                                        use.cdc.categorizations = use.cdc.categorizations)
+                                        use.cdc.categorizations = use.cdc.categorizations,
+                                        throw.error.if.missing.years=throw.error.if.missing.years)
+    else if (data.type=='hiv.positive.population')
+        arr = extract.simset.hiv.positive.population(simset,
+                                                     years = years, 
+                                                     all.dimensions = keep.dimensions,
+                                                     dimension.subsets = dimension.subsets,
+                                                     total.population = total.population,
+                                                     use.cdc.categorizations = use.cdc.categorizations,
+                                                     throw.error.if.missing.years=throw.error.if.missing.years)
     else
         stop(paste0("'", data.type, "' is not a valid data.type."))
     
@@ -808,7 +848,8 @@ get.total.population.for.simset <- function(simset,
 #per total population in year
 extract.simset.new.diagnoses <- function(simset, years, all.dimensions,
                                          dimension.subsets, total.population,
-                                         use.cdc.categorizations=T)
+                                         use.cdc.categorizations=T,
+                                         throw.error.if.missing.years=F)
 {
     eg = do.extract.new.diagnoses(simset@simulations[[1]],
                                   years=years, 
@@ -824,7 +865,7 @@ extract.simset.new.diagnoses <- function(simset, years, all.dimensions,
                                   cd4=NULL,
                                   hiv.subsets=NULL,
                                   use.cdc.categorizations=use.cdc.categorizations,
-                                  throw.error.if.missing.years = F)
+                                  throw.error.if.missing.years = throw.error.if.missing.years)
     
     rv = sapply(1:length(simset@simulations), function(i)
     {
@@ -843,7 +884,7 @@ extract.simset.new.diagnoses <- function(simset, years, all.dimensions,
                                               cd4=NULL,
                                               hiv.subsets=NULL,
                                               use.cdc.categorizations=use.cdc.categorizations,
-                                              throw.error.if.missing.years = F)
+                                              throw.error.if.missing.years = throw.error.if.missing.years)
         denominators = do.extract.population.subset(sim, years=years, keep.dimensions = 'year', use.cdc.categorizations = T)
         
         as.numeric(numerators) / as.numeric(denominators) * total.population[,i]
@@ -871,20 +912,23 @@ extract.simset.aids.diagnoses <- function(simset, years, all.dimensions,
                                                                              '2002'=1.39,
                                                                              '2003'=1.35,
                                                                              '2004'=1.25)),
-                                          use.cdc.categorizations=T
+                                          use.cdc.categorizations=T,
+                                          throw.error.if.missing.years=F
 )
 {
     extract.simset.new.diagnoses(simset, years=years, 
                                  all.dimensions = all.dimensions,
                                  dimension.subsets = dimension.subsets,
                                  total.population=total.population,
-                                 use.cdc.categorizations=use.cdc.categorizations) / hiv.to.aids.diagnoses.ratio
+                                 use.cdc.categorizations=use.cdc.categorizations,
+                                 throw.error.if.missing.years = throw.error.if.missing.years) / hiv.to.aids.diagnoses.ratio
 }
 
 #per total population in year
 extract.simset.incidence <- function(simset, years, all.dimensions,
                                      dimension.subsets, total.population,
-                                     use.cdc.categorizations=T)
+                                     use.cdc.categorizations=T,
+                                     throw.error.if.missing.years=F)
 {
     eg = do.extract.incidence(simset@simulations[[1]],
                               years=years, 
@@ -900,7 +944,7 @@ extract.simset.incidence <- function(simset, years, all.dimensions,
                               cd4=NULL,
                               hiv.subsets=NULL,
                               use.cdc.categorizations=use.cdc.categorizations,
-                              throw.error.if.missing.years = F)
+                              throw.error.if.missing.years = throw.error.if.missing.years)
     rv = sapply(1:length(simset@simulations), function(i)
     {
         sim = simset@simulations[[i]]
@@ -918,7 +962,7 @@ extract.simset.incidence <- function(simset, years, all.dimensions,
                                           cd4=NULL,
                                           hiv.subsets=NULL,
                                           use.cdc.categorizations=use.cdc.categorizations,
-                                          throw.error.if.missing.years = F)
+                                          throw.error.if.missing.years = throw.error.if.missing.years)
         denominators = do.extract.population.subset(sim, years=years, keep.dimensions = 'year', use.cdc.categorizations = T)
         
         as.numeric(numerators) / as.numeric(denominators) * total.population[,i]
@@ -942,7 +986,8 @@ extract.simset.incidence <- function(simset, years, all.dimensions,
 #per total population in year
 extract.simset.prevalence <- function(simset, years, all.dimensions,
                                       dimension.subsets, total.population,
-                                      use.cdc.categorizations=T)
+                                      use.cdc.categorizations=T,
+                                      throw.error.if.missing.years=F)
 {
     eg = do.extract.prevalence(simset@simulations[[1]],
                                years=years, 
@@ -957,7 +1002,7 @@ extract.simset.prevalence <- function(simset, years, all.dimensions,
                                cd4s=NULL,
                                hiv.subsets=NULL,
                                use.cdc.categorizations=use.cdc.categorizations,
-                               throw.error.if.missing.years = F)
+                               throw.error.if.missing.years = throw.error.if.missing.years)
     rv = sapply(1:length(simset@simulations), function(i)
     {
         sim = simset@simulations[[i]]
@@ -974,7 +1019,7 @@ extract.simset.prevalence <- function(simset, years, all.dimensions,
                                            cd4s=NULL,
                                            hiv.subsets=NULL,
                                            use.cdc.categorizations=use.cdc.categorizations,
-                                           throw.error.if.missing.years = F)
+                                           throw.error.if.missing.years = throw.error.if.missing.years)
         denominators = do.extract.population.subset(sim, years=years, keep.dimensions = 'year', use.cdc.categorizations = T)
         
         as.numeric(numerators) / as.numeric(denominators) * total.population[,i]
@@ -996,7 +1041,8 @@ extract.simset.prevalence <- function(simset, years, all.dimensions,
 
 extract.simset.hiv.mortality <- function(simset, years, all.dimensions,
                                          dimension.subsets, total.population,
-                                         use.cdc.categorizations=T)
+                                         use.cdc.categorizations=T,
+                                         throw.error.if.missing.years=F)
 {
     eg = do.extract.overall.hiv.mortality(simset@simulations[[1]],
                                           years=years, 
@@ -1011,7 +1057,7 @@ extract.simset.hiv.mortality <- function(simset, years, all.dimensions,
                                           cd4s=NULL,
                                           hiv.subsets=NULL,
                                           use.cdc.categorizations=use.cdc.categorizations,
-                                          throw.error.if.missing.years = F)
+                                          throw.error.if.missing.years = throw.error.if.missing.years)
     rv = sapply(1:length(simset@simulations), function(i)
     {
         sim = simset@simulations[[i]]
@@ -1028,7 +1074,7 @@ extract.simset.hiv.mortality <- function(simset, years, all.dimensions,
                                                       cd4s=NULL,
                                                       hiv.subsets=NULL,
                                                       use.cdc.categorizations=use.cdc.categorizations,
-                                                      throw.error.if.missing.years = F)
+                                                      throw.error.if.missing.years = throw.error.if.missing.years)
         denominators = do.extract.population.subset(sim, years=years, keep.dimensions = 'year', use.cdc.categorizations = T)
         
         as.numeric(numerators) / as.numeric(denominators) * total.population[,i]
@@ -1050,7 +1096,8 @@ extract.simset.hiv.mortality <- function(simset, years, all.dimensions,
 
 extract.simset.suppression <- function(simset, years, all.dimensions,
                                        dimension.subsets, year.anchor,
-                                       use.cdc.categorizations=T)
+                                       use.cdc.categorizations=T,
+                                       throw.error.if.missing.years=F)
 {
     eg = extract.suppression(simset@simulations[[1]],
                              years=years, 
@@ -1066,7 +1113,7 @@ extract.simset.suppression <- function(simset, years, all.dimensions,
                              hiv.subsets=NULL,
                              use.cdc.categorizations=use.cdc.categorizations,
                              year.anchor=year.anchor,
-                             throw.error.if.missing.years = F)
+                             throw.error.if.missing.years = throw.error.if.missing.years)
     rv = sapply(simset@simulations, extract.suppression,
                 years=years, 
                 keep.dimensions=all.dimensions,
@@ -1081,7 +1128,7 @@ extract.simset.suppression <- function(simset, years, all.dimensions,
                 hiv.subsets=NULL,
                 use.cdc.categorizations=use.cdc.categorizations,
                 year.anchor=year.anchor,
-                throw.error.if.missing.years = F)
+                throw.error.if.missing.years = throw.error.if.missing.years)
     
     if (is.null(dim(eg)))
     {
@@ -1099,7 +1146,8 @@ extract.simset.suppression <- function(simset, years, all.dimensions,
 
 extract.simset.engagement<- function(simset, years, all.dimensions,
                                      dimension.subsets, year.anchor,
-                                     use.cdc.categorizations=T)
+                                     use.cdc.categorizations=T,
+                                     throw.error.if.missing.years=F)
 {
     eg = do.extract.engagement(simset@simulations[[1]],
                                years=years, 
@@ -1114,7 +1162,7 @@ extract.simset.engagement<- function(simset, years, all.dimensions,
                                cd4=NULL,
                                hiv.subsets=NULL,
                                use.cdc.categorizations=use.cdc.categorizations,
-                               throw.error.if.missing.years = F)
+                               throw.error.if.missing.years = throw.error.if.missing.years)
     #                             year.anchor=year.anchor)
     rv = sapply(simset@simulations, do.extract.engagement,
                 years=years, 
@@ -1129,7 +1177,7 @@ extract.simset.engagement<- function(simset, years, all.dimensions,
                 cd4=NULL,
                 hiv.subsets=NULL,
                 use.cdc.categorizations=use.cdc.categorizations,
-                throw.error.if.missing.years = F)
+                throw.error.if.missing.years = throw.error.if.missing.years)
     #                year.anchor=year.anchor)
     
     if (is.null(dim(eg)))
@@ -1148,7 +1196,8 @@ extract.simset.engagement<- function(simset, years, all.dimensions,
 
 extract.simset.linkage<- function(simset, years, all.dimensions,
                                   dimension.subsets, year.anchor,
-                                  use.cdc.categorizations=T)
+                                  use.cdc.categorizations=T,
+                                  throw.error.if.missing.years=F)
 {
     eg = extract.linkage(simset@simulations[[1]],
                          years=years, 
@@ -1163,7 +1212,7 @@ extract.simset.linkage<- function(simset, years, all.dimensions,
                          cd4=NULL,
                          hiv.subsets=NULL,
                          use.cdc.categorizations=use.cdc.categorizations,
-                         throw.error.if.missing.years = F)
+                         throw.error.if.missing.years = throw.error.if.missing.years)
     #                             year.anchor=year.anchor)
     rv = sapply(simset@simulations, extract.linkage,
                 years=years, 
@@ -1178,7 +1227,7 @@ extract.simset.linkage<- function(simset, years, all.dimensions,
                 cd4=NULL,
                 hiv.subsets=NULL,
                 use.cdc.categorizations=use.cdc.categorizations,
-                throw.error.if.missing.years = F)
+                throw.error.if.missing.years = throw.error.if.missing.years)
     #                year.anchor=year.anchor)
     
     if (is.null(dim(eg)))
@@ -1197,7 +1246,8 @@ extract.simset.linkage<- function(simset, years, all.dimensions,
 
 extract.simset.retention<- function(simset, years, all.dimensions,
                                     dimension.subsets, year.anchor,
-                                    use.cdc.categorizations=T)
+                                    use.cdc.categorizations=T,
+                                    throw.error.if.missing.years=F)
 {
     continuum = attr(simset@simulations[[1]], 'components')$settings$ENGAGED_STATES
     
@@ -1214,7 +1264,7 @@ extract.simset.retention<- function(simset, years, all.dimensions,
                            cd4=NULL,
                            hiv.subsets=NULL,
                            use.cdc.categorizations=use.cdc.categorizations,
-                           throw.error.if.missing.years = F)
+                           throw.error.if.missing.years = throw.error.if.missing.years)
     #                             year.anchor=year.anchor)
     rv = sapply(simset@simulations, extract.retention,
                 years=years, 
@@ -1229,7 +1279,7 @@ extract.simset.retention<- function(simset, years, all.dimensions,
                 cd4=NULL,
                 hiv.subsets=NULL,
                 use.cdc.categorizations=use.cdc.categorizations,
-                throw.error.if.missing.years = F)
+                throw.error.if.missing.years = throw.error.if.missing.years)
     #                year.anchor=year.anchor)
     
     if (is.null(dim(eg)))
@@ -1248,7 +1298,8 @@ extract.simset.retention<- function(simset, years, all.dimensions,
 
 extract.simset.gain.of.suppression<- function(simset, years, all.dimensions,
                                               dimension.subsets, year.anchor,
-                                              use.cdc.categorizations=T)
+                                              use.cdc.categorizations=T,
+                                              throw.error.if.missing.years=F)
 {
     continuum = setdiff(attr(simset@simulations[[1]], 'components')$settings$ENGAGED_STATES,
                         attr(simset@simulations[[1]], 'components')$settings$SUPPRESSED_STATES)
@@ -1266,7 +1317,7 @@ extract.simset.gain.of.suppression<- function(simset, years, all.dimensions,
                                      cd4=NULL,
                                      hiv.subsets=NULL,
                                      use.cdc.categorizations=use.cdc.categorizations,
-                                     throw.error.if.missing.years = F)
+                                     throw.error.if.missing.years = throw.error.if.missing.years)
     #                             year.anchor=year.anchor)
     rv = sapply(simset@simulations, extract.gain.of.suppression,
                 years=years, 
@@ -1281,7 +1332,7 @@ extract.simset.gain.of.suppression<- function(simset, years, all.dimensions,
                 cd4=NULL,
                 hiv.subsets=NULL,
                 use.cdc.categorizations=use.cdc.categorizations,
-                throw.error.if.missing.years = F)
+                throw.error.if.missing.years = throw.error.if.missing.years)
     #                year.anchor=year.anchor)
     
     if (is.null(dim(eg)))
@@ -1300,7 +1351,8 @@ extract.simset.gain.of.suppression<- function(simset, years, all.dimensions,
 
 extract.simset.prep.coverage <- function(simset, years, all.dimensions,
                                          dimension.subsets, year.anchor,
-                                         use.cdc.categorizations=T)
+                                         use.cdc.categorizations=T,
+                                         throw.error.if.missing.years=F)
 {
     eg = extract.prep.coverage(simset@simulations[[1]],
                                years=years, 
@@ -1313,7 +1365,7 @@ extract.simset.prep.coverage <- function(simset, years, all.dimensions,
                                risks=dimension.subsets[['risk']],
                                use.cdc.categorizations=use.cdc.categorizations,
                                year.anchor=year.anchor,
-                               throw.error.if.missing.years = F)
+                               throw.error.if.missing.years = throw.error.if.missing.years)
     
     rv = sapply(simset@simulations, extract.prep.coverage,
                 years=years, 
@@ -1326,7 +1378,7 @@ extract.simset.prep.coverage <- function(simset, years, all.dimensions,
                 risks=dimension.subsets[['risk']],
                 use.cdc.categorizations=use.cdc.categorizations,
                 year.anchor=year.anchor,
-                throw.error.if.missing.years = F)
+                throw.error.if.missing.years = throw.error.if.missing.years)
     
     if (is.null(dim(eg)))
     {
@@ -1344,7 +1396,8 @@ extract.simset.prep.coverage <- function(simset, years, all.dimensions,
 
 extract.simset.testing.rates <- function(simset, years, all.dimensions,
                                          dimension.subsets, year.anchor,
-                                         use.cdc.categorizations=T)
+                                         use.cdc.categorizations=T,
+                                         throw.error.if.missing.years=F)
 {
     eg = extract.testing.rates(simset@simulations[[1]],
                                years=years, 
@@ -1357,7 +1410,7 @@ extract.simset.testing.rates <- function(simset, years, all.dimensions,
                                risks=dimension.subsets[['risk']],
                                use.cdc.categorizations=use.cdc.categorizations,
                                year.anchor=year.anchor,
-                               throw.error.if.missing.years = F)
+                               throw.error.if.missing.years = throw.error.if.missing.years)
     
     rv = sapply(simset@simulations, extract.testing.rates,
                 years=years, 
@@ -1370,7 +1423,7 @@ extract.simset.testing.rates <- function(simset, years, all.dimensions,
                 risks=dimension.subsets[['risk']],
                 use.cdc.categorizations=use.cdc.categorizations,
                 year.anchor=year.anchor,
-                throw.error.if.missing.years = F)
+                throw.error.if.missing.years = throw.error.if.missing.years)
     
     if (is.null(dim(eg)))
     {
@@ -1388,7 +1441,8 @@ extract.simset.testing.rates <- function(simset, years, all.dimensions,
 
 extract.simset.testing.proportions <- function(simset, years, all.dimensions,
                                                dimension.subsets, year.anchor,
-                                               use.cdc.categorizations=T)
+                                               use.cdc.categorizations=T,
+                                               throw.error.if.missing.years=F)
 {
     eg = extract.testing.proportions(simset@simulations[[1]],
                                      years=years, 
@@ -1401,7 +1455,7 @@ extract.simset.testing.proportions <- function(simset, years, all.dimensions,
                                      risks=dimension.subsets[['risk']],
                                      use.cdc.categorizations=use.cdc.categorizations,
                                      year.anchor=year.anchor,
-                                     throw.error.if.missing.years = F)
+                                     throw.error.if.missing.years = throw.error.if.missing.years)
     
     rv = sapply(simset@simulations, extract.testing.proportions,
                 years=years, 
@@ -1414,7 +1468,7 @@ extract.simset.testing.proportions <- function(simset, years, all.dimensions,
                 risks=dimension.subsets[['risk']],
                 use.cdc.categorizations=use.cdc.categorizations,
                 year.anchor=year.anchor,
-                throw.error.if.missing.years = F)
+                throw.error.if.missing.years = throw.error.if.missing.years)
     
     if (is.null(dim(eg)))
     {
@@ -1432,7 +1486,8 @@ extract.simset.testing.proportions <- function(simset, years, all.dimensions,
 
 extract.simset.testing.period <- function(simset, years, all.dimensions,
                                           dimension.subsets, year.anchor,
-                                          use.cdc.categorizations=T)
+                                          use.cdc.categorizations=T,
+                                          throw.error.if.missing.years=F)
 {
     eg = extract.testing.period(simset@simulations[[1]],
                                 years=years, 
@@ -1445,7 +1500,7 @@ extract.simset.testing.period <- function(simset, years, all.dimensions,
                                 risks=dimension.subsets[['risk']],
                                 use.cdc.categorizations=use.cdc.categorizations,
                                 year.anchor=year.anchor,
-                                throw.error.if.missing.years = F)
+                                throw.error.if.missing.years = throw.error.if.missing.years)
     
     rv = sapply(simset@simulations, extract.testing.period,
                 years=years, 
@@ -1458,7 +1513,7 @@ extract.simset.testing.period <- function(simset, years, all.dimensions,
                 risks=dimension.subsets[['risk']],
                 use.cdc.categorizations=use.cdc.categorizations,
                 year.anchor=year.anchor,
-                throw.error.if.missing.years = F)
+                throw.error.if.missing.years = throw.error.if.missing.years)
     
     if (is.null(dim(eg)))
     {
@@ -1476,7 +1531,8 @@ extract.simset.testing.period <- function(simset, years, all.dimensions,
 
 extract.simset.knowledge.of.status <- function(simset, years, all.dimensions,
                                                dimension.subsets,
-                                               use.cdc.categorizations=T)
+                                               use.cdc.categorizations=T,
+                                               throw.error.if.missing.years=F)
 {
     eg = do.extract.diagnosed.hiv(simset@simulations[[1]],
                                   years=years, 
@@ -1490,7 +1546,7 @@ extract.simset.knowledge.of.status <- function(simset, years, all.dimensions,
                                   cd4=NULL,
                                   hiv.subsets=NULL,
                                   use.cdc.categorizations=use.cdc.categorizations,
-                                  throw.error.if.missing.years = F)
+                                  throw.error.if.missing.years = throw.error.if.missing.years)
     rv = sapply(simset@simulations, do.extract.diagnosed.hiv,
                 years=years, 
                 keep.dimensions=all.dimensions,
@@ -1503,7 +1559,7 @@ extract.simset.knowledge.of.status <- function(simset, years, all.dimensions,
                 cd4=NULL,
                 hiv.subsets=NULL,
                 use.cdc.categorizations=use.cdc.categorizations,
-                throw.error.if.missing.years = F)
+                throw.error.if.missing.years = throw.error.if.missing.years)
     
     if (is.null(dim(eg)))
     {
@@ -1521,7 +1577,8 @@ extract.simset.knowledge.of.status <- function(simset, years, all.dimensions,
 
 extract.simset.population <- function(simset, years, all.dimensions,
                                       dimension.subsets, total.population,
-                                      use.cdc.categorizations=T)
+                                      use.cdc.categorizations=T,
+                                      throw.error.if.missing.years=F)
 {
     eg = do.extract.population.subset(simset@simulations[[1]],
                                       years=years, 
@@ -1535,7 +1592,8 @@ extract.simset.population <- function(simset, years, all.dimensions,
                                       continuum=NULL,
                                       cd4=NULL,
                                       hiv.subsets=NULL,
-                                      use.cdc.categorizations=use.cdc.categorizations)
+                                      use.cdc.categorizations=use.cdc.categorizations,
+                                      throw.error.if.missing.years = throw.error.if.missing.years)
     
     rv = sapply(1:length(simset@simulations), function(i)
     {
@@ -1552,7 +1610,8 @@ extract.simset.population <- function(simset, years, all.dimensions,
                                                   continuum=NULL,
                                                   cd4=NULL,
                                                   hiv.subsets=NULL,
-                                                  use.cdc.categorizations=use.cdc.categorizations)
+                                                  use.cdc.categorizations=use.cdc.categorizations,
+                                                  throw.error.if.missing.years = throw.error.if.missing.years)
         denominators = do.extract.population.subset(sim, years=years, keep.dimensions = 'year', use.cdc.categorizations = T)
         
         as.numeric(numerators) / as.numeric(denominators) * total.population[,i]
@@ -1572,3 +1631,60 @@ extract.simset.population <- function(simset, years, all.dimensions,
     rv
 }
 
+extract.simset.hiv.positive.population <- function(simset, years, all.dimensions,
+                                                   dimension.subsets, total.population,
+                                                   use.cdc.categorizations=T,
+                                                   throw.error.if.missing.years=F)
+{
+    eg = do.extract.population.subset(simset@simulations[[1]],
+                                      years=years, 
+                                      keep.dimensions=all.dimensions,
+                                      per.population=NA,
+                                      ages=dimension.subsets[['age']],
+                                      races=dimension.subsets[['race']],
+                                      subpopulations=dimension.subsets[['subpopulation']],
+                                      sexes=dimension.subsets[['sex']],
+                                      risks=dimension.subsets[['risk']],
+                                      continuum=NULL,
+                                      cd4=NULL,
+                                      hiv.subsets=NULL,
+                                      include.hiv.negative = F,
+                                      use.cdc.categorizations=use.cdc.categorizations,
+                                      throw.error.if.missing.years = throw.error.if.missing.years)
+    
+    rv = sapply(1:length(simset@simulations), function(i)
+    {
+        sim = simset@simulations[[i]]
+        numerators = do.extract.population.subset(sim,
+                                                  years=years, 
+                                                  keep.dimensions=all.dimensions,
+                                                  per.population=NA,
+                                                  ages=dimension.subsets[['age']],
+                                                  races=dimension.subsets[['race']],
+                                                  subpopulations=dimension.subsets[['subpopulation']],
+                                                  sexes=dimension.subsets[['sex']],
+                                                  risks=dimension.subsets[['risk']],
+                                                  continuum=dimension.subsets[['continuum']],
+                                                  cd4=NULL,
+                                                  hiv.subsets=NULL,
+                                                  include.hiv.negative = F,
+                                                  use.cdc.categorizations=use.cdc.categorizations,
+                                                  throw.error.if.missing.years = throw.error.if.missing.years)
+        denominators = do.extract.population.subset(sim, years=years, keep.dimensions = 'year', use.cdc.categorizations = T)
+        
+        as.numeric(numerators) / as.numeric(denominators) * total.population[,i]
+    })
+    
+    if (is.null(dim(eg)))
+    {
+        dim.names = list(names(eg), 1:simset@n.sim)
+        names(dim.names) = c(all.dimensions, 'simulation')
+    }
+    else
+        dim.names = c(dimnames(eg), list(simulation=1:simset@n.sim))
+    
+    dim(rv) = sapply(dim.names, length)
+    dimnames(rv) = dim.names
+    
+    rv
+}

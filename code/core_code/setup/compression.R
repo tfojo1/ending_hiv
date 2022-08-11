@@ -178,6 +178,10 @@ compress.jheem.array <- function(arr,
     to.keep = sapply(names(dim.names), function(name){any(name==keep.dimensions)})
     length.1 = dim(arr) == 1
     
+    #print(paste0("class(to.keep) = ", class(to.keep), ", class(length.1) = ", class(length.1)))
+    #if (is.list(to.keep))
+    #    browser()
+    
     non.compress.dimensions = names(dim.names)[to.keep | length.1]
     compress.dimensions = names(dim.names)[!to.keep & !length.1]
 
@@ -218,10 +222,11 @@ compress.jheem.components <- function(components,
                                       keep.dimensions,
                                       compress.continuum.to.diagnosed.vs.undiagnosed)
 {
-    to.compress = names(components)[grepl('rates.and.times', names(components))]
+    to.compress = names(components)[grepl('rates.and.times', names(components)) & sapply(components, is.array)]
     
     for (elem in to.compress)
     {
+        print(elem)
         components[[elem]] = trim.rates.and.times(components[[elem]], keep.times=keep.years)
         components[[elem]]$rates = lapply(components[[elem]]$rates, compress.jheem.array,
                                           sim=sim,

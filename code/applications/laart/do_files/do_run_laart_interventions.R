@@ -15,4 +15,6 @@ run.multiple.systematic.interventions(version='laart',
                                       locations=LOCATIONS,
                                       interventions=LAART.INTERVENTIONS,
                                       src.dir = SRC.DIRECTORY,
-                                      dst.dir = DST.DIRECTORY)
+                                      dst.dir = DST.DIRECTORY,
+                                      run.to.year = 2035,
+                                      keep.years = 2015:2035)

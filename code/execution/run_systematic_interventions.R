@@ -26,7 +26,12 @@ run.multiple.systematic.interventions <- function(version,
         
         
         full.filename = get.full.filename(location=loc, version=version)
-        load(file=file.path(src.dir, full.filename))
+        
+        to.load = file.path(src.dir, full.filename)
+        if (!file.exists(to.load))
+            stop(paste0("Unable to load the full simset for ", loc, ". '",
+                        to.load, "' does not exist."))
+        load(file=to.load)
         
         run.systematic.interventions(simset =  simset,
                                      dst.dir = dst.dir,
@@ -103,7 +108,10 @@ run.systematic.interventions <- function(simset,
             if (verbose)
                 print("Compressing baseline simset...")
         
-            save.simset(simset, dir=dst.dir, compress=compress, compress.cd4=compress.cd4, pare.components = pare.components)
+            save.simset(simset, dir=dst.dir, compress=compress, 
+                        compress.cd4=compress.cd4, 
+                        compress.years=keep.years,
+                        pare.components = pare.components)
         }
         
         if (overwrite || !file.exists(file.path(dst.dir, location, get.seed.filename(location, version=version))))
@@ -153,7 +161,11 @@ run.systematic.interventions <- function(simset,
                 print(paste0("Total runtime = ", get.timespan.text(run.time),
                              " (", get.timespan.text(run.time/n.total.sim), " per simulation on average)"))
             
-            save.simset(simset, dir=dst.dir, compress=compress, compress.cd4=compress.cd4, pare.components = pare.components)
+            save.simset(simset, dir=dst.dir, 
+                        compress=compress, 
+                        compress.years = keep.years,
+                        compress.cd4=compress.cd4, 
+                        pare.components = pare.components)
         }
     }
     
@@ -250,7 +262,7 @@ run.systematic.interventions.from.seed <- function(locations,
                     print(paste0("Total runtime = ", get.timespan.text(run.time),
                                  " (", get.timespan.text(run.time/n.total.sim), " per simulation on average)"))
                 
-                save.simset(simset, dir=dir, compress=compress)
+                save.simset(simset, dir=dir, compress=compress, compress.years=keep.years)
             }
         }
     }

@@ -6,9 +6,11 @@
 
 make.filenames.from.elements <- function(location,
                                         intervention.code,
-                                        version)
+                                        version,
+                                        check.version=T)
 {
-    version = check.version.for.file(version)
+    if (check.version)
+        version = check.version.for.file(version)
     
     paste0(version, "_", location, "_", intervention.code, ".Rdata")
 }
@@ -56,12 +58,35 @@ get.interventions.from.filenames <- function(filenames,
     rv
 }
 
-get.simset.filename <- function(simset,
-                                location=attr(simset@simulations[[1]], 'location'),
-                                intervention=attr(simset, 'intervention'),
-                                intervention.code=NULL,
-                                version=get.simset.file.version(simset))
+get.simset.version.regex <- function(location,
+                                     intervention.code)
 {
+    make.filenames.from.elements(version="([^_]+)",
+                                 location=location,
+                                 intervention.code=intervention.code,
+                                 check.version = F)
+}
+
+get.full.simset.version.regex <- function(location)
+{
+    make.filenames.from.elements(version="([^_]+)",
+                                 location=location,
+                                 intervention.code='full',
+                                 check.version = F)
+}
+
+get.simset.filename <- function(simset=NULL,
+                                location=attr(simset@simulations[[1]], 'location'),
+                                intervention=NULL,
+                                intervention.code = if (is.null(simset)) NULL else get.simset.intervention.code(simset),
+                                version= if (is.null(simset)) NULL else get.simset.file.version(simset))
+{
+    if (!is.null(simset) && !is(simset, 'simset'))
+        stop("simset must be an object of class 'simset'")
+    
+    if (is.null(version))
+        stop('version cannot be NULL')
+    
     if (is.null(intervention.code))
     {
         if (is.null(intervention))
@@ -87,17 +112,17 @@ save.simset <- function(simset,
                         compress=!full,
                         pare.components=!full,
                         compress.cd4=T,
-                        #compress.years=max(attr(simset, 'run.from.year'), min(simset@simulations[[1]]$years)):max(simset@simulations[[1]]$years),
+                        compress.years=max(attr(simset, 'run.from.year'), min(simset@simulations[[1]]$years)):max(simset@simulations[[1]]$years),
                         full=F,
                         version=get.simset.file.version(simset),
                         save.full.in.master.directory=T)
 {
     if (compress)
-        simset = compress.simset(simset, keep.cd4=!compress.cd4)#, keep.years=compress.years)
+        simset = compress.simset(simset, keep.cd4=!compress.cd4, keep.years=compress.years)
     if (pare.components)
         simset = pare.simset.components(simset)
     
-    location = attr(simset@simulations[[1]], 'location')
+    location = get.simset.location(simset)
     
     if (full)
         filename = get.full.filename(location, version=version)

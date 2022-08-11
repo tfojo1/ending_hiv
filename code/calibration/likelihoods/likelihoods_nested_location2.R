@@ -16,6 +16,11 @@ NESTED.DATA.TYPES.FOR.N = c('suppression'='prevalence',
 ALLOWED.NESTED.DATA.TYPES = names(NESTED.DATA.TYPES.FOR.N)
 BACKUP.DATA.TYPE.FOR.P.BIAS.AND.VARIANCE = c('retention'='engagement')
 BACKUP.DATA.TYPES.FOR.IN.V.EXTRA.MSA.SD.RATIO = list(testing=c('suppression','engagement'))
+
+EXCLUDE.COUNTIES.FROM.MSA = list(
+    '47900' = '54037'
+)
+
 create.nested.likelihood <- function(data.type=c('suppression','engagement','linkage','diagnosed')[1],
                                      msa,
                                      msa.surveillance,
@@ -81,7 +86,6 @@ create.nested.likelihood <- function(data.type=c('suppression','engagement','lin
                                      cached.errors=NULL,
                                      verbose=F)
 {
-    
 #-- CHECK ARGUMENTS --#
     
     if (all(ALLOWED.NESTED.DATA.TYPES!=data.type))
@@ -103,29 +107,9 @@ create.nested.likelihood <- function(data.type=c('suppression','engagement','lin
     if (!include.msa && verbose)
         cat("\n    - NOT including msa")
     
-    
-    # Pull state data
-    states.containing.msa = states.for.msa(msa)
-    if (include.states)
-    {
-        state.data = lapply(states.containing.msa, get.surveillance.data,
-                            surv=state.surveillance, data.type=data.type, years=years,
-                            throw.error.if.missing.data = F)
-        have.state.data = sapply(state.data, function(st){
-            !is.null(st) && any(!is.na(st))  
-        })
-        states.with.data = states.containing.msa[have.state.data]
-    }
-    else
-    {
-        states.with.data = character()
-        if (verbose)
-            cat("\n    - NOT including states")
-    }
-    
-    
     # Pull county data
     counties.in.msa = counties.for.msa(msa)
+    counties.in.msa = setdiff(counties.in.msa, EXCLUDE.COUNTIES.FROM.MSA[[msa]])
     # If this is a one-msa county, don't use county data (it will be the same as MSA)
     if (include.counties)
     {
@@ -154,6 +138,27 @@ create.nested.likelihood <- function(data.type=c('suppression','engagement','lin
         if (verbose)
             cat("\n    - NOT including counties")
     }    
+    
+    # Pull state data
+    #states.containing.msa = states.for.msa(msa)
+    states.containing.msa = unique(state.for.county(counties.in.msa))
+    if (include.states)
+    {
+        state.data = lapply(states.containing.msa, get.surveillance.data,
+                            surv=state.surveillance, data.type=data.type, years=years,
+                            throw.error.if.missing.data = F)
+        have.state.data = sapply(state.data, function(st){
+            !is.null(st) && any(!is.na(st))  
+        })
+        states.with.data = states.containing.msa[have.state.data]
+    }
+    else
+    {
+        states.with.data = character()
+        if (verbose)
+            cat("\n    - NOT including states")
+    }
+    
     
     if (verbose)
         cat("Done\n")
@@ -605,7 +610,6 @@ create.nested.likelihood <- function(data.type=c('suppression','engagement','lin
             }
             else
                 super.locations = super.surv = diff.super.to.1.locations = diff.super.to.1.surv = NULL
-            
             
             calculate.outcome.differences(data.type=data.type.for.n,
                                                years=years,
@@ -2065,6 +2069,7 @@ calculate.outcome.differences <- function(data.type,
     combinations.by.level.values = lapply(0:length(dimensions), function(depth){
         cbl = combinations.by.level.dimensions[[depth+1]]
         lapply(1:dim(cbl)[2], function(i){
+
             dims = cbl[,i]
             
             values1 = get.surveillance.data(surv=surv1, location.codes=locations1, data.type=data.type, years=years,
@@ -2077,7 +2082,7 @@ calculate.outcome.differences <- function(data.type,
                                             throw.error.if.missing.data = F)
             
             if (!is.null(super.surv) && !is.null(diff.super.to.1.surv) &&
-                (is.null(values1) || all(is.na(values1))))
+                (is.null(values1) || all(is.na(values1) | values1==0)))
             {
                 values1 = get.surveillance.data(surv=super.surv, 
                                                 location.codes=super.locations, 
@@ -2096,14 +2101,28 @@ calculate.outcome.differences <- function(data.type,
             }
             
             # if we're coming up empty so far, allow na.rm to aggregate across missing data
-            if (!is.null(values1) && all(is.na(values1)))
-                values1 = get.surveillance.data(surv=surv1, location.codes=locations1, data.type=data.type, years=years,
-                                                aggregate.locations = T, aggregate.years = F,
-                                                age=dims['age'], race=dims['race'], sex=dims['sex'], risk=dims['risk'],
-                                                throw.error.if.missing.data = F, na.rm = T)
+            if (!is.null(values1) && all(is.na(values1 | values1==0)))
+            {
+                disaggregated = values1 = get.surveillance.data(surv=surv1, location.codes=locations1, data.type=data.type, years=years,
+                                                                aggregate.locations = F, aggregate.years = F,
+                                                                age=dims['age'], race=dims['race'], sex=dims['sex'], risk=dims['risk'],
+                                                                throw.error.if.missing.data = F)
+                if (is.null(disaggregated))
+                    values1 = NULL
+                else
+                {
+                    values1 = apply(disaggregated, setdiff(names(dimnames(disaggregated)), 'location'), sum, na.rm=T)
+                    all.na = apply(is.na(disaggregated), setdiff(names(dimnames(disaggregated)), 'location'), all)
+                    values1[all.na] = NA
+                }
+#                values1 = get.surveillance.data(surv=surv1, location.codes=locations1, data.type=data.type, years=years,
+#                                                aggregate.locations = T, aggregate.years = F,
+#                                                age=dims['age'], race=dims['race'], sex=dims['sex'], risk=dims['risk'],
+#                                                throw.error.if.missing.data = F, na.rm = T)
+            }
             
             
-            if (is.null(values1) || is.null(values2) || all(is.na(values1) | is.na(values2)))
+            if (is.null(values1) || is.null(values2) || all(is.na(values1) | values1==0 | is.na(values2)))
             {
                 if (depth==0)
                     browser()
@@ -2124,7 +2143,7 @@ calculate.outcome.differences <- function(data.type,
                         if (sum(mask)==0)
                             rep(NaN, length(years))
                         else if (sum(mask)==1)
-                            rep(z[!is.na(z)], length(years))
+                            rep(z[!is.na(z) & !is.infinite(z)], length(years))
                         else
                         {
                             fit = lm(z[mask]~years[mask])
@@ -2183,6 +2202,8 @@ calculate.outcome.differences <- function(data.type,
     
     #-- Clean up and aggregate --#
     
+    if (locations1[1]=='54037')
+        browser()
     rv = combinations.by.level.values[[1+length(dimensions)]][[1]]
     rv = recategorize.to.jheem.risk.strata(rv, proportion.idu.in.remission = 1, proportion.idu.active=1)
     rv = reverse.scale(rv)

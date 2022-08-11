@@ -5,7 +5,13 @@ get.simset.intervention.code <- function(simset)
     
     # for backwards compatibility - early versions set the intervention object, not the code
     if (is.null(code))
-        get.intervention.code(attr(simset, 'intervention'))
+    {
+        int = attr(simset, 'intervention')
+        if (is.null(int))
+            NULL
+        else
+            get.intervention.code(int)
+    }
     else
         code
 }

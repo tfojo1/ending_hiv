@@ -125,12 +125,20 @@ pare.jheem.components <- function(components,
         components = enumerate.components.dependencies(components)
     
     # Decide what we're going to keep
-    to.keep = character()
     if (keep.rates.and.times)
     {
-        to.keep = components$ALL.DEPENDENT.NAMES[grepl('rates.and.times', components$ALL.DEPENDENT.NAMES)]
-        to.keep = c(to.keep, 'continuum.transitions', 'continuum.transition.years')
+        rates.and.times.to.keep = components$ALL.DEPENDENT.NAMES[grepl('rates.and.times', components$ALL.DEPENDENT.NAMES)]
+        
+        transition.and.years.names = get.all.mapped.transition.component.names(components)
+        transitions.to.keep = transition.and.years.names$transition.names
+        transition.years.to.keep = transition.and.years.names$years.names
+        
+        to.keep = c(rates.and.times.to.keep,
+                    transitions.to.keep,
+                    transition.years.to.keep)
     }
+    else
+        rates.and.times.to.keep = transitions.to.keep = transition.years.to.keep = to.keep = character()
     
     # Decide what we're going to remove
     if (aggressive)
@@ -145,8 +153,16 @@ pare.jheem.components <- function(components,
     # trim years for what we keep
     if (!is.null(keep.years))
     {
-        for (elem in to.keep)
+        for (elem in rates.and.times.to.keep)
             components[[elem]] = trim.rates.and.times(components[[elem]], keep.times=keep.years)
+
+        for (i in 1:length(transitions.to.keep))
+        {
+            components = trim.rates.and.times(components,
+                                              keep.times=keep.years,
+                                              times.name = transition.years.to.keep[i],
+                                              rates.name = transitions.to.keep[i])
+        }
     }
     
     # package and return
@@ -1574,19 +1590,21 @@ do.setup.continuum.transitions <- function(components)
 ##--------------------------------------------------##
 
 
-trim.rates.and.times <- function(rates.and.times,
-                                 keep.times)
+trim.rates.and.times <- function(rates.and.times.container,
+                                 keep.times,
+                                 rates.name='rates',
+                                 times.name='times')
 {
-    if (length(rates.and.times$times)>0)
+    if (length(rates.and.times.container[[times.name]])>0)
     {
-        mask = sapply(rates.and.times$times, function(time){
+        mask = sapply(rates.and.times.container[[times.name]], function(time){
             any(time==keep.times)
         })
-        rates.and.times$times = rates.and.times$times[mask]
-        rates.and.times$rates = rates.and.times$rates[mask]
+        rates.and.times.container[[times.name]] = rates.and.times.container[[times.name]][mask]
+        rates.and.times.container[[rates.name]] = rates.and.times.container[[rates.name]][mask]
     }
     
-    rates.and.times
+    rates.and.times.container
 }
 
 
@@ -3558,6 +3576,26 @@ get.transition.component.names <- function(dimension,
     
     rv
 }
+
+get.all.mapped.transition.component.names <- function(components)
+{
+    transition.mapping = get.components.settings(components)$transition.mapping
+    
+    transition.names = unlist(sapply(names(transition.mapping$by.subgroup), function(subgroup){
+        sapply(names(transition.mapping$by.subgroup[[subgroup]]), function(dimension){
+            get.transition.component.names(dimension=dimension, subgroup=subgroup)$name
+        })
+    }))
+    years.names = unlist(sapply(names(transition.mapping$by.subgroup), function(subgroup){
+        sapply(names(transition.mapping$by.subgroup[[subgroup]]), function(dimension){
+            get.transition.component.names(dimension=dimension, subgroup=subgroup)$years.name
+        })
+    }))
+    
+    list(transition.names=transition.names,
+         years.names=years.names)
+}
+        
 
 # the extra dim stuff is for backwards compatibility
 # older components objects (collapsed_1.0 were full arrays)
