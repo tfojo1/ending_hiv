@@ -45,7 +45,6 @@ make.depression.likelihood <- function(location,
         sim.prevalence.general.age1 = get.population.depression.prevalence(sim,
                                                                            years,
                                                                            get.for.under.26=T,
-                                                                           age.bracket.indices=if(get.for.under.26) 1 else 2:5,
                                                                            include.hiv.positive=T,
                                                                            include.hiv.negative=T)
         sim.prevalence.general.age2 = get.population.depression.prevalence(sim,
@@ -59,8 +58,7 @@ make.depression.likelihood <- function(location,
         
         sim.prevalence.hiv.total = get.population.depression.prevalence(sim,
                                                                         years,
-                                                                        get.for.under.26=F,
-                                                                        age.bracket.indices=if(get.for.under.26) 1 else 2:5,
+                                                                        get.for.under.26=T,
                                                                         include.hiv.positive=T,
                                                                         include.hiv.negative=F)
         
