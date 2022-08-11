@@ -25,7 +25,7 @@ run.multiple.systematic.interventions <- function(version,
                          msa.names(loc), " (", loc, ") ***"))
         
         
-        full.filename = get.full.filename(location=location, version=version)
+        full.filename = get.full.filename(location=loc, version=version)
         load(file=file.path(src.dir, full.filename))
         
         run.systematic.interventions(simset =  simset,
@@ -98,7 +98,7 @@ run.systematic.interventions <- function(simset,
     
     if (save.baseline.and.seed)
     {
-        if (overwrite || !file.exists(file.path(dst.dir, location, get.baseline.filename(location))))
+        if (overwrite || !file.exists(file.path(dst.dir, location, get.baseline.filename(location, version=version))))
         {
             if (verbose)
                 print("Compressing baseline simset...")
@@ -106,7 +106,7 @@ run.systematic.interventions <- function(simset,
             save.simset(simset, dir=dst.dir, compress=compress, compress.cd4=compress.cd4, pare.components = pare.components)
         }
         
-        if (overwrite || !file.exists(file.path(dst.dir, location, get.seed.filename(location))))
+        if (overwrite || !file.exists(file.path(dst.dir, location, get.seed.filename(location, version=version))))
         {
             if (verbose)
                 print("Preparing seed simset...")
@@ -125,7 +125,8 @@ run.systematic.interventions <- function(simset,
         int = interventions[[i]]
         
         filename = get.simset.filename(location=location,
-                                       intervention=int)
+                                       intervention=int,
+                                       version=version)
         int.name = get.intervention.name(int)
         if (!overwrite && file.exists(file.path(dst.dir, location, filename)))
         {
