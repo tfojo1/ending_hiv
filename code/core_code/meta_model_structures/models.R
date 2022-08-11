@@ -166,20 +166,12 @@ project.from.transformed.intercept.slope.model <- function(model, years,
                                                            transformation.fn)
 {
     intercept = add.alphas.to.array(arr=model$intercept,
-                                        alphas=alphas$intercept$main.effects,
-                                        target.dim.names = dim.names,
-                                        collapse.sex.risk = alphas$intercept$interact.sex.risk)
-    if (!is.null(alphas$intercept$interaction.effects))
-        intercept = add.interaction.alphas.to.array(arr=intercept,
-                                                    interaction.alphas=alphas$intercept$interaction.effects)
+                                        alphas=alphas$intercept,
+                                        target.dim.names = dim.names)
     
     slope = add.alphas.to.array(arr=model$slope,
-                                        alphas=alphas$slope$main.effects,
-                                        target.dim.names = dim.names,
-                                        collapse.sex.risk = alphas$slope$interact.sex.risk)
-    if (!is.null(alphas$intercept$interaction.effects))
-        slope = add.interaction.alphas.to.array(arr=slope,
-                                                interaction.alphas=alphas$slope$interaction.effects)
+                                        alphas=alphas$slope,
+                                        target.dim.names = dim.names)
    
     
     lapply(years, function(year){
@@ -241,23 +233,6 @@ project.from.logistic.tail.model <- function(model, years,
     })
 }
 
-#-- MULTIPLICATIVE ALPHAS --#
-
-add.multiplicative.alphas <- function(arr,
-                                      alphas,
-                                      target.dim.names)
-{
-    arr = multiply.alphas.into.array(arr=arr,
-                                     alphas=alphas$main.effects,
-                                     target.dim.names = target.dim.names,
-                                     collapse.sex.risk = alphas$interact.sex.risk)
-    
-    if (!is.null(alphas$interaction.effects))
-        arr = multiply.interaction.alphas.into.array(arr=arr,
-                                                     interaction.alphas=alphas$interaction.effects)
-    
-    arr
-}
 
 
 #-- GET MODEL DIMENSIONS --#
@@ -344,37 +319,36 @@ OLD.map.alphas <- function(raw.alphas,
 
 add.alphas.to.array <- function(arr,
                                 alphas,
-                                target.dim.names,
-                                collapse.sex.risk)
+                                target.dim.names)
 {
     do.join.alphas.to.array(arr=arr,
                             alphas=alphas,
                             target.dim.names=target.dim.names,
-                            collapse.sex.risk=collapse.sex.risk,
                             join.function='add')
 }
 
 
 multiply.alphas.into.array <- function(arr,
                                        alphas,
-                                       target.dim.names,
-                                       collapse.sex.risk)
+                                       target.dim.names)
 {
     do.join.alphas.to.array(arr=arr,
                             alphas=alphas,
                             target.dim.names=target.dim.names,
-                            collapse.sex.risk=collapse.sex.risk,
                             join.function='multiply')
 }
 
 do.join.alphas.to.array <- function(arr,
                                 alphas,
                                 target.dim.names,
-                                collapse.sex.risk,
                                 join.function=c('add','multiply')[1])
 {
     arr = expand.population(arr, target.dim.names)
-    
+ 
+    collapse.sex.risk = alphas$interact.sex.risk
+    interaction.effects = alphas$interaction.effects
+    alphas = alphas$main.effects
+       
     if (!is.null(alphas))
     {
         if (collapse.sex.risk)
@@ -442,6 +416,10 @@ do.join.alphas.to.array <- function(arr,
                 stop("join.function must be either 'add' or 'multiply'")
         }
     }
+    
+    if (!is.null(interaction.effects))
+        arr = add.interaction.alphas.to.array(arr=arr,
+                                              interaction.alphas=interaction.effects)
     
     arr
 }

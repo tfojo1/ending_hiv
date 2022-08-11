@@ -2822,10 +2822,10 @@ do.setup.susceptibility <- function(components)
     base.sexual.susceptibility = base.idu.susceptibility = get.hiv.negative.population.skeleton(components$jheem, 1)
     
     #fold in alphas
-    base.sexual.susceptibility = add.multiplicative.alphas(arr=base.sexual.susceptibility,
+    base.sexual.susceptibility = multiply.alphas.into.array(arr=base.sexual.susceptibility,
                                                             alphas=components$sexual.transmission$alphas$susceptibility,
                                                             target.dim.names=dimnames(base.sexual.susceptibility))
-    
+
     if (components$model.idu)
         base.idu.susceptibility = multiply.alphas.into.array(arr=base.idu.susceptibility,
                                                              alphas=components$idu.transmission$alphas$susceptibility,

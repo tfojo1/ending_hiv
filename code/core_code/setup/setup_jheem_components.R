@@ -1903,15 +1903,16 @@ do.set.susceptbility.or.transmissibility.alphas <- function(components,
 set.transition.intercept.alphas <- function(components,
                                               type,
                                               values,
-                                              dimension,
+                                            dim.values=names(values),
+                                              dimensions,
                                               interact.sex.risk=NULL)
 {
     do.set.transition.alphas.for.category(components,
                                type=type,
                                category='intercept',
                                values=values,
-                               dim.values=names(values),
-                               dimensions=dimension,
+                               dim.values=dim.values,
+                               dimensions=dimensions,
                                interact.sex.risk=interact.sex.risk,
                                as.interaction=F)
 }
@@ -1919,15 +1920,16 @@ set.transition.intercept.alphas <- function(components,
 set.transition.slope.alphas <- function(components,
                                         type,
                                         values,
-                                        dimension,
+                                        dim.values=names(values),
+                                        dimensions,
                                         interact.sex.risk=NULL)
 {
     do.set.transition.alphas.for.category(components,
                                type=type,
                                category='slope',
                                values=values,
-                               dim.values=names(values),
-                               dimensions=dimension,
+                               dim.values=dim.values,
+                               dimensions=dimensions,
                                interact.sex.risk=interact.sex.risk,
                                as.interaction=F)
 }
