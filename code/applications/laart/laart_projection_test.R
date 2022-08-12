@@ -58,10 +58,11 @@ start.year = 2025
 implemented.year = 2028
 
 rate.50 = -log(1-0.50)/(implemented.year-start.year)
+rate.50 = rate.50 * 2
 u.DURABLE.LAART.50 = create.intervention.unit(type = 'engaged.durably.suppressed.switch.to.laart',
                                               start.year = start.year,
                                               years = c(start.year+0.0001, implemented.year, implemented.year+0.001),#engaged.durably.suppressed.switch.to.laart
-                                              rates = expression(c(rate.50, rate.50, 0)),
+                                              rates = expression(c(rate.50, rate.50, laart.discontinuation)),
                                               scale = 'rate',
                                               apply.function = 'absolute',
                                               expression.parameters = list(rate.50=rate.50))
