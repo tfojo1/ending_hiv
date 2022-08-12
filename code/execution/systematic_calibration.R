@@ -575,6 +575,26 @@ create.initial.components <- function(location,
     init.components
 }
 
+project.simulation <- function(sim,
+                              run.from.year=2018,
+                              run.to.year=2035,
+                              keep.years=run.from.year:run.to.year)
+{
+    if (!is(sim, 'jheem.results'))
+        stop("sim must be an object of class 'jheem.results'")
+    
+    version = get.sim.version(sim)
+    project.components.fn = get.projection.update.components.function.for.version(version)
+    
+    components = get.sim.components(sim)
+    components = project.components.fn(parameters, components)
+    
+    run.jheem.from.components(components,
+                              prior.results = sim,
+                              start.year=start.year, end.year=end.year,
+                              keep.years=keep.years)
+}
+
 create.run.simulation.function <- function(msa,
                                            start.values=NULL,
                                            version = 'collapsed_1.0',

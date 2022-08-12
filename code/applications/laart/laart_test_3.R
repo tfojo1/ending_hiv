@@ -5,13 +5,14 @@ if (1==2)
 
 source('code/source_code.R')
 source('code/processing/visualization/sim_plots.R')
-load('simulations/laart_test/12580.Rdata')
+
 source('code/settings_and_files/setup_versions.R')
 source('code/applications/laart/laart_jheem_settings.R')
 source('code/applications/laart/laart_parameters.R')
 source('code/applications/laart/laart_parameter_mapping.R')
 source('code/applications/laart/laart_interventions.R')
 
+load('simulations/laart_test/12580.Rdata')
 simset = subset.simset(simset, 1:5)
 #simplot(simset)
 
