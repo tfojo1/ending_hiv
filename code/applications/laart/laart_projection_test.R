@@ -9,7 +9,10 @@ source('code/applications/laart/laart_parameters.R')
 source('code/applications/laart/laart_parameter_mapping.R')
 source('code/applications/laart/laart_interventions.R')
 
-load('simulations/laart_test/12580.Rdata')
+#load('simulations/laart_test/12580.Rdata')
+
+src.filename = get.full.filename(location=LA.MSA, version='ex1.0')
+load(file.path(SRC.DIRECTORY, src.filename))
 
 prepared = prepare.simset.for.intervention(subset.simset(simset, simset@n.sim-2:0), update.version = 'laart')
 
@@ -53,30 +56,32 @@ get.proportions.engaged.by.laart <- function(sim, years=2035)
 }
 
 #-- DEFINE A TEST INTERVENTION --#
-
+min.loss <-function(param){
 start.year = 2025
 implemented.year = 2028
-
+switch.coefficient = 2#param[1]
+discontinuation.coefficient = 10#param[2]
 rate.50 = -log(1-0.50)/(implemented.year-start.year)
-rate.50 = rate.50 * 2
+rate.50 = rate.50 * switch.coefficient
 u.DURABLE.LAART.50 = create.intervention.unit(type = 'engaged.durably.suppressed.switch.to.laart',
                                               start.year = start.year,
                                               years = c(start.year+0.0001, implemented.year, implemented.year+0.001),#engaged.durably.suppressed.switch.to.laart
-                                              rates = expression(c(rate.50, rate.50, laart.discontinuation)),
+                                              rates = expression(c(rate.50, rate.50, discontinuation.coefficient*laart.discontinuation)),
                                               scale = 'rate',
                                               apply.function = 'absolute',
-                                              expression.parameters = list(rate.50=rate.50))
-u.stop.laart.attrition = create.intervention.unit(type = 'laart.durably.suppressed.to.engaged.durably.suppressed',
-                                                  start.year = start.year,
-                                                  years = start.year+0.0001,
-                                                  rates = 0,
-                                                  scale = 'rate',
-                                                  apply.function = 'absolute')
+                                              expression.parameters = list(rate.50=rate.50, discontinuation.coefficient = discontinuation.coefficient ))
+#u.stop.laart.attrition = create.intervention.unit(type = 'laart.durably.suppressed.to.engaged.durably.suppressed',
+#                                                  start.year = start.year,
+#       print(INTERVENTION.MANAGER.1.0)                                           years = start.year+0.0001,
+#                                                  rates = 0,
+#                                                  scale = 'rate',
+#                                                  apply.function = 'absolute')
+#Write function taking in x simulations, target proportion at 2028 and target at 2035; return rate 50 coefficient and laart discontinuation
 
 intervention.to.test = create.intervention(WHOLE.POPULATION, 
                                         u.DURABLE.LAART.50)
-
 source('code/core_code/interventions/intervention_defaults.R')
+
 INTERVENTION.MANAGER.1.0 = register.intervention(intervention.to.test, code=paste0('test.intervention'),
                                              name='test',
                                              manager = INTERVENTION.MANAGER.1.0, allow.intervention.multiple.names = T)
@@ -87,10 +92,17 @@ projected = run.simset.intervention(prepared,
                                     run.to.year=2035,
                                     keep.years=2015:2035)
 
+columns = c("2027_laart_percentage","2035_laart_percentage") 
+df = data.frame(matrix(nrow = 0, ncol = length(columns))) 
+colnames(df) = columns
+for (i in 1:projected@n.sim){
+  df[nrow(df) + 1,] = c(round(100*t(sapply(as.character(2024:2035), function(year){
+    rowMeans(sapply(projected@simulations[i], get.proportions.engaged.by.laart, years=as.numeric(year)))
+  })),1)['2027', 'laart'], round(100*t(sapply(as.character(2024:2035), function(year){
+    rowMeans(sapply(projected@simulations[i], get.proportions.engaged.by.laart, years=as.numeric(year)))
+  })),1)['2035', 'laart'])
+}
 
-round(100*t(sapply(as.character(2024:2035), function(year){
-    rowMeans(sapply(projected@simulations, get.proportions.durable, years=as.numeric(year)))
-})),1)
-round(100*t(sapply(as.character(2024:2035), function(year){
-    rowMeans(sapply(projected@simulations, get.proportions.engaged.by.laart, years=as.numeric(year)))
-})),1)
+loss = sum((df-50)^2)
+return(loss)
+}
