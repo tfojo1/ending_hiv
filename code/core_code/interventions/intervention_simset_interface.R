@@ -3,7 +3,8 @@ get.simset.intervention.code <- function(simset)
 {
     code = attr(simset, 'intervention.code')
     
-    # for backwards compatibility - early versions set the intervention object, not the code
+    # for compatibility with an unregistered intervention, which save the intervention, not the code
+    # or early versions, which saved the intervention even if registered
     if (is.null(code))
     {
         int = attr(simset, 'intervention')
@@ -22,7 +23,7 @@ get.simset.intervention <- function(simset)
     
     if (!is.null(code))
         intervention.from.code(code)
-    else # for backwards compatibility - early versions set the intervention object, not the code
+    else 
     {
         int = attr(simset, 'intervention')
         
@@ -41,9 +42,14 @@ get.simset.intervention <- function(simset)
     }
 }
 
-set.simset.intervention.code <- function(simset, code)
+set.simset.intervention.or.code <- function(simset, intervention)
 {
-    attr(simset, 'intervention.code') = code
+    code = get.intervention.code(int, throw.error.if.missing.intervention = F)
+    if (is.null(code))
+        attr(simset, 'intervention') = intervention
+    else
+        attr(simset, 'intervention.code') = code
+    
     simset
 }
 
@@ -145,7 +151,8 @@ run.simset.intervention <- function(simset,
     if (verbose)
         print("Done")
     
-    set.simset.intervention.code(simset, get.intervention.code(original.intervention))
+    set.simset.intervention.or.code(simset, original.intervention)
+#    set.simset.intervention.code(simset, get.intervention.code(original.intervention))
 }
 
 run.sim.intervention <- function(sim,
