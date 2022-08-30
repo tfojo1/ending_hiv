@@ -44,7 +44,7 @@ get.simset.intervention <- function(simset)
 
 set.simset.intervention.or.code <- function(simset, intervention)
 {
-    code = get.intervention.code(int, throw.error.if.missing.intervention = F)
+    code = get.intervention.code(intervention, throw.error.if.missing.intervention = F)
     if (is.null(code))
         attr(simset, 'intervention') = intervention
     else
