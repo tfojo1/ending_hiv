@@ -55,12 +55,14 @@ get.proportions.engaged.by.laart <- function(sim, years=2035)
     c(oral=sum(pop[oral.states]), laart=sum(pop[laart.states]), resistant=sum(pop[resistant.states])) / sum(pop[engaged.states])
 }
 
+
+
 #-- DEFINE A TEST INTERVENTION --#
 min.loss <-function(param){
 start.year = 2025
 implemented.year = 2028
-switch.coefficient = 2#param[1]
-discontinuation.coefficient = 10#param[2]
+switch.coefficient = param[1]
+discontinuation.coefficient = param[2]
 rate.50 = -log(1-0.50)/(implemented.year-start.year)
 rate.50 = rate.50 * switch.coefficient
 u.DURABLE.LAART.50 = create.intervention.unit(type = 'engaged.durably.suppressed.switch.to.laart',
@@ -103,6 +105,51 @@ for (i in 1:projected@n.sim){
   })),1)['2035', 'laart'])
 }
 
-loss = sum((df-50)^2)
+loss = sum((df-50)^2)/projected@n.sim
 return(loss)
 }
+
+optim.output<- optim(par = c(2.5110, 8.7675), fn = min.loss, control = list(maxit = 10))
+
+
+
+start.year = 2025
+implemented.year = 2028
+switch.coefficient = optim.output$par[1]
+discontinuation.coefficient = optim.output$par[2]
+rate.50 = -log(1-0.50)/(implemented.year-start.year)
+rate.50 = rate.50 * switch.coefficient
+prepared = prepare.simset.for.intervention(subset.simset(simset, simset@n.sim-49:0), update.version = 'laart')
+u.DURABLE.LAART.50 = create.intervention.unit(type = 'engaged.durably.suppressed.switch.to.laart',
+                                              start.year = start.year,
+                                              years = c(start.year+0.0001, implemented.year, implemented.year+0.001),#engaged.durably.suppressed.switch.to.laart
+                                              rates = expression(c(rate.50, rate.50, discontinuation.coefficient*laart.discontinuation)),
+                                              scale = 'rate',
+                                              apply.function = 'absolute',
+                                              expression.parameters = list(rate.50=rate.50, discontinuation.coefficient = discontinuation.coefficient ))
+
+intervention.to.test = create.intervention(WHOLE.POPULATION, 
+                                           u.DURABLE.LAART.50)
+source('code/core_code/interventions/intervention_defaults.R')
+
+INTERVENTION.MANAGER.1.0 = register.intervention(intervention.to.test, code=paste0('test.intervention'),
+                                                 name='test',
+                                                 manager = INTERVENTION.MANAGER.1.0, allow.intervention.multiple.names = T)
+#-- RUN AND EXPLORE THE INTERVENTION --#
+projected = run.simset.intervention(prepared, 
+                                    intervention=intervention.to.test,
+                                    run.to.year=2035,
+                                    keep.years=2015:2035)
+
+print(round(100*t(sapply(as.character(2024:2035), function(year){rowMeans(sapply(projected@simulations, get.proportions.engaged.by.laart, years=as.numeric(year)))}))))
+columns = c("2027_laart_percentage","2035_laart_percentage") 
+df = data.frame(matrix(nrow = 0, ncol = length(columns))) 
+colnames(df) = columns
+for (i in 1:projected@n.sim){
+  df[nrow(df) + 1,] = c(round(100*t(sapply(as.character(2024:2035), function(year){
+    rowMeans(sapply(projected@simulations[i], get.proportions.engaged.by.laart, years=as.numeric(year)))
+  })),1)['2027', 'laart'], round(100*t(sapply(as.character(2024:2035), function(year){
+    rowMeans(sapply(projected@simulations[i], get.proportions.engaged.by.laart, years=as.numeric(year)))
+  })),1)['2035', 'laart'])
+}
+
