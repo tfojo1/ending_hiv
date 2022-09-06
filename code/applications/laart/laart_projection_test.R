@@ -68,7 +68,7 @@ rate.50 = rate.50 * switch.coefficient
 u.DURABLE.LAART.50 = create.intervention.unit(type = 'engaged.durably.suppressed.switch.to.laart',
                                               start.year = start.year,
                                               years = c(start.year+0.0001, implemented.year, implemented.year+0.001),#engaged.durably.suppressed.switch.to.laart
-                                              rates = expression(c(rate.50, rate.50, discontinuation.coefficient*laart.discontinuation)),
+                                              rates = expression(c(rate.50, rate.50, discontinuation.coefficient* (0.5 / (1-.5)) *laart.discontinuation)),
                                               scale = 'rate',
                                               apply.function = 'absolute',
                                               expression.parameters = list(rate.50=rate.50, discontinuation.coefficient = discontinuation.coefficient ))
@@ -123,7 +123,7 @@ prepared = prepare.simset.for.intervention(subset.simset(simset, simset@n.sim-49
 u.DURABLE.LAART.50 = create.intervention.unit(type = 'engaged.durably.suppressed.switch.to.laart',
                                               start.year = start.year,
                                               years = c(start.year+0.0001, implemented.year, implemented.year+0.001),#engaged.durably.suppressed.switch.to.laart
-                                              rates = expression(c(rate.50, rate.50, discontinuation.coefficient*laart.discontinuation)),
+                                              rates = expression(c(rate.50, rate.50, discontinuation.coefficient* (0.5 / (1-.5)) *laart.discontinuation)),
                                               scale = 'rate',
                                               apply.function = 'absolute',
                                               expression.parameters = list(rate.50=rate.50, discontinuation.coefficient = discontinuation.coefficient ))
