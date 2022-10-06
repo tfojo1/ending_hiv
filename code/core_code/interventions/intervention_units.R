@@ -9,6 +9,10 @@ THROW.ERROR.IF.PAST.CHECK.YEAR = T
 ##-- INTERVENTION UNITS --##
 ##------------------------##
 
+##---------------------##
+##-- THE CONSTRUCTOR --##
+##---------------------##
+
 #'@param type The specific rates/proportions to which this intervention applies
 #'@param start.year The precise time at which the intervention starts to scale up (ie, the last time prior to which the intervention rates apply)
 #'@param end.year The precise time at which the intervention stops being applied (ie, the first time when the intervention rates no longer apply)
@@ -486,24 +490,51 @@ resolve.element <- function(elem, resolved.bindings, parameters)
         stop("Error resolving intervention unit: expressions and functions must resolve to numeric values")
 }
 
-##--------------------##
-##-- UNIT META-DATA --##
-##--------------------##
 
 
-INTERVENTION.UNIT.SUBGROUPS = c('hiv.negative', 'hiv.positive')
-ALLOWED.UNIT.METADATA.DIMENSIONS = c('age','race','subpopulation','sex','risk','non.hiv.subset')
+ALLOWED.UNIT.METADATA.DIMENSIONS = c('age','race','location','subpopulation','sex','risk',
+                                     'non.hiv.subset',
+                                     'continuum','cd4','hiv.subset')
 create.unit.metadata <- function(type,
-                                 applies.to.subgroups,
-                                 affects.dimensions=character())
+                                 dimensions)
 {
+    if (!is.character(type) || length(type) != 1 || is.na(type) || type=='')
+        stop("type must be a non-empty, non-NA, single character value")
     
+    
+    if (!is.character(dimensions) || length(dimensions)==0 || any(is.na(dimensions)))
+        stop("dimensions must be a non-empty, non-NA character vector")
+    extraneous.dimensions = setdiff(dimensions, ALLOWED.UNIT.METADATA.DIMENSIONS)
+    if (length(extraneous.dimensions)>0)
+        stop("The following dimension(s) are not allowed for unit metadata: ",
+             paste0("'", extraneous.dimensions, "'", collapse=', '))
+    
+    rv = list(
+        type = type,
+        dimensions = dimensions
+    )
+    
+    class(rv) = 'intervention.unit.metadata'
+    rv
+}
+
+copy.unit.metadata <- function(type,
+                               to.copy)
+{
+    create.unit.metadata(
+        type=type,
+        
+    )
 }
 
 REGISTERED.INTERVENTION.UNIT.METADATA = list(
     
 )
 
+
+
+
+##-- ALL BELOW IS ON ITS WAY TO DEPRECATION --##
 
 ADDITIONAL.PREP.TYPES = c(
     'lai.prep'

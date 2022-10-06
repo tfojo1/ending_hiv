@@ -11,6 +11,11 @@ register.standard.interventions.annals.revision <- function(start.year=2023,
     ##-- INTERVENTION UNITS --##
     ##------------------------##
     
+    create.intervention.unit('testing', start.year = 2023,
+                             rates = c(1,2),
+                             times = c(2027, 2030),
+                             end)
+    
     TESTING.1x = create.intervention.unit('testing', start.year, 1, end.year, scale = 'rate')
     TESTING.0.5x = create.intervention.unit('testing', start.year, 0.5, end.year, scale = 'rate')
     TESTING.2x = create.intervention.unit('testing', start.year, 2, end.year, scale = 'rate')
