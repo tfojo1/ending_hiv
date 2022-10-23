@@ -24,28 +24,28 @@ LAART.CONTINUUM.TRANSITION.MAPPING = register.transition(LAART.CONTINUUM.TRANSIT
                                                          dimension='continuum',
                                                          from.state='laart_recently_suppressed',
                                                          to.state='disengaged_failing',
-                                                         rate = expression((1-laart.recently.suppressed.to.resistant.disengaged)*recently.suppressed.to.disengaged*laart.versus.oral.disengagement.rr),
+                                                         rate = expression((1-laart.suppressed.to.resistant.disengaged)*recently.suppressed.to.disengaged*laart.versus.oral.disengagement.rr),
                                                          label = 'loss.to.care')
 
 LAART.CONTINUUM.TRANSITION.MAPPING = register.transition(LAART.CONTINUUM.TRANSITION.MAPPING,
                                                          dimension='continuum',
                                                          from.state='laart_recently_suppressed',
                                                          to.state='resistant_disengaged',
-                                                         rate = expression((laart.recently.suppressed.to.resistant.disengaged)*recently.suppressed.to.disengaged*laart.versus.oral.disengagement.rr),
+                                                         rate = expression((laart.suppressed.to.resistant.disengaged)*recently.suppressed.to.disengaged*laart.versus.oral.disengagement.rr),
                                                          label = 'loss.to.care')
 
 LAART.CONTINUUM.TRANSITION.MAPPING = register.transition(LAART.CONTINUUM.TRANSITION.MAPPING,
                                                          dimension='continuum',
                                                          from.state='laart_recently_suppressed',
                                                          to.state='engaged_recently_suppressed',
-                                                         rate = 'laart.recently.suppressed.to.engaged.recently.suppressed',
+                                                         rate = 'laart.recently.suppressed.to.engaged.recently.suppressed', 
                                                          label = 'switch.to.art')
 
 LAART.CONTINUUM.TRANSITION.MAPPING = register.transition(LAART.CONTINUUM.TRANSITION.MAPPING,
                                                          dimension='continuum',
                                                          from.state='laart_recently_suppressed',
                                                          to.state='resistant_unsuppressed',
-                                                         rate = 'laart.recently.suppressed.to.resistant.unsuppressed',
+                                                         rate = 'laart.suppressed.to.resistant.unsuppressed',
                                                          label = 'gain.of.resistance')
 
 LAART.CONTINUUM.TRANSITION.MAPPING = register.transition(LAART.CONTINUUM.TRANSITION.MAPPING,
@@ -59,21 +59,22 @@ LAART.CONTINUUM.TRANSITION.MAPPING = register.transition(LAART.CONTINUUM.TRANSIT
                                                          dimension='continuum',
                                                          from.state='laart_durably_suppressed',
                                                          to.state='disengaged_failing',
-                                                         rate = expression((1-laart.durably.suppressed.to.resistant.disengaged)*durably.suppressed.to.disengaged*laart.versus.oral.disengagement.rr),
+                                                         #Confirm
+                                                         rate = expression((1-laart.suppressed.to.resistant.disengaged)*durably.suppressed.to.disengaged*laart.versus.oral.disengagement.rr),
                                                          label = 'loss.to.care')
 
 LAART.CONTINUUM.TRANSITION.MAPPING = register.transition(LAART.CONTINUUM.TRANSITION.MAPPING,
                                                          dimension='continuum',
                                                          from.state='laart_durably_suppressed',
                                                          to.state='resistant_disengaged',
-                                                         rate = expression((laart.durably.suppressed.to.resistant.disengaged)*durably.suppressed.to.disengaged*laart.versus.oral.disengagement.rr),
+                                                         rate = expression((laart.suppressed.to.resistant.disengaged)*durably.suppressed.to.disengaged*laart.versus.oral.disengagement.rr),
                                                          label = 'loss.to.care')
 
 LAART.CONTINUUM.TRANSITION.MAPPING = register.transition(LAART.CONTINUUM.TRANSITION.MAPPING,
                                                          dimension='continuum',
                                                          from.state='laart_durably_suppressed',
                                                          to.state='resistant_unsuppressed',
-                                                         rate = 'laart.durably.suppressed.to.resistant.unsuppressed',
+                                                         rate = 'laart.suppressed.to.resistant.unsuppressed',
                                                          label = 'gain.of.resistance')
 
 LAART.CONTINUUM.TRANSITION.MAPPING = register.transition(LAART.CONTINUUM.TRANSITION.MAPPING,
@@ -87,14 +88,14 @@ LAART.CONTINUUM.TRANSITION.MAPPING = register.transition(LAART.CONTINUUM.TRANSIT
                                                          dimension='continuum',
                                                          from.state='laart_unsuppressed', 
                                                          to.state='disengaged_failing',
-                                                         rate = expression((1-laart.unsuppressed.to.resistant.disengaged)*failing.to.disengaged*laart.versus.oral.disengagement.rr),
+                                                         rate = expression((1-laart.suppressed.to.resistant.disengaged)*failing.to.disengaged*laart.versus.oral.disengagement.rr),
                                                          label = 'loss.to.care')
 
 LAART.CONTINUUM.TRANSITION.MAPPING = register.transition(LAART.CONTINUUM.TRANSITION.MAPPING,
                                                          dimension='continuum',
                                                          from.state='laart_unsuppressed', 
                                                          to.state='resistant_disengaged',
-                                                         rate = expression(laart.unsuppressed.to.resistant.disengaged*failing.to.disengaged*laart.versus.oral.disengagement.rr),
+                                                         rate = expression(laart.suppressed.to.resistant.disengaged*failing.to.disengaged*laart.versus.oral.disengagement.rr),
                                                          label = 'loss.to.care')
 
 LAART.CONTINUUM.TRANSITION.MAPPING = register.transition(LAART.CONTINUUM.TRANSITION.MAPPING,
@@ -122,7 +123,6 @@ LAART.CONTINUUM.TRANSITION.MAPPING = register.transition(LAART.CONTINUUM.TRANSIT
                                                          dimension='continuum',
                                                          from.state='resistant_recently_suppressed',
                                                          to.state='resistant_unsuppressed', 
-                                                         #rate = 'resistant.recently.suppressed.to.resistant.unsuppressed', #multiple by ratio of oral vs resistant
                                                          rate = expression(recently.suppressed.to.failing*resistant.versus.oral.loss.of.suppression.rr), 
                                                          label = 'loss.of.suppression')
 
@@ -180,39 +180,52 @@ LAART.CONTINUUM.TRANSITION.MAPPING = register.transition(LAART.CONTINUUM.TRANSIT
                                                          dimension='continuum',
                                                          from.state='engaged_durably_suppressed',
                                                          to.state='laart_durably_suppressed',
-                                                         rate = expression((engaged.durably.suppressed.switch.to.laart.successful)*engaged.durably.suppressed.switch.to.laart),
+                                                         #Confirm
+                                                         rate = expression((1-engaged.suppressed.to.resistant.unsuppressed)*engaged.durably.suppressed.switch.to.laart),
                                                          label = 'switch.to.laart')
 
 LAART.CONTINUUM.TRANSITION.MAPPING = register.transition(LAART.CONTINUUM.TRANSITION.MAPPING,
                                                          dimension='continuum',
                                                          from.state='engaged_durably_suppressed',
                                                          to.state='resistant_unsuppressed',
-                                                         rate = expression((1-engaged.durably.suppressed.switch.to.laart.successful)*engaged.durably.suppressed.switch.to.laart),
+                                                         rate = expression((engaged.suppressed.to.resistant.unsuppressed)*engaged.durably.suppressed.switch.to.laart),
                                                          label = 'switch.to.laart')
 
 LAART.CONTINUUM.TRANSITION.MAPPING = register.transition(LAART.CONTINUUM.TRANSITION.MAPPING,
                                                          dimension='continuum',
                                                          from.state='engaged_unsuppressed_failing',
-                                                         to.state='laart_unsuppressed', 
-                                                         rate = expression((engaged.unsuppressed.switch.to.laart.successful)*engaged.unsuppressed.switch.to.laart),
+                                                         to.state='laart_unsuppressed',
+                                                         rate = expression((1-engaged.unsuppressed.vs.suppressed.resistant.unsuppressed.or*engaged.suppressed.to.resistant.unsuppressed)*engaged.unsuppressed.switch.to.laart),
                                                          label = 'switch.to.laart')
 
 LAART.CONTINUUM.TRANSITION.MAPPING = register.transition(LAART.CONTINUUM.TRANSITION.MAPPING,
                                                          dimension='continuum',
                                                          from.state='engaged_unsuppressed_failing',
-                                                         to.state='resistant_unsuppressed', 
-                                                         rate = expression((1-engaged.unsuppressed.switch.to.laart.successful)*engaged.unsuppressed.switch.to.laart),
+                                                         to.state='resistant_unsuppressed',
+                                                         rate = expression((engaged.unsuppressed.vs.suppressed.resistant.unsuppressed.or*engaged.suppressed.to.resistant.unsuppressed)*engaged.unsuppressed.switch.to.laart),
+                                                         label = 'switch.to.laart')
+
+LAART.CONTINUUM.TRANSITION.MAPPING = register.transition(LAART.CONTINUUM.TRANSITION.MAPPING,
+                                                         dimension='continuum',
+                                                         from.state='engaged_unsuppressed_naive',
+                                                         to.state='laart_unsuppressed',
+                                                         rate = expression((1-engaged.unsuppressed.vs.suppressed.resistant.unsuppressed.or*engaged.suppressed.to.resistant.unsuppressed)*engaged.naive.switch.to.laart),
+                                                         label = 'switch.to.laart')
+
+LAART.CONTINUUM.TRANSITION.MAPPING = register.transition(LAART.CONTINUUM.TRANSITION.MAPPING,
+                                                         dimension='continuum',
+                                                         from.state='engaged_unsuppressed_naive',
+                                                         to.state='resistant_unsuppressed',
+                                                         rate = expression((engaged.unsuppressed.vs.suppressed.resistant.unsuppressed.or*engaged.suppressed.to.resistant.unsuppressed)*engaged.naive.switch.to.laart),
                                                          label = 'switch.to.laart')
 
 
 
 
-
-
-LAART.CONTINUUM.TRANSITION.MAPPING = register.transition.element(LAART.CONTINUUM.TRANSITION.MAPPING,
-                                                                 name='laart.recently.suppressed.to.resistant.disengaged',
-                                                                 type = 'proportion', 
-                                                                 )
+# LAART.CONTINUUM.TRANSITION.MAPPING = register.transition.element(LAART.CONTINUUM.TRANSITION.MAPPING,
+#                                                                  name='laart.recently.suppressed.to.resistant.disengaged',
+#                                                                  type = 'proportion', 
+#                                                                  )
 
 LAART.CONTINUUM.TRANSITION.MAPPING = register.transition.element(LAART.CONTINUUM.TRANSITION.MAPPING,
                                                                  name='laart.versus.oral.disengagement.rr',
@@ -226,12 +239,12 @@ LAART.CONTINUUM.TRANSITION.MAPPING = register.transition.element(LAART.CONTINUUM
                                                                  return.type = 'rate',
                                                                  )
 
-LAART.CONTINUUM.TRANSITION.MAPPING = register.transition.element(LAART.CONTINUUM.TRANSITION.MAPPING,
-                                                                 name='laart.recently.suppressed.to.resistant.unsuppressed',
-                                                                 background.model.type = 'proportion',
-                                                                 ramp.type = 'proportion',
-                                                                 return.type = 'rate',
-                                                                 )
+# LAART.CONTINUUM.TRANSITION.MAPPING = register.transition.element(LAART.CONTINUUM.TRANSITION.MAPPING,
+#                                                                  name='laart.recently.suppressed.to.resistant.unsuppressed',
+#                                                                  background.model.type = 'proportion',
+#                                                                  ramp.type = 'proportion',
+#                                                                  return.type = 'rate',
+#                                                                  )
 
 LAART.CONTINUUM.TRANSITION.MAPPING = register.transition.element(LAART.CONTINUUM.TRANSITION.MAPPING,
                                                                  name='time.to.laart.durable.suppression',
@@ -239,13 +252,13 @@ LAART.CONTINUUM.TRANSITION.MAPPING = register.transition.element(LAART.CONTINUUM
                                                                  default.value = 0.25,
                                                                  required=F)
 
-LAART.CONTINUUM.TRANSITION.MAPPING = register.transition.element(LAART.CONTINUUM.TRANSITION.MAPPING,
-                                                                 name='laart.durably.suppressed.to.resistant.disengaged',
-                                                                 type = 'proportion',
-)
+# LAART.CONTINUUM.TRANSITION.MAPPING = register.transition.element(LAART.CONTINUUM.TRANSITION.MAPPING,
+#                                                                  name='laart.durably.suppressed.to.resistant.disengaged',
+#                                                                  type = 'proportion',
+# )
 
 LAART.CONTINUUM.TRANSITION.MAPPING = register.transition.element(LAART.CONTINUUM.TRANSITION.MAPPING,
-                                                                 name='laart.durably.suppressed.to.resistant.unsuppressed',
+                                                                 name='laart.suppressed.to.resistant.unsuppressed',
                                                                  background.model.type = 'proportion',
                                                                  ramp.type = 'proportion',
                                                                  return.type = 'rate',
@@ -258,10 +271,10 @@ LAART.CONTINUUM.TRANSITION.MAPPING = register.transition.element(LAART.CONTINUUM
                                                                  return.type = 'rate',
                                                                  )
 
-LAART.CONTINUUM.TRANSITION.MAPPING = register.transition.element(LAART.CONTINUUM.TRANSITION.MAPPING,
-                                                                 name='laart.unsuppressed.to.resistant.disengaged',
-                                                                 type = 'proportion', 
-                                                                 )
+# LAART.CONTINUUM.TRANSITION.MAPPING = register.transition.element(LAART.CONTINUUM.TRANSITION.MAPPING,
+#                                                                  name='laart.unsuppressed.to.resistant.disengaged',
+#                                                                  type = 'proportion', 
+#                                                                  )
 
 LAART.CONTINUUM.TRANSITION.MAPPING = register.transition.element(LAART.CONTINUUM.TRANSITION.MAPPING,
                                                                  name='time.to.laart.gain.suppression',
@@ -301,10 +314,10 @@ LAART.CONTINUUM.TRANSITION.MAPPING = register.transition.element(LAART.CONTINUUM
                                                                  type = 'rate', 
                                                                  )
 
-LAART.CONTINUUM.TRANSITION.MAPPING = register.transition.element(LAART.CONTINUUM.TRANSITION.MAPPING,
-                                                                 name='engaged.durably.suppressed.switch.to.laart.successful',
-                                                                 type = 'proportion'
-                                                                 )
+# LAART.CONTINUUM.TRANSITION.MAPPING = register.transition.element(LAART.CONTINUUM.TRANSITION.MAPPING,
+#                                                                  name='engaged.durably.suppressed.switch.to.laart.successful',
+#                                                                  type = 'proportion'
+#                                                                  )
 
 LAART.CONTINUUM.TRANSITION.MAPPING = register.transition.element(LAART.CONTINUUM.TRANSITION.MAPPING,
                                                                  name='engaged.durably.suppressed.switch.to.laart',
@@ -312,16 +325,38 @@ LAART.CONTINUUM.TRANSITION.MAPPING = register.transition.element(LAART.CONTINUUM
                                                                  default.value = 0,
                                                                  required=F)
 
-LAART.CONTINUUM.TRANSITION.MAPPING = register.transition.element(LAART.CONTINUUM.TRANSITION.MAPPING,
-                                                                 name='engaged.unsuppressed.switch.to.laart.successful',
-                                                                 type = 'proportion',
-                                                                 )
+# LAART.CONTINUUM.TRANSITION.MAPPING = register.transition.element(LAART.CONTINUUM.TRANSITION.MAPPING,
+#                                                                  name='engaged.unsuppressed.switch.to.laart.successful',
+#                                                                  type = 'proportion',
+#                                                                  )
 
 LAART.CONTINUUM.TRANSITION.MAPPING = register.transition.element(LAART.CONTINUUM.TRANSITION.MAPPING,
                                                                  name='engaged.unsuppressed.switch.to.laart',
                                                                  type='rate',
                                                                  default.value = 0,
                                                                  required=F)
+
+LAART.CONTINUUM.TRANSITION.MAPPING = register.transition.element(LAART.CONTINUUM.TRANSITION.MAPPING,
+                                                                 name='engaged.naive.switch.to.laart',
+                                                                 type='rate',
+                                                                 default.value = 0,
+                                                                 required=F)
+
+LAART.CONTINUUM.TRANSITION.MAPPING = register.transition.element(LAART.CONTINUUM.TRANSITION.MAPPING,
+                                                                 name='engaged.suppressed.to.resistant.unsuppressed',
+                                                                 type = 'proportion',
+                                                                 )
+
+LAART.CONTINUUM.TRANSITION.MAPPING = register.transition.element(LAART.CONTINUUM.TRANSITION.MAPPING,
+                                                                 name='engaged.unsuppressed.vs.suppressed.resistant.unsuppressed.or',
+                                                                 type = 'rate',
+                                                                 )
+
+
+LAART.CONTINUUM.TRANSITION.MAPPING = register.transition.element(LAART.CONTINUUM.TRANSITION.MAPPING,
+                                                                 name='laart.suppressed.to.resistant.disengaged',
+                                                                 type = 'proportion',
+)
 
 
 VERSION.MANAGER = copy.and.modify.jheem.settings(

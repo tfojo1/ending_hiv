@@ -92,7 +92,7 @@ create.laart.interventions <- function(target.population=WHOLE.POPULATION,
                                                   apply.function = 'absolute',
                                                   expression.parameters = list(rate.50=rate.50))
     
-    
+    rate.10 = -log(1-0.1)/(implemented.year-start.year)
     u.UNSUPPRESSED.LAART.10 = create.intervention.unit(type = 'engaged.unsuppressed.switch.to.laart',
                                                        start.year = start.year,
                                                        years = c(start.year+0.0001, implemented.year, implemented.year+0.001),
@@ -100,7 +100,7 @@ create.laart.interventions <- function(target.population=WHOLE.POPULATION,
                                                        scale = 'rate',
                                                        apply.function = 'absolute',
                                                        expression.parameters = list(rate.10=rate.10)) 
-    
+    rate.25 = -log(1-0.25)/(implemented.year-start.year)
     u.UNSUPPRESSED.LAART.25 = create.intervention.unit(type = 'engaged.unsuppressed.switch.to.laart',
                                                   start.year = start.year,
                                                   years = c(start.year+0.0001, implemented.year, implemented.year+0.001),
@@ -108,7 +108,7 @@ create.laart.interventions <- function(target.population=WHOLE.POPULATION,
                                                   scale = 'rate',
                                                   apply.function = 'absolute',
                                                   expression.parameters = list(rate.25=rate.25))
-    
+    rate.50 = -log(1-0.50)/(implemented.year-start.year)
     u.UNSUPPRESSED.LAART.50 = create.intervention.unit(type = 'engaged.unsuppressed.switch.to.laart',
                                                   start.year = start.year,
                                                   years = c(start.year+0.0001, implemented.year, implemented.year+0.001),

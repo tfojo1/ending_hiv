@@ -20,3 +20,4 @@ for (loc in LOCATIONS)
     simset = prepare.simset.for.intervention(simset, update.version='laart')
     save.simset(simset, full=T, dir=DST.DIRECTORY)
 }
+
