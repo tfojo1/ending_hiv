@@ -43,11 +43,8 @@ get.final.treatment.group.distribution<-function(allsimsets, INTERVENTION.MANAGE
   hist(df$`2035_laart_percentage`)
 }
 
-run.multiple.laart.interventions<- function(INTERVENTION.MANAGER = INTERVENTION.MANAGER.1.0, run.to.year = 2035, keep.years = 2015:2035)
+run.multiple.laart.interventions<- function(SRC.DIRECTORY = SRC.DIRECTORY,  DST.DIRECTORY = DST.DIRECTORY, INTERVENTION.MANAGER = INTERVENTION.MANAGER.1.0, run.to.year = 2035, keep.years = 2015:2035, LOCATIONS = LOCATIONS)
 {
-  SRC.DIRECTORY = file.path(SIMULATIONS.DIR, 'baseline_quick_laart')
-  DST.DIRECTORY = file.path(SIMULATIONS.DIR, 'laart_results')
-  LOCATIONS = c(ATLANTA.MSA, BALTIMORE.MSA, LA.MSA, MIAMI.MSA)
   for (loc in LOCATIONS)
   {
     print(paste0("Simulating ", msa.names(loc), " (", loc, ")"))
@@ -63,8 +60,7 @@ run.multiple.laart.interventions<- function(INTERVENTION.MANAGER = INTERVENTION.
   }
 }
 
-run.multiple.laart.interventions()
-
-
-
-
+SRC.DIRECTORY = file.path(SIMULATIONS.DIR, 'baseline_quick_laart')
+DST.DIRECTORY = file.path(SIMULATIONS.DIR, 'laart_results')
+LOCATIONS = c(ATLANTA.MSA, BALTIMORE.MSA, LA.MSA, MIAMI.MSA)
+run.multiple.laart.interventions(SRC.DIRECTORY = SRC.DIRECTORY,  DST.DIRECTORY = DST.DIRECTORY, INTERVENTION.MANAGER = INTERVENTION.MANAGER.1.0, run.to.year = 2035, keep.years = 2015:2035, LOCATIONS = LOCATIONS)
