@@ -8,7 +8,10 @@ source('code/settings_and_files/setup_versions.R')
 source('code/applications/laart/laart_jheem_settings.R')
 source('code/applications/laart/laart_parameters.R')
 source('code/applications/laart/laart_parameter_mapping.R')
-#source('code/applications/laart/laart_interventions.R')
+source('code/applications/laart/laart_summary_functions.R')
+source('code/applications/laart/laart_interventionsv2.R')
+library('ramify')
+
 load("atlanta.RData")
 
 intervention_code_dictionary <-c(
@@ -22,42 +25,6 @@ intervention_code_dictionary <-c(
   "everything.laart.25" = 8,
   "everything.laart.50" = 9
 )
-### SUMMARY FUNCTIONS###
-get.proportions.durable <- function(sim, years=2035)
-{
-  pop = do.extract.population.subset(sim, years=years, keep.dimensions=c('continuum'), include.hiv.negative = F)
-  
-  of.interest = pop[c('engaged_durably_suppressed','laart_durably_suppressed','resistant_durably_suppressed')]
-  of.interest / sum(of.interest)
-}
-
-get.proportions.unsuppressed <- function(sim, years=2035)
-{
-  pop = do.extract.population.subset(sim, years=years, keep.dimensions=c('continuum'), include.hiv.negative = F)
-  
-  of.interest = pop[c('engaged_unsuppressed_failing','laart_unsuppressed','resistant_unsuppressed')]
-  of.interest / sum(of.interest)
-}
-
-get.proportions.engaged <- function(sim, years=2035)
-{
-  pop = do.extract.population.subset(sim, years=years, keep.dimensions=c('continuum'), include.hiv.negative = F)
-  
-  of.interest = pop[get.settings.for.version('laart')$ENGAGED_STATES]
-  of.interest / sum(of.interest)
-}
-
-get.proportions.engaged.by.laart <- function(sim, years=2035)
-{
-  pop = do.extract.population.subset(sim, years=years, keep.dimensions=c('continuum'), include.hiv.negative = F)
-  
-  engaged.states = get.settings.for.version('laart')$ENGAGED_STATES
-  laart.states = c('laart_unsuppressed','laart_recently_suppressed', 'laart_durably_suppressed')
-  resistant.states = c('resistant_unsuppressed','resistant_recently_suppressed', 'resistant_durably_suppressed')
-  oral.states = setdiff(engaged.states, c(laart.states, resistant.states))
-  
-  c(oral=sum(pop[oral.states]), laart=sum(pop[laart.states]), resistant=sum(pop[resistant.states])) / sum(pop[engaged.states])
-}
 
 ### OBTAIN TOTAL % AND CI OF PEOPLE IN TREATMENT TYPES###
 get.proportion.by.treatment.group<-function(all_city_simset)
@@ -147,19 +114,24 @@ get.percentage.point.incidence.reduction <-function(all_city_simsets, start_year
 plot.parameter.sensitivity.per.intervention <-function(all_city_simsets, param_name, intervention_code, x_axis_name, start_year=2025, end_year=2035)
 {
   pp_inc_red = get.percentage.point.incidence.reduction(all_city_simsets, start_year, end_year)
+  simset = all_city_simsets[[intervention_code_dictionary[intervention_code]]]
   df<- data.frame(par = simset@parameters[, param_name], inc = pp_inc_red[,intervention_code_dictionary[intervention_code]])
   ggplot(df, aes(x = par, y = inc)) + 
-    annotate("text",  x=Inf, y = Inf, label = paste("R²= ", round(cor(simset@parameters[, param_name], pp_inc_red[,intervention_code_dictionary[intervention_code]]), 2)), vjust=1, hjust=1) + 
+    annotate("text",  x=Inf, y = Inf, label = paste("R²= ", round(cor(simset@parameters[, param_name], pp_inc_red[,intervention_code_dictionary[intervention_code]]), 2)), vjust=1, hjust=1, size = 15) + 
     geom_point() + 
     labs(x = x_axis_name, y = "Estimated Incidence Reduction") + 
     theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) + 
     theme(legend.position = c(0.8,0.8)) + 
     theme(legend.title=element_text(size=10),legend.text=element_text(size=8)) 
 }
-plot.parameter.sensitivity.per.intervention(all_city_simsets = allsimsets, param_name = "laart.versus.oral.disengagement.rr", intervention_code = "durable.laart.50", x_axis_name = "Risk Ratio of Care Disengagement using LAART vesus Oral ART")
-plot.parameter.sensitivity.per.intervention(allsimsets, "laart.versus.oral.disengagement.rr", "naive.laart.50", "Risk Ratio of Care Disengagement using LAART vesus Oral ART")
-plot.parameter.sensitivity.per.intervention(allsimsets, "laart.suppressed.to.resistant.unsuppressed", "durable.laart.50", "Proportion of Durably Suppressed Individuals on LAART\n Developing Resistance")
-plot.parameter.sensitivity.per.intervention(allsimsets, "laart.suppressed.to.resistant.unsuppressed", "naive.laart.50", "Proportion of Durably Suppressed Individuals on LAART\n Developing Resistance")
+plot.parameter.sensitivity.per.intervention(all_city_simsets = allsimsets, param_name = "laart.versus.oral.disengagement.rr", 
+                                            intervention_code = "durable.laart.50", x_axis_name = "Risk Ratio of Care Disengagement using LAART versus Oral ART")
+plot.parameter.sensitivity.per.intervention(all_city_simsets = allsimsets, param_name = "laart.versus.oral.disengagement.rr", 
+                                            intervention_code = "naive.laart.50", x_axis_name = "Risk Ratio of Care Disengagement using LAART versus Oral ART")
+plot.parameter.sensitivity.per.intervention(all_city_simsets = allsimsets, param_name = "laart.suppressed.to.resistant.unsuppressed", 
+                                            intervention_code = "durable.laart.50", x_axis_name = "Proportion of Durably Suppressed Individuals on LAART\n Developing Resistance")
+plot.parameter.sensitivity.per.intervention(all_city_simsets = allsimsets, param_name = "laart.suppressed.to.resistant.unsuppressed", 
+                                            intervention_code = "naive.laart.50", x_axis_name = "Proportion of Durably Suppressed Individuals on LAART\n Developing Resistance")
 
 
 get.correlation.coefficient.per.parameter<- function(all_city_simsets, start_year=2025, end_year=2035){
