@@ -2,7 +2,7 @@
 CURRENT.GAINS.END.BY.YEAR = Uniform.Distribution(2020,2025)
 TOTAL.FUTURE.SLOPE.OR.DIST = Lognormal.Distribution(0, log(1.05))
 
-prepare.simset.for.intervention <- function(simset,
+prepare.simset.for.interventions <- function(simset,
                                             update.version=NULL,
                                             crunch.components=F,
                                             seed = 234321,

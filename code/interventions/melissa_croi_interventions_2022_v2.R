@@ -5,26 +5,26 @@ source('code/core_code/interventions/interventions.R')
 source('code/core_code/interventions/intervention_units.R')
 
 # Intervention units
-P10 = create.intervention.unit(type = "prep", rates = .1, start.year = 2023, years = 2027)
-P25 = create.intervention.unit(type = "prep", rates = .25, start.year = 2023, years = 2027)
+P10 = create.intervention.unit(type = "prep", rates = .1, start.year = 2023, years = 2027,scale="proportion")
+P25 = create.intervention.unit(type = "prep", rates = .25, start.year = 2023, years = 2027,scale="proportion")
 
-LINKAGE.90 = create.intervention.unit(type = "linkage", rates = .9, start.year = 2023, years = 2027)
-LINKAGE.95 = create.intervention.unit(type = "linkage", rates = .95, start.year = 2023, years = 2027)
+LINKAGE.90 = create.intervention.unit(type = "linkage", rates = .9, start.year = 2023, years = 2027,scale="proportion")
+LINKAGE.95 = create.intervention.unit(type = "linkage", rates = .95, start.year = 2023, years = 2027,scale="proportion")
 
-RETENTION.SUPP.80 = create.intervention.unit(type = "retention.suppressed", rates = .8, start.year = 2023, years = 2027)
-RETENTION.FAILING.80 = create.intervention.unit(type = "retention.failing", rates = .8, start.year = 2023, years = 2027)
-RETENTION.NAIVE.80 = create.intervention.unit(type = "retention.naive", rates = .8, start.year = 2023, years = 2027)
+RETENTION.SUPP.80 = create.intervention.unit(type = "retention.suppressed", rates = .8, start.year = 2023, years = 2027,scale="proportion")
+RETENTION.FAILING.80 = create.intervention.unit(type = "retention.failing", rates = .8, start.year = 2023, years = 2027,scale="proportion")
+RETENTION.NAIVE.80 = create.intervention.unit(type = "retention.naive", rates = .8, start.year = 2023, years = 2027,scale="proportion")
 
-RETENTION.SUPP.90 = create.intervention.unit(type = "retention.suppressed", rates = .9, start.year = 2023, years = 2027)
-RETENTION.FAILING.90 = create.intervention.unit(type = "retention.failing", rates = .9, start.year = 2023, years = 2027)
-RETENTION.NAIVE.90 = create.intervention.unit(type = "retention.naive", rates = .9, start.year = 2023, years = 2027)
+RETENTION.SUPP.90 = create.intervention.unit(type = "retention.suppressed", rates = .9, start.year = 2023, years = 2027,scale="proportion")
+RETENTION.FAILING.90 = create.intervention.unit(type = "retention.failing", rates = .9, start.year = 2023, years = 2027,scale="proportion")
+RETENTION.NAIVE.90 = create.intervention.unit(type = "retention.naive", rates = .9, start.year = 2023, years = 2027,scale="proportion")
 
-RETENTION.SUPP.95 = create.intervention.unit(type = "retention.suppressed", rates = .95, start.year = 2023, years = 2027)
-RETENTION.FAILING.95 = create.intervention.unit(type = "retention.failing", rates = .95, start.year = 2023, years = 2027)
-RETENTION.NAIVE.95 = create.intervention.unit(type = "retention.naive", rates = .95, start.year = 2023, years = 2027)
+RETENTION.SUPP.95 = create.intervention.unit(type = "retention.suppressed", rates = .95, start.year = 2023, years = 2027,scale="proportion")
+RETENTION.FAILING.95 = create.intervention.unit(type = "retention.failing", rates = .95, start.year = 2023, years = 2027,scale="proportion")
+RETENTION.NAIVE.95 = create.intervention.unit(type = "retention.naive", rates = .95, start.year = 2023, years = 2027,scale="proportion")
 
-ANNUAL.SUPP.FAILING.90 = create.intervention.unit(type = "gain.of.suppression.failing", rates = .9, start.year = 2023, years = 2027)
-ANNUAL.SUPP.FAILING.95 = create.intervention.unit(type = "gain.of.suppression.failing", rates = .95, start.year = 2023, years = 2027)
+ANNUAL.SUPP.FAILING.90 = create.intervention.unit(type = "gain.of.suppression.failing", rates = .9, start.year = 2023, years = 2027,scale="proportion")
+ANNUAL.SUPP.FAILING.95 = create.intervention.unit(type = "gain.of.suppression.failing", rates = .95, start.year = 2023, years = 2027,scale="proportion")
 
 
 
