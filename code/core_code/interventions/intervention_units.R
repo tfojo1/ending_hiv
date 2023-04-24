@@ -497,11 +497,15 @@ create.unit.metadata <- function(type,
                                  applies.to.subgroups,
                                  affects.dimensions=character())
 {
-    
+    list(type = type,
+         applies.to.subgroups = applies.to.subgroups,
+         dimensions = affects.dimensions)
 }
 
 REGISTERED.INTERVENTION.UNIT.METADATA = list(
-    
+    prep = create.unit.metadata(type = 'prep',
+                                applies.to.subgroups = 'hiv.negative',
+                                affects.dimensions = c('age','race','sex','risk'))
 )
 
 

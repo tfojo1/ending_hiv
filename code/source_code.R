@@ -79,7 +79,8 @@ source('code/core_code/setup/compression.R')
 source('code/core_code/time_text.R') #from commoncode, for printing updates
 
 #-- Interventions --#
-source('code/core_code/interventions/target_population2.R')
+#source('code/core_code/interventions/target_population2.R')
+source('code/core_code/interventions/target_population.R')
 source('code/core_code/interventions/interventions.R')
 source('code/core_code/interventions/intervention_units.R')
 source('code/core_code/interventions/intervention_static_settings.R')

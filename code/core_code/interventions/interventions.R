@@ -885,7 +885,8 @@ process.intervention <- function(intervention,
             
             for (j in length(sub$target.populations):1)
             {
-                tpop = resolve.target.population(sub$target.populations[[j]], dim.names = dim.names)
+#                tpop = resolve.target.population(sub$target.populations[[j]], dim.names = dim.names)\
+                tpop = sub$target.populations[[j]]
                 unit = sub$intervention.units[[j]]
                 rv$start.times[tpop] = unit$start.year
                 rv$end.times[tpop] = unit$end.year
