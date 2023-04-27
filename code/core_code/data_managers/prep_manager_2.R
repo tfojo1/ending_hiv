@@ -261,7 +261,7 @@ convert.prep.rx.to.true.prep <- function(x,
 #   p 42, 43, 45
 get.prep.indications.estimate <- function(prep.manager=ALL.DATA.MANAGERS$prep,
                                           location,
-                                          settings)
+                                          settings=get.settings.for.version("expanded_1.0"))
 {
     #-- Get probability of PrEP Indication (conditioned on sexual activity for MSM and HET) --#
     data = get.prep.lit.data(as.proportion.of.indicated = T,
