@@ -409,6 +409,9 @@ EXPANDED.CONTINUUM.UPDATE.COMPONENTS.FUNCTION <- function(parameters, components
 {
     components = set.background.change.to.years(components,
                                                 
+                                                testing = parameters['testing.gains.end.by.year'],
+                                                prep = parameters['prep.gains.end.by.year'],
+                                                
                                                 linkage = parameters['continuum.gains.end.by.year'],
                                                 
                                                 naive.to.suppressed = parameters['continuum.gains.end.by.year'],
