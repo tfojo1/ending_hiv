@@ -140,7 +140,8 @@ do.plot.simulations <- function(
     }
     else
     {
-        interventions = lapply(simsets, function(ss){attr(ss, 'intervention')})
+        # interventions = lapply(simsets, function(ss){attr(ss, 'intervention')})
+        interventions = lapply(simsets, get.simset.intervention)
         is.baseline = sapply(interventions, is.null)
     
         is.no.intervention = sapply(
