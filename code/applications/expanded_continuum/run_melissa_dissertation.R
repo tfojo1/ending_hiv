@@ -8,9 +8,10 @@ source('code/interventions/synthesize_interventions.R')
 source('code/applications/expanded_continuum/melissa_croi_interventions_2022_v2.R')
 
 # N.SIM = 100
+dir = 'mcmc_runs/quick_simsets'
 
 run.interventions.melissa = function(){
-    files = list.files('mcmc_runs/quick_simsets')
+    files = list.files(dir)
     files = files[grepl("ex",files)]
     locations = substr(files,7,11)
     
@@ -31,7 +32,7 @@ run.interventions.melissa = function(){
         # simset = subset.simset(simset,1:n.sim)
         
         run.systematic.interventions(simset,
-                                     dst.dir = 'mcmc_runs/quick_simsets',
+                                     dst.dir = dir,
                                      interventions = MELISSA.CROI.INTERVENTIONS.2022,
                                      save.baseline.and.seed = F, run.to.year = 2035, overwrite = T)
         
