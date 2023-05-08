@@ -5,41 +5,41 @@ source('code/core_code/interventions/interventions.R')
 source('code/core_code/interventions/intervention_units.R')
 
 # Intervention units
-P10 = create.intervention.unit(type = "prep", rates = .1, start.year = 2025, years = 2029,scale="proportion")
-P25 = create.intervention.unit(type = "prep", rates = .25, start.year = 2025, years = 2029,scale="proportion")
+P10 = create.intervention.unit(type = "prep", rates = .1, start.year = 2025, years = 2030,scale="proportion")
+P25 = create.intervention.unit(type = "prep", rates = .25, start.year = 2025, years = 2030,scale="proportion")
 
-LINKAGE.90 = create.intervention.unit(type = "linkage", rates = .9, start.year = 2025, years = 2029, scale="proportion")
-LINKAGE.95 = create.intervention.unit(type = "linkage", rates = .95, start.year = 2025, years = 2029, scale="proportion")
+LINKAGE.90 = create.intervention.unit(type = "linkage", rates = .9, start.year = 2025, years = 2030, scale="proportion")
+LINKAGE.95 = create.intervention.unit(type = "linkage", rates = .95, start.year = 2025, years = 2030, scale="proportion")
 
-RETENTION.NAIVE.80 = create.intervention.unit(type = "naive.to.disengaged", rates = 1-0.8, start.year = 2025, years = 2029, scale="proportion", allow.less.than.otherwise = T, allow.greater.than.otherwise = F)
-RETENTION.DURABLE.80 = create.intervention.unit(type = "durably.suppressed.to.disengaged", rates = 1-0.8, start.year = 2025, years = 2029, scale="proportion", allow.less.than.otherwise = T, allow.greater.than.otherwise = F)
-RETENTION.RECENT.80 = create.intervention.unit(type = "recently.suppressed.to.disengaged", rates = 1-0.8, start.year = 2025, years = 2029, scale="proportion", allow.less.than.otherwise = T, allow.greater.than.otherwise = F)
-RETENTION.FAILING.80 = create.intervention.unit(type = "failing.to.disengaged", rates = 1-0.8, start.year = 2025, years = 2029, scale="proportion", allow.less.than.otherwise = T, allow.greater.than.otherwise = F)
+RETENTION.NAIVE.80 = create.intervention.unit(type = "naive.to.disengaged", rates = 1-0.8, start.year = 2025, years = 2030, scale="proportion", allow.less.than.otherwise = T, allow.greater.than.otherwise = F)
+RETENTION.DURABLE.80 = create.intervention.unit(type = "durably.suppressed.to.disengaged", rates = 1-0.8, start.year = 2025, years = 2030, scale="proportion", allow.less.than.otherwise = T, allow.greater.than.otherwise = F)
+RETENTION.RECENT.80 = create.intervention.unit(type = "recently.suppressed.to.disengaged", rates = 1-0.8, start.year = 2025, years = 2030, scale="proportion", allow.less.than.otherwise = T, allow.greater.than.otherwise = F)
+RETENTION.FAILING.80 = create.intervention.unit(type = "failing.to.disengaged", rates = 1-0.8, start.year = 2025, years = 2030, scale="proportion", allow.less.than.otherwise = T, allow.greater.than.otherwise = F)
 
-#RETENTION.SUPP.80 = create.intervention.unit(type = "retention.suppressed", rates = .8, start.year = 2025, years = 2029,scale="proportion")
-#RETENTION.FAILING.80 = create.intervention.unit(type = "retention.failing", rates = .8, start.year = 2025, years = 2029,scale="proportion")
-#RETENTION.NAIVE.80 = create.intervention.unit(type = "retention.naive", rates = .8, start.year = 2025, years = 2029,scale="proportion")
+#RETENTION.SUPP.80 = create.intervention.unit(type = "retention.suppressed", rates = .8, start.year = 2025, years = 2030,scale="proportion")
+#RETENTION.FAILING.80 = create.intervention.unit(type = "retention.failing", rates = .8, start.year = 2025, years = 2030,scale="proportion")
+#RETENTION.NAIVE.80 = create.intervention.unit(type = "retention.naive", rates = .8, start.year = 2025, years = 2030,scale="proportion")
 
-RETENTION.NAIVE.90 = create.intervention.unit(type = "naive.to.disengaged", rates = 1-0.9, start.year = 2025, years = 2029, scale="proportion", allow.less.than.otherwise = T, allow.greater.than.otherwise = F)
-RETENTION.DURABLE.90 = create.intervention.unit(type = "durably.suppressed.to.disengaged", rates = 1-0.9, start.year = 2025, years = 2029, scale="proportion", allow.less.than.otherwise = T, allow.greater.than.otherwise = F)
-RETENTION.RECENT.90 = create.intervention.unit(type = "recently.suppressed.to.disengaged", rates = 1-0.9, start.year = 2025, years = 2029, scale="proportion", allow.less.than.otherwise = T, allow.greater.than.otherwise = F)
-RETENTION.FAILING.90 = create.intervention.unit(type = "failing.to.disengaged", rates = 1-0.9, start.year = 2025, years = 2029, scale="proportion", allow.less.than.otherwise = T, allow.greater.than.otherwise = F)
+RETENTION.NAIVE.90 = create.intervention.unit(type = "naive.to.disengaged", rates = 1-0.9, start.year = 2025, years = 2030, scale="proportion", allow.less.than.otherwise = T, allow.greater.than.otherwise = F)
+RETENTION.DURABLE.90 = create.intervention.unit(type = "durably.suppressed.to.disengaged", rates = 1-0.9, start.year = 2025, years = 2030, scale="proportion", allow.less.than.otherwise = T, allow.greater.than.otherwise = F)
+RETENTION.RECENT.90 = create.intervention.unit(type = "recently.suppressed.to.disengaged", rates = 1-0.9, start.year = 2025, years = 2030, scale="proportion", allow.less.than.otherwise = T, allow.greater.than.otherwise = F)
+RETENTION.FAILING.90 = create.intervention.unit(type = "failing.to.disengaged", rates = 1-0.9, start.year = 2025, years = 2030, scale="proportion", allow.less.than.otherwise = T, allow.greater.than.otherwise = F)
 
-#RETENTION.SUPP.90 = create.intervention.unit(type = "retention.suppressed", rates = .9, start.year = 2025, years = 2029,scale="proportion")
-#RETENTION.FAILING.90 = create.intervention.unit(type = "retention.failing", rates = .9, start.year = 2025, years = 2029,scale="proportion")
-#RETENTION.NAIVE.90 = create.intervention.unit(type = "retention.naive", rates = .9, start.year = 2025, years = 2029,scale="proportion")
+#RETENTION.SUPP.90 = create.intervention.unit(type = "retention.suppressed", rates = .9, start.year = 2025, years = 2030,scale="proportion")
+#RETENTION.FAILING.90 = create.intervention.unit(type = "retention.failing", rates = .9, start.year = 2025, years = 2030,scale="proportion")
+#RETENTION.NAIVE.90 = create.intervention.unit(type = "retention.naive", rates = .9, start.year = 2025, years = 2030,scale="proportion")
 
-RETENTION.NAIVE.95 = create.intervention.unit(type = "naive.to.disengaged", rates = 1-0.95, start.year = 2025, years = 2029, scale="proportion", allow.less.than.otherwise = T, allow.greater.than.otherwise = F)
-RETENTION.DURABLE.95 = create.intervention.unit(type = "durably.suppressed.to.disengaged", rates = 1-0.95, start.year = 2025, years = 2029, scale="proportion", allow.less.than.otherwise = T, allow.greater.than.otherwise = F)
-RETENTION.RECENT.95 = create.intervention.unit(type = "recently.suppressed.to.disengaged", rates = 1-0.95, start.year = 2025, years = 2029, scale="proportion", allow.less.than.otherwise = T, allow.greater.than.otherwise = F)
-RETENTION.FAILING.95 = create.intervention.unit(type = "failing.to.disengaged", rates = 1-0.95, start.year = 2025, years = 2029, scale="proportion", allow.less.than.otherwise = T, allow.greater.than.otherwise = F)
+RETENTION.NAIVE.95 = create.intervention.unit(type = "naive.to.disengaged", rates = 1-0.95, start.year = 2025, years = 2030, scale="proportion", allow.less.than.otherwise = T, allow.greater.than.otherwise = F)
+RETENTION.DURABLE.95 = create.intervention.unit(type = "durably.suppressed.to.disengaged", rates = 1-0.95, start.year = 2025, years = 2030, scale="proportion", allow.less.than.otherwise = T, allow.greater.than.otherwise = F)
+RETENTION.RECENT.95 = create.intervention.unit(type = "recently.suppressed.to.disengaged", rates = 1-0.95, start.year = 2025, years = 2030, scale="proportion", allow.less.than.otherwise = T, allow.greater.than.otherwise = F)
+RETENTION.FAILING.95 = create.intervention.unit(type = "failing.to.disengaged", rates = 1-0.95, start.year = 2025, years = 2030, scale="proportion", allow.less.than.otherwise = T, allow.greater.than.otherwise = F)
 
-#RETENTION.SUPP.95 = create.intervention.unit(type = "retention.suppressed", rates = .95, start.year = 2025, years = 2029,scale="proportion")
-#RETENTION.FAILING.95 = create.intervention.unit(type = "retention.failing", rates = .95, start.year = 2025, years = 2029,scale="proportion")
-#RETENTION.NAIVE.95 = create.intervention.unit(type = "retention.naive", rates = .95, start.year = 2025, years = 2029,scale="proportion")
+#RETENTION.SUPP.95 = create.intervention.unit(type = "retention.suppressed", rates = .95, start.year = 2025, years = 2030,scale="proportion")
+#RETENTION.FAILING.95 = create.intervention.unit(type = "retention.failing", rates = .95, start.year = 2025, years = 2030,scale="proportion")
+#RETENTION.NAIVE.95 = create.intervention.unit(type = "retention.naive", rates = .95, start.year = 2025, years = 2030,scale="proportion")
 
-ANNUAL.SUPP.FAILING.90 = create.intervention.unit(type = "failing.to.suppressed", rates = .9, start.year = 2025, years = 2029, scale="proportion")
-ANNUAL.SUPP.FAILING.95 = create.intervention.unit(type = "failing.to.suppressed", rates = .95, start.year = 2025, years = 2029, scale="proportion")
+ANNUAL.SUPP.FAILING.90 = create.intervention.unit(type = "failing.to.suppressed", rates = .9, start.year = 2025, years = 2030, scale="proportion")
+ANNUAL.SUPP.FAILING.95 = create.intervention.unit(type = "failing.to.suppressed", rates = .95, start.year = 2025, years = 2030, scale="proportion")
 
 
 
