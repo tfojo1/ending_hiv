@@ -26,7 +26,7 @@ run.interventions.melissa = function(){
     
     sapply(files.to.run, function(x){
         
-        file = paste0("mcmc_runs/quick_simsets/",x)
+        file = file.path(dir,x)
         load(file)
         
         # simset = subset.simset(simset,1:n.sim)
