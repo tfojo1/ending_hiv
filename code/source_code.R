@@ -48,6 +48,8 @@ source('code/core_code/data_managers/hiv_surveillance_manager.R')
 source('code/calibration/target_msas.R')
 
 #-- Set-Up --#
+source('code/settings_and_files/setup_versions.R')
+
 source('code/core_code/meta_model_structures/jheem_sim_interface.R')
 source('code/core_code/meta_model_structures/logit_transformations.R')
 sourceCpp('code/core_code/meta_model_structures/models.cpp')
